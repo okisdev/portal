@@ -1,8 +1,7 @@
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
-import { Calendar, ChevronDown, ChevronUp, Home, Inbox, Search, Settings, User2 } from 'lucide-react';
+import { Calendar, ChevronDown, ChevronUp, Home, Inbox, Settings, User2 } from 'lucide-react';
 
-// Menu items.
 const items = [
   {
     title: 'Home',
@@ -10,23 +9,23 @@ const items = [
     icon: Home,
   },
   {
-    title: 'Inbox',
-    url: '#',
+    title: 'Users',
+    url: '/dashboard/users',
+    icon: User2,
+  },
+  {
+    title: 'Clients',
+    url: '/dashboard/clients',
     icon: Inbox,
   },
   {
     title: 'Calendar',
-    url: '#',
+    url: '/dashboard/calendar',
     icon: Calendar,
   },
   {
-    title: 'Search',
-    url: '#',
-    icon: Search,
-  },
-  {
     title: 'Settings',
-    url: '#',
+    url: '/dashboard/settings',
     icon: Settings,
   },
 ];
