@@ -1,9 +1,9 @@
-import type { Metadata } from 'next';
-import { database } from '@/lib/database';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import Link from 'next/link';
 import { formatDate } from '@/lib/utils';
+import { api } from '@/utils/trpc/client';
+import type { Metadata } from 'next';
+import Link from 'next/link';
 
 export const metadata: Metadata = {
   title: 'Clients',
@@ -11,11 +11,7 @@ export const metadata: Metadata = {
 };
 
 export default async function ClientsPage() {
-  const clients = await database.client.findMany({
-    orderBy: {
-      createdAt: 'desc',
-    },
-  });
+  const clients = api.dashboard.getClients.useQuery();
 
   return (
     <div className='container mx-auto py-10'>
