@@ -1,11 +1,10 @@
+import authConfig from '@/auth.config';
+import { prisma } from '@/lib/database';
+import { PrismaAdapter } from '@auth/prisma-adapter';
 import NextAuth from 'next-auth';
-import Resend from 'next-auth/providers/resend';
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
-  providers: [
-    Resend({
-      from: 'crm-no-reply@resend.okisdev.com',
-      name: 'CRM',
-    }),
-  ],
+  adapter: PrismaAdapter(prisma),
+  session: { strategy: 'jwt' },
+  ...authConfig,
 });
