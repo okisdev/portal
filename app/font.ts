@@ -10,4 +10,4 @@ const geistMono = Geist_Mono({
   subsets: ['latin'],
 });
 
-export default { geistSans, geistMono };
+export { geistSans, geistMono };
