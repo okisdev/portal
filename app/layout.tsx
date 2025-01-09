@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import '@/styles/globals.css';
-import font from '@/app/font';
+import { geistMono, geistSans } from '@/app/font';
+import { Toaster } from '@/components/ui/sonner';
 
 export const metadata: Metadata = {
   title: 'CRM',
@@ -14,7 +15,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang='en'>
-      <body className={`${font.geistSans.variable} ${font.geistMono.variable} antialiased`}>{children}</body>
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+        {children}
+
+        <Toaster />
+      </body>
     </html>
   );
 }

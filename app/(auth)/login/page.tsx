@@ -1,50 +1,29 @@
 'use client';
 
-import { signIn } from '@/auth';
+import { Label } from '@/components/ui/label';
+import { AnimatePresence, motion } from 'framer-motion';
+import { CheckCircle2, Loader2 } from 'lucide-react';
+import { signIn } from 'next-auth/react';
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
+import { toast } from 'sonner';
 
 export default function LoginPage() {
-  const router = useRouter();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [emailSent, setEmailSent] = useState(false);
+  const [sentEmail, setSentEmail] = useState('');
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    try {
-      setLoading(true);
-      setError(null);
-
-      const result = await signIn('credentials', {
-        email,
-        password,
-        redirect: false,
-      });
-
-      if (result?.error) {
-        setError('Invalid credentials');
-        return;
-      }
-
-      router.push('/dashboard');
-    } catch (error) {
-      setError('An error occurred during login');
-    } finally {
-      setLoading(false);
-    }
+    const formData = new FormData(e.currentTarget);
+    await sendEmail(formData);
   };
 
-  const handleMagicLinkSignIn = async () => {
-    if (!email) {
-      setError('Please enter your email address');
-      return;
-    }
+  const sendEmail = async (formData: FormData) => {
     try {
       setLoading(true);
-      setError(null);
+      setError('');
+      const email = formData.get('email') as string;
 
       const result = await signIn('resend', {
         email,
@@ -52,118 +31,99 @@ export default function LoginPage() {
       });
 
       if (result?.error) {
-        setError('Failed to send magic link');
-        return;
+        setError(result.error);
+        toast.error(result.error);
+      } else {
+        setEmailSent(true);
+        setSentEmail(email);
       }
-
-      // Show success message or handle accordingly
-      setError('Magic link has been sent to your email');
-    } catch (error) {
-      setError('An error occurred while sending magic link');
+    } catch (err) {
+      setError('Something went wrong. Please try again.');
+      toast.error('Something went wrong. Please try again.');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className='flex min-h-screen items-center justify-center bg-gray-50'>
-      <div className='w-full max-w-md space-y-8 rounded-xl bg-white p-8 shadow-lg'>
-        <div className='text-center'>
-          <h2 className='mt-6 font-bold text-3xl text-gray-900'>Welcome back</h2>
-          <p className='mt-2 text-gray-600 text-sm'>Please sign in to your account</p>
+    <div className='flex min-h-screen items-center justify-center bg-white'>
+      <div className='w-full max-w-md space-y-6 p-8'>
+        <div className='flex items-center justify-center'>
+          <div className='h-12 w-12 rounded-xl bg-gradient-to-br from-blue-400 to-blue-500 shadow-lg' />
         </div>
 
-        <form className='mt-8 space-y-6' onSubmit={handleSubmit}>
-          <div className='space-y-4 rounded-md shadow-sm'>
-            <div>
-              <label htmlFor='email' className='sr-only'>
-                Email address
-              </label>
-              <input
-                id='email'
-                name='email'
-                type='email'
-                autoComplete='email'
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className='relative block w-full appearance-none rounded-lg border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:z-10 focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm'
-                placeholder='Email address'
-              />
-            </div>
-            <div>
-              <label htmlFor='password' className='sr-only'>
-                Password
-              </label>
-              <input
-                id='password'
-                name='password'
-                type='password'
-                autoComplete='current-password'
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className='relative block w-full appearance-none rounded-lg border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:z-10 focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm'
-                placeholder='Password'
-              />
-            </div>
-          </div>
+        <AnimatePresence mode='wait'>
+          {!emailSent ? (
+            <motion.div key='login-form' initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.2 }}>
+              <div className='space-y-2 text-center'>
+                <h1 className='font-semibold text-2xl text-gray-900'>Log in to your account</h1>
+                <p className='text-gray-500'>Welcome back! Please enter your details.</p>
+              </div>
 
-          {error && <div className='text-center text-red-500 text-sm'>{error}</div>}
+              <form onSubmit={handleSubmit} className='space-y-4'>
+                {error && <div className='rounded-lg bg-red-50 p-3 text-red-400 text-sm'>{error}</div>}
 
-          <div className='flex items-center justify-between'>
-            <div className='flex items-center'>
-              <input id='remember-me' name='remember-me' type='checkbox' className='h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500' />
-              <label htmlFor='remember-me' className='ml-2 block text-gray-900 text-sm'>
-                Remember me
-              </label>
-            </div>
+                <div className='space-y-1'>
+                  <Label className='mb-1 block font-medium text-gray-700 text-sm'>Email</Label>
+                  <input type='email' required name='email' className='w-full rounded-lg border p-2 focus:outline-none focus:ring-2 focus:ring-blue-400' placeholder='Enter your email' />
+                </div>
 
-            <div className='text-sm'>
-              <Link href='#' className='font-medium text-indigo-600 hover:text-indigo-500'>
-                Forgot your password?
-              </Link>
-            </div>
-          </div>
+                <div className='flex items-center justify-between'>
+                  <label className='flex items-center'>
+                    <input type='checkbox' className='h-4 w-4 rounded border-gray-300 text-blue-500 focus:ring-blue-400' />
+                    <span className='ml-2 text-gray-500 text-sm'>Remember for 30 days</span>
+                  </label>
+                </div>
 
-          <div>
-            <button
-              type='submit'
-              disabled={loading}
-              className='group relative flex w-full justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 font-medium text-sm text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50'
+                <div className='space-y-3'>
+                  <button
+                    type='submit'
+                    disabled={loading}
+                    className='flex w-full items-center justify-center rounded-lg bg-blue-500 px-4 py-2 font-medium text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50'
+                  >
+                    {loading ? (
+                      <>
+                        <Loader2 className='mr-2 h-5 w-5 animate-spin' />
+                        Sending...
+                      </>
+                    ) : (
+                      'Send Magic Link'
+                    )}
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          ) : (
+            <motion.div
+              key='success-message'
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.2 }}
+              className='space-y-6 text-center'
             >
-              {loading ? <span className='flex items-center'>Signing in...</span> : 'Sign in'}
-            </button>
-          </div>
-        </form>
-
-        <div className='mt-6'>
-          <div className='relative'>
-            <div className='absolute inset-0 flex items-center'>
-              <div className='w-full border-gray-300 border-t' />
-            </div>
-            <div className='relative flex justify-center text-sm'>
-              <span className='bg-white px-2 text-gray-500'>Or continue with</span>
-            </div>
-          </div>
-
-          <div className='mt-6 grid grid-cols-1 gap-3'>
-            <button
-              type='button'
-              onClick={handleMagicLinkSignIn}
-              className='inline-flex w-full justify-center rounded-md border border-gray-300 bg-white px-4 py-2 font-medium text-gray-500 text-sm shadow-sm hover:bg-gray-50'
-            >
-              <span className='sr-only'>Sign in with Magic Link</span>
-            </button>
-          </div>
-        </div>
-
-        <p className='mt-8 text-center text-gray-600 text-sm'>
-          Don't have an account?{' '}
-          <a href='/register' className='font-medium text-indigo-600 hover:text-indigo-500'>
-            Sign up
-          </a>
-        </p>
+              <div className='flex justify-center'>
+                <CheckCircle2 className='h-12 w-12 text-green-500' />
+              </div>
+              <div className='space-y-2'>
+                <h2 className='font-semibold text-2xl text-gray-900'>Check your email</h2>
+                <p className='text-gray-500'>
+                  We've sent a magic link to <span className='font-medium text-gray-700'>{sentEmail}</span>
+                </p>
+              </div>
+              <button
+                type='button'
+                onClick={() => {
+                  setEmailSent(false);
+                  setSentEmail('');
+                }}
+                className='text-blue-500 text-sm hover:text-blue-600'
+              >
+                Use a different email
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );
