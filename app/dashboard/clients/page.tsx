@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 };
 
 export default async function ClientsPage() {
-  const clients = api.dashboard.getClients.useQuery();
+  const { data: clients } = api.dashboard.getClients.useQuery();
 
   return (
     <div className='container mx-auto py-10'>
