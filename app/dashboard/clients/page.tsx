@@ -4,13 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { formatDate } from '@/lib/utils';
 import { api } from '@/utils/trpc/client';
-import type { Metadata } from 'next';
 import Link from 'next/link';
-
-export const metadata: Metadata = {
-  title: 'Clients',
-  description: 'Manage your clients',
-};
 
 export default function ClientsPage() {
   const { data: clients } = api.dashboard.getClients.useQuery();
