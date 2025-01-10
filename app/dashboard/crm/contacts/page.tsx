@@ -1,7 +1,7 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { formatDate } from '@/lib/utils';
 import { api } from '@/utils/trpc/client';
 import Link from 'next/link';
@@ -10,8 +10,8 @@ export default function CRMContactsPage() {
   const { data: contacts } = api.dashboard.getContacts.useQuery();
 
   return (
-    <div className='container mx-auto w-full p-3'>
-      <div className='flex items-center justify-between'>
+    <div className='container mx-auto w-full space-y-2'>
+      <div className='flex items-center justify-end'>
         <Button asChild>
           <Link href='/dashboard/crm/contacts/new'>Add Contact</Link>
         </Button>
@@ -32,7 +32,7 @@ export default function CRMContactsPage() {
               <TableRow key={contact.id}>
                 <TableCell>
                   <Link href={`/dashboard/crm/contacts/${contact.id}`} className='hover:underline'>
-                    {contact.name}
+                    {contact.firstName} {contact.lastName}
                   </Link>
                 </TableCell>
                 <TableCell>{contact.email}</TableCell>
@@ -41,6 +41,11 @@ export default function CRMContactsPage() {
               </TableRow>
             ))}
           </TableBody>
+          <TableFooter>
+            <TableRow>
+              <TableCell colSpan={4}>Total: {contacts?.length}</TableCell>
+            </TableRow>
+          </TableFooter>
         </Table>
       </div>
     </div>

@@ -1,5 +1,5 @@
 import { relations } from 'drizzle-orm/relations';
-import { account, authenticator, contact, session, user } from './schema';
+import { account, authenticator, contact, contactConversation, contactDeal, session, user } from './schema';
 
 export const accountRelations = relations(account, ({ one }) => ({
   user: one(user, {
@@ -28,6 +28,29 @@ export const sessionRelations = relations(session, ({ one }) => ({
   }),
 }));
 
-export const contactRelations = relations(contact, ({ many }) => ({
-  contacts: many(contact),
+export const contactRelations = relations(contact, ({ many, one }) => ({
+  remarks: many(contactConversation),
+  deals: many(contactDeal),
+  assignedUser: one(user, {
+    fields: [contact.assignedTo],
+    references: [user.id],
+  }),
+}));
+
+export const contactConversationRelations = relations(contactConversation, ({ one }) => ({
+  contact: one(contact, {
+    fields: [contactConversation.contactId],
+    references: [contact.id],
+  }),
+  user: one(user, {
+    fields: [contactConversation.userId],
+    references: [user.id],
+  }),
+}));
+
+export const contactDealRelations = relations(contactDeal, ({ one }) => ({
+  contact: one(contact, {
+    fields: [contactDeal.contactId],
+    references: [contact.id],
+  }),
 }));

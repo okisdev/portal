@@ -86,12 +86,57 @@ export const contact = pgTable('contact', {
     .primaryKey()
     .notNull()
     .$defaultFn(() => crypto.randomUUID()),
-  name: text().notNull(),
+  name: text(),
   firstName: text().notNull(),
   lastName: text().notNull(),
   email: text().notNull(),
   phone: text(),
+  gender: text(), // 'male', 'female', 'other'
+  company: text(),
+  jobTitle: text(),
   address: text(),
+  city: text(),
+  state: text(),
+  country: text(),
+  postalCode: text(),
+  status: text().notNull().default('lead'), // 'lead', 'prospect', 'customer', 'churned'
+  source: text(), // how did they find you
+  assignedTo: text().references(() => user.id), // sales rep or account manager
+  stripeCustomerId: text(), // for payment integration
+  createdAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
+  updatedAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
+});
+
+export const contactConversation = pgTable('contactConversation', {
+  id: text()
+    .primaryKey()
+    .notNull()
+    .$defaultFn(() => crypto.randomUUID()),
+  contactId: text()
+    .notNull()
+    .references(() => contact.id, { onDelete: 'cascade' }),
+  userId: text()
+    .notNull()
+    .references(() => user.id), // who made the remark
+  content: text().notNull(),
+  type: text().default('note'), // 'note', 'call', 'meeting', 'email'
+  createdAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
+  updatedAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
+});
+
+export const contactDeal = pgTable('contactDeal', {
+  id: text()
+    .primaryKey()
+    .notNull()
+    .$defaultFn(() => crypto.randomUUID()),
+  contactId: text()
+    .notNull()
+    .references(() => contact.id, { onDelete: 'cascade' }),
+  name: text().notNull(),
+  value: integer().notNull(), // in cents
+  status: text().notNull().default('open'), // 'open', 'won', 'lost'
+  expectedCloseDate: timestamp({ mode: 'date' }),
+  actualCloseDate: timestamp({ mode: 'date' }),
   createdAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
   updatedAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
 });

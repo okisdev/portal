@@ -9,6 +9,8 @@ import { usePathname } from 'next/navigation';
 export function DashboardHeader() {
   const pathname = usePathname();
 
+  const paths = pathname.replace('/dashboard/', '').split('/');
+
   const isCrm = pathname.startsWith('/dashboard/crm');
   const isMarketing = pathname.startsWith('/dashboard/marketing');
 
