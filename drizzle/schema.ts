@@ -81,7 +81,7 @@ export const session = pgTable(
   ]
 );
 
-export const client = pgTable('client', {
+export const contact = pgTable('contact', {
   id: text().primaryKey().notNull(),
   name: text().notNull(),
   email: text(),

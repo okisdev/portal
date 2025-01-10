@@ -1,6 +1,7 @@
 import { auth } from '@/auth';
+import { DashboardHeader } from '@/components/dashboard/header';
 import { DashboardSidebar } from '@/components/dashboard/sidebar';
-import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
+import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
 import { redirect } from 'next/navigation';
 
 export default async function DashboardLayout({
@@ -15,10 +16,14 @@ export default async function DashboardLayout({
   return (
     <SidebarProvider>
       <DashboardSidebar />
-      <main>
+      {/* <main className='min-h-screen w-full flex-1'>
         <SidebarTrigger />
         {children}
-      </main>
+      </main> */}
+      <SidebarInset>
+        <DashboardHeader />
+        <div className='flex flex-1 flex-col gap-4 p-4 pt-0'>{children}</div>
+      </SidebarInset>
     </SidebarProvider>
   );
 }

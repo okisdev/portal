@@ -6,15 +6,14 @@ import { formatDate } from '@/lib/utils';
 import { api } from '@/utils/trpc/client';
 import Link from 'next/link';
 
-export default function ClientsPage() {
-  const { data: clients } = api.dashboard.getClients.useQuery();
+export default function CRMContactsPage() {
+  const { data: contacts } = api.dashboard.getContacts.useQuery();
 
   return (
-    <div className='container mx-auto py-10'>
-      <div className='mb-8 flex items-center justify-between'>
-        <h1 className='font-bold text-3xl tracking-tight'>Clients</h1>
+    <div className='container mx-auto w-full p-3'>
+      <div className='flex items-center justify-between'>
         <Button asChild>
-          <Link href='/dashboard/clients/new'>Add Client</Link>
+          <Link href='/dashboard/crm/contacts/new'>Add Contact</Link>
         </Button>
       </div>
 
@@ -29,16 +28,16 @@ export default function ClientsPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {clients?.map((client) => (
-              <TableRow key={client.id}>
+            {contacts?.map((contact) => (
+              <TableRow key={contact.id}>
                 <TableCell>
-                  <Link href={`/dashboard/clients/${client.id}`} className='hover:underline'>
-                    {client.name}
+                  <Link href={`/dashboard/crm/contacts/${contact.id}`} className='hover:underline'>
+                    {contact.name}
                   </Link>
                 </TableCell>
-                <TableCell>{client.email}</TableCell>
-                <TableCell>{client.phone || '—'}</TableCell>
-                <TableCell>{formatDate(new Date(client.createdAt))}</TableCell>
+                <TableCell>{contact.email}</TableCell>
+                <TableCell>{contact.phone || '—'}</TableCell>
+                <TableCell>{formatDate(new Date(contact.createdAt))}</TableCell>
               </TableRow>
             ))}
           </TableBody>

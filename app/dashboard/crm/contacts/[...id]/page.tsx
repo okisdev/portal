@@ -9,22 +9,22 @@ import { notFound, useParams } from 'next/navigation';
 export default function ClientIdPage() {
   const params = useParams<{ id: string }>();
 
-  const clientId = params.id;
+  const contactId = params.id;
 
-  const { data: client } = api.dashboard.getClient.useQuery({
-    id: clientId,
+  const { data: contact } = api.dashboard.getContact.useQuery({
+    id: contactId,
   });
 
-  if (!client) {
+  if (!contact) {
     notFound();
   }
 
   return (
     <div className='container mx-auto py-10'>
       <div className='mb-8 flex items-center justify-between'>
-        <h1 className='font-bold text-3xl tracking-tight'>{client?.name}</h1>
+        <h1 className='font-bold text-3xl tracking-tight'>{contact?.name}</h1>
         <Button variant='outline' asChild>
-          <Link href='/dashboard/clients'>Back to Clients</Link>
+          <Link href='/dashboard/crm/contacts'>Back to Contacts</Link>
         </Button>
       </div>
 
@@ -34,19 +34,19 @@ export default function ClientIdPage() {
           <dl className='grid gap-3'>
             <div className='grid grid-cols-3'>
               <dt className='font-medium'>Email</dt>
-              <dd className='col-span-2'>{client.email}</dd>
+              <dd className='col-span-2'>{contact.email}</dd>
             </div>
             <div className='grid grid-cols-3'>
               <dt className='font-medium'>Phone</dt>
-              <dd className='col-span-2'>{client.phone || '—'}</dd>
+              <dd className='col-span-2'>{contact.phone || '—'}</dd>
             </div>
             <div className='grid grid-cols-3'>
               <dt className='font-medium'>Address</dt>
-              <dd className='col-span-2'>{client.address || '—'}</dd>
+              <dd className='col-span-2'>{contact.address || '—'}</dd>
             </div>
             <div className='grid grid-cols-3'>
               <dt className='font-medium'>Created</dt>
-              <dd className='col-span-2'>{formatDate(new Date(client.createdAt))}</dd>
+              <dd className='col-span-2'>{formatDate(new Date(contact.createdAt))}</dd>
             </div>
           </dl>
         </div>
