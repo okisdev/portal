@@ -1,16 +1,16 @@
-import { redirect } from 'next/navigation';
 import { auth } from '@/auth';
-import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { DashboardSidebar } from '@/components/dashboard/sidebar';
+import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
+import { redirect } from 'next/navigation';
 
-export default async function AuthLayout({
+export default async function DashboardLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
   const session = await auth();
 
-  if (session) return redirect('/');
+  if (!session) return redirect('/login');
 
   return (
     <SidebarProvider>

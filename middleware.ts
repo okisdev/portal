@@ -1,4 +1,6 @@
-import NextAuth from 'next-auth';
-import authConfig from '@/auth.config';
+// biome-ignore lint/performance/noBarrelFile: <explanation>
+export { auth as middleware } from '@/auth';
 
-export const { auth: middleware } = NextAuth(authConfig);
+export const config = {
+  matcher: ['/((?!_next/static|_next/image|favicon.ico).*)'],
+};

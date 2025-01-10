@@ -12,14 +12,48 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [emailSent, setEmailSent] = useState(false);
   const [sentEmail, setSentEmail] = useState('');
+  const [isPasswordLogin, setIsPasswordLogin] = useState(true);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
-    await sendEmail(formData);
+
+    if (isPasswordLogin) {
+      await handlePasswordLogin(formData);
+    } else {
+      await sendMagicLink(formData);
+    }
   };
 
-  const sendEmail = async (formData: FormData) => {
+  const handlePasswordLogin = async (formData: FormData) => {
+    try {
+      setLoading(true);
+      setError('');
+      const email = formData.get('email') as string;
+      const password = formData.get('password') as string;
+
+      const result = await signIn('credentials', {
+        email,
+        password,
+        redirect: false,
+      });
+
+      if (result?.error) {
+        setError(result.error);
+        toast.error(result.error);
+      } else {
+        // Redirect or handle successful login
+        window.location.href = '/dashboard'; // Or your desired redirect path
+      }
+    } catch (err) {
+      setError('Something went wrong. Please try again.');
+      toast.error('Something went wrong. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const sendMagicLink = async (formData: FormData) => {
     try {
       setLoading(true);
       setError('');
@@ -60,19 +94,36 @@ export default function LoginPage() {
                 <p className='text-gray-500'>Welcome back! Please enter your details.</p>
               </div>
 
-              <form onSubmit={handleSubmit} className='space-y-4'>
+              <form onSubmit={handleSubmit} className='mt-6 space-y-4'>
                 {error && <div className='rounded-lg bg-red-50 p-3 text-red-400 text-sm'>{error}</div>}
 
                 <div className='space-y-1'>
-                  <Label className='mb-1 block font-medium text-gray-700 text-sm'>Email</Label>
+                  <Label className='mb-1 flex justify-between font-medium text-gray-700 text-sm'>
+                    <span>Email</span>
+                    <button type='button' onClick={() => setIsPasswordLogin(!isPasswordLogin)} className='text-blue-500'>
+                      {isPasswordLogin ? 'use magic link' : 'use password'}
+                    </button>
+                  </Label>
                   <input type='email' required name='email' className='w-full rounded-lg border p-2 focus:outline-none focus:ring-2 focus:ring-blue-400' placeholder='Enter your email' />
                 </div>
+
+                {isPasswordLogin && (
+                  <div className='space-y-1'>
+                    <Label className='mb-1 block font-medium text-gray-700 text-sm'>Password</Label>
+                    <input type='password' required name='password' className='w-full rounded-lg border p-2 focus:outline-none focus:ring-2 focus:ring-blue-400' placeholder='Enter your password' />
+                  </div>
+                )}
 
                 <div className='flex items-center justify-between'>
                   <label className='flex items-center'>
                     <input type='checkbox' className='h-4 w-4 rounded border-gray-300 text-blue-500 focus:ring-blue-400' />
                     <span className='ml-2 text-gray-500 text-sm'>Remember for 30 days</span>
                   </label>
+                  {isPasswordLogin && (
+                    <a href='/forgot-password' className='text-blue-500 text-sm hover:text-blue-600'>
+                      Forgot password?
+                    </a>
+                  )}
                 </div>
 
                 <div className='space-y-3'>
@@ -84,12 +135,20 @@ export default function LoginPage() {
                     {loading ? (
                       <>
                         <Loader2 className='mr-2 h-5 w-5 animate-spin' />
-                        Sending...
+                        {isPasswordLogin ? 'Signing in...' : 'Sending...'}
                       </>
+                    ) : isPasswordLogin ? (
+                      'Sign in'
                     ) : (
                       'Send Magic Link'
                     )}
                   </button>
+                  <p className='text-center text-gray-500 text-sm'>
+                    Don't have an account?{' '}
+                    <a href='/register' className='text-blue-500 hover:text-blue-600'>
+                      Sign up
+                    </a>
+                  </p>
                 </div>
               </form>
             </motion.div>

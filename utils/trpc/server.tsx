@@ -1,5 +1,5 @@
 import { auth } from '@/auth';
-import { createCaller, createTRPCContext } from '@/trpc';
+import { createCaller, createTRPCContext } from '@/server';
 import { headers } from 'next/headers';
 import { cache } from 'react';
 

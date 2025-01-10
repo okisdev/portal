@@ -11,7 +11,7 @@ import { TRPCError, initTRPC } from '@trpc/server';
 import superjson from 'superjson';
 import { ZodError } from 'zod';
 
-import { prisma } from '@/lib/database';
+import { database } from '@/lib/database';
 import type { Session } from 'next-auth';
 
 /**
@@ -28,7 +28,7 @@ import type { Session } from 'next-auth';
  */
 export const createTRPCContext = async (opts: { headers: Headers; session: Session | null }) => {
   return {
-    db: prisma,
+    db: database,
     // session,
     ...opts,
   };

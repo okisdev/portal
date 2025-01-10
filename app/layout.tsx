@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import '@/styles/globals.css';
 import { geistSans } from '@/app/font';
+import RootProvider from '@/app/provider';
 import { Toaster } from '@/components/ui/sonner';
 
 export const metadata: Metadata = {
@@ -14,12 +15,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang='en'>
-      <body className={`${geistSans.className} antialiased`}>
-        {children}
+    <RootProvider>
+      <html lang='en'>
+        <body className={`${geistSans.className} antialiased`}>
+          {children}
 
-        <Toaster />
-      </body>
-    </html>
+          <Toaster />
+        </body>
+      </html>
+    </RootProvider>
   );
 }
