@@ -1,17 +1,13 @@
 import { Button } from '@/components/ui/button';
 import { formatDate } from '@/lib/utils';
-import { api } from '@/utils/trpc/client';
+import { api } from '@/utils/trpc/server';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 
 export default async function ClientIdPage({ params }: { params: Promise<{ id: string }> }) {
   const clientId = (await params).id;
 
-  const client = await api.dashboard.getClient.useQuery({
-    where: {
-      id: clientId,
-    },
-  });
+  const client = await api.dashboard.getClient(clientId);
 
   if (!client) {
     notFound();
