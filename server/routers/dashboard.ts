@@ -8,7 +8,12 @@ export const dashboardRouter = createTRPCRouter({
     return ctx.db.select().from(client).orderBy(desc(client.createdAt));
   }),
 
-  getClient: protectedProcedure.input(z.string()).query(({ ctx, input }) => {
-    return ctx.db.select().from(client).where(eq(client.id, input));
+  getClient: protectedProcedure.input(z.object({ id: z.string() })).query(({ ctx, input }) => {
+    return ctx.db
+      .select()
+      .from(client)
+      .where(eq(client.id, input.id))
+      .limit(1)
+      .then((rows) => rows[0]);
   }),
 });

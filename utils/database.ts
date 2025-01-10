@@ -6,5 +6,6 @@ export const getUserFromDb = async (email: string, pwHash: string) => {
   return await database
     .select()
     .from(user)
-    .where(and(eq(user.email, email), eq(user.password, pwHash)));
+    .where(and(eq(user.email, email), eq(user.password, pwHash)))
+    .then((rows) => rows[0]);
 };
