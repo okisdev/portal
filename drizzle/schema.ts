@@ -82,11 +82,16 @@ export const session = pgTable(
 );
 
 export const contact = pgTable('contact', {
-  id: text().primaryKey().notNull(),
+  id: text()
+    .primaryKey()
+    .notNull()
+    .$defaultFn(() => crypto.randomUUID()),
   name: text().notNull(),
-  email: text(),
+  firstName: text().notNull(),
+  lastName: text().notNull(),
+  email: text().notNull(),
   phone: text(),
   address: text(),
-  createdAt: timestamp({ mode: 'string' }).notNull(),
-  updatedAt: timestamp({ mode: 'string' }).notNull(),
+  createdAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
+  updatedAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
 });

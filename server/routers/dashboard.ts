@@ -8,12 +8,28 @@ export const dashboardRouter = createTRPCRouter({
     return ctx.db.select().from(contact).orderBy(desc(contact.createdAt));
   }),
 
-  getContact: protectedProcedure.input(z.object({ id: z.string() })).query(({ ctx, input }) => {
-    return ctx.db
-      .select()
-      .from(contact)
-      .where(eq(contact.id, input.id))
-      .limit(1)
-      .then((rows) => rows[0]);
+  getContact: protectedProcedure.input(z.object({ id: z.string() })).query(async ({ ctx, input }) => {
+    const rows = await ctx.db.select().from(contact).where(eq(contact.id, input.id)).limit(1);
+
+    return rows[0];
   }),
+
+  addContact: protectedProcedure
+    .input(
+      z.object({
+        firstName: z.string(),
+        lastName: z.string(),
+        email: z.string(),
+        phone: z.string(),
+      })
+    )
+    .mutation(({ ctx, input }) => {
+      return ctx.db.insert(contact).values({
+        name: `${input.firstName} ${input.lastName}`,
+        email: input.email,
+        phone: input.phone,
+        firstName: input.firstName,
+        lastName: input.lastName,
+      });
+    }),
 });

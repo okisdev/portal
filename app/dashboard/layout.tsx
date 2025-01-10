@@ -16,10 +16,6 @@ export default async function DashboardLayout({
   return (
     <SidebarProvider>
       <DashboardSidebar />
-      {/* <main className='min-h-screen w-full flex-1'>
-        <SidebarTrigger />
-        {children}
-      </main> */}
       <SidebarInset>
         <DashboardHeader />
         <div className='flex flex-1 flex-col gap-4 p-4 pt-0'>{children}</div>
