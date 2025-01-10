@@ -7,7 +7,7 @@ import { MoveLeft } from 'lucide-react';
 import Link from 'next/link';
 import { notFound, useParams } from 'next/navigation';
 
-export default function ClientIdPage() {
+export default function ContactIdPage() {
   const { id: contactId } = useParams<{ id: string }>();
 
   const { data: contacts } = api.dashboard.getContacts.useQuery();
@@ -29,7 +29,7 @@ export default function ClientIdPage() {
         <h1 className='font-bold text-3xl tracking-tight'>{contact?.name}</h1>
       </div>
 
-      <div className='grid gap-6'>
+      <div className='grid grid-cols-1 gap-6 md:grid-cols-2'>
         <div className='rounded-lg border p-6'>
           <h2 className='mb-4 font-semibold text-xl'>Client Details</h2>
           <dl className='grid gap-3'>
@@ -50,6 +50,21 @@ export default function ClientIdPage() {
               <dd className='col-span-2'>{formatDate(new Date(contact.createdAt))}</dd>
             </div>
           </dl>
+        </div>
+
+        <div className='rounded-lg border p-6'>
+          <h2 className='mb-4 font-semibold text-xl'>Actions</h2>
+          <ul className='space-y-3'>
+            <li>
+              <Button variant='outline'>View Conversation History</Button>
+            </li>
+            <li>
+              <Button variant='outline'>Schedule Follow-up</Button>
+            </li>
+            <li>
+              <Button variant='outline'>Add Note</Button>
+            </li>
+          </ul>
         </div>
       </div>
     </div>
