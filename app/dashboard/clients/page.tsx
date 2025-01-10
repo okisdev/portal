@@ -38,7 +38,7 @@ export default function ClientsPage() {
                 </TableCell>
                 <TableCell>{client.email}</TableCell>
                 <TableCell>{client.phone || '—'}</TableCell>
-                <TableCell>{formatDate(client.createdAt)}</TableCell>
+                <TableCell>{formatDate(new Date(client.createdAt))}</TableCell>
               </TableRow>
             ))}
           </TableBody>
