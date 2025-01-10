@@ -2,13 +2,13 @@ import { database } from '@/lib/database';
 import { credentialSchema } from '@/lib/schema';
 import { getUserFromDb } from '@/utils/database';
 import { encryptPassword } from '@/utils/password';
-import { PrismaAdapter } from '@auth/prisma-adapter';
+import { DrizzleAdapter } from '@auth/drizzle-adapter';
 import NextAuth from 'next-auth';
 import Credentials from 'next-auth/providers/credentials';
 import Resend from 'next-auth/providers/resend';
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
-  adapter: PrismaAdapter(database),
+  adapter: DrizzleAdapter(database),
   providers: [
     Credentials({
       credentials: {

@@ -1,7 +1,6 @@
-import { PrismaClient } from '@prisma/client';
+import { drizzle } from 'drizzle-orm/neon-serverless';
 
-const globalForPrisma = globalThis as unknown as { prisma: PrismaClient };
+// biome-ignore lint/style/noNonNullAssertion: <explanation>
+const database = drizzle(process.env.DATABASE_URL!);
 
-export const database = globalForPrisma.prisma || new PrismaClient();
-
-if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = database;
+export { database };
