@@ -1,5 +1,5 @@
-import { authRouter } from '@/trpc/routers/auth';
-import { dashboardRouter } from '@/trpc/routers/dashboard';
+import { authRouter } from '@/server/routers/auth';
+import { dashboardRouter } from '@/server/routers/dashboard';
 import type { inferReactQueryProcedureOptions } from '@trpc/react-query';
 import type { inferRouterInputs, inferRouterOutputs } from '@trpc/server';
 import { createCallerFactory, createTRPCRouter } from './trpc';

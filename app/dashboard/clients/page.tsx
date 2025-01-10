@@ -1,3 +1,5 @@
+'use client';
+
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { formatDate } from '@/lib/utils';
@@ -10,7 +12,7 @@ export const metadata: Metadata = {
   description: 'Manage your clients',
 };
 
-export default async function ClientsPage() {
+export default function ClientsPage() {
   const { data: clients } = api.dashboard.getClients.useQuery();
 
   return (
@@ -33,7 +35,7 @@ export default async function ClientsPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {clients.map((client) => (
+            {clients?.map((client) => (
               <TableRow key={client.id}>
                 <TableCell>
                   <Link href={`/dashboard/clients/${client.id}`} className='hover:underline'>

@@ -1,4 +1,4 @@
-import { createTRPCRouter, protectedProcedure } from '../trpc';
+import { createTRPCRouter, protectedProcedure } from '@/server/trpc';
 
 export const authRouter = createTRPCRouter({
   getMe: protectedProcedure.query(({ ctx }) => {

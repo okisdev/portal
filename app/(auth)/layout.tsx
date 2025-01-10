@@ -1,5 +1,5 @@
-import { redirect } from 'next/navigation';
 import { auth } from '@/auth';
+import { redirect } from 'next/navigation';
 
 export default async function AuthLayout({
   children,
@@ -8,7 +8,7 @@ export default async function AuthLayout({
 }>) {
   const session = await auth();
 
-  if (session) return redirect('/');
+  if (session) return redirect('/dashboard');
 
   return children;
 }

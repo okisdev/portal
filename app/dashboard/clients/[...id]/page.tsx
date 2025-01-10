@@ -4,7 +4,7 @@ import { api } from '@/utils/trpc/client';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 
-export default async function ClientPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function ClientIdPage({ params }: { params: Promise<{ id: string }> }) {
   const clientId = (await params).id;
 
   const client = await api.dashboard.getClient.useQuery({
