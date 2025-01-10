@@ -1,69 +1,57 @@
 'use client';
 
 import { Label } from '@/components/ui/label';
+import { encryptPassword } from '@/utils/password';
+import { api } from '@/utils/trpc/client';
 import { motion } from 'framer-motion';
-import ky from 'ky';
 import { Loader2 } from 'lucide-react';
-import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
 export default function RegisterPage() {
   const router = useRouter();
+
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [isPasswordSignup, setIsPasswordSignup] = useState(true);
+
+  const registerAccount = api.auth.register.useMutation();
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
 
-    if (isPasswordSignup) {
-      await handlePasswordSignup(formData);
-    } else {
-      router.push('/login?magic=true');
-    }
+    await handlePasswordSignup(formData);
   };
 
   const handlePasswordSignup = async (formData: FormData) => {
-    try {
-      setLoading(true);
-      setError('');
-      const email = formData.get('email') as string;
-      const password = formData.get('password') as string;
+    setLoading(true);
 
-      await ky
-        .post('/api/register', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ email, password }),
-        })
-        .json();
+    setError('');
 
-      const result = await signIn('credentials', {
-        email,
-        password,
-        redirect: false,
-      });
+    const email = formData.get('email') as string;
+    const password = formData.get('password') as string;
 
-      if (result?.error) {
-        setError(result.error);
+    const hashedPassword = encryptPassword(password);
 
-        toast.error(result.error);
-      } else {
-        toast.success('Registration successful!');
-
-        router.push('/dashboard');
+    await registerAccount.mutateAsync(
+      {
+        email: email,
+        password: hashedPassword,
+      },
+      {
+        onSuccess: () => {
+          toast.success('Registration successful!');
+          router.push('/dashboard');
+        },
+        onError: (error) => {
+          setError(error.message || 'Something went wrong. Please try again.');
+          toast.error(error.message || 'Something went wrong. Please try again.');
+        },
       }
-    } catch (err: any) {
-      setError(err.message || 'Something went wrong. Please try again.');
-      toast.error(err.message || 'Something went wrong. Please try again.');
-    } finally {
-      setLoading(false);
-    }
+    );
+
+    setLoading(false);
   };
 
   return (
@@ -87,12 +75,10 @@ export default function RegisterPage() {
               <input type='email' required name='email' className='w-full rounded-lg border p-2 focus:outline-none focus:ring-2 focus:ring-blue-400' placeholder='Enter your email' />
             </div>
 
-            {isPasswordSignup && (
-              <div className='space-y-1'>
-                <Label className='mb-1 block font-medium text-gray-700 text-sm'>Password</Label>
-                <input type='password' required name='password' className='w-full rounded-lg border p-2 focus:outline-none focus:ring-2 focus:ring-blue-400' placeholder='Create a password' />
-              </div>
-            )}
+            <div className='space-y-1'>
+              <Label className='mb-1 block font-medium text-gray-700 text-sm'>Password</Label>
+              <input type='password' required name='password' className='w-full rounded-lg border p-2 focus:outline-none focus:ring-2 focus:ring-blue-400' placeholder='Create a password' />
+            </div>
 
             <div className='space-y-3'>
               <button
@@ -103,12 +89,10 @@ export default function RegisterPage() {
                 {loading ? (
                   <>
                     <Loader2 className='mr-2 h-5 w-5 animate-spin' />
-                    {isPasswordSignup ? 'Creating account...' : 'Redirecting...'}
+                    Creating account...
                   </>
-                ) : isPasswordSignup ? (
-                  'Create account'
                 ) : (
-                  'Continue with Magic Link'
+                  'Create account'
                 )}
               </button>
 

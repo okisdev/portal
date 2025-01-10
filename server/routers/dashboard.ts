@@ -1,4 +1,5 @@
 import { createTRPCRouter, protectedProcedure } from '@/server/trpc';
+import { z } from 'zod';
 
 export const dashboardRouter = createTRPCRouter({
   getClients: protectedProcedure.query(({ ctx }) => {

@@ -5,6 +5,8 @@ import { type NextRequest, NextResponse } from 'next/server';
 
 export async function POST(req: NextRequest) {
   try {
+    await database.$connect();
+
     const body = await req.json();
     const { email, password } = await credentialSchema.parseAsync(body);
 
@@ -24,5 +26,7 @@ export async function POST(req: NextRequest) {
   } catch (error: any) {
     console.error('Registration error:', error);
     return NextResponse.json({ error: error.message ?? 'Failed to create user' }, { status: 400 });
+  } finally {
+    await database.$disconnect();
   }
 }
