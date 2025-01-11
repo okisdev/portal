@@ -22,8 +22,6 @@ export const authRouter = createTRPCRouter({
 
       const existingUser = await ctx.db.select().from(user).where(eq(user.email, email));
 
-      console.log('existingUser', existingUser);
-
       if (existingUser.length > 0) {
         throw new TRPCError({ code: 'CONFLICT', message: 'User already exists with this email' });
       }

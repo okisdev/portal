@@ -19,7 +19,7 @@ export default function ContactIdPage() {
   }
 
   return (
-    <div className='container mx-auto space-y-2'>
+    <div className='container mx-auto flex-1 space-y-2'>
       <div className='flex items-center space-x-2'>
         <Button variant='ghost' asChild>
           <Link href='/dashboard/crm/contacts'>
