@@ -1,6 +1,7 @@
 import { contact, contactActivity } from '@/drizzle/schema';
 import { createTRPCRouter, protectedProcedure } from '@/server/trpc';
 import { desc, eq } from 'drizzle-orm';
+import Stripe from 'stripe';
 import { z } from 'zod';
 
 export const dashboardRouter = createTRPCRouter({
@@ -56,5 +57,36 @@ export const dashboardRouter = createTRPCRouter({
         title: input.title,
         description: input.description,
       });
+    }),
+
+  getContactPayments: protectedProcedure
+    .input(
+      z.object({
+        email: z.string(),
+      })
+    )
+    .query(async ({ input }) => {
+      // biome-ignore lint/style/noNonNullAssertion: <explanation>
+      const stripe = new Stripe(process.env.STRIPE_KEY!, {
+        apiVersion: '2024-12-18.acacia',
+      });
+
+      try {
+        const payments = await stripe.paymentIntents.list({
+          customer: input.email,
+        });
+
+        console.log('payments', payments);
+
+        return payments.data.map((payment) => ({
+          id: payment.id,
+          amount: payment.amount / 100,
+          status: payment.status,
+          created: payment.created,
+          currency: payment.currency,
+        }));
+      } catch (error) {
+        return [];
+      }
     }),
 });

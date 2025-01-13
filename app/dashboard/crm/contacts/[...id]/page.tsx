@@ -1,7 +1,7 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
-import { formatDate } from '@/lib/utils';
+import { formatDate, isDev } from '@/lib/utils';
 import { api } from '@/utils/trpc/client';
 import { Edit2, Mail, MoreHorizontal, Phone, Printer, Send } from 'lucide-react';
 import { notFound, useParams } from 'next/navigation';
@@ -11,10 +11,20 @@ export default function ContactIdPage() {
   const { id: contactId } = useParams<{ id: string }>();
   const [newActivity, setNewActivity] = useState('');
 
+  const isDevMode = isDev();
+
   const { data: contacts } = api.dashboard.getContacts.useQuery();
   const { data: activities, refetch: refetchActivities } = api.dashboard.getContactActivities.useQuery({
     id: contactId[0],
   });
+  const { data: payments } = api.dashboard.getContactPayments.useQuery(
+    {
+      email: contacts?.find((contact) => contact.id === contactId[0])?.email || '',
+    },
+    {
+      enabled: !!contacts?.find((contact) => contact.id === contactId[0])?.email,
+    }
+  );
 
   const addActivity = api.dashboard.addContactActivity.useMutation({
     onSuccess: () => {
@@ -147,10 +157,39 @@ export default function ContactIdPage() {
           <div className='rounded-lg border p-4'>
             <div className='mb-2 flex items-center justify-between'>
               <h2 className='font-semibold text-lg'>Payments</h2>
-              <Button variant='outline' size='sm'>
-                新增
+              <Button variant='outline' size='sm' asChild>
+                <a
+                  href={isDevMode ? `https://dashboard.stripe.com/test/search?query=${contact.email}` : `https://dashboard.stripe.com/search?query=${contact.email}`}
+                  target='_blank'
+                  rel='noopener noreferrer'
+                >
+                  View in Stripe
+                </a>
               </Button>
             </div>
+
+            {payments && payments.length > 0 ? (
+              <div className='space-y-3'>
+                {payments.map((payment) => (
+                  <div key={payment.id} className='border-b pb-2'>
+                    <div className='flex items-center justify-between'>
+                      <span className='font-medium'>
+                        {new Intl.NumberFormat('en-US', {
+                          style: 'currency',
+                          currency: payment.currency,
+                        }).format(payment.amount)}
+                      </span>
+                      <span className={`text-sm capitalize ${payment.status === 'succeeded' ? 'text-green-600' : payment.status === 'processing' ? 'text-yellow-600' : 'text-red-600'}`}>
+                        {payment.status}
+                      </span>
+                    </div>
+                    <p className='text-gray-500 text-sm'>{formatDate(new Date(payment.created * 1000))}</p>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className='py-2 text-gray-500 text-sm'>No payments found</p>
+            )}
           </div>
         </div>
       </div>
