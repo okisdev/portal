@@ -115,6 +115,11 @@ export const contact = pgTable('contact', {
   stripeCustomerId: text(), // for payment integration
   createdAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
   updatedAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
+  priority: text('priority', { enum: ['high', 'medium', 'low'] }).default('medium'),
+  workExperience: text(), // years of experience
+  currentRole: text(), // current job role
+  industry: text(), // industry they work in
+  skills: text(), // comma-separated list of skills
 });
 
 export const contactConversation = pgTable('contactConversation', {

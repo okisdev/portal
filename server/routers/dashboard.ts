@@ -99,11 +99,15 @@ export const dashboardRouter = createTRPCRouter({
         email: z.string().email(),
         phone: z.string().optional(),
         company: z.string().optional(),
+        priority: z.enum(['high', 'medium', 'low']).optional(),
+        workExperience: z.string().optional(),
+        currentRole: z.string().optional(),
+        industry: z.string().optional(),
+        skills: z.string().optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
       const { id, ...updateData } = input;
-
       return await ctx.db.update(contact).set(updateData).where(eq(contact.id, id));
     }),
 });

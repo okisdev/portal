@@ -6,12 +6,16 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { formatDate, isDev } from '@/lib/utils';
+import { getPriorityBadgeColor, getStatusBadgeColor } from '@/utils/color';
 import { api } from '@/utils/trpc/client';
 import { Edit2, Mail, MoreHorizontal, Phone, Printer, Send } from 'lucide-react';
 import Link from 'next/link';
 import { notFound, useParams } from 'next/navigation';
 import { useState } from 'react';
+
+type Priority = 'high' | 'medium' | 'low';
 
 export default function ContactIdPage() {
   const { id: contactId } = useParams<{ id: string }>();
@@ -37,6 +41,7 @@ export default function ContactIdPage() {
     company: '',
     status: '',
     source: '',
+    priority: 'medium' as Priority,
   });
 
   const addActivity = api.dashboard.addContactActivity.useMutation({
@@ -81,6 +86,7 @@ export default function ContactIdPage() {
       company: contact?.company || '',
       status: contact?.status || '',
       source: contact?.source || '',
+      priority: (contact?.priority as Priority) || 'medium',
     });
     setIsEditModalOpen(true);
   };
@@ -90,25 +96,9 @@ export default function ContactIdPage() {
     updateContact.mutate({
       id: contactId[0],
       ...editForm,
+      priority: editForm.priority as Priority,
     });
   };
-
-  function getStatusBadgeColor(status: string) {
-    switch (status) {
-      case 'lead':
-        return 'bg-yellow-100 text-yellow-800';
-      case 'prospect':
-        return 'bg-blue-100 text-blue-800';
-      case 'customer':
-        return 'bg-green-100 text-green-800';
-      case 'churned':
-        return 'bg-red-100 text-red-800';
-      case 'opportunity':
-        return 'bg-purple-100 text-purple-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
-    }
-  }
 
   return (
     <div className='space-y-6'>
@@ -164,23 +154,46 @@ export default function ContactIdPage() {
             </div>
             <div className='space-y-2'>
               <Label htmlFor='status'>Status</Label>
-              <select id='status' value={editForm.status} onChange={(e) => setEditForm({ ...editForm, status: e.target.value })} className='w-full rounded-md border p-2'>
-                <option value='lead'>Lead</option>
-                <option value='prospect'>Prospect</option>
-                <option value='customer'>Customer</option>
-                <option value='churned'>Churned</option>
-                <option value='opportunity'>Opportunity</option>
-              </select>
+              <Select value={editForm.status} onValueChange={(value) => setEditForm({ ...editForm, status: value })}>
+                <SelectTrigger>
+                  <SelectValue placeholder='Select status' />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value='lead'>Lead</SelectItem>
+                  <SelectItem value='prospect'>Prospect</SelectItem>
+                  <SelectItem value='customer'>Customer</SelectItem>
+                  <SelectItem value='churned'>Churned</SelectItem>
+                  <SelectItem value='opportunity'>Opportunity</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <div className='space-y-2'>
               <Label htmlFor='source'>Source</Label>
-              <select id='source' value={editForm.source} onChange={(e) => setEditForm({ ...editForm, source: e.target.value })} className='w-full rounded-md border p-2'>
-                <option value='social_media'>Social Media</option>
-                <option value='referral'>Referral</option>
-                <option value='website'>Website</option>
-                <option value='cold_outreach'>Cold Outreach</option>
-                <option value='event'>Event</option>
-              </select>
+              <Select value={editForm.source} onValueChange={(value) => setEditForm({ ...editForm, source: value })}>
+                <SelectTrigger>
+                  <SelectValue placeholder='Select source' />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value='social_media'>Social Media</SelectItem>
+                  <SelectItem value='referral'>Referral</SelectItem>
+                  <SelectItem value='website'>Website</SelectItem>
+                  <SelectItem value='cold_outreach'>Cold Outreach</SelectItem>
+                  <SelectItem value='event'>Event</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className='space-y-2'>
+              <Label htmlFor='priority'>Priority</Label>
+              <Select value={editForm.priority} onValueChange={(value) => setEditForm({ ...editForm, priority: value as Priority })}>
+                <SelectTrigger>
+                  <SelectValue placeholder='Select priority' />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value='high'>High</SelectItem>
+                  <SelectItem value='medium'>Medium</SelectItem>
+                  <SelectItem value='low'>Low</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <div className='flex justify-end space-x-2'>
               <Button type='button' variant='outline' onClick={() => setIsEditModalOpen(false)}>
@@ -198,7 +211,7 @@ export default function ContactIdPage() {
         <div className='col-span-2 space-y-6'>
           <div className='rounded-lg border p-4'>
             <h2 className='mb-4 font-semibold text-lg'>日期焦點</h2>
-            <div className='grid grid-cols-3 gap-4'>
+            <div className='grid grid-cols-4 gap-4'>
               <div>
                 <p className='text-gray-500 text-sm'>建立日期</p>
                 <p>{formatDate(new Date(contact?.createdAt || ''))}</p>
@@ -207,6 +220,12 @@ export default function ContactIdPage() {
                 <p className='text-gray-500 text-sm'>生命週期階段</p>
                 <span className={`inline-block rounded-full px-2 py-1 text-sm ${getStatusBadgeColor(contact?.status || 'lead')}`}>
                   {(contact?.status && contact.status.charAt(0).toUpperCase() + contact.status.slice(1)) || 'Lead'}
+                </span>
+              </div>
+              <div>
+                <p className='text-gray-500 text-sm'>優先程度</p>
+                <span className={`inline-block rounded-full px-2 py-1 text-sm ${getPriorityBadgeColor(contact?.priority || 'medium')}`}>
+                  {(contact?.priority && contact.priority.charAt(0).toUpperCase() + contact.priority.slice(1)) || 'Medium'}
                 </span>
               </div>
               <div>
