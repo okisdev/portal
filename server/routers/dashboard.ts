@@ -1,7 +1,7 @@
 import { contact, contactActivity } from '@/drizzle/schema';
+import { stripe } from '@/lib/payment';
 import { createTRPCRouter, protectedProcedure } from '@/server/trpc';
 import { desc, eq } from 'drizzle-orm';
-import Stripe from 'stripe';
 import { z } from 'zod';
 
 export const dashboardRouter = createTRPCRouter({
@@ -59,6 +59,10 @@ export const dashboardRouter = createTRPCRouter({
       });
     }),
 
+  deleteContactActivity: protectedProcedure.input(z.object({ id: z.string() })).mutation(({ ctx, input }) => {
+    return ctx.db.delete(contactActivity).where(eq(contactActivity.id, input.id));
+  }),
+
   getContactPayments: protectedProcedure
     .input(
       z.object({
@@ -66,11 +70,6 @@ export const dashboardRouter = createTRPCRouter({
       })
     )
     .query(async ({ input }) => {
-      // biome-ignore lint/style/noNonNullAssertion: <explanation>
-      const stripe = new Stripe(process.env.STRIPE_KEY!, {
-        apiVersion: '2024-12-18.acacia',
-      });
-
       try {
         const payments = await stripe.paymentIntents.list({
           // email: input.email,
