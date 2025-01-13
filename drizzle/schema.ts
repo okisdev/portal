@@ -10,6 +10,8 @@ export const user = pgTable(
   'user',
   {
     id: text().primaryKey().notNull(),
+    firstName: text(),
+    lastName: text(),
     name: text(),
     email: text(),
     emailVerified: timestamp({ mode: 'string' }),
@@ -81,12 +83,94 @@ export const session = pgTable(
   ]
 );
 
-export const client = pgTable('client', {
-  id: text().primaryKey().notNull(),
-  name: text().notNull(),
-  email: text(),
+export const contact = pgTable('contact', {
+  id: text()
+    .primaryKey()
+    .notNull()
+    .$defaultFn(() => crypto.randomUUID()),
+  name: text(),
+  firstName: text().notNull(),
+  lastName: text().notNull(),
+  email: text().notNull(),
   phone: text(),
+  gender: text(), // 'male', 'female', 'other'
+  company: text(),
+  jobTitle: text(),
   address: text(),
-  createdAt: timestamp({ mode: 'string' }).notNull(),
-  updatedAt: timestamp({ mode: 'string' }).notNull(),
+  city: text(),
+  state: text(),
+  country: text(),
+  postalCode: text(),
+  status: text().notNull().default('lead'), // 'lead' - Initial contact, needs qualification
+  // 'prospect' - Qualified lead, actively engaged
+  // 'customer' - Current paying customer
+  // 'churned' - Previous customer, no longer active
+  // 'opportunity' - Qualified lead with high potential
+  source: text(), // 'social_media' - From social media platforms
+  // 'referral' - Referred by existing customer
+  // 'website' - Direct website visit
+  // 'cold_outreach' - From cold calling/emailing
+  // 'event' - From trade shows or events
+  assignedTo: text().references(() => user.id), // sales rep or account manager
+  stripeCustomerId: text(), // for payment integration
+  createdAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
+  updatedAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
+  priority: text('priority', { enum: ['high', 'medium', 'low'] }).default('medium'),
+  workExperience: text(), // years of experience
+  currentRole: text(), // current job role
+  industry: text(), // industry they work in
+  skills: text(), // comma-separated list of skills
+});
+
+export const contactConversation = pgTable('contactConversation', {
+  id: text()
+    .primaryKey()
+    .notNull()
+    .$defaultFn(() => crypto.randomUUID()),
+  contactId: text()
+    .notNull()
+    .references(() => contact.id, { onDelete: 'cascade' }),
+  userId: text()
+    .notNull()
+    .references(() => user.id), // who made the remark
+  content: text().notNull(),
+  type: text().default('note'), // 'note', 'call', 'meeting', 'email'
+  createdAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
+  updatedAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
+});
+
+export const contactDeal = pgTable('contactDeal', {
+  id: text()
+    .primaryKey()
+    .notNull()
+    .$defaultFn(() => crypto.randomUUID()),
+  contactId: text()
+    .notNull()
+    .references(() => contact.id, { onDelete: 'cascade' }),
+  name: text().notNull(),
+  value: integer().notNull(), // in cents
+  status: text().notNull().default('open'), // 'open', 'won', 'lost'
+  expectedCloseDate: timestamp({ mode: 'date' }),
+  actualCloseDate: timestamp({ mode: 'date' }),
+  createdAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
+  updatedAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
+});
+
+export const contactActivity = pgTable('contactActivity', {
+  id: text()
+    .primaryKey()
+    .notNull()
+    .$defaultFn(() => crypto.randomUUID()),
+  contactId: text()
+    .notNull()
+    .references(() => contact.id, { onDelete: 'cascade' }),
+  userId: text()
+    .notNull()
+    .references(() => user.id), // who performed the activity
+  type: text().notNull(), // 'call', 'email', 'meeting', 'note', 'status_change', 'deal_created', 'deal_updated', etc.
+  title: text().notNull(), // e.g., "Called client about new proposal"
+  description: text(), // optional detailed description
+  metadata: text(), // JSON string for additional data specific to activity type
+  createdAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
+  updatedAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
 });

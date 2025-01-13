@@ -3,6 +3,7 @@ import { credentialSchema } from '@/lib/schema';
 import { getUserFromDb } from '@/utils/database';
 import { encryptPassword } from '@/utils/password';
 import { DrizzleAdapter } from '@auth/drizzle-adapter';
+import bcrypt from 'bcrypt-edge';
 import NextAuth from 'next-auth';
 import type { User } from 'next-auth';
 import Credentials from 'next-auth/providers/credentials';
@@ -22,9 +23,19 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
           const pwHash = encryptPassword(password);
 
-          const dbUser = await getUserFromDb(email, pwHash);
+          console.log(email, pwHash);
 
-          if (!dbUser) {
+          const dbUser = await getUserFromDb(email);
+
+          console.log(dbUser);
+
+          if (!dbUser || !dbUser.password) {
+            throw new Error('Invalid credentials.');
+          }
+
+          const isValidPassword = bcrypt.compareSync(password, dbUser.password);
+
+          if (!isValidPassword) {
             throw new Error('Invalid credentials.');
           }
 
@@ -47,5 +58,19 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       name: 'CRM',
     }),
   ],
-  session: { strategy: 'jwt' },
+  session: {
+    strategy: 'jwt',
+  },
+  callbacks: {
+    jwt: async ({ token, user }) => {
+      if (user) {
+        token.id = user.id;
+      }
+      return token;
+    },
+    session: async ({ session, token }) => {
+      session.user.id = token.id as string;
+      return session;
+    },
+  },
 });

@@ -1,6 +1,8 @@
+import DashboardProvider from '@/app/dashboard/provider';
 import { auth } from '@/auth';
+import { DashboardHeader } from '@/components/dashboard/header';
 import { DashboardSidebar } from '@/components/dashboard/sidebar';
-import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
+import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
 import { redirect } from 'next/navigation';
 
 export default async function DashboardLayout({
@@ -13,12 +15,14 @@ export default async function DashboardLayout({
   if (!session) return redirect('/login');
 
   return (
-    <SidebarProvider>
-      <DashboardSidebar />
-      <main>
-        <SidebarTrigger />
-        {children}
-      </main>
-    </SidebarProvider>
+    <DashboardProvider>
+      <SidebarProvider>
+        <DashboardSidebar />
+        <SidebarInset>
+          <DashboardHeader />
+          <div className='flex flex-1 flex-col gap-4 p-4 pt-0'>{children}</div>
+        </SidebarInset>
+      </SidebarProvider>
+    </DashboardProvider>
   );
 }

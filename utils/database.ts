@@ -1,11 +1,11 @@
 import { user } from '@/drizzle/schema';
 import { database } from '@/lib/database';
-import { and, eq } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 
-export const getUserFromDb = async (email: string, pwHash: string) => {
+export const getUserFromDb = async (email: string) => {
   return await database
     .select()
     .from(user)
-    .where(and(eq(user.email, email), eq(user.password, pwHash)))
+    .where(eq(user.email, email))
     .then((rows) => rows[0]);
 };

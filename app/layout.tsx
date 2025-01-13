@@ -3,6 +3,7 @@ import '@/styles/globals.css';
 import { geistSans } from '@/app/font';
 import RootProvider from '@/app/provider';
 import { Toaster } from '@/components/ui/sonner';
+import { cn } from '@/lib/utils';
 
 export const metadata: Metadata = {
   title: 'CRM',
@@ -17,10 +18,10 @@ export default function RootLayout({
   return (
     <RootProvider>
       <html lang='en'>
-        <body className={`${geistSans.className} antialiased`}>
+        <body className={cn(geistSans.className, 'antialiased')}>
           {children}
 
-          <Toaster />
+          <Toaster richColors />
         </body>
       </html>
     </RootProvider>
