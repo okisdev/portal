@@ -12,7 +12,7 @@ import { getPriorityBadgeColor, getStatusBadgeColor } from '@/utils/color';
 import { api } from '@/utils/trpc/client';
 import { Edit2, Mail, MoreHorizontal, Phone, Printer, Send } from 'lucide-react';
 import Link from 'next/link';
-import { notFound, useParams, useRouter } from 'next/navigation';
+import { notFound, useParams, } from 'next/navigation';
 import { useState } from 'react';
 
 type Priority = 'high' | 'medium' | 'low';
@@ -20,7 +20,6 @@ type Priority = 'high' | 'medium' | 'low';
 export default function ContactIdPage() {
   const { id: contactId } = useParams<{ id: string }>();
 
-  const router = useRouter();
   const isDevMode = isDev();
 
   const utils = api.useUtils();
@@ -242,47 +241,47 @@ export default function ContactIdPage() {
 
           <div className='h-96 rounded-lg border p-4'>
             <div className='mb-4 flex items-center justify-between'>
-              <h2 className='font-semibold text-lg'>近期活動（速記）</h2>
+              <h2 className='font-semibold text-lg'>Activity</h2>
               <Button variant='outline' size='sm'>
-                {activities?.length || 0} 個活動
+                Unsubscribe
               </Button>
             </div>
 
-            <form onSubmit={handleSubmitActivity} className='mb-4'>
-              <div className='flex gap-2'>
-                <input
-                  type='text'
-                  value={newActivity}
-                  onChange={(e) => setNewActivity(e.target.value)}
-                  placeholder='快速記錄活動...'
-                  className='h-8 flex-1 rounded-lg border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500'
-                />
-                <Button type='submit' size='sm' disabled={addActivity.isPending}>
-                  <Send className='mr-2 size-4' />
-                  送出
-                </Button>
-              </div>
-            </form>
+            <div className='flex h-[calc(100%-48px)] flex-col'>
+              {activities && activities.length > 0 ? (
+                <div className='relative flex-1 space-y-4 overflow-y-auto'>
+                  {activities
+                    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+                    .map((activity) => (
+                      <div key={activity.id} className='relative pl-6'>
+                        <div className='absolute top-2 left-0 size-2 rounded-full bg-green-500' />
+                        <div className='absolute top-4 bottom-0 left-[3.5px] w-[1px] bg-gray-200' />
 
-            {activities && activities.length > 0 ? (
-              <div className='space-y-4'>
-                {activities.map((activity) => (
-                  <div key={activity.id} className='border-b pb-3'>
-                    <div className='flex items-start justify-between'>
-                      <div>
-                        <p className='font-medium'>{activity.title}</p>
-                        <p className='text-gray-600 text-sm'>{activity.description}</p>
+                        <div className='flex flex-col gap-1'>
+                          <div className='flex items-center gap-2'>
+                            <span className='font-medium'>{activity.title}</span>
+                            <span className='text-gray-500 text-sm'>• {formatDate(new Date(activity.createdAt))}</span>
+                          </div>
+                          <p className='text-gray-500 text-sm'>{activity.description}</p>
+                        </div>
                       </div>
-                      <span className='text-gray-500 text-sm'>{formatDate(new Date(activity.createdAt))}</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className='flex items-center justify-center py-8 text-gray-500'>
-                <p>沒有符合目前篩選條件的活動。</p>
-              </div>
-            )}
+                    ))}
+                </div>
+              ) : (
+                <div className='flex flex-1 items-center justify-center py-8 text-gray-500'>
+                  <p>No activities found.</p>
+                </div>
+              )}
+
+              <form onSubmit={handleSubmitActivity} className='mt-4'>
+                <div className='flex gap-2'>
+                  <Input value={newActivity} onChange={(e) => setNewActivity(e.target.value)} placeholder='Leave a comment...' className='flex-1' />
+                  <Button type='submit' size='icon' variant='ghost' disabled={addActivity.isPending}>
+                    <Send className='size-4' />
+                  </Button>
+                </div>
+              </form>
+            </div>
           </div>
         </div>
 

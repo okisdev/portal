@@ -1,14 +1,9 @@
 import { paymentTrack } from '@/drizzle/schema';
 import { contactActivity } from '@/drizzle/schema';
 import { database } from '@/lib/database';
+import { stripe } from '@/lib/payment';
 import { eq } from 'drizzle-orm';
 import { type NextRequest, NextResponse } from 'next/server';
-import Stripe from 'stripe';
-
-// biome-ignore lint/style/noNonNullAssertion: <explanation>
-const stripe = new Stripe(process.env.STRIPE_KEY!, {
-  apiVersion: '2024-12-18.acacia',
-});
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
 
