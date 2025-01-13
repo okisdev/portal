@@ -1,0 +1,1 @@
+export const insuranceCompanies = ['AIA', 'AXA', 'FWD', 'HSBC', 'Prudential', 'Manulife'];

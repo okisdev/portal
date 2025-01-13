@@ -90,4 +90,20 @@ export const dashboardRouter = createTRPCRouter({
         return [];
       }
     }),
+
+  updateContact: protectedProcedure
+    .input(
+      z.object({
+        id: z.string(),
+        name: z.string(),
+        email: z.string().email(),
+        phone: z.string().optional(),
+        company: z.string().optional(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const { id, ...updateData } = input;
+
+      return await ctx.db.update(contact).set(updateData).where(eq(contact.id, id));
+    }),
 });

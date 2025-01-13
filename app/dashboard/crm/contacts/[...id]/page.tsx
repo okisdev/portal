@@ -1,6 +1,11 @@
 'use client';
 
+import { CompanyCombobox } from '@/components/shared/company-combobox';
+import { PhoneInput } from '@/components/shared/phone-input';
 import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { formatDate, isDev } from '@/lib/utils';
 import { api } from '@/utils/trpc/client';
 import { Edit2, Mail, MoreHorizontal, Phone, Printer, Send } from 'lucide-react';
@@ -13,6 +18,8 @@ export default function ContactIdPage() {
 
   const isDevMode = isDev();
 
+  const utils = api.useUtils();
+
   const { data: contact, isLoading } = api.dashboard.getContactById.useQuery({
     id: contactId[0],
   });
@@ -21,14 +28,26 @@ export default function ContactIdPage() {
   });
   const { data: payments, isLoading: isPaymentsLoading } = api.dashboard.getContactPayments.useQuery({ email: contact?.email || '' }, { enabled: !!contact?.email });
 
-  console.log('payments', payments);
-
   const [newActivity, setNewActivity] = useState('');
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editForm, setEditForm] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    company: '',
+  });
 
   const addActivity = api.dashboard.addContactActivity.useMutation({
     onSuccess: () => {
       setNewActivity('');
       refetchActivities();
+    },
+  });
+
+  const updateContact = api.dashboard.updateContact.useMutation({
+    onSuccess: () => {
+      setIsEditModalOpen(false);
+      utils.dashboard.getContactById.invalidate({ id: contactId[0] });
     },
   });
 
@@ -52,6 +71,24 @@ export default function ContactIdPage() {
     });
   };
 
+  const handleEditClick = () => {
+    setEditForm({
+      name: contact?.name || '',
+      email: contact?.email || '',
+      phone: contact?.phone || '',
+      company: contact?.company || '',
+    });
+    setIsEditModalOpen(true);
+  };
+
+  const handleSubmitEdit = (e: React.FormEvent) => {
+    e.preventDefault();
+    updateContact.mutate({
+      id: contactId[0],
+      ...editForm,
+    });
+  };
+
   return (
     <div className='space-y-6'>
       <div className='flex items-center justify-between border-b pb-4'>
@@ -64,7 +101,7 @@ export default function ContactIdPage() {
           </div>
         </div>
         <div className='flex space-x-2'>
-          <Button variant='ghost' size='icon'>
+          <Button variant='ghost' size='icon' onClick={handleEditClick}>
             <Edit2 className='size-4' />
           </Button>
           <Button variant='ghost' size='icon'>
@@ -81,6 +118,40 @@ export default function ContactIdPage() {
           </Button>
         </div>
       </div>
+
+      <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Contact Information</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleSubmitEdit} className='space-y-4'>
+            <div className='space-y-2'>
+              <Label htmlFor='name'>Name</Label>
+              <Input id='name' value={editForm.name} onChange={(e) => setEditForm({ ...editForm, name: e.target.value })} />
+            </div>
+            <div className='space-y-2'>
+              <Label htmlFor='email'>Email</Label>
+              <Input id='email' type='email' value={editForm.email} onChange={(e) => setEditForm({ ...editForm, email: e.target.value })} />
+            </div>
+            <div className='space-y-2'>
+              <Label htmlFor='phone'>Phone</Label>
+              <PhoneInput id='phone' value={editForm.phone} onChange={(value) => setEditForm({ ...editForm, phone: value })} />
+            </div>
+            <div className='space-y-2'>
+              <Label htmlFor='company'>Company</Label>
+              <CompanyCombobox value={editForm.company} onChange={(value) => setEditForm({ ...editForm, company: value })} />
+            </div>
+            <div className='flex justify-end space-x-2'>
+              <Button type='button' variant='outline' onClick={() => setIsEditModalOpen(false)}>
+                Cancel
+              </Button>
+              <Button type='submit' disabled={updateContact.isPending}>
+                {updateContact.isPending ? 'Saving...' : 'Save Changes'}
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
 
       <div className='grid grid-cols-3 gap-6'>
         <div className='col-span-2 space-y-6'>
