@@ -12,7 +12,7 @@ import { getPriorityBadgeColor, getStatusBadgeColor } from '@/utils/color';
 import { api } from '@/utils/trpc/client';
 import { Edit2, Mail, MoreHorizontal, Phone, Printer, Send } from 'lucide-react';
 import Link from 'next/link';
-import { notFound, useParams } from 'next/navigation';
+import { notFound, useParams, useRouter } from 'next/navigation';
 import { useState } from 'react';
 
 type Priority = 'high' | 'medium' | 'low';
@@ -20,6 +20,7 @@ type Priority = 'high' | 'medium' | 'low';
 export default function ContactIdPage() {
   const { id: contactId } = useParams<{ id: string }>();
 
+  const router = useRouter();
   const isDevMode = isDev();
 
   const utils = api.useUtils();
@@ -115,11 +116,15 @@ export default function ContactIdPage() {
           <Button variant='ghost' size='icon' onClick={handleEditClick}>
             <Edit2 className='size-4' />
           </Button>
-          <Button variant='ghost' size='icon'>
-            <Mail className='size-4' />
+          <Button variant='ghost' size='icon' asChild>
+            <Link href={`mailto:${contact?.email}`} target='_blank' rel='noopener noreferrer'>
+              <Mail className='size-4' />
+            </Link>
           </Button>
-          <Button variant='ghost' size='icon'>
-            <Phone className='size-4' />
+          <Button variant='ghost' size='icon' asChild>
+            <Link href={`https://wa.me/${contact?.phone}`} target='_blank' rel='noopener noreferrer'>
+              <Phone className='size-4' />
+            </Link>
           </Button>
           <Button variant='ghost' size='icon'>
             <Printer className='size-4' />

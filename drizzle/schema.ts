@@ -174,3 +174,27 @@ export const contactActivity = pgTable('contactActivity', {
   createdAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
   updatedAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
 });
+
+export const paymentTrack = pgTable('paymentTrack', {
+  id: text()
+    .primaryKey()
+    .notNull()
+    .$defaultFn(() => crypto.randomUUID()),
+  contactId: text()
+    .notNull()
+    .references(() => contact.id, { onDelete: 'cascade' }),
+  userId: text()
+    .notNull()
+    .references(() => user.id), // who created the payment link
+  amount: integer().notNull(), // in cents
+  currency: text().notNull().default('usd'),
+  status: text().notNull().default('pending'), // 'pending', 'clicked', 'paid', 'failed'
+  stripePaymentId: text(), // Stripe payment intent ID
+  linkClicked: boolean().default(false),
+  clickedAt: timestamp({ mode: 'date' }),
+  paidAt: timestamp({ mode: 'date' }),
+  expiresAt: timestamp({ mode: 'date' }), // Optional expiration date
+  metadata: text(), // JSON string for additional data
+  createdAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
+  updatedAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
+});

@@ -59,6 +59,10 @@ export const dashboardRouter = createTRPCRouter({
       });
     }),
 
+  deleteContactActivity: protectedProcedure.input(z.object({ id: z.string() })).mutation(({ ctx, input }) => {
+    return ctx.db.delete(contactActivity).where(eq(contactActivity.id, input.id));
+  }),
+
   getContactPayments: protectedProcedure
     .input(
       z.object({
