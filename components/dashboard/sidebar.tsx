@@ -2,15 +2,30 @@
 
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarHeader,
+  SidebarMenu,
+  SidebarMenuAction,
+  SidebarMenuButton,
+  SidebarMenuItem,
+} from '@/components/ui/sidebar';
 import { crmItems, marketingItems, teamItems } from '@/config/dashboard';
 import { api } from '@/utils/trpc/client';
-import { ChevronDown, ChevronUp, Settings, User2 } from 'lucide-react';
+import { ChevronDown, ChevronUp, Plus, Settings, User2 } from 'lucide-react';
 import { signOut } from 'next-auth/react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 export function DashboardSidebar() {
   const { data: me } = api.account.getMe.useQuery();
+
+  const router = useRouter();
 
   return (
     <Sidebar>
@@ -56,6 +71,11 @@ export function DashboardSidebar() {
                           <span>{item.title}</span>
                         </Link>
                       </SidebarMenuButton>
+                      {item.title === 'Contacts' && (
+                        <SidebarMenuAction onClick={() => router.push('/dashboard/crm/contacts/new')}>
+                          <Plus /> <span className='sr-only'>Add Contact</span>
+                        </SidebarMenuAction>
+                      )}
                     </SidebarMenuItem>
                   ))}
                 </SidebarMenu>

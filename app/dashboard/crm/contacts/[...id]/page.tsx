@@ -9,22 +9,25 @@ import { useState } from 'react';
 
 export default function ContactIdPage() {
   const { id: contactId } = useParams<{ id: string }>();
-  const [newActivity, setNewActivity] = useState('');
 
   const isDevMode = isDev();
 
-  const { data: contacts } = api.dashboard.getContacts.useQuery();
+  const { data: contact, isLoading } = api.dashboard.getContactById.useQuery({
+    id: contactId[0],
+  });
   const { data: activities, refetch: refetchActivities } = api.dashboard.getContactActivities.useQuery({
     id: contactId[0],
   });
   const { data: payments } = api.dashboard.getContactPayments.useQuery(
     {
-      email: contacts?.find((contact) => contact.id === contactId[0])?.email || '',
+      email: contact?.email || '',
     },
     {
-      enabled: !!contacts?.find((contact) => contact.id === contactId[0])?.email,
+      enabled: !!contact?.email,
     }
   );
+
+  const [newActivity, setNewActivity] = useState('');
 
   const addActivity = api.dashboard.addContactActivity.useMutation({
     onSuccess: () => {
@@ -33,9 +36,13 @@ export default function ContactIdPage() {
     },
   });
 
-  const contact = contacts?.find((contact) => contact.id === contactId[0]);
+  // Show loading state while fetching data
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
 
-  if (!contact) {
+  // Only call notFound() after we've confirmed the data isn't loading and doesn't exist
+  if (!isLoading && !contact) {
     notFound();
   }
 
@@ -57,9 +64,9 @@ export default function ContactIdPage() {
         <div className='flex items-center space-x-4'>
           <div className='size-12 rounded-full bg-gray-200' />
           <div>
-            <h1 className='font-semibold text-xl'>{contact.name}</h1>
-            <p className='text-gray-500 text-sm'>{contact.company || 'Unknown'}</p>
-            <p className='text-gray-500 text-sm'>{contact.email}</p>
+            <h1 className='font-semibold text-xl'>{contact?.name}</h1>
+            <p className='text-gray-500 text-sm'>{contact?.company || 'Unknown'}</p>
+            <p className='text-gray-500 text-sm'>{contact?.email}</p>
           </div>
         </div>
         <div className='flex space-x-2'>
@@ -88,7 +95,7 @@ export default function ContactIdPage() {
             <div className='grid grid-cols-3 gap-4'>
               <div>
                 <p className='text-gray-500 text-sm'>建立日期</p>
-                <p>{formatDate(new Date(contact.createdAt))}</p>
+                <p>{formatDate(new Date(contact?.createdAt || ''))}</p>
               </div>
               <div>
                 <p className='text-gray-500 text-sm'>生命週期階段</p>
@@ -150,8 +157,8 @@ export default function ContactIdPage() {
         <div className='space-y-6'>
           <div className='rounded-lg border p-4'>
             <h2 className='mb-2 font-semibold text-lg'>公司</h2>
-            <p className='text-gray-500 text-sm'>{contact.company || 'Unknown'}</p>
-            <p className='text-gray-500 text-sm'>電話：{contact.phone || '—'}</p>
+            <p className='text-gray-500 text-sm'>{contact?.company || 'Unknown'}</p>
+            <p className='text-gray-500 text-sm'>電話：{contact?.phone || '—'}</p>
           </div>
 
           <div className='rounded-lg border p-4'>
@@ -159,7 +166,7 @@ export default function ContactIdPage() {
               <h2 className='font-semibold text-lg'>Payments</h2>
               <Button variant='outline' size='sm' asChild>
                 <a
-                  href={isDevMode ? `https://dashboard.stripe.com/test/search?query=${contact.email}` : `https://dashboard.stripe.com/search?query=${contact.email}`}
+                  href={isDevMode ? `https://dashboard.stripe.com/test/search?query=${contact?.email}` : `https://dashboard.stripe.com/search?query=${contact?.email}`}
                   target='_blank'
                   rel='noopener noreferrer'
                 >

@@ -9,12 +9,12 @@ export const dashboardRouter = createTRPCRouter({
     return ctx.db.select().from(contact).orderBy(desc(contact.createdAt));
   }),
 
-  getContact: protectedProcedure.input(z.object({ id: z.string() })).query(({ ctx, input }) => {
-    const rows = ctx.db.select().from(contact);
-
-    console.log('rows', rows);
-
-    return rows;
+  getContactById: protectedProcedure.input(z.object({ id: z.string() })).query(({ ctx, input }) => {
+    return ctx.db
+      .select()
+      .from(contact)
+      .where(eq(contact.id, input.id))
+      .then((rows) => rows[0]);
   }),
 
   addContact: protectedProcedure
