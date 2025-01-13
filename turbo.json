@@ -12,7 +12,9 @@
       "env": [
         "AUTH_RESEND_KEY",
         "AUTH_SECRET",
-        "DATABASE_URL"
+        "DATABASE_URL",
+        "STRIPE_KEY",
+        "NEXT_PUBLIC_APP_URL"
       ]
     },
     "check-types": {
