@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { formatDate, isDev } from '@/lib/utils';
 import { api } from '@/utils/trpc/client';
 import { Edit2, Mail, MoreHorizontal, Phone, Printer, Send } from 'lucide-react';
+import Link from 'next/link';
 import { notFound, useParams } from 'next/navigation';
 import { useState } from 'react';
 
@@ -18,14 +19,9 @@ export default function ContactIdPage() {
   const { data: activities, refetch: refetchActivities } = api.dashboard.getContactActivities.useQuery({
     id: contactId[0],
   });
-  const { data: payments } = api.dashboard.getContactPayments.useQuery(
-    {
-      email: contact?.email || '',
-    },
-    {
-      enabled: !!contact?.email,
-    }
-  );
+  const { data: payments, isLoading: isPaymentsLoading } = api.dashboard.getContactPayments.useQuery({ email: contact?.email || '' }, { enabled: !!contact?.email });
+
+  console.log('payments', payments);
 
   const [newActivity, setNewActivity] = useState('');
 
@@ -36,12 +32,10 @@ export default function ContactIdPage() {
     },
   });
 
-  // Show loading state while fetching data
   if (isLoading) {
     return <div>Loading...</div>;
   }
 
-  // Only call notFound() after we've confirmed the data isn't loading and doesn't exist
   if (!isLoading && !contact) {
     notFound();
   }
@@ -164,14 +158,14 @@ export default function ContactIdPage() {
           <div className='rounded-lg border p-4'>
             <div className='mb-2 flex items-center justify-between'>
               <h2 className='font-semibold text-lg'>Payments</h2>
-              <Button variant='outline' size='sm' asChild>
-                <a
+              <Button variant='outline' size='sm' asChild className='h-8'>
+                <Link
                   href={isDevMode ? `https://dashboard.stripe.com/test/search?query=${contact?.email}` : `https://dashboard.stripe.com/search?query=${contact?.email}`}
                   target='_blank'
                   rel='noopener noreferrer'
                 >
                   View in Stripe
-                </a>
+                </Link>
               </Button>
             </div>
 

@@ -73,12 +73,12 @@ export const dashboardRouter = createTRPCRouter({
 
       try {
         const payments = await stripe.paymentIntents.list({
-          customer: input.email,
+          // email: input.email,
         });
 
-        console.log('payments', payments);
+        const filteredPayments = payments.data.filter((payment) => payment.receipt_email === input.email);
 
-        return payments.data.map((payment) => ({
+        return filteredPayments.map((payment) => ({
           id: payment.id,
           amount: payment.amount / 100,
           status: payment.status,
@@ -86,6 +86,7 @@ export const dashboardRouter = createTRPCRouter({
           currency: payment.currency,
         }));
       } catch (error) {
+        console.error('Error fetching payments:', error);
         return [];
       }
     }),
