@@ -18,6 +18,14 @@ export const accountRouter = createTRPCRouter({
     //   .then(([user]) => user);
   }),
 
+  getMeFromDatabase: protectedProcedure.query(({ ctx }) => {
+    return ctx.db
+      .select()
+      .from(user)
+      .where(eq(user.id, ctx.session.user.id))
+      .then(([user]) => user);
+  }),
+
   updateMe: protectedProcedure
     .input(
       z.object({
@@ -42,11 +50,19 @@ export const accountRouter = createTRPCRouter({
         .where(eq(user.id, ctx.session.user.id));
     }),
 
-  updatePassword: protectedProcedure.input(z.object({ password: z.string().min(8) })).mutation(({ ctx, input }) => {
-    if (!ctx.session.user.id) throw new TRPCError({ code: 'UNAUTHORIZED' });
+  updatePassword: protectedProcedure
+    .input(
+      z.object({
+        currentPassword: z.string().optional(),
+        newPassword: z.string().min(8),
+        confirmPassword: z.string().min(8),
+      })
+    )
+    .mutation(({ ctx, input }) => {
+      if (!ctx.session.user.id) throw new TRPCError({ code: 'UNAUTHORIZED' });
 
-    const hashedPassword = encryptPassword(input.password);
+      const hashedPassword = encryptPassword(input.newPassword);
 
-    return ctx.db.update(user).set({ password: hashedPassword }).where(eq(user.id, ctx.session.user.id));
-  }),
+      return ctx.db.update(user).set({ password: hashedPassword }).where(eq(user.id, ctx.session.user.id));
+    }),
 });
