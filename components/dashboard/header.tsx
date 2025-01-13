@@ -3,18 +3,17 @@
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
 import { Separator } from '@/components/ui/separator';
 import { SidebarTrigger } from '@/components/ui/sidebar';
-import { crmItems, marketingItems } from '@/config/dashboard';
 import { usePathname } from 'next/navigation';
+import React from 'react';
 
 export function DashboardHeader() {
   const pathname = usePathname();
 
   const paths = pathname.replace('/dashboard/', '').split('/');
 
-  const isCrm = pathname.startsWith('/dashboard/crm');
-  const isMarketing = pathname.startsWith('/dashboard/marketing');
-
-  const items = isCrm ? crmItems : marketingItems;
+  const formatPathSegment = (segment: string) => {
+    return segment.charAt(0).toUpperCase() + segment.slice(1);
+  };
 
   return (
     <header className='flex h-12 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12'>
@@ -23,13 +22,18 @@ export function DashboardHeader() {
         <Separator orientation='vertical' className='mr-2 h-4' />
         <Breadcrumb>
           <BreadcrumbList>
-            <BreadcrumbItem className='hidden md:block'>
-              <BreadcrumbLink href={isCrm ? '/dashboard/crm' : '/dashboard/marketing'}>{isCrm ? 'CRM' : 'Marketing'}</BreadcrumbLink>
-            </BreadcrumbItem>
-            <BreadcrumbSeparator className='hidden md:block' />
-            <BreadcrumbItem>
-              <BreadcrumbPage>{items[items.length - 1].title}</BreadcrumbPage>
-            </BreadcrumbItem>
+            {paths.map((path, index) => (
+              <React.Fragment key={path}>
+                <BreadcrumbItem>
+                  {index === paths.length - 1 ? (
+                    <BreadcrumbPage>{formatPathSegment(path)}</BreadcrumbPage>
+                  ) : (
+                    <BreadcrumbLink href={`/dashboard/${paths.slice(0, index + 1).join('/')}`}>{formatPathSegment(path)}</BreadcrumbLink>
+                  )}
+                </BreadcrumbItem>
+                {index < paths.length - 1 && <BreadcrumbSeparator />}
+              </React.Fragment>
+            ))}
           </BreadcrumbList>
         </Breadcrumb>
       </div>

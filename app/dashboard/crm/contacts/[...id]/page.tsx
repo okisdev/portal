@@ -3,8 +3,7 @@
 import { Button } from '@/components/ui/button';
 import { formatDate } from '@/lib/utils';
 import { api } from '@/utils/trpc/client';
-import { MoveLeft } from 'lucide-react';
-import Link from 'next/link';
+import { Edit2, Mail, MoreHorizontal, Phone, Printer } from 'lucide-react';
 import { notFound, useParams } from 'next/navigation';
 
 export default function ContactIdPage() {
@@ -19,52 +18,97 @@ export default function ContactIdPage() {
   }
 
   return (
-    <div className='container mx-auto flex-1 space-y-2'>
-      <div className='flex items-center space-x-2'>
-        <Button variant='ghost' asChild>
-          <Link href='/dashboard/crm/contacts'>
-            <MoveLeft className='size-4' />
-          </Link>
-        </Button>
-        <h1 className='font-bold text-3xl tracking-tight'>{contact?.name}</h1>
+    <div className='space-y-6'>
+      <div className='flex items-center justify-between border-b pb-4'>
+        <div className='flex items-center space-x-4'>
+          <div className='size-12 rounded-full bg-gray-200' />
+          <div>
+            <h1 className='font-semibold text-xl'>{contact.name}</h1>
+            <p className='text-gray-500 text-sm'>{contact.company || 'psdf.com'}</p>
+            <p className='text-gray-500 text-sm'>{contact.email}</p>
+          </div>
+        </div>
+        <div className='flex space-x-2'>
+          <Button variant='ghost' size='icon'>
+            <Edit2 className='size-4' />
+          </Button>
+          <Button variant='ghost' size='icon'>
+            <Mail className='size-4' />
+          </Button>
+          <Button variant='ghost' size='icon'>
+            <Phone className='size-4' />
+          </Button>
+          <Button variant='ghost' size='icon'>
+            <Printer className='size-4' />
+          </Button>
+          <Button variant='ghost' size='icon'>
+            <MoreHorizontal className='size-4' />
+          </Button>
+        </div>
       </div>
 
-      <div className='grid grid-cols-1 gap-6 md:grid-cols-2'>
-        <div className='rounded-lg border p-6'>
-          <h2 className='mb-4 font-semibold text-xl'>Client Details</h2>
-          <dl className='grid gap-3'>
-            <div className='grid grid-cols-3'>
-              <dt className='font-medium'>Email</dt>
-              <dd className='col-span-2'>{contact.email}</dd>
+      <div className='grid grid-cols-3 gap-6'>
+        <div className='col-span-2 space-y-6'>
+          <div className='rounded-lg border p-4'>
+            <h2 className='mb-4 font-semibold text-lg'>日期焦點</h2>
+            <div className='grid grid-cols-3 gap-4'>
+              <div>
+                <p className='text-gray-500 text-sm'>建立日期</p>
+                <p>{formatDate(new Date(contact.createdAt))}</p>
+              </div>
+              <div>
+                <p className='text-gray-500 text-sm'>生命週期階段</p>
+                <p>Lead</p>
+              </div>
+              <div>
+                <p className='text-gray-500 text-sm'>上次活動日期</p>
+                <p>—</p>
+              </div>
             </div>
-            <div className='grid grid-cols-3'>
-              <dt className='font-medium'>Phone</dt>
-              <dd className='col-span-2'>{contact.phone || '—'}</dd>
+          </div>
+
+          <div className='rounded-lg border p-4'>
+            <div className='mb-4 flex items-center justify-between'>
+              <h2 className='font-semibold text-lg'>近期活動</h2>
+              <Button variant='outline' size='sm'>
+                7 個活動
+              </Button>
             </div>
-            <div className='grid grid-cols-3'>
-              <dt className='font-medium'>Address</dt>
-              <dd className='col-span-2'>{contact.address || '—'}</dd>
+            <div className='flex items-center justify-center py-8 text-gray-500'>
+              <p>沒有符合目前篩選條件的活動。</p>
             </div>
-            <div className='grid grid-cols-3'>
-              <dt className='font-medium'>Created</dt>
-              <dd className='col-span-2'>{formatDate(new Date(contact.createdAt))}</dd>
+          </div>
+
+          <div className='rounded-lg border p-4'>
+            <div className='mb-4 flex items-center justify-between'>
+              <h2 className='font-semibold text-lg'>連絡人</h2>
+              <Button variant='outline' size='sm'>
+                新增
+              </Button>
             </div>
-          </dl>
+            <div className='flex items-center justify-center py-8 text-gray-500'>
+              <p>不存在此瀏覽的相關物件，或者你沒有檢視它們的權限。</p>
+            </div>
+          </div>
         </div>
 
-        <div className='rounded-lg border p-6'>
-          <h2 className='mb-4 font-semibold text-xl'>Actions</h2>
-          <ul className='space-y-3'>
-            <li>
-              <Button variant='outline'>View Conversation History</Button>
-            </li>
-            <li>
-              <Button variant='outline'>Schedule Follow-up</Button>
-            </li>
-            <li>
-              <Button variant='outline'>Add Note</Button>
-            </li>
-          </ul>
+        <div className='space-y-6'>
+          <div className='rounded-lg border p-4'>
+            <h2 className='mb-2 font-semibold text-lg'>公司</h2>
+            <p className='text-gray-500 text-sm'>psdf.com</p>
+            <p className='text-gray-500 text-sm'>電話：—</p>
+          </div>
+
+          {['交易 (0)', '服務票證 (0)', '付款憑據 (0)', '連絡人 (0)', '訂閱 (0)'].map((section) => (
+            <div key={section} className='rounded-lg border p-4'>
+              <div className='mb-2 flex items-center justify-between'>
+                <h2 className='font-semibold text-lg'>{section}</h2>
+                <Button variant='outline' size='sm'>
+                  新增
+                </Button>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     </div>
