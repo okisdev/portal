@@ -6,13 +6,42 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { formatDate } from '@/lib/utils';
-import { getPriorityBadgeColor, getStatusBadgeColor } from '@/utils/color';
 import { api } from '@/utils/trpc/client';
 import { CaretSortIcon } from '@radix-ui/react-icons';
 import { Filter } from 'lucide-react';
 import { X } from 'lucide-react';
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
+
+export function getStatusBadgeColor(status: string) {
+  switch (status) {
+    case 'lead':
+      return 'bg-yellow-100 text-yellow-800';
+    case 'prospect':
+      return 'bg-blue-100 text-blue-800';
+    case 'customer':
+      return 'bg-green-100 text-green-800';
+    case 'churned':
+      return 'bg-red-100 text-red-800';
+    case 'opportunity':
+      return 'bg-purple-100 text-purple-800';
+    default:
+      return 'bg-gray-100 text-gray-800';
+  }
+}
+
+export function getPriorityBadgeColor(priority: string) {
+  switch (priority) {
+    case 'high':
+      return 'bg-red-100 text-red-800';
+    case 'medium':
+      return 'bg-orange-100 text-orange-800';
+    case 'low':
+      return 'bg-green-100 text-green-800';
+    default:
+      return 'bg-gray-100 text-gray-800';
+  }
+}
 
 type SortConfig = {
   column: string;
@@ -101,8 +130,8 @@ export default function CRMContactsPage() {
                   Filters
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent className='w-56'>
-                <div className='p-2'>
+              <DropdownMenuContent className='flex w-56 flex-row gap-2 p-2'>
+                <div className='flex flex-col gap-2'>
                   <div className='mb-2 font-medium'>Status</div>
                   {['active', 'inactive', 'lead'].map((status) => (
                     <DropdownMenuItem key={status} onClick={() => toggleFilter('status', status)}>
@@ -110,14 +139,18 @@ export default function CRMContactsPage() {
                       <span className='capitalize'>{status}</span>
                     </DropdownMenuItem>
                   ))}
-                  <div className='mt-4 mb-2 font-medium'>Priority</div>
+                </div>
+                <div className='flex flex-col gap-2'>
+                  <div className='mb-2 font-medium'>Priority</div>
                   {['high', 'medium', 'low'].map((priority) => (
                     <DropdownMenuItem key={priority} onClick={() => toggleFilter('priority', priority)}>
                       {filters.priority.includes(priority) ? '✓ ' : ''}
                       <span className='capitalize'>{priority}</span>
                     </DropdownMenuItem>
                   ))}
-                  <div className='mt-4 mb-2 font-medium'>Source</div>
+                </div>
+                <div className='flex flex-col gap-2'>
+                  <div className='mb-2 font-medium'>Source</div>
                   {['website', 'referral', 'social_media'].map((source) => (
                     <DropdownMenuItem key={source} onClick={() => toggleFilter('source', source)}>
                       {filters.source.includes(source) ? '✓ ' : ''}
@@ -128,9 +161,14 @@ export default function CRMContactsPage() {
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
-          <Button asChild>
-            <Link href='/dashboard/crm/contacts/new'>Add Contact</Link>
-          </Button>
+          <div className='flex flex-row gap-2'>
+            <Button variant='outline' asChild className='h-8'>
+              <Link href='/dashboard/crm/contacts/new'>Upload CSV</Link>
+            </Button>
+            <Button variant='outline' asChild className='h-8'>
+              <Link href='/dashboard/crm/contacts/new'>Add Contact</Link>
+            </Button>
+          </div>
         </div>
 
         {(filters.status.length > 0 || filters.priority.length > 0 || filters.source.length > 0) && (

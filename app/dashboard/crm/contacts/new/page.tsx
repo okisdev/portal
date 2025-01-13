@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import type { Status } from '@/lib/schema';
 import { generateUUID } from '@/lib/utils';
 import { api } from '@/utils/trpc/client';
 import { Upload } from 'lucide-react';
@@ -26,7 +27,7 @@ interface ContactFormData {
   state?: string;
   country?: string;
   postalCode?: string;
-  status: string;
+  status: Status;
   source?: string;
 }
 
@@ -194,6 +195,7 @@ export default function NewContact() {
                           <SelectItem value='prospect'>Prospect</SelectItem>
                           <SelectItem value='customer'>Customer</SelectItem>
                           <SelectItem value='churned'>Churned</SelectItem>
+                          <SelectItem value='opportunity'>Opportunity</SelectItem>
                         </SelectContent>
                       </Select>
                     </TableCell>
@@ -296,6 +298,7 @@ export default function NewContact() {
                   <SelectItem value='prospect'>Prospect</SelectItem>
                   <SelectItem value='customer'>Customer</SelectItem>
                   <SelectItem value='churned'>Churned</SelectItem>
+                  <SelectItem value='opportunity'>Opportunity</SelectItem>
                 </SelectContent>
               </Select>
             </div>

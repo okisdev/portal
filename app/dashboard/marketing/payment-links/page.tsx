@@ -34,7 +34,7 @@ export default async function PaymentLinksPage() {
   const paymentLinks = await getPaymentLinks();
 
   return (
-    <div className='flex flex-col gap-4 p-4'>
+    <div className='flex flex-col gap-4'>
       <div className='flex items-center justify-between'>
         <div>
           <h1 className='font-bold text-2xl tracking-tight'>Payment Links</h1>

@@ -2,23 +2,55 @@
 
 import { CompanyCombobox } from '@/components/shared/company-combobox';
 import { PhoneInput } from '@/components/shared/phone-input';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import type { Priority, Status } from '@/lib/schema';
 import { formatDate, isDev } from '@/lib/utils';
-import { getPriorityBadgeColor, getStatusBadgeColor } from '@/utils/color';
 import { api } from '@/utils/trpc/client';
 import { Edit2, Mail, MoreHorizontal, Phone, Printer, Send } from 'lucide-react';
+import { useSession } from 'next-auth/react';
 import Link from 'next/link';
-import { notFound, useParams, } from 'next/navigation';
+import { notFound, useParams } from 'next/navigation';
 import { useState } from 'react';
 
-type Priority = 'high' | 'medium' | 'low';
+export function getStatusBadgeColor(status: string) {
+  switch (status) {
+    case 'lead':
+      return 'bg-yellow-100 text-yellow-800';
+    case 'prospect':
+      return 'bg-blue-100 text-blue-800';
+    case 'customer':
+      return 'bg-green-100 text-green-800';
+    case 'churned':
+      return 'bg-red-100 text-red-800';
+    case 'opportunity':
+      return 'bg-purple-100 text-purple-800';
+    default:
+      return 'bg-gray-100 text-gray-800';
+  }
+}
+
+export function getPriorityBadgeColor(priority: string) {
+  switch (priority) {
+    case 'high':
+      return 'bg-red-100 text-red-800';
+    case 'medium':
+      return 'bg-orange-100 text-orange-800';
+    case 'low':
+      return 'bg-green-100 text-green-800';
+    default:
+      return 'bg-gray-100 text-gray-800';
+  }
+}
 
 export default function ContactIdPage() {
   const { id: contactId } = useParams<{ id: string }>();
+
+  const { data: session } = useSession();
 
   const isDevMode = isDev();
 
@@ -39,7 +71,7 @@ export default function ContactIdPage() {
     email: '',
     phone: '',
     company: '',
-    status: '',
+    status: 'lead' as Status,
     source: '',
     priority: 'medium' as Priority,
   });
@@ -66,6 +98,16 @@ export default function ContactIdPage() {
     notFound();
   }
 
+  const getInitiatorLabel = (activity: { initiatorType: string; type: string; initiatorId: string | null }) => {
+    if (activity.initiatorType === 'contact') {
+      return 'Contact';
+    }
+    if (activity.initiatorType === 'system') {
+      return 'System';
+    }
+    return activity.initiatorId || 'Unknown User';
+  };
+
   const handleSubmitActivity = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newActivity.trim()) return;
@@ -73,6 +115,8 @@ export default function ContactIdPage() {
     addActivity.mutate({
       contactId: contactId[0],
       type: 'note',
+      initiatorType: 'user',
+      initiatorId: session?.user.id || '',
       title: 'Quick Note',
       description: newActivity,
     });
@@ -84,9 +128,9 @@ export default function ContactIdPage() {
       email: contact?.email || '',
       phone: contact?.phone || '',
       company: contact?.company || '',
-      status: contact?.status || '',
+      status: contact?.status || 'lead',
       source: contact?.source || '',
-      priority: (contact?.priority as Priority) || 'medium',
+      priority: contact?.priority || 'low',
     });
     setIsEditModalOpen(true);
   };
@@ -96,7 +140,6 @@ export default function ContactIdPage() {
     updateContact.mutate({
       id: contactId[0],
       ...editForm,
-      priority: editForm.priority as Priority,
     });
   };
 
@@ -104,7 +147,10 @@ export default function ContactIdPage() {
     <div className='space-y-6'>
       <div className='flex items-center justify-between border-b pb-4'>
         <div className='flex items-center space-x-4'>
-          <div className='size-12 rounded-full bg-gray-200' />
+          <Avatar className='size-12'>
+            <AvatarImage src='' />
+            <AvatarFallback>{contact?.name?.charAt(0) || ''}</AvatarFallback>
+          </Avatar>
           <div>
             <h1 className='font-semibold text-xl'>{contact?.name}</h1>
             <p className='text-gray-500 text-sm'>{contact?.company || 'Unknown'}</p>
@@ -158,7 +204,7 @@ export default function ContactIdPage() {
             </div>
             <div className='space-y-2'>
               <Label htmlFor='status'>Status</Label>
-              <Select value={editForm.status} onValueChange={(value) => setEditForm({ ...editForm, status: value })}>
+              <Select value={editForm.status} onValueChange={(value) => setEditForm({ ...editForm, status: value as Status })}>
                 <SelectTrigger>
                   <SelectValue placeholder='Select status' />
                 </SelectTrigger>
@@ -214,27 +260,27 @@ export default function ContactIdPage() {
       <div className='grid grid-cols-3 gap-6'>
         <div className='col-span-2 space-y-6'>
           <div className='rounded-lg border p-4'>
-            <h2 className='mb-4 font-semibold text-lg'>日期焦點</h2>
+            <h2 className='mb-4 font-semibold text-lg'>Date Focus</h2>
             <div className='grid grid-cols-4 gap-4'>
               <div>
-                <p className='text-gray-500 text-sm'>建立日期</p>
-                <p>{formatDate(new Date(contact?.createdAt || ''))}</p>
+                <p className='text-gray-500 text-sm'>Created Date</p>
+                <p className='text-sm'>{formatDate(new Date(contact?.createdAt || ''))}</p>
               </div>
               <div>
-                <p className='text-gray-500 text-sm'>生命週期階段</p>
+                <p className='text-gray-500 text-sm'>Stage</p>
                 <span className={`inline-block rounded-full px-2 py-1 text-sm ${getStatusBadgeColor(contact?.status || 'lead')}`}>
                   {(contact?.status && contact.status.charAt(0).toUpperCase() + contact.status.slice(1)) || 'Lead'}
                 </span>
               </div>
               <div>
-                <p className='text-gray-500 text-sm'>優先程度</p>
+                <p className='text-gray-500 text-sm'>Priority</p>
                 <span className={`inline-block rounded-full px-2 py-1 text-sm ${getPriorityBadgeColor(contact?.priority || 'medium')}`}>
                   {(contact?.priority && contact.priority.charAt(0).toUpperCase() + contact.priority.slice(1)) || 'Medium'}
                 </span>
               </div>
               <div>
-                <p className='text-gray-500 text-sm'>上次活動日期</p>
-                <p>—</p>
+                <p className='text-gray-500 text-sm'>Last Activity</p>
+                <p className='text-gray-500 text-sm'>—</p>
               </div>
             </div>
           </div>
@@ -260,7 +306,9 @@ export default function ContactIdPage() {
                         <div className='flex flex-col gap-1'>
                           <div className='flex items-center gap-2'>
                             <span className='font-medium'>{activity.title}</span>
-                            <span className='text-gray-500 text-sm'>• {formatDate(new Date(activity.createdAt))}</span>
+                            <span className='text-gray-500 text-sm'>
+                              • by {getInitiatorLabel(activity)} • {formatDate(new Date(activity.createdAt))}
+                            </span>
                           </div>
                           <p className='text-gray-500 text-sm'>{activity.description}</p>
                         </div>
@@ -286,10 +334,10 @@ export default function ContactIdPage() {
         </div>
 
         <div className='space-y-6'>
-          <div className='rounded-lg border p-4'>
-            <h2 className='mb-2 font-semibold text-lg'>公司</h2>
-            <p className='text-gray-500 text-sm'>{contact?.company || 'Unknown'}</p>
-            <p className='text-gray-500 text-sm'>電話：{contact?.phone || '—'}</p>
+          <div className='rounded-lg border p-4 space-y-1'>
+            <h2 className='mb-2 font-semibold text-lg'>Personal Information</h2>
+            <p className='text-gray-500 text-sm'>Company: {contact?.company || 'Unknown'}</p>
+            <p className='text-gray-500 text-sm'>Phone: {contact?.phone || '—'}</p>
           </div>
 
           <div className='rounded-lg border p-4'>
@@ -309,7 +357,7 @@ export default function ContactIdPage() {
             {payments && payments.length > 0 ? (
               <div className='space-y-3'>
                 {payments.map((payment) => (
-                  <div key={payment.id} className='border-b pb-2'>
+                  <div key={payment.id}>
                     <div className='flex items-center justify-between'>
                       <span className='font-medium'>
                         {new Intl.NumberFormat('en-US', {
