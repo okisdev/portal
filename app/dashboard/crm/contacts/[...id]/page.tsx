@@ -35,6 +35,8 @@ export default function ContactIdPage() {
     email: '',
     phone: '',
     company: '',
+    status: '',
+    source: '',
   });
 
   const addActivity = api.dashboard.addContactActivity.useMutation({
@@ -77,6 +79,8 @@ export default function ContactIdPage() {
       email: contact?.email || '',
       phone: contact?.phone || '',
       company: contact?.company || '',
+      status: contact?.status || '',
+      source: contact?.source || '',
     });
     setIsEditModalOpen(true);
   };
@@ -88,6 +92,23 @@ export default function ContactIdPage() {
       ...editForm,
     });
   };
+
+  function getStatusBadgeColor(status: string) {
+    switch (status) {
+      case 'lead':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'prospect':
+        return 'bg-blue-100 text-blue-800';
+      case 'customer':
+        return 'bg-green-100 text-green-800';
+      case 'churned':
+        return 'bg-red-100 text-red-800';
+      case 'opportunity':
+        return 'bg-purple-100 text-purple-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  }
 
   return (
     <div className='space-y-6'>
@@ -141,6 +162,26 @@ export default function ContactIdPage() {
               <Label htmlFor='company'>Company</Label>
               <CompanyCombobox value={editForm.company} onChange={(value) => setEditForm({ ...editForm, company: value })} />
             </div>
+            <div className='space-y-2'>
+              <Label htmlFor='status'>Status</Label>
+              <select id='status' value={editForm.status} onChange={(e) => setEditForm({ ...editForm, status: e.target.value })} className='w-full rounded-md border p-2'>
+                <option value='lead'>Lead</option>
+                <option value='prospect'>Prospect</option>
+                <option value='customer'>Customer</option>
+                <option value='churned'>Churned</option>
+                <option value='opportunity'>Opportunity</option>
+              </select>
+            </div>
+            <div className='space-y-2'>
+              <Label htmlFor='source'>Source</Label>
+              <select id='source' value={editForm.source} onChange={(e) => setEditForm({ ...editForm, source: e.target.value })} className='w-full rounded-md border p-2'>
+                <option value='social_media'>Social Media</option>
+                <option value='referral'>Referral</option>
+                <option value='website'>Website</option>
+                <option value='cold_outreach'>Cold Outreach</option>
+                <option value='event'>Event</option>
+              </select>
+            </div>
             <div className='flex justify-end space-x-2'>
               <Button type='button' variant='outline' onClick={() => setIsEditModalOpen(false)}>
                 Cancel
@@ -164,7 +205,9 @@ export default function ContactIdPage() {
               </div>
               <div>
                 <p className='text-gray-500 text-sm'>生命週期階段</p>
-                <p>Lead</p>
+                <span className={`inline-block rounded-full px-2 py-1 text-sm ${getStatusBadgeColor(contact?.status || 'lead')}`}>
+                  {(contact?.status && contact.status.charAt(0).toUpperCase() + contact.status.slice(1)) || 'Lead'}
+                </span>
               </div>
               <div>
                 <p className='text-gray-500 text-sm'>上次活動日期</p>

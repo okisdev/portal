@@ -101,8 +101,16 @@ export const contact = pgTable('contact', {
   state: text(),
   country: text(),
   postalCode: text(),
-  status: text().notNull().default('lead'), // 'lead', 'prospect', 'customer', 'churned'
-  source: text(), // how did they find you
+  status: text().notNull().default('lead'), // 'lead' - Initial contact, needs qualification
+  // 'prospect' - Qualified lead, actively engaged
+  // 'customer' - Current paying customer
+  // 'churned' - Previous customer, no longer active
+  // 'opportunity' - Qualified lead with high potential
+  source: text(), // 'social_media' - From social media platforms
+  // 'referral' - Referred by existing customer
+  // 'website' - Direct website visit
+  // 'cold_outreach' - From cold calling/emailing
+  // 'event' - From trade shows or events
   assignedTo: text().references(() => user.id), // sales rep or account manager
   stripeCustomerId: text(), // for payment integration
   createdAt: timestamp({ mode: 'date' }).notNull().defaultNow(),

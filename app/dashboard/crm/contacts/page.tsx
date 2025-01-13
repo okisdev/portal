@@ -59,6 +59,23 @@ export default function CRMContactsPage() {
     }));
   };
 
+  function getStatusBadgeColor(status: string) {
+    switch (status) {
+      case 'lead':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'prospect':
+        return 'bg-blue-100 text-blue-800';
+      case 'customer':
+        return 'bg-green-100 text-green-800';
+      case 'churned':
+        return 'bg-red-100 text-red-800';
+      case 'opportunity':
+        return 'bg-purple-100 text-purple-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  }
+
   return (
     <div className='container mx-auto w-full space-y-4'>
       <div className='flex items-center justify-between gap-4'>
@@ -94,8 +111,11 @@ export default function CRMContactsPage() {
               <TableHead onClick={() => handleSort('email')} className='cursor-pointer'>
                 Email {sortConfig.column === 'email' && <CaretSortIcon className='ml-2 inline' />}
               </TableHead>
-              <TableHead onClick={() => handleSort('phone')} className='cursor-pointer'>
-                Phone {sortConfig.column === 'phone' && <CaretSortIcon className='ml-2 inline' />}
+              <TableHead onClick={() => handleSort('status')} className='cursor-pointer'>
+                Status {sortConfig.column === 'status' && <CaretSortIcon className='ml-2 inline' />}
+              </TableHead>
+              <TableHead onClick={() => handleSort('source')} className='cursor-pointer'>
+                Source {sortConfig.column === 'source' && <CaretSortIcon className='ml-2 inline' />}
               </TableHead>
               <TableHead onClick={() => handleSort('createdAt')} className='cursor-pointer'>
                 Created {sortConfig.column === 'createdAt' && <CaretSortIcon className='ml-2 inline' />}
@@ -111,7 +131,12 @@ export default function CRMContactsPage() {
                   </Link>
                 </TableCell>
                 <TableCell>{contact.email}</TableCell>
-                <TableCell>{contact.phone || '—'}</TableCell>
+                <TableCell>
+                  <span className={`inline-block rounded-full px-2 py-1 text-sm ${getStatusBadgeColor(contact.status)}`}>{contact.status.charAt(0).toUpperCase() + contact.status.slice(1)}</span>
+                </TableCell>
+                <TableCell>
+                  <span className='capitalize'>{contact.source?.replace('_', ' ') || '—'}</span>
+                </TableCell>
                 <TableCell>{formatDate(new Date(contact.createdAt))}</TableCell>
               </TableRow>
             ))}
