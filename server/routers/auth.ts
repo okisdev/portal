@@ -1,15 +1,11 @@
 import { user } from '@/drizzle/schema';
 import { generateUUID } from '@/lib/utils';
-import { createTRPCRouter, protectedProcedure, publicProcedure } from '@/server/trpc';
+import { createTRPCRouter, publicProcedure } from '@/server/trpc';
 import { TRPCError } from '@trpc/server';
 import { eq } from 'drizzle-orm';
 import z from 'zod';
 
 export const authRouter = createTRPCRouter({
-  getMe: protectedProcedure.query(({ ctx }) => {
-    return ctx.session.user;
-  }),
-
   register: publicProcedure
     .input(
       z.object({

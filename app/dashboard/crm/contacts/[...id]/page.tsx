@@ -24,7 +24,7 @@ export default function ContactIdPage() {
           <div className='size-12 rounded-full bg-gray-200' />
           <div>
             <h1 className='font-semibold text-xl'>{contact.name}</h1>
-            <p className='text-gray-500 text-sm'>{contact.company || 'psdf.com'}</p>
+            <p className='text-gray-500 text-sm'>{contact.company || 'Unknown'}</p>
             <p className='text-gray-500 text-sm'>{contact.email}</p>
           </div>
         </div>
@@ -68,8 +68,8 @@ export default function ContactIdPage() {
           </div>
 
           <div className='rounded-lg border p-4'>
-            <div className='mb-4 flex items-center justify-between'>
-              <h2 className='font-semibold text-lg'>近期活動</h2>
+            <div className='flex items-center justify-between'>
+              <h2 className='font-semibold text-lg'>近期活動（速記）</h2>
               <Button variant='outline' size='sm'>
                 7 個活動
               </Button>
@@ -78,37 +78,23 @@ export default function ContactIdPage() {
               <p>沒有符合目前篩選條件的活動。</p>
             </div>
           </div>
-
-          <div className='rounded-lg border p-4'>
-            <div className='mb-4 flex items-center justify-between'>
-              <h2 className='font-semibold text-lg'>連絡人</h2>
-              <Button variant='outline' size='sm'>
-                新增
-              </Button>
-            </div>
-            <div className='flex items-center justify-center py-8 text-gray-500'>
-              <p>不存在此瀏覽的相關物件，或者你沒有檢視它們的權限。</p>
-            </div>
-          </div>
         </div>
 
         <div className='space-y-6'>
           <div className='rounded-lg border p-4'>
             <h2 className='mb-2 font-semibold text-lg'>公司</h2>
-            <p className='text-gray-500 text-sm'>psdf.com</p>
-            <p className='text-gray-500 text-sm'>電話：—</p>
+            <p className='text-gray-500 text-sm'>{contact.company || 'Unknown'}</p>
+            <p className='text-gray-500 text-sm'>電話：{contact.phone || '—'}</p>
           </div>
 
-          {['交易 (0)', '服務票證 (0)', '付款憑據 (0)', '連絡人 (0)', '訂閱 (0)'].map((section) => (
-            <div key={section} className='rounded-lg border p-4'>
-              <div className='mb-2 flex items-center justify-between'>
-                <h2 className='font-semibold text-lg'>{section}</h2>
-                <Button variant='outline' size='sm'>
-                  新增
-                </Button>
-              </div>
+          <div className='rounded-lg border p-4'>
+            <div className='mb-2 flex items-center justify-between'>
+              <h2 className='font-semibold text-lg'>Payments</h2>
+              <Button variant='outline' size='sm'>
+                新增
+              </Button>
             </div>
-          ))}
+          </div>
         </div>
       </div>
     </div>

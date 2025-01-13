@@ -10,6 +10,8 @@ export const user = pgTable(
   'user',
   {
     id: text().primaryKey().notNull(),
+    firstName: text(),
+    lastName: text(),
     name: text(),
     email: text(),
     emailVerified: timestamp({ mode: 'string' }),

@@ -1,11 +1,17 @@
+'use client';
+
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
 import { crmItems, marketingItems, teamItems } from '@/config/dashboard';
+import { api } from '@/utils/trpc/client';
 import { ChevronDown, ChevronUp, Settings, User2 } from 'lucide-react';
+import { signOut } from 'next-auth/react';
 import Link from 'next/link';
 
 export function DashboardSidebar() {
+  const { data: me } = api.account.getMe.useQuery();
+
   return (
     <Sidebar>
       <SidebarHeader>
@@ -124,7 +130,7 @@ export function DashboardSidebar() {
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <SidebarMenuButton>
-                  <User2 /> Username
+                  <User2 /> {me?.name ?? me?.email}
                   <ChevronUp className='ml-auto' />
                 </SidebarMenuButton>
               </DropdownMenuTrigger>
@@ -135,7 +141,7 @@ export function DashboardSidebar() {
                 <DropdownMenuItem>
                   <span>Billing</span>
                 </DropdownMenuItem>
-                <DropdownMenuItem>
+                <DropdownMenuItem onClick={() => signOut()}>
                   <span>Sign out</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
