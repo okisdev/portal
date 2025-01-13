@@ -1,6 +1,6 @@
-import { contact } from '@/drizzle/schema';
+import { contact, contactActivity } from '@/drizzle/schema';
 import { createTRPCRouter, protectedProcedure } from '@/server/trpc';
-import { desc } from 'drizzle-orm';
+import { desc, eq } from 'drizzle-orm';
 import { z } from 'zod';
 
 export const dashboardRouter = createTRPCRouter({
@@ -32,6 +32,29 @@ export const dashboardRouter = createTRPCRouter({
         phone: input.phone,
         firstName: input.firstName,
         lastName: input.lastName,
+      });
+    }),
+
+  getContactActivities: protectedProcedure.input(z.object({ id: z.string() })).query(({ ctx, input }) => {
+    return ctx.db.select().from(contactActivity).where(eq(contactActivity.contactId, input.id));
+  }),
+
+  addContactActivity: protectedProcedure
+    .input(
+      z.object({
+        contactId: z.string(),
+        type: z.string(),
+        title: z.string(),
+        description: z.string(),
+      })
+    )
+    .mutation(({ ctx, input }) => {
+      return ctx.db.insert(contactActivity).values({
+        contactId: input.contactId,
+        userId: ctx.session?.user.id,
+        type: input.type,
+        title: input.title,
+        description: input.description,
       });
     }),
 });

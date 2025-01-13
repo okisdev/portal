@@ -142,3 +142,22 @@ export const contactDeal = pgTable('contactDeal', {
   createdAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
   updatedAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
 });
+
+export const contactActivity = pgTable('contactActivity', {
+  id: text()
+    .primaryKey()
+    .notNull()
+    .$defaultFn(() => crypto.randomUUID()),
+  contactId: text()
+    .notNull()
+    .references(() => contact.id, { onDelete: 'cascade' }),
+  userId: text()
+    .notNull()
+    .references(() => user.id), // who performed the activity
+  type: text().notNull(), // 'call', 'email', 'meeting', 'note', 'status_change', 'deal_created', 'deal_updated', etc.
+  title: text().notNull(), // e.g., "Called client about new proposal"
+  description: text(), // optional detailed description
+  metadata: text(), // JSON string for additional data specific to activity type
+  createdAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
+  updatedAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
+});
