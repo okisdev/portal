@@ -23,3 +23,7 @@ export function generateUUID() {
 export function isDev() {
   return process.env.NODE_ENV === 'development';
 }
+
+export function generateCouponCode() {
+  return Math.random().toString(36).substring(2, 10).toUpperCase() + Math.random().toString(36).substring(2, 10).toUpperCase();
+}

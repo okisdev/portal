@@ -47,7 +47,7 @@ export default function ContactIdPage() {
     priority: 'medium' as Priority,
   });
 
-  const addActivity = api.dashboard.addContactActivity.useMutation({
+  const createContactActivity = api.dashboard.createContactActivity.useMutation({
     onSuccess: () => {
       setNewActivity('');
       refetchActivities();
@@ -83,7 +83,7 @@ export default function ContactIdPage() {
     e.preventDefault();
     if (!newActivity.trim()) return;
 
-    addActivity.mutate({
+    createContactActivity.mutate({
       contactId: contactId[0],
       type: 'note',
       initiatorType: 'user',
@@ -291,7 +291,7 @@ export default function ContactIdPage() {
               <form onSubmit={handleSubmitActivity} className='mt-4'>
                 <div className='flex gap-2'>
                   <Input value={newActivity} onChange={(e) => setNewActivity(e.target.value)} placeholder='Leave a comment...' className='flex-1' />
-                  <Button type='submit' size='icon' variant='ghost' disabled={addActivity.isPending}>
+                  <Button type='submit' size='icon' variant='ghost' disabled={createContactActivity.isPending}>
                     <Send className='size-4' />
                   </Button>
                 </div>

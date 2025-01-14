@@ -1,6 +1,6 @@
-import { z } from 'zod';
+import { account, authenticator, contact, contactActivity, contactConversation, contactDeal, paymentTrack, session, subscriptionCoupon, subscriptionPlan, user } from '@/drizzle/schema';
 import { createSelectSchema } from 'drizzle-zod';
-import { user } from '@/drizzle/schema';
+import { z } from 'zod';
 
 export const credentialSchema = z.object({
   email: z.string().min(1, 'Email is required').email('Invalid email'),
@@ -27,3 +27,43 @@ export type UserRole = z.infer<typeof userRoleSchema>;
 export const userSchema = createSelectSchema(user);
 
 export type User = z.infer<typeof userSchema>;
+
+export const accountSchema = createSelectSchema(account);
+
+export type Account = z.infer<typeof accountSchema>;
+
+export const authenticatorSchema = createSelectSchema(authenticator);
+
+export type Authenticator = z.infer<typeof authenticatorSchema>;
+
+export const sessionSchema = createSelectSchema(session);
+
+export type Session = z.infer<typeof sessionSchema>;
+
+export const contactSchema = createSelectSchema(contact);
+
+export type Contact = z.infer<typeof contactSchema>;
+
+export const contactConversationSchema = createSelectSchema(contactConversation);
+
+export type ContactConversation = z.infer<typeof contactConversationSchema>;
+
+export const contactDealSchema = createSelectSchema(contactDeal);
+
+export type ContactDeal = z.infer<typeof contactDealSchema>;
+
+export const contactActivitySchema = createSelectSchema(contactActivity);
+
+export type ContactActivity = z.infer<typeof contactActivitySchema>;
+
+export const paymentTrackSchema = createSelectSchema(paymentTrack);
+
+export type PaymentTrack = z.infer<typeof paymentTrackSchema>;
+
+export const subscriptionCouponSchema = createSelectSchema(subscriptionCoupon);
+
+export type SubscriptionCoupon = z.infer<typeof subscriptionCouponSchema>;
+
+export const subscriptionPlanSchema = createSelectSchema(subscriptionPlan);
+
+export type SubscriptionPlan = z.infer<typeof subscriptionPlanSchema>;

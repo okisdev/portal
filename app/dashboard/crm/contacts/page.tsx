@@ -12,6 +12,7 @@ import { CaretSortIcon } from '@radix-ui/react-icons';
 import { Filter } from 'lucide-react';
 import { X } from 'lucide-react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useMemo, useState } from 'react';
 
 type SortConfig = {
@@ -26,6 +27,7 @@ type FilterConfig = {
 };
 
 export default function CRMContactsPage() {
+  const router = useRouter();
   const { data: contacts } = api.dashboard.getContacts.useQuery();
 
   const [search, setSearch] = useState('');
@@ -191,11 +193,9 @@ export default function CRMContactsPage() {
           </TableHeader>
           <TableBody>
             {filteredContacts.map((contact) => (
-              <TableRow key={contact.id}>
+              <TableRow key={contact.id} className='cursor-pointer hover:bg-muted/50' onClick={() => router.push(`/dashboard/crm/contacts/${contact.id}`)}>
                 <TableCell>
-                  <Link href={`/dashboard/crm/contacts/${contact.id}`} className='hover:underline'>
-                    {contact.firstName} {contact.lastName}
-                  </Link>
+                  {contact.firstName} {contact.lastName}
                 </TableCell>
                 <TableCell>{contact.email}</TableCell>
                 <TableCell>

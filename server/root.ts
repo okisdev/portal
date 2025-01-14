@@ -1,10 +1,11 @@
 import { accountRouter } from '@/server/routers/account';
+import { adminRouter } from '@/server/routers/admin';
 import { authRouter } from '@/server/routers/auth';
 import { dashboardRouter } from '@/server/routers/dashboard';
+import { payRouter } from '@/server/routers/pay';
 import type { inferReactQueryProcedureOptions } from '@trpc/react-query';
 import type { inferRouterInputs, inferRouterOutputs } from '@trpc/server';
 import { createCallerFactory, createTRPCRouter } from './trpc';
-import { adminRouter } from '@/server/routers/admin';
 /**
  * This is the primary router for your server.
  *
@@ -15,6 +16,7 @@ export const appRouter = createTRPCRouter({
   admin: adminRouter,
   account: accountRouter,
   dashboard: dashboardRouter,
+  pay: payRouter,
 });
 
 // export type definition of API

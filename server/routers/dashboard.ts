@@ -1,4 +1,4 @@
-import { contact, contactActivity } from '@/drizzle/schema';
+import { contact, contactActivity, } from '@/drizzle/schema';
 import { stripe } from '@/lib/payment';
 import { prioritySchema, statusSchema } from '@/lib/schema';
 import { createTRPCRouter, protectedProcedure } from '@/server/trpc';
@@ -18,30 +18,46 @@ export const dashboardRouter = createTRPCRouter({
       .then((rows) => rows[0]);
   }),
 
-  addContact: protectedProcedure
+  createContact: protectedProcedure
     .input(
       z.object({
-        firstName: z.string(),
-        lastName: z.string(),
+        firstName: z.string().optional(),
+        lastName: z.string().optional(),
         email: z.string(),
-        phone: z.string(),
+        phone: z.string().optional(),
+        company: z.string().optional(),
       })
     )
-    .mutation(({ ctx, input }) => {
-      return ctx.db.insert(contact).values({
-        name: `${input.firstName} ${input.lastName}`,
-        email: input.email,
-        phone: input.phone,
-        firstName: input.firstName,
-        lastName: input.lastName,
-      });
+    .mutation(async ({ ctx, input }) => {
+      const existingContact = await ctx.db
+        .select()
+        .from(contact)
+        .where(eq(contact.email, input.email))
+        .then((rows) => rows[0]);
+
+      if (existingContact) {
+        return existingContact;
+      }
+
+      const result = await ctx.db
+        .insert(contact)
+        .values({
+          firstName: input.firstName ?? '',
+          lastName: input.lastName ?? '',
+          email: input.email,
+          phone: input.phone ?? '',
+          company: input.company ?? '',
+        })
+        .returning();
+
+      return result[0];
     }),
 
   getContactActivities: protectedProcedure.input(z.object({ id: z.string() })).query(({ ctx, input }) => {
     return ctx.db.select().from(contactActivity).where(eq(contactActivity.contactId, input.id)).orderBy(desc(contactActivity.createdAt));
   }),
 
-  addContactActivity: protectedProcedure
+  createContactActivity: protectedProcedure
     .input(
       z.object({
         contactId: z.string(),
@@ -67,6 +83,30 @@ export const dashboardRouter = createTRPCRouter({
   deleteContactActivity: protectedProcedure.input(z.object({ id: z.string() })).mutation(({ ctx, input }) => {
     return ctx.db.delete(contactActivity).where(eq(contactActivity.id, input.id));
   }),
+
+
+
+  updateContact: protectedProcedure
+    .input(
+      z.object({
+        id: z.string(),
+        name: z.string(),
+        email: z.string().email(),
+        phone: z.string().optional(),
+        company: z.string().optional(),
+        priority: prioritySchema.optional(),
+        workExperience: z.string().optional(),
+        currentRole: z.string().optional(),
+        industry: z.string().optional(),
+        skills: z.string().optional(),
+        status: statusSchema.optional(),
+        source: z.string().optional(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const { id, ...updateData } = input;
+      return await ctx.db.update(contact).set(updateData).where(eq(contact.id, id));
+    }),
 
   getContactPayments: protectedProcedure
     .input(
@@ -95,25 +135,4 @@ export const dashboardRouter = createTRPCRouter({
       }
     }),
 
-  updateContact: protectedProcedure
-    .input(
-      z.object({
-        id: z.string(),
-        name: z.string(),
-        email: z.string().email(),
-        phone: z.string().optional(),
-        company: z.string().optional(),
-        priority: prioritySchema.optional(),
-        workExperience: z.string().optional(),
-        currentRole: z.string().optional(),
-        industry: z.string().optional(),
-        skills: z.string().optional(),
-        status: statusSchema.optional(),
-        source: z.string().optional(),
-      })
-    )
-    .mutation(async ({ ctx, input }) => {
-      const { id, ...updateData } = input;
-      return await ctx.db.update(contact).set(updateData).where(eq(contact.id, id));
-    }),
 });

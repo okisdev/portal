@@ -12,7 +12,9 @@ export function DashboardHeader() {
   const paths = pathname.replace('/dashboard/', '').split('/');
 
   const formatPathSegment = (segment: string) => {
-    return segment.charAt(0).toUpperCase() + segment.slice(1);
+    const words = segment.split('-');
+
+    return words.map((word) => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
   };
 
   return (
