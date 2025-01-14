@@ -1,4 +1,4 @@
-import { Contact, Gift, Link, Users } from 'lucide-react';
+import { Contact, Gift, Link, Settings, Users } from 'lucide-react';
 
 export const crmItems = [
   {
@@ -28,8 +28,8 @@ export const teamItems = [
     icon: Users,
   },
   {
-    title: 'Management',
-    url: '/dashboard/team/management',
-    icon: Users,
+    title: 'Configuration',
+    url: '/dashboard/team/configuration',
+    icon: Settings,
   },
 ];

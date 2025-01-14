@@ -17,6 +17,8 @@ export const user = pgTable(
     emailVerified: timestamp({ mode: 'string' }),
     password: text(),
     image: text(),
+    role: text('role', { enum: ['ADMIN', 'SALES', 'MANAGER', 'USER'] }).default('USER'),
+    username: text().unique(),
   },
   (table) => [unique('user_email_unique').on(table.email)]
 );
@@ -101,12 +103,11 @@ export const contact = pgTable('contact', {
   state: text(),
   country: text(),
   postalCode: text(),
-  status: text().notNull().default('lead'), // 'lead' - Initial contact, needs qualification
-  // 'prospect' - Qualified lead, actively engaged
-  // 'customer' - Current paying customer
-  // 'churned' - Previous customer, no longer active
-  // 'opportunity' - Qualified lead with high potential
-  source: text(), // 'social_media' - From social media platforms
+  status: text('status', { enum: ['lead', 'prospect', 'customer', 'churned', 'opportunity'] })
+    .notNull()
+    .default('lead'),
+  source: text(),
+  // 'social_media' - From social media platforms
   // 'referral' - Referred by existing customer
   // 'website' - Direct website visit
   // 'cold_outreach' - From cold calling/emailing
@@ -115,7 +116,7 @@ export const contact = pgTable('contact', {
   stripeCustomerId: text(), // for payment integration
   createdAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
   updatedAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
-  priority: text('priority', { enum: ['high', 'medium', 'low'] }).default('medium'),
+  priority: text('priority', { enum: ['urgent', 'high', 'medium', 'low'] }).default('medium'),
   workExperience: text(), // years of experience
   currentRole: text(), // current job role
   industry: text(), // industry they work in
@@ -167,7 +168,9 @@ export const contactActivity = pgTable('contactActivity', {
   userId: text()
     .notNull()
     .references(() => user.id), // who performed the activity
-  type: text().notNull(), // 'call', 'email', 'meeting', 'note', 'status_change', 'deal_created', 'deal_updated', etc.
+  type: text().notNull(), // 'call', 'email', 'meeting', 'note', 'status_change', 'deal_created', 'deal_updated', 'payment_link_clicked', etc.
+  initiatorType: text().notNull().default('system'), // 'user', 'contact', 'system'
+  initiatorId: text(), // id of the initiator
   title: text().notNull(), // e.g., "Called client about new proposal"
   description: text(), // optional detailed description
   metadata: text(), // JSON string for additional data specific to activity type

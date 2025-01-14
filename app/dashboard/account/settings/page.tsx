@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { api } from '@/utils/trpc/client';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
 export default function AccountSettingsPage() {
@@ -16,10 +16,20 @@ export default function AccountSettingsPage() {
 
   console.log('me', me);
 
-  const [firstName, setFirstName] = useState(me?.firstName ?? '');
-  const [lastName, setLastName] = useState(me?.lastName ?? '');
-  const [email, setEmail] = useState(me?.email ?? '');
-  const [image, setImage] = useState(me?.image ?? '');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [email, setEmail] = useState('');
+  const [image, setImage] = useState('');
+
+  useEffect(() => {
+    if (me) {
+      setFirstName(me.firstName ?? '');
+      setLastName(me.lastName ?? '');
+      setEmail(me.email ?? '');
+      setImage(me.image ?? '');
+    }
+  }, [me]);
+
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');

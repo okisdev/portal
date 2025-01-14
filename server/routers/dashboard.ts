@@ -1,5 +1,6 @@
 import { contact, contactActivity } from '@/drizzle/schema';
 import { stripe } from '@/lib/payment';
+import { prioritySchema, statusSchema } from '@/lib/schema';
 import { createTRPCRouter, protectedProcedure } from '@/server/trpc';
 import { desc, eq } from 'drizzle-orm';
 import { z } from 'zod';
@@ -37,7 +38,7 @@ export const dashboardRouter = createTRPCRouter({
     }),
 
   getContactActivities: protectedProcedure.input(z.object({ id: z.string() })).query(({ ctx, input }) => {
-    return ctx.db.select().from(contactActivity).where(eq(contactActivity.contactId, input.id));
+    return ctx.db.select().from(contactActivity).where(eq(contactActivity.contactId, input.id)).orderBy(desc(contactActivity.createdAt));
   }),
 
   addContactActivity: protectedProcedure
@@ -47,6 +48,8 @@ export const dashboardRouter = createTRPCRouter({
         type: z.string(),
         title: z.string(),
         description: z.string(),
+        initiatorType: z.enum(['user', 'contact', 'system']),
+        initiatorId: z.string(),
       })
     )
     .mutation(({ ctx, input }) => {
@@ -54,6 +57,8 @@ export const dashboardRouter = createTRPCRouter({
         contactId: input.contactId,
         userId: ctx.session?.user.id,
         type: input.type,
+        initiatorType: input.initiatorType,
+        initiatorId: input.initiatorId,
         title: input.title,
         description: input.description,
       });
@@ -98,11 +103,13 @@ export const dashboardRouter = createTRPCRouter({
         email: z.string().email(),
         phone: z.string().optional(),
         company: z.string().optional(),
-        priority: z.enum(['high', 'medium', 'low']).optional(),
+        priority: prioritySchema.optional(),
         workExperience: z.string().optional(),
         currentRole: z.string().optional(),
         industry: z.string().optional(),
         skills: z.string().optional(),
+        status: statusSchema.optional(),
+        source: z.string().optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {

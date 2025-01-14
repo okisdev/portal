@@ -23,7 +23,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
 export function DashboardSidebar() {
-  const { data: me } = api.account.getMe.useQuery();
+  const { data: me } = api.account.getMeFromDatabase.useQuery();
 
   const router = useRouter();
 
@@ -32,22 +32,9 @@ export function DashboardSidebar() {
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <SidebarMenuButton>
-                  Select Workspace
-                  <ChevronDown className='ml-auto' />
-                </SidebarMenuButton>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className='w-[--radix-popper-anchor-width]'>
-                <DropdownMenuItem>
-                  <span>Acme Inc</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem>
-                  <span>Acme Corp.</span>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <SidebarMenuButton asChild>
+              <Link href='/dashboard'>Acme Inc</Link>
+            </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarHeader>
@@ -109,32 +96,34 @@ export function DashboardSidebar() {
             </CollapsibleContent>
           </SidebarGroup>
         </Collapsible>
-        <Collapsible defaultOpen className='group/collapsible'>
-          <SidebarGroup>
-            <SidebarGroupLabel asChild>
-              <CollapsibleTrigger>
-                Team
-                <ChevronDown className='ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180' />
-              </CollapsibleTrigger>
-            </SidebarGroupLabel>
-            <CollapsibleContent>
-              <SidebarGroupContent>
-                <SidebarMenu>
-                  {teamItems.map((item) => (
-                    <SidebarMenuItem key={item.title}>
-                      <SidebarMenuButton asChild>
-                        <Link href={item.url}>
-                          <item.icon />
-                          <span>{item.title}</span>
-                        </Link>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  ))}
-                </SidebarMenu>
-              </SidebarGroupContent>
-            </CollapsibleContent>
-          </SidebarGroup>
-        </Collapsible>
+        {me?.role === 'ADMIN' && (
+          <Collapsible defaultOpen className='group/collapsible'>
+            <SidebarGroup>
+              <SidebarGroupLabel asChild>
+                <CollapsibleTrigger>
+                  Team
+                  <ChevronDown className='ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180' />
+                </CollapsibleTrigger>
+              </SidebarGroupLabel>
+              <CollapsibleContent>
+                <SidebarGroupContent>
+                  <SidebarMenu>
+                    {teamItems.map((item) => (
+                      <SidebarMenuItem key={item.title}>
+                        <SidebarMenuButton asChild>
+                          <Link href={item.url}>
+                            <item.icon />
+                            <span>{item.title}</span>
+                          </Link>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    ))}
+                  </SidebarMenu>
+                </SidebarGroupContent>
+              </CollapsibleContent>
+            </SidebarGroup>
+          </Collapsible>
+        )}
       </SidebarContent>
       <SidebarFooter>
         <SidebarMenu>
@@ -155,11 +144,10 @@ export function DashboardSidebar() {
                 </SidebarMenuButton>
               </DropdownMenuTrigger>
               <DropdownMenuContent side='top' className='w-[--radix-popper-anchor-width]'>
-                <DropdownMenuItem>
-                  <span>Account</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem>
-                  <span>Billing</span>
+                <DropdownMenuItem asChild>
+                  <Link href='/dashboard/account/settings' className='cursor-pointer'>
+                    <span>Account</span>
+                  </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => signOut()}>
                   <span>Sign out</span>

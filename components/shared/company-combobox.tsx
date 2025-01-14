@@ -5,7 +5,7 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from '
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { insuranceCompanies } from '@/data/data';
 import { Check, ChevronsUpDown } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 interface CompanyComboboxProps {
   value: string;
@@ -14,6 +14,13 @@ interface CompanyComboboxProps {
 
 export function CompanyCombobox({ value, onChange }: CompanyComboboxProps) {
   const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState('');
+
+  useEffect(() => {
+    if (!open) {
+      setSearch('');
+    }
+  }, [open]);
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -24,13 +31,27 @@ export function CompanyCombobox({ value, onChange }: CompanyComboboxProps) {
         </Button>
       </PopoverTrigger>
       <PopoverContent className='w-full p-0' align='start'>
-        <Command shouldFilter={false}>
-          <CommandInput placeholder='Search company...' />
-          <CommandEmpty>No company found</CommandEmpty>
+        <Command>
+          <CommandInput placeholder='Search company...' onValueChange={setSearch} />
+          <CommandEmpty>No results found</CommandEmpty>
+          <CommandGroup heading='Custom'>
+            {search && (
+              <CommandItem
+                value={`custom-${search}`}
+                onSelect={() => {
+                  onChange(search);
+                  setOpen(false);
+                }}
+              >
+                Use "{search}"
+              </CommandItem>
+            )}
+          </CommandGroup>
           <CommandGroup heading='Companies'>
             {insuranceCompanies.map((company) => (
               <CommandItem
                 key={company}
+                value={company}
                 onSelect={() => {
                   onChange(company);
                   setOpen(false);

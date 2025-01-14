@@ -1,12 +1,12 @@
 'use client';
 
+import { ColorBadge } from '@/components/shared/color-badge';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { formatDate } from '@/lib/utils';
-import { getPriorityBadgeColor, getStatusBadgeColor } from '@/utils/color';
 import { api } from '@/utils/trpc/client';
 import { CaretSortIcon } from '@radix-ui/react-icons';
 import { Filter } from 'lucide-react';
@@ -101,8 +101,8 @@ export default function CRMContactsPage() {
                   Filters
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent className='w-56'>
-                <div className='p-2'>
+              <DropdownMenuContent className='flex w-56 flex-row gap-2 p-2'>
+                <div className='flex flex-col gap-2'>
                   <div className='mb-2 font-medium'>Status</div>
                   {['active', 'inactive', 'lead'].map((status) => (
                     <DropdownMenuItem key={status} onClick={() => toggleFilter('status', status)}>
@@ -110,14 +110,18 @@ export default function CRMContactsPage() {
                       <span className='capitalize'>{status}</span>
                     </DropdownMenuItem>
                   ))}
-                  <div className='mt-4 mb-2 font-medium'>Priority</div>
+                </div>
+                <div className='flex flex-col gap-2'>
+                  <div className='mb-2 font-medium'>Priority</div>
                   {['high', 'medium', 'low'].map((priority) => (
                     <DropdownMenuItem key={priority} onClick={() => toggleFilter('priority', priority)}>
                       {filters.priority.includes(priority) ? '✓ ' : ''}
                       <span className='capitalize'>{priority}</span>
                     </DropdownMenuItem>
                   ))}
-                  <div className='mt-4 mb-2 font-medium'>Source</div>
+                </div>
+                <div className='flex flex-col gap-2'>
+                  <div className='mb-2 font-medium'>Source</div>
                   {['website', 'referral', 'social_media'].map((source) => (
                     <DropdownMenuItem key={source} onClick={() => toggleFilter('source', source)}>
                       {filters.source.includes(source) ? '✓ ' : ''}
@@ -128,9 +132,14 @@ export default function CRMContactsPage() {
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
-          <Button asChild>
-            <Link href='/dashboard/crm/contacts/new'>Add Contact</Link>
-          </Button>
+          <div className='flex flex-row gap-2'>
+            <Button variant='outline' asChild className='h-8'>
+              <Link href='/dashboard/crm/contacts/new'>Upload CSV</Link>
+            </Button>
+            <Button variant='outline' asChild className='h-8'>
+              <Link href='/dashboard/crm/contacts/new'>Add Contact</Link>
+            </Button>
+          </div>
         </div>
 
         {(filters.status.length > 0 || filters.priority.length > 0 || filters.source.length > 0) && (
@@ -190,15 +199,13 @@ export default function CRMContactsPage() {
                 </TableCell>
                 <TableCell>{contact.email}</TableCell>
                 <TableCell>
-                  <span className={`inline-block rounded-full px-2 py-1 text-sm ${getStatusBadgeColor(contact.status)}`}>{contact.status.charAt(0).toUpperCase() + contact.status.slice(1)}</span>
+                  <ColorBadge type='status' value={contact.status} />
                 </TableCell>
                 <TableCell>
                   <span className='capitalize'>{contact.source?.replace('_', ' ') || '—'}</span>
                 </TableCell>
                 <TableCell>
-                  <span className={`inline-block rounded-full px-2 py-1 text-sm ${getPriorityBadgeColor(contact.priority ?? 'medium')}`}>
-                    {(contact.priority ?? 'medium').charAt(0).toUpperCase() + (contact.priority ?? 'medium').slice(1)}
-                  </span>
+                  <ColorBadge type='priority' value={contact.priority ?? 'medium'} />
                 </TableCell>
                 <TableCell>{formatDate(new Date(contact.createdAt))}</TableCell>
               </TableRow>
