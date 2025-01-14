@@ -105,6 +105,7 @@ export const payRouter = createTRPCRouter({
         expiresAt: z.date().optional(),
         planId: z.string(),
         company: z.string().optional(),
+        source: z.string().optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -120,6 +121,7 @@ export const payRouter = createTRPCRouter({
             planId: input.planId,
             createdBy: ctx.session?.user.id,
             company: input.company,
+            source: input.source,
           });
         }
 

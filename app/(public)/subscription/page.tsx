@@ -39,6 +39,7 @@ const SubscriptionContent = () => {
       const contact = await createContact.mutateAsync({
         email,
         company: coupon?.company ?? '',
+        source: coupon?.source ?? '',
       });
 
       await createContactActivity.mutateAsync({

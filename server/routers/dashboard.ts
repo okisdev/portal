@@ -1,4 +1,4 @@
-import { contact, contactActivity, } from '@/drizzle/schema';
+import { contact, contactActivity } from '@/drizzle/schema';
 import { stripe } from '@/lib/payment';
 import { prioritySchema, statusSchema } from '@/lib/schema';
 import { createTRPCRouter, protectedProcedure } from '@/server/trpc';
@@ -26,6 +26,7 @@ export const dashboardRouter = createTRPCRouter({
         email: z.string(),
         phone: z.string().optional(),
         company: z.string().optional(),
+        source: z.string().optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -47,6 +48,7 @@ export const dashboardRouter = createTRPCRouter({
           email: input.email,
           phone: input.phone ?? '',
           company: input.company ?? '',
+          source: input.source ?? '',
         })
         .returning();
 
@@ -83,8 +85,6 @@ export const dashboardRouter = createTRPCRouter({
   deleteContactActivity: protectedProcedure.input(z.object({ id: z.string() })).mutation(({ ctx, input }) => {
     return ctx.db.delete(contactActivity).where(eq(contactActivity.id, input.id));
   }),
-
-
 
   updateContact: protectedProcedure
     .input(
@@ -134,5 +134,4 @@ export const dashboardRouter = createTRPCRouter({
         return [];
       }
     }),
-
 });

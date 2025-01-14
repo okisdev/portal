@@ -1,6 +1,6 @@
 'use client';
 
-import { CompanyCombobox } from '@/components/shared/company-combobox';
+import { Combobox } from '@/components/shared/combobox';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -10,6 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { insuranceCompanies } from '@/data/data';
 import { api } from '@/utils/trpc/client';
 import { MoreHorizontal } from 'lucide-react';
 import { useState } from 'react';
@@ -33,6 +34,7 @@ export default function SubscriptionManagement() {
     company: '',
     planId: '',
     team: '',
+    source: '',
   });
   const [dialogOpen, setDialogOpen] = useState(false);
   const [planDialogOpen, setPlanDialogOpen] = useState(false);
@@ -110,6 +112,7 @@ export default function SubscriptionManagement() {
       expiresAt: couponData.expiresAt ? new Date(couponData.expiresAt) : undefined,
       planId: couponData.planId,
       company: couponData.company,
+      source: couponData.source,
     });
 
     setDialogOpen(false);
@@ -121,6 +124,7 @@ export default function SubscriptionManagement() {
       company: '',
       planId: '',
       team: '',
+      source: '',
     });
   };
 
@@ -187,7 +191,7 @@ export default function SubscriptionManagement() {
                           <SelectContent>
                             {stripePlans?.map((plan: any) => (
                               <SelectItem key={plan.id} value={plan.id}>
-                                {plan.name} - ${plan.metadata.price / 100}/{plan.metadata.interval}
+                                {plan.name} - ${(plan.metadata?.price || 0) / 100}/{plan.metadata?.interval || 'month'}
                               </SelectItem>
                             ))}
                           </SelectContent>
@@ -196,7 +200,26 @@ export default function SubscriptionManagement() {
 
                       <div>
                         <Label htmlFor='company'>Company</Label>
-                        <CompanyCombobox value={couponData.company} onChange={(value) => setCouponData({ ...couponData, company: value })} />
+                        <Combobox
+                          value={couponData.company}
+                          onChange={(value) => setCouponData({ ...couponData, company: value })}
+                          items={insuranceCompanies}
+                          placeholder='Select company...'
+                          searchPlaceholder='Search company...'
+                          groupHeading='Companies'
+                        />
+                      </div>
+
+                      <div>
+                        <Label htmlFor='source'>Source</Label>
+                        <Combobox
+                          value={couponData.source}
+                          onChange={(value) => setCouponData({ ...couponData, source: value })}
+                          items={['Sales', 'Marketing', 'Support', 'Engineering', 'Product']}
+                          placeholder='Select team...'
+                          searchPlaceholder='Search team...'
+                          groupHeading='Teams'
+                        />
                       </div>
 
                       <div>
@@ -371,9 +394,9 @@ export default function SubscriptionManagement() {
                       <TableCell>{plan.name}</TableCell>
                       <TableCell>{plan.description}</TableCell>
                       <TableCell>
-                        {plan.metadata.currency.toUpperCase()} {plan.metadata.price / 100}
+                        {plan.metadata?.currency?.toUpperCase() || 'USD'} {(plan.metadata?.price || 0) / 100}
                       </TableCell>
-                      <TableCell>{plan.metadata.interval}</TableCell>
+                      <TableCell>{plan.metadata?.interval || 'month'}</TableCell>
                       <TableCell>{plan.active ? 'Active' : 'Inactive'}</TableCell>
                       <TableCell className='space-x-2 text-right'>
                         <DropdownMenu>
@@ -389,9 +412,9 @@ export default function SubscriptionManagement() {
                                 setPlanData({
                                   name: plan.name,
                                   description: plan.description || '',
-                                  price: (plan.metadata.price / 100).toString(),
-                                  interval: plan.metadata.interval as 'month' | 'year',
-                                  currency: plan.metadata.currency as 'usd' | 'eur' | 'gbp' | 'hkd',
+                                  price: ((plan.metadata?.price || 0) / 100).toString(),
+                                  interval: (plan.metadata?.interval as 'month' | 'year') || 'month',
+                                  currency: (plan.metadata?.currency as 'usd' | 'eur' | 'gbp' | 'hkd') || 'usd',
                                 });
                                 setEditingPlan(plan);
                                 setPlanDialogOpen(true);
