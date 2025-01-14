@@ -19,6 +19,11 @@ export const marketingItems = [
     url: '/dashboard/marketing/payment-links',
     icon: Link,
   },
+  {
+    title: 'Subscription Management',
+    url: '/dashboard/marketing/subscription-management',
+    icon: Link,
+  },
 ];
 
 export const teamItems = [

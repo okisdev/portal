@@ -1,5 +1,5 @@
 import { relations } from 'drizzle-orm/relations';
-import { account, authenticator, contact, contactActivity, contactConversation, contactDeal, paymentTrack, session, user } from './schema';
+import { account, authenticator, contact, contactActivity, contactConversation, contactDeal, paymentTrack, session, subscriptionCoupon, user } from './schema';
 
 export const accountRelations = relations(account, ({ one }) => ({
   user: one(user, {
@@ -75,6 +75,13 @@ export const paymentTrackRelations = relations(paymentTrack, ({ one }) => ({
   }),
   user: one(user, {
     fields: [paymentTrack.userId],
+    references: [user.id],
+  }),
+}));
+
+export const subscriptionCouponRelations = relations(subscriptionCoupon, ({ one }) => ({
+  creator: one(user, {
+    fields: [subscriptionCoupon.createdBy],
     references: [user.id],
   }),
 }));

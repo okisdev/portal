@@ -20,7 +20,7 @@ export default async function DashboardLayout({
         <DashboardSidebar />
         <SidebarInset>
           <DashboardHeader />
-          <div className='flex-1 p-4'>{children}</div>
+          <div className='flex-1 p-6'>{children}</div>
         </SidebarInset>
       </SidebarProvider>
     </DashboardProvider>

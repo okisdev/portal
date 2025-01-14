@@ -37,7 +37,7 @@ export default async function PaymentLinksPage() {
     <div className='flex flex-col gap-4'>
       <div className='flex items-center justify-between'>
         <div>
-          <h1 className='font-bold text-2xl tracking-tight'>Payment Links</h1>
+          <h1 className='font-medium text-2xl tracking-tight'>Payment Links</h1>
           <p className='text-muted-foreground'>Create and manage payment links for your contacts</p>
         </div>
         <CreatePaymentLink />

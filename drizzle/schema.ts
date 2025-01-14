@@ -201,3 +201,37 @@ export const paymentTrack = pgTable('paymentTrack', {
   createdAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
   updatedAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
 });
+
+export const subscriptionCoupon = pgTable('subscriptionCoupon', {
+  id: text()
+    .primaryKey()
+    .notNull()
+    .$defaultFn(() => crypto.randomUUID()),
+  code: text().notNull().unique(),
+  discountPercent: integer().notNull(),
+  maxUses: integer(),
+  usedCount: integer().default(0),
+  expiresAt: timestamp({ mode: 'date' }),
+  createdBy: text().references(() => user.id),
+  createdAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
+  updatedAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
+  isActive: boolean().default(true),
+  company: text(),
+  planId: text('plan_id').notNull(),
+});
+
+export const subscriptionPlan = pgTable('subscriptionPlan', {
+  id: text()
+    .primaryKey()
+    .notNull()
+    .$defaultFn(() => crypto.randomUUID()),
+  name: text().notNull(),
+  description: text(),
+  stripePriceId: text().notNull(),
+  price: integer().notNull(), // in cents
+  interval: text('interval', { enum: ['month', 'year'] }).notNull(),
+  features: text(), // JSON string of features
+  isActive: boolean().default(true),
+  createdAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
+  updatedAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
+});
