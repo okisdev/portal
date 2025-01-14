@@ -2,43 +2,68 @@ import { subscriptionCoupon } from '@/drizzle/schema';
 import { database } from '@/lib/database';
 import { stripe } from '@/lib/payment';
 import { eq } from 'drizzle-orm';
-import { NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 
-export async function POST(req: Request) {
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+
+export async function POST(request: NextRequest) {
   try {
-    const { email, couponCode, contactId } = await req.json();
+    const body = await request.json();
+    const { email, couponCode, contactId } = body;
 
-    // Get the subscription plan and coupon details
-    const coupon = couponCode ? await database.select().from(subscriptionCoupon).where(eq(subscriptionCoupon.code, couponCode)) : null;
+    if (!email || !couponCode || !contactId) {
+      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+    }
 
-    // Create Stripe checkout session
+    // Get the coupon details from the database
+    const [coupon] = await database.select().from(subscriptionCoupon).where(eq(subscriptionCoupon.code, couponCode)).execute();
+
+    if (!coupon) {
+      return NextResponse.json({ error: 'Invalid coupon code' }, { status: 400 });
+    }
+
+    // Get the price for the plan
+    const prices = await stripe.prices.list({
+      product: coupon.planId,
+      active: true,
+      limit: 1,
+    });
+
+    if (!prices.data[0]) {
+      return NextResponse.json({ error: 'No price found for the plan' }, { status: 400 });
+    }
+
     const session = await stripe.checkout.sessions.create({
-      customer_email: email,
-      mode: 'subscription',
-      payment_method_types: ['card'],
       line_items: [
         {
-          price: process.env.STRIPE_PRICE_ID, // Your default price ID
+          price: prices.data[0].id,
           quantity: 1,
         },
       ],
-      discounts: coupon
-        ? [
-            {
-              coupon: coupon.stripeId, // You'll need to store Stripe coupon IDs
-            },
-          ]
-        : [],
-      success_url: `${process.env.NEXT_PUBLIC_APP_URL}/subscription/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/subscription/cancel`,
+      mode: 'subscription',
+      success_url: `${APP_URL}/payment/success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${APP_URL}/payment/cancel`,
       metadata: {
-        contactId, // Store the contact ID in metadata
+        contactId,
+        couponCode,
       },
+      customer_email: email,
+      ...(coupon.discountPercent > 0 && {
+        discounts: [
+          {
+            coupon: couponCode,
+          },
+        ],
+      }),
     });
+
+    if (!session.url) {
+      return NextResponse.json({ error: 'Failed to create checkout session' }, { status: 500 });
+    }
 
     return NextResponse.json({ url: session.url });
   } catch (error) {
     console.error('Checkout error:', error);
-    return new NextResponse('Internal Server Error', { status: 500 });
+    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }

@@ -100,16 +100,28 @@ export default function SubscriptionManagement() {
     },
   });
 
+  const deleteCoupon = api.dashboard.deleteSubscriptionCoupon.useMutation({
+    onSuccess: () => {
+      utils.dashboard.fetchSubscriptionCoupons.invalidate();
+      toast.success('Coupon deleted successfully');
+    },
+    onError: (error) => {
+      toast.error(error.message);
+    },
+  });
+
+  console.log(couponData);
+
   const handleCreateCoupon = () => {
     if (!couponData.planId) {
       toast.error('Please select a subscription plan');
       return;
     }
 
-    const discountDecimal = Number(couponData.discountPercent) / 100;
+    const discountPercent = Number(couponData.discountPercent);
 
     createCoupon.mutate({
-      discountPercent: discountDecimal,
+      discountPercent: discountPercent,
       maxUses: couponData.maxUses ? Number(couponData.maxUses) : undefined,
       expiresAt: couponData.expiresAt ? new Date(couponData.expiresAt) : undefined,
       planId: couponData.planId,
@@ -255,7 +267,11 @@ export default function SubscriptionManagement() {
                       <TableRow key={coupon.id}>
                         <TableCell>{coupon.code}</TableCell>
                         <TableCell>{coupon.planId}</TableCell>
-                        <TableCell>{(coupon.discountPercent * 100).toFixed(0)}%</TableCell>
+                        <TableCell>
+                          {coupon.discountPercent === 0 
+                            ? 'No discount' 
+                            : `${(coupon.discountPercent * 100).toFixed(0)}%`}
+                        </TableCell>
                         <TableCell>{coupon.company}</TableCell>
                         <TableCell>
                           {coupon.usedCount}/{coupon.maxUses || '∞'}
@@ -272,6 +288,17 @@ export default function SubscriptionManagement() {
                             <DropdownMenuContent align='end'>
                               <DropdownMenuItem onClick={() => copyToClipboard(coupon.code)}>Copy code</DropdownMenuItem>
                               <DropdownMenuItem onClick={() => copyToClipboard(`${window.location.origin}/subscription?code=${coupon.code}`)}>Copy link</DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() =>
+                                  deleteCoupon.mutate({
+                                    id: coupon.id,
+                                    // biome-ignore lint/style/noNonNullAssertion: <explanation>
+                                    stripeId: coupon.stripeId ?? '',
+                                  })
+                                }
+                              >
+                                Delete coupon
+                              </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
                         </TableCell>

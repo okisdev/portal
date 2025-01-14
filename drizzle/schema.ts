@@ -218,6 +218,7 @@ export const subscriptionCoupon = pgTable('subscriptionCoupon', {
   isActive: boolean().default(true),
   company: text(),
   planId: text('plan_id').notNull(),
+  stripeId: text('stripe_id'),
 });
 
 export const subscriptionPlan = pgTable('subscriptionPlan', {

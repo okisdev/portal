@@ -18,10 +18,10 @@ export default function SubscriptionPage() {
 
   const { data: plan } = api.dashboard.fetchStripeSubscriptionPlanByCouponCode.useQuery({ code: couponCode || '' }, { enabled: !!couponCode });
 
+  const { data: coupon } = api.dashboard.fetchSubscriptionCouponByCode.useQuery({ code: couponCode || '' }, { enabled: !!couponCode });
+
   const createContact = api.dashboard.addContact.useMutation();
   const createContactActivity = api.dashboard.addContactActivity.useMutation();
-
-  console.log('plan', plan);
 
   const handleCheckout = async () => {
     if (!email) {
@@ -29,19 +29,25 @@ export default function SubscriptionPage() {
       return;
     }
 
+    if (!plan?.price) {
+      toast.error('Invalid plan or price');
+      return;
+    }
+
     setLoading(true);
     try {
       const contact = await createContact.mutateAsync({
         email,
+        company: coupon?.company ?? '',
       });
 
       await createContactActivity.mutateAsync({
         contactId: contact.id,
         type: 'subscription_page',
-        title: 'Subscription Page',
-        description: 'Subscription Page',
-        initiatorType: 'system',
-        initiatorId: 'system',
+        title: 'Started Subscription Checkout',
+        description: `Started checkout for plan with coupon code: ${couponCode}`,
+        initiatorType: 'contact',
+        initiatorId: contact.id,
       });
 
       const checkoutResponse = await fetch('/api/subscription/checkout', {
@@ -56,15 +62,26 @@ export default function SubscriptionPage() {
         }),
       });
 
-      if (!checkoutResponse.ok) {
-        throw new Error('Failed to initiate checkout');
+      let data: any;
+
+      try {
+        data = await checkoutResponse.json();
+      } catch (e) {
+        throw new Error('Invalid response from server');
       }
 
-      const { url } = await checkoutResponse.json();
-      window.location.href = url;
+      if (!checkoutResponse.ok) {
+        throw new Error(typeof data.error === 'string' ? data.error : 'Failed to initiate checkout');
+      }
+
+      if (!data?.url) {
+        throw new Error('No checkout URL received');
+      }
+
+      window.location.href = data.url;
     } catch (error) {
       console.error('Checkout error:', error);
-      toast.error('Failed to initiate checkout');
+      toast.error(error instanceof Error ? error.message : 'Failed to initiate checkout');
     } finally {
       setLoading(false);
     }
@@ -81,8 +98,8 @@ export default function SubscriptionPage() {
             {plan && (
               <div className='rounded-lg bg-muted p-4'>
                 <h3 className='font-semibold'>Plan Details</h3>
-                {/* <p>Price: ${plan.unit_amount}</p> */}
-                {/* {couponCode && <p className='text-green-600'>Discount: {planDetails.}% off</p>} */}
+                <p>Price: ${(plan.price?.unit_amount ?? 0) / 100}</p>
+                {couponCode && plan.discountPercent > 0 && <p className='text-green-600'>Discount: {plan.discountPercent * 100}% off</p>}
               </div>
             )}
 
