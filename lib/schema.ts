@@ -1,4 +1,6 @@
 import { z } from 'zod';
+import { createSelectSchema } from 'drizzle-zod';
+import { user } from '@/drizzle/schema';
 
 export const credentialSchema = z.object({
   email: z.string().min(1, 'Email is required').email('Invalid email'),
@@ -17,3 +19,11 @@ export type Status = z.infer<typeof statusSchema>;
 export const prioritySchema = z.enum(['urgent', 'high', 'medium', 'low']);
 
 export type Priority = z.infer<typeof prioritySchema>;
+
+export const userRoleSchema = z.enum(['ADMIN', 'SALES', 'MANAGER', 'USER']);
+
+export type UserRole = z.infer<typeof userRoleSchema>;
+
+export const userSchema = createSelectSchema(user);
+
+export type User = z.infer<typeof userSchema>;

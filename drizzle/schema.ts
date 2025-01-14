@@ -17,6 +17,8 @@ export const user = pgTable(
     emailVerified: timestamp({ mode: 'string' }),
     password: text(),
     image: text(),
+    role: text('role', { enum: ['ADMIN', 'SALES', 'MANAGER', 'USER'] }).default('USER'),
+    username: text().unique(),
   },
   (table) => [unique('user_email_unique').on(table.email)]
 );

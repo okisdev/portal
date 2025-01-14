@@ -4,6 +4,7 @@ import { dashboardRouter } from '@/server/routers/dashboard';
 import type { inferReactQueryProcedureOptions } from '@trpc/react-query';
 import type { inferRouterInputs, inferRouterOutputs } from '@trpc/server';
 import { createCallerFactory, createTRPCRouter } from './trpc';
+import { adminRouter } from '@/server/routers/admin';
 /**
  * This is the primary router for your server.
  *
@@ -11,6 +12,7 @@ import { createCallerFactory, createTRPCRouter } from './trpc';
  */
 export const appRouter = createTRPCRouter({
   auth: authRouter,
+  admin: adminRouter,
   account: accountRouter,
   dashboard: dashboardRouter,
 });
