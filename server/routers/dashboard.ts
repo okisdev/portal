@@ -22,20 +22,24 @@ export const dashboardRouter = createTRPCRouter({
   addContact: protectedProcedure
     .input(
       z.object({
-        firstName: z.string(),
-        lastName: z.string(),
+        firstName: z.string().optional(),
+        lastName: z.string().optional(),
         email: z.string(),
-        phone: z.string(),
+        phone: z.string().optional(),
       })
     )
-    .mutation(({ ctx, input }) => {
-      return ctx.db.insert(contact).values({
-        name: `${input.firstName} ${input.lastName}`,
-        email: input.email,
-        phone: input.phone,
-        firstName: input.firstName,
-        lastName: input.lastName,
-      });
+    .mutation(async ({ ctx, input }) => {
+      const result = await ctx.db
+        .insert(contact)
+        .values({
+          firstName: input.firstName ?? '',
+          lastName: input.lastName ?? '',
+          email: input.email,
+          phone: input.phone ?? '',
+        })
+        .returning();
+
+      return result[0];
     }),
 
   getContactActivities: protectedProcedure.input(z.object({ id: z.string() })).query(({ ctx, input }) => {
@@ -133,10 +137,31 @@ export const dashboardRouter = createTRPCRouter({
         metadata: {
           price: price?.unit_amount || 0,
           interval: price?.recurring?.interval || 'month',
+          currency: price?.currency || 'usd',
         },
         priceId: price?.id,
       };
     });
+  }),
+
+  fetchStripeSubscriptionPlanByCouponCode: protectedProcedure.input(z.object({ code: z.string() })).query(async ({ ctx, input }) => {
+    const coupon = await ctx.db
+      .select()
+      .from(subscriptionCoupon)
+      .where(eq(subscriptionCoupon.code, input.code))
+      .then((rows) => rows[0]);
+
+    // const product = await stripe.products.retrieve(coupon.planId);
+    // const price = await stripe.prices.retrieve(product.id);
+
+    const productPrices = await stripe.prices.list({
+      expand: ['data.product'],
+      active: true,
+    });
+
+    const product = productPrices.data.find((price) => price.id === coupon.planId);
+
+    return product;
   }),
 
   fetchSubscriptionPlans: protectedProcedure.query(async ({ ctx }) => {
@@ -168,4 +193,96 @@ export const dashboardRouter = createTRPCRouter({
         company: input.company,
       });
     }),
+
+  createStripePlan: protectedProcedure
+    .input(
+      z.object({
+        name: z.string(),
+        description: z.string().optional(),
+        price: z.number(),
+        interval: z.enum(['month', 'year']),
+        currency: z.enum(['usd', 'eur', 'gbp', 'hkd']),
+      })
+    )
+    .mutation(async ({ input }) => {
+      try {
+        const product = await stripe.products.create({
+          name: input.name,
+          description: input.description,
+          active: true,
+        });
+
+        const price = await stripe.prices.create({
+          product: product.id,
+          unit_amount: input.price,
+          currency: input.currency,
+          recurring: {
+            interval: input.interval,
+          },
+        });
+
+        return { product, price };
+      } catch (error) {
+        throw new Error('Failed to create subscription plan');
+      }
+    }),
+
+  updateStripePlan: protectedProcedure
+    .input(
+      z.object({
+        productId: z.string(),
+        name: z.string(),
+        description: z.string().optional(),
+        active: z.boolean(),
+      })
+    )
+    .mutation(async ({ input }) => {
+      try {
+        const product = await stripe.products.update(input.productId, {
+          name: input.name,
+          description: input.description,
+          active: input.active,
+        });
+
+        return product;
+      } catch (error) {
+        throw new Error('Failed to update subscription plan');
+      }
+    }),
+
+  createStripePlanPrice: protectedProcedure
+    .input(
+      z.object({
+        productId: z.string(),
+        price: z.number(),
+        interval: z.enum(['month', 'year']),
+        currency: z.enum(['usd', 'eur', 'gbp', 'hkd']),
+      })
+    )
+    .mutation(async ({ input }) => {
+      try {
+        const price = await stripe.prices.create({
+          product: input.productId,
+          unit_amount: input.price,
+          currency: input.currency,
+          recurring: {
+            interval: input.interval,
+          },
+        });
+
+        return price;
+      } catch (error) {
+        throw new Error('Failed to create price');
+      }
+    }),
+
+  fetchStripePlanByCouponCode: protectedProcedure.input(z.object({ code: z.string() })).query(async ({ ctx, input }) => {
+    const coupon = await ctx.db
+      .select()
+      .from(subscriptionCoupon)
+      .where(eq(subscriptionCoupon.code, input.code))
+      .then((rows) => rows[0]);
+
+    return await stripe.prices.retrieve(coupon.planId);
+  }),
 });

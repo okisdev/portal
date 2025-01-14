@@ -14,6 +14,7 @@ import { api } from '@/utils/trpc/client';
 import { MoreHorizontal } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
+import type Stripe from 'stripe';
 
 type Plan = {
   id: string;
@@ -22,7 +23,8 @@ type Plan = {
   active: boolean;
   metadata: {
     price: number;
-    interval: string;
+    interval: Stripe.Price.Recurring.Interval;
+    currency: string;
   };
   priceId: string | undefined;
 };
@@ -47,6 +49,15 @@ export default function SubscriptionManagement() {
     team: '',
   });
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [planDialogOpen, setPlanDialogOpen] = useState(false);
+  const [editingPlan, setEditingPlan] = useState<Plan | null>(null);
+  const [planData, setPlanData] = useState({
+    name: '',
+    description: '',
+    price: '',
+    interval: 'month' as 'month' | 'year',
+    currency: 'usd' as 'usd' | 'eur' | 'gbp' | 'hkd',
+  });
 
   const utils = api.useUtils();
 
@@ -63,6 +74,31 @@ export default function SubscriptionManagement() {
   const { data: coupons } = api.dashboard.fetchSubscriptionCoupons.useQuery();
 
   const { data: stripePlans } = api.dashboard.fetchStripeSubscriptionPlans.useQuery();
+
+  const createPlan = api.dashboard.createStripePlan.useMutation({
+    onSuccess: () => {
+      utils.dashboard.fetchStripeSubscriptionPlans.invalidate();
+      toast.success('Plan created successfully');
+      setPlanDialogOpen(false);
+      setPlanData({ name: '', description: '', price: '', interval: 'month', currency: 'usd' });
+    },
+  });
+
+  const updatePlan = api.dashboard.updateStripePlan.useMutation({
+    onSuccess: () => {
+      utils.dashboard.fetchStripeSubscriptionPlans.invalidate();
+      toast.success('Plan updated successfully');
+      setPlanDialogOpen(false);
+      setEditingPlan(null);
+    },
+  });
+
+  const createPrice = api.dashboard.createStripePlanPrice.useMutation({
+    onSuccess: () => {
+      utils.dashboard.fetchStripeSubscriptionPlans.invalidate();
+      toast.success('Price added successfully');
+    },
+  });
 
   const handleCreateCoupon = () => {
     if (!couponData.planId) {
@@ -89,6 +125,36 @@ export default function SubscriptionManagement() {
       company: '',
       planId: '',
       team: '',
+    });
+  };
+
+  const handleCreatePlan = () => {
+    createPlan.mutate({
+      name: planData.name,
+      description: planData.description,
+      price: Math.round(Number(planData.price) * 100),
+      interval: planData.interval,
+      currency: planData.currency,
+    });
+  };
+
+  const handleUpdatePlan = () => {
+    if (!editingPlan) return;
+
+    updatePlan.mutate({
+      productId: editingPlan.id,
+      name: planData.name,
+      description: planData.description,
+      active: true,
+    });
+  };
+
+  const handleAddPrice = (productId: string) => {
+    createPrice.mutate({
+      productId,
+      price: Math.round(Number(planData.price) * 100),
+      interval: planData.interval,
+      currency: planData.currency,
     });
   };
 
@@ -222,12 +288,70 @@ export default function SubscriptionManagement() {
           <Card>
             <CardHeader className='flex flex-row items-center justify-between'>
               <CardTitle>Subscription Plans</CardTitle>
+              <Dialog open={planDialogOpen} onOpenChange={setPlanDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button>Create New Plan</Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>{editingPlan ? 'Edit Plan' : 'Create New Plan'}</DialogTitle>
+                  </DialogHeader>
+                  <div className='space-y-4'>
+                    <div>
+                      <Label htmlFor='name'>Plan Name</Label>
+                      <Input id='name' value={planData.name} onChange={(e) => setPlanData({ ...planData, name: e.target.value })} placeholder='Enter plan name' />
+                    </div>
+
+                    <div>
+                      <Label htmlFor='description'>Description</Label>
+                      <Input id='description' value={planData.description} onChange={(e) => setPlanData({ ...planData, description: e.target.value })} placeholder='Enter plan description' />
+                    </div>
+
+                    <div className='grid grid-cols-3 gap-4'>
+                      <div className='col-span-2'>
+                        <Label htmlFor='price'>Price</Label>
+                        <Input id='price' type='number' value={planData.price} onChange={(e) => setPlanData({ ...planData, price: e.target.value })} placeholder='Enter price' />
+                      </div>
+                      <div>
+                        <Label htmlFor='currency'>Currency</Label>
+                        <Select value={planData.currency} onValueChange={(value: 'usd' | 'eur' | 'gbp' | 'hkd') => setPlanData({ ...planData, currency: value })}>
+                          <SelectTrigger>
+                            <SelectValue placeholder='Select currency' />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value='usd'>USD</SelectItem>
+                            <SelectItem value='eur'>EUR</SelectItem>
+                            <SelectItem value='gbp'>GBP</SelectItem>
+                            <SelectItem value='hkd'>HKD</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+
+                    <div>
+                      <Label htmlFor='interval'>Billing Interval</Label>
+                      <Select value={planData.interval} onValueChange={(value: 'month' | 'year') => setPlanData({ ...planData, interval: value })}>
+                        <SelectTrigger>
+                          <SelectValue placeholder='Select interval' />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value='month'>Monthly</SelectItem>
+                          <SelectItem value='year'>Yearly</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <Button onClick={editingPlan ? handleUpdatePlan : handleCreatePlan}>{editingPlan ? 'Update Plan' : 'Create Plan'}</Button>
+                  </div>
+                </DialogContent>
+              </Dialog>
             </CardHeader>
             <CardContent>
               <Table>
                 <TableHeader>
                   <TableRow>
                     <TableHead>Name</TableHead>
+                    <TableHead>Description</TableHead>
                     <TableHead>Price</TableHead>
                     <TableHead>Interval</TableHead>
                     <TableHead>Status</TableHead>
@@ -238,13 +362,50 @@ export default function SubscriptionManagement() {
                   {stripePlans?.map((plan) => (
                     <TableRow key={plan.id}>
                       <TableCell>{plan.name}</TableCell>
-                      <TableCell>${plan.metadata.price / 100}</TableCell>
+                      <TableCell>{plan.description}</TableCell>
+                      <TableCell>
+                        {plan.metadata.currency.toUpperCase()} {plan.metadata.price / 100}
+                      </TableCell>
                       <TableCell>{plan.metadata.interval}</TableCell>
                       <TableCell>{plan.active ? 'Active' : 'Inactive'}</TableCell>
-                      <TableCell className='text-right'>
-                        <Button variant='outline' size='sm'>
-                          Edit
-                        </Button>
+                      <TableCell className='space-x-2 text-right'>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant='ghost' className='h-8 w-8 p-0'>
+                              <span className='sr-only'>Open menu</span>
+                              <MoreHorizontal className='h-4 w-4' />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align='end'>
+                            <DropdownMenuItem
+                              onClick={() => {
+                                setPlanData({
+                                  name: plan.name,
+                                  description: plan.description || '',
+                                  price: (plan.metadata.price / 100).toString(),
+                                  interval: plan.metadata.interval as 'month' | 'year',
+                                  currency: plan.metadata.currency as 'usd' | 'eur' | 'gbp' | 'hkd',
+                                });
+                                setEditingPlan(plan);
+                                setPlanDialogOpen(true);
+                              }}
+                            >
+                              Edit plan
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => {
+                                setPlanData({
+                                  ...planData,
+                                  price: '',
+                                  interval: 'month',
+                                });
+                                handleAddPrice(plan.id);
+                              }}
+                            >
+                              Add price
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </TableCell>
                     </TableRow>
                   ))}

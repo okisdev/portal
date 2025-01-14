@@ -4,33 +4,24 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { api } from '@/utils/trpc/client';
 import { useSearchParams } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { toast } from 'sonner';
 
 export default function SubscriptionPage() {
   const searchParams = useSearchParams();
-  const couponCode = searchParams.get('coupon');
+  const couponCode = searchParams.get('code');
 
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
-  const [planDetails, setPlanDetails] = useState<any>(null);
 
-  useEffect(() => {
-    if (couponCode) {
-      fetchPlanDetails();
-    }
-  }, [couponCode]);
+  const { data: plan } = api.dashboard.fetchStripeSubscriptionPlanByCouponCode.useQuery({ code: couponCode || '' }, { enabled: !!couponCode });
 
-  const fetchPlanDetails = async () => {
-    try {
-      const response = await fetch(`/api/subscription/plan?coupon=${couponCode}`);
-      const data = await response.json();
-      setPlanDetails(data);
-    } catch (error) {
-      toast.error('Failed to load plan details');
-    }
-  };
+  const createContact = api.dashboard.addContact.useMutation();
+  const createContactActivity = api.dashboard.addContactActivity.useMutation();
+
+  console.log('plan', plan);
 
   const handleCheckout = async () => {
     if (!email) {
@@ -40,26 +31,19 @@ export default function SubscriptionPage() {
 
     setLoading(true);
     try {
-      // First create or get the contact
-      const contactResponse = await fetch('/api/contacts', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email,
-          source: 'subscription_page',
-          status: 'lead',
-        }),
+      const contact = await createContact.mutateAsync({
+        email,
       });
 
-      if (!contactResponse.ok) {
-        throw new Error('Failed to create contact');
-      }
+      await createContactActivity.mutateAsync({
+        contactId: contact.id,
+        type: 'subscription_page',
+        title: 'Subscription Page',
+        description: 'Subscription Page',
+        initiatorType: 'system',
+        initiatorId: 'system',
+      });
 
-      const { id: contactId } = await contactResponse.json();
-
-      // Then initiate checkout with the contact ID
       const checkoutResponse = await fetch('/api/subscription/checkout', {
         method: 'POST',
         headers: {
@@ -68,7 +52,7 @@ export default function SubscriptionPage() {
         body: JSON.stringify({
           email,
           couponCode,
-          contactId,
+          contactId: contact.id,
         }),
       });
 
@@ -77,7 +61,7 @@ export default function SubscriptionPage() {
       }
 
       const { url } = await checkoutResponse.json();
-      window.location.href = url; // Redirect to Stripe checkout
+      window.location.href = url;
     } catch (error) {
       console.error('Checkout error:', error);
       toast.error('Failed to initiate checkout');
@@ -88,17 +72,17 @@ export default function SubscriptionPage() {
 
   return (
     <div className='container mx-auto p-6'>
-      <Card className='max-w-md mx-auto'>
+      <Card className='mx-auto max-w-md'>
         <CardHeader>
           <CardTitle>Subscribe to Our Service</CardTitle>
         </CardHeader>
         <CardContent>
           <div className='space-y-4'>
-            {planDetails && (
-              <div className='bg-muted p-4 rounded-lg'>
+            {plan && (
+              <div className='rounded-lg bg-muted p-4'>
                 <h3 className='font-semibold'>Plan Details</h3>
-                <p>Price: ${planDetails.price}</p>
-                {couponCode && <p className='text-green-600'>Discount: {planDetails.discountPercent}% off</p>}
+                {/* <p>Price: ${plan.unit_amount}</p> */}
+                {/* {couponCode && <p className='text-green-600'>Discount: {planDetails.}% off</p>} */}
               </div>
             )}
 
