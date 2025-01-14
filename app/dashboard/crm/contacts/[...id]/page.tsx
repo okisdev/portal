@@ -1,7 +1,7 @@
 'use client';
 
 import { ColorBadge } from '@/components/shared/color-badge';
-import { CompanyCombobox } from '@/components/shared/company-combobox';
+import { Combobox } from '@/components/shared/combobox';
 import { PhoneInput } from '@/components/shared/phone-input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { insuranceCompanies } from '@/data/data';
 import type { Priority, Status } from '@/lib/schema';
 import { formatDate, isDev } from '@/lib/utils';
 import { api } from '@/utils/trpc/client';
@@ -171,7 +172,14 @@ export default function ContactIdPage() {
             </div>
             <div className='space-y-2'>
               <Label htmlFor='company'>Company</Label>
-              <CompanyCombobox value={editForm.company} onChange={(value) => setEditForm({ ...editForm, company: value })} />
+              <Combobox
+                value={editForm.company}
+                onChange={(value) => setEditForm({ ...editForm, company: value })}
+                items={insuranceCompanies}
+                placeholder='Select company...'
+                searchPlaceholder='Search company...'
+                groupHeading='Companies'
+              />
             </div>
             <div className='space-y-2'>
               <Label htmlFor='status'>Status</Label>
