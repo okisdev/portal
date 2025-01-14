@@ -1,5 +1,6 @@
 'use client';
 
+import { ColorBadge } from '@/components/shared/color-badge';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -12,36 +13,6 @@ import { Filter } from 'lucide-react';
 import { X } from 'lucide-react';
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
-
-export function getStatusBadgeColor(status: string) {
-  switch (status) {
-    case 'lead':
-      return 'bg-yellow-100 text-yellow-800';
-    case 'prospect':
-      return 'bg-blue-100 text-blue-800';
-    case 'customer':
-      return 'bg-green-100 text-green-800';
-    case 'churned':
-      return 'bg-red-100 text-red-800';
-    case 'opportunity':
-      return 'bg-purple-100 text-purple-800';
-    default:
-      return 'bg-gray-100 text-gray-800';
-  }
-}
-
-export function getPriorityBadgeColor(priority: string) {
-  switch (priority) {
-    case 'high':
-      return 'bg-red-100 text-red-800';
-    case 'medium':
-      return 'bg-orange-100 text-orange-800';
-    case 'low':
-      return 'bg-green-100 text-green-800';
-    default:
-      return 'bg-gray-100 text-gray-800';
-  }
-}
 
 type SortConfig = {
   column: string;
@@ -228,15 +199,13 @@ export default function CRMContactsPage() {
                 </TableCell>
                 <TableCell>{contact.email}</TableCell>
                 <TableCell>
-                  <span className={`inline-block rounded-full px-2 py-1 text-sm ${getStatusBadgeColor(contact.status)}`}>{contact.status.charAt(0).toUpperCase() + contact.status.slice(1)}</span>
+                  <ColorBadge type='status' value={contact.status} />
                 </TableCell>
                 <TableCell>
                   <span className='capitalize'>{contact.source?.replace('_', ' ') || '—'}</span>
                 </TableCell>
                 <TableCell>
-                  <span className={`inline-block rounded-full px-2 py-1 text-sm ${getPriorityBadgeColor(contact.priority ?? 'medium')}`}>
-                    {(contact.priority ?? 'medium').charAt(0).toUpperCase() + (contact.priority ?? 'medium').slice(1)}
-                  </span>
+                  <ColorBadge type='priority' value={contact.priority ?? 'medium'} />
                 </TableCell>
                 <TableCell>{formatDate(new Date(contact.createdAt))}</TableCell>
               </TableRow>

@@ -1,5 +1,6 @@
 'use client';
 
+import { ColorBadge } from '@/components/shared/color-badge';
 import { CompanyCombobox } from '@/components/shared/company-combobox';
 import { PhoneInput } from '@/components/shared/phone-input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -16,36 +17,6 @@ import { useSession } from 'next-auth/react';
 import Link from 'next/link';
 import { notFound, useParams } from 'next/navigation';
 import { useState } from 'react';
-
-export function getStatusBadgeColor(status: string) {
-  switch (status) {
-    case 'lead':
-      return 'bg-yellow-100 text-yellow-800';
-    case 'prospect':
-      return 'bg-blue-100 text-blue-800';
-    case 'customer':
-      return 'bg-green-100 text-green-800';
-    case 'churned':
-      return 'bg-red-100 text-red-800';
-    case 'opportunity':
-      return 'bg-purple-100 text-purple-800';
-    default:
-      return 'bg-gray-100 text-gray-800';
-  }
-}
-
-export function getPriorityBadgeColor(priority: string) {
-  switch (priority) {
-    case 'high':
-      return 'bg-red-100 text-red-800';
-    case 'medium':
-      return 'bg-orange-100 text-orange-800';
-    case 'low':
-      return 'bg-green-100 text-green-800';
-    default:
-      return 'bg-gray-100 text-gray-800';
-  }
-}
 
 export default function ContactIdPage() {
   const { id: contactId } = useParams<{ id: string }>();
@@ -268,15 +239,11 @@ export default function ContactIdPage() {
               </div>
               <div>
                 <p className='text-gray-500 text-sm'>Stage</p>
-                <span className={`inline-block rounded-full px-2 py-1 text-sm ${getStatusBadgeColor(contact?.status || 'lead')}`}>
-                  {(contact?.status && contact.status.charAt(0).toUpperCase() + contact.status.slice(1)) || 'Lead'}
-                </span>
+                <ColorBadge type='status' value={contact?.status || 'lead'} />
               </div>
               <div>
                 <p className='text-gray-500 text-sm'>Priority</p>
-                <span className={`inline-block rounded-full px-2 py-1 text-sm ${getPriorityBadgeColor(contact?.priority || 'medium')}`}>
-                  {(contact?.priority && contact.priority.charAt(0).toUpperCase() + contact.priority.slice(1)) || 'Medium'}
-                </span>
+                <ColorBadge type='priority' value={contact?.priority || 'medium'} />
               </div>
               <div>
                 <p className='text-gray-500 text-sm'>Last Activity</p>
@@ -334,7 +301,7 @@ export default function ContactIdPage() {
         </div>
 
         <div className='space-y-6'>
-          <div className='rounded-lg border p-4 space-y-1'>
+          <div className='space-y-1 rounded-lg border p-4'>
             <h2 className='mb-2 font-semibold text-lg'>Personal Information</h2>
             <p className='text-gray-500 text-sm'>Company: {contact?.company || 'Unknown'}</p>
             <p className='text-gray-500 text-sm'>Phone: {contact?.phone || '—'}</p>
