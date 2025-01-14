@@ -19,7 +19,7 @@ export const dashboardRouter = createTRPCRouter({
       .then((rows) => rows[0]);
   }),
 
-  addContact: protectedProcedure
+  createContact: protectedProcedure
     .input(
       z.object({
         firstName: z.string().optional(),
@@ -58,7 +58,7 @@ export const dashboardRouter = createTRPCRouter({
     return ctx.db.select().from(contactActivity).where(eq(contactActivity.contactId, input.id)).orderBy(desc(contactActivity.createdAt));
   }),
 
-  addContactActivity: protectedProcedure
+  createContactActivity: protectedProcedure
     .input(
       z.object({
         contactId: z.string(),

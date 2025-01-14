@@ -6,10 +6,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { api } from '@/utils/trpc/client';
 import { useSearchParams } from 'next/navigation';
-import { useState } from 'react';
+import { Suspense, useState } from 'react';
 import { toast } from 'sonner';
 
-export default function SubscriptionPage() {
+const SubscriptionContent = () => {
   const searchParams = useSearchParams();
   const couponCode = searchParams.get('code');
 
@@ -20,8 +20,8 @@ export default function SubscriptionPage() {
 
   const { data: coupon } = api.dashboard.fetchSubscriptionCouponByCode.useQuery({ code: couponCode || '' }, { enabled: !!couponCode });
 
-  const createContact = api.dashboard.addContact.useMutation();
-  const createContactActivity = api.dashboard.addContactActivity.useMutation();
+  const createContact = api.dashboard.createContact.useMutation();
+  const createContactActivity = api.dashboard.createContactActivity.useMutation();
 
   const handleCheckout = async () => {
     if (!email) {
@@ -122,5 +122,13 @@ export default function SubscriptionPage() {
         </CardContent>
       </Card>
     </div>
+  );
+};
+
+export default function SubscriptionPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <SubscriptionContent />
+    </Suspense>
   );
 }

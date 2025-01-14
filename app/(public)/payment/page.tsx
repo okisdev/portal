@@ -4,8 +4,9 @@ import { Button } from '@/components/ui/button';
 import { CheckCircle2, XCircle } from 'lucide-react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
+import { Suspense } from 'react';
 
-export default function PaymentPage() {
+const PaymentContent = () => {
   const searchParams = useSearchParams();
   const mode = searchParams.get('mode');
 
@@ -53,5 +54,13 @@ export default function PaymentPage() {
         </Button>
       </div>
     </div>
+  );
+};
+
+export default function PaymentPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <PaymentContent />
+    </Suspense>
   );
 }
