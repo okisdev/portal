@@ -23,7 +23,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
 export function DashboardSidebar() {
-  const { data: me } = api.account.getMe.useQuery();
+  const { data: me } = api.account.getMeFromDatabase.useQuery();
 
   const router = useRouter();
 
@@ -142,11 +142,10 @@ export function DashboardSidebar() {
                 </SidebarMenuButton>
               </DropdownMenuTrigger>
               <DropdownMenuContent side='top' className='w-[--radix-popper-anchor-width]'>
-                <DropdownMenuItem>
-                  <span>Account</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem>
-                  <span>Billing</span>
+                <DropdownMenuItem asChild>
+                  <Link href='/dashboard/account/settings' className='cursor-pointer'>
+                    <span>Account</span>
+                  </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => signOut()}>
                   <span>Sign out</span>

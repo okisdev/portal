@@ -20,7 +20,17 @@ export const accountRouter = createTRPCRouter({
 
   getMeFromDatabase: protectedProcedure.query(({ ctx }) => {
     return ctx.db
-      .select()
+      .select({
+        id: user.id,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
+        image: user.image,
+        name: user.name,
+        emailVerified: user.emailVerified,
+        role: user.role,
+        username: user.username,
+      })
       .from(user)
       .where(eq(user.id, ctx.session.user.id))
       .then(([user]) => user);
