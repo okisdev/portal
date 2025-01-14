@@ -47,9 +47,9 @@ export default function SubscriptionManagement() {
 
   const utils = api.useUtils();
 
-  const createCoupon = api.subscription.createSubscriptionCoupon.useMutation({
+  const createCoupon = api.pay.createSubscriptionCoupon.useMutation({
     onSuccess: () => {
-      utils.subscription.fetchSubscriptionCoupons.invalidate();
+      utils.pay.fetchSubscriptionCoupons.invalidate();
       toast.success('Coupon created successfully');
     },
     onError: (error) => {
@@ -57,38 +57,38 @@ export default function SubscriptionManagement() {
     },
   });
 
-  const { data: coupons } = api.subscription.fetchSubscriptionCoupons.useQuery();
+  const { data: coupons } = api.pay.fetchSubscriptionCoupons.useQuery();
 
-  const { data: stripePlans } = api.subscription.fetchSubscriptionPlans.useQuery();
+  const { data: stripePlans } = api.pay.fetchSubscriptionPlans.useQuery();
 
-  const createPlan = api.subscription.createStripePlan.useMutation({
+  const createPlan = api.pay.createStripePlan.useMutation({
     onSuccess: () => {
-      utils.subscription.fetchSubscriptionPlans.invalidate();
+      utils.pay.fetchSubscriptionPlans.invalidate();
       toast.success('Plan created successfully');
       setPlanDialogOpen(false);
       setPlanData({ name: '', description: '', price: '', interval: 'month', currency: 'usd' });
     },
   });
 
-  const updatePlan = api.subscription.updateStripePlan.useMutation({
+  const updatePlan = api.pay.updateStripePlan.useMutation({
     onSuccess: () => {
-      utils.subscription.fetchStripeSubscriptionPlans.invalidate();
+      utils.pay.fetchStripeSubscriptionPlans.invalidate();
       toast.success('Plan updated successfully');
       setPlanDialogOpen(false);
       setEditingPlan(null);
     },
   });
 
-  const createPrice = api.subscription.createStripePlanPrice.useMutation({
+  const createPrice = api.pay.createStripePlanPrice.useMutation({
     onSuccess: () => {
-      utils.subscription.fetchStripeSubscriptionPlans.invalidate();
+      utils.pay.fetchStripeSubscriptionPlans.invalidate();
       toast.success('Price added successfully');
     },
   });
 
-  const deleteCoupon = api.subscription.deleteSubscriptionCoupon.useMutation({
+  const deleteCoupon = api.pay.deleteSubscriptionCoupon.useMutation({
     onSuccess: () => {
-      utils.subscription.fetchSubscriptionCoupons.invalidate();
+      utils.pay.fetchSubscriptionCoupons.invalidate();
       toast.success('Coupon deleted successfully');
     },
     onError: (error) => {

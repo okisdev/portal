@@ -6,7 +6,7 @@ import { TRPCError } from '@trpc/server';
 import { asc, eq } from 'drizzle-orm';
 import { z } from 'zod';
 
-export const subscriptionRouter = createTRPCRouter({
+export const payRouter = createTRPCRouter({
   getContactPayments: protectedProcedure
     .input(
       z.object({
