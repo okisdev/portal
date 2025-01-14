@@ -16,9 +16,9 @@ const SubscriptionContent = () => {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const { data: plan } = api.dashboard.fetchStripeSubscriptionPlanByCouponCode.useQuery({ code: couponCode || '' }, { enabled: !!couponCode });
+  const { data: plan } = api.subscription.fetchStripeSubscriptionPlanByCouponCode.useQuery({ code: couponCode || '' }, { enabled: !!couponCode });
 
-  const { data: coupon } = api.dashboard.fetchSubscriptionCouponByCode.useQuery({ code: couponCode || '' }, { enabled: !!couponCode });
+  const { data: coupon } = api.subscription.fetchSubscriptionCouponByCode.useQuery({ code: couponCode || '' }, { enabled: !!couponCode });
 
   const createContact = api.dashboard.createContact.useMutation();
   const createContactActivity = api.dashboard.createContactActivity.useMutation();

@@ -14,20 +14,6 @@ import { api } from '@/utils/trpc/client';
 import { MoreHorizontal } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
-import type Stripe from 'stripe';
-
-type Plan = {
-  id: string;
-  name: string;
-  description: string | null;
-  active: boolean;
-  metadata: {
-    price: number;
-    interval: Stripe.Price.Recurring.Interval;
-    currency: string;
-  };
-  priceId: string | undefined;
-};
 
 const copyToClipboard = async (text: string) => {
   try {
@@ -50,7 +36,7 @@ export default function SubscriptionManagement() {
   });
   const [dialogOpen, setDialogOpen] = useState(false);
   const [planDialogOpen, setPlanDialogOpen] = useState(false);
-  const [editingPlan, setEditingPlan] = useState<Plan | null>(null);
+  const [editingPlan, setEditingPlan] = useState<any | null>(null);
   const [planData, setPlanData] = useState({
     name: '',
     description: '',
@@ -61,9 +47,9 @@ export default function SubscriptionManagement() {
 
   const utils = api.useUtils();
 
-  const createCoupon = api.dashboard.createSubscriptionCoupon.useMutation({
+  const createCoupon = api.subscription.createSubscriptionCoupon.useMutation({
     onSuccess: () => {
-      utils.dashboard.fetchSubscriptionCoupons.invalidate();
+      utils.subscription.fetchSubscriptionCoupons.invalidate();
       toast.success('Coupon created successfully');
     },
     onError: (error) => {
@@ -71,46 +57,44 @@ export default function SubscriptionManagement() {
     },
   });
 
-  const { data: coupons } = api.dashboard.fetchSubscriptionCoupons.useQuery();
+  const { data: coupons } = api.subscription.fetchSubscriptionCoupons.useQuery();
 
-  const { data: stripePlans } = api.dashboard.fetchStripeSubscriptionPlans.useQuery();
+  const { data: stripePlans } = api.subscription.fetchSubscriptionPlans.useQuery();
 
-  const createPlan = api.dashboard.createStripePlan.useMutation({
+  const createPlan = api.subscription.createStripePlan.useMutation({
     onSuccess: () => {
-      utils.dashboard.fetchStripeSubscriptionPlans.invalidate();
+      utils.subscription.fetchSubscriptionPlans.invalidate();
       toast.success('Plan created successfully');
       setPlanDialogOpen(false);
       setPlanData({ name: '', description: '', price: '', interval: 'month', currency: 'usd' });
     },
   });
 
-  const updatePlan = api.dashboard.updateStripePlan.useMutation({
+  const updatePlan = api.subscription.updateStripePlan.useMutation({
     onSuccess: () => {
-      utils.dashboard.fetchStripeSubscriptionPlans.invalidate();
+      utils.subscription.fetchStripeSubscriptionPlans.invalidate();
       toast.success('Plan updated successfully');
       setPlanDialogOpen(false);
       setEditingPlan(null);
     },
   });
 
-  const createPrice = api.dashboard.createStripePlanPrice.useMutation({
+  const createPrice = api.subscription.createStripePlanPrice.useMutation({
     onSuccess: () => {
-      utils.dashboard.fetchStripeSubscriptionPlans.invalidate();
+      utils.subscription.fetchStripeSubscriptionPlans.invalidate();
       toast.success('Price added successfully');
     },
   });
 
-  const deleteCoupon = api.dashboard.deleteSubscriptionCoupon.useMutation({
+  const deleteCoupon = api.subscription.deleteSubscriptionCoupon.useMutation({
     onSuccess: () => {
-      utils.dashboard.fetchSubscriptionCoupons.invalidate();
+      utils.subscription.fetchSubscriptionCoupons.invalidate();
       toast.success('Coupon deleted successfully');
     },
     onError: (error) => {
       toast.error(error.message);
     },
   });
-
-  console.log(couponData);
 
   const handleCreateCoupon = () => {
     if (!couponData.planId) {
@@ -201,7 +185,7 @@ export default function SubscriptionManagement() {
                             <SelectValue placeholder='Select a plan' />
                           </SelectTrigger>
                           <SelectContent>
-                            {stripePlans?.map((plan: Plan) => (
+                            {stripePlans?.map((plan: any) => (
                               <SelectItem key={plan.id} value={plan.id}>
                                 {plan.name} - ${plan.metadata.price / 100}/{plan.metadata.interval}
                               </SelectItem>
@@ -267,11 +251,7 @@ export default function SubscriptionManagement() {
                       <TableRow key={coupon.id}>
                         <TableCell>{coupon.code}</TableCell>
                         <TableCell>{coupon.planId}</TableCell>
-                        <TableCell>
-                          {coupon.discountPercent === 0 
-                            ? 'No discount' 
-                            : `${(coupon.discountPercent * 100).toFixed(0)}%`}
-                        </TableCell>
+                        <TableCell>{coupon.discountPercent === 0 ? 'No discount' : `${(coupon.discountPercent * 100).toFixed(0)}%`}</TableCell>
                         <TableCell>{coupon.company}</TableCell>
                         <TableCell>
                           {coupon.usedCount}/{coupon.maxUses || '∞'}
@@ -386,7 +366,7 @@ export default function SubscriptionManagement() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {stripePlans?.map((plan) => (
+                  {stripePlans?.map((plan: any) => (
                     <TableRow key={plan.id}>
                       <TableCell>{plan.name}</TableCell>
                       <TableCell>{plan.description}</TableCell>
