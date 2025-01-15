@@ -1,10 +1,15 @@
-import { Contact, Gift, Link, Settings, Users } from 'lucide-react';
+import { Coins, Contact, Gift, Link, Settings, Users } from 'lucide-react';
 
 export const crmItems = [
   {
     title: 'Contacts',
     url: '/dashboard/crm/contacts',
     icon: Contact,
+  },
+  {
+    title: 'Payments',
+    url: '/dashboard/crm/payments',
+    icon: Coins,
   },
 ];
 

@@ -1,5 +1,4 @@
 import { contact, contactActivity } from '@/drizzle/schema';
-import { stripe } from '@/lib/payment';
 import { prioritySchema, statusSchema } from '@/lib/schema';
 import { createTRPCRouter, protectedProcedure } from '@/server/trpc';
 import { desc, eq } from 'drizzle-orm';
@@ -90,8 +89,10 @@ export const dashboardRouter = createTRPCRouter({
     .input(
       z.object({
         id: z.string(),
-        name: z.string(),
-        email: z.string().email(),
+        name: z.string().optional(),
+        firstName: z.string().optional(),
+        lastName: z.string().optional(),
+        email: z.string().email().optional(),
         phone: z.string().optional(),
         company: z.string().optional(),
         priority: prioritySchema.optional(),
@@ -101,37 +102,15 @@ export const dashboardRouter = createTRPCRouter({
         skills: z.string().optional(),
         status: statusSchema.optional(),
         source: z.string().optional(),
+        lastContactedAt: z.date().optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
       const { id, ...updateData } = input;
-      return await ctx.db.update(contact).set(updateData).where(eq(contact.id, id));
-    }),
-
-  getContactPayments: protectedProcedure
-    .input(
-      z.object({
-        email: z.string(),
-      })
-    )
-    .query(async ({ input }) => {
-      try {
-        const payments = await stripe.paymentIntents.list({
-          // email: input.email,
-        });
-
-        const filteredPayments = payments.data.filter((payment) => payment.receipt_email === input.email);
-
-        return filteredPayments.map((payment) => ({
-          id: payment.id,
-          amount: payment.amount / 100,
-          status: payment.status,
-          created: payment.created,
-          currency: payment.currency,
-        }));
-      } catch (error) {
-        console.error('Error fetching payments:', error);
-        return [];
-      }
+      const name = `${input.firstName} ${input.lastName}`;
+      return await ctx.db
+        .update(contact)
+        .set({ ...updateData, name })
+        .where(eq(contact.id, id));
     }),
 });

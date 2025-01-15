@@ -34,12 +34,13 @@ export default function ContactIdPage() {
   const { data: activities, refetch: refetchActivities } = api.dashboard.getContactActivities.useQuery({
     id: contactId[0],
   });
-  const { data: payments, isLoading: isPaymentsLoading } = api.dashboard.getContactPayments.useQuery({ email: contact?.email || '' }, { enabled: !!contact?.email });
+  const { data: payments } = api.pay.getPaymentByContactEmail.useQuery({ email: contact?.email || '' }, { enabled: !!contact?.email });
 
   const [newActivity, setNewActivity] = useState('');
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editForm, setEditForm] = useState({
-    name: '',
+    firstName: '',
+    lastName: '',
     email: '',
     phone: '',
     company: '',
@@ -95,8 +96,10 @@ export default function ContactIdPage() {
   };
 
   const handleEditClick = () => {
+    const [firstName = '', lastName = ''] = contact?.name?.split(' ') || ['', ''];
     setEditForm({
-      name: contact?.name || '',
+      firstName,
+      lastName,
       email: contact?.email || '',
       phone: contact?.phone || '',
       company: contact?.company || '',
@@ -111,7 +114,42 @@ export default function ContactIdPage() {
     e.preventDefault();
     updateContact.mutate({
       id: contactId[0],
-      ...editForm,
+      firstName: editForm.firstName,
+      lastName: editForm.lastName,
+      email: editForm.email,
+      phone: editForm.phone,
+      company: editForm.company,
+      status: editForm.status,
+      source: editForm.source,
+      priority: editForm.priority,
+    });
+  };
+
+  const handleStatusChange = (value: Status) => {
+    updateContact.mutate({
+      id: contactId[0],
+      status: value,
+      firstName: contact?.firstName || '',
+      lastName: contact?.lastName || '',
+      email: contact?.email || '',
+      phone: contact?.phone || '',
+      company: contact?.company || '',
+      source: contact?.source || '',
+      priority: contact?.priority || 'medium',
+    });
+  };
+
+  const handlePriorityChange = (value: Priority) => {
+    updateContact.mutate({
+      id: contactId[0],
+      priority: value,
+      firstName: contact?.firstName || '',
+      lastName: contact?.lastName || '',
+      email: contact?.email || '',
+      phone: contact?.phone || '',
+      company: contact?.company || '',
+      source: contact?.source || '',
+      status: contact?.status || 'lead',
     });
   };
 
@@ -139,7 +177,7 @@ export default function ContactIdPage() {
             </Link>
           </Button>
           <Button variant='ghost' size='icon' asChild>
-            <Link href={`https://wa.me/${contact?.phone}`} target='_blank' rel='noopener noreferrer'>
+            <Link href={`https://wa.me/${contact?.phone?.replace(/\D/g, '')}`} target='_blank' rel='noopener noreferrer'>
               <Phone className='size-4' />
             </Link>
           </Button>
@@ -158,9 +196,15 @@ export default function ContactIdPage() {
             <DialogTitle>Edit Contact Information</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSubmitEdit} className='space-y-4'>
-            <div className='space-y-2'>
-              <Label htmlFor='name'>Name</Label>
-              <Input id='name' value={editForm.name} onChange={(e) => setEditForm({ ...editForm, name: e.target.value })} />
+            <div className='grid grid-cols-2 gap-4'>
+              <div className='space-y-2'>
+                <Label htmlFor='firstName'>First Name</Label>
+                <Input id='firstName' value={editForm.firstName} onChange={(e) => setEditForm({ ...editForm, firstName: e.target.value })} />
+              </div>
+              <div className='space-y-2'>
+                <Label htmlFor='lastName'>Last Name</Label>
+                <Input id='lastName' value={editForm.lastName} onChange={(e) => setEditForm({ ...editForm, lastName: e.target.value })} />
+              </div>
             </div>
             <div className='space-y-2'>
               <Label htmlFor='email'>Email</Label>
@@ -183,6 +227,7 @@ export default function ContactIdPage() {
             </div>
             <div className='space-y-2'>
               <Label htmlFor='status'>Status</Label>
+
               <Select value={editForm.status} onValueChange={(value) => setEditForm({ ...editForm, status: value as Status })}>
                 <SelectTrigger>
                   <SelectValue placeholder='Select status' />
@@ -198,18 +243,14 @@ export default function ContactIdPage() {
             </div>
             <div className='space-y-2'>
               <Label htmlFor='source'>Source</Label>
-              <Select value={editForm.source} onValueChange={(value) => setEditForm({ ...editForm, source: value })}>
-                <SelectTrigger>
-                  <SelectValue placeholder='Select source' />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value='social_media'>Social Media</SelectItem>
-                  <SelectItem value='referral'>Referral</SelectItem>
-                  <SelectItem value='website'>Website</SelectItem>
-                  <SelectItem value='cold_outreach'>Cold Outreach</SelectItem>
-                  <SelectItem value='event'>Event</SelectItem>
-                </SelectContent>
-              </Select>
+              <Combobox
+                value={editForm.source}
+                onChange={(value) => setEditForm({ ...editForm, source: value })}
+                items={['Pitching', 'Referral', 'Website', 'Email', 'IG', 'LinkedIn', 'Facebook', 'Other']}
+                placeholder='Select source...'
+                searchPlaceholder='Search source...'
+                groupHeading='Sources'
+              />
             </div>
             <div className='space-y-2'>
               <Label htmlFor='priority'>Priority</Label>
@@ -247,15 +288,55 @@ export default function ContactIdPage() {
               </div>
               <div>
                 <p className='text-gray-500 text-sm'>Stage</p>
-                <ColorBadge type='status' value={contact?.status || 'lead'} />
+                <Select value={contact?.status || 'lead'} onValueChange={handleStatusChange}>
+                  <SelectTrigger className='h-8'>
+                    <SelectValue>
+                      <ColorBadge type='status' value={contact?.status || 'lead'} />
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value='lead'>
+                      <ColorBadge type='status' value='lead' />
+                    </SelectItem>
+                    <SelectItem value='prospect'>
+                      <ColorBadge type='status' value='prospect' />
+                    </SelectItem>
+                    <SelectItem value='customer'>
+                      <ColorBadge type='status' value='customer' />
+                    </SelectItem>
+                    <SelectItem value='churned'>
+                      <ColorBadge type='status' value='churned' />
+                    </SelectItem>
+                    <SelectItem value='opportunity'>
+                      <ColorBadge type='status' value='opportunity' />
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
               <div>
                 <p className='text-gray-500 text-sm'>Priority</p>
-                <ColorBadge type='priority' value={contact?.priority || 'medium'} />
+                <Select value={contact?.priority || 'medium'} onValueChange={handlePriorityChange}>
+                  <SelectTrigger className='h-8'>
+                    <SelectValue>
+                      <ColorBadge type='priority' value={contact?.priority || 'medium'} />
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value='high'>
+                      <ColorBadge type='priority' value='high' />
+                    </SelectItem>
+                    <SelectItem value='medium'>
+                      <ColorBadge type='priority' value='medium' />
+                    </SelectItem>
+                    <SelectItem value='low'>
+                      <ColorBadge type='priority' value='low' />
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
               <div>
-                <p className='text-gray-500 text-sm'>Last Activity</p>
-                <p className='text-gray-500 text-sm'>—</p>
+                <p className='text-gray-500 text-sm'>Last Contacted</p>
+                <p className='text-sm'>{contact?.lastContactedAt ? formatDate(new Date(contact?.lastContactedAt)) : '—'}</p>
               </div>
             </div>
           </div>
