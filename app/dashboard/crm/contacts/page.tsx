@@ -1,9 +1,8 @@
 'use client';
 
 import { ColorBadge } from '@/components/shared/color-badge';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { formatDate } from '@/lib/utils';
@@ -20,10 +19,17 @@ type SortConfig = {
   direction: 'asc' | 'desc';
 };
 
+type FilterOperator = '=' | '!=' | 'contains' | 'startsWith' | 'endsWith';
+
+type FilterCondition = {
+  field: string;
+  operator: FilterOperator;
+  value: string;
+};
+
 type FilterConfig = {
-  status: string[];
-  priority: string[];
-  source: string[];
+  conditions: FilterCondition[];
+  matchAll: boolean; // true for AND, false for OR
 };
 
 export default function CRMContactsPage() {
@@ -35,24 +41,63 @@ export default function CRMContactsPage() {
   const [sortConfig, setSortConfig] = useState<SortConfig>({ column: '', direction: 'asc' });
 
   const [filters, setFilters] = useState<FilterConfig>({
-    status: [],
-    priority: [],
-    source: [],
+    conditions: [],
+    matchAll: true,
   });
+
+  const filterFields = [
+    { label: 'Name', value: 'name' },
+    { label: 'Email', value: 'email' },
+    { label: 'Status', value: 'status' },
+    { label: 'Priority', value: 'priority' },
+    { label: 'Source', value: 'source' },
+  ];
+
+  const filterOperators: { label: string; value: FilterOperator }[] = [
+    { label: 'Equals', value: '=' },
+    { label: 'Not equals', value: '!=' },
+    { label: 'Contains', value: 'contains' },
+    { label: 'Starts with', value: 'startsWith' },
+    { label: 'Ends with', value: 'endsWith' },
+  ];
 
   const filteredContacts = useMemo(() => {
     if (!contacts) return [];
 
     return contacts
       .filter((contact) => {
-        const searchString = `${contact.firstName} ${contact.lastName} ${contact.email} ${contact.phone}`.toLowerCase();
-        const matchesSearch = searchString.includes(search.toLowerCase());
+        if (filters.conditions.length === 0) return true;
 
-        const matchesStatus = filters.status.length === 0 || filters.status.includes(contact.status);
-        const matchesPriority = filters.priority.length === 0 || filters.priority.includes(contact.priority ?? 'medium');
-        const matchesSource = filters.source.length === 0 || filters.source.includes(contact.source ?? '');
+        const results = filters.conditions.map((condition) => {
+          let fieldValue = '';
 
-        return matchesSearch && matchesStatus && matchesPriority && matchesSource;
+          // Handle composite fields like name
+          if (condition.field === 'name') {
+            fieldValue = `${contact.firstName} ${contact.lastName}`;
+          } else {
+            fieldValue = String(contact[condition.field as keyof typeof contact] || '');
+          }
+
+          fieldValue = fieldValue.toLowerCase();
+          const compareValue = condition.value.toLowerCase();
+
+          switch (condition.operator) {
+            case '=':
+              return fieldValue === compareValue;
+            case '!=':
+              return fieldValue !== compareValue;
+            case 'contains':
+              return fieldValue.includes(compareValue);
+            case 'startsWith':
+              return fieldValue.startsWith(compareValue);
+            case 'endsWith':
+              return fieldValue.endsWith(compareValue);
+            default:
+              return false;
+          }
+        });
+
+        return filters.matchAll ? results.every(Boolean) : results.some(Boolean);
       })
       .sort((a, b) => {
         if (!sortConfig.column) return 0;
@@ -64,29 +109,12 @@ export default function CRMContactsPage() {
         if (aValue > bValue) return sortConfig.direction === 'asc' ? 1 : -1;
         return 0;
       });
-  }, [contacts, search, sortConfig, filters]);
+  }, [contacts, filters, sortConfig]);
 
   const handleSort = (column: string) => {
     setSortConfig((current) => ({
       column,
       direction: current.column === column && current.direction === 'asc' ? 'desc' : 'asc',
-    }));
-  };
-
-  const toggleFilter = (type: keyof FilterConfig, value: string) => {
-    setFilters((current) => {
-      const currentFilters = current[type];
-      return {
-        ...current,
-        [type]: currentFilters.includes(value) ? currentFilters.filter((item) => item !== value) : [...currentFilters, value],
-      };
-    });
-  };
-
-  const clearFilter = (type: keyof FilterConfig) => {
-    setFilters((current) => ({
-      ...current,
-      [type]: [],
     }));
   };
 
@@ -100,36 +128,90 @@ export default function CRMContactsPage() {
               <DropdownMenuTrigger asChild>
                 <Button variant='outline' size='sm'>
                   <Filter className='mr-2 h-4 w-4' />
-                  Filters
+                  Filters ({filters.conditions.length})
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent className='flex w-56 flex-row gap-2 p-2'>
-                <div className='flex flex-col gap-2'>
-                  <div className='mb-2 font-medium'>Status</div>
-                  {['active', 'inactive', 'lead'].map((status) => (
-                    <DropdownMenuItem key={status} onClick={() => toggleFilter('status', status)}>
-                      {filters.status.includes(status) ? '✓ ' : ''}
-                      <span className='capitalize'>{status}</span>
-                    </DropdownMenuItem>
+              <DropdownMenuContent className='w-[350px] p-4'>
+                <div className='space-y-4'>
+                  <div className='flex items-center gap-2'>
+                    <span className='font-medium text-sm'>Match:</span>
+                    <Button variant='ghost' size='sm' onClick={() => setFilters((f) => ({ ...f, matchAll: !f.matchAll }))}>
+                      {filters.matchAll ? 'ALL conditions' : 'ANY condition'}
+                    </Button>
+                  </div>
+
+                  {filters.conditions.map((condition, index) => (
+                    <div key={condition.field} className='flex items-center gap-2'>
+                      <select
+                        className='h-8 rounded-md border px-2 text-sm'
+                        value={condition.field}
+                        onChange={(e) => {
+                          const newConditions = [...filters.conditions];
+                          newConditions[index].field = e.target.value;
+                          setFilters((f) => ({ ...f, conditions: newConditions }));
+                        }}
+                      >
+                        {filterFields.map((field) => (
+                          <option key={field.value} value={field.value}>
+                            {field.label}
+                          </option>
+                        ))}
+                      </select>
+
+                      <select
+                        className='h-8 rounded-md border px-2 text-sm'
+                        value={condition.operator}
+                        onChange={(e) => {
+                          const newConditions = [...filters.conditions];
+                          newConditions[index].operator = e.target.value as FilterOperator;
+                          setFilters((f) => ({ ...f, conditions: newConditions }));
+                        }}
+                      >
+                        {filterOperators.map((op) => (
+                          <option key={op.value} value={op.value}>
+                            {op.label}
+                          </option>
+                        ))}
+                      </select>
+
+                      <Input
+                        className='h-8'
+                        value={condition.value}
+                        onChange={(e) => {
+                          const newConditions = [...filters.conditions];
+                          newConditions[index].value = e.target.value;
+                          setFilters((f) => ({ ...f, conditions: newConditions }));
+                        }}
+                      />
+
+                      <Button
+                        variant='ghost'
+                        size='sm'
+                        onClick={() => {
+                          setFilters((f) => ({
+                            ...f,
+                            conditions: f.conditions.filter((_, i) => i !== index),
+                          }));
+                        }}
+                      >
+                        <X className='h-4 w-4' />
+                      </Button>
+                    </div>
                   ))}
-                </div>
-                <div className='flex flex-col gap-2'>
-                  <div className='mb-2 font-medium'>Priority</div>
-                  {['high', 'medium', 'low'].map((priority) => (
-                    <DropdownMenuItem key={priority} onClick={() => toggleFilter('priority', priority)}>
-                      {filters.priority.includes(priority) ? '✓ ' : ''}
-                      <span className='capitalize'>{priority}</span>
-                    </DropdownMenuItem>
-                  ))}
-                </div>
-                <div className='flex flex-col gap-2'>
-                  <div className='mb-2 font-medium'>Source</div>
-                  {['website', 'referral', 'social_media'].map((source) => (
-                    <DropdownMenuItem key={source} onClick={() => toggleFilter('source', source)}>
-                      {filters.source.includes(source) ? '✓ ' : ''}
-                      <span className='capitalize'>{source.replace('_', ' ')}</span>
-                    </DropdownMenuItem>
-                  ))}
+
+                  <Button
+                    variant='outline'
+                    size='sm'
+                    className='w-full'
+                    onClick={() => {
+                      setFilters((f) => ({
+                        ...f,
+                        conditions: [...f.conditions, { field: 'name', operator: 'contains', value: '' }],
+                      }));
+                    }}
+                  >
+                    Add Condition
+                  </Button>
                 </div>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -143,28 +225,6 @@ export default function CRMContactsPage() {
             </Button>
           </div>
         </div>
-
-        {(filters.status.length > 0 || filters.priority.length > 0 || filters.source.length > 0) && (
-          <div className='flex flex-wrap gap-2'>
-            {Object.entries(filters).map(
-              ([type, values]) =>
-                values.length > 0 && (
-                  <div key={type} className='flex items-center gap-2'>
-                    <span className='text-muted-foreground text-sm capitalize'>{type}:</span>
-                    {values.map((value) => (
-                      <Badge key={value} variant='secondary' className='flex items-center gap-1'>
-                        <span className='capitalize'>{value.replace('_', ' ')}</span>
-                        <X className='h-3 w-3 cursor-pointer' onClick={() => toggleFilter(type as keyof FilterConfig, value)} />
-                      </Badge>
-                    ))}
-                    <Button variant='ghost' size='sm' className='h-6 px-2 text-xs' onClick={() => clearFilter(type as keyof FilterConfig)}>
-                      Clear
-                    </Button>
-                  </div>
-                )
-            )}
-          </div>
-        )}
       </div>
 
       <div className='rounded-md border'>

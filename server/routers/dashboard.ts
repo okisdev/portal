@@ -90,8 +90,8 @@ export const dashboardRouter = createTRPCRouter({
     .input(
       z.object({
         id: z.string(),
-        name: z.string(),
-        email: z.string().email(),
+        name: z.string().optional(),
+        email: z.string().email().optional(),
         phone: z.string().optional(),
         company: z.string().optional(),
         priority: prioritySchema.optional(),
@@ -101,6 +101,7 @@ export const dashboardRouter = createTRPCRouter({
         skills: z.string().optional(),
         status: statusSchema.optional(),
         source: z.string().optional(),
+        lastContactedAt: z.date().optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {

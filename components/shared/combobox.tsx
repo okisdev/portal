@@ -39,12 +39,12 @@ export function Combobox({
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <Button variant='outline' aria-expanded={open} className='w-full justify-between'>
+        <Button variant='outline' aria-expanded={open} className='w-full justify-between px-3 font-normal'>
           {value || placeholder}
           <ChevronsUpDown className='ml-2 h-4 w-4 shrink-0 opacity-50' />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className='w-full p-0' align='start'>
+      <PopoverContent className='w-[--radix-popper-anchor-width] p-0' align='start'>
         <Command>
           <CommandInput placeholder={searchPlaceholder} onValueChange={setSearch} />
           <CommandEmpty>{emptyText}</CommandEmpty>
