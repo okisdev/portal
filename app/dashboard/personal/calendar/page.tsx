@@ -8,7 +8,6 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Form, FormControl, FormField, FormItem, FormLabel } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Textarea } from '@/components/ui/textarea';
 import type { CalendarEvent } from '@/lib/schema';
@@ -43,6 +42,7 @@ export default function DashboardPersonalCalendar() {
   const [isCreateEventOpen, setIsCreateEventOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
   const [isEditMode, setIsEditMode] = useState(false);
+  const [hiddenCalendars, setHiddenCalendars] = useState<Set<string>>(new Set());
 
   const utils = api.useUtils();
 
@@ -223,15 +223,11 @@ export default function DashboardPersonalCalendar() {
     setIsEditMode(true);
     setIsCreateEventOpen(true);
 
-    // Create new Date objects and preserve the exact time
     const startAt = new Date(event.startAt);
     const endAt = new Date(event.endAt);
 
-    // If it's an all-day event, set times to midnight
-    if (event.isAllDay) {
-      startAt.setHours(0, 0, 0, 0);
-      endAt.setHours(0, 0, 0, 0);
-    }
+    startAt.setHours(event.startAt.getHours(), event.startAt.getMinutes(), 0, 0);
+    endAt.setHours(event.endAt.getHours(), event.endAt.getMinutes(), 0, 0);
 
     form.reset({
       title: event.title,
@@ -308,25 +304,50 @@ export default function DashboardPersonalCalendar() {
             {/* biome-ignore lint/a11y/useKeyWithClickEvents: <explanation> */}
             <div className='flex cursor-pointer items-center gap-2' onClick={() => setIsCalendarFolded(!isCalendarFolded)}>
               <div className='flex-1 text-sm'>Calendars</div>
-              <ChevronDown className='h-4 w-4' />
+              <ChevronDown className={cn('h-4 w-4 transition-transform duration-200', isCalendarFolded && 'rotate-180')} />
             </div>
             {!isCalendarFolded && (
               <div className='flex w-full flex-col gap-2'>
                 <div className='flex flex-col space-y-1'>
                   {folders?.map((folder) => (
-                    <Button key={folder.id} variant='ghost' className='h-8 w-full justify-start'>
-                      <div className='mr-2 h-4 w-4 rounded-full' style={{ backgroundColor: folder.color ?? 'transparent' }} />
-                      {folder.name}
-                    </Button>
+                    <div key={folder.id} className='flex items-center gap-2'>
+                      <Checkbox
+                        checked={!hiddenCalendars.has(folder.id)}
+                        onCheckedChange={(checked) => {
+                          setHiddenCalendars((prev) => {
+                            const next = new Set(prev);
+                            if (checked) {
+                              next.delete(folder.id);
+                            } else {
+                              next.add(folder.id);
+                            }
+                            return next;
+                          });
+                        }}
+                      />
+                      <Button
+                        variant='ghost'
+                        className='h-8 w-full justify-start px-2'
+                        onClick={() => {
+                          setHiddenCalendars((prev) => {
+                            const next = new Set(prev);
+                            if (next.has(folder.id)) {
+                              next.delete(folder.id);
+                            } else {
+                              next.add(folder.id);
+                            }
+                            return next;
+                          });
+                        }}
+                      >
+                        <div className='mr-1 h-4 w-4 rounded-full' style={{ backgroundColor: folder.color ?? 'transparent' }} />
+                        {folder.name}
+                      </Button>
+                    </div>
                   ))}
                 </div>
               </div>
             )}
-
-            <div className='flex items-center gap-2'>
-              <Checkbox checked={showAllCalendars} onClick={() => setShowAllCalendars(!showAllCalendars)} />
-              <Label className='text-sm'>Show All events</Label>
-            </div>
           </div>
         </div>
 
@@ -387,92 +408,105 @@ export default function DashboardPersonalCalendar() {
                   >
                     {date.getDate()}
                   </span>
-                  {showAllCalendars &&
-                    events.map((event) => (
-                      <Popover key={event.id}>
-                        <PopoverTrigger asChild>
-                          <Button
-                            variant='ghost'
-                            className='h-auto w-full justify-start truncate rounded border border-blue-300 border-dashed bg-blue-100 p-1 text-blue-700 text-xs hover:bg-blue-200'
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            {event.isAllDay ? (
-                              'All day'
-                            ) : (
-                              <>
-                                {new Date(event.startAt).toLocaleTimeString([], {
-                                  hour: '2-digit',
-                                  minute: '2-digit',
-                                  hour12: false,
-                                })}
-                                {' - '}
-                                {new Date(event.endAt).toLocaleTimeString([], {
-                                  hour: '2-digit',
-                                  minute: '2-digit',
-                                  hour12: false,
-                                })}
-                              </>
-                            )}{' '}
-                            {event.title}
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent id='popover-content' className='w-80'>
-                          <div className='grid gap-2'>
-                            <div className='space-y-2'>
-                              <h4 className='font-medium leading-none'>{event.title}</h4>
-                              <p className='text-muted-foreground text-sm'>
-                                {event.isAllDay ? (
-                                  'All day'
-                                ) : (
-                                  <>
-                                    {new Date(event.startAt).toLocaleTimeString([], {
-                                      hour: '2-digit',
-                                      minute: '2-digit',
-                                      hour12: false,
-                                    })}
-                                    {' - '}
-                                    {new Date(event.endAt).toLocaleTimeString([], {
-                                      hour: '2-digit',
-                                      minute: '2-digit',
-                                      hour12: false,
-                                    })}
-                                  </>
+                  {events
+                    .filter((event) => !hiddenCalendars.has(event.folderId))
+                    .map((event) => {
+                      const folder = folders?.find((f) => f.id === event.folderId);
+
+                      return (
+                        <Popover key={event.id}>
+                          <PopoverTrigger asChild>
+                            <Button
+                              variant='ghost'
+                              className='h-auto w-full justify-start truncate rounded border border-dashed p-1 text-xs'
+                              style={{
+                                backgroundColor: `${folder?.color}20`,
+                                borderColor: folder?.color ?? 'transparent',
+                                color: folder?.color ?? 'inherit',
+                              }}
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              {event.isAllDay ? (
+                                'All day'
+                              ) : (
+                                <>
+                                  {new Date(event.startAt).toLocaleTimeString([], {
+                                    hour: '2-digit',
+                                    minute: '2-digit',
+                                    hour12: false,
+                                  })}
+                                  {' - '}
+                                  {new Date(event.endAt).toLocaleTimeString([], {
+                                    hour: '2-digit',
+                                    minute: '2-digit',
+                                    hour12: false,
+                                  })}
+                                </>
+                              )}{' '}
+                              {event.title}
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent id='popover-content' className='w-80'>
+                            <div className='grid gap-2'>
+                              <div className='space-y-2'>
+                                <div className='flex items-center gap-2'>
+                                  <div className='h-3 w-3 rounded-full' style={{ backgroundColor: folder?.color ?? 'transparent' }} />
+                                  <h4 className='font-medium leading-none'>{event.title}</h4>
+                                </div>
+                                <p className='text-muted-foreground text-sm'>
+                                  {event.isAllDay ? (
+                                    'All day'
+                                  ) : (
+                                    <>
+                                      {new Date(event.startAt).toLocaleTimeString([], {
+                                        hour: '2-digit',
+                                        minute: '2-digit',
+                                        hour12: false,
+                                      })}
+                                      {' - '}
+                                      {new Date(event.endAt).toLocaleTimeString([], {
+                                        hour: '2-digit',
+                                        minute: '2-digit',
+                                        hour12: false,
+                                      })}
+                                    </>
+                                  )}
+                                </p>
+                              </div>
+                              <div className='space-y-2'>
+                                {event.description && (
+                                  <div className='grid gap-2'>
+                                    <div className='grid grid-cols-3 items-center gap-4'>
+                                      <p className='text-sm'>Description:</p>
+                                      <p className='col-span-2 text-sm'>{event.description}</p>
+                                    </div>
+                                  </div>
                                 )}
-                              </p>
-                            </div>
-                            <div className='space-y-2'>
-                              {event.description && (
-                                <div className='grid gap-2'>
-                                  <div className='grid grid-cols-3 items-center gap-4'>
-                                    <p className='text-sm'>Description:</p>
-                                    <p className='col-span-2 text-sm'>{event.description}</p>
+                                {event.location && (
+                                  <div className='grid gap-2'>
+                                    <div className='grid grid-cols-3 items-center gap-4'>
+                                      <p className='text-sm'>Location:</p>
+                                      <p className='col-span-2 text-sm'>{event.location}</p>
+                                    </div>
                                   </div>
-                                </div>
-                              )}
-                              {event.location && (
-                                <div className='grid gap-2'>
-                                  <div className='grid grid-cols-3 items-center gap-4'>
-                                    <p className='text-sm'>Location:</p>
-                                    <p className='col-span-2 text-sm'>{event.location}</p>
-                                  </div>
-                                </div>
-                              )}
+                                )}
+                              </div>
+                              <div className='flex justify-end'>
+                                <Button
+                                  variant='outline'
+                                  size='sm'
+                                  onClick={() => {
+                                    handleEditEvent(event);
+                                  }}
+                                >
+                                  Edit
+                                </Button>
+                              </div>
                             </div>
-                            <div className='flex justify-end'>
-                              <Button
-                                variant='outline'
-                                size='sm'
-                                onClick={() => {
-                                  handleEditEvent(event);
-                                }}
-                              >
-                                Edit
-                              </Button>
-                            </div>
-                          </div>
-                        </PopoverContent>
-                      </Popover>
-                    ))}
+                          </PopoverContent>
+                        </Popover>
+                      );
+                    })}
                 </div>
               );
             })}
