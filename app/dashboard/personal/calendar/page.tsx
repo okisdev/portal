@@ -10,11 +10,12 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Textarea } from '@/components/ui/textarea';
+import type { CalendarEvent } from '@/lib/schema';
 import { cn } from '@/lib/utils';
 import { api } from '@/utils/trpc/client';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { ChevronDown, ChevronLeft, ChevronRight, Plus } from 'lucide-react';
-import * as React from 'react';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
@@ -32,17 +33,18 @@ const eventFormSchema = z.object({
   folderId: z.string(),
 });
 
-export default function DashboardCalendar() {
-  const [currentDate, setCurrentDate] = React.useState(new Date());
-  const [selectedDate, setSelectedDate] = React.useState(new Date());
-  const [showAllCalendars, setShowAllCalendars] = React.useState(true);
-  const [yearMonthPickerOpen, setYearMonthPickerOpen] = React.useState(false);
-  const [isCalendarFolded, setIsCalendarFolded] = React.useState(false);
-  const [isCreateEventOpen, setIsCreateEventOpen] = React.useState(false);
+export default function DashboardPersonalCalendar() {
+  const [currentDate, setCurrentDate] = useState(new Date());
+  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [showAllCalendars, setShowAllCalendars] = useState(true);
+  const [yearMonthPickerOpen, setYearMonthPickerOpen] = useState(false);
+  const [isCalendarFolded, setIsCalendarFolded] = useState(false);
+  const [isCreateEventOpen, setIsCreateEventOpen] = useState(false);
+  const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
+  const [isEditMode, setIsEditMode] = useState(false);
 
   const utils = api.useUtils();
 
-  // Fetch calendar data
   const startOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
   const endOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
 
@@ -67,13 +69,13 @@ export default function DashboardCalendar() {
   });
 
   // Update form values when selected date changes
-  React.useEffect(() => {
+  useEffect(() => {
     form.setValue('startAt', selectedDate);
     form.setValue('endAt', selectedDate);
   }, [selectedDate, form]);
 
   // Reset form when dialog closes
-  React.useEffect(() => {
+  useEffect(() => {
     if (!isCreateEventOpen) {
       form.reset({
         title: '',
@@ -102,6 +104,26 @@ export default function DashboardCalendar() {
     },
   });
 
+  const updateEvent = api.calendar.updateEvent.useMutation({
+    onSuccess: () => {
+      utils.calendar.getEvents.invalidate();
+      setIsCreateEventOpen(false);
+      setSelectedEvent(null);
+      setIsEditMode(false);
+      form.reset();
+    },
+  });
+
+  const deleteEvent = api.calendar.deleteEvent.useMutation({
+    onSuccess: () => {
+      utils.calendar.getEvents.invalidate();
+      setIsCreateEventOpen(false);
+      setSelectedEvent(null);
+      setIsEditMode(false);
+      form.reset();
+    },
+  });
+
   const handleCalendarSelect = async (value: string) => {
     // If the folder doesn't exist, create it
     if (!folders?.some((folder) => folder.name === value)) {
@@ -119,7 +141,14 @@ export default function DashboardCalendar() {
   };
 
   const onSubmit = (data: z.infer<typeof eventFormSchema>) => {
-    createEvent.mutate(data);
+    if (isEditMode && selectedEvent) {
+      updateEvent.mutate({
+        id: selectedEvent.id,
+        ...data,
+      });
+    } else {
+      createEvent.mutate(data);
+    }
   };
 
   const getDaysInMonth = (date: Date) => {
@@ -162,6 +191,22 @@ export default function DashboardCalendar() {
 
   const goToNextMonth = () => {
     setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1));
+  };
+
+  const handleEditEvent = (event: CalendarEvent) => {
+    setSelectedEvent(event);
+    setIsEditMode(true);
+    setIsCreateEventOpen(true);
+    form.reset({
+      title: event.title,
+      description: event.description ?? '',
+      location: event.location ?? '',
+      startAt: new Date(event.startAt),
+      endAt: new Date(event.endAt),
+      isAllDay: event.isAllDay ?? false,
+      isPublic: event.isPublic ?? false,
+      folderId: event.folderId,
+    });
   };
 
   return (
@@ -322,13 +367,41 @@ export default function DashboardCalendar() {
                           <div className='grid gap-4'>
                             <div className='space-y-2'>
                               <h4 className='font-medium leading-none'>{event.title}</h4>
-                              <p className='text-muted-foreground text-sm'>{event.startAt.toLocaleTimeString()}</p>
+                              <p className='text-sm text-muted-foreground'>
+                                {event.isAllDay
+                                  ? 'All day'
+                                  : `${new Date(event.startAt).toLocaleTimeString([], {
+                                      hour: '2-digit',
+                                      minute: '2-digit',
+                                    })}`}
+                              </p>
                             </div>
-                            <div className='grid gap-2'>
-                              <div className='grid grid-cols-3 items-center gap-4'>
-                                <p className='text-sm'>Description:</p>
-                                <p className='col-span-2 text-sm'>{event.description}</p>
+                            {event.description && (
+                              <div className='grid gap-2'>
+                                <div className='grid grid-cols-3 items-center gap-4'>
+                                  <p className='text-sm'>Description:</p>
+                                  <p className='col-span-2 text-sm'>{event.description}</p>
+                                </div>
                               </div>
+                            )}
+                            {event.location && (
+                              <div className='grid gap-2'>
+                                <div className='grid grid-cols-3 items-center gap-4'>
+                                  <p className='text-sm'>Location:</p>
+                                  <p className='col-span-2 text-sm'>{event.location}</p>
+                                </div>
+                              </div>
+                            )}
+                            <div className='flex justify-end'>
+                              <Button
+                                variant='outline'
+                                size='sm'
+                                onClick={() => {
+                                  handleEditEvent(event);
+                                }}
+                              >
+                                Edit
+                              </Button>
                             </div>
                           </div>
                         </PopoverContent>
@@ -346,13 +419,15 @@ export default function DashboardCalendar() {
         onOpenChange={(open) => {
           setIsCreateEventOpen(open);
           if (!open) {
+            setSelectedEvent(null);
+            setIsEditMode(false);
             form.reset();
           }
         }}
       >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Create New Event</DialogTitle>
+            <DialogTitle>{isEditMode ? 'Edit Event' : 'Create New Event'}</DialogTitle>
           </DialogHeader>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-4'>
@@ -483,9 +558,25 @@ export default function DashboardCalendar() {
                 />
               </div>
 
-              <Button type='submit' className='w-full'>
-                Create Event
-              </Button>
+              <div className='flex gap-2'>
+                {isEditMode && (
+                  <Button
+                    type='button'
+                    variant='destructive'
+                    className='w-full'
+                    onClick={() => {
+                      if (selectedEvent) {
+                        deleteEvent.mutate(selectedEvent.id);
+                      }
+                    }}
+                  >
+                    Delete
+                  </Button>
+                )}
+                <Button type='submit' className='w-full'>
+                  {isEditMode ? 'Update' : 'Create'} Event
+                </Button>
+              </div>
             </form>
           </Form>
         </DialogContent>
