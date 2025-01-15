@@ -45,6 +45,7 @@ export default function DashboardPersonalCalendar() {
   const [hiddenCalendars, setHiddenCalendars] = useState<Set<string>>(new Set());
   const [isEditCalendarOpen, setIsEditCalendarOpen] = useState(false);
   const [selectedCalendar, setSelectedCalendar] = useState<CalendarFolder | null>(null);
+  const [isAddCalendarOpen, setIsAddCalendarOpen] = useState(false);
 
   const utils = api.useUtils();
 
@@ -75,6 +76,13 @@ export default function DashboardPersonalCalendar() {
     defaultValues: {
       name: '',
       color: '#000000',
+    },
+  });
+
+  const addCalendarForm = useForm<{ name: string; color: string }>({
+    defaultValues: {
+      name: '',
+      color: '#4f46e5',
     },
   });
 
@@ -275,6 +283,15 @@ export default function DashboardPersonalCalendar() {
     }
   };
 
+  const handleAddCalendarSubmit = (data: { name: string; color: string }) => {
+    createFolder.mutate({
+      name: data.name,
+      color: data.color,
+    });
+    setIsAddCalendarOpen(false);
+    addCalendarForm.reset();
+  };
+
   return (
     <>
       <div className='flex'>
@@ -329,7 +346,14 @@ export default function DashboardPersonalCalendar() {
               ))}
           </div>
 
-          <Button className='flex items-center gap-2' variant='outline'>
+          <Button
+            className='flex items-center gap-2'
+            variant='outline'
+            onClick={() => {
+              addCalendarForm.reset();
+              setIsAddCalendarOpen(true);
+            }}
+          >
             <Plus className='h-4 w-4' />
             Add calendar
           </Button>
@@ -804,6 +828,68 @@ export default function DashboardPersonalCalendar() {
                   Cancel
                 </Button>
                 <Button type='submit'>Save Changes</Button>
+              </div>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={isAddCalendarOpen}
+        onOpenChange={(open) => {
+          setIsAddCalendarOpen(open);
+          if (!open) {
+            addCalendarForm.reset();
+          }
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add Calendar</DialogTitle>
+          </DialogHeader>
+          <Form {...addCalendarForm}>
+            <form onSubmit={addCalendarForm.handleSubmit(handleAddCalendarSubmit)} className='space-y-4'>
+              <FormField
+                control={addCalendarForm.control}
+                name='name'
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Name</FormLabel>
+                    <FormControl>
+                      <Input {...field} placeholder='My Calendar' />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={addCalendarForm.control}
+                name='color'
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Color</FormLabel>
+                    <FormControl>
+                      <div className='flex items-center gap-2'>
+                        <Input type='color' {...field} className='h-10 w-20 p-1' />
+                        <Input {...field} className='flex-1' placeholder='#4f46e5' />
+                      </div>
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+
+              <div className='flex justify-end gap-2'>
+                <Button
+                  type='button'
+                  variant='outline'
+                  onClick={() => {
+                    setIsAddCalendarOpen(false);
+                    addCalendarForm.reset();
+                  }}
+                >
+                  Cancel
+                </Button>
+                <Button type='submit'>Create Calendar</Button>
               </div>
             </form>
           </Form>
