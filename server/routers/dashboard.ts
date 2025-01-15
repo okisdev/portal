@@ -35,9 +35,7 @@ export const dashboardRouter = createTRPCRouter({
         .where(eq(contact.email, input.email))
         .then((rows) => rows[0]);
 
-      if (existingContact) {
-        return existingContact;
-      }
+      if (existingContact) return existingContact;
 
       const result = await ctx.db
         .insert(contact)

@@ -11,7 +11,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { insuranceCompanies, sources } from '@/data/data';
 import type { Priority, Status } from '@/lib/schema';
-import { formatDate, isDev } from '@/lib/utils';
+import { cn, formatDate, isDev } from '@/lib/utils';
 import { api } from '@/utils/trpc/client';
 import { Edit2, Mail, MoreHorizontal, Phone, Printer, Send } from 'lucide-react';
 import { useSession } from 'next-auth/react';
@@ -177,7 +177,12 @@ export default function ContactIdPage() {
             </Link>
           </Button>
           <Button variant='ghost' size='icon' asChild>
-            <Link href={`https://wa.me/${contact?.phone?.replace(/\D/g, '')}`} target='_blank' rel='noopener noreferrer'>
+            <Link
+              href={!contact?.phone ? '' : `https://wa.me/${contact?.phone?.replace(/\D/g, '')}`}
+              target={'_blank'}
+              rel='noopener noreferrer'
+              className={cn(!contact?.phone && 'cursor-not-allowed opacity-50')}
+            >
               <Phone className='size-4' />
             </Link>
           </Button>
