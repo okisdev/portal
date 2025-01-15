@@ -1,10 +1,13 @@
 'use client';
 
+import { Combobox } from '@/components/shared/combobox';
+import { PageHeader } from '@/components/shared/page-header';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { insuranceCompanies, sources } from '@/data/data';
 import type { Status } from '@/lib/schema';
 import { generateUUID } from '@/lib/utils';
 import { api } from '@/utils/trpc/client';
@@ -22,11 +25,6 @@ interface ContactFormData {
   gender?: string;
   company?: string;
   jobTitle?: string;
-  address?: string;
-  city?: string;
-  state?: string;
-  country?: string;
-  postalCode?: string;
   status: Status;
   source?: string;
 }
@@ -41,11 +39,6 @@ export default function NewContact() {
     gender: '',
     company: '',
     jobTitle: '',
-    address: '',
-    city: '',
-    state: '',
-    country: '',
-    postalCode: '',
     status: 'lead',
     source: '',
   });
@@ -141,21 +134,25 @@ export default function NewContact() {
   };
 
   return (
-    <div>
-      <h1 className='mb-6 font-bold text-2xl'>Add New Contact</h1>
-
-      <div className='mb-6 flex gap-4'>
-        <Button variant='outline' className='gap-2' onClick={() => document.getElementById('csvUpload')?.click()}>
-          <Upload className='w-4 h-4' />
-          Upload CSV
-        </Button>
-        <input id='csvUpload' type='file' accept='.csv' className='hidden' onChange={handleCsvUpload} />
-      </div>
+    <div className='space-y-6'>
+      <PageHeader
+        title='Add New Contact'
+        description='Add a new contact to CRM'
+        right={
+          <div className='mb-6 flex gap-4'>
+            <Button variant='outline' className='h-8 gap-2' onClick={() => document.getElementById('csvUpload')?.click()}>
+              <Upload className='h-4 w-4' />
+              Upload CSV
+            </Button>
+            <input id='csvUpload' type='file' accept='.csv' className='hidden' onChange={handleCsvUpload} />
+          </div>
+        }
+      />
 
       {showPreview ? (
         <div className='mb-6'>
-          <h2 className='mb-4 text-lg font-semibold'>Preview CSV Data</h2>
-          <div className='border rounded-lg overflow-x-auto'>
+          <h2 className='mb-4 font-semibold text-lg'>Preview CSV Data</h2>
+          <div className='overflow-x-auto rounded-lg border'>
             <Table>
               <TableHeader>
                 <TableRow>
@@ -219,17 +216,19 @@ export default function NewContact() {
             </div>
           </div>
 
-          <div className='space-y-2'>
-            <Label htmlFor='email'>Email *</Label>
-            <Input id='email' name='email' type='email' value={formData.email} onChange={handleChange} required />
-          </div>
-
           <div className='grid grid-cols-2 gap-4'>
+            <div className='space-y-2'>
+              <Label htmlFor='email'>Email</Label>
+              <Input id='email' name='email' type='email' value={formData.email} onChange={handleChange} />
+            </div>
+
             <div className='space-y-2'>
               <Label htmlFor='phone'>Phone</Label>
               <Input id='phone' name='phone' type='tel' value={formData.phone} onChange={handleChange} />
             </div>
+          </div>
 
+          <div className='grid grid-cols-2 gap-4'>
             <div className='space-y-2'>
               <Label htmlFor='gender'>Gender</Label>
               <Select name='gender' value={formData.gender} onValueChange={(value) => handleSelectChange('gender', value)}>
@@ -243,46 +242,17 @@ export default function NewContact() {
                 </SelectContent>
               </Select>
             </div>
-          </div>
 
-          <div className='grid grid-cols-2 gap-4'>
             <div className='space-y-2'>
               <Label htmlFor='company'>Company</Label>
-              <Input id='company' name='company' value={formData.company} onChange={handleChange} />
-            </div>
-
-            <div className='space-y-2'>
-              <Label htmlFor='jobTitle'>Job Title</Label>
-              <Input id='jobTitle' name='jobTitle' value={formData.jobTitle} onChange={handleChange} />
-            </div>
-          </div>
-
-          <div className='space-y-2'>
-            <Label htmlFor='address'>Address</Label>
-            <Input id='address' name='address' value={formData.address} onChange={handleChange} />
-          </div>
-
-          <div className='grid grid-cols-2 gap-4'>
-            <div className='space-y-2'>
-              <Label htmlFor='city'>City</Label>
-              <Input id='city' name='city' value={formData.city} onChange={handleChange} />
-            </div>
-
-            <div className='space-y-2'>
-              <Label htmlFor='state'>State</Label>
-              <Input id='state' name='state' value={formData.state} onChange={handleChange} />
-            </div>
-          </div>
-
-          <div className='grid grid-cols-2 gap-4'>
-            <div className='space-y-2'>
-              <Label htmlFor='country'>Country</Label>
-              <Input id='country' name='country' value={formData.country} onChange={handleChange} />
-            </div>
-
-            <div className='space-y-2'>
-              <Label htmlFor='postalCode'>Postal Code</Label>
-              <Input id='postalCode' name='postalCode' value={formData.postalCode} onChange={handleChange} />
+              <Combobox
+                value={formData.company ?? ''}
+                onChange={(value) => handleSelectChange('company', value)}
+                items={insuranceCompanies}
+                placeholder='Select company'
+                searchPlaceholder='Search company...'
+                groupHeading='Companies'
+              />
             </div>
           </div>
 
@@ -305,13 +275,20 @@ export default function NewContact() {
 
             <div className='space-y-2'>
               <Label htmlFor='source'>Source</Label>
-              <Input id='source' name='source' value={formData.source} onChange={handleChange} placeholder='How did they find you?' />
+              <Combobox
+                value={formData.source ?? ''}
+                onChange={(value) => handleSelectChange('source', value)}
+                items={sources}
+                placeholder='Select source...'
+                searchPlaceholder='Search source...'
+                groupHeading='Sources'
+              />
             </div>
           </div>
         </form>
       )}
 
-      <div className='flex gap-4 mt-6'>
+      <div className='mt-6 flex gap-4'>
         <Button type='submit' disabled={isLoading} onClick={handleSubmit} className='w-full sm:w-auto'>
           {isLoading ? 'Creating...' : showPreview ? 'Import Contacts' : 'Create Contact'}
         </Button>

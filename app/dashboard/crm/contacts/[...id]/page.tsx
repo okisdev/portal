@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { insuranceCompanies } from '@/data/data';
+import { insuranceCompanies, sources } from '@/data/data';
 import type { Priority, Status } from '@/lib/schema';
 import { formatDate, isDev } from '@/lib/utils';
 import { api } from '@/utils/trpc/client';
@@ -246,7 +246,7 @@ export default function ContactIdPage() {
               <Combobox
                 value={editForm.source}
                 onChange={(value) => setEditForm({ ...editForm, source: value })}
-                items={['Pitching', 'Referral', 'Website', 'Email', 'IG', 'LinkedIn', 'Facebook', 'Other']}
+                items={sources}
                 placeholder='Select source...'
                 searchPlaceholder='Search source...'
                 groupHeading='Sources'
