@@ -2,6 +2,7 @@
 
 import { YearMonthPicker } from '@/components/dashboard/personal/calendar/year-month-picker';
 import { Combobox } from '@/components/shared/combobox';
+import { DateTimePicker } from '@/components/shared/date-time-picker';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -70,19 +71,43 @@ export default function DashboardPersonalCalendar() {
 
   // Update form values when selected date changes
   useEffect(() => {
-    form.setValue('startAt', selectedDate);
-    form.setValue('endAt', selectedDate);
+    const startDate = new Date(selectedDate);
+    const endDate = new Date(selectedDate);
+
+    if (!form.getValues('isAllDay')) {
+      // For regular events, set end time to 1 hour after start
+      endDate.setHours(endDate.getHours() + 1);
+    } else {
+      // For all-day events, set times to midnight
+      startDate.setHours(0, 0, 0, 0);
+      endDate.setHours(0, 0, 0, 0);
+    }
+
+    form.setValue('startAt', startDate);
+    form.setValue('endAt', endDate);
   }, [selectedDate, form]);
 
   // Reset form when dialog closes
   useEffect(() => {
     if (!isCreateEventOpen) {
+      const startDate = new Date(selectedDate);
+      const endDate = new Date(selectedDate);
+
+      if (!form.getValues('isAllDay')) {
+        // For regular events, set end time to 1 hour after start
+        endDate.setHours(endDate.getHours() + 1);
+      } else {
+        // For all-day events, set times to midnight
+        startDate.setHours(0, 0, 0, 0);
+        endDate.setHours(0, 0, 0, 0);
+      }
+
       form.reset({
         title: '',
         description: '',
         location: '',
-        startAt: selectedDate,
-        endAt: selectedDate,
+        startAt: startDate,
+        endAt: endDate,
         isAllDay: false,
         isPublic: false,
         folderId: folders?.[0]?.id ?? '',
@@ -197,12 +222,23 @@ export default function DashboardPersonalCalendar() {
     setSelectedEvent(event);
     setIsEditMode(true);
     setIsCreateEventOpen(true);
+
+    // Create new Date objects and preserve the exact time
+    const startAt = new Date(event.startAt);
+    const endAt = new Date(event.endAt);
+
+    // If it's an all-day event, set times to midnight
+    if (event.isAllDay) {
+      startAt.setHours(0, 0, 0, 0);
+      endAt.setHours(0, 0, 0, 0);
+    }
+
     form.reset({
       title: event.title,
       description: event.description ?? '',
       location: event.location ?? '',
-      startAt: new Date(event.startAt),
-      endAt: new Date(event.endAt),
+      startAt: startAt,
+      endAt: endAt,
       isAllDay: event.isAllDay ?? false,
       isPublic: event.isPublic ?? false,
       folderId: event.folderId,
@@ -271,14 +307,14 @@ export default function DashboardPersonalCalendar() {
           <div className='flex flex-col gap-2'>
             {/* biome-ignore lint/a11y/useKeyWithClickEvents: <explanation> */}
             <div className='flex cursor-pointer items-center gap-2' onClick={() => setIsCalendarFolded(!isCalendarFolded)}>
-              <div className='flex-1'>Calendars</div>
+              <div className='flex-1 text-sm'>Calendars</div>
               <ChevronDown className='h-4 w-4' />
             </div>
             {!isCalendarFolded && (
               <div className='flex w-full flex-col gap-2'>
-                <div className='flex flex-col gap-2'>
+                <div className='flex flex-col space-y-1'>
                   {folders?.map((folder) => (
-                    <Button key={folder.id} variant='ghost' className='w-full justify-start'>
+                    <Button key={folder.id} variant='ghost' className='h-8 w-full justify-start'>
                       <div className='mr-2 h-4 w-4 rounded-full' style={{ backgroundColor: folder.color ?? 'transparent' }} />
                       {folder.name}
                     </Button>
@@ -360,38 +396,68 @@ export default function DashboardPersonalCalendar() {
                             className='h-auto w-full justify-start truncate rounded border border-blue-300 border-dashed bg-blue-100 p-1 text-blue-700 text-xs hover:bg-blue-200'
                             onClick={(e) => e.stopPropagation()}
                           >
-                            {event.isAllDay ? 'All day' : `${new Date(event.startAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`} {event.title}
+                            {event.isAllDay ? (
+                              'All day'
+                            ) : (
+                              <>
+                                {new Date(event.startAt).toLocaleTimeString([], {
+                                  hour: '2-digit',
+                                  minute: '2-digit',
+                                  hour12: false,
+                                })}
+                                {' - '}
+                                {new Date(event.endAt).toLocaleTimeString([], {
+                                  hour: '2-digit',
+                                  minute: '2-digit',
+                                  hour12: false,
+                                })}
+                              </>
+                            )}{' '}
+                            {event.title}
                           </Button>
                         </PopoverTrigger>
-                        <PopoverContent className='w-80'>
-                          <div className='grid gap-4'>
+                        <PopoverContent id='popover-content' className='w-80'>
+                          <div className='grid gap-2'>
                             <div className='space-y-2'>
                               <h4 className='font-medium leading-none'>{event.title}</h4>
-                              <p className='text-sm text-muted-foreground'>
-                                {event.isAllDay
-                                  ? 'All day'
-                                  : `${new Date(event.startAt).toLocaleTimeString([], {
+                              <p className='text-muted-foreground text-sm'>
+                                {event.isAllDay ? (
+                                  'All day'
+                                ) : (
+                                  <>
+                                    {new Date(event.startAt).toLocaleTimeString([], {
                                       hour: '2-digit',
                                       minute: '2-digit',
-                                    })}`}
+                                      hour12: false,
+                                    })}
+                                    {' - '}
+                                    {new Date(event.endAt).toLocaleTimeString([], {
+                                      hour: '2-digit',
+                                      minute: '2-digit',
+                                      hour12: false,
+                                    })}
+                                  </>
+                                )}
                               </p>
                             </div>
-                            {event.description && (
-                              <div className='grid gap-2'>
-                                <div className='grid grid-cols-3 items-center gap-4'>
-                                  <p className='text-sm'>Description:</p>
-                                  <p className='col-span-2 text-sm'>{event.description}</p>
+                            <div className='space-y-2'>
+                              {event.description && (
+                                <div className='grid gap-2'>
+                                  <div className='grid grid-cols-3 items-center gap-4'>
+                                    <p className='text-sm'>Description:</p>
+                                    <p className='col-span-2 text-sm'>{event.description}</p>
+                                  </div>
                                 </div>
-                              </div>
-                            )}
-                            {event.location && (
-                              <div className='grid gap-2'>
-                                <div className='grid grid-cols-3 items-center gap-4'>
-                                  <p className='text-sm'>Location:</p>
-                                  <p className='col-span-2 text-sm'>{event.location}</p>
+                              )}
+                              {event.location && (
+                                <div className='grid gap-2'>
+                                  <div className='grid grid-cols-3 items-center gap-4'>
+                                    <p className='text-sm'>Location:</p>
+                                    <p className='col-span-2 text-sm'>{event.location}</p>
+                                  </div>
                                 </div>
-                              </div>
-                            )}
+                              )}
+                            </div>
                             <div className='flex justify-end'>
                               <Button
                                 variant='outline'
@@ -470,6 +536,21 @@ export default function DashboardPersonalCalendar() {
                 )}
               />
 
+              <div className='flex gap-4'>
+                <FormField
+                  control={form.control}
+                  name='isAllDay'
+                  render={({ field }) => (
+                    <FormItem className='flex flex-row items-center justify-center gap-2'>
+                      <FormControl>
+                        <Checkbox checked={field.value} onCheckedChange={field.onChange} />
+                      </FormControl>
+                      <FormLabel className='text-sm'>All Day</FormLabel>
+                    </FormItem>
+                  )}
+                />
+              </div>
+
               <div className='grid grid-cols-2 gap-4'>
                 <FormField
                   control={form.control}
@@ -478,12 +559,11 @@ export default function DashboardPersonalCalendar() {
                     <FormItem>
                       <FormLabel>Start</FormLabel>
                       <FormControl>
-                        <Input
-                          type='datetime-local'
-                          {...field}
-                          value={field.value ? new Date(field.value).toISOString().slice(0, 16) : ''}
-                          onChange={(e) => field.onChange(new Date(e.target.value))}
-                        />
+                        {form.watch('isAllDay') ? (
+                          <DateTimePicker value={field.value} onChange={(date) => field.onChange(date)} showTimePicker={false} />
+                        ) : (
+                          <DateTimePicker value={field.value} onChange={(date) => field.onChange(date)} showTimePicker={true} />
+                        )}
                       </FormControl>
                     </FormItem>
                   )}
@@ -496,12 +576,11 @@ export default function DashboardPersonalCalendar() {
                     <FormItem>
                       <FormLabel>End</FormLabel>
                       <FormControl>
-                        <Input
-                          type='datetime-local'
-                          {...field}
-                          value={field.value ? new Date(field.value).toISOString().slice(0, 16) : ''}
-                          onChange={(e) => field.onChange(new Date(e.target.value))}
-                        />
+                        {form.watch('isAllDay') ? (
+                          <DateTimePicker value={field.value} onChange={(date) => field.onChange(date)} showTimePicker={false} />
+                        ) : (
+                          <DateTimePicker value={field.value} onChange={(date) => field.onChange(date)} showTimePicker={true} />
+                        )}
                       </FormControl>
                     </FormItem>
                   )}
@@ -530,33 +609,18 @@ export default function DashboardPersonalCalendar() {
                 )}
               />
 
-              <div className='flex gap-4'>
-                <FormField
-                  control={form.control}
-                  name='isAllDay'
-                  render={({ field }) => (
-                    <FormItem className='flex items-center gap-2'>
-                      <FormControl>
-                        <Checkbox checked={field.value} onCheckedChange={field.onChange} />
-                      </FormControl>
-                      <FormLabel>All Day</FormLabel>
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name='isPublic'
-                  render={({ field }) => (
-                    <FormItem className='flex items-center gap-2'>
-                      <FormControl>
-                        <Checkbox checked={field.value} onCheckedChange={field.onChange} />
-                      </FormControl>
-                      <FormLabel>Public</FormLabel>
-                    </FormItem>
-                  )}
-                />
-              </div>
+              <FormField
+                control={form.control}
+                name='isPublic'
+                render={({ field }) => (
+                  <FormItem className='flex flex-row items-center gap-2'>
+                    <FormControl>
+                      <Checkbox checked={field.value} onCheckedChange={field.onChange} />
+                    </FormControl>
+                    <FormLabel className='text-sm'>Public</FormLabel>
+                  </FormItem>
+                )}
+              />
 
               <div className='flex gap-2'>
                 {isEditMode && (
