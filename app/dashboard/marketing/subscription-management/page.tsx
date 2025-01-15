@@ -1,6 +1,7 @@
 'use client';
 
 import { Combobox } from '@/components/shared/combobox';
+import { PageHeader } from '@/components/shared/page-header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -167,8 +168,8 @@ export default function SubscriptionManagement() {
   };
 
   return (
-    <div className='container mx-auto max-w-6xl'>
-      <h1 className='mb-6 font-bold text-2xl'>Subscription Management</h1>
+    <div className='space-y-6'>
+      <PageHeader title='Subscription Management' description='Manage your subscription plans and coupons' />
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList>
