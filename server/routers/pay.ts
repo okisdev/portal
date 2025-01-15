@@ -56,6 +56,10 @@ export const payRouter = createTRPCRouter({
     });
   }),
 
+  deleteStripeSubscriptionPlan: protectedProcedure.input(z.object({ productId: z.string() })).mutation(async ({ ctx, input }) => {
+    return await stripe.products.del(input.productId);
+  }),
+
   fetchStripeSubscriptionPlanByCouponCode: protectedProcedure.input(z.object({ code: z.string() })).query(async ({ ctx, input }) => {
     const coupon = await ctx.db
       .select()
@@ -81,7 +85,7 @@ export const payRouter = createTRPCRouter({
     };
   }),
 
-  fetchSubscriptionPlans: protectedProcedure.query(async ({ ctx }) => {
+  fetchLocalSubscriptionPlans: protectedProcedure.query(async ({ ctx }) => {
     return await ctx.db.select().from(subscriptionPlan).orderBy(asc(subscriptionPlan.price));
   }),
 
@@ -208,6 +212,59 @@ export const payRouter = createTRPCRouter({
         throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Failed to update subscription plan' });
       }
     }),
+
+  syncStripeSubscriptionPlans: protectedProcedure.mutation(async ({ ctx }) => {
+    const products = await stripe.products.list({ active: true });
+    const prices = await stripe.prices.list({ active: true });
+
+    const productwithPrices = products.data
+      .map((product) => {
+        const price = prices.data.filter((p) => p.product === product.id && p.type === 'recurring').sort((a, b) => b.created - a.created)[0];
+
+        return {
+          product,
+          price,
+        };
+      })
+      .filter((item) => item.price);
+
+    const localPlans = await ctx.db.select().from(subscriptionPlan);
+
+    for (const item of productwithPrices) {
+      const { product, price } = item;
+      if (!price.recurring?.interval) continue;
+
+      const interval = price.recurring.interval;
+      if (interval !== 'month' && interval !== 'year') continue;
+
+      const existingPlan = localPlans.find((plan) => plan.stripePriceId === price.id);
+
+      const planData = {
+        name: product.name,
+        description: product.description ?? '',
+        price: price.unit_amount ?? 0,
+        interval: interval,
+        currency: price.currency,
+        stripePriceId: price.id,
+        stripeProductId: product.id,
+        active: product.active,
+        features: '',
+      };
+
+      if (existingPlan) {
+        await ctx.db.update(subscriptionPlan).set(planData).where(eq(subscriptionPlan.id, existingPlan.id));
+      } else {
+        await ctx.db.insert(subscriptionPlan).values(planData);
+      }
+    }
+
+    const updatedLocalPlans = await ctx.db.select().from(subscriptionPlan).orderBy(asc(subscriptionPlan.price));
+
+    return {
+      stripeProducts: productwithPrices,
+      localPlans: updatedLocalPlans,
+    };
+  }),
 
   createStripePlanPrice: protectedProcedure
     .input(
