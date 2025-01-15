@@ -8,22 +8,15 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { insuranceCompanies } from '@/data/data';
+import { copyToClipboard } from '@/utils/clipboard';
 import { api } from '@/utils/trpc/client';
 import { MoreHorizontal } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
-
-const copyToClipboard = async (text: string) => {
-  try {
-    await navigator.clipboard.writeText(text);
-    toast.success('Copied to clipboard');
-  } catch (err) {
-    toast.error('Failed to copy to clipboard');
-  }
-};
 
 export default function SubscriptionManagement() {
   const [activeTab, setActiveTab] = useState('coupons');
@@ -33,7 +26,6 @@ export default function SubscriptionManagement() {
     expiresAt: '',
     company: '',
     planId: '',
-    team: '',
     source: '',
   });
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -46,6 +38,7 @@ export default function SubscriptionManagement() {
     interval: 'month' as 'month' | 'year',
     currency: 'usd' as 'usd' | 'eur' | 'gbp' | 'hkd',
   });
+  const [showLocalPlans, setShowLocalPlans] = useState(false);
 
   const utils = api.useUtils();
 
@@ -61,11 +54,22 @@ export default function SubscriptionManagement() {
 
   const { data: coupons } = api.pay.fetchSubscriptionCoupons.useQuery();
 
-  const { data: stripePlans } = api.pay.fetchSubscriptionPlans.useQuery();
+  const { data: stripePlans } = api.pay.fetchStripeSubscriptionPlans.useQuery();
+
+  const { data: localPlans } = api.pay.fetchLocalSubscriptionPlans.useQuery();
+
+  const syncStripePlans = api.pay.syncStripeSubscriptionPlans.useMutation();
+
+  const deleteStripePlan = api.pay.deleteStripeSubscriptionPlan.useMutation({
+    onSuccess: () => {
+      utils.pay.fetchStripeSubscriptionPlans.invalidate();
+      toast.success('Plan deleted successfully');
+    },
+  });
 
   const createPlan = api.pay.createStripePlan.useMutation({
     onSuccess: () => {
-      utils.pay.fetchSubscriptionPlans.invalidate();
+      utils.pay.fetchStripeSubscriptionPlans.invalidate();
       toast.success('Plan created successfully');
       setPlanDialogOpen(false);
       setPlanData({ name: '', description: '', price: '', interval: 'month', currency: 'usd' });
@@ -123,7 +127,6 @@ export default function SubscriptionManagement() {
       expiresAt: '',
       company: '',
       planId: '',
-      team: '',
       source: '',
     });
   };
@@ -158,6 +161,11 @@ export default function SubscriptionManagement() {
     });
   };
 
+  const handleSyncStripePlans = async () => {
+    await syncStripePlans.mutateAsync();
+    toast.success('Stripe plans synced successfully');
+  };
+
   return (
     <div className='container mx-auto max-w-6xl'>
       <h1 className='mb-6 font-bold text-2xl'>Subscription Management</h1>
@@ -175,7 +183,9 @@ export default function SubscriptionManagement() {
                 <CardTitle>Active Coupons</CardTitle>
                 <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
                   <DialogTrigger asChild>
-                    <Button>Create New Coupon</Button>
+                    <Button variant='outline' className='h-8'>
+                      Create New Coupon
+                    </Button>
                   </DialogTrigger>
                   <DialogContent>
                     <DialogHeader>
@@ -215,10 +225,10 @@ export default function SubscriptionManagement() {
                         <Combobox
                           value={couponData.source}
                           onChange={(value) => setCouponData({ ...couponData, source: value })}
-                          items={['Sales', 'Marketing', 'Support', 'Engineering', 'Product']}
-                          placeholder='Select team...'
-                          searchPlaceholder='Search team...'
-                          groupHeading='Teams'
+                          items={['Pitching', 'Referral', 'Website', 'Email', 'IG', 'LinkedIn', 'Facebook', 'Other']}
+                          placeholder='Select source...'
+                          searchPlaceholder='Search source...'
+                          groupHeading='Sources'
                         />
                       </div>
 
@@ -264,6 +274,7 @@ export default function SubscriptionManagement() {
                       <TableHead>Plan</TableHead>
                       <TableHead>Discount</TableHead>
                       <TableHead>Company</TableHead>
+                      <TableHead>Source</TableHead>
                       <TableHead>Uses</TableHead>
                       <TableHead>Expires</TableHead>
                       <TableHead className='text-right'>Actions</TableHead>
@@ -276,6 +287,7 @@ export default function SubscriptionManagement() {
                         <TableCell>{coupon.planId}</TableCell>
                         <TableCell>{coupon.discountPercent === 0 ? 'No discount' : `${(coupon.discountPercent * 100).toFixed(0)}%`}</TableCell>
                         <TableCell>{coupon.company}</TableCell>
+                        <TableCell>{coupon.source ?? 'N/A'}</TableCell>
                         <TableCell>
                           {coupon.usedCount}/{coupon.maxUses || '∞'}
                         </TableCell>
@@ -317,11 +329,24 @@ export default function SubscriptionManagement() {
         <TabsContent value='plans'>
           <Card>
             <CardHeader className='flex flex-row items-center justify-between'>
-              <CardTitle>Subscription Plans</CardTitle>
+              <div className='flex items-center gap-4'>
+                <CardTitle>Subscription Plans</CardTitle>
+                <div className='flex items-center gap-2'>
+                  <Switch checked={showLocalPlans} onCheckedChange={setShowLocalPlans} id='local-plans-switch' />
+                  <Label htmlFor='local-plans-switch'>Show Local Plans</Label>
+                </div>
+              </div>
               <Dialog open={planDialogOpen} onOpenChange={setPlanDialogOpen}>
-                <DialogTrigger asChild>
-                  <Button>Create New Plan</Button>
-                </DialogTrigger>
+                <div className='flex items-center justify-end gap-2'>
+                  <Button variant='outline' onClick={handleSyncStripePlans} className='h-8'>
+                    Sync Stripe Plans
+                  </Button>
+                  <DialogTrigger asChild>
+                    <Button variant='outline' className='h-8'>
+                      Create New Plan
+                    </Button>
+                  </DialogTrigger>
+                </div>
                 <DialogContent>
                   <DialogHeader>
                     <DialogTitle>{editingPlan ? 'Edit Plan' : 'Create New Plan'}</DialogTitle>
@@ -389,7 +414,7 @@ export default function SubscriptionManagement() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {stripePlans?.map((plan: any) => (
+                  {(showLocalPlans ? localPlans : stripePlans)?.map((plan: any) => (
                     <TableRow key={plan.id}>
                       <TableCell>{plan.name}</TableCell>
                       <TableCell>{plan.description}</TableCell>
@@ -407,33 +432,38 @@ export default function SubscriptionManagement() {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align='end'>
-                            <DropdownMenuItem
-                              onClick={() => {
-                                setPlanData({
-                                  name: plan.name,
-                                  description: plan.description || '',
-                                  price: ((plan.metadata?.price || 0) / 100).toString(),
-                                  interval: (plan.metadata?.interval as 'month' | 'year') || 'month',
-                                  currency: (plan.metadata?.currency as 'usd' | 'eur' | 'gbp' | 'hkd') || 'usd',
-                                });
-                                setEditingPlan(plan);
-                                setPlanDialogOpen(true);
-                              }}
-                            >
-                              Edit plan
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onClick={() => {
-                                setPlanData({
-                                  ...planData,
-                                  price: '',
-                                  interval: 'month',
-                                });
-                                handleAddPrice(plan.id);
-                              }}
-                            >
-                              Add price
-                            </DropdownMenuItem>
+                            {!showLocalPlans && (
+                              <>
+                                <DropdownMenuItem
+                                  onClick={() => {
+                                    setPlanData({
+                                      name: plan.name,
+                                      description: plan.description || '',
+                                      price: ((plan.metadata?.price || 0) / 100).toString(),
+                                      interval: (plan.metadata?.interval as 'month' | 'year') || 'month',
+                                      currency: (plan.metadata?.currency as 'usd' | 'eur' | 'gbp' | 'hkd') || 'usd',
+                                    });
+                                    setEditingPlan(plan);
+                                    setPlanDialogOpen(true);
+                                  }}
+                                >
+                                  Edit plan
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  onClick={() => {
+                                    setPlanData({
+                                      ...planData,
+                                      price: '',
+                                      interval: 'month',
+                                    });
+                                    handleAddPrice(plan.id);
+                                  }}
+                                >
+                                  Add price
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => deleteStripePlan.mutate({ productId: plan.id })}>Delete plan</DropdownMenuItem>
+                              </>
+                            )}
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </TableCell>
