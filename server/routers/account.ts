@@ -1,8 +1,8 @@
-import { user } from '@/drizzle/schema';
+import { notifications, user } from '@/drizzle/schema';
 import { createTRPCRouter, protectedProcedure } from '@/server/trpc';
 import { encryptPassword } from '@/utils/password';
 import { TRPCError } from '@trpc/server';
-import { eq } from 'drizzle-orm';
+import { and, desc, eq } from 'drizzle-orm';
 import z from 'zod';
 
 export const accountRouter = createTRPCRouter({
@@ -75,4 +75,19 @@ export const accountRouter = createTRPCRouter({
 
       return ctx.db.update(user).set({ password: hashedPassword }).where(eq(user.id, ctx.session.user.id));
     }),
+
+  getNotifications: protectedProcedure.query(({ ctx }) => {
+    return ctx.db.select().from(notifications).where(eq(notifications.userId, ctx.session.user.id)).orderBy(desc(notifications.createdAt));
+  }),
+
+  markNotificationAsRead: protectedProcedure.input(z.number()).mutation(({ ctx, input }) => {
+    return ctx.db
+      .update(notifications)
+      .set({ read: true })
+      .where(and(eq(notifications.userId, ctx.session.user.id), eq(notifications.id, input)));
+  }),
+
+  markAllNotificationsAsRead: protectedProcedure.mutation(({ ctx }) => {
+    return ctx.db.update(notifications).set({ read: true }).where(eq(notifications.userId, ctx.session.user.id));
+  }),
 });

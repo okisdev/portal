@@ -1,5 +1,6 @@
 'use client';
 
+import { PageHeader } from '@/components/shared/page-header';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -98,7 +99,9 @@ export default function AccountSettingsPage() {
   };
 
   return (
-    <div className='h-full flex-1 space-y-8 p-8 pt-6'>
+    <div className='space-y-6'>
+      <PageHeader title='Account Settings' description='Manage your account settings' />
+
       <div className='flex h-full flex-col space-y-8'>
         <Tabs defaultValue='profile' className='space-y-6'>
           <TabsList>

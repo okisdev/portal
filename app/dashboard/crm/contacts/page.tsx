@@ -1,6 +1,7 @@
 'use client';
 
 import { ColorBadge } from '@/components/shared/color-badge';
+import { PageHeader } from '@/components/shared/page-header';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
@@ -119,7 +120,9 @@ export default function CRMContactsPage() {
   };
 
   return (
-    <div className='container mx-auto w-full space-y-4'>
+    <div className='space-y-6'>
+      <PageHeader title='Contacts' description='Manage sales contacts' />
+
       <div className='flex flex-col gap-4'>
         <div className='flex items-center justify-between gap-4'>
           <div className='flex flex-row gap-2'>

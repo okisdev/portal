@@ -1,4 +1,4 @@
-import { boolean, foreignKey, integer, pgTable, text, timestamp, unique } from 'drizzle-orm/pg-core';
+import { boolean, foreignKey, integer, pgTable, serial, text, timestamp, unique, varchar } from 'drizzle-orm/pg-core';
 
 export const verificationToken = pgTable('verificationToken', {
   identifier: text().notNull(),
@@ -237,4 +237,15 @@ export const subscriptionPlan = pgTable('subscriptionPlan', {
   isActive: boolean().default(true),
   createdAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
   updatedAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
+});
+
+export const notifications = pgTable('notifications', {
+  id: serial('id').primaryKey(),
+  userId: varchar('user_id').notNull(),
+  type: varchar('type').notNull(),
+  title: varchar('title').notNull(),
+  message: text('message').notNull(),
+  read: boolean('read').default(false),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
 });
