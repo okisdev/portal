@@ -39,7 +39,8 @@ export default function ContactIdPage() {
   const [newActivity, setNewActivity] = useState('');
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editForm, setEditForm] = useState({
-    name: '',
+    firstName: '',
+    lastName: '',
     email: '',
     phone: '',
     company: '',
@@ -95,8 +96,10 @@ export default function ContactIdPage() {
   };
 
   const handleEditClick = () => {
+    const [firstName = '', lastName = ''] = contact?.name?.split(' ') || ['', ''];
     setEditForm({
-      name: contact?.name || '',
+      firstName,
+      lastName,
       email: contact?.email || '',
       phone: contact?.phone || '',
       company: contact?.company || '',
@@ -111,7 +114,14 @@ export default function ContactIdPage() {
     e.preventDefault();
     updateContact.mutate({
       id: contactId[0],
-      ...editForm,
+      firstName: editForm.firstName,
+      lastName: editForm.lastName,
+      email: editForm.email,
+      phone: editForm.phone,
+      company: editForm.company,
+      status: editForm.status,
+      source: editForm.source,
+      priority: editForm.priority,
     });
   };
 
@@ -119,7 +129,8 @@ export default function ContactIdPage() {
     updateContact.mutate({
       id: contactId[0],
       status: value,
-      name: contact?.name || '',
+      firstName: contact?.firstName || '',
+      lastName: contact?.lastName || '',
       email: contact?.email || '',
       phone: contact?.phone || '',
       company: contact?.company || '',
@@ -132,7 +143,8 @@ export default function ContactIdPage() {
     updateContact.mutate({
       id: contactId[0],
       priority: value,
-      name: contact?.name || '',
+      firstName: contact?.firstName || '',
+      lastName: contact?.lastName || '',
       email: contact?.email || '',
       phone: contact?.phone || '',
       company: contact?.company || '',
@@ -184,9 +196,15 @@ export default function ContactIdPage() {
             <DialogTitle>Edit Contact Information</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSubmitEdit} className='space-y-4'>
-            <div className='space-y-2'>
-              <Label htmlFor='name'>Name</Label>
-              <Input id='name' value={editForm.name} onChange={(e) => setEditForm({ ...editForm, name: e.target.value })} />
+            <div className='grid grid-cols-2 gap-4'>
+              <div className='space-y-2'>
+                <Label htmlFor='firstName'>First Name</Label>
+                <Input id='firstName' value={editForm.firstName} onChange={(e) => setEditForm({ ...editForm, firstName: e.target.value })} />
+              </div>
+              <div className='space-y-2'>
+                <Label htmlFor='lastName'>Last Name</Label>
+                <Input id='lastName' value={editForm.lastName} onChange={(e) => setEditForm({ ...editForm, lastName: e.target.value })} />
+              </div>
             </div>
             <div className='space-y-2'>
               <Label htmlFor='email'>Email</Label>

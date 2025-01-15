@@ -91,6 +91,8 @@ export const dashboardRouter = createTRPCRouter({
       z.object({
         id: z.string(),
         name: z.string().optional(),
+        firstName: z.string().optional(),
+        lastName: z.string().optional(),
         email: z.string().email().optional(),
         phone: z.string().optional(),
         company: z.string().optional(),
@@ -106,7 +108,11 @@ export const dashboardRouter = createTRPCRouter({
     )
     .mutation(async ({ ctx, input }) => {
       const { id, ...updateData } = input;
-      return await ctx.db.update(contact).set(updateData).where(eq(contact.id, id));
+      const name = `${input.firstName} ${input.lastName}`;
+      return await ctx.db
+        .update(contact)
+        .set({ ...updateData, name })
+        .where(eq(contact.id, id));
     }),
 
   getContactPayments: protectedProcedure
