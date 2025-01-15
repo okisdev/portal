@@ -1,47 +1,36 @@
 'use client';
 
 import { YearMonthPicker } from '@/components/dashboard/personal/calendar/year-month-picker';
+import { Combobox } from '@/components/shared/combobox';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Form, FormControl, FormField, FormItem, FormLabel } from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
+import { api } from '@/utils/trpc/client';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { ChevronDown, ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 import * as React from 'react';
+import { useForm } from 'react-hook-form';
+import { z } from 'zod';
 
 const WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
-interface Event {
-  id: string;
-  title: string;
-  time: string;
-  date: Date;
-  description?: string;
-}
-
-const SAMPLE_EVENTS: Event[] = [
-  {
-    id: '1',
-    title: 'Pre-collec',
-    time: '13:00',
-    date: new Date(2025, 0, 3),
-    description: 'Pre-collection meeting with the team',
-  },
-  {
-    id: '2',
-    title: 'Insurtecl',
-    time: '8:00',
-    date: new Date(2025, 0, 4),
-    description: 'Insurance technology conference call',
-  },
-  {
-    id: '3',
-    title: 'Insurtecl',
-    time: '8:00',
-    date: new Date(2025, 0, 5),
-    description: 'Follow-up on insurance technology implementation',
-  },
-];
+const eventFormSchema = z.object({
+  title: z.string().min(1, 'Title is required'),
+  description: z.string().optional(),
+  location: z.string().optional(),
+  startAt: z.date(),
+  endAt: z.date(),
+  isAllDay: z.boolean().default(false),
+  isPublic: z.boolean().default(false),
+  folderId: z.string(),
+});
 
 export default function DashboardCalendar() {
   const [currentDate, setCurrentDate] = React.useState(new Date());
@@ -49,6 +38,89 @@ export default function DashboardCalendar() {
   const [showAllCalendars, setShowAllCalendars] = React.useState(true);
   const [yearMonthPickerOpen, setYearMonthPickerOpen] = React.useState(false);
   const [isCalendarFolded, setIsCalendarFolded] = React.useState(false);
+  const [isCreateEventOpen, setIsCreateEventOpen] = React.useState(false);
+
+  const utils = api.useUtils();
+
+  // Fetch calendar data
+  const startOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+  const endOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
+
+  const { data: folders } = api.calendar.getFolders.useQuery();
+  const { data: events } = api.calendar.getEvents.useQuery({
+    startDate: startOfMonth,
+    endDate: endOfMonth,
+  });
+
+  const form = useForm<z.infer<typeof eventFormSchema>>({
+    resolver: zodResolver(eventFormSchema),
+    defaultValues: {
+      title: '',
+      description: '',
+      location: '',
+      startAt: selectedDate,
+      endAt: selectedDate,
+      isAllDay: false,
+      isPublic: false,
+      folderId: '',
+    },
+  });
+
+  // Update form values when selected date changes
+  React.useEffect(() => {
+    form.setValue('startAt', selectedDate);
+    form.setValue('endAt', selectedDate);
+  }, [selectedDate, form]);
+
+  // Reset form when dialog closes
+  React.useEffect(() => {
+    if (!isCreateEventOpen) {
+      form.reset({
+        title: '',
+        description: '',
+        location: '',
+        startAt: selectedDate,
+        endAt: selectedDate,
+        isAllDay: false,
+        isPublic: false,
+        folderId: folders?.[0]?.id ?? '',
+      });
+    }
+  }, [isCreateEventOpen, selectedDate, folders, form]);
+
+  const createEvent = api.calendar.createEvent.useMutation({
+    onSuccess: () => {
+      utils.calendar.getEvents.invalidate();
+      setIsCreateEventOpen(false);
+      form.reset();
+    },
+  });
+
+  const createFolder = api.calendar.createFolder.useMutation({
+    onSuccess: () => {
+      utils.calendar.getFolders.invalidate();
+    },
+  });
+
+  const handleCalendarSelect = async (value: string) => {
+    // If the folder doesn't exist, create it
+    if (!folders?.some((folder) => folder.name === value)) {
+      await createFolder.mutateAsync({
+        name: value,
+        color: `#${Math.floor(Math.random() * 16777215).toString(16)}`, // Random color
+      });
+    }
+
+    // Find the folder id or wait for the folders to refresh
+    const folder = folders?.find((f) => f.name === value);
+    if (folder) {
+      form.setValue('folderId', folder.id);
+    }
+  };
+
+  const onSubmit = (data: z.infer<typeof eventFormSchema>) => {
+    createEvent.mutate(data);
+  };
 
   const getDaysInMonth = (date: Date) => {
     const year = date.getFullYear();
@@ -75,7 +147,7 @@ export default function DashboardCalendar() {
   };
 
   const getEventsForDate = (date: Date) => {
-    return SAMPLE_EVENTS.filter((event) => event.date.getDate() === date.getDate() && event.date.getMonth() === date.getMonth() && event.date.getFullYear() === date.getFullYear());
+    return events?.filter((event) => event.startAt.getDate() === date.getDate() && event.startAt.getMonth() === date.getMonth() && event.startAt.getFullYear() === date.getFullYear()) ?? [];
   };
 
   const goToToday = () => {
@@ -93,167 +165,331 @@ export default function DashboardCalendar() {
   };
 
   return (
-    <div className='flex'>
-      <div className='flex w-64 flex-col gap-4 border-r p-4'>
-        <div className='flex items-center justify-between'>
-          <Popover open={yearMonthPickerOpen} onOpenChange={setYearMonthPickerOpen}>
-            <PopoverTrigger asChild>
-              <Button variant='outline' className='w-full justify-start' onClick={() => setYearMonthPickerOpen(true)}>
-                <span>
-                  {currentDate.getFullYear()} {MONTHS[currentDate.getMonth()]}
-                </span>
-                <ChevronDown className='ml-auto h-4 w-4' />
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className='w-auto p-0' align='start'>
-              <YearMonthPicker
-                value={currentDate}
-                onChange={(date) => {
-                  setCurrentDate(date);
-                  setYearMonthPickerOpen(false);
-                }}
-                onClose={() => setYearMonthPickerOpen(false)}
-              />
-            </PopoverContent>
-          </Popover>
-        </div>
+    <>
+      <div className='flex'>
+        <div className='flex w-64 flex-col gap-4 border-r p-4'>
+          <div className='flex items-center justify-between'>
+            <Popover open={yearMonthPickerOpen} onOpenChange={setYearMonthPickerOpen}>
+              <PopoverTrigger asChild>
+                <Button variant='outline' className='w-full justify-start' onClick={() => setYearMonthPickerOpen(true)}>
+                  <span>
+                    {currentDate.getFullYear()} {MONTHS[currentDate.getMonth()]}
+                  </span>
+                  <ChevronDown className='ml-auto h-4 w-4' />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className='w-auto p-0' align='start'>
+                <YearMonthPicker
+                  value={currentDate}
+                  onChange={(date) => {
+                    setCurrentDate(date);
+                    setYearMonthPickerOpen(false);
+                  }}
+                  onClose={() => setYearMonthPickerOpen(false)}
+                />
+              </PopoverContent>
+            </Popover>
+          </div>
 
-        <div className='grid grid-cols-7 gap-1 text-sm'>
-          {WEEKDAYS.map((day) => (
-            <div key={day} className='text-center text-muted-foreground'>
-              {day.slice(0, 1)}
-            </div>
-          ))}
-          {getDaysInMonth(currentDate)
-            .slice(0, 35)
-            .map((date) => (
-              <Button
-                key={date.toISOString()}
-                variant='ghost'
-                className={cn(
-                  'h-6 w-6 p-0',
-                  date.getMonth() !== currentDate.getMonth() && 'text-muted-foreground',
-                  date.getDate() === selectedDate.getDate() && date.getMonth() === selectedDate.getMonth() && date.getFullYear() === selectedDate.getFullYear() && 'bg-primary text-primary-foreground'
-                )}
-                onClick={() => setSelectedDate(date)}
-              >
-                {date.getDate()}
-              </Button>
+          <div className='grid grid-cols-7 gap-1 text-sm'>
+            {WEEKDAYS.map((day) => (
+              <div key={day} className='text-center text-muted-foreground'>
+                {day.slice(0, 1)}
+              </div>
             ))}
-        </div>
-
-        <Button className='flex items-center gap-2' variant='outline'>
-          <Plus className='h-4 w-4' />
-          Add calendar
-        </Button>
-
-        <div className='flex flex-col gap-2'>
-          {/* biome-ignore lint/a11y/useKeyWithClickEvents: <explanation> */}
-          <div className='flex cursor-pointer items-center gap-2' onClick={() => setIsCalendarFolded(!isCalendarFolded)}>
-            <div className='flex-1'>Calendars</div>
-            <ChevronDown className='h-4 w-4' />
-          </div>
-          {!isCalendarFolded && (
-            <div>
-              <Button variant='ghost' className='justify-start'>
-                Work
-              </Button>
-            </div>
-          )}
-        </div>
-
-        <div>
-          <div className='flex items-center gap-2'>
-            <Checkbox checked={showAllCalendars} onClick={() => setShowAllCalendars(!showAllCalendars)} />
-            <div className='flex-1'>Show All events</div>
-          </div>
-        </div>
-      </div>
-
-      <div className='flex flex-1 flex-col'>
-        <header className='flex items-center justify-between border-b p-4'>
-          <div className='flex items-center gap-4'>
-            <Button variant='outline' onClick={goToToday}>
-              Today
-            </Button>
-            <div className='flex items-center gap-2'>
-              <Button variant='ghost' size='icon' onClick={goToPreviousMonth}>
-                <ChevronLeft className='h-4 w-4' />
-              </Button>
-              <Button variant='ghost' size='icon' onClick={goToNextMonth}>
-                <ChevronRight className='h-4 w-4' />
-              </Button>
-            </div>
-            <h1 className='text-xl'>
-              {currentDate.getFullYear()} {MONTHS[currentDate.getMonth()]}
-            </h1>
-          </div>
-        </header>
-
-        <div className='grid flex-1 grid-cols-7'>
-          {WEEKDAYS.map((day) => (
-            <div key={day} className='border-r border-b p-2 text-muted-foreground text-sm'>
-              {day}
-            </div>
-          ))}
-          {getDaysInMonth(currentDate).map((date) => {
-            const events = getEventsForDate(date);
-
-            return (
-              // biome-ignore lint/a11y/useKeyWithClickEvents: <explanation>
-              <div
-                key={date.toISOString()}
-                className={cn(
-                  'relative min-h-[120px] border-r border-b p-2',
-                  date.getMonth() !== currentDate.getMonth() && 'bg-muted/50',
-                  date.getDate() === selectedDate.getDate() && date.getMonth() === selectedDate.getMonth() && date.getFullYear() === selectedDate.getFullYear() && 'ring-2 ring-primary ring-inset'
-                )}
-                onClick={() => setSelectedDate(date)}
-              >
-                <span
+            {getDaysInMonth(currentDate)
+              .slice(0, 35)
+              .map((date) => (
+                <Button
+                  key={date.toISOString()}
+                  variant='ghost'
                   className={cn(
-                    'text-sm',
-                    date.getDate() === new Date().getDate() &&
-                      date.getMonth() === new Date().getMonth() &&
-                      date.getFullYear() === new Date().getFullYear() &&
-                      'inline-flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground'
+                    'h-6 w-6 p-0',
+                    date.getMonth() !== currentDate.getMonth() && 'text-muted-foreground',
+                    date.getDate() === selectedDate.getDate() &&
+                      date.getMonth() === selectedDate.getMonth() &&
+                      date.getFullYear() === selectedDate.getFullYear() &&
+                      'bg-primary text-primary-foreground'
                   )}
+                  onClick={() => setSelectedDate(date)}
                 >
                   {date.getDate()}
-                </span>
-                {showAllCalendars &&
-                  events.map((event) => (
-                    <Popover key={event.id}>
-                      <PopoverTrigger asChild>
-                        <Button
-                          variant='ghost'
-                          className='h-auto w-full justify-start truncate rounded border border-blue-300 border-dashed bg-blue-100 p-1 text-blue-700 text-xs hover:bg-blue-200'
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          {event.time} {event.title}
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className='w-80'>
-                        <div className='grid gap-4'>
-                          <div className='space-y-2'>
-                            <h4 className='font-medium leading-none'>{event.title}</h4>
-                            <p className='text-muted-foreground text-sm'>{event.time}</p>
-                          </div>
-                          <div className='grid gap-2'>
-                            <div className='grid grid-cols-3 items-center gap-4'>
-                              <p className='text-sm'>Description:</p>
-                              <p className='col-span-2 text-sm'>{event.description}</p>
+                </Button>
+              ))}
+          </div>
+
+          <Button className='flex items-center gap-2' variant='outline'>
+            <Plus className='h-4 w-4' />
+            Add calendar
+          </Button>
+
+          <div className='flex flex-col gap-2'>
+            {/* biome-ignore lint/a11y/useKeyWithClickEvents: <explanation> */}
+            <div className='flex cursor-pointer items-center gap-2' onClick={() => setIsCalendarFolded(!isCalendarFolded)}>
+              <div className='flex-1'>Calendars</div>
+              <ChevronDown className='h-4 w-4' />
+            </div>
+            {!isCalendarFolded && (
+              <div className='flex w-full flex-col gap-2'>
+                <div className='flex flex-col gap-2'>
+                  {folders?.map((folder) => (
+                    <Button key={folder.id} variant='ghost' className='w-full justify-start'>
+                      <div className='mr-2 h-4 w-4 rounded-full' style={{ backgroundColor: folder.color ?? 'transparent' }} />
+                      {folder.name}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div className='flex items-center gap-2'>
+              <Checkbox checked={showAllCalendars} onClick={() => setShowAllCalendars(!showAllCalendars)} />
+              <Label className='text-sm'>Show All events</Label>
+            </div>
+          </div>
+        </div>
+
+        <div className='flex flex-1 flex-col'>
+          <header className='flex items-center justify-between border-b px-4 py-2'>
+            <div className='flex items-center gap-4'>
+              <Button variant='outline' onClick={goToToday} className='h-8'>
+                Today
+              </Button>
+              <div className='flex items-center gap-2'>
+                <Button variant='ghost' size='icon' onClick={goToPreviousMonth}>
+                  <ChevronLeft className='h-4 w-4' />
+                </Button>
+                <Button variant='ghost' size='icon' onClick={goToNextMonth}>
+                  <ChevronRight className='h-4 w-4' />
+                </Button>
+              </div>
+              <h1 className='text-lg'>
+                {currentDate.getFullYear()} {MONTHS[currentDate.getMonth()]}
+              </h1>
+            </div>
+            <div className='flex items-center gap-2'>
+              <Button variant='outline' className='h-8 w-auto' onClick={() => setIsCreateEventOpen(true)}>
+                <Plus className='h-4 w-4' />
+                Add event
+              </Button>
+            </div>
+          </header>
+
+          <div className='grid flex-1 grid-cols-7'>
+            {WEEKDAYS.map((day) => (
+              <div key={day} className='border-r border-b p-2 text-muted-foreground text-sm'>
+                {day}
+              </div>
+            ))}
+            {getDaysInMonth(currentDate).map((date) => {
+              const events = getEventsForDate(date);
+
+              return (
+                // biome-ignore lint/a11y/useKeyWithClickEvents: <explanation>
+                <div
+                  key={date.toISOString()}
+                  className={cn(
+                    'relative min-h-[120px] border-r border-b p-2',
+                    date.getMonth() !== currentDate.getMonth() && 'bg-muted/50',
+                    date.getDate() === selectedDate.getDate() && date.getMonth() === selectedDate.getMonth() && date.getFullYear() === selectedDate.getFullYear() && 'ring-2 ring-primary ring-inset'
+                  )}
+                  onClick={() => setSelectedDate(date)}
+                >
+                  <span
+                    className={cn(
+                      'text-sm',
+                      date.getDate() === new Date().getDate() &&
+                        date.getMonth() === new Date().getMonth() &&
+                        date.getFullYear() === new Date().getFullYear() &&
+                        'inline-flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground'
+                    )}
+                  >
+                    {date.getDate()}
+                  </span>
+                  {showAllCalendars &&
+                    events.map((event) => (
+                      <Popover key={event.id}>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant='ghost'
+                            className='h-auto w-full justify-start truncate rounded border border-blue-300 border-dashed bg-blue-100 p-1 text-blue-700 text-xs hover:bg-blue-200'
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            {event.isAllDay ? 'All day' : `${new Date(event.startAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`} {event.title}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className='w-80'>
+                          <div className='grid gap-4'>
+                            <div className='space-y-2'>
+                              <h4 className='font-medium leading-none'>{event.title}</h4>
+                              <p className='text-muted-foreground text-sm'>{event.startAt.toLocaleTimeString()}</p>
+                            </div>
+                            <div className='grid gap-2'>
+                              <div className='grid grid-cols-3 items-center gap-4'>
+                                <p className='text-sm'>Description:</p>
+                                <p className='col-span-2 text-sm'>{event.description}</p>
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      </PopoverContent>
-                    </Popover>
-                  ))}
-              </div>
-            );
-          })}
+                        </PopoverContent>
+                      </Popover>
+                    ))}
+                </div>
+              );
+            })}
+          </div>
         </div>
       </div>
-    </div>
+
+      <Dialog
+        open={isCreateEventOpen}
+        onOpenChange={(open) => {
+          setIsCreateEventOpen(open);
+          if (!open) {
+            form.reset();
+          }
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Create New Event</DialogTitle>
+          </DialogHeader>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-4'>
+              <FormField
+                control={form.control}
+                name='title'
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Title</FormLabel>
+                    <FormControl>
+                      <Input {...field} />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name='description'
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Description</FormLabel>
+                    <FormControl>
+                      <Textarea {...field} />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name='location'
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Location</FormLabel>
+                    <FormControl>
+                      <Input {...field} />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+
+              <div className='grid grid-cols-2 gap-4'>
+                <FormField
+                  control={form.control}
+                  name='startAt'
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Start</FormLabel>
+                      <FormControl>
+                        <Input
+                          type='datetime-local'
+                          {...field}
+                          value={field.value ? new Date(field.value).toISOString().slice(0, 16) : ''}
+                          onChange={(e) => field.onChange(new Date(e.target.value))}
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name='endAt'
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>End</FormLabel>
+                      <FormControl>
+                        <Input
+                          type='datetime-local'
+                          {...field}
+                          value={field.value ? new Date(field.value).toISOString().slice(0, 16) : ''}
+                          onChange={(e) => field.onChange(new Date(e.target.value))}
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <FormField
+                control={form.control}
+                name='folderId'
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Calendar</FormLabel>
+                    <FormControl>
+                      <Combobox
+                        value={folders?.find((f) => f.id === field.value)?.name || ''}
+                        onChange={handleCalendarSelect}
+                        items={folders?.map((f) => f.name) || []}
+                        placeholder='Select or create calendar'
+                        searchPlaceholder='Search calendars...'
+                        emptyText='No calendars found'
+                        groupHeading='Calendars'
+                        allowCustom={true}
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+
+              <div className='flex gap-4'>
+                <FormField
+                  control={form.control}
+                  name='isAllDay'
+                  render={({ field }) => (
+                    <FormItem className='flex items-center gap-2'>
+                      <FormControl>
+                        <Checkbox checked={field.value} onCheckedChange={field.onChange} />
+                      </FormControl>
+                      <FormLabel>All Day</FormLabel>
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name='isPublic'
+                  render={({ field }) => (
+                    <FormItem className='flex items-center gap-2'>
+                      <FormControl>
+                        <Checkbox checked={field.value} onCheckedChange={field.onChange} />
+                      </FormControl>
+                      <FormLabel>Public</FormLabel>
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <Button type='submit' className='w-full'>
+                Create Event
+              </Button>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }

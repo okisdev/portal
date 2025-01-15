@@ -1,6 +1,7 @@
 import { accountRouter } from '@/server/routers/account';
 import { adminRouter } from '@/server/routers/admin';
 import { authRouter } from '@/server/routers/auth';
+import { calendarRouter } from '@/server/routers/calendar';
 import { dashboardRouter } from '@/server/routers/dashboard';
 import { payRouter } from '@/server/routers/pay';
 import type { inferReactQueryProcedureOptions } from '@trpc/react-query';
@@ -15,6 +16,7 @@ export const appRouter = createTRPCRouter({
   auth: authRouter,
   admin: adminRouter,
   account: accountRouter,
+  calendar: calendarRouter,
   dashboard: dashboardRouter,
   pay: payRouter,
 });

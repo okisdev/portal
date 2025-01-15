@@ -249,3 +249,58 @@ export const notifications = pgTable('notifications', {
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow(),
 });
+
+export const calendarFolder = pgTable('calendarFolder', {
+  id: text()
+    .primaryKey()
+    .notNull()
+    .$defaultFn(() => crypto.randomUUID()),
+  userId: text()
+    .notNull()
+    .references(() => user.id, { onDelete: 'cascade' }),
+  name: text().notNull(),
+  color: text().default('#4f46e5'),
+  isDefault: boolean().default(false),
+  createdAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
+  updatedAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
+});
+
+export const calendarEvent = pgTable('calendarEvent', {
+  id: text()
+    .primaryKey()
+    .notNull()
+    .$defaultFn(() => crypto.randomUUID()),
+  userId: text()
+    .notNull()
+    .references(() => user.id, { onDelete: 'cascade' }),
+  folderId: text()
+    .notNull()
+    .references(() => calendarFolder.id, { onDelete: 'cascade' }),
+  title: text().notNull(),
+  description: text(),
+  location: text(),
+  startAt: timestamp({ mode: 'date' }).notNull(),
+  endAt: timestamp({ mode: 'date' }).notNull(),
+  isAllDay: boolean().default(false),
+  isPublic: boolean().default(false),
+  recurrence: text(), // JSON string for recurrence rules
+  metadata: text(), // JSON string for additional data
+  createdAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
+  updatedAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
+});
+
+export const calendarEventShare = pgTable('calendarEventShare', {
+  id: text()
+    .primaryKey()
+    .notNull()
+    .$defaultFn(() => crypto.randomUUID()),
+  eventId: text()
+    .notNull()
+    .references(() => calendarEvent.id, { onDelete: 'cascade' }),
+  sharedWithUserId: text()
+    .notNull()
+    .references(() => user.id, { onDelete: 'cascade' }),
+  permission: text('permission', { enum: ['view', 'edit'] }).default('view'),
+  createdAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
+  updatedAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
+});
