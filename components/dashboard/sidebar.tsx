@@ -15,7 +15,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from '@/components/ui/sidebar';
-import { crmItems, marketingItems, teamItems } from '@/config/dashboard';
+import { crmItems, marketingItems, personalItems, teamItems } from '@/config/dashboard';
 import { api } from '@/utils/trpc/client';
 import { ChevronDown, ChevronUp, Plus, Settings, User2 } from 'lucide-react';
 import { signOut } from 'next-auth/react';
@@ -39,6 +39,37 @@ export function DashboardSidebar() {
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
+        <Collapsible defaultOpen className='group/collapsible'>
+          <SidebarGroup>
+            <SidebarGroupLabel asChild>
+              <CollapsibleTrigger>
+                Personal
+                <ChevronDown className='ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180' />
+              </CollapsibleTrigger>
+            </SidebarGroupLabel>
+            <CollapsibleContent>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {personalItems.map((item) => (
+                    <SidebarMenuItem key={item.title}>
+                      <SidebarMenuButton asChild>
+                        <Link href={item.url}>
+                          <item.icon />
+                          <span>{item.title}</span>
+                        </Link>
+                      </SidebarMenuButton>
+                      {item.title === 'Contacts' && (
+                        <SidebarMenuAction onClick={() => router.push('/dashboard/crm/contacts/new')}>
+                          <Plus /> <span className='sr-only'>Add Contact</span>
+                        </SidebarMenuAction>
+                      )}
+                    </SidebarMenuItem>
+                  ))}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </CollapsibleContent>
+          </SidebarGroup>
+        </Collapsible>
         <Collapsible defaultOpen className='group/collapsible'>
           <SidebarGroup>
             <SidebarGroupLabel asChild>

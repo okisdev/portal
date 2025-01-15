@@ -1,4 +1,17 @@
-import { Coins, Contact, Gift, Link, Settings, Users } from 'lucide-react';
+import { Calendar, Coins, Contact, Gift, Link, Settings, Tornado, Users } from 'lucide-react';
+
+export const personalItems = [
+  {
+    title: 'Calendar',
+    url: '/dashboard/personal/calendar',
+    icon: Calendar,
+  },
+  {
+    title: 'Tasks',
+    url: '/dashboard/personal/tasks',
+    icon: Tornado,
+  },
+];
 
 export const crmItems = [
   {

@@ -1,6 +1,7 @@
 'use client';
 
 import { Combobox } from '@/components/shared/combobox';
+import { PageHeader } from '@/components/shared/page-header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -11,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { insuranceCompanies } from '@/data/data';
+import { insuranceCompanies, sources } from '@/data/data';
 import { copyToClipboard } from '@/utils/clipboard';
 import { api } from '@/utils/trpc/client';
 import { MoreHorizontal } from 'lucide-react';
@@ -167,8 +168,8 @@ export default function SubscriptionManagement() {
   };
 
   return (
-    <div className='container mx-auto max-w-6xl'>
-      <h1 className='mb-6 font-bold text-2xl'>Subscription Management</h1>
+    <div className='space-y-6 p-6'>
+      <PageHeader title='Subscription Management' description='Manage your subscription plans and coupons' />
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList>
@@ -225,7 +226,7 @@ export default function SubscriptionManagement() {
                         <Combobox
                           value={couponData.source}
                           onChange={(value) => setCouponData({ ...couponData, source: value })}
-                          items={['Pitching', 'Referral', 'Website', 'Email', 'IG', 'LinkedIn', 'Facebook', 'Other']}
+                          items={sources}
                           placeholder='Select source...'
                           searchPlaceholder='Search source...'
                           groupHeading='Sources'

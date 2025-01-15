@@ -1,11 +1,12 @@
 'use client';
 
+import { PageHeader } from '@/components/shared/page-header';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { PlusIcon, SearchIcon } from 'lucide-react';
+import { SearchIcon } from 'lucide-react';
 import { useState } from 'react';
 
 interface Campaign {
@@ -65,14 +66,8 @@ export default function MarketingCampaignsPage() {
   const filteredCampaigns = sampleCampaigns.filter((campaign) => campaign.name.toLowerCase().includes(searchQuery.toLowerCase()));
 
   return (
-    <div className='space-y-6'>
-      <div className='flex items-center justify-between'>
-        <h1 className='font-medium text-2xl'>Marketing Campaigns</h1>
-        <Button variant='outline'>
-          <PlusIcon className='mr-2 h-4 w-4' />
-          New Campaign
-        </Button>
-      </div>
+    <div className='space-y-6 p-6'>
+      <PageHeader title='Marketing Campaigns' description='Create and manage marketing campaigns' right={<Button variant='outline'>New Campaign</Button>} />
 
       <div className='grid grid-cols-1 gap-4 md:grid-cols-3'>
         <Card>

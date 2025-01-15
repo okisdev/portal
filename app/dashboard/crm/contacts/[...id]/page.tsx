@@ -9,9 +9,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { insuranceCompanies } from '@/data/data';
+import { insuranceCompanies, sources } from '@/data/data';
 import type { Priority, Status } from '@/lib/schema';
-import { formatDate, isDev } from '@/lib/utils';
+import { cn, formatDate, isDev } from '@/lib/utils';
 import { api } from '@/utils/trpc/client';
 import { Edit2, Mail, MoreHorizontal, Phone, Printer, Send } from 'lucide-react';
 import { useSession } from 'next-auth/react';
@@ -154,7 +154,7 @@ export default function ContactIdPage() {
   };
 
   return (
-    <div className='space-y-6'>
+    <div className='space-y-6 p-6'>
       <div className='flex items-center justify-between border-b pb-4'>
         <div className='flex items-center space-x-4'>
           <Avatar className='size-12'>
@@ -177,7 +177,12 @@ export default function ContactIdPage() {
             </Link>
           </Button>
           <Button variant='ghost' size='icon' asChild>
-            <Link href={`https://wa.me/${contact?.phone?.replace(/\D/g, '')}`} target='_blank' rel='noopener noreferrer'>
+            <Link
+              href={!contact?.phone ? '' : `https://wa.me/${contact?.phone?.replace(/\D/g, '')}`}
+              target={'_blank'}
+              rel='noopener noreferrer'
+              className={cn(!contact?.phone && 'cursor-not-allowed opacity-50')}
+            >
               <Phone className='size-4' />
             </Link>
           </Button>
@@ -246,7 +251,7 @@ export default function ContactIdPage() {
               <Combobox
                 value={editForm.source}
                 onChange={(value) => setEditForm({ ...editForm, source: value })}
-                items={['Pitching', 'Referral', 'Website', 'Email', 'IG', 'LinkedIn', 'Facebook', 'Other']}
+                items={sources}
                 placeholder='Select source...'
                 searchPlaceholder='Search source...'
                 groupHeading='Sources'

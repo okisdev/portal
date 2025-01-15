@@ -7,6 +7,7 @@ import { format } from 'date-fns';
 import { Loader2, TrendingUp } from 'lucide-react';
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from 'recharts';
 
+import { PageHeader } from '@/components/shared/page-header';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { type ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 
@@ -74,10 +75,8 @@ export default function PaymentsPage() {
   const successRate = payments?.length ? (successfulPayments / payments.length) * 100 : 0;
 
   return (
-    <div className='flex-1 space-y-4'>
-      <div className='flex items-center justify-between space-y-2'>
-        <h2 className='font-medium text-3xl tracking-tight'>Payments Dashboard</h2>
-      </div>
+    <div className='space-y-6 p-6'>
+      <PageHeader title='Payments' description='Manage your payments' />
 
       <Tabs defaultValue='overview' className='space-y-4'>
         <TabsList>

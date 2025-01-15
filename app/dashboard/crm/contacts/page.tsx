@@ -1,15 +1,16 @@
 'use client';
 
 import { ColorBadge } from '@/components/shared/color-badge';
+import { PageHeader } from '@/components/shared/page-header';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { DropdownMenuCheckboxItem } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { formatDate } from '@/lib/utils';
 import { api } from '@/utils/trpc/client';
 import { CaretSortIcon } from '@radix-ui/react-icons';
-import { Filter } from 'lucide-react';
-import { X } from 'lucide-react';
+import { Check, Filter, X } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useMemo, useState } from 'react';
@@ -29,7 +30,13 @@ type FilterCondition = {
 
 type FilterConfig = {
   conditions: FilterCondition[];
-  matchAll: boolean; // true for AND, false for OR
+  matchAll: boolean;
+};
+
+type ColumnConfig = {
+  id: string;
+  label: string;
+  visible: boolean;
 };
 
 export default function CRMContactsPage() {
@@ -44,6 +51,15 @@ export default function CRMContactsPage() {
     conditions: [],
     matchAll: true,
   });
+
+  const [columns, setColumns] = useState<ColumnConfig[]>([
+    { id: 'name', label: 'Name', visible: true },
+    { id: 'email', label: 'Email', visible: true },
+    { id: 'status', label: 'Status', visible: true },
+    { id: 'source', label: 'Source', visible: true },
+    { id: 'priority', label: 'Priority', visible: true },
+    { id: 'createdAt', label: 'Created', visible: true },
+  ]);
 
   const filterFields = [
     { label: 'Name', value: 'name' },
@@ -66,6 +82,18 @@ export default function CRMContactsPage() {
 
     return contacts
       .filter((contact) => {
+        // Apply search filter
+        if (search) {
+          const searchTerm = search.toLowerCase();
+          const fullName = `${contact.firstName} ${contact.lastName}`.toLowerCase();
+          const email = contact.email.toLowerCase();
+          const status = contact.status.toLowerCase();
+          const source = (contact.source || '').toLowerCase();
+
+          return fullName.includes(searchTerm) || email.includes(searchTerm) || status.includes(searchTerm) || source.includes(searchTerm);
+        }
+
+        // Apply filter conditions
         if (filters.conditions.length === 0) return true;
 
         const results = filters.conditions.map((condition) => {
@@ -102,14 +130,25 @@ export default function CRMContactsPage() {
       .sort((a, b) => {
         if (!sortConfig.column) return 0;
 
-        const aValue = a[sortConfig.column as keyof typeof a] ?? '';
-        const bValue = b[sortConfig.column as keyof typeof b] ?? '';
+        let aValue: string | Date;
+        let bValue: string | Date;
+
+        if (sortConfig.column === 'name') {
+          aValue = `${a.firstName} ${a.lastName}`;
+          bValue = `${b.firstName} ${b.lastName}`;
+        } else if (sortConfig.column === 'createdAt') {
+          aValue = new Date(a.createdAt);
+          bValue = new Date(b.createdAt);
+        } else {
+          aValue = String(a[sortConfig.column as keyof typeof a] ?? '');
+          bValue = String(b[sortConfig.column as keyof typeof b] ?? '');
+        }
 
         if (aValue < bValue) return sortConfig.direction === 'asc' ? -1 : 1;
         if (aValue > bValue) return sortConfig.direction === 'asc' ? 1 : -1;
         return 0;
       });
-  }, [contacts, filters, sortConfig]);
+  }, [contacts, filters, sortConfig, search]);
 
   const handleSort = (column: string) => {
     setSortConfig((current) => ({
@@ -119,7 +158,9 @@ export default function CRMContactsPage() {
   };
 
   return (
-    <div className='container mx-auto w-full space-y-4'>
+    <div className='space-y-6 p-6'>
+      <PageHeader title='Contacts' description='Manage contacts' />
+
       <div className='flex flex-col gap-4'>
         <div className='flex items-center justify-between gap-4'>
           <div className='flex flex-row gap-2'>
@@ -215,6 +256,28 @@ export default function CRMContactsPage() {
                 </div>
               </DropdownMenuContent>
             </DropdownMenu>
+
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant='outline' size='sm'>
+                  <Check className='mr-2 h-4 w-4' />
+                  Columns
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                {columns.map((column) => (
+                  <DropdownMenuCheckboxItem
+                    key={column.id}
+                    checked={column.visible}
+                    onCheckedChange={(checked) => {
+                      setColumns((prev) => prev.map((col) => (col.id === column.id ? { ...col, visible: checked } : col)));
+                    }}
+                  >
+                    {column.label}
+                  </DropdownMenuCheckboxItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
           <div className='flex flex-row gap-2'>
             <Button variant='outline' asChild className='h-8'>
@@ -231,43 +294,30 @@ export default function CRMContactsPage() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead onClick={() => handleSort('firstName')} className='cursor-pointer'>
-                Name {sortConfig.column === 'firstName' && <CaretSortIcon className='ml-2 inline' />}
-              </TableHead>
-              <TableHead onClick={() => handleSort('email')} className='cursor-pointer'>
-                Email {sortConfig.column === 'email' && <CaretSortIcon className='ml-2 inline' />}
-              </TableHead>
-              <TableHead onClick={() => handleSort('status')} className='cursor-pointer'>
-                Status {sortConfig.column === 'status' && <CaretSortIcon className='ml-2 inline' />}
-              </TableHead>
-              <TableHead onClick={() => handleSort('source')} className='cursor-pointer'>
-                Source {sortConfig.column === 'source' && <CaretSortIcon className='ml-2 inline' />}
-              </TableHead>
-              <TableHead onClick={() => handleSort('priority')} className='cursor-pointer'>
-                Priority {sortConfig.column === 'priority' && <CaretSortIcon className='ml-2 inline' />}
-              </TableHead>
-              <TableHead onClick={() => handleSort('createdAt')} className='cursor-pointer'>
-                Created {sortConfig.column === 'createdAt' && <CaretSortIcon className='ml-2 inline' />}
-              </TableHead>
+              {columns.map((column) =>
+                column.visible ? (
+                  <TableHead key={column.id} onClick={() => handleSort(column.id)} className='cursor-pointer'>
+                    {column.label} {sortConfig.column === column.id && <CaretSortIcon className='ml-2 inline' />}
+                  </TableHead>
+                ) : null
+              )}
             </TableRow>
           </TableHeader>
           <TableBody>
             {filteredContacts.map((contact) => (
               <TableRow key={contact.id} className='cursor-pointer hover:bg-muted/50' onClick={() => router.push(`/dashboard/crm/contacts/${contact.id}`)}>
-                <TableCell>
-                  {contact.firstName} {contact.lastName}
-                </TableCell>
-                <TableCell>{contact.email}</TableCell>
-                <TableCell>
-                  <ColorBadge type='status' value={contact.status} />
-                </TableCell>
-                <TableCell>
-                  <span className='capitalize'>{contact.source?.replace('_', ' ') || '—'}</span>
-                </TableCell>
-                <TableCell>
-                  <ColorBadge type='priority' value={contact.priority ?? 'medium'} />
-                </TableCell>
-                <TableCell>{formatDate(new Date(contact.createdAt))}</TableCell>
+                {columns.map((column) =>
+                  column.visible ? (
+                    <TableCell key={column.id}>
+                      {column.id === 'name' && `${contact.firstName} ${contact.lastName}`}
+                      {column.id === 'email' && contact.email}
+                      {column.id === 'status' && <ColorBadge type='status' value={contact.status} />}
+                      {column.id === 'source' && <span className='capitalize'>{contact.source?.replace('_', ' ') || '—'}</span>}
+                      {column.id === 'priority' && <ColorBadge type='priority' value={contact.priority ?? 'medium'} />}
+                      {column.id === 'createdAt' && formatDate(new Date(contact.createdAt))}
+                    </TableCell>
+                  ) : null
+                )}
               </TableRow>
             ))}
           </TableBody>

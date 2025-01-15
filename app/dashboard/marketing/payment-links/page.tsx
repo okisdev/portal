@@ -1,6 +1,7 @@
 'use server';
 
 import { auth } from '@/auth';
+import { PageHeader } from '@/components/shared/page-header';
 import { contact, paymentTrack } from '@/drizzle/schema';
 import { database } from '@/lib/database';
 import { desc, eq } from 'drizzle-orm';
@@ -34,14 +35,8 @@ export default async function PaymentLinksPage() {
   const paymentLinks = await getPaymentLinks();
 
   return (
-    <div className='flex flex-col gap-4'>
-      <div className='flex items-center justify-between'>
-        <div>
-          <h1 className='font-medium text-2xl tracking-tight'>Payment Links</h1>
-          <p className='text-muted-foreground'>Create and manage payment links for your contacts</p>
-        </div>
-        <CreatePaymentLink />
-      </div>
+    <div className='space-y-6 p-6'>
+      <PageHeader title='Payment Links' description='Create and manage payment links for your contacts' right={<CreatePaymentLink />} />
 
       <DataTable columns={columns} data={paymentLinks} />
     </div>

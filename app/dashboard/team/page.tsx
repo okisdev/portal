@@ -1,5 +1,6 @@
 'use client';
 
+import { PageHeader } from '@/components/shared/page-header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -67,6 +68,8 @@ export default function TeamPage() {
 
   return (
     <div className='mx-auto max-w-6xl space-y-6'>
+      <PageHeader title='Team' description='Manage your team members and settings' />
+
       <div className='grid gap-4 md:grid-cols-2'>
         <Card>
           <CardHeader>

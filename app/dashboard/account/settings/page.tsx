@@ -1,5 +1,6 @@
 'use client';
 
+import { PageHeader } from '@/components/shared/page-header';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -98,15 +99,17 @@ export default function AccountSettingsPage() {
   };
 
   return (
-    <div className='h-full flex-1 space-y-8 p-8 pt-6'>
+    <div className='space-y-6 p-6'>
+      <PageHeader title='Account Settings' description='Manage your account settings' />
+
       <div className='flex h-full flex-col space-y-8'>
-        <Tabs defaultValue='profile' className='space-y-6'>
+        <Tabs defaultValue='profile' className='space-y-6 p-6'>
           <TabsList>
             <TabsTrigger value='profile'>Profile</TabsTrigger>
             <TabsTrigger value='password'>Password</TabsTrigger>
           </TabsList>
 
-          <TabsContent value='profile' className='space-y-6'>
+          <TabsContent value='profile' className='space-y-6 p-6'>
             <form onSubmit={handleSubmit} className='space-y-8'>
               <div className='flex items-center space-x-8'>
                 <Avatar className='h-28 w-28'>
@@ -159,7 +162,7 @@ export default function AccountSettingsPage() {
             </form>
           </TabsContent>
 
-          <TabsContent value='password' className='space-y-6'>
+          <TabsContent value='password' className='space-y-6 p-6'>
             <div className='space-y-4'>
               <h2 className='font-semibold text-2xl tracking-tight'>Change Password</h2>
               <form onSubmit={handlePasswordSubmit} className='space-y-4'>
