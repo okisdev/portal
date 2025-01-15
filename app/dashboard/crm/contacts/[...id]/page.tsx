@@ -154,7 +154,7 @@ export default function ContactIdPage() {
   };
 
   return (
-    <div className='space-y-6'>
+    <div className='space-y-6 p-6'>
       <div className='flex items-center justify-between border-b pb-4'>
         <div className='flex items-center space-x-4'>
           <Avatar className='size-12'>
@@ -394,7 +394,7 @@ export default function ContactIdPage() {
           </div>
         </div>
 
-        <div className='space-y-6'>
+        <div className='space-y-6 p-6'>
           <div className='space-y-1 rounded-lg border p-4'>
             <h2 className='mb-2 font-semibold text-lg'>Personal Information</h2>
             <p className='text-gray-500 text-sm'>Company: {contact?.company || 'Unknown'}</p>

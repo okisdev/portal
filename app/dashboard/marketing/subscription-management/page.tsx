@@ -168,7 +168,7 @@ export default function SubscriptionManagement() {
   };
 
   return (
-    <div className='space-y-6'>
+    <div className='space-y-6 p-6'>
       <PageHeader title='Subscription Management' description='Manage your subscription plans and coupons' />
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>

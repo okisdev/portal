@@ -35,7 +35,7 @@ export default async function PaymentLinksPage() {
   const paymentLinks = await getPaymentLinks();
 
   return (
-    <div className='space-y-6'>
+    <div className='space-y-6 p-6'>
       <PageHeader title='Payment Links' description='Create and manage payment links for your contacts' right={<CreatePaymentLink />} />
 
       <DataTable columns={columns} data={paymentLinks} />

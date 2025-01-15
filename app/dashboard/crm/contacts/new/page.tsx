@@ -134,7 +134,7 @@ export default function NewContact() {
   };
 
   return (
-    <div className='space-y-6'>
+    <div className='space-y-6 p-6'>
       <PageHeader
         title='Add New Contact'
         description='Add a new contact to CRM'

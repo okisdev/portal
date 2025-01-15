@@ -10,7 +10,7 @@ export const metadata = {
 
 export default async function NotificationsPage() {
   return (
-    <div className='flex flex-col gap-6'>
+    <div className='space-y-6 p-6'>
       <PageHeader title='Notifications' description='View and manage your notifications' />
 
       <div className='flex flex-col gap-8'>
