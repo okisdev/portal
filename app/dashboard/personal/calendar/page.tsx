@@ -24,28 +24,28 @@ const SAMPLE_EVENTS: Event[] = [
     id: '1',
     title: 'Pre-collec',
     time: '13:00',
-    date: new Date(2024, 11, 3),
+    date: new Date(2025, 0, 3),
     description: 'Pre-collection meeting with the team',
   },
   {
     id: '2',
     title: 'Insurtecl',
     time: '8:00',
-    date: new Date(2024, 11, 4),
+    date: new Date(2025, 0, 4),
     description: 'Insurance technology conference call',
   },
   {
     id: '3',
     title: 'Insurtecl',
     time: '8:00',
-    date: new Date(2024, 11, 5),
+    date: new Date(2025, 0, 5),
     description: 'Follow-up on insurance technology implementation',
   },
 ];
 
 export default function DashboardCalendar() {
-  const [currentDate, setCurrentDate] = React.useState(new Date(2024, 11, 1));
-  const [selectedDate, setSelectedDate] = React.useState(new Date(2024, 11, 2));
+  const [currentDate, setCurrentDate] = React.useState(new Date());
+  const [selectedDate, setSelectedDate] = React.useState(new Date());
   const [showAllCalendars, setShowAllCalendars] = React.useState(true);
   const [yearMonthPickerOpen, setYearMonthPickerOpen] = React.useState(false);
   const [isCalendarFolded, setIsCalendarFolded] = React.useState(false);
@@ -57,7 +57,6 @@ export default function DashboardCalendar() {
     const lastDay = new Date(year, month + 1, 0);
     const days = [];
 
-    // Add previous month's days
     const firstDayOfWeek = firstDay.getDay();
     for (let i = firstDayOfWeek - 1; i >= 0; i--) {
       days.push(new Date(year, month, -i));
