@@ -20,7 +20,6 @@ export const calendarRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      // Check if folder with same name exists
       const existing = await ctx.db
         .select()
         .from(calendarFolder)
@@ -107,5 +106,27 @@ export const calendarRouter = createTRPCRouter({
 
   deleteEvent: protectedProcedure.input(z.string()).mutation(({ ctx, input }) => {
     return ctx.db.delete(calendarEvent).where(and(eq(calendarEvent.id, input), eq(calendarEvent.userId, ctx.session.user.id)));
+  }),
+
+  updateFolder: protectedProcedure
+    .input(
+      z.object({
+        id: z.string(),
+        name: z.string(),
+        color: z.string(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      return ctx.db
+        .update(calendarFolder)
+        .set({
+          name: input.name,
+          color: input.color,
+        })
+        .where(and(eq(calendarFolder.id, input.id), eq(calendarFolder.userId, ctx.session.user.id)));
+    }),
+
+  deleteFolder: protectedProcedure.input(z.string()).mutation(async ({ ctx, input }) => {
+    return ctx.db.delete(calendarFolder).where(and(eq(calendarFolder.id, input), eq(calendarFolder.userId, ctx.session.user.id)));
   }),
 });

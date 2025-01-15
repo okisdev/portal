@@ -6,15 +6,16 @@ import { DateTimePicker } from '@/components/shared/date-time-picker';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Form, FormControl, FormField, FormItem, FormLabel } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Textarea } from '@/components/ui/textarea';
-import type { CalendarEvent } from '@/lib/schema';
+import type { CalendarEvent, CalendarFolder } from '@/lib/schema';
 import { cn } from '@/lib/utils';
 import { api } from '@/utils/trpc/client';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { ChevronDown, ChevronLeft, ChevronRight, Plus } from 'lucide-react';
+import { ChevronDown, ChevronLeft, ChevronRight, MoreHorizontal, Plus } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -36,13 +37,14 @@ const eventFormSchema = z.object({
 export default function DashboardPersonalCalendar() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState(new Date());
-  const [showAllCalendars, setShowAllCalendars] = useState(true);
   const [yearMonthPickerOpen, setYearMonthPickerOpen] = useState(false);
   const [isCalendarFolded, setIsCalendarFolded] = useState(false);
   const [isCreateEventOpen, setIsCreateEventOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
   const [isEditMode, setIsEditMode] = useState(false);
   const [hiddenCalendars, setHiddenCalendars] = useState<Set<string>>(new Set());
+  const [isEditCalendarOpen, setIsEditCalendarOpen] = useState(false);
+  const [selectedCalendar, setSelectedCalendar] = useState<CalendarFolder | null>(null);
 
   const utils = api.useUtils();
 
@@ -66,6 +68,13 @@ export default function DashboardPersonalCalendar() {
       isAllDay: false,
       isPublic: false,
       folderId: '',
+    },
+  });
+
+  const calendarForm = useForm<{ name: string; color: string }>({
+    defaultValues: {
+      name: '',
+      color: '#000000',
     },
   });
 
@@ -146,6 +155,18 @@ export default function DashboardPersonalCalendar() {
       setSelectedEvent(null);
       setIsEditMode(false);
       form.reset();
+    },
+  });
+
+  const updateFolder = api.calendar.updateFolder.useMutation({
+    onSuccess: () => {
+      utils.calendar.getFolders.invalidate();
+    },
+  });
+
+  const deleteFolder = api.calendar.deleteFolder.useMutation({
+    onSuccess: () => {
+      utils.calendar.getFolders.invalidate();
     },
   });
 
@@ -241,6 +262,19 @@ export default function DashboardPersonalCalendar() {
     });
   };
 
+  const handleCalendarSubmit = (data: { name: string; color: string }) => {
+    if (selectedCalendar) {
+      updateFolder.mutate({
+        id: selectedCalendar.id,
+        name: data.name,
+        color: data.color,
+      });
+      setIsEditCalendarOpen(false);
+      setSelectedCalendar(null);
+      calendarForm.reset();
+    }
+  };
+
   return (
     <>
       <div className='flex'>
@@ -327,7 +361,7 @@ export default function DashboardPersonalCalendar() {
                       />
                       <Button
                         variant='ghost'
-                        className='h-8 w-full justify-start px-2'
+                        className='h-8 flex-1 justify-start px-2'
                         onClick={() => {
                           setHiddenCalendars((prev) => {
                             const next = new Set(prev);
@@ -343,6 +377,38 @@ export default function DashboardPersonalCalendar() {
                         <div className='mr-1 h-4 w-4 rounded-full' style={{ backgroundColor: folder.color ?? 'transparent' }} />
                         {folder.name}
                       </Button>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant='ghost' className='h-8 w-8 p-0' onClick={(e) => e.stopPropagation()}>
+                            <MoreHorizontal className='h-4 w-4' />
+                            <span className='sr-only'>Open menu</span>
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align='end'>
+                          <DropdownMenuItem
+                            onClick={() => {
+                              setSelectedCalendar(folder);
+                              calendarForm.reset({
+                                name: folder.name,
+                                color: folder.color ?? '#000000',
+                              });
+                              setIsEditCalendarOpen(true);
+                            }}
+                          >
+                            Edit
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            className='text-red-600'
+                            onClick={() => {
+                              if (window.confirm('Are you sure you want to delete this calendar?')) {
+                                deleteFolder.mutate(folder.id);
+                              }
+                            }}
+                          >
+                            Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </div>
                   ))}
                 </div>
@@ -674,6 +740,70 @@ export default function DashboardPersonalCalendar() {
                 <Button type='submit' className='w-full'>
                   {isEditMode ? 'Update' : 'Create'} Event
                 </Button>
+              </div>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={isEditCalendarOpen}
+        onOpenChange={(open) => {
+          setIsEditCalendarOpen(open);
+          if (!open) {
+            setSelectedCalendar(null);
+            calendarForm.reset();
+          }
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Calendar</DialogTitle>
+          </DialogHeader>
+          <Form {...calendarForm}>
+            <form onSubmit={calendarForm.handleSubmit(handleCalendarSubmit)} className='space-y-4'>
+              <FormField
+                control={calendarForm.control}
+                name='name'
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Name</FormLabel>
+                    <FormControl>
+                      <Input {...field} />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={calendarForm.control}
+                name='color'
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Color</FormLabel>
+                    <FormControl>
+                      <div className='flex items-center gap-2'>
+                        <Input type='color' {...field} className='h-10 w-20 p-1' />
+                        <Input {...field} className='flex-1' placeholder='#000000' />
+                      </div>
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+
+              <div className='flex justify-end gap-2'>
+                <Button
+                  type='button'
+                  variant='outline'
+                  onClick={() => {
+                    setIsEditCalendarOpen(false);
+                    setSelectedCalendar(null);
+                    calendarForm.reset();
+                  }}
+                >
+                  Cancel
+                </Button>
+                <Button type='submit'>Save Changes</Button>
               </div>
             </form>
           </Form>
