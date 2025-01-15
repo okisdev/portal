@@ -406,7 +406,7 @@ export default function SubscriptionManagement() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Name</TableHead>
-                    <TableHead>Description</TableHead>
+                    {/* <TableHead>Description</TableHead> */}
                     <TableHead>Price</TableHead>
                     <TableHead>Interval</TableHead>
                     <TableHead>Status</TableHead>
@@ -417,7 +417,7 @@ export default function SubscriptionManagement() {
                   {(showLocalPlans ? localPlans : stripePlans)?.map((plan: any) => (
                     <TableRow key={plan.id}>
                       <TableCell>{plan.name}</TableCell>
-                      <TableCell>{plan.description}</TableCell>
+                      {/* <TableCell>{plan.description}</TableCell> */}
                       <TableCell>
                         {plan.metadata?.currency?.toUpperCase() || 'USD'} {(plan.metadata?.price || 0) / 100}
                       </TableCell>

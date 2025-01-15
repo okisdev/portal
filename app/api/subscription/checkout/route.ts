@@ -41,8 +41,8 @@ export async function POST(request: NextRequest) {
         },
       ],
       mode: 'subscription',
-      success_url: `${APP_URL}/payment/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${APP_URL}/payment/cancel`,
+      success_url: `${APP_URL}/payment?mode=success&session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${APP_URL}/payment?mode=cancel`,
       metadata: {
         contactId,
         couponCode,
