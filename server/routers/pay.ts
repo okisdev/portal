@@ -7,7 +7,12 @@ import { asc, eq } from 'drizzle-orm';
 import { z } from 'zod';
 
 export const payRouter = createTRPCRouter({
-  getContactPayments: protectedProcedure
+  getPaymentsFromStripe: protectedProcedure.query(async ({ ctx }) => {
+    const payments = await stripe.paymentIntents.list();
+    return payments.data;
+  }),
+
+  getPaymentByContactEmail: protectedProcedure
     .input(
       z.object({
         email: z.string(),

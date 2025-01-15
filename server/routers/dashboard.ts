@@ -1,5 +1,4 @@
 import { contact, contactActivity } from '@/drizzle/schema';
-import { stripe } from '@/lib/payment';
 import { prioritySchema, statusSchema } from '@/lib/schema';
 import { createTRPCRouter, protectedProcedure } from '@/server/trpc';
 import { desc, eq } from 'drizzle-orm';
@@ -113,32 +112,5 @@ export const dashboardRouter = createTRPCRouter({
         .update(contact)
         .set({ ...updateData, name })
         .where(eq(contact.id, id));
-    }),
-
-  getContactPayments: protectedProcedure
-    .input(
-      z.object({
-        email: z.string(),
-      })
-    )
-    .query(async ({ input }) => {
-      try {
-        const payments = await stripe.paymentIntents.list({
-          // email: input.email,
-        });
-
-        const filteredPayments = payments.data.filter((payment) => payment.receipt_email === input.email);
-
-        return filteredPayments.map((payment) => ({
-          id: payment.id,
-          amount: payment.amount / 100,
-          status: payment.status,
-          created: payment.created,
-          currency: payment.currency,
-        }));
-      } catch (error) {
-        console.error('Error fetching payments:', error);
-        return [];
-      }
     }),
 });

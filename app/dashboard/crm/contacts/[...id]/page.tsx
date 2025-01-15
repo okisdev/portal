@@ -34,7 +34,7 @@ export default function ContactIdPage() {
   const { data: activities, refetch: refetchActivities } = api.dashboard.getContactActivities.useQuery({
     id: contactId[0],
   });
-  const { data: payments } = api.dashboard.getContactPayments.useQuery({ email: contact?.email || '' }, { enabled: !!contact?.email });
+  const { data: payments } = api.pay.getPaymentByContactEmail.useQuery({ email: contact?.email || '' }, { enabled: !!contact?.email });
 
   const [newActivity, setNewActivity] = useState('');
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
