@@ -602,6 +602,29 @@ export default function DashboardPersonalCalendar() {
                                     </div>
                                   </div>
                                 )}
+                                {event.participants && event.participants.length > 0 && (
+                                  <div className='grid gap-2'>
+                                    <div className='grid grid-cols-3 items-center gap-4'>
+                                      <p className='text-sm'>Participants:</p>
+                                      <div className='col-span-2 space-y-1'>
+                                        {event.participants.map((participant) => (
+                                          <div key={participant.id} className='flex items-center justify-between text-sm'>
+                                            <span>
+                                              {participant.participantType === 'contact' && <span className='text-blue-600'>Contact: {participant.name || 'Unknown'}</span>}
+                                              {participant.participantType === 'user' && <span className='text-green-600'>User: {participant.name || 'Unknown'}</span>}
+                                              {participant.participantType === 'external' && (
+                                                <span className='text-orange-600'>
+                                                  External: {participant.name} ({participant.email})
+                                                </span>
+                                              )}
+                                            </span>
+                                            <span className='text-xs capitalize text-muted-foreground'>{participant.status}</span>
+                                          </div>
+                                        ))}
+                                      </div>
+                                    </div>
+                                  </div>
+                                )}
                               </div>
                               <div className='flex justify-end'>
                                 <Button

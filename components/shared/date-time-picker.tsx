@@ -2,7 +2,6 @@
 
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
-import { FormControl } from '@/components/ui/form';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
@@ -44,12 +43,12 @@ export function DateTimePicker({ value, onChange, showTimePicker = true }: { val
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <FormControl>
+        <div>
           <Button variant={'outline'} className={cn('w-full pl-3 text-left font-normal', !value && 'text-muted-foreground')}>
             {value ? showTimePicker ? format(value, 'MM/dd/yyyy HH:mm') : format(value, 'MM/dd/yyyy') : <span>{showTimePicker ? 'MM/DD/YYYY HH:mm' : 'MM/DD/YYYY'}</span>}
             <CalendarIcon className='ml-auto h-4 w-4 opacity-50' />
           </Button>
-        </FormControl>
+        </div>
       </PopoverTrigger>
       <PopoverContent className='w-auto p-0'>
         <div className='sm:flex'>

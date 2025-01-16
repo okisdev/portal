@@ -1,4 +1,5 @@
 import { calendarEvent, calendarEventParticipant, calendarFolder, contact, user } from '@/drizzle/schema';
+import { appointmentSchema } from '@/lib/schema';
 import { createTRPCRouter, protectedProcedure } from '@/server/trpc';
 import { and, eq, gte, inArray, lte } from 'drizzle-orm';
 import { z } from 'zod';
@@ -190,5 +191,43 @@ export const calendarRouter = createTRPCRouter({
         email: c.email,
       })),
     };
+  }),
+
+  createAppointment: protectedProcedure.input(appointmentSchema).mutation(async ({ ctx, input }) => {
+    const { title, description, date, contactId } = input;
+
+    // Create the calendar event
+    const [event] = await ctx.db
+      .insert(calendarEvent)
+      .values({
+        userId: ctx.session.user.id,
+        title,
+        description,
+        startAt: date,
+        endAt: new Date(date.getTime() + 60 * 60 * 1000), // 1 hour duration
+        isAllDay: false,
+        isPublic: false,
+        folderId:
+          (
+            await ctx.db
+              .select()
+              .from(calendarFolder)
+              .where(eq(calendarFolder.userId, ctx.session.user.id))
+              .limit(1)
+              .then((rows) => rows[0])
+          )?.id ?? '',
+      })
+      .returning();
+
+    // Add the contact as a participant
+    await ctx.db.insert(calendarEventParticipant).values({
+      eventId: event.id,
+      participantType: 'contact',
+      participantId: contactId,
+      status: 'accepted',
+      role: 'required',
+    });
+
+    return event;
   }),
 });

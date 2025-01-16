@@ -108,3 +108,10 @@ export type CalendarEventParticipant = z.infer<typeof calendarEventParticipantSc
 export type CalendarEventWithParticipants = CalendarEvent & {
   participants: CalendarEventParticipant[];
 };
+
+export const appointmentSchema = z.object({
+  title: z.string(),
+  description: z.string(),
+  date: z.date(),
+  contactId: z.string(),
+});

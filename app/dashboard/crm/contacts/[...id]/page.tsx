@@ -9,15 +9,17 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
 import { insuranceCompanies, sources } from '@/data/data';
 import type { Priority, Status } from '@/lib/schema';
 import { cn, formatDate, isDev } from '@/lib/utils';
 import { api } from '@/utils/trpc/client';
-import { Edit2, Mail, MoreHorizontal, Phone, Printer, Send } from 'lucide-react';
+import { CalendarIcon, Edit2, Mail, MoreHorizontal, Phone, Printer, Send } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
 import { notFound, useParams } from 'next/navigation';
 import { useState } from 'react';
+import { DateTimePicker } from '@/components/shared/date-time-picker';
 
 export default function ContactIdPage() {
   const { id: contactId } = useParams<{ id: string }>();
@@ -49,6 +51,10 @@ export default function ContactIdPage() {
     priority: 'medium' as Priority,
   });
 
+  const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
+  const [appointmentDate, setAppointmentDate] = useState<Date>();
+  const [appointmentNotes, setAppointmentNotes] = useState('');
+
   const createContactActivity = api.contact.createContactActivity.useMutation({
     onSuccess: () => {
       setNewActivity('');
@@ -60,6 +66,14 @@ export default function ContactIdPage() {
     onSuccess: () => {
       setIsEditModalOpen(false);
       utils.contact.getContactById.invalidate({ id: contactId[0] });
+    },
+  });
+
+  const createAppointment = api.calendar.createAppointment.useMutation({
+    onSuccess: () => {
+      setIsBookingModalOpen(false);
+      setAppointmentDate(undefined);
+      setAppointmentNotes('');
     },
   });
 
@@ -153,6 +167,18 @@ export default function ContactIdPage() {
     });
   };
 
+  const handleBookAppointment = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!appointmentDate) return;
+
+    createAppointment.mutate({
+      title: `Meeting with ${contact?.name}`,
+      description: appointmentNotes,
+      date: appointmentDate,
+      contactId: contactId[0],
+    });
+  };
+
   return (
     <div className='space-y-6 p-6'>
       <div className='flex items-center justify-between border-b pb-4'>
@@ -188,6 +214,9 @@ export default function ContactIdPage() {
           </Button>
           <Button variant='ghost' size='icon'>
             <Printer className='size-4' />
+          </Button>
+          <Button variant='ghost' size='icon' onClick={() => setIsBookingModalOpen(true)}>
+            <CalendarIcon className='size-4' />
           </Button>
           <Button variant='ghost' size='icon'>
             <MoreHorizontal className='size-4' />
@@ -276,6 +305,32 @@ export default function ContactIdPage() {
               </Button>
               <Button type='submit' disabled={updateContact.isPending}>
                 {updateContact.isPending ? 'Saving...' : 'Save Changes'}
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isBookingModalOpen} onOpenChange={setIsBookingModalOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Book Appointment</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleBookAppointment} className='space-y-4'>
+            <div className='space-y-2'>
+              <Label>Date and Time</Label>
+              <DateTimePicker value={appointmentDate || new Date()} onChange={setAppointmentDate} showTimePicker={true} />
+            </div>
+            <div className='space-y-2'>
+              <Label>Notes</Label>
+              <Textarea value={appointmentNotes} onChange={(e) => setAppointmentNotes(e.target.value)} placeholder='Add any notes about the appointment...' />
+            </div>
+            <div className='flex justify-end space-x-2'>
+              <Button type='button' variant='outline' onClick={() => setIsBookingModalOpen(false)}>
+                Cancel
+              </Button>
+              <Button type='submit' disabled={createAppointment.isPending || !appointmentDate}>
+                {createAppointment.isPending ? 'Booking...' : 'Book Appointment'}
               </Button>
             </div>
           </form>
