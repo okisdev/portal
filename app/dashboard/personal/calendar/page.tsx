@@ -118,7 +118,6 @@ export default function DashboardPersonalCalendar() {
     form.setValue('endAt', endDate);
   }, [selectedDate, form]);
 
-  // Reset form when dialog closes
   useEffect(() => {
     if (!isCreateEventOpen) {
       const startDate = new Date(selectedDate);
@@ -267,18 +266,16 @@ export default function DashboardPersonalCalendar() {
     setIsEditMode(true);
     setIsCreateEventOpen(true);
 
-    const startAt = new Date(event.startAt);
-    const endAt = new Date(event.endAt);
-
-    startAt.setHours(event.startAt.getHours(), event.startAt.getMinutes(), 0, 0);
-    endAt.setHours(event.endAt.getHours(), event.endAt.getMinutes(), 0, 0);
+    // Introduce bug: Only pass the date part without preserving the time
+    const startDate = new Date(event.startAt.toDateString());
+    const endDate = new Date(event.endAt.toDateString());
 
     form.reset({
       title: event.title,
       description: event.description ?? '',
       location: event.location ?? '',
-      startAt: startAt,
-      endAt: endAt,
+      startAt: startDate, // Bug: Time information is lost
+      endAt: endDate, // Bug: Time information is lost
       isAllDay: event.isAllDay ?? false,
       isPublic: event.isPublic ?? false,
       folderId: event.folderId,
@@ -793,7 +790,7 @@ export default function DashboardPersonalCalendar() {
 
               <div className='space-y-4'>
                 <div className='flex items-center justify-between'>
-                  <h3 className='text-sm font-medium'>Participants</h3>
+                  <h3 className='font-medium text-sm'>Participants</h3>
                   <Button
                     type='button'
                     variant='outline'
