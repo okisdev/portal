@@ -28,10 +28,10 @@ export default function ContactIdPage() {
 
   const utils = api.useUtils();
 
-  const { data: contact, isLoading } = api.dashboard.getContactById.useQuery({
+  const { data: contact, isLoading } = api.contact.getContactById.useQuery({
     id: contactId[0],
   });
-  const { data: activities, refetch: refetchActivities } = api.dashboard.getContactActivities.useQuery({
+  const { data: activities, refetch: refetchActivities } = api.contact.getContactActivities.useQuery({
     id: contactId[0],
   });
   const { data: payments } = api.pay.getPaymentByContactEmail.useQuery({ email: contact?.email || '' }, { enabled: !!contact?.email });
@@ -49,17 +49,17 @@ export default function ContactIdPage() {
     priority: 'medium' as Priority,
   });
 
-  const createContactActivity = api.dashboard.createContactActivity.useMutation({
+  const createContactActivity = api.contact.createContactActivity.useMutation({
     onSuccess: () => {
       setNewActivity('');
       refetchActivities();
     },
   });
 
-  const updateContact = api.dashboard.updateContact.useMutation({
+  const updateContact = api.contact.updateContact.useMutation({
     onSuccess: () => {
       setIsEditModalOpen(false);
-      utils.dashboard.getContactById.invalidate({ id: contactId[0] });
+      utils.contact.getContactById.invalidate({ id: contactId[0] });
     },
   });
 

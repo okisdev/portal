@@ -4,8 +4,8 @@ import { createTRPCRouter, protectedProcedure } from '@/server/trpc';
 import { desc, eq } from 'drizzle-orm';
 import { z } from 'zod';
 
-export const dashboardRouter = createTRPCRouter({
-  getContacts: protectedProcedure.query(({ ctx }) => {
+export const contactRouter = createTRPCRouter({
+  getAllContacts: protectedProcedure.query(({ ctx }) => {
     return ctx.db.select().from(contact).orderBy(desc(contact.createdAt));
   }),
 

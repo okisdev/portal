@@ -41,7 +41,7 @@ type ColumnConfig = {
 
 export default function CRMContactsPage() {
   const router = useRouter();
-  const { data: contacts } = api.dashboard.getContacts.useQuery();
+  const { data: contacts } = api.contact.getAllContacts.useQuery();
 
   const [search, setSearch] = useState('');
 
