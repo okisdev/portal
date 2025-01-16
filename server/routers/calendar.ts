@@ -1,7 +1,7 @@
 import { calendarEvent, calendarEventParticipant, calendarFolder, contact, user } from '@/drizzle/schema';
 import { appointmentSchema } from '@/lib/schema';
 import { createTRPCRouter, protectedProcedure } from '@/server/trpc';
-import { and, eq, gte, inArray, lte } from 'drizzle-orm';
+import { and, desc, eq, gte, inArray, lte} from 'drizzle-orm';
 import { z } from 'zod';
 
 export const calendarRouter = createTRPCRouter({
@@ -230,4 +230,27 @@ export const calendarRouter = createTRPCRouter({
 
     return event;
   }),
+
+  getAppointmentsByContactId: protectedProcedure
+    .input(z.object({ contactId: z.string() }))
+    .query(async ({ ctx, input }) => {
+      return await ctx.db
+        .select({
+          id: calendarEvent.id,
+          title: calendarEvent.title,
+          description: calendarEvent.description,
+          startAt: calendarEvent.startAt,
+          endAt: calendarEvent.endAt,
+        })
+        .from(calendarEvent)
+        .innerJoin(
+          calendarEventParticipant,
+          and(
+            eq(calendarEventParticipant.eventId, calendarEvent.id),
+            eq(calendarEventParticipant.participantId, input.contactId),
+            eq(calendarEventParticipant.participantType, 'contact')
+          )
+        )
+        .orderBy(desc(calendarEvent.startAt));
+    }),
 });
