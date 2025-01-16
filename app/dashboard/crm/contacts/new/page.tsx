@@ -47,7 +47,7 @@ export default function NewContact() {
   const [csvData, setCsvData] = useState<ContactFormData[]>([]);
   const [showPreview, setShowPreview] = useState(false);
 
-  const createContact = api.dashboard.createContact.useMutation({
+  const createContact = api.contact.createContact.useMutation({
     onSuccess: () => {
       toast.success('Contact created successfully');
       router.push('/dashboard/crm/contacts');

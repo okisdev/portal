@@ -20,8 +20,8 @@ const SubscriptionContent = () => {
 
   const { data: coupon } = api.pay.fetchSubscriptionCouponByCode.useQuery({ code: couponCode || '' }, { enabled: !!couponCode });
 
-  const createContact = api.dashboard.createContact.useMutation();
-  const createContactActivity = api.dashboard.createContactActivity.useMutation();
+  const createContact = api.contact.createContact.useMutation();
+  const createContactActivity = api.contact.createContactActivity.useMutation();
 
   const handleCheckout = async () => {
     if (!email) {

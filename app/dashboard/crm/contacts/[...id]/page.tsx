@@ -2,6 +2,7 @@
 
 import { ColorBadge } from '@/components/shared/color-badge';
 import { Combobox } from '@/components/shared/combobox';
+import { DateTimePicker } from '@/components/shared/date-time-picker';
 import { PhoneInput } from '@/components/shared/phone-input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -9,11 +10,12 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
 import { insuranceCompanies, sources } from '@/data/data';
 import type { Priority, Status } from '@/lib/schema';
 import { cn, formatDate, isDev } from '@/lib/utils';
 import { api } from '@/utils/trpc/client';
-import { Edit2, Mail, MoreHorizontal, Phone, Printer, Send } from 'lucide-react';
+import { Calendar, CalendarIcon, Edit2, Mail, MoreHorizontal, Phone, Printer, Send, Trash2 } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
 import { notFound, useParams } from 'next/navigation';
@@ -28,13 +30,16 @@ export default function ContactIdPage() {
 
   const utils = api.useUtils();
 
-  const { data: contact, isLoading } = api.dashboard.getContactById.useQuery({
+  const { data: contact, isLoading } = api.contact.getContactById.useQuery({
     id: contactId[0],
   });
-  const { data: activities, refetch: refetchActivities } = api.dashboard.getContactActivities.useQuery({
+  const { data: activities, refetch: refetchActivities } = api.contact.getContactActivities.useQuery({
     id: contactId[0],
   });
   const { data: payments } = api.pay.getPaymentByContactEmail.useQuery({ email: contact?.email || '' }, { enabled: !!contact?.email });
+  const { data: appointments } = api.calendar.getAppointmentsByContactId.useQuery({
+    contactId: contactId[0],
+  });
 
   const [newActivity, setNewActivity] = useState('');
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -49,17 +54,35 @@ export default function ContactIdPage() {
     priority: 'medium' as Priority,
   });
 
-  const createContactActivity = api.dashboard.createContactActivity.useMutation({
+  const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
+  const [appointmentDate, setAppointmentDate] = useState<Date>();
+  const [appointmentNotes, setAppointmentNotes] = useState('');
+
+  const createContactActivity = api.contact.createContactActivity.useMutation({
     onSuccess: () => {
       setNewActivity('');
       refetchActivities();
     },
   });
 
-  const updateContact = api.dashboard.updateContact.useMutation({
+  const updateContact = api.contact.updateContact.useMutation({
     onSuccess: () => {
       setIsEditModalOpen(false);
-      utils.dashboard.getContactById.invalidate({ id: contactId[0] });
+      utils.contact.getContactById.invalidate({ id: contactId[0] });
+    },
+  });
+
+  const createAppointment = api.calendar.createAppointment.useMutation({
+    onSuccess: () => {
+      setIsBookingModalOpen(false);
+      setAppointmentDate(undefined);
+      setAppointmentNotes('');
+    },
+  });
+
+  const deleteAppointment = api.calendar.deleteEvent.useMutation({
+    onSuccess: () => {
+      utils.calendar.getAppointmentsByContactId.invalidate({ contactId: contactId[0] });
     },
   });
 
@@ -153,6 +176,18 @@ export default function ContactIdPage() {
     });
   };
 
+  const handleBookAppointment = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!appointmentDate) return;
+
+    createAppointment.mutate({
+      title: `Meeting with ${contact?.name}`,
+      description: appointmentNotes,
+      date: appointmentDate,
+      contactId: contactId[0],
+    });
+  };
+
   return (
     <div className='space-y-6 p-6'>
       <div className='flex items-center justify-between border-b pb-4'>
@@ -188,6 +223,9 @@ export default function ContactIdPage() {
           </Button>
           <Button variant='ghost' size='icon'>
             <Printer className='size-4' />
+          </Button>
+          <Button variant='ghost' size='icon' onClick={() => setIsBookingModalOpen(true)}>
+            <CalendarIcon className='size-4' />
           </Button>
           <Button variant='ghost' size='icon'>
             <MoreHorizontal className='size-4' />
@@ -276,6 +314,32 @@ export default function ContactIdPage() {
               </Button>
               <Button type='submit' disabled={updateContact.isPending}>
                 {updateContact.isPending ? 'Saving...' : 'Save Changes'}
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isBookingModalOpen} onOpenChange={setIsBookingModalOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Book Appointment</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleBookAppointment} className='space-y-4'>
+            <div className='space-y-2'>
+              <Label>Date and Time</Label>
+              <DateTimePicker value={appointmentDate || new Date()} onChange={setAppointmentDate} showTimePicker={true} />
+            </div>
+            <div className='space-y-2'>
+              <Label>Notes</Label>
+              <Textarea value={appointmentNotes} onChange={(e) => setAppointmentNotes(e.target.value)} placeholder='Add any notes about the appointment...' />
+            </div>
+            <div className='flex justify-end space-x-2'>
+              <Button type='button' variant='outline' onClick={() => setIsBookingModalOpen(false)}>
+                Cancel
+              </Button>
+              <Button type='submit' disabled={createAppointment.isPending || !appointmentDate}>
+                {createAppointment.isPending ? 'Booking...' : 'Book Appointment'}
               </Button>
             </div>
           </form>
@@ -436,6 +500,39 @@ export default function ContactIdPage() {
               </div>
             ) : (
               <p className='py-2 text-gray-500 text-sm'>No payments found</p>
+            )}
+          </div>
+
+          <div className='rounded-lg border p-4'>
+            <div className='mb-2 flex items-center justify-between'>
+              <h2 className='font-semibold text-lg'>Appointments</h2>
+              <Button variant='outline' size='sm' onClick={() => setIsBookingModalOpen(true)}>
+                Book Appointment
+              </Button>
+            </div>
+
+            {appointments && appointments.length > 0 ? (
+              <div className='space-y-3'>
+                {appointments.map((appointment) => (
+                  <div key={appointment.id} className='flex items-start gap-3 border-b pb-3 last:border-0'>
+                    <Calendar className='mt-1 size-4 text-gray-500' />
+                    <div className='flex-1'>
+                      <div className='flex items-start justify-between'>
+                        <div>
+                          <p className='font-medium text-sm'>{appointment.title}</p>
+                          <p className='text-gray-500 text-xs'>{`${formatDate(new Date(appointment.startAt))} - ${formatDate(new Date(appointment.endAt))}`}</p>
+                          {appointment.description && <p className='mt-1 text-gray-500 text-xs'>{appointment.description}</p>}
+                        </div>
+                        <Button variant='ghost' size='icon' onClick={() => deleteAppointment.mutate(appointment.id)} disabled={deleteAppointment.isPending}>
+                          <Trash2 className='size-4 text-gray-500 hover:text-red-500' />
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className='py-2 text-gray-500 text-sm'>No appointments scheduled</p>
             )}
           </div>
         </div>

@@ -1,4 +1,21 @@
-import { account, authenticator, contact, contactActivity, contactConversation, contactDeal, paymentTrack, session, subscriptionCoupon, subscriptionPlan, user } from '@/drizzle/schema';
+import {
+  account,
+  authenticator,
+  calendarEvent,
+  calendarEventParticipant,
+  calendarEventShare,
+  calendarFolder,
+  contact,
+  contactActivity,
+  contactConversation,
+  contactDeal,
+  notifications,
+  paymentTrack,
+  session,
+  subscriptionCoupon,
+  subscriptionPlan,
+  user,
+} from '@/drizzle/schema';
 import { createSelectSchema } from 'drizzle-zod';
 import { z } from 'zod';
 
@@ -67,3 +84,34 @@ export type SubscriptionCoupon = z.infer<typeof subscriptionCouponSchema>;
 export const subscriptionPlanSchema = createSelectSchema(subscriptionPlan);
 
 export type SubscriptionPlan = z.infer<typeof subscriptionPlanSchema>;
+
+export const notificationsSchema = createSelectSchema(notifications);
+
+export type Notifications = z.infer<typeof notificationsSchema>;
+
+export const calendarFolderSchema = createSelectSchema(calendarFolder);
+
+export type CalendarFolder = z.infer<typeof calendarFolderSchema>;
+
+export const calendarEventSchema = createSelectSchema(calendarEvent);
+
+export type CalendarEvent = z.infer<typeof calendarEventSchema>;
+
+export const calendarEventShareSchema = createSelectSchema(calendarEventShare);
+
+export type CalendarEventShare = z.infer<typeof calendarEventShareSchema>;
+
+export const calendarEventParticipantSchema = createSelectSchema(calendarEventParticipant);
+
+export type CalendarEventParticipant = z.infer<typeof calendarEventParticipantSchema>;
+
+export type CalendarEventWithParticipants = CalendarEvent & {
+  participants: CalendarEventParticipant[];
+};
+
+export const appointmentSchema = z.object({
+  title: z.string(),
+  description: z.string(),
+  date: z.date(),
+  contactId: z.string(),
+});

@@ -1,5 +1,21 @@
 import { relations } from 'drizzle-orm/relations';
-import { account, authenticator, contact, contactActivity, contactConversation, contactDeal, notifications, paymentTrack, session, subscriptionCoupon, user } from './schema';
+import {
+  account,
+  authenticator,
+  calendarEvent,
+  calendarEventParticipant,
+  calendarEventShare,
+  calendarFolder,
+  contact,
+  contactActivity,
+  contactConversation,
+  contactDeal,
+  notifications,
+  paymentTrack,
+  session,
+  subscriptionCoupon,
+  user,
+} from './schema';
 
 export const accountRelations = relations(account, ({ one }) => ({
   user: one(user, {
@@ -12,6 +28,10 @@ export const userRelations = relations(user, ({ many }) => ({
   accounts: many(account),
   authenticators: many(authenticator),
   sessions: many(session),
+  calendarFolders: many(calendarFolder),
+  calendarEvents: many(calendarEvent),
+  sharedCalendarEvents: many(calendarEventShare, { relationName: 'sharedWithUser' }),
+  eventParticipations: many(calendarEventParticipant),
 }));
 
 export const authenticatorRelations = relations(authenticator, ({ one }) => ({
@@ -37,6 +57,7 @@ export const contactRelations = relations(contact, ({ many, one }) => ({
     fields: [contact.assignedTo],
     references: [user.id],
   }),
+  eventParticipations: many(calendarEventParticipant),
 }));
 
 export const contactConversationRelations = relations(contactConversation, ({ one }) => ({
@@ -90,5 +111,52 @@ export const notificationRelations = relations(notifications, ({ one }) => ({
   user: one(user, {
     fields: [notifications.userId],
     references: [user.id],
+  }),
+}));
+
+export const calendarFolderRelations = relations(calendarFolder, ({ one, many }) => ({
+  user: one(user, {
+    fields: [calendarFolder.userId],
+    references: [user.id],
+  }),
+  events: many(calendarEvent),
+}));
+
+export const calendarEventRelations = relations(calendarEvent, ({ one, many }) => ({
+  user: one(user, {
+    fields: [calendarEvent.userId],
+    references: [user.id],
+  }),
+  folder: one(calendarFolder, {
+    fields: [calendarEvent.folderId],
+    references: [calendarFolder.id],
+  }),
+  shares: many(calendarEventShare),
+  participants: many(calendarEventParticipant),
+}));
+
+export const calendarEventShareRelations = relations(calendarEventShare, ({ one }) => ({
+  event: one(calendarEvent, {
+    fields: [calendarEventShare.eventId],
+    references: [calendarEvent.id],
+  }),
+  sharedWithUser: one(user, {
+    fields: [calendarEventShare.sharedWithUserId],
+    references: [user.id],
+  }),
+}));
+
+export const calendarEventParticipantRelations = relations(calendarEventParticipant, ({ one }) => ({
+  event: one(calendarEvent, {
+    fields: [calendarEventParticipant.eventId],
+    references: [calendarEvent.id],
+  }),
+  user: one(user, {
+    fields: [calendarEventParticipant.participantId],
+    references: [user.id],
+  }),
+  contact: one(contact, {
+    fields: [calendarEventParticipant.participantId],
+    references: [contact.id],
   }),
 }));
