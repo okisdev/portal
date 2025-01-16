@@ -3,6 +3,7 @@ import {
   account,
   authenticator,
   calendarEvent,
+  calendarEventParticipant,
   calendarEventShare,
   calendarFolder,
   contact,
@@ -30,6 +31,7 @@ export const userRelations = relations(user, ({ many }) => ({
   calendarFolders: many(calendarFolder),
   calendarEvents: many(calendarEvent),
   sharedCalendarEvents: many(calendarEventShare, { relationName: 'sharedWithUser' }),
+  eventParticipations: many(calendarEventParticipant),
 }));
 
 export const authenticatorRelations = relations(authenticator, ({ one }) => ({
@@ -55,6 +57,7 @@ export const contactRelations = relations(contact, ({ many, one }) => ({
     fields: [contact.assignedTo],
     references: [user.id],
   }),
+  eventParticipations: many(calendarEventParticipant),
 }));
 
 export const contactConversationRelations = relations(contactConversation, ({ one }) => ({
@@ -129,6 +132,7 @@ export const calendarEventRelations = relations(calendarEvent, ({ one, many }) =
     references: [calendarFolder.id],
   }),
   shares: many(calendarEventShare),
+  participants: many(calendarEventParticipant),
 }));
 
 export const calendarEventShareRelations = relations(calendarEventShare, ({ one }) => ({
@@ -139,5 +143,20 @@ export const calendarEventShareRelations = relations(calendarEventShare, ({ one 
   sharedWithUser: one(user, {
     fields: [calendarEventShare.sharedWithUserId],
     references: [user.id],
+  }),
+}));
+
+export const calendarEventParticipantRelations = relations(calendarEventParticipant, ({ one }) => ({
+  event: one(calendarEvent, {
+    fields: [calendarEventParticipant.eventId],
+    references: [calendarEvent.id],
+  }),
+  user: one(user, {
+    fields: [calendarEventParticipant.participantId],
+    references: [user.id],
+  }),
+  contact: one(contact, {
+    fields: [calendarEventParticipant.participantId],
+    references: [contact.id],
   }),
 }));

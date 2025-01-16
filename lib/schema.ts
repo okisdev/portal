@@ -2,6 +2,7 @@ import {
   account,
   authenticator,
   calendarEvent,
+  calendarEventParticipant,
   calendarEventShare,
   calendarFolder,
   contact,
@@ -99,3 +100,11 @@ export type CalendarEvent = z.infer<typeof calendarEventSchema>;
 export const calendarEventShareSchema = createSelectSchema(calendarEventShare);
 
 export type CalendarEventShare = z.infer<typeof calendarEventShareSchema>;
+
+export const calendarEventParticipantSchema = createSelectSchema(calendarEventParticipant);
+
+export type CalendarEventParticipant = z.infer<typeof calendarEventParticipantSchema>;
+
+export type CalendarEventWithParticipants = CalendarEvent & {
+  participants: CalendarEventParticipant[];
+};

@@ -1,6 +1,6 @@
-import { calendarEvent, calendarFolder } from '@/drizzle/schema';
+import { calendarEvent, calendarEventParticipant, calendarFolder, contact, user } from '@/drizzle/schema';
 import { createTRPCRouter, protectedProcedure } from '@/server/trpc';
-import { and, eq, gte, lte } from 'drizzle-orm';
+import { and, eq, gte, inArray, lte } from 'drizzle-orm';
 import { z } from 'zod';
 
 export const calendarRouter = createTRPCRouter({
@@ -51,11 +51,26 @@ export const calendarRouter = createTRPCRouter({
         endDate: z.date(),
       })
     )
-    .query(({ ctx, input }) => {
-      return ctx.db
+    .query(async ({ ctx, input }) => {
+      const events = await ctx.db
         .select()
         .from(calendarEvent)
         .where(and(eq(calendarEvent.userId, ctx.session.user.id), gte(calendarEvent.startAt, input.startDate), lte(calendarEvent.endAt, input.endDate)));
+
+      const participants = await ctx.db
+        .select()
+        .from(calendarEventParticipant)
+        .where(
+          inArray(
+            calendarEventParticipant.eventId,
+            events.map((e) => e.id)
+          )
+        );
+
+      return events.map((event) => ({
+        ...event,
+        participants: participants.filter((p) => p.eventId === event.id),
+      }));
     }),
 
   createEvent: protectedProcedure
@@ -71,13 +86,43 @@ export const calendarRouter = createTRPCRouter({
         folderId: z.string(),
         recurrence: z.string().optional(),
         metadata: z.string().optional(),
+        participants: z
+          .array(
+            z.object({
+              type: z.enum(['user', 'contact', 'external']),
+              id: z.string().optional(),
+              email: z.string().optional(),
+              name: z.string().optional(),
+              role: z.enum(['organizer', 'required', 'optional']),
+            })
+          )
+          .default([]),
       })
     )
-    .mutation(({ ctx, input }) => {
-      return ctx.db.insert(calendarEvent).values({
-        userId: ctx.session.user.id,
-        ...input,
-      });
+    .mutation(async ({ ctx, input }) => {
+      const [event] = await ctx.db
+        .insert(calendarEvent)
+        .values({
+          userId: ctx.session.user.id,
+          ...input,
+        })
+        .returning();
+
+      if (input.participants.length > 0) {
+        const participants = input.participants.map((p) => ({
+          participantType: p.type,
+          participantId: p.id,
+          email: p.email,
+          name: p.name,
+          role: p.role,
+          eventId: event.id,
+          status: 'pending' as const,
+        }));
+
+        await ctx.db.insert(calendarEventParticipant).values(participants);
+      }
+
+      return event;
     }),
 
   updateEvent: protectedProcedure
@@ -128,5 +173,22 @@ export const calendarRouter = createTRPCRouter({
 
   deleteFolder: protectedProcedure.input(z.string()).mutation(async ({ ctx, input }) => {
     return ctx.db.delete(calendarFolder).where(and(eq(calendarFolder.id, input), eq(calendarFolder.userId, ctx.session.user.id)));
+  }),
+
+  getParticipantOptions: protectedProcedure.query(async ({ ctx }) => {
+    const users = await ctx.db.select().from(user);
+    const contacts = await ctx.db.select().from(contact);
+
+    return {
+      users: users.map((u) => ({
+        id: u.id,
+        name: `${u.firstName} ${u.lastName}`.trim() || u.email || u.username,
+      })),
+      contacts: contacts.map((c) => ({
+        id: c.id,
+        name: `${c.firstName} ${c.lastName}`.trim(),
+        email: c.email,
+      })),
+    };
   }),
 });

@@ -10,12 +10,13 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Form, FormControl, FormField, FormItem, FormLabel } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import type { CalendarEvent, CalendarFolder } from '@/lib/schema';
-import { cn } from '@/lib/utils';
+import type { CalendarEventWithParticipants, CalendarFolder } from '@/lib/schema';
+import { cn, generateUUID } from '@/lib/utils';
 import { api } from '@/utils/trpc/client';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { ChevronDown, ChevronLeft, ChevronRight, MoreHorizontal, Plus } from 'lucide-react';
+import { ChevronDown, ChevronLeft, ChevronRight, MoreHorizontal, Plus, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -32,6 +33,17 @@ const eventFormSchema = z.object({
   isAllDay: z.boolean().default(false),
   isPublic: z.boolean().default(false),
   folderId: z.string(),
+  participants: z
+    .array(
+      z.object({
+        type: z.enum(['user', 'contact', 'external']),
+        id: z.string().optional(),
+        email: z.string().optional(),
+        name: z.string().optional(),
+        role: z.enum(['organizer', 'required', 'optional']).default('required'),
+      })
+    )
+    .default([]),
 });
 
 export default function DashboardPersonalCalendar() {
@@ -40,7 +52,7 @@ export default function DashboardPersonalCalendar() {
   const [yearMonthPickerOpen, setYearMonthPickerOpen] = useState(false);
   const [isCalendarFolded, setIsCalendarFolded] = useState(false);
   const [isCreateEventOpen, setIsCreateEventOpen] = useState(false);
-  const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
+  const [selectedEvent, setSelectedEvent] = useState<CalendarEventWithParticipants | null>(null);
   const [isEditMode, setIsEditMode] = useState(false);
   const [hiddenCalendars, setHiddenCalendars] = useState<Set<string>>(new Set());
   const [isEditCalendarOpen, setIsEditCalendarOpen] = useState(false);
@@ -57,6 +69,7 @@ export default function DashboardPersonalCalendar() {
     startDate: startOfMonth,
     endDate: endOfMonth,
   });
+  const { data: participantOptions } = api.calendar.getParticipantOptions.useQuery();
 
   const form = useForm<z.infer<typeof eventFormSchema>>({
     resolver: zodResolver(eventFormSchema),
@@ -69,6 +82,7 @@ export default function DashboardPersonalCalendar() {
       isAllDay: false,
       isPublic: false,
       folderId: '',
+      participants: [],
     },
   });
 
@@ -128,6 +142,7 @@ export default function DashboardPersonalCalendar() {
         isAllDay: false,
         isPublic: false,
         folderId: folders?.[0]?.id ?? '',
+        participants: [],
       });
     }
   }, [isCreateEventOpen, selectedDate, folders, form]);
@@ -247,7 +262,7 @@ export default function DashboardPersonalCalendar() {
     setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1));
   };
 
-  const handleEditEvent = (event: CalendarEvent) => {
+  const handleEditEvent = (event: CalendarEventWithParticipants) => {
     setSelectedEvent(event);
     setIsEditMode(true);
     setIsCreateEventOpen(true);
@@ -267,6 +282,13 @@ export default function DashboardPersonalCalendar() {
       isAllDay: event.isAllDay ?? false,
       isPublic: event.isPublic ?? false,
       folderId: event.folderId,
+      participants: event.participants.map((p) => ({
+        type: p.participantType,
+        role: p.role ?? 'required',
+        id: p.participantId ?? undefined,
+        email: p.email ?? undefined,
+        name: p.name ?? undefined,
+      })),
     });
   };
 
@@ -745,6 +767,158 @@ export default function DashboardPersonalCalendar() {
                   </FormItem>
                 )}
               />
+
+              <div className='space-y-4'>
+                <div className='flex items-center justify-between'>
+                  <h3 className='text-sm font-medium'>Participants</h3>
+                  <Button
+                    type='button'
+                    variant='outline'
+                    size='sm'
+                    onClick={() => {
+                      const participants = form.getValues('participants');
+                      form.setValue('participants', [...participants, { type: 'external', email: '', name: '', role: 'required' }]);
+                    }}
+                  >
+                    Add Participant
+                  </Button>
+                </div>
+
+                {form.watch('participants').map((participant, index) => (
+                  <div key={participant.id + generateUUID()} className='flex items-start gap-2'>
+                    <FormField
+                      control={form.control}
+                      name={`participants.${index}.type`}
+                      render={({ field }) => (
+                        <FormItem className='flex-1'>
+                          <Select
+                            value={field.value}
+                            onValueChange={(value: 'user' | 'contact' | 'external') => {
+                              field.onChange(value);
+                              // Reset id when type changes
+                              form.setValue(`participants.${index}.id`, undefined);
+                              form.setValue(`participants.${index}.email`, undefined);
+                              form.setValue(`participants.${index}.name`, undefined);
+                            }}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder='Type' />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value='user'>User</SelectItem>
+                              <SelectItem value='contact'>Contact</SelectItem>
+                              <SelectItem value='external'>External</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </FormItem>
+                      )}
+                    />
+
+                    {participant.type === 'user' && (
+                      <FormField
+                        control={form.control}
+                        name={`participants.${index}.id`}
+                        render={({ field }) => (
+                          <FormItem className='flex-1'>
+                            <Select value={field.value} onValueChange={field.onChange}>
+                              <SelectTrigger>
+                                <SelectValue placeholder='Select user' />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {participantOptions?.users.map((user) => (
+                                  <SelectItem key={user.id} value={user.id}>
+                                    {user.name}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </FormItem>
+                        )}
+                      />
+                    )}
+
+                    {participant.type === 'contact' && (
+                      <FormField
+                        control={form.control}
+                        name={`participants.${index}.id`}
+                        render={({ field }) => (
+                          <FormItem className='flex-1'>
+                            <Select value={field.value} onValueChange={field.onChange}>
+                              <SelectTrigger>
+                                <SelectValue placeholder='Select contact' />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {participantOptions?.contacts.map((contact) => (
+                                  <SelectItem key={contact.id} value={contact.id}>
+                                    {contact.name}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </FormItem>
+                        )}
+                      />
+                    )}
+
+                    {participant.type === 'external' && (
+                      <>
+                        <FormField
+                          control={form.control}
+                          name={`participants.${index}.email`}
+                          render={({ field }) => (
+                            <FormItem className='flex-1'>
+                              <Input {...field} placeholder='Email' />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
+                          name={`participants.${index}.name`}
+                          render={({ field }) => (
+                            <FormItem className='flex-1'>
+                              <Input {...field} placeholder='Name' />
+                            </FormItem>
+                          )}
+                        />
+                      </>
+                    )}
+
+                    <FormField
+                      control={form.control}
+                      name={`participants.${index}.role`}
+                      render={({ field }) => (
+                        <FormItem>
+                          <Select value={field.value} onValueChange={field.onChange}>
+                            <SelectTrigger>
+                              <SelectValue placeholder='Role' />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value='organizer'>Organizer</SelectItem>
+                              <SelectItem value='required'>Required</SelectItem>
+                              <SelectItem value='optional'>Optional</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </FormItem>
+                      )}
+                    />
+
+                    <Button
+                      type='button'
+                      variant='ghost'
+                      size='icon'
+                      onClick={() => {
+                        const participants = form.getValues('participants');
+                        form.setValue(
+                          'participants',
+                          participants.filter((_, i) => i !== index)
+                        );
+                      }}
+                    >
+                      <X className='h-4 w-4' />
+                    </Button>
+                  </div>
+                ))}
+              </div>
 
               <div className='flex gap-2'>
                 {isEditMode && (

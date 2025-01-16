@@ -304,3 +304,21 @@ export const calendarEventShare = pgTable('calendarEventShare', {
   createdAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
   updatedAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
 });
+
+export const calendarEventParticipant = pgTable('calendarEventParticipant', {
+  id: text()
+    .primaryKey()
+    .notNull()
+    .$defaultFn(() => crypto.randomUUID()),
+  eventId: text()
+    .notNull()
+    .references(() => calendarEvent.id, { onDelete: 'cascade' }),
+  participantType: text('participantType', { enum: ['user', 'contact', 'external'] }).notNull(),
+  participantId: text(), // userId or contactId for internal participants
+  email: text(), // for external participants
+  name: text(), // for external participants
+  status: text('status', { enum: ['pending', 'accepted', 'declined', 'tentative'] }).default('pending'),
+  role: text('role', { enum: ['organizer', 'required', 'optional'] }).default('required'),
+  createdAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
+  updatedAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
+});
