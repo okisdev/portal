@@ -90,6 +90,7 @@ export const teamRouter = createTRPCRouter({
         leaderId: team.leaderId,
         subLeaderId: team.subLeaderId,
         referralId: team.referralId,
+        campaignCode: team.campaignCode,
         leader: sql<{ id: string; firstName: string; lastName: string } | null>`
           (SELECT row_to_json(c) 
            FROM ${contact} c 

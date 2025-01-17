@@ -1,16 +1,18 @@
 'use client';
 
 import { ColorBadge } from '@/components/shared/color-badge';
+import { Combobox } from '@/components/shared/combobox';
+import { ComboboxCommand } from '@/components/shared/combobox';
 import { EventDialog } from '@/components/shared/event-dialog';
 import { PageHeader } from '@/components/shared/page-header';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from '@/components/ui/command';
+import {} from '@/components/ui/command';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {} from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { formatDate } from '@/lib/utils';
 import { api } from '@/utils/trpc/client';
@@ -50,6 +52,7 @@ export default function TeamIdPage() {
     leaderId: '',
     subLeaderId: '',
     referralId: '',
+    campaignCode: '',
   });
   const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
   const [searchValue, setSearchValue] = useState('');
@@ -136,6 +139,7 @@ export default function TeamIdPage() {
       leaderId: team.leaderId || '',
       subLeaderId: team.subLeaderId || '',
       referralId: team.referralId || '',
+      campaignCode: team.campaignCode || '',
     });
     setIsEditModalOpen(true);
   };
@@ -199,11 +203,14 @@ export default function TeamIdPage() {
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className='w-[300px] p-0' align='end'>
-                  <Command>
-                    <CommandInput placeholder='Search contacts...' value={searchValue} onValueChange={setSearchValue} />
-                    <CommandEmpty>No contacts found.</CommandEmpty>
-                    <CommandGroup className='max-h-[300px] overflow-auto'>
-                      {contacts
+                  <ComboboxCommand
+                    query={searchValue}
+                    setQuery={setSearchValue}
+                    value=''
+                    onChange={handleAddMember}
+                    setOpen={setIsAddMemberOpen}
+                    items={
+                      contacts
                         ?.filter(
                           (contact) =>
                             !teamContacts?.some((member) => member.contact.id === contact.id) &&
@@ -211,21 +218,30 @@ export default function TeamIdPage() {
                               contact.lastName.toLowerCase().includes(searchValue.toLowerCase()) ||
                               contact.email.toLowerCase().includes(searchValue.toLowerCase()))
                         )
-                        .map((contact) => (
-                          <CommandItem key={contact.id} value={contact.id} onSelect={() => handleAddMember(contact.id)} className='flex cursor-pointer items-center gap-2'>
-                            <Avatar className='size-6'>
-                              <AvatarFallback>{contact.firstName.charAt(0)}</AvatarFallback>
-                            </Avatar>
-                            <div className='flex-1'>
-                              <p className='text-sm'>
-                                {contact.firstName} {contact.lastName}
-                              </p>
-                              <p className='text-gray-500 text-xs'>{contact.email}</p>
-                            </div>
-                          </CommandItem>
-                        ))}
-                    </CommandGroup>
-                  </Command>
+                        .map((contact) => contact.id) ?? []
+                    }
+                    searchPlaceholder='Search contacts...'
+                    emptyText='No contacts found.'
+                    groupHeading='Contacts'
+                    allowCustom={false}
+                    renderItem={(contactId) => {
+                      const contact = contacts?.find((c) => c.id === contactId);
+                      if (!contact) return null;
+                      return (
+                        <>
+                          <Avatar className='size-6'>
+                            <AvatarFallback>{contact.firstName.charAt(0)}</AvatarFallback>
+                          </Avatar>
+                          <div className='flex-1'>
+                            <p className='text-sm'>
+                              {contact.firstName} {contact.lastName}
+                            </p>
+                            <p className='text-gray-500 text-xs'>{contact.email}</p>
+                          </div>
+                        </>
+                      );
+                    }}
+                  />
                 </PopoverContent>
               </Popover>
             </div>
@@ -290,6 +306,10 @@ export default function TeamIdPage() {
                 <p className='text-sm'>{team.referralId ? `${team.referral?.firstName} ${team.referral?.lastName}` : 'N/A'}</p>
               </div>
               <div>
+                <Label className='text-gray-500 text-xs'>Campaign Code</Label>
+                <p className='text-sm'>{team.campaignCode || 'N/A'}</p>
+              </div>
+              <div>
                 <Label className='text-gray-500 text-xs'>Created</Label>
                 <p className='text-sm'>{formatDate(new Date(team.createdAt))}</p>
               </div>
@@ -352,48 +372,66 @@ export default function TeamIdPage() {
             </div>
             <div className='space-y-2'>
               <Label>Team Leader</Label>
-              <Select value={editForm.leaderId} onValueChange={(value) => setEditForm({ ...editForm, leaderId: value })}>
-                <SelectTrigger>
-                  <SelectValue placeholder='Select team leader' />
-                </SelectTrigger>
-                <SelectContent>
-                  {contacts?.map((contact) => (
-                    <SelectItem key={contact.id} value={contact.id}>
-                      {contact.firstName} {contact.lastName}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Combobox
+                value={
+                  editForm.leaderId
+                    ? `${teamContacts?.find((m) => m.contact.id === editForm.leaderId)?.contact.firstName} ${teamContacts?.find((m) => m.contact.id === editForm.leaderId)?.contact.lastName}`
+                    : ''
+                }
+                onChange={(value) => {
+                  const member = teamContacts?.find((m) => `${m.contact.firstName} ${m.contact.lastName}` === value);
+                  setEditForm({ ...editForm, leaderId: member?.contact.id || '' });
+                }}
+                items={teamContacts?.map((member) => `${member.contact.firstName} ${member.contact.lastName}`) || []}
+                placeholder='Select team leader'
+                searchPlaceholder='Search team leader...'
+                allowCustom={false}
+                groupHeading='Contacts'
+              />
             </div>
             <div className='space-y-2'>
               <Label>Sub Leader</Label>
-              <Select value={editForm.subLeaderId} onValueChange={(value) => setEditForm({ ...editForm, subLeaderId: value })}>
-                <SelectTrigger>
-                  <SelectValue placeholder='Select sub leader' />
-                </SelectTrigger>
-                <SelectContent>
-                  {contacts?.map((contact) => (
-                    <SelectItem key={contact.id} value={contact.id}>
-                      {contact.firstName} {contact.lastName}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Combobox
+                value={
+                  editForm.subLeaderId
+                    ? `${teamContacts?.find((m) => m.contact.id === editForm.subLeaderId)?.contact.firstName} ${teamContacts?.find((m) => m.contact.id === editForm.subLeaderId)?.contact.lastName}`
+                    : ''
+                }
+                onChange={(value) => {
+                  const member = teamContacts?.find((m) => `${m.contact.firstName} ${m.contact.lastName}` === value);
+                  setEditForm({ ...editForm, subLeaderId: member?.contact.id || '' });
+                }}
+                items={teamContacts?.map((member) => `${member.contact.firstName} ${member.contact.lastName}`) || []}
+                placeholder='Select sub leader'
+                searchPlaceholder='Search sub leader...'
+                allowCustom={false}
+                groupHeading='Contacts'
+              />
             </div>
             <div className='space-y-2'>
               <Label>Referral</Label>
-              <Select value={editForm.referralId} onValueChange={(value) => setEditForm({ ...editForm, referralId: value })}>
-                <SelectTrigger>
-                  <SelectValue placeholder='Select referral' />
-                </SelectTrigger>
-                <SelectContent>
-                  {contacts?.map((contact) => (
-                    <SelectItem key={contact.id} value={contact.id}>
-                      {contact.firstName} {contact.lastName}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Combobox
+                value={
+                  editForm.referralId
+                    ? `${contacts?.find((c) => c.id === editForm.referralId)?.firstName} ${contacts?.find((c) => c.id === editForm.referralId)?.lastName} (${
+                        contacts?.find((c) => c.id === editForm.referralId)?.email
+                      })`
+                    : ''
+                }
+                onChange={(value) => {
+                  const contact = contacts?.find((c) => `${c.firstName} ${c.lastName} (${c.email})` === value);
+                  setEditForm({ ...editForm, referralId: contact?.id || '' });
+                }}
+                items={contacts?.map((contact) => `${contact.firstName} ${contact.lastName} (${contact.email})`) || []}
+                placeholder='Select referral'
+                searchPlaceholder='Search referral...'
+                allowCustom={false}
+                groupHeading='Contacts'
+              />
+            </div>
+            <div className='space-y-2'>
+              <Label>Campaign Code</Label>
+              <Input value={editForm.campaignCode} onChange={(e) => setEditForm({ ...editForm, campaignCode: e.target.value })} placeholder='Enter campaign code' />
             </div>
             <div className='flex justify-end space-x-2'>
               <Button type='button' variant='outline' onClick={() => setIsEditModalOpen(false)}>

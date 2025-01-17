@@ -177,7 +177,6 @@ export const teamRelations = relations(team, ({ many, one }) => ({
   }),
   contacts: many(teamContact),
   remarks: many(teamRemark),
-  pitchings: many(teamMeeting),
   leader: one(contact, {
     fields: [team.leaderId],
     references: [contact.id],
