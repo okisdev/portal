@@ -1,6 +1,7 @@
 'use client';
 
 import { PageHeader } from '@/components/shared/page-header';
+import { PageLoading } from '@/components/shared/page-loading';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -63,7 +64,7 @@ export default function TeamPage() {
   };
 
   if (isLoading) {
-    return <div>Loading...</div>;
+    return <PageLoading />;
   }
 
   return (

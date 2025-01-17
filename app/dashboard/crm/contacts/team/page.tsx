@@ -1,6 +1,7 @@
 'use client';
 
 import { PageHeader } from '@/components/shared/page-header';
+import { PageLoading } from '@/components/shared/page-loading';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -42,7 +43,7 @@ export default function TeamPage() {
   };
 
   if (isLoading) {
-    return <div>Loading...</div>;
+    return <PageLoading />;
   }
 
   return (

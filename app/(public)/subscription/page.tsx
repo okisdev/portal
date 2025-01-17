@@ -1,5 +1,6 @@
 'use client';
 
+import { PageLoading } from '@/components/shared/page-loading';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -128,7 +129,7 @@ const SubscriptionContent = () => {
 
 export default function SubscriptionPage() {
   return (
-    <Suspense fallback={<div>Loading...</div>}>
+    <Suspense fallback={<PageLoading />}>
       <SubscriptionContent />
     </Suspense>
   );

@@ -4,6 +4,7 @@ import { ColorBadge } from '@/components/shared/color-badge';
 import { Combobox } from '@/components/shared/combobox';
 import { DateTimePicker } from '@/components/shared/date-time-picker';
 import { EventDialog } from '@/components/shared/event-dialog';
+import { PageLoading } from '@/components/shared/page-loading';
 import { PhoneInput } from '@/components/shared/phone-input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -142,7 +143,7 @@ export default function ContactIdPage() {
   }, [mode, contact]);
 
   if (isLoading) {
-    return <div>Loading...</div>;
+    return <PageLoading />;
   }
 
   if (!isLoading && !contact) {

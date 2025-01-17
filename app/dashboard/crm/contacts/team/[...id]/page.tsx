@@ -5,6 +5,7 @@ import { Combobox } from '@/components/shared/combobox';
 import { ComboboxCommand } from '@/components/shared/combobox';
 import { EventDialog } from '@/components/shared/event-dialog';
 import { PageHeader } from '@/components/shared/page-header';
+import { PageLoading } from '@/components/shared/page-loading';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import {} from '@/components/ui/command';
@@ -128,7 +129,7 @@ export default function TeamIdPage() {
     });
   };
 
-  if (isLoading) return <div>Loading...</div>;
+  if (isLoading) return <PageLoading />;
 
   if (!team) return notFound();
 
