@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { generateUUID } from '@/lib/utils';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { X } from 'lucide-react';
+import { PlusIcon, X } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
@@ -47,13 +47,20 @@ interface CreateEventProps {
   defaultValues?: Partial<EventFormData>;
   folders?: { id: string; name: string }[];
   participantOptions?: {
-    users: { id: string; name: string }[];
-    contacts: { id: string; name: string }[];
+    users?: { id: string; name: string }[];
+    contacts?: { id: string; name: string }[];
   };
+  initialParticipants?: {
+    type: 'user' | 'contact' | 'external';
+    id?: string;
+    email?: string;
+    name?: string;
+    role?: 'organizer' | 'required' | 'optional';
+  }[];
   onCreateFolder?: (name: string) => Promise<void>;
 }
 
-export function CreateEvent({ open, onOpenChange, onSubmit, isEditMode = false, defaultValues, folders = [], participantOptions, onCreateFolder }: CreateEventProps) {
+export function CreateEvent({ open, onOpenChange, onSubmit, isEditMode = false, defaultValues, folders = [], participantOptions, initialParticipants = [], onCreateFolder }: CreateEventProps) {
   const form = useForm<EventFormData>({
     resolver: zodResolver(eventFormSchema),
     defaultValues: {
@@ -65,7 +72,7 @@ export function CreateEvent({ open, onOpenChange, onSubmit, isEditMode = false, 
       isAllDay: false,
       isPublic: false,
       folderId: folders[0]?.id ?? '',
-      participants: [],
+      participants: initialParticipants,
       ...defaultValues,
     },
   });
@@ -87,7 +94,18 @@ export function CreateEvent({ open, onOpenChange, onSubmit, isEditMode = false, 
       onOpenChange={(open) => {
         onOpenChange(open);
         if (!open) {
-          form.reset();
+          form.reset({
+            title: '',
+            description: '',
+            location: '',
+            startAt: new Date(),
+            endAt: new Date(),
+            isAllDay: false,
+            isPublic: false,
+            folderId: folders[0]?.id ?? '',
+            participants: initialParticipants,
+            ...defaultValues,
+          });
         }
       }}
     >
@@ -216,20 +234,18 @@ export function CreateEvent({ open, onOpenChange, onSubmit, isEditMode = false, 
 
             {participantOptions && (
               <div className='space-y-4'>
-                <div className='flex items-start justify-between'>
+                <div className='flex items-center space-x-2'>
                   <p className='font-medium text-sm'>Participants</p>
-                  <Button
+                  <button
                     type='button'
-                    variant='outline'
-                    size='sm'
-                    className='h-8'
                     onClick={() => {
                       const participants = form.getValues('participants');
                       form.setValue('participants', [...participants, { type: 'external', email: '', name: '', role: 'required' }]);
                     }}
+                    className='flex items-center justify-center rounded-full bg-gray-100 p-1 transition-colors hover:bg-gray-200'
                   >
-                    Add Participant
-                  </Button>
+                    <PlusIcon className='size-4' />
+                  </button>
                 </div>
 
                 {form.watch('participants').map((participant, index) => (
@@ -272,7 +288,7 @@ export function CreateEvent({ open, onOpenChange, onSubmit, isEditMode = false, 
                                 <SelectValue placeholder='Select user' />
                               </SelectTrigger>
                               <SelectContent>
-                                {participantOptions.users.map((user) => (
+                                {participantOptions.users?.map((user) => (
                                   <SelectItem key={user.id} value={user.id}>
                                     {user.name}
                                   </SelectItem>
@@ -295,7 +311,7 @@ export function CreateEvent({ open, onOpenChange, onSubmit, isEditMode = false, 
                                 <SelectValue placeholder='Select contact' />
                               </SelectTrigger>
                               <SelectContent>
-                                {participantOptions.contacts.map((contact) => (
+                                {participantOptions.contacts?.map((contact) => (
                                   <SelectItem key={contact.id} value={contact.id}>
                                     {contact.name}
                                   </SelectItem>

@@ -122,7 +122,13 @@ export default function TeamIdPage() {
     });
   };
 
-  const meetingsFolder = folders?.find((f) => f.name === `Team ${team.name} Meetings`);
+  const initialParticipants =
+    teamContacts?.map((member) => ({
+      type: 'contact' as const,
+      id: member.contact.id,
+      name: `${member.contact.firstName} ${member.contact.lastName}`,
+      role: 'required' as const,
+    })) || [];
 
   return (
     <div className='space-y-4 p-4'>
@@ -324,11 +330,6 @@ export default function TeamIdPage() {
         open={isNewMeetingModalOpen}
         onOpenChange={setIsNewMeetingModalOpen}
         onSubmit={handleCreateMeeting}
-        defaultValues={{
-          startAt: new Date(),
-          endAt: new Date(Date.now() + 60 * 60 * 1000),
-          folderId: meetingsFolder?.id ?? '',
-        }}
         folders={folders}
         participantOptions={
           participantOptions && {
@@ -336,6 +337,7 @@ export default function TeamIdPage() {
             contacts: participantOptions.contacts,
           }
         }
+        initialParticipants={initialParticipants}
         onCreateFolder={async (name) => {
           await createFolder.mutateAsync({
             name,
