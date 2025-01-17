@@ -10,6 +10,28 @@ WESTERN_FIRST_NAMES = ['James', 'Mary', 'John', 'Patricia', 'Robert', 'Jennifer'
 WESTERN_LAST_NAMES = ['Smith', 'Johnson', 'Williams', 'Brown', 'Jones', 'Garcia', 'Miller', 'Davis',
                     'Rodriguez', 'Martinez', 'Hernandez', 'Lopez', 'Gonzalez', 'Wilson', 'Anderson']
 
+# Sources for contacts
+SOURCES = ['Pitching', 'Referral', 'Website', 'Email', 'IG', 'LinkedIn', 'Facebook', 'Other']
+
+# Simple remarks
+REMARKS = [
+    'Potential client',
+    'Follow up needed',
+    'Interested in services',
+    'Meeting scheduled',
+    'Call back requested',
+    'Send information',
+    'High priority',
+    'New contact',
+    'VIP client',
+    'Waiting for response',
+    'Check back next week',
+    'Requires attention',
+    'Good lead',
+    'To be contacted',
+    'Left message'
+]
+
 # Mainland Chinese names (simplified)
 CN_SURNAMES = ['王', '李', '张', '刘', '陈', '杨', '黄', '赵', '吴', '周', '林', '徐', '孙', '马', '胡']
 CN_GIVEN_CHARS = ['伟', '芳', '娜', '秀英', '敏', '静', '丽', '强', '磊', '军', '洋', '勇', '艳', '杰', '涛']
@@ -112,10 +134,16 @@ def generate_contacts(num_records: int, allow_duplicates: bool | int = False, ou
         else:  # International format
             phone = f"{country_code} {random.randint(100000000, 999999999)}"
         
+        # Generate source and remark
+        source = random.choice(SOURCES)
+        remark = random.choice(REMARKS)
+        
         return {
             'name': full_name,
             'email': email,
-            'phone': phone
+            'phone': phone,
+            'source': source,
+            'remark': remark
         }
     
     contacts = []
@@ -148,7 +176,7 @@ def generate_contacts(num_records: int, allow_duplicates: bool | int = False, ou
     
     # Write to CSV file
     with open(output_file, 'w', newline='', encoding='utf-8') as csvfile:
-        fieldnames = ['name', 'email', 'phone']
+        fieldnames = ['name', 'email', 'phone', 'source', 'remark']
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
         writer.writeheader()
         writer.writerows(contacts)

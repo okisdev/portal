@@ -115,9 +115,13 @@ export const teamRouter = createTRPCRouter({
         id: z.string(),
         name: z.string(),
         description: z.string().optional(),
-        leaderId: z.string().nullable(),
-        subLeaderId: z.string().nullable(),
-        referralId: z.string().nullable(),
+        leaderId: z.string().optional(),
+        subLeaderId: z.string().optional(),
+        referralId: z.string().optional(),
+        campaignCode: z
+          .string()
+          .optional()
+          .transform((val) => val?.toUpperCase()),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -129,6 +133,7 @@ export const teamRouter = createTRPCRouter({
           leaderId: input.leaderId,
           subLeaderId: input.subLeaderId,
           referralId: input.referralId,
+          campaignCode: input.campaignCode,
           updatedAt: new Date(),
         })
         .where(eq(team.id, input.id))
