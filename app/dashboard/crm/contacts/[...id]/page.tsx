@@ -130,10 +130,10 @@ export default function ContactIdPage() {
   };
 
   const handleEditClick = () => {
-    const [firstName = '', lastName = ''] = contact?.name?.split(' ') || ['', ''];
+
     setEditForm({
-      firstName,
-      lastName,
+      firstName: contact?.firstName || '',
+      lastName: contact?.lastName || '',
       email: contact?.email || '',
       phone: contact?.phone || '',
       company: contact?.company || '',
@@ -376,6 +376,38 @@ export default function ContactIdPage() {
                       currency: payment.currency,
                     }).format(payment.amount)}
                   </span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className='rounded-lg border bg-white p-4'>
+            <div className='mb-3'>
+              <h2 className='font-semibold'>Team Roles</h2>
+            </div>
+            <div className='space-y-3'>
+              {contact?.leadingTeams?.map((team) => (
+                <div key={team.id} className='flex items-center justify-between text-sm'>
+                  <Link href={`/dashboard/crm/contacts/team/${team.id}`} className='hover:text-blue-600'>
+                    {team.name}
+                  </Link>
+                  <span className='text-gray-500 text-xs'>Team Leader</span>
+                </div>
+              ))}
+              {contact?.subLeadingTeams?.map((team) => (
+                <div key={team.id} className='flex items-center justify-between text-sm'>
+                  <Link href={`/dashboard/crm/contacts/team/${team.id}`} className='hover:text-blue-600'>
+                    {team.name}
+                  </Link>
+                  <span className='text-gray-500 text-xs'>Sub Leader</span>
+                </div>
+              ))}
+              {contact?.referralTeams?.map((team) => (
+                <div key={team.id} className='flex items-center justify-between text-sm'>
+                  <Link href={`/dashboard/crm/contacts/team/${team.id}`} className='hover:text-blue-600'>
+                    {team.name}
+                  </Link>
+                  <span className='text-gray-500 text-xs'>Referral</span>
                 </div>
               ))}
             </div>
