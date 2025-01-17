@@ -241,35 +241,46 @@ export default function ImportContacts() {
       return firstName || '';
     };
 
+    const processBatch = async (contacts: typeof csvData, startIdx: number, batchSize: number, totalContacts: number) => {
+      const endIdx = Math.min(startIdx + batchSize, contacts.length);
+      const batch = contacts.slice(startIdx, endIdx);
+
+      await Promise.all(
+        batch.map((contact) =>
+          createContact.mutateAsync({
+            firstName: contact.firstName,
+            lastName: contact.lastName,
+            name: formatName(contact.firstName, contact.lastName),
+            email: contact.email,
+            phone: contact.phone || '',
+            company: contact.company || '',
+            source: formData.source || '',
+            remark: formData.remark || '',
+          })
+        )
+      );
+
+      return endIdx;
+    };
+
     try {
       if (showPreview && csvData.length > 0) {
         const nonDuplicateContacts = csvData.filter((contact) => !isRowEmpty(contact) && !duplicates.some((d) => d.email === contact.email));
 
-        toast.promise(
-          Promise.all(
-            nonDuplicateContacts.map((contact) =>
-              createContact.mutateAsync({
-                firstName: contact.firstName,
-                lastName: contact.lastName,
-                name: formatName(contact.firstName, contact.lastName),
-                email: contact.email,
-                phone: contact.phone || '',
-                company: contact.company || '',
-                source: formData.source || '',
-                remark: formData.remark || '',
-              })
-            )
-          ),
-          {
-            loading: `Creating ${nonDuplicateContacts.length} contacts...`,
-            success: () => {
-              if (nonDuplicateContacts.length !== csvData.length) {
-                return `Created ${nonDuplicateContacts.length} contacts (${csvData.length - nonDuplicateContacts.length} duplicates skipped)`;
-              }
-              return `Successfully created ${nonDuplicateContacts.length} contacts`;
-            },
-            error: 'Failed to create contacts',
-          }
+        const batchSize = 10;
+        let processedCount = 0;
+        const totalContacts = nonDuplicateContacts.length;
+
+        const toastId = toast.loading(`Processing contacts... (0/${totalContacts})`);
+
+        while (processedCount < totalContacts) {
+          processedCount = await processBatch(nonDuplicateContacts, processedCount, batchSize, totalContacts);
+          toast.loading(`Processing contacts... (${processedCount}/${totalContacts})`, { id: toastId });
+        }
+
+        toast.success(
+          totalContacts !== csvData.length ? `Created ${totalContacts} contacts (${csvData.length - totalContacts} duplicates skipped)` : `Successfully created ${totalContacts} contacts`,
+          { id: toastId }
         );
       } else {
         toast.promise(
@@ -295,6 +306,7 @@ export default function ImportContacts() {
       }
     } catch (error) {
       console.error('Error creating contact:', error);
+      toast.error('Failed to create contacts');
     } finally {
       setIsLoading(false);
     }
