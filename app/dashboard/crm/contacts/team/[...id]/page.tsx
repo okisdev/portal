@@ -1,13 +1,15 @@
 'use client';
 
 import { ColorBadge } from '@/components/shared/color-badge';
-import { CreateEvent } from '@/components/shared/create-event';
+import { EventDialog } from '@/components/shared/event-dialog';
 import { PageHeader } from '@/components/shared/page-header';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from '@/components/ui/command';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { formatDate } from '@/lib/utils';
@@ -16,6 +18,7 @@ import { Calendar, Edit2, Plus, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import { notFound, useParams } from 'next/navigation';
 import { useState } from 'react';
+import { toast } from 'sonner';
 
 export default function TeamIdPage() {
   const { id: teamId } = useParams<{ id: string }>();
@@ -48,11 +51,17 @@ export default function TeamIdPage() {
     subLeaderId: '',
     referralId: '',
   });
+  const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
+  const [searchValue, setSearchValue] = useState('');
 
   const updateTeam = api.team.updateTeam.useMutation({
     onSuccess: () => {
       setIsEditModalOpen(false);
       utils.team.getTeamById.invalidate({ id: teamId[0] });
+      toast.success('Team updated successfully');
+    },
+    onError: (error) => {
+      toast.error(error.message);
     },
   });
 
@@ -60,6 +69,10 @@ export default function TeamIdPage() {
     onSuccess: () => {
       setNewRemark('');
       utils.team.getTeamRemarks.invalidate({ teamId: teamId[0] });
+      toast.success('Remark created successfully');
+    },
+    onError: (error) => {
+      toast.error(error.message);
     },
   });
 
@@ -67,22 +80,53 @@ export default function TeamIdPage() {
     onSuccess: () => {
       setIsNewMeetingModalOpen(false);
       utils.team.getTeamMeetings.invalidate({ teamId: teamId[0] });
+      toast.success('Meeting created successfully');
+    },
+    onError: (error) => {
+      toast.error(error.message);
     },
   });
 
   const deleteTeamMeeting = api.team.deleteTeamMeeting.useMutation({
     onSuccess: () => {
       utils.team.getTeamMeetings.invalidate({ teamId: teamId[0] });
+      toast.success('Meeting deleted successfully');
+    },
+    onError: (error) => {
+      toast.error(error.message);
     },
   });
 
   const createFolder = api.calendar.createFolder.useMutation({
     onSuccess: () => {
       utils.calendar.getFolders.invalidate();
+      toast.success('Folder created successfully');
+    },
+    onError: (error) => {
+      toast.error(error.message);
     },
   });
 
+  const addTeamMember = api.team.addTeamMember.useMutation({
+    onSuccess: () => {
+      setIsAddMemberOpen(false);
+      utils.team.getTeamContacts.invalidate({ teamId: teamId[0] });
+      toast.success('Member added successfully');
+    },
+    onError: (error) => {
+      toast.error(error.message);
+    },
+  });
+
+  const handleAddMember = (contactId: string) => {
+    addTeamMember.mutate({
+      teamId: teamId[0],
+      contactId,
+    });
+  };
+
   if (isLoading) return <div>Loading...</div>;
+
   if (!team) return notFound();
 
   const handleEditClick = () => {
@@ -148,30 +192,62 @@ export default function TeamIdPage() {
           <div className='space-y-2 rounded-lg border bg-white p-4'>
             <div className='flex items-center justify-between'>
               <p className='font-semibold'>Team Members</p>
-              <div className='flex items-center gap-2'>
-                <p className='text-gray-500 text-sm'>total {teamContacts?.length} members</p>
-                <Button variant='outline' size='sm' className='h-8'>
-                  <Plus className='mr-1 size-4' /> Add Member
-                </Button>
-              </div>
+              <Popover open={isAddMemberOpen} onOpenChange={setIsAddMemberOpen}>
+                <PopoverTrigger asChild>
+                  <Button variant='outline' size='sm' className='h-8'>
+                    <Plus className='mr-1 size-4' /> Add Member
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className='w-[300px] p-0' align='end'>
+                  <Command>
+                    <CommandInput placeholder='Search contacts...' value={searchValue} onValueChange={setSearchValue} />
+                    <CommandEmpty>No contacts found.</CommandEmpty>
+                    <CommandGroup className='max-h-[300px] overflow-auto'>
+                      {contacts
+                        ?.filter(
+                          (contact) =>
+                            !teamContacts?.some((member) => member.contact.id === contact.id) &&
+                            (contact.firstName.toLowerCase().includes(searchValue.toLowerCase()) ||
+                              contact.lastName.toLowerCase().includes(searchValue.toLowerCase()) ||
+                              contact.email.toLowerCase().includes(searchValue.toLowerCase()))
+                        )
+                        .map((contact) => (
+                          <CommandItem key={contact.id} value={contact.id} onSelect={() => handleAddMember(contact.id)} className='flex cursor-pointer items-center gap-2'>
+                            <Avatar className='size-6'>
+                              <AvatarFallback>{contact.firstName.charAt(0)}</AvatarFallback>
+                            </Avatar>
+                            <div className='flex-1'>
+                              <p className='text-sm'>
+                                {contact.firstName} {contact.lastName}
+                              </p>
+                              <p className='text-gray-500 text-xs'>{contact.email}</p>
+                            </div>
+                          </CommandItem>
+                        ))}
+                    </CommandGroup>
+                  </Command>
+                </PopoverContent>
+              </Popover>
             </div>
-            <div className='space-y-3'>
-              {teamContacts?.map((member) => (
-                <Link key={member.id} href={`/dashboard/crm/contacts/${member.contact.id}`} className='flex items-center justify-between rounded-lg border p-2 transition-colors hover:bg-gray-50'>
-                  <div className='flex items-center gap-2'>
-                    <Avatar className='size-8'>
-                      <AvatarFallback>{member.contact.firstName.charAt(0)}</AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <p className='font-medium'>
-                        {member.contact.firstName} {member.contact.lastName}
-                      </p>
-                      <p className='text-gray-500 text-sm'>{member.contact.email}</p>
+            {teamContacts && teamContacts?.length > 0 && (
+              <div className='space-y-3'>
+                {teamContacts?.map((member) => (
+                  <Link key={member.id} href={`/dashboard/crm/contacts/${member.contact.id}`} className='flex items-center justify-between rounded-lg border p-2 transition-colors hover:bg-gray-50'>
+                    <div className='flex items-center gap-2'>
+                      <Avatar className='size-8'>
+                        <AvatarFallback>{member.contact.firstName.charAt(0)}</AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <p className='font-medium'>
+                          {member.contact.firstName} {member.contact.lastName}
+                        </p>
+                        <p className='text-gray-500 text-sm'>{member.contact.email}</p>
+                      </div>
                     </div>
-                  </div>
-                </Link>
-              ))}
-            </div>
+                  </Link>
+                ))}
+              </div>
+            )}
           </div>
 
           <div className='rounded-lg border bg-white p-4'>
@@ -198,27 +274,20 @@ export default function TeamIdPage() {
         </div>
 
         <div className='space-y-4'>
-          {/* Team Info Box */}
           <div className='rounded-lg border bg-white p-4'>
             <h2 className='mb-3 font-semibold'>Team Information</h2>
             <div className='space-y-3'>
               <div>
                 <Label className='text-gray-500 text-xs'>Team Leader</Label>
-                <p className='text-sm'>
-                  {team.leader?.firstName} {team.leader?.lastName}
-                </p>
+                <p className='text-sm'>{team.leaderId ? `${team.leader?.firstName} ${team.leader?.lastName}` : 'N/A'}</p>
               </div>
               <div>
                 <Label className='text-gray-500 text-xs'>Sub Leader</Label>
-                <p className='text-sm'>
-                  {team.subLeader?.firstName} {team.subLeader?.lastName}
-                </p>
+                <p className='text-sm'>{team.subLeaderId ? `${team.subLeader?.firstName} ${team.subLeader?.lastName}` : 'N/A'}</p>
               </div>
               <div>
                 <Label className='text-gray-500 text-xs'>Referral</Label>
-                <p className='text-sm'>
-                  {team.referral?.firstName} {team.referral?.lastName}
-                </p>
+                <p className='text-sm'>{team.referralId ? `${team.referral?.firstName} ${team.referral?.lastName}` : 'N/A'}</p>
               </div>
               <div>
                 <Label className='text-gray-500 text-xs'>Created</Label>
@@ -228,7 +297,7 @@ export default function TeamIdPage() {
           </div>
 
           <div className='rounded-lg border bg-white p-4'>
-            <div className='mb-3 flex items-center justify-between'>
+            <div className='flex items-center justify-between'>
               <h2 className='font-semibold'>Meetings</h2>
               <Button variant='outline' size='sm' onClick={() => setIsNewMeetingModalOpen(true)}>
                 <Calendar className='mr-1 size-4' /> New Meeting
@@ -338,7 +407,7 @@ export default function TeamIdPage() {
         </DialogContent>
       </Dialog>
 
-      <CreateEvent
+      <EventDialog
         open={isNewMeetingModalOpen}
         onOpenChange={setIsNewMeetingModalOpen}
         onSubmit={handleCreateMeeting}

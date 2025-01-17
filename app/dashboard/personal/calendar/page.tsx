@@ -1,7 +1,7 @@
 'use client';
 
 import { YearMonthPicker } from '@/components/dashboard/personal/calendar/year-month-picker';
-import { CreateEvent } from '@/components/shared/create-event';
+import { EventDialog } from '@/components/shared/event-dialog';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -49,7 +49,7 @@ export default function DashboardPersonalCalendar() {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [yearMonthPickerOpen, setYearMonthPickerOpen] = useState(false);
   const [isCalendarFolded, setIsCalendarFolded] = useState(false);
-  const [isCreateEventOpen, setIsCreateEventOpen] = useState(false);
+  const [isEventDialogOpen, setIsEventDialogOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<CalendarEventWithParticipants | null>(null);
   const [isEditMode, setIsEditMode] = useState(false);
   const [hiddenCalendars, setHiddenCalendars] = useState<Set<string>>(new Set());
@@ -117,7 +117,7 @@ export default function DashboardPersonalCalendar() {
   }, [selectedDate, form]);
 
   useEffect(() => {
-    if (!isCreateEventOpen) {
+    if (!isEventDialogOpen) {
       const startDate = new Date(selectedDate);
       const endDate = new Date(selectedDate);
 
@@ -142,12 +142,12 @@ export default function DashboardPersonalCalendar() {
         participants: [],
       });
     }
-  }, [isCreateEventOpen, selectedDate, folders, form]);
+  }, [isEventDialogOpen, selectedDate, folders, form]);
 
   const createEvent = api.calendar.createEvent.useMutation({
     onSuccess: () => {
       utils.calendar.getEvents.invalidate();
-      setIsCreateEventOpen(false);
+      setIsEventDialogOpen(false);
       form.reset();
     },
   });
@@ -161,7 +161,7 @@ export default function DashboardPersonalCalendar() {
   const updateEvent = api.calendar.updateEvent.useMutation({
     onSuccess: () => {
       utils.calendar.getEvents.invalidate();
-      setIsCreateEventOpen(false);
+      setIsEventDialogOpen(false);
       setSelectedEvent(null);
       setIsEditMode(false);
       form.reset();
@@ -171,7 +171,7 @@ export default function DashboardPersonalCalendar() {
   const deleteEvent = api.calendar.deleteEvent.useMutation({
     onSuccess: () => {
       utils.calendar.getEvents.invalidate();
-      setIsCreateEventOpen(false);
+      setIsEventDialogOpen(false);
       setSelectedEvent(null);
       setIsEditMode(false);
       form.reset();
@@ -235,7 +235,7 @@ export default function DashboardPersonalCalendar() {
   const handleEditEvent = (event: CalendarEventWithParticipants) => {
     setSelectedEvent(event);
     setIsEditMode(true);
-    setIsCreateEventOpen(true);
+    setIsEventDialogOpen(true);
 
     // Introduce bug: Only pass the date part without preserving the time
     const startDate = new Date(event.startAt.toDateString());
@@ -450,7 +450,7 @@ export default function DashboardPersonalCalendar() {
               </h1>
             </div>
             <div className='flex items-center gap-2'>
-              <Button variant='outline' className='h-8 w-auto' onClick={() => setIsCreateEventOpen(true)}>
+              <Button variant='outline' className='h-8 w-auto' onClick={() => setIsEventDialogOpen(true)}>
                 <Plus className='h-4 w-4' />
                 Add event
               </Button>
@@ -630,10 +630,10 @@ export default function DashboardPersonalCalendar() {
         </div>
       </div>
 
-      <CreateEvent
-        open={isCreateEventOpen}
+      <EventDialog
+        open={isEventDialogOpen}
         onOpenChange={(open) => {
-          setIsCreateEventOpen(open);
+          setIsEventDialogOpen(open);
           if (!open) {
             setSelectedEvent(null);
             setIsEditMode(false);

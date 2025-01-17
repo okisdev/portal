@@ -39,7 +39,7 @@ const eventFormSchema = z.object({
 
 export type EventFormData = z.infer<typeof eventFormSchema>;
 
-interface CreateEventProps {
+interface EventDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSubmit: (data: EventFormData) => void;
@@ -60,7 +60,7 @@ interface CreateEventProps {
   onCreateFolder?: (name: string) => Promise<void>;
 }
 
-export function CreateEvent({ open, onOpenChange, onSubmit, isEditMode = false, defaultValues, folders = [], participantOptions, initialParticipants = [], onCreateFolder }: CreateEventProps) {
+export function EventDialog({ open, onOpenChange, onSubmit, isEditMode = false, defaultValues, folders = [], participantOptions, initialParticipants = [], onCreateFolder }: EventDialogProps) {
   const form = useForm<EventFormData>({
     resolver: zodResolver(eventFormSchema),
     defaultValues: {

@@ -12,9 +12,7 @@ export const teamRouter = createTRPCRouter({
         description: team.description,
         createdAt: team.createdAt,
         createdBy: team.createdBy,
-        _count: {
-          contacts: sql<number>`(SELECT COUNT(*) FROM ${teamContact} WHERE ${teamContact.teamId} = ${team.id})`,
-        },
+        contacts: sql<number>`(SELECT COUNT(*) FROM ${teamContact} WHERE ${teamContact.teamId} = ${team.id})`,
       })
       .from(team);
   }),
@@ -312,5 +310,34 @@ export const teamRouter = createTRPCRouter({
 
         return deletedMeeting;
       });
+    }),
+
+  addTeamMember: protectedProcedure
+    .input(
+      z.object({
+        teamId: z.string(),
+        contactId: z.string(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const existingMember = await ctx.db
+        .select()
+        .from(teamContact)
+        .where(and(eq(teamContact.teamId, input.teamId), eq(teamContact.contactId, input.contactId)))
+        .then((rows) => rows[0]);
+
+      if (existingMember) {
+        throw new Error('Contact is already a member of this team');
+      }
+
+      const [newMember] = await ctx.db
+        .insert(teamContact)
+        .values({
+          teamId: input.teamId,
+          contactId: input.contactId,
+        })
+        .returning();
+
+      return newMember;
     }),
 });

@@ -48,7 +48,7 @@ export function Combobox({
         </Button>
       </PopoverTrigger>
       <PopoverContent className='w-[--radix-popper-anchor-width] p-0' align='start'>
-        <Command className='max-h-[300px] overflow-y-auto'>
+        <Command>
           <CommandInput placeholder={searchPlaceholder} onValueChange={setQuery} />
           <CommandEmpty>{emptyText}</CommandEmpty>
           {allowCustom && query && (
@@ -64,7 +64,7 @@ export function Combobox({
               </CommandItem>
             </CommandGroup>
           )}
-          <CommandGroup heading={groupHeading}>
+          <CommandGroup heading={groupHeading} className='max-h-[300px] overflow-auto'>
             {items.map((item) => (
               <CommandItem
                 key={item}

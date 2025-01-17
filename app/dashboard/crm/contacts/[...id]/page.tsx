@@ -3,10 +3,12 @@
 import { ColorBadge } from '@/components/shared/color-badge';
 import { Combobox } from '@/components/shared/combobox';
 import { DateTimePicker } from '@/components/shared/date-time-picker';
+import { EventDialog } from '@/components/shared/event-dialog';
 import { PhoneInput } from '@/components/shared/phone-input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -15,7 +17,7 @@ import { insuranceCompanies, sources } from '@/data/data';
 import type { Priority, Status } from '@/lib/schema';
 import { cn, formatDate } from '@/lib/utils';
 import { api } from '@/utils/trpc/client';
-import { Building2, Calendar, CalendarIcon, Edit2, Mail, Phone, Trash2, Users } from 'lucide-react';
+import { Building2, Calendar, CalendarIcon, Edit2, Mail, MoreHorizontal, Phone, Trash2, Users } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
 import { notFound, useParams } from 'next/navigation';
@@ -58,6 +60,12 @@ export default function ContactIdPage() {
   const [appointmentNotes, setAppointmentNotes] = useState('');
   const [isTeamModalOpen, setIsTeamModalOpen] = useState(false);
   const [selectedTeam, setSelectedTeam] = useState<string>('');
+  const [editingAppointment, setEditingAppointment] = useState<{
+    id: string;
+    title: string;
+    description: string;
+    startAt: Date;
+  } | null>(null);
 
   const createContactActivity = api.contact.createContactActivity.useMutation({
     onSuccess: () => {
@@ -93,6 +101,25 @@ export default function ContactIdPage() {
       utils.calendar.getAppointmentsByContactId.invalidate({ contactId: contactId[0] });
     },
   });
+
+  const updateAppointment = api.calendar.updateEvent.useMutation({
+    onSuccess: () => {
+      setEditingAppointment(null);
+      utils.calendar.getAppointmentsByContactId.invalidate({ contactId: contactId[0] });
+    },
+  });
+
+  const handleEditAppointment = (data: any) => {
+    if (!editingAppointment) return;
+
+    updateAppointment.mutate({
+      id: editingAppointment.id,
+      title: data.title,
+      description: data.description,
+      startAt: data.startAt,
+      endAt: data.endAt,
+    });
+  };
 
   if (isLoading) {
     return <div>Loading...</div>;
@@ -352,9 +379,33 @@ export default function ContactIdPage() {
                     <p className='font-medium'>{apt.title}</p>
                     <p className='text-gray-500 text-xs'>{formatDate(new Date(apt.startAt))}</p>
                   </div>
-                  <Button variant='ghost' size='icon' onClick={() => deleteAppointment.mutate(apt.id)}>
-                    <Trash2 className='size-4' />
-                  </Button>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant='ghost' size='icon'>
+                        <MoreHorizontal className='size-4' />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align='end'>
+                      <DropdownMenuItem
+                        className='cursor-pointer'
+                        onClick={() =>
+                          setEditingAppointment({
+                            id: apt.id,
+                            title: apt.title,
+                            description: apt.description || '',
+                            startAt: new Date(apt.startAt),
+                          })
+                        }
+                      >
+                        <Edit2 className='mr-2 size-4' />
+                        Edit
+                      </DropdownMenuItem>
+                      <DropdownMenuItem className='cursor-pointer text-red-600' onClick={() => deleteAppointment.mutate(apt.id)}>
+                        <Trash2 className='mr-2 size-4' />
+                        Delete
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </div>
               ))}
             </div>
@@ -556,6 +607,24 @@ export default function ContactIdPage() {
           </div>
         </DialogContent>
       </Dialog>
+
+      <EventDialog
+        open={!!editingAppointment}
+        onOpenChange={(open) => !open && setEditingAppointment(null)}
+        onSubmit={handleEditAppointment}
+        isEditMode={true}
+        defaultValues={
+          editingAppointment
+            ? {
+                title: editingAppointment.title,
+                description: editingAppointment.description,
+                startAt: editingAppointment.startAt,
+                endAt: new Date(editingAppointment.startAt.getTime() + 30 * 60000), // 30 minutes duration
+              }
+            : undefined
+        }
+        folders={[{ id: 'default', name: 'Default Calendar' }]}
+      />
     </div>
   );
 }

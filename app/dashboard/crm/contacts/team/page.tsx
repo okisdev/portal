@@ -77,7 +77,7 @@ export default function TeamPage() {
                   </div>
                 </TableCell>
                 <TableCell>{team.description}</TableCell>
-                <TableCell>{team._count.contacts}</TableCell>
+                <TableCell>{team.contacts}</TableCell>
                 <TableCell>{formatDate(new Date(team.createdAt))}</TableCell>
               </TableRow>
             ))}
