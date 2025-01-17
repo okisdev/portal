@@ -13,9 +13,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { insuranceCompanies, sources } from '@/data/data';
 import type { Priority, Status } from '@/lib/schema';
-import { cn, formatDate, isDev } from '@/lib/utils';
+import { formatDate } from '@/lib/utils';
 import { api } from '@/utils/trpc/client';
-import { Calendar, CalendarIcon, Edit2, Mail, MoreHorizontal, Phone, Printer, Send, Trash2 } from 'lucide-react';
+import { Building2, Calendar, CalendarIcon, Edit2, Mail, Phone, Trash2 } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
 import { notFound, useParams } from 'next/navigation';
@@ -25,8 +25,6 @@ export default function ContactIdPage() {
   const { id: contactId } = useParams<{ id: string }>();
 
   const { data: session } = useSession();
-
-  const isDevMode = isDev();
 
   const utils = api.useUtils();
 
@@ -189,47 +187,170 @@ export default function ContactIdPage() {
   };
 
   return (
-    <div className='space-y-6 p-6'>
-      <div className='flex items-center justify-between border-b pb-4'>
-        <div className='flex items-center space-x-4'>
+    <div className='space-y-4 p-4'>
+      <div className='flex items-center justify-between rounded-lg border bg-white p-4'>
+        <div className='flex items-center gap-4'>
           <Avatar className='size-12'>
             <AvatarImage src='' />
             <AvatarFallback>{contact?.name?.charAt(0) || ''}</AvatarFallback>
           </Avatar>
-          <div>
-            <h1 className='font-semibold text-xl'>{contact?.name}</h1>
-            <p className='text-gray-500 text-sm'>{contact?.company || 'Unknown'}</p>
-            <p className='text-gray-500 text-sm'>{contact?.email}</p>
+          <div className='space-y-1'>
+            <div className='flex items-center gap-2'>
+              <h1 className='font-semibold text-xl'>{contact?.name}</h1>
+              <ColorBadge type='status' value={contact?.status || 'lead'} />
+            </div>
+            <div className='flex items-center gap-2 text-gray-500 text-sm'>
+              {contact?.company && (
+                <div className='flex items-center gap-1'>
+                  <Building2 className='size-3' />
+                  {contact.company}
+                </div>
+              )}
+              {contact?.email && (
+                <Link href={`mailto:${contact.email}`} className='flex items-center gap-1 hover:text-gray-700'>
+                  <Mail className='size-3' />
+                  {contact.email}
+                </Link>
+              )}
+              {contact?.phone && (
+                <Link href={`https://wa.me/${contact.phone.replace(/\D/g, '')}`} className='flex items-center gap-1 hover:text-gray-700'>
+                  <Phone className='size-3' />
+                  {contact.phone}
+                </Link>
+              )}
+            </div>
           </div>
         </div>
-        <div className='flex space-x-2'>
-          <Button variant='ghost' size='icon' onClick={handleEditClick}>
-            <Edit2 className='size-4' />
+        <div className='flex gap-2'>
+          <Button variant='outline' size='sm' onClick={() => setIsBookingModalOpen(true)}>
+            <CalendarIcon className='mr-1 size-4' /> Book Meeting
           </Button>
-          <Button variant='ghost' size='icon' asChild>
-            <Link href={`mailto:${contact?.email}`} target='_blank' rel='noopener noreferrer'>
-              <Mail className='size-4' />
-            </Link>
+          <Button variant='outline' size='sm' onClick={handleEditClick}>
+            <Edit2 className='mr-1 size-4' /> Edit
           </Button>
-          <Button variant='ghost' size='icon' asChild>
-            <Link
-              href={!contact?.phone ? '' : `https://wa.me/${contact?.phone?.replace(/\D/g, '')}`}
-              target={'_blank'}
-              rel='noopener noreferrer'
-              className={cn(!contact?.phone && 'cursor-not-allowed opacity-50')}
-            >
-              <Phone className='size-4' />
-            </Link>
-          </Button>
-          <Button variant='ghost' size='icon'>
-            <Printer className='size-4' />
-          </Button>
-          <Button variant='ghost' size='icon' onClick={() => setIsBookingModalOpen(true)}>
-            <CalendarIcon className='size-4' />
-          </Button>
-          <Button variant='ghost' size='icon'>
-            <MoreHorizontal className='size-4' />
-          </Button>
+        </div>
+      </div>
+
+      <div className='grid grid-cols-3 gap-4'>
+        <div className='col-span-2 space-y-4'>
+          <div className='grid grid-cols-4 gap-4'>
+            {[
+              { label: 'Created', value: formatDate(new Date(contact?.createdAt || '')) },
+              { label: 'Last Contact', value: contact?.lastContactedAt ? formatDate(new Date(contact.lastContactedAt)) : '—' },
+              {
+                label: 'Priority',
+                value: (
+                  <Select value={contact?.priority || 'medium'} onValueChange={handlePriorityChange}>
+                    <SelectTrigger className='h-8'>
+                      <SelectValue>
+                        <ColorBadge type='priority' value={contact?.priority || 'medium'} />
+                      </SelectValue>
+                    </SelectTrigger>
+                    <SelectContent>
+                      {['high', 'medium', 'low'].map((priority) => (
+                        <SelectItem key={priority} value={priority}>
+                          <ColorBadge type='priority' value={priority} />
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                ),
+              },
+              {
+                label: 'Status',
+                value: (
+                  <Select value={contact?.status || 'lead'} onValueChange={handleStatusChange}>
+                    <SelectTrigger className='h-8'>
+                      <SelectValue>
+                        <ColorBadge type='status' value={contact?.status || 'lead'} />
+                      </SelectValue>
+                    </SelectTrigger>
+                    <SelectContent>
+                      {['lead', 'prospect', 'customer', 'churned', 'opportunity'].map((status) => (
+                        <SelectItem key={status} value={status}>
+                          <ColorBadge type='status' value={status} />
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                ),
+              },
+            ].map((item) => (
+              <div key={item.label} className='rounded-lg border bg-white p-3'>
+                <p className='text-gray-500 text-xs'>{item.label}</p>
+                <div className='mt-1 text-sm'>{item.value}</div>
+              </div>
+            ))}
+          </div>
+
+          <div className='rounded-lg border bg-white p-4'>
+            <div className='mb-4 flex items-center justify-between'>
+              <h2 className='font-semibold'>Activity</h2>
+              <form onSubmit={handleSubmitActivity} className='ml-4 flex max-w-md flex-1 gap-2'>
+                <Input value={newActivity} onChange={(e) => setNewActivity(e.target.value)} placeholder='Add note...' className='h-8' />
+                <Button type='submit' size='sm' disabled={createContactActivity.isPending}>
+                  Add
+                </Button>
+              </form>
+            </div>
+
+            <div className='max-h-[500px] space-y-3 overflow-y-auto'>
+              {activities?.map((activity) => (
+                <div key={activity.id} className='flex gap-3 border-b pb-3 last:border-0'>
+                  <div className='mt-2 size-2 shrink-0 rounded-full bg-green-500' />
+                  <div>
+                    <div className='flex items-center gap-2 text-sm'>
+                      <span className='font-medium'>{activity.title}</span>
+                      <span className='text-gray-500'>by {getInitiatorLabel(activity)}</span>
+                      <span className='text-gray-500'>{formatDate(new Date(activity.createdAt))}</span>
+                    </div>
+                    <p className='mt-1 text-gray-600 text-sm'>{activity.description}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div className='space-y-4'>
+          <div className='rounded-lg border bg-white p-4'>
+            <div className='mb-3 flex items-center justify-between'>
+              <h2 className='font-semibold'>Upcoming Meetings</h2>
+            </div>
+            <div className='space-y-3'>
+              {appointments?.map((apt) => (
+                <div key={apt.id} className='flex items-center gap-3 text-sm'>
+                  <Calendar className='size-4 text-gray-500' />
+                  <div className='flex-1'>
+                    <p className='font-medium'>{apt.title}</p>
+                    <p className='text-gray-500 text-xs'>{formatDate(new Date(apt.startAt))}</p>
+                  </div>
+                  <Button variant='ghost' size='icon' onClick={() => deleteAppointment.mutate(apt.id)}>
+                    <Trash2 className='size-4' />
+                  </Button>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className='rounded-lg border bg-white p-4'>
+            <div className='mb-3 flex items-center justify-between'>
+              <h2 className='font-semibold'>Recent Payments</h2>
+            </div>
+            <div className='space-y-2'>
+              {payments?.slice(0, 3).map((payment) => (
+                <div key={payment.id} className='flex items-center justify-between text-sm'>
+                  <span>{formatDate(new Date(payment.created * 1000))}</span>
+                  <span className='font-medium'>
+                    {new Intl.NumberFormat('en-US', {
+                      style: 'currency',
+                      currency: payment.currency,
+                    }).format(payment.amount)}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
 
@@ -345,198 +466,6 @@ export default function ContactIdPage() {
           </form>
         </DialogContent>
       </Dialog>
-
-      <div className='grid grid-cols-3 gap-6'>
-        <div className='col-span-2 space-y-6'>
-          <div className='rounded-lg border p-4'>
-            <h2 className='mb-4 font-semibold text-lg'>Date Focus</h2>
-            <div className='grid grid-cols-4 gap-4'>
-              <div>
-                <p className='text-gray-500 text-sm'>Created Date</p>
-                <p className='text-sm'>{formatDate(new Date(contact?.createdAt || ''))}</p>
-              </div>
-              <div>
-                <p className='text-gray-500 text-sm'>Stage</p>
-                <Select value={contact?.status || 'lead'} onValueChange={handleStatusChange}>
-                  <SelectTrigger className='h-8'>
-                    <SelectValue>
-                      <ColorBadge type='status' value={contact?.status || 'lead'} />
-                    </SelectValue>
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value='lead'>
-                      <ColorBadge type='status' value='lead' />
-                    </SelectItem>
-                    <SelectItem value='prospect'>
-                      <ColorBadge type='status' value='prospect' />
-                    </SelectItem>
-                    <SelectItem value='customer'>
-                      <ColorBadge type='status' value='customer' />
-                    </SelectItem>
-                    <SelectItem value='churned'>
-                      <ColorBadge type='status' value='churned' />
-                    </SelectItem>
-                    <SelectItem value='opportunity'>
-                      <ColorBadge type='status' value='opportunity' />
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <p className='text-gray-500 text-sm'>Priority</p>
-                <Select value={contact?.priority || 'medium'} onValueChange={handlePriorityChange}>
-                  <SelectTrigger className='h-8'>
-                    <SelectValue>
-                      <ColorBadge type='priority' value={contact?.priority || 'medium'} />
-                    </SelectValue>
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value='high'>
-                      <ColorBadge type='priority' value='high' />
-                    </SelectItem>
-                    <SelectItem value='medium'>
-                      <ColorBadge type='priority' value='medium' />
-                    </SelectItem>
-                    <SelectItem value='low'>
-                      <ColorBadge type='priority' value='low' />
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <p className='text-gray-500 text-sm'>Last Contacted</p>
-                <p className='text-sm'>{contact?.lastContactedAt ? formatDate(new Date(contact?.lastContactedAt)) : '—'}</p>
-              </div>
-            </div>
-          </div>
-
-          <div className='h-96 rounded-lg border p-4'>
-            <div className='mb-4 flex items-center justify-between'>
-              <h2 className='font-semibold text-lg'>Activity</h2>
-              <Button variant='outline' size='sm'>
-                Unsubscribe
-              </Button>
-            </div>
-
-            <div className='flex h-[calc(100%-48px)] flex-col'>
-              {activities && activities.length > 0 ? (
-                <div className='relative flex-1 space-y-4 overflow-y-auto'>
-                  {activities
-                    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-                    .map((activity) => (
-                      <div key={activity.id} className='relative pl-6'>
-                        <div className='absolute top-2 left-0 size-2 rounded-full bg-green-500' />
-                        <div className='absolute top-4 bottom-0 left-[3.5px] w-[1px] bg-gray-200' />
-
-                        <div className='flex flex-col gap-1'>
-                          <div className='flex items-center gap-2'>
-                            <span className='font-medium'>{activity.title}</span>
-                            <span className='text-gray-500 text-sm'>
-                              • by {getInitiatorLabel(activity)} • {formatDate(new Date(activity.createdAt))}
-                            </span>
-                          </div>
-                          <p className='text-gray-500 text-sm'>{activity.description}</p>
-                        </div>
-                      </div>
-                    ))}
-                </div>
-              ) : (
-                <div className='flex flex-1 items-center justify-center py-8 text-gray-500'>
-                  <p>No activities found.</p>
-                </div>
-              )}
-
-              <form onSubmit={handleSubmitActivity} className='mt-4'>
-                <div className='flex gap-2'>
-                  <Input value={newActivity} onChange={(e) => setNewActivity(e.target.value)} placeholder='Leave a comment...' className='flex-1' />
-                  <Button type='submit' size='icon' variant='ghost' disabled={createContactActivity.isPending}>
-                    <Send className='size-4' />
-                  </Button>
-                </div>
-              </form>
-            </div>
-          </div>
-        </div>
-
-        <div className='space-y-6'>
-          <div className='space-y-1 rounded-lg border p-4'>
-            <h2 className='mb-2 font-semibold text-lg'>Personal Information</h2>
-            <p className='text-gray-500 text-sm'>Company: {contact?.company || 'Unknown'}</p>
-            <p className='text-gray-500 text-sm'>Phone: {contact?.phone || '—'}</p>
-          </div>
-
-          <div className='rounded-lg border p-4'>
-            <div className='mb-2 flex items-center justify-between'>
-              <h2 className='font-semibold text-lg'>Payments</h2>
-              <Button variant='outline' size='sm' asChild className='h-8'>
-                <Link
-                  href={isDevMode ? `https://dashboard.stripe.com/test/search?query=${contact?.email}` : `https://dashboard.stripe.com/search?query=${contact?.email}`}
-                  target='_blank'
-                  rel='noopener noreferrer'
-                >
-                  View in Stripe
-                </Link>
-              </Button>
-            </div>
-
-            {payments && payments.length > 0 ? (
-              <div className='space-y-3'>
-                {payments.map((payment) => (
-                  <div key={payment.id}>
-                    <div className='flex items-center justify-between'>
-                      <span className='font-medium'>
-                        {new Intl.NumberFormat('en-US', {
-                          style: 'currency',
-                          currency: payment.currency,
-                        }).format(payment.amount)}
-                      </span>
-                      <span className={`text-sm capitalize ${payment.status === 'succeeded' ? 'text-green-600' : payment.status === 'processing' ? 'text-yellow-600' : 'text-red-600'}`}>
-                        {payment.status}
-                      </span>
-                    </div>
-                    <p className='text-gray-500 text-sm'>{formatDate(new Date(payment.created * 1000))}</p>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className='py-2 text-gray-500 text-sm'>No payments found</p>
-            )}
-          </div>
-
-          <div className='rounded-lg border p-4'>
-            <div className='mb-2 flex items-center justify-between'>
-              <h2 className='font-semibold text-lg'>Appointments</h2>
-              <Button variant='outline' size='sm' onClick={() => setIsBookingModalOpen(true)}>
-                Book Appointment
-              </Button>
-            </div>
-
-            {appointments && appointments.length > 0 ? (
-              <div className='space-y-3'>
-                {appointments.map((appointment) => (
-                  <div key={appointment.id} className='flex items-start gap-3 border-b pb-3 last:border-0'>
-                    <Calendar className='mt-1 size-4 text-gray-500' />
-                    <div className='flex-1'>
-                      <div className='flex items-start justify-between'>
-                        <div>
-                          <p className='font-medium text-sm'>{appointment.title}</p>
-                          <p className='text-gray-500 text-xs'>{`${formatDate(new Date(appointment.startAt))} - ${formatDate(new Date(appointment.endAt))}`}</p>
-                          {appointment.description && <p className='mt-1 text-gray-500 text-xs'>{appointment.description}</p>}
-                        </div>
-                        <Button variant='ghost' size='icon' onClick={() => deleteAppointment.mutate(appointment.id)} disabled={deleteAppointment.isPending}>
-                          <Trash2 className='size-4 text-gray-500 hover:text-red-500' />
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className='py-2 text-gray-500 text-sm'>No appointments scheduled</p>
-            )}
-          </div>
-        </div>
-      </div>
     </div>
   );
 }
