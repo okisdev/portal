@@ -20,11 +20,15 @@ import { api } from '@/utils/trpc/client';
 import { Building2, Calendar, CalendarIcon, Edit2, Mail, MoreHorizontal, Phone, Trash2, Users } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
-import { notFound, useParams } from 'next/navigation';
-import { useState } from 'react';
+import { notFound, useParams, useRouter, useSearchParams } from 'next/navigation';
+import { useEffect, useState } from 'react';
 
 export default function ContactIdPage() {
+  const router = useRouter();
   const { id: contactId } = useParams<{ id: string }>();
+  const mode = useSearchParams().get('mode');
+
+  console.log(mode);
 
   const { data: session } = useSession();
 
@@ -83,7 +87,7 @@ export default function ContactIdPage() {
 
   const updateContact = api.contact.updateContact.useMutation({
     onSuccess: () => {
-      setIsEditModalOpen(false);
+      handleCloseEditModal();
       utils.contact.getContactById.invalidate({ id: contactId[0] });
     },
   });
@@ -120,6 +124,22 @@ export default function ContactIdPage() {
       endAt: data.endAt,
     });
   };
+
+  useEffect(() => {
+    if (mode === 'edit' && contact) {
+      setEditForm({
+        firstName: contact.firstName || '',
+        lastName: contact.lastName || '',
+        email: contact.email || '',
+        phone: contact.phone || '',
+        company: contact.company || '',
+        status: contact.status || 'lead',
+        source: contact.source || '',
+        priority: contact.priority || 'low',
+      });
+      setIsEditModalOpen(true);
+    }
+  }, [mode, contact]);
 
   if (isLoading) {
     return <div>Loading...</div>;
@@ -228,6 +248,14 @@ export default function ContactIdPage() {
       date: appointmentDate,
       contactId: contactId[0],
     });
+  };
+
+  const handleCloseEditModal = () => {
+    setIsEditModalOpen(false);
+    const searchParams = new URLSearchParams(window.location.search);
+    searchParams.delete('mode');
+    const newUrl = `${window.location.pathname}${searchParams.toString() ? `?${searchParams.toString()}` : ''}`;
+    router.replace(newUrl);
   };
 
   return (
@@ -465,7 +493,7 @@ export default function ContactIdPage() {
         </div>
       </div>
 
-      <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
+      <Dialog open={isEditModalOpen} onOpenChange={handleCloseEditModal}>
         <DialogContent className='max-h-[90vh] max-w-xl overflow-y-auto'>
           <DialogHeader>
             <DialogTitle>Edit Contact Information</DialogTitle>
@@ -541,7 +569,7 @@ export default function ContactIdPage() {
               </Select>
             </div>
             <div className='flex justify-end space-x-2'>
-              <Button type='button' variant='outline' onClick={() => setIsEditModalOpen(false)}>
+              <Button type='button' variant='outline' onClick={handleCloseEditModal}>
                 Cancel
               </Button>
               <Button type='submit' disabled={updateContact.isPending}>
@@ -614,13 +642,14 @@ export default function ContactIdPage() {
         onOpenChange={(open) => !open && setEditingAppointment(null)}
         onSubmit={handleEditAppointment}
         isEditMode={true}
+        key={editingAppointment?.id}
         defaultValues={
           editingAppointment
             ? {
                 title: editingAppointment.title,
                 description: editingAppointment.description,
-                startAt: editingAppointment.startAt,
-                endAt: new Date(editingAppointment.startAt.getTime() + 30 * 60000), // 30 minutes duration
+                startAt: new Date(editingAppointment.startAt),
+                endAt: new Date(editingAppointment.startAt.getTime() + 30 * 60000),
               }
             : undefined
         }
