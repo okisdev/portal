@@ -4,54 +4,52 @@ import sys
 import argparse
 from typing import List, Dict, Tuple
 
-def generate_contacts(num_records: int, allow_duplicates: bool = False, output_file: str = "contacts.csv") -> List[Dict]:
+# Global name data
+WESTERN_FIRST_NAMES = ['James', 'Mary', 'John', 'Patricia', 'Robert', 'Jennifer', 'Michael', 'Linda', 
+                     'William', 'Elizabeth', 'David', 'Barbara', 'Richard', 'Susan', 'Joseph', 'Jessica']
+WESTERN_LAST_NAMES = ['Smith', 'Johnson', 'Williams', 'Brown', 'Jones', 'Garcia', 'Miller', 'Davis',
+                    'Rodriguez', 'Martinez', 'Hernandez', 'Lopez', 'Gonzalez', 'Wilson', 'Anderson']
+
+# Mainland Chinese names (simplified)
+CN_SURNAMES = ['王', '李', '张', '刘', '陈', '杨', '黄', '赵', '吴', '周', '林', '徐', '孙', '马', '胡']
+CN_GIVEN_CHARS = ['伟', '芳', '娜', '秀英', '敏', '静', '丽', '强', '磊', '军', '洋', '勇', '艳', '杰', '涛']
+
+# Hong Kong names (traditional + English)
+HK_SURNAMES = [
+    ('陳', 'Chan', 'Chan'),
+    ('李', 'Lee', 'Lee'),
+    ('黃', 'Wong', 'Wong'),
+    ('張', 'Cheung', 'Cheung'),
+    ('劉', 'Lau', 'Lau'),
+    ('周', 'Chow', 'Chow'),
+    ('吳', 'Ng', 'Ng'),
+    ('葉', 'Yip', 'Yip'),
+    ('林', 'Lam', 'Lam'),
+    ('梁', 'Leung', 'Leung')
+]
+
+HK_GIVEN_NAMES = [
+    ('家明', 'Ka Ming', 'Kevin'),
+    ('志豪', 'Chi Ho', 'Howard'),
+    ('詠詩', 'Wing Sze', 'Wincy'),
+    ('美玲', 'Mei Ling', 'Mary'),
+    ('嘉欣', 'Ka Yan', 'Karen'),
+    ('俊傑', 'Chun Kit', 'Keith'),
+    ('穎恩', 'Wing Yan', 'Vivian'),
+    ('志強', 'Chi Keung', 'Chris'),
+    ('美華', 'Mei Wah', 'May'),
+    ('浩然', 'Ho Yin', 'Henry')
+]
+
+def generate_contacts(num_records: int, allow_duplicates: bool | int = False, output_file: str = "contacts.csv") -> List[Dict]:
     """
     Generate a CSV file with random contact information including names, emails, and phone numbers.
+    
+    Args:
+        num_records: Number of records to generate
+        allow_duplicates: If True, randomly include duplicates. If int, generate exactly that many duplicates
+        output_file: Path to output CSV file
     """
-    # Western names
-    western_first_names = ['James', 'Mary', 'John', 'Patricia', 'Robert', 'Jennifer', 'Michael', 'Linda', 
-                         'William', 'Elizabeth', 'David', 'Barbara', 'Richard', 'Susan', 'Joseph', 'Jessica']
-    western_last_names = ['Smith', 'Johnson', 'Williams', 'Brown', 'Jones', 'Garcia', 'Miller', 'Davis',
-                        'Rodriguez', 'Martinez', 'Hernandez', 'Lopez', 'Gonzalez', 'Wilson', 'Anderson']
-    
-    # Mainland Chinese names (simplified)
-    cn_surnames = ['王', '李', '张', '刘', '陈', '杨', '黄', '赵', '吴', '周', '林', '徐', '孙', '马', '胡']
-    cn_given_chars = ['伟', '芳', '娜', '秀英', '敏', '静', '丽', '强', '磊', '军', '洋', '勇', '艳', '杰', '涛']
-    
-    # Hong Kong names (traditional + English)
-    # Format: (traditional, canton_surname_roman, common_english_name)
-    hk_surnames = [
-        ('陳', 'Chan', 'Chan'),
-        ('李', 'Lee', 'Lee'),
-        ('黃', 'Wong', 'Wong'),
-        ('張', 'Cheung', 'Cheung'),
-        ('劉', 'Lau', 'Lau'),
-        ('周', 'Chow', 'Chow'),
-        ('吳', 'Ng', 'Ng'),
-        ('葉', 'Yip', 'Yip'),
-        ('林', 'Lam', 'Lam'),
-        ('梁', 'Leung', 'Leung')
-    ]
-    
-    # Hong Kong given names (traditional, canton_roman, english_name)
-    hk_given_names = [
-        ('家明', 'Ka Ming', 'Kevin'),
-        ('志豪', 'Chi Ho', 'Howard'),
-        ('詠詩', 'Wing Sze', 'Wincy'),
-        ('美玲', 'Mei Ling', 'Mary'),
-        ('嘉欣', 'Ka Yan', 'Karen'),
-        ('俊傑', 'Chun Kit', 'Keith'),
-        ('穎恩', 'Wing Yan', 'Vivian'),
-        ('志強', 'Chi Keung', 'Chris'),
-        ('美華', 'Mei Wah', 'May'),
-        ('浩然', 'Ho Yin', 'Henry'),
-        ('詠怡', 'Wing Yee', 'Winnie'),
-        ('建華', 'Kin Wah', 'Kenny'),
-        ('慧珊', 'Wai Shan', 'Wilson'),
-        ('婉婷', 'Yuen Ting', 'Tina'),
-        ('志明', 'Chi Ming', 'Jimmy')
-    ]
-    
     # Email domains
     email_domains = {
         'international': ['gmail.com', 'yahoo.com', 'hotmail.com', 'outlook.com'],
@@ -64,16 +62,16 @@ def generate_contacts(num_records: int, allow_duplicates: bool = False, output_f
         name_type = random.choices(['western', 'chinese', 'hongkong'], weights=[0.3, 0.3, 0.4])[0]
         
         if name_type == 'western':
-            first_name = random.choice(western_first_names)
-            last_name = random.choice(western_last_names)
+            first_name = random.choice(WESTERN_FIRST_NAMES)
+            last_name = random.choice(WESTERN_LAST_NAMES)
             full_name = f"{first_name} {last_name}"
             email_name = f"{first_name.lower()}.{last_name.lower()}"
             email_domain = random.choice(email_domains['international'])
             country_code = random.choice(['+1', '+44', '+61', '+33', '+49'])
             
         elif name_type == 'chinese':
-            surname = random.choice(cn_surnames)
-            given_name = random.choice(cn_given_chars)
+            surname = random.choice(CN_SURNAMES)
+            given_name = random.choice(CN_GIVEN_CHARS)
             full_name = f"{surname}{given_name}"
             pinyin_mapping = {
                 '王': 'wang', '李': 'li', '张': 'zhang', '刘': 'liu', '陈': 'chen',
@@ -84,8 +82,8 @@ def generate_contacts(num_records: int, allow_duplicates: bool = False, output_f
             country_code = '+86'
             
         else:  # hongkong
-            surname_tuple = random.choice(hk_surnames)
-            given_tuple = random.choice(hk_given_names)
+            surname_tuple = random.choice(HK_SURNAMES)
+            given_tuple = random.choice(HK_GIVEN_NAMES)
             full_name = f"{surname_tuple[0]}{given_tuple[0]}"  # Traditional Chinese
             roman_name = f"{surname_tuple[1]} {given_tuple[1]}"  # Romanized name
             english_name = f"{given_tuple[2]} {surname_tuple[2]}"  # English name
@@ -125,11 +123,26 @@ def generate_contacts(num_records: int, allow_duplicates: bool = False, output_f
     if allow_duplicates:
         base_contacts = [generate_single_contact() for _ in range(max(3, num_records // 3))]
         contacts = []
-        for _ in range(num_records):
-            if random.random() < 0.3:  # 30% chance of duplicate
-                contacts.append(random.choice(base_contacts).copy())
-            else:
+        
+        if isinstance(allow_duplicates, int):
+            # Generate exact number of duplicates
+            num_duplicates = min(allow_duplicates, num_records)
+            num_unique = num_records - num_duplicates
+            
+            # Generate unique contacts
+            for _ in range(num_unique):
                 contacts.append(generate_single_contact())
+                
+            # Add exact number of duplicates
+            for _ in range(num_duplicates):
+                contacts.append(random.choice(contacts).copy())
+        else:
+            # Original behavior - random 30% chance of duplicates
+            for _ in range(num_records):
+                if random.random() < 0.3:  # 30% chance of duplicate
+                    contacts.append(random.choice(base_contacts).copy())
+                else:
+                    contacts.append(generate_single_contact())
     else:
         contacts = [generate_single_contact() for _ in range(num_records)]
     
@@ -142,11 +155,25 @@ def generate_contacts(num_records: int, allow_duplicates: bool = False, output_f
     
     return contacts
 
+def count_name_types(contacts: List[Dict]) -> Tuple[int, int, int]:
+    """Count the number of each type of name in the contacts list"""
+    num_hk = sum(
+        '(' in c['name']
+        or any(surname[0] in c['name'] for surname in HK_SURNAMES)
+        for c in contacts
+    )
+    num_cn = (
+        sum(any((char in c['name'] for char in CN_SURNAMES)) for c in contacts)
+        - num_hk
+    )
+    num_western = len(contacts) - num_hk - num_cn
+    return num_western, num_cn, num_hk
+
 def main():
     parser = argparse.ArgumentParser(description='Generate random contact information')
     parser.add_argument('num_records', type=int, help='Number of records to generate')
-    parser.add_argument('--duplicate', action='store_true', 
-                      help='Allow duplicate records in the output')
+    parser.add_argument('--duplicate', nargs='?', const=True, type=int, metavar='N',
+                      help='Allow duplicate records. If N is specified, exactly N duplicates will be generated')
     
     args = parser.parse_args()
     
@@ -160,9 +187,7 @@ def main():
     # Count types of names and duplicates for reporting
     unique_contacts = {(c['name'], c['email'], c['phone']) for c in generated_contacts}
     num_duplicates = len(generated_contacts) - len(unique_contacts)
-    num_hk = sum(1 for c in generated_contacts if '(' in c['name'] or any(surname[0] in c['name'] for surname in hk_surnames))
-    num_cn = sum(1 for c in generated_contacts if any(char in c['name'] for char in cn_surnames)) - num_hk
-    num_western = len(generated_contacts) - num_hk - num_cn
+    num_western, num_cn, num_hk = count_name_types(generated_contacts)
     
     print(f"Successfully generated {args.num_records} contacts and saved to 'contacts.csv'")
     print(f"Distribution:")

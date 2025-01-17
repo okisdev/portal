@@ -127,87 +127,98 @@ export default function ImportContacts() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    Papa.parse(file, {
-      header: true,
-      complete: async (results) => {
-        const parsedData = (results.data as any[])
-          .filter((row) => row.name || row.firstName || row.email) // Filter empty rows
-          .map((row) => {
-            // If the row already has firstName/lastName, use those
-            if (row.firstName || row.lastName) {
-              return {
-                firstName: row.firstName || '',
-                lastName: row.lastName || '',
-                email: row.email || '',
-                phone: row.phone || '',
-                company: row.company || '',
-                status: row.status || 'lead',
-              };
-            }
+    // Create a promise that wraps the Papa.parse operation
+    const parsePromise = new Promise<ContactFormData[]>((resolve, reject) => {
+      Papa.parse(file, {
+        header: true,
+        complete: async (results) => {
+          try {
+            const parsedData = (results.data as any[])
+              .filter((row) => row.name || row.firstName || row.email)
+              .map((row) => {
+                if (row.firstName || row.lastName) {
+                  return {
+                    firstName: row.firstName || '',
+                    lastName: row.lastName || '',
+                    email: row.email || '',
+                    phone: row.phone || '',
+                    company: row.company || '',
+                    status: row.status || 'lead',
+                  };
+                }
 
-            // Otherwise parse from the name field
-            const { firstName, lastName } = parseFullName(row.name || '');
-            return {
-              firstName,
-              lastName,
-              email: row.email || '',
-              phone: row.phone || '',
-              company: row.company || '',
-              status: row.status || 'lead',
-            };
-          })
-          .filter((row) => !isRowEmpty(row));
+                const { firstName, lastName } = parseFullName(row.name || '');
+                return {
+                  firstName,
+                  lastName,
+                  email: row.email || '',
+                  phone: row.phone || '',
+                  company: row.company || '',
+                  status: row.status || 'lead',
+                };
+              })
+              .filter((row) => !isRowEmpty(row));
 
-        setCsvData(parsedData);
+            setCsvData(parsedData);
 
-        const duplicatesMap = new Map<string, DuplicateContact[]>();
-        for (const [index, contact] of parsedData.entries()) {
-          const key = `${contact.email}`.toLowerCase();
-          if (!duplicatesMap.has(key)) {
-            duplicatesMap.set(key, []);
-          }
-          duplicatesMap.get(key)?.push({
-            firstName: contact.firstName,
-            lastName: contact.lastName,
-            email: contact.email,
-            existingRecord: false,
-            rowIndex: index,
-          });
-        }
-
-        const { data: existingContacts } = await checkExistingContacts.refetch();
-        const allDuplicates: DuplicateContact[] = [];
-
-        for (const [, dupes] of duplicatesMap) {
-          if (dupes.length > 1) {
-            allDuplicates.push(...dupes);
-          }
-        }
-
-        if (existingContacts) {
-          for (const email of existingContacts) {
-            const matchingRow = parsedData.findIndex((contact) => contact.email.toLowerCase() === email.toLowerCase());
-            if (matchingRow !== -1) {
-              allDuplicates.push({
-                ...parsedData[matchingRow],
-                existingRecord: true,
-                rowIndex: matchingRow,
+            const duplicatesMap = new Map<string, DuplicateContact[]>();
+            for (const [index, contact] of parsedData.entries()) {
+              const key = `${contact.email}`.toLowerCase();
+              if (!duplicatesMap.has(key)) {
+                duplicatesMap.set(key, []);
+              }
+              duplicatesMap.get(key)?.push({
+                firstName: contact.firstName,
+                lastName: contact.lastName,
+                email: contact.email,
+                existingRecord: false,
+                rowIndex: index,
               });
             }
+
+            const { data: existingContacts } = await checkExistingContacts.refetch();
+            const allDuplicates: DuplicateContact[] = [];
+
+            for (const [, dupes] of duplicatesMap) {
+              if (dupes.length > 1) {
+                allDuplicates.push(...dupes);
+              }
+            }
+
+            if (existingContacts) {
+              for (const email of existingContacts) {
+                const matchingRow = parsedData.findIndex((contact) => contact.email.toLowerCase() === email.toLowerCase());
+                if (matchingRow !== -1) {
+                  allDuplicates.push({
+                    ...parsedData[matchingRow],
+                    existingRecord: true,
+                    rowIndex: matchingRow,
+                  });
+                }
+              }
+            }
+
+            if (allDuplicates.length > 0) {
+              setDuplicates(allDuplicates);
+              setHasDuplicates(true);
+            }
+
+            setShowPreview(true);
+            resolve(parsedData);
+          } catch (error) {
+            reject(error);
           }
-        }
+        },
+        error: (error) => {
+          reject(error);
+        },
+      });
+    });
 
-        if (allDuplicates.length > 0) {
-          setDuplicates(allDuplicates);
-          setHasDuplicates(true);
-        }
-
-        setShowPreview(true);
-      },
-      error: (error) => {
-        toast.error('Error parsing CSV file');
-        console.error(error);
-      },
+    await toast.promise(parsePromise, {
+      loading: 'Processing CSV file...',
+      success: (data: ContactFormData[]) => `Successfully processed ${data.length} contacts`,
+      error: 'Failed to process CSV file',
     });
   };
 
@@ -339,8 +350,34 @@ export default function ImportContacts() {
           )}
 
           {showPreview ? (
-            <div className='mb-6'>
-              <h2 className='mb-4 font-medium text-lg'>Preview CSV Data</h2>
+            <div className='mb-6 space-y-4'>
+              <PageHeader
+                title='Preview CSV Data'
+                description={`Total: ${csvData.length} Duplicates Removed: ${duplicates.length}`}
+                right={
+                  <div className='mt-6 flex gap-4'>
+                    <Button type='submit' disabled={isLoading} onClick={handleSubmit} className='w-full sm:w-auto'>
+                      {isLoading ? 'Creating...' : showPreview ? 'Import Contacts' : 'Create Contact'}
+                    </Button>
+                    <Button
+                      type='button'
+                      variant='outline'
+                      onClick={() => {
+                        if (showPreview) {
+                          setShowPreview(false);
+                          setCsvData([]);
+                        } else {
+                          router.back();
+                        }
+                      }}
+                      className='w-full sm:w-auto'
+                    >
+                      {showPreview ? 'Cancel Import' : 'Cancel'}
+                    </Button>
+                  </div>
+                }
+              />
+
               <div className='overflow-x-auto rounded-lg border'>
                 <Table>
                   <TableHeader>
