@@ -1,7 +1,7 @@
-import { contact, contactActivity } from '@/drizzle/schema';
+import { contact, contactActivity, team } from '@/drizzle/schema';
 import { prioritySchema, statusSchema } from '@/lib/schema';
 import { createTRPCRouter, protectedProcedure } from '@/server/trpc';
-import { desc, eq } from 'drizzle-orm';
+import { desc, eq, sql } from 'drizzle-orm';
 import { z } from 'zod';
 
 export const contactRouter = createTRPCRouter({
@@ -9,9 +9,36 @@ export const contactRouter = createTRPCRouter({
     return ctx.db.select().from(contact).orderBy(desc(contact.createdAt));
   }),
 
-  getContactById: protectedProcedure.input(z.object({ id: z.string() })).query(({ ctx, input }) => {
+  getContactById: protectedProcedure.input(z.object({ id: z.string() })).query(async ({ ctx, input }) => {
     return ctx.db
-      .select()
+      .select({
+        id: contact.id,
+        name: contact.name,
+        firstName: contact.firstName,
+        lastName: contact.lastName,
+        email: contact.email,
+        phone: contact.phone,
+        company: contact.company,
+        source: contact.source,
+        priority: contact.priority,
+        workExperience: contact.workExperience,
+        currentRole: contact.currentRole,
+        industry: contact.industry,
+        skills: contact.skills,
+        status: contact.status,
+        lastContactedAt: contact.lastContactedAt,
+        leadingTeams: sql<Array<{ id: string; name: string }>>`
+          SELECT id, name FROM ${team} WHERE "leaderId" = ${input.id}
+        `,
+        subLeadingTeams: sql<Array<{ id: string; name: string }>>`
+          SELECT id, name FROM ${team} WHERE "subLeaderId" = ${input.id}
+        `,
+        referralTeams: sql<Array<{ id: string; name: string }>>`
+          SELECT id, name FROM ${team} WHERE "referralId" = ${input.id}
+        `,
+        createdAt: contact.createdAt,
+        updatedAt: contact.updatedAt,
+      })
       .from(contact)
       .where(eq(contact.id, input.id))
       .then((rows) => rows[0]);

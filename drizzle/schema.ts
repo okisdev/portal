@@ -322,3 +322,70 @@ export const calendarEventParticipant = pgTable('calendarEventParticipant', {
   createdAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
   updatedAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
 });
+
+export const team = pgTable('team', {
+  id: text()
+    .primaryKey()
+    .notNull()
+    .$defaultFn(() => crypto.randomUUID()),
+  name: text().notNull(),
+  description: text(),
+  leaderId: text().references(() => contact.id),
+  subLeaderId: text().references(() => contact.id),
+  referralId: text().references(() => contact.id),
+  createdBy: text()
+    .notNull()
+    .references(() => user.id),
+  createdAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
+  updatedAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
+});
+
+export const teamContact = pgTable('teamContact', {
+  id: text()
+    .primaryKey()
+    .notNull()
+    .$defaultFn(() => crypto.randomUUID()),
+  teamId: text()
+    .notNull()
+    .references(() => team.id, { onDelete: 'cascade' }),
+  contactId: text()
+    .notNull()
+    .references(() => contact.id, { onDelete: 'cascade' }),
+  assignedTo: text().references(() => user.id),
+  createdAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
+  updatedAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
+});
+
+export const teamRemark = pgTable('teamRemark', {
+  id: text()
+    .primaryKey()
+    .notNull()
+    .$defaultFn(() => crypto.randomUUID()),
+  teamId: text()
+    .notNull()
+    .references(() => team.id, { onDelete: 'cascade' }),
+  content: text().notNull(),
+  createdBy: text()
+    .notNull()
+    .references(() => user.id),
+  createdAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
+});
+
+export const teamMeeting = pgTable('teamMeeting', {
+  id: text()
+    .primaryKey()
+    .notNull()
+    .$defaultFn(() => crypto.randomUUID()),
+  teamId: text()
+    .notNull()
+    .references(() => team.id, { onDelete: 'cascade' }),
+  title: text().notNull(),
+  description: text(),
+  meetingDate: timestamp({ mode: 'date' }).notNull(),
+  status: text('status', { enum: ['upcoming', 'completed', 'cancelled'] }).default('upcoming'),
+  createdBy: text()
+    .notNull()
+    .references(() => user.id),
+  createdAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
+  updatedAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
+});

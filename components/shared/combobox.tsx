@@ -3,6 +3,7 @@
 import { Button } from '@/components/ui/button';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from '@/components/ui/command';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { cn } from '@/lib/utils';
 import { Check, ChevronsUpDown } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
@@ -15,6 +16,7 @@ interface ComboboxProps {
   emptyText?: string;
   groupHeading?: string;
   allowCustom?: boolean;
+  className?: string;
 }
 
 export function Combobox({
@@ -26,38 +28,39 @@ export function Combobox({
   emptyText = 'No results found',
   groupHeading = 'Items',
   allowCustom = true,
+  className,
 }: ComboboxProps) {
   const [open, setOpen] = useState(false);
-  const [search, setSearch] = useState('');
+  const [query, setQuery] = useState('');
 
   useEffect(() => {
     if (!open) {
-      setSearch('');
+      setQuery('');
     }
   }, [open]);
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <Button variant='outline' aria-expanded={open} className='w-full justify-between px-3 font-normal'>
+        <Button variant='outline' aria-expanded={open} className={cn('w-full justify-between px-3 font-normal', className)}>
           {value || placeholder}
           <ChevronsUpDown className='ml-2 h-4 w-4 shrink-0 opacity-50' />
         </Button>
       </PopoverTrigger>
       <PopoverContent className='w-[--radix-popper-anchor-width] p-0' align='start'>
-        <Command>
-          <CommandInput placeholder={searchPlaceholder} onValueChange={setSearch} />
+        <Command className='max-h-[300px] overflow-y-auto'>
+          <CommandInput placeholder={searchPlaceholder} onValueChange={setQuery} />
           <CommandEmpty>{emptyText}</CommandEmpty>
-          {allowCustom && search && (
-            <CommandGroup heading='Custom'>
+          {allowCustom && query && (
+            <CommandGroup heading='Custom' className=''>
               <CommandItem
-                value={`custom-${search}`}
+                value={`custom-${query}`}
                 onSelect={() => {
-                  onChange(search);
+                  onChange(query);
                   setOpen(false);
                 }}
               >
-                Use "{search}"
+                Use "{query}"
               </CommandItem>
             </CommandGroup>
           )}
@@ -70,6 +73,7 @@ export function Combobox({
                   onChange(item);
                   setOpen(false);
                 }}
+                className='cursor-pointer'
               >
                 {item}
                 {value === item && <Check className='ml-auto h-4 w-4' />}

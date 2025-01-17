@@ -1,8 +1,7 @@
 'use client';
 
 import { YearMonthPicker } from '@/components/dashboard/personal/calendar/year-month-picker';
-import { Combobox } from '@/components/shared/combobox';
-import { DateTimePicker } from '@/components/shared/date-time-picker';
+import { CreateEvent } from '@/components/shared/create-event';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -10,15 +9,14 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Form, FormControl, FormField, FormItem, FormLabel } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Textarea } from '@/components/ui/textarea';
 import type { CalendarEventWithParticipants, CalendarFolder } from '@/lib/schema';
-import { cn, generateUUID } from '@/lib/utils';
+import { cn } from '@/lib/utils';
 import { api } from '@/utils/trpc/client';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { ChevronDown, ChevronLeft, ChevronRight, MoreHorizontal, Plus, X } from 'lucide-react';
+import { ChevronDown, ChevronLeft, ChevronRight, MoreHorizontal, Plus } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
 import { z } from 'zod';
 
 const WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -191,33 +189,6 @@ export default function DashboardPersonalCalendar() {
       utils.calendar.getFolders.invalidate();
     },
   });
-
-  const handleCalendarSelect = async (value: string) => {
-    // If the folder doesn't exist, create it
-    if (!folders?.some((folder) => folder.name === value)) {
-      await createFolder.mutateAsync({
-        name: value,
-        color: `#${Math.floor(Math.random() * 16777215).toString(16)}`, // Random color
-      });
-    }
-
-    // Find the folder id or wait for the folders to refresh
-    const folder = folders?.find((f) => f.name === value);
-    if (folder) {
-      form.setValue('folderId', folder.id);
-    }
-  };
-
-  const onSubmit = (data: z.infer<typeof eventFormSchema>) => {
-    if (isEditMode && selectedEvent) {
-      updateEvent.mutate({
-        id: selectedEvent.id,
-        ...data,
-      });
-    } else {
-      createEvent.mutate(data);
-    }
-  };
 
   const getDaysInMonth = (date: Date) => {
     const year = date.getFullYear();
@@ -623,7 +594,20 @@ export default function DashboardPersonalCalendar() {
                                   </div>
                                 )}
                               </div>
-                              <div className='flex justify-end'>
+                              <div className='flex justify-end gap-2'>
+                                <Button
+                                  size='sm'
+                                  variant='destructive'
+                                  onClick={() => {
+                                    toast.promise(deleteEvent.mutateAsync(event.id), {
+                                      loading: 'Deleting event...',
+                                      success: 'Event deleted successfully',
+                                      error: 'Failed to delete event',
+                                    });
+                                  }}
+                                >
+                                  Delete
+                                </Button>
                                 <Button
                                   variant='outline'
                                   size='sm'
@@ -646,323 +630,65 @@ export default function DashboardPersonalCalendar() {
         </div>
       </div>
 
-      <Dialog
+      <CreateEvent
         open={isCreateEventOpen}
         onOpenChange={(open) => {
           setIsCreateEventOpen(open);
           if (!open) {
             setSelectedEvent(null);
             setIsEditMode(false);
-            form.reset();
           }
         }}
-      >
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{isEditMode ? 'Edit Event' : 'Create New Event'}</DialogTitle>
-          </DialogHeader>
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-4'>
-              <FormField
-                control={form.control}
-                name='title'
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Title</FormLabel>
-                    <FormControl>
-                      <Input {...field} />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name='description'
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Description</FormLabel>
-                    <FormControl>
-                      <Textarea {...field} />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name='location'
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Location</FormLabel>
-                    <FormControl>
-                      <Input {...field} />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-
-              <div className='flex gap-4'>
-                <FormField
-                  control={form.control}
-                  name='isAllDay'
-                  render={({ field }) => (
-                    <FormItem className='flex flex-row items-center justify-center gap-2'>
-                      <FormControl>
-                        <Checkbox checked={field.value} onCheckedChange={field.onChange} />
-                      </FormControl>
-                      <FormLabel className='text-sm'>All Day</FormLabel>
-                    </FormItem>
-                  )}
-                />
-              </div>
-
-              <div className='grid grid-cols-2 gap-4'>
-                <FormField
-                  control={form.control}
-                  name='startAt'
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Start</FormLabel>
-                      <FormControl>
-                        {form.watch('isAllDay') ? (
-                          <DateTimePicker value={field.value} onChange={(date) => field.onChange(date)} showTimePicker={false} />
-                        ) : (
-                          <DateTimePicker value={field.value} onChange={(date) => field.onChange(date)} showTimePicker={true} />
-                        )}
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name='endAt'
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>End</FormLabel>
-                      <FormControl>
-                        {form.watch('isAllDay') ? (
-                          <DateTimePicker value={field.value} onChange={(date) => field.onChange(date)} showTimePicker={false} />
-                        ) : (
-                          <DateTimePicker value={field.value} onChange={(date) => field.onChange(date)} showTimePicker={true} />
-                        )}
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-              </div>
-
-              <FormField
-                control={form.control}
-                name='folderId'
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Calendar</FormLabel>
-                    <FormControl>
-                      <Combobox
-                        value={folders?.find((f) => f.id === field.value)?.name || ''}
-                        onChange={handleCalendarSelect}
-                        items={folders?.map((f) => f.name) || []}
-                        placeholder='Select or create calendar'
-                        searchPlaceholder='Search calendars...'
-                        emptyText='No calendars found'
-                        groupHeading='Calendars'
-                        allowCustom={true}
-                      />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name='isPublic'
-                render={({ field }) => (
-                  <FormItem className='flex flex-row items-center gap-2'>
-                    <FormControl>
-                      <Checkbox checked={field.value} onCheckedChange={field.onChange} />
-                    </FormControl>
-                    <FormLabel className='text-sm'>Public</FormLabel>
-                  </FormItem>
-                )}
-              />
-
-              <div className='space-y-4'>
-                <div className='flex items-center justify-between'>
-                  <h3 className='font-medium text-sm'>Participants</h3>
-                  <Button
-                    type='button'
-                    variant='outline'
-                    size='sm'
-                    onClick={() => {
-                      const participants = form.getValues('participants');
-                      form.setValue('participants', [...participants, { type: 'external', email: '', name: '', role: 'required' }]);
-                    }}
-                  >
-                    Add Participant
-                  </Button>
-                </div>
-
-                {form.watch('participants').map((participant, index) => (
-                  <div key={participant.id + generateUUID()} className='flex items-start gap-2'>
-                    <FormField
-                      control={form.control}
-                      name={`participants.${index}.type`}
-                      render={({ field }) => (
-                        <FormItem className='flex-1'>
-                          <Select
-                            value={field.value}
-                            onValueChange={(value: 'user' | 'contact' | 'external') => {
-                              field.onChange(value);
-                              // Reset id when type changes
-                              form.setValue(`participants.${index}.id`, undefined);
-                              form.setValue(`participants.${index}.email`, undefined);
-                              form.setValue(`participants.${index}.name`, undefined);
-                            }}
-                          >
-                            <SelectTrigger>
-                              <SelectValue placeholder='Type' />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value='user'>User</SelectItem>
-                              <SelectItem value='contact'>Contact</SelectItem>
-                              <SelectItem value='external'>External</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </FormItem>
-                      )}
-                    />
-
-                    {participant.type === 'user' && (
-                      <FormField
-                        control={form.control}
-                        name={`participants.${index}.id`}
-                        render={({ field }) => (
-                          <FormItem className='flex-1'>
-                            <Select value={field.value} onValueChange={field.onChange}>
-                              <SelectTrigger>
-                                <SelectValue placeholder='Select user' />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {participantOptions?.users.map((user) => (
-                                  <SelectItem key={user.id} value={user.id}>
-                                    {user.name}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </FormItem>
-                        )}
-                      />
-                    )}
-
-                    {participant.type === 'contact' && (
-                      <FormField
-                        control={form.control}
-                        name={`participants.${index}.id`}
-                        render={({ field }) => (
-                          <FormItem className='flex-1'>
-                            <Select value={field.value} onValueChange={field.onChange}>
-                              <SelectTrigger>
-                                <SelectValue placeholder='Select contact' />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {participantOptions?.contacts.map((contact) => (
-                                  <SelectItem key={contact.id} value={contact.id}>
-                                    {contact.name}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </FormItem>
-                        )}
-                      />
-                    )}
-
-                    {participant.type === 'external' && (
-                      <>
-                        <FormField
-                          control={form.control}
-                          name={`participants.${index}.email`}
-                          render={({ field }) => (
-                            <FormItem className='flex-1'>
-                              <Input {...field} placeholder='Email' />
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={form.control}
-                          name={`participants.${index}.name`}
-                          render={({ field }) => (
-                            <FormItem className='flex-1'>
-                              <Input {...field} placeholder='Name' />
-                            </FormItem>
-                          )}
-                        />
-                      </>
-                    )}
-
-                    <FormField
-                      control={form.control}
-                      name={`participants.${index}.role`}
-                      render={({ field }) => (
-                        <FormItem>
-                          <Select value={field.value} onValueChange={field.onChange}>
-                            <SelectTrigger>
-                              <SelectValue placeholder='Role' />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value='organizer'>Organizer</SelectItem>
-                              <SelectItem value='required'>Required</SelectItem>
-                              <SelectItem value='optional'>Optional</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </FormItem>
-                      )}
-                    />
-
-                    <Button
-                      type='button'
-                      variant='ghost'
-                      size='icon'
-                      onClick={() => {
-                        const participants = form.getValues('participants');
-                        form.setValue(
-                          'participants',
-                          participants.filter((_, i) => i !== index)
-                        );
-                      }}
-                    >
-                      <X className='h-4 w-4' />
-                    </Button>
-                  </div>
-                ))}
-              </div>
-
-              <div className='flex gap-2'>
-                {isEditMode && (
-                  <Button
-                    type='button'
-                    variant='destructive'
-                    className='w-full'
-                    onClick={() => {
-                      if (selectedEvent) {
-                        deleteEvent.mutate(selectedEvent.id);
-                      }
-                    }}
-                  >
-                    Delete
-                  </Button>
-                )}
-                <Button type='submit' className='w-full'>
-                  {isEditMode ? 'Update' : 'Create'} Event
-                </Button>
-              </div>
-            </form>
-          </Form>
-        </DialogContent>
-      </Dialog>
+        onSubmit={(data) => {
+          if (isEditMode && selectedEvent) {
+            updateEvent.mutate({
+              id: selectedEvent.id,
+              ...data,
+            });
+          } else {
+            createEvent.mutate(data);
+          }
+        }}
+        isEditMode={isEditMode}
+        defaultValues={
+          selectedEvent
+            ? {
+                title: selectedEvent.title,
+                description: selectedEvent.description ?? '',
+                location: selectedEvent.location ?? '',
+                startAt: selectedEvent.startAt,
+                endAt: selectedEvent.endAt,
+                isAllDay: selectedEvent.isAllDay ?? false,
+                isPublic: selectedEvent.isPublic ?? false,
+                folderId: selectedEvent.folderId,
+                participants: selectedEvent.participants.map((p) => ({
+                  type: p.participantType,
+                  role: p.role ?? 'required',
+                  id: p.participantId ?? undefined,
+                  email: p.email ?? undefined,
+                  name: p.name ?? undefined,
+                })),
+              }
+            : {
+                startAt: selectedDate,
+                endAt: new Date(selectedDate.getTime() + 60 * 60 * 1000),
+                folderId: folders?.[0]?.id ?? '',
+              }
+        }
+        folders={folders}
+        participantOptions={
+          participantOptions && {
+            users: participantOptions.users.map((u) => ({ id: u.id, name: u.name || '' })),
+            contacts: participantOptions.contacts,
+          }
+        }
+        onCreateFolder={async (name) => {
+          await createFolder.mutateAsync({
+            name,
+            color: `#${Math.floor(Math.random() * 16777215).toString(16)}`,
+          });
+        }}
+      />
 
       <Dialog
         open={isEditCalendarOpen}

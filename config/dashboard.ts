@@ -20,6 +20,11 @@ export const crmItems = [
     icon: Contact,
   },
   {
+    title: 'Teams',
+    url: '/dashboard/crm/contacts/team',
+    icon: Users,
+  },
+  {
     title: 'Payments',
     url: '/dashboard/crm/payments',
     icon: Coins,

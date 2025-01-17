@@ -54,7 +54,7 @@ export default function TasksPage() {
   };
 
   return (
-    <div className='space-y-6 p-6'>
+    <div className='space-y-4 p-4'>
       <PageHeader title='Personal Tasks' description='Manage your personal tasks' />
 
       <div className='flex flex-col gap-4'>

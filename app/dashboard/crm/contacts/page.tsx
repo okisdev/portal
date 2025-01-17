@@ -2,6 +2,7 @@
 
 import { ColorBadge } from '@/components/shared/color-badge';
 import { PageHeader } from '@/components/shared/page-header';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { DropdownMenuCheckboxItem } from '@/components/ui/dropdown-menu';
@@ -158,7 +159,7 @@ export default function CRMContactsPage() {
   };
 
   return (
-    <div className='space-y-6 p-6'>
+    <div className='space-y-4 p-4'>
       <PageHeader title='Contacts' description='Manage contacts' />
 
       <div className='flex flex-col gap-4'>
@@ -309,7 +310,17 @@ export default function CRMContactsPage() {
                 {columns.map((column) =>
                   column.visible ? (
                     <TableCell key={column.id}>
-                      {column.id === 'name' && `${contact.firstName} ${contact.lastName}`}
+                      {column.id === 'name' && (
+                        <div className='flex items-center gap-2'>
+                          <Avatar className='size-8'>
+                            <AvatarFallback>{contact.firstName?.[0] ?? contact.name?.[0] ?? contact.email?.[0] ?? ''}</AvatarFallback>
+                          </Avatar>
+                          <div>
+                            <div className='font-medium'>{contact.name}</div>
+                            <div className='text-gray-500 text-xs'>{contact.email}</div>
+                          </div>
+                        </div>
+                      )}
                       {column.id === 'email' && contact.email}
                       {column.id === 'status' && <ColorBadge type='status' value={contact.status} />}
                       {column.id === 'source' && <span className='capitalize'>{contact.source?.replace('_', ' ') || '—'}</span>}
