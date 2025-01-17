@@ -28,14 +28,17 @@ export const contactRouter = createTRPCRouter({
         status: contact.status,
         lastContactedAt: contact.lastContactedAt,
         leadingTeams: sql<Array<{ id: string; name: string }>>`
-          SELECT id, name FROM ${team} WHERE "leaderId" = ${input.id}
-        `,
+          (SELECT json_agg(json_build_object('id', t.id, 'name', t.name))
+           FROM ${team} t 
+           WHERE t."leaderId" = ${input.id})`,
         subLeadingTeams: sql<Array<{ id: string; name: string }>>`
-          SELECT id, name FROM ${team} WHERE "subLeaderId" = ${input.id}
-        `,
+          (SELECT json_agg(json_build_object('id', t.id, 'name', t.name))
+           FROM ${team} t 
+           WHERE t."subLeaderId" = ${input.id})`,
         referralTeams: sql<Array<{ id: string; name: string }>>`
-          SELECT id, name FROM ${team} WHERE "referralId" = ${input.id}
-        `,
+          (SELECT json_agg(json_build_object('id', t.id, 'name', t.name))
+           FROM ${team} t 
+           WHERE t."referralId" = ${input.id})`,
         createdAt: contact.createdAt,
         updatedAt: contact.updatedAt,
       })
@@ -78,6 +81,10 @@ export const contactRouter = createTRPCRouter({
 
       return result[0];
     }),
+
+  deleteContact: protectedProcedure.input(z.object({ id: z.string() })).mutation(({ ctx, input }) => {
+    return ctx.db.delete(contact).where(eq(contact.id, input.id));
+  }),
 
   getContactActivities: protectedProcedure.input(z.object({ id: z.string() })).query(({ ctx, input }) => {
     return ctx.db.select().from(contactActivity).where(eq(contactActivity.contactId, input.id)).orderBy(desc(contactActivity.createdAt));

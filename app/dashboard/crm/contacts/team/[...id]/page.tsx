@@ -256,7 +256,7 @@ export default function TeamIdPage() {
       </div>
 
       <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
-        <DialogContent>
+        <DialogContent className='max-h-[90vh] max-w-xl overflow-y-auto'>
           <DialogHeader>
             <DialogTitle>Edit Team Information</DialogTitle>
           </DialogHeader>

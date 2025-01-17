@@ -2,19 +2,21 @@
 
 import { ColorBadge } from '@/components/shared/color-badge';
 import { PageHeader } from '@/components/shared/page-header';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { DropdownMenuCheckboxItem } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { formatDate } from '@/lib/utils';
+import { cn, formatDate } from '@/lib/utils';
 import { api } from '@/utils/trpc/client';
 import { CaretSortIcon } from '@radix-ui/react-icons';
-import { Check, Filter, X } from 'lucide-react';
+import { Check, ChevronDown, Filter, Import, MoreHorizontal, Pencil, Trash2, X } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useMemo, useState } from 'react';
+import { toast } from 'sonner';
 
 type SortConfig = {
   column: string;
@@ -42,7 +44,16 @@ type ColumnConfig = {
 
 export default function CRMContactsPage() {
   const router = useRouter();
+
   const { data: contacts } = api.contact.getAllContacts.useQuery();
+
+  const utils = api.useUtils();
+
+  const deleteContact = api.contact.deleteContact.useMutation({
+    onSuccess: () => {
+      utils.contact.getAllContacts.invalidate();
+    },
+  });
 
   const [search, setSearch] = useState('');
 
@@ -60,6 +71,7 @@ export default function CRMContactsPage() {
     { id: 'source', label: 'Source', visible: true },
     { id: 'priority', label: 'Priority', visible: true },
     { id: 'createdAt', label: 'Created', visible: true },
+    { id: 'actions', label: 'Actions', visible: true },
   ]);
 
   const filterFields = [
@@ -77,6 +89,9 @@ export default function CRMContactsPage() {
     { label: 'Starts with', value: 'startsWith' },
     { label: 'Ends with', value: 'endsWith' },
   ];
+
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [contactToDelete, setContactToDelete] = useState<string | null>(null);
 
   const filteredContacts = useMemo(() => {
     if (!contacts) return [];
@@ -156,6 +171,25 @@ export default function CRMContactsPage() {
       column,
       direction: current.column === column && current.direction === 'asc' ? 'desc' : 'asc',
     }));
+  };
+
+  const handleDeleteClick = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setContactToDelete(id);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (contactToDelete) {
+      await deleteContact.mutate({ id: contactToDelete });
+      setDeleteDialogOpen(false);
+      setContactToDelete(null);
+    }
+  };
+
+  const handleEdit = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    router.push(`/dashboard/crm/contacts/${id}?mode=edit`);
   };
 
   return (
@@ -281,9 +315,25 @@ export default function CRMContactsPage() {
             </DropdownMenu>
           </div>
           <div className='flex flex-row gap-2'>
-            <Button variant='outline' asChild className='h-8'>
-              <Link href='/dashboard/crm/contacts/new'>Upload CSV</Link>
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant='outline' className='flex h-8 items-center gap-2'>
+                  Import
+                  <ChevronDown className='h-4 w-4' />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                <DropdownMenuItem className='cursor-pointer' onClick={() => toast.info('Coming soon!')}>
+                  <Import className='mr-2 h-4 w-4' />
+                  Basic CSV
+                </DropdownMenuItem>
+                <DropdownMenuItem className='cursor-pointer' onClick={() => toast.info('Coming soon!')}>
+                  <Import className='mr-2 h-4 w-4' />
+                  Existing CRM
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
             <Button variant='outline' asChild className='h-8'>
               <Link href='/dashboard/crm/contacts/new'>Add Contact</Link>
             </Button>
@@ -297,7 +347,7 @@ export default function CRMContactsPage() {
             <TableRow>
               {columns.map((column) =>
                 column.visible ? (
-                  <TableHead key={column.id} onClick={() => handleSort(column.id)} className='cursor-pointer'>
+                  <TableHead key={column.id} onClick={() => handleSort(column.id)} className={cn('cursor-pointer', column.label === 'Actions' && 'text-right')}>
                     {column.label} {sortConfig.column === column.id && <CaretSortIcon className='ml-2 inline' />}
                   </TableHead>
                 ) : null
@@ -329,6 +379,25 @@ export default function CRMContactsPage() {
                     </TableCell>
                   ) : null
                 )}
+                <TableCell className='w-[50px]'>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                      <Button variant='ghost' className='h-8 w-8 p-0'>
+                        <MoreHorizontal className='h-4 w-4' />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align='end'>
+                      <DropdownMenuItem onClick={(e) => handleEdit(contact.id, e)}>
+                        <Pencil className='mr-2 h-4 w-4' />
+                        Edit
+                      </DropdownMenuItem>
+                      <DropdownMenuItem className='text-red-600' onClick={(e) => handleDeleteClick(contact.id, e)}>
+                        <Trash2 className='mr-2 h-4 w-4' />
+                        Delete
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </TableCell>
               </TableRow>
             ))}
           </TableBody>
@@ -341,6 +410,21 @@ export default function CRMContactsPage() {
           </TableFooter>
         </Table>
       </div>
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogDescription>This action cannot be undone. This will permanently delete the contact and remove their data from our servers.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteConfirm} className='bg-red-600 hover:bg-red-700'>
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

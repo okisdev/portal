@@ -700,7 +700,7 @@ export default function DashboardPersonalCalendar() {
           }
         }}
       >
-        <DialogContent>
+        <DialogContent className='max-h-[90vh] max-w-xl overflow-y-auto'>
           <DialogHeader>
             <DialogTitle>Edit Calendar</DialogTitle>
           </DialogHeader>
@@ -763,7 +763,7 @@ export default function DashboardPersonalCalendar() {
           }
         }}
       >
-        <DialogContent>
+        <DialogContent className='max-h-[90vh] max-w-xl overflow-y-auto'>
           <DialogHeader>
             <DialogTitle>Add Calendar</DialogTitle>
           </DialogHeader>

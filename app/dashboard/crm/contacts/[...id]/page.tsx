@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { insuranceCompanies, sources } from '@/data/data';
 import type { Priority, Status } from '@/lib/schema';
-import { formatDate } from '@/lib/utils';
+import { cn, formatDate } from '@/lib/utils';
 import { api } from '@/utils/trpc/client';
 import { Building2, Calendar, CalendarIcon, Edit2, Mail, Phone, Trash2, Users } from 'lucide-react';
 import { useSession } from 'next-auth/react';
@@ -39,9 +39,6 @@ export default function ContactIdPage() {
     contactId: contactId[0],
   });
   const { data: allTeams } = api.team.getAllTeams.useQuery();
-  const { data: contactTeams } = api.team.getContactTeams.useQuery({
-    contactId: contactId[0],
-  });
 
   const [newActivity, setNewActivity] = useState('');
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -130,7 +127,6 @@ export default function ContactIdPage() {
   };
 
   const handleEditClick = () => {
-
     setEditForm({
       firstName: contact?.firstName || '',
       lastName: contact?.lastName || '',
@@ -227,14 +223,16 @@ export default function ContactIdPage() {
                   {contact.company}
                 </div>
               )}
-              <div className='flex items-center gap-1'>
-                <Users className='size-3' />
-                {contactTeams?.map((team) => (
-                  <Link key={team.id} href={`/dashboard/crm/contacts/team/${team.id}`} className='hover:text-gray-700'>
-                    {team.name}
-                  </Link>
-                ))}
-              </div>
+              {contact?.leadingTeams?.length && contact?.leadingTeams?.length > 0 && (
+                <div className='flex items-center gap-1'>
+                  <Users className='size-3' />
+                  {contact?.leadingTeams?.map((team) => (
+                    <Link key={team.id} href={`/dashboard/crm/contacts/team/${team.id}`} className='hover:text-gray-700'>
+                      {team.name}
+                    </Link>
+                  ))}
+                </div>
+              )}
               {contact?.email && (
                 <Link href={`mailto:${contact.email}`} className='flex items-center gap-1 hover:text-gray-700'>
                   <Mail className='size-3' />
@@ -370,7 +368,7 @@ export default function ContactIdPage() {
               {payments?.slice(0, 3).map((payment) => (
                 <div key={payment.id} className='flex items-center justify-between text-sm'>
                   <span>{formatDate(new Date(payment.created * 1000))}</span>
-                  <span className='font-medium'>
+                  <span className={cn('font-medium', payment.status === 'succeeded' ? 'text-green-600' : 'text-gray-500')}>
                     {new Intl.NumberFormat('en-US', {
                       style: 'currency',
                       currency: payment.currency,
@@ -416,7 +414,7 @@ export default function ContactIdPage() {
       </div>
 
       <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
-        <DialogContent>
+        <DialogContent className='max-h-[90vh] max-w-xl overflow-y-auto'>
           <DialogHeader>
             <DialogTitle>Edit Contact Information</DialogTitle>
           </DialogHeader>
@@ -503,7 +501,7 @@ export default function ContactIdPage() {
       </Dialog>
 
       <Dialog open={isBookingModalOpen} onOpenChange={setIsBookingModalOpen}>
-        <DialogContent>
+        <DialogContent className='max-h-[90vh] max-w-xl overflow-y-auto'>
           <DialogHeader>
             <DialogTitle>Book Appointment</DialogTitle>
           </DialogHeader>
@@ -529,7 +527,7 @@ export default function ContactIdPage() {
       </Dialog>
 
       <Dialog open={isTeamModalOpen} onOpenChange={setIsTeamModalOpen}>
-        <DialogContent>
+        <DialogContent className='max-h-[90vh] max-w-xl overflow-y-auto'>
           <DialogHeader>
             <DialogTitle>Assign to Team</DialogTitle>
           </DialogHeader>

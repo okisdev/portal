@@ -86,7 +86,7 @@ export default function TeamPage() {
       </div>
 
       <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
-        <DialogContent>
+        <DialogContent className='max-h-[90vh] max-w-xl overflow-y-auto'>
           <DialogHeader>
             <DialogTitle>Create New Team</DialogTitle>
           </DialogHeader>

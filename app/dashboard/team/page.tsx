@@ -67,7 +67,7 @@ export default function TeamPage() {
   }
 
   return (
-    <div className='mx-auto max-w-6xl space-y-6'>
+    <div className='space-y-4 p-4'>
       <PageHeader title='Team' description='Manage your team members and settings' />
 
       <div className='grid gap-4 md:grid-cols-2'>

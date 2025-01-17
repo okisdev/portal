@@ -109,7 +109,7 @@ export function CreateEvent({ open, onOpenChange, onSubmit, isEditMode = false, 
         }
       }}
     >
-      <DialogContent>
+      <DialogContent className='max-h-[90vh] max-w-xl overflow-y-auto'>
         <DialogHeader>
           <DialogTitle>{isEditMode ? 'Edit Event' : 'Create New Event'}</DialogTitle>
         </DialogHeader>
