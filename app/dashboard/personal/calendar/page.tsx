@@ -16,6 +16,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { ChevronDown, ChevronLeft, ChevronRight, MoreHorizontal, Plus } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
 import { z } from 'zod';
 
 const WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -188,33 +189,6 @@ export default function DashboardPersonalCalendar() {
       utils.calendar.getFolders.invalidate();
     },
   });
-
-  const handleCalendarSelect = async (value: string) => {
-    // If the folder doesn't exist, create it
-    if (!folders?.some((folder) => folder.name === value)) {
-      await createFolder.mutateAsync({
-        name: value,
-        color: `#${Math.floor(Math.random() * 16777215).toString(16)}`, // Random color
-      });
-    }
-
-    // Find the folder id or wait for the folders to refresh
-    const folder = folders?.find((f) => f.name === value);
-    if (folder) {
-      form.setValue('folderId', folder.id);
-    }
-  };
-
-  const onSubmit = (data: z.infer<typeof eventFormSchema>) => {
-    if (isEditMode && selectedEvent) {
-      updateEvent.mutate({
-        id: selectedEvent.id,
-        ...data,
-      });
-    } else {
-      createEvent.mutate(data);
-    }
-  };
 
   const getDaysInMonth = (date: Date) => {
     const year = date.getFullYear();
@@ -620,7 +594,20 @@ export default function DashboardPersonalCalendar() {
                                   </div>
                                 )}
                               </div>
-                              <div className='flex justify-end'>
+                              <div className='flex justify-end gap-2'>
+                                <Button
+                                  size='sm'
+                                  variant='destructive'
+                                  onClick={() => {
+                                    toast.promise(deleteEvent.mutateAsync(event.id), {
+                                      loading: 'Deleting event...',
+                                      success: 'Event deleted successfully',
+                                      error: 'Failed to delete event',
+                                    });
+                                  }}
+                                >
+                                  Delete
+                                </Button>
                                 <Button
                                   variant='outline'
                                   size='sm'
