@@ -44,7 +44,11 @@ export function DateTimePicker({ value, onChange, showTimePicker = true }: { val
     <Popover>
       <PopoverTrigger asChild>
         <div>
-          <Button variant={'outline'} className={cn('w-full pl-3 text-left font-normal', !value && 'text-muted-foreground')}>
+          <Button 
+            type="button"
+            variant={'outline'} 
+            className={cn('w-full pl-3 text-left font-normal', !value && 'text-muted-foreground')}
+          >
             {value ? showTimePicker ? format(value, 'MM/dd/yyyy HH:mm') : format(value, 'MM/dd/yyyy') : <span>{showTimePicker ? 'MM/DD/YYYY HH:mm' : 'MM/DD/YYYY'}</span>}
             <CalendarIcon className='ml-auto h-4 w-4 opacity-50' />
           </Button>
@@ -62,6 +66,7 @@ export function DateTimePicker({ value, onChange, showTimePicker = true }: { val
                     .map((hour) => (
                       <Button
                         key={hour}
+                        type="button"
                         size='icon'
                         variant={value && value.getHours() === hour ? 'default' : 'ghost'}
                         className='aspect-square shrink-0 sm:w-full'
@@ -78,6 +83,7 @@ export function DateTimePicker({ value, onChange, showTimePicker = true }: { val
                   {Array.from({ length: 12 }, (_, i) => i * 5).map((minute) => (
                     <Button
                       key={minute}
+                      type="button"
                       size='icon'
                       variant={value && value.getMinutes() === minute ? 'default' : 'ghost'}
                       className='aspect-square shrink-0 sm:w-full'
