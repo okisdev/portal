@@ -324,7 +324,7 @@ export default function CRMContactsPage() {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent>
-                <DropdownMenuItem className='cursor-pointer' onClick={() => toast.info('Coming soon!')}>
+                <DropdownMenuItem className='cursor-pointer' onClick={() => router.push('/dashboard/crm/contacts/import?mode=simple')}>
                   <Import className='mr-2 h-4 w-4' />
                   Basic CSV
                 </DropdownMenuItem>

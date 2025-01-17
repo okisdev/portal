@@ -1,7 +1,7 @@
 import { contact, contactActivity, team, teamContact } from '@/drizzle/schema';
 import { prioritySchema, statusSchema } from '@/lib/schema';
-import { createTRPCRouter, protectedProcedure } from '@/server/trpc';
-import { desc, eq, sql } from 'drizzle-orm';
+import { createTRPCRouter, protectedProcedure, publicProcedure } from '@/server/trpc';
+import { desc, eq, inArray, sql } from 'drizzle-orm';
 import { z } from 'zod';
 
 export const contactRouter = createTRPCRouter({
@@ -149,5 +149,22 @@ export const contactRouter = createTRPCRouter({
         .update(contact)
         .set({ ...updateData, name })
         .where(eq(contact.id, id));
+    }),
+
+  checkExistingContacts: publicProcedure
+    .input(
+      z.object({
+        emails: z.array(z.string()),
+      })
+    )
+    .query(async ({ ctx, input }) => {
+      const existingContacts = await ctx.db
+        .select({
+          email: contact.email,
+        })
+        .from(contact)
+        .where(inArray(contact.email, input.emails));
+
+      return existingContacts.map((contact) => contact.email);
     }),
 });
