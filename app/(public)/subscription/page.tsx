@@ -99,7 +99,7 @@ const SubscriptionContent = () => {
           <div className='space-y-4'>
             {plan && (
               <div className='rounded-lg bg-muted p-4'>
-                <h3 className='font-semibold'>Plan Details</h3>
+                <h3 className='font-medium'>Plan Details</h3>
                 <p>Price: ${(plan.price?.unit_amount ?? 0) / 100}</p>
                 {couponCode && plan.discountPercent > 0 && <p className='text-green-600'>Discount: {plan.discountPercent * 100}% off</p>}
               </div>

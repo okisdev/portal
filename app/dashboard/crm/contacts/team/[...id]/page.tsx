@@ -186,9 +186,14 @@ export default function TeamIdPage() {
         title={team.name}
         description={team.description || ''}
         right={
-          <Button variant='outline' size='sm' className='h-8' onClick={handleEditClick}>
-            <Edit2 className='mr-1 size-4' /> Edit Team
-          </Button>
+          <div className='flex items-center gap-2'>
+            <Button variant='outline' size='sm' className='h-8' onClick={() => setIsNewMeetingModalOpen(true)}>
+              <Calendar className='mr-1 size-4' /> New Meeting
+            </Button>
+            <Button variant='outline' size='sm' className='h-8' onClick={handleEditClick}>
+              <Edit2 className='mr-1 size-4' /> Edit Team
+            </Button>
+          </div>
         }
       />
 
@@ -196,7 +201,7 @@ export default function TeamIdPage() {
         <div className='col-span-2 space-y-4'>
           <div className='space-y-2 rounded-lg border bg-white p-4'>
             <div className='flex items-center justify-between'>
-              <p className='font-semibold'>Team Members</p>
+              <p className='font-medium'>Team Members</p>
               <Popover open={isAddMemberOpen} onOpenChange={setIsAddMemberOpen}>
                 <PopoverTrigger asChild>
                   <Button variant='outline' size='sm' className='h-8'>
@@ -237,7 +242,7 @@ export default function TeamIdPage() {
                             <p className='text-sm'>
                               {contact.firstName} {contact.lastName}
                             </p>
-                            <p className='text-gray-500 text-xs'>{contact.email}</p>
+                            <p className='text-neutral-500 text-xs'>{contact.email}</p>
                           </div>
                         </>
                       );
@@ -258,7 +263,7 @@ export default function TeamIdPage() {
                         <p className='font-medium'>
                           {member.contact.firstName} {member.contact.lastName}
                         </p>
-                        <p className='text-gray-500 text-sm'>{member.contact.email}</p>
+                        <p className='text-neutral-500 text-sm'>{member.contact.email}</p>
                       </div>
                     </div>
                   </Link>
@@ -269,7 +274,7 @@ export default function TeamIdPage() {
 
           <div className='rounded-lg border bg-white p-4'>
             <div className='mb-4 flex items-center justify-between'>
-              <h2 className='font-semibold'>Remarks</h2>
+              <h2 className='font-medium'>Remarks</h2>
               <form onSubmit={handleSubmitRemark} className='flex max-w-md flex-1 gap-2'>
                 <Input value={newRemark} onChange={(e) => setNewRemark(e.target.value)} placeholder='Add remark...' className='h-8' />
                 <Button type='submit' size='sm' disabled={createRemark.isPending}>
@@ -281,7 +286,7 @@ export default function TeamIdPage() {
               {teamRemarks?.map((remark) => (
                 <div key={remark.id} className='rounded-lg border p-3'>
                   <p className='text-sm'>{remark.content}</p>
-                  <p className='mt-1 text-gray-500 text-xs'>
+                  <p className='mt-1 text-neutral-500 text-xs'>
                     By {remark.createdBy} - {formatDate(new Date(remark.createdAt))}
                   </p>
                 </div>
@@ -292,51 +297,45 @@ export default function TeamIdPage() {
 
         <div className='space-y-4'>
           <div className='rounded-lg border bg-white p-4'>
-            <h2 className='mb-3 font-semibold'>Team Information</h2>
-            <div className='space-y-3'>
+            <h2 className='mb-3 font-medium'>Team Information</h2>
+            <div className='space-y-1'>
               <div>
-                <Label className='text-gray-500 text-xs'>Team Leader</Label>
+                <Label className='text-neutral-500 text-xs'>Team Leader</Label>
                 <p className='text-sm'>
                   <Link href={`/dashboard/crm/contacts/${team.leaderId}`}>{team.leaderId ? `${team.leader?.firstName} ${team.leader?.lastName}` : 'N/A'}</Link>
                 </p>
               </div>
               <div>
-                <Label className='text-gray-500 text-xs'>Sub Leader</Label>
+                <Label className='text-neutral-500 text-xs'>Sub Leader</Label>
                 <p className='text-sm'>
                   <Link href={`/dashboard/crm/contacts/${team.subLeaderId}`}>{team.subLeaderId ? `${team.subLeader?.firstName} ${team.subLeader?.lastName}` : 'N/A'}</Link>
                 </p>
               </div>
               <div>
-                <Label className='text-gray-500 text-xs'>Referral</Label>
+                <Label className='text-neutral-500 text-xs'>Referral</Label>
                 <p className='text-sm'>
                   <Link href={`/dashboard/crm/contacts/${team.referralId}`}>{team.referralId ? `${team.referral?.firstName} ${team.referral?.lastName}` : 'N/A'}</Link>
                 </p>
               </div>
               <div>
-                <Label className='text-gray-500 text-xs'>Campaign Code</Label>
+                <Label className='text-neutral-500 text-xs'>Campaign Code</Label>
                 <p className='text-sm'>{team.campaignCode || 'N/A'}</p>
               </div>
-              <div>
-                <Label className='text-gray-500 text-xs'>Created</Label>
-                <p className='text-sm'>{formatDate(new Date(team.createdAt))}</p>
+              <div className='items-cen flex justify-end'>
+                <p className='text-neutral-500 text-xs'>Created on {formatDate(new Date(team.createdAt))}</p>
               </div>
             </div>
           </div>
 
-          <div className='rounded-lg border bg-white p-4'>
-            <div className='flex items-center justify-between'>
-              <h2 className='font-semibold'>Meetings</h2>
-              <Button variant='outline' size='sm' onClick={() => setIsNewMeetingModalOpen(true)}>
-                <Calendar className='mr-1 size-4' /> New Meeting
-              </Button>
-            </div>
+          <div className='space-y-3 rounded-lg border bg-white p-4'>
+            <h2 className='font-medium'>Meetings</h2>
             <div className='space-y-3'>
               {teamMeetings?.map((meeting) => (
                 <div key={meeting.id} className='flex items-center gap-3 text-sm'>
-                  <Calendar className='size-4 text-gray-500' />
+                  <Calendar className='size-4 text-neutral-500' />
                   <div className='flex-1'>
                     <p className='font-medium'>{meeting.title}</p>
-                    <p className='text-gray-500 text-xs'>
+                    <p className='text-neutral-500 text-xs'>
                       {formatDate(new Date(meeting.meetingDate))}
                       {meeting.status === 'completed' && ' (Past)'}
                     </p>
@@ -354,7 +353,7 @@ export default function TeamIdPage() {
                       }
                     }}
                   >
-                    <Trash2 className='size-4 text-gray-500' />
+                    <Trash2 className='size-4 text-neutral-500' />
                   </Button>
                 </div>
               ))}

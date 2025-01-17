@@ -52,7 +52,7 @@ function ComboboxCommand({ query, setQuery, value, onChange, setOpen, items, sea
           </CommandItem>
         </CommandGroup>
       )}
-      <CommandGroup heading={groupHeading}>
+      <CommandGroup heading={groupHeading} className='max-h-[300px] overflow-y-auto'>
         {items.map((item) => (
           <CommandItem
             key={item + generateUUID()}

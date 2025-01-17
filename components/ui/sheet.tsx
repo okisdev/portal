@@ -64,7 +64,7 @@ const SheetFooter = ({ className, ...props }: React.HTMLAttributes<HTMLDivElemen
 SheetFooter.displayName = 'SheetFooter';
 
 const SheetTitle = React.forwardRef<React.ElementRef<typeof SheetPrimitive.Title>, React.ComponentPropsWithoutRef<typeof SheetPrimitive.Title>>(({ className, ...props }, ref) => (
-  <SheetPrimitive.Title ref={ref} className={cn('font-semibold text-foreground text-lg', className)} {...props} />
+  <SheetPrimitive.Title ref={ref} className={cn('font-medium text-foreground text-lg', className)} {...props} />
 ));
 SheetTitle.displayName = SheetPrimitive.Title.displayName;
 

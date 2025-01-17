@@ -151,7 +151,7 @@ export default function NewContact() {
 
       {showPreview ? (
         <div className='mb-6'>
-          <h2 className='mb-4 font-semibold text-lg'>Preview CSV Data</h2>
+          <h2 className='mb-4 font-medium text-lg'>Preview CSV Data</h2>
           <div className='overflow-x-auto rounded-lg border'>
             <Table>
               <TableHeader>

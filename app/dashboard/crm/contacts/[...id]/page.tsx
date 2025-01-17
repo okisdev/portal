@@ -269,10 +269,10 @@ export default function ContactIdPage() {
           </Avatar>
           <div className='space-y-1'>
             <div className='flex items-center gap-2'>
-              <h1 className='font-semibold text-xl'>{contact?.name}</h1>
+              <h1 className='font-medium text-xl'>{contact?.name}</h1>
               <ColorBadge type='contactStatus' value={contact?.status || 'lead'} />
             </div>
-            <div className='flex items-center gap-2 text-gray-500 text-sm'>
+            <div className='flex items-center gap-2 text-neutral-500 text-sm'>
               {contact?.company && (
                 <div className='flex items-center gap-1'>
                   <Building2 className='size-3' />
@@ -360,7 +360,7 @@ export default function ContactIdPage() {
               },
             ].map((item) => (
               <div key={item.label} className='rounded-lg border bg-white p-3'>
-                <p className='text-gray-500 text-xs'>{item.label}</p>
+                <p className='text-neutral-500 text-xs'>{item.label}</p>
                 <div className='mt-1 text-sm'>{item.value}</div>
               </div>
             ))}
@@ -368,7 +368,7 @@ export default function ContactIdPage() {
 
           <div className='rounded-lg border bg-white p-4'>
             <div className='mb-4 flex items-center justify-between'>
-              <h2 className='font-semibold'>Activity</h2>
+              <h2 className='font-medium'>Activity</h2>
               <form onSubmit={handleSubmitActivity} className='ml-4 flex max-w-md flex-1 gap-2'>
                 <Input value={newActivity} onChange={(e) => setNewActivity(e.target.value)} placeholder='Add note...' className='h-8' />
                 <Button type='submit' size='sm' disabled={createContactActivity.isPending}>
@@ -384,7 +384,7 @@ export default function ContactIdPage() {
                   <div>
                     <div className='flex items-center gap-2 text-sm'>
                       <span className='font-medium'>{activity.title}</span>
-                      <span className='text-gray-500 text-xs'>
+                      <span className='text-neutral-500 text-xs'>
                         by {getInitiatorLabel(activity)} - {formatDate(new Date(activity.createdAt))}
                       </span>
                     </div>
@@ -399,15 +399,15 @@ export default function ContactIdPage() {
         <div className='space-y-4'>
           <div className='rounded-lg border bg-white p-4'>
             <div className='mb-3 flex items-center justify-between'>
-              <h2 className='font-semibold'>Upcoming Meetings</h2>
+              <h2 className='font-medium'>Upcoming Meetings</h2>
             </div>
             <div className='space-y-3'>
               {appointments?.map((apt) => (
                 <div key={apt.id} className='flex items-center gap-3 text-sm'>
-                  <Calendar className='size-4 text-gray-500' />
+                  <Calendar className='size-4 text-neutral-500' />
                   <div className='flex-1'>
                     <p className='font-medium'>{apt.title}</p>
-                    <p className='text-gray-500 text-xs'>{formatDate(new Date(apt.startAt))}</p>
+                    <p className='text-neutral-500 text-xs'>{formatDate(new Date(apt.startAt))}</p>
                   </div>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
@@ -443,13 +443,13 @@ export default function ContactIdPage() {
 
           <div className='rounded-lg border bg-white p-4'>
             <div className='mb-3 flex items-center justify-between'>
-              <h2 className='font-semibold'>Recent Payments</h2>
+              <h2 className='font-medium'>Recent Payments</h2>
             </div>
             <div className='space-y-2'>
               {payments?.slice(0, 3).map((payment) => (
                 <div key={payment.id} className='flex items-center justify-between text-sm'>
                   <span>{formatDate(new Date(payment.created * 1000))}</span>
-                  <span className={cn('font-medium', payment.status === 'succeeded' ? 'text-green-600' : 'text-gray-500')}>
+                  <span className={cn('font-medium', payment.status === 'succeeded' ? 'text-green-600' : 'text-neutral-500')}>
                     {new Intl.NumberFormat('en-US', {
                       style: 'currency',
                       currency: payment.currency,
@@ -462,7 +462,7 @@ export default function ContactIdPage() {
 
           <div className='rounded-lg border bg-white p-4'>
             <div className='mb-3'>
-              <h2 className='font-semibold'>Team Roles</h2>
+              <h2 className='font-medium'>Team Roles</h2>
             </div>
             <div className='space-y-3'>
               {contact?.leadingTeams?.map((team) => (
@@ -470,7 +470,7 @@ export default function ContactIdPage() {
                   <Link href={`/dashboard/crm/contacts/team/${team.id}`} className='hover:text-blue-600'>
                     {team.name}
                   </Link>
-                  <span className='text-gray-500 text-xs'>Team Leader</span>
+                  <span className='text-neutral-500 text-xs'>Team Leader</span>
                 </div>
               ))}
               {contact?.subLeadingTeams?.map((team) => (
@@ -478,7 +478,7 @@ export default function ContactIdPage() {
                   <Link href={`/dashboard/crm/contacts/team/${team.id}`} className='hover:text-blue-600'>
                     {team.name}
                   </Link>
-                  <span className='text-gray-500 text-xs'>Sub Leader</span>
+                  <span className='text-neutral-500 text-xs'>Sub Leader</span>
                 </div>
               ))}
               {contact?.referralTeams?.map((team) => (
@@ -486,7 +486,7 @@ export default function ContactIdPage() {
                   <Link href={`/dashboard/crm/contacts/team/${team.id}`} className='hover:text-blue-600'>
                     {team.name}
                   </Link>
-                  <span className='text-gray-500 text-xs'>Referral</span>
+                  <span className='text-neutral-500 text-xs'>Referral</span>
                 </div>
               ))}
             </div>

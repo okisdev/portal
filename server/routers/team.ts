@@ -341,4 +341,8 @@ export const teamRouter = createTRPCRouter({
 
       return newMember;
     }),
+
+  deleteTeam: protectedProcedure.input(z.object({ id: z.string() })).mutation(async ({ ctx, input }) => {
+    return await ctx.db.delete(team).where(eq(team.id, input.id));
+  }),
 });

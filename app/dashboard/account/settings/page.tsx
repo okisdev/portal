@@ -120,7 +120,7 @@ export default function AccountSettingsPage() {
                   </AvatarFallback>
                 </Avatar>
                 <div className='space-y-2'>
-                  <h2 className='font-semibold text-2xl tracking-tight'>Profile Picture</h2>
+                  <h2 className='font-medium text-2xl tracking-tight'>Profile Picture</h2>
                   <p className='text-muted-foreground text-sm'>Update your profile picture</p>
                   <Button type='button' variant='outline' onClick={() => fileInputRef.current?.click()}>
                     Change Photo
@@ -130,7 +130,7 @@ export default function AccountSettingsPage() {
               </div>
 
               <div className='space-y-4'>
-                <h2 className='font-semibold text-2xl tracking-tight'>Personal Information</h2>
+                <h2 className='font-medium text-2xl tracking-tight'>Personal Information</h2>
                 <div className='grid grid-cols-2 gap-6'>
                   <div className='space-y-2'>
                     <Label htmlFor='firstName'>First Name</Label>
@@ -144,7 +144,7 @@ export default function AccountSettingsPage() {
               </div>
 
               <div className='space-y-4'>
-                <h2 className='font-semibold text-2xl tracking-tight'>Contact Information</h2>
+                <h2 className='font-medium text-2xl tracking-tight'>Contact Information</h2>
                 <div className='space-y-2'>
                   <Label htmlFor='email'>Email Address</Label>
                   <div className='flex items-center gap-2'>
@@ -164,7 +164,7 @@ export default function AccountSettingsPage() {
 
           <TabsContent value='password' className='space-y-4 p-4'>
             <div className='space-y-4'>
-              <h2 className='font-semibold text-2xl tracking-tight'>Change Password</h2>
+              <h2 className='font-medium text-2xl tracking-tight'>Change Password</h2>
               <form onSubmit={handlePasswordSubmit} className='space-y-4'>
                 <div className='space-y-2'>
                   <Label htmlFor='currentPassword'>Current Password</Label>

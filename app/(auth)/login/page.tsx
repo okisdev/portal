@@ -90,8 +90,8 @@ export default function LoginPage() {
           {!emailSent ? (
             <motion.div key='login-form' initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.2 }}>
               <div className='space-y-2 text-center'>
-                <h1 className='font-semibold text-2xl text-gray-900'>Log in to your account</h1>
-                <p className='text-gray-500'>Welcome back! Please enter your details.</p>
+                <h1 className='font-medium text-2xl text-gray-900'>Log in to your account</h1>
+                <p className='text-neutral-500'>Welcome back! Please enter your details.</p>
               </div>
 
               <form onSubmit={handleSubmit} className='mt-6 space-y-4'>
@@ -117,7 +117,7 @@ export default function LoginPage() {
                 <div className='flex items-center justify-between'>
                   <label className='flex items-center'>
                     <input type='checkbox' className='h-4 w-4 rounded border-gray-300 text-blue-500 focus:ring-blue-400' />
-                    <span className='ml-2 text-gray-500 text-sm'>Remember for 30 days</span>
+                    <span className='ml-2 text-neutral-500 text-sm'>Remember for 30 days</span>
                   </label>
                   {isPasswordLogin && (
                     <a href='/forgot-password' className='text-blue-500 text-sm hover:text-blue-600'>
@@ -143,7 +143,7 @@ export default function LoginPage() {
                       'Send Magic Link'
                     )}
                   </button>
-                  <p className='text-center text-gray-500 text-sm'>
+                  <p className='text-center text-neutral-500 text-sm'>
                     Don't have an account?{' '}
                     <a href='/register' className='text-blue-500 hover:text-blue-600'>
                       Sign up
@@ -165,8 +165,8 @@ export default function LoginPage() {
                 <CheckCircle2 className='h-12 w-12 text-green-500' />
               </div>
               <div className='space-y-2'>
-                <h2 className='font-semibold text-2xl text-gray-900'>Check your email</h2>
-                <p className='text-gray-500'>
+                <h2 className='font-medium text-2xl text-gray-900'>Check your email</h2>
+                <p className='text-neutral-500'>
                   We've sent a magic link to <span className='font-medium text-gray-700'>{sentEmail}</span>
                 </p>
               </div>

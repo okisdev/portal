@@ -29,7 +29,7 @@ export function NotificationList() {
           <div className='flex-1'>
             <div className='flex items-center justify-between'>
               <p className='font-medium'>{notification.title}</p>
-              <time className='text-gray-500 text-sm'>
+              <time className='text-neutral-500 text-sm'>
                 {notification.createdAt &&
                   formatDistanceToNow(new Date(notification.createdAt), {
                     addSuffix: true,
@@ -56,6 +56,6 @@ function NotificationIcon({ type }: { type: string }) {
     case 'email':
       return <Mail className='h-5 w-5 text-green-500' />;
     default:
-      return <Bell className='h-5 w-5 text-gray-500' />;
+      return <Bell className='h-5 w-5 text-neutral-500' />;
   }
 }

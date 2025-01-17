@@ -1,8 +1,9 @@
 'use client';
 
 import { ColorBadge } from '@/components/shared/color-badge';
+import { DeleteAlertDialog } from '@/components/shared/delete-alert-dialog';
 import { PageHeader } from '@/components/shared/page-header';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import {} from '@/components/ui/alert-dialog';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -367,7 +368,7 @@ export default function CRMContactsPage() {
                           </Avatar>
                           <div>
                             <div className='font-medium'>{contact.name}</div>
-                            <div className='text-gray-500 text-xs'>{contact.email}</div>
+                            <div className='text-neutral-500 text-xs'>{contact.email}</div>
                           </div>
                         </div>
                       )}
@@ -411,20 +412,12 @@ export default function CRMContactsPage() {
         </Table>
       </div>
 
-      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-            <AlertDialogDescription>This action cannot be undone. This will permanently delete the contact and remove their data from our servers.</AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDeleteConfirm} className='bg-red-600 hover:bg-red-700'>
-              Delete
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <DeleteAlertDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        onConfirm={handleDeleteConfirm}
+        description='This action cannot be undone. This will permanently delete the contact and remove their data from our servers.'
+      />
     </div>
   );
 }
