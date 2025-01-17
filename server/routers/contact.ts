@@ -1,7 +1,7 @@
-import { contact, contactActivity, team } from '@/drizzle/schema';
+import { contact, contactActivity, team, teamContact } from '@/drizzle/schema';
 import { prioritySchema, statusSchema } from '@/lib/schema';
-import { createTRPCRouter, protectedProcedure } from '@/server/trpc';
-import { desc, eq, sql } from 'drizzle-orm';
+import { createTRPCRouter, protectedProcedure, publicProcedure } from '@/server/trpc';
+import { desc, eq, inArray, sql } from 'drizzle-orm';
 import { z } from 'zod';
 
 export const contactRouter = createTRPCRouter({
@@ -27,15 +27,23 @@ export const contactRouter = createTRPCRouter({
         skills: contact.skills,
         status: contact.status,
         lastContactedAt: contact.lastContactedAt,
+        teams: sql<Array<{ id: string; name: string }>>`
+          (SELECT json_agg(json_build_object('id', t.id, 'name', t.name))
+           FROM ${team} t 
+           INNER JOIN ${teamContact} tc ON tc."teamId" = t.id
+           WHERE tc."contactId" = ${input.id})`,
         leadingTeams: sql<Array<{ id: string; name: string }>>`
-          SELECT id, name FROM ${team} WHERE "leaderId" = ${input.id}
-        `,
+          (SELECT json_agg(json_build_object('id', t.id, 'name', t.name))
+           FROM ${team} t 
+           WHERE t."leaderId" = ${input.id})`,
         subLeadingTeams: sql<Array<{ id: string; name: string }>>`
-          SELECT id, name FROM ${team} WHERE "subLeaderId" = ${input.id}
-        `,
+          (SELECT json_agg(json_build_object('id', t.id, 'name', t.name))
+           FROM ${team} t 
+           WHERE t."subLeaderId" = ${input.id})`,
         referralTeams: sql<Array<{ id: string; name: string }>>`
-          SELECT id, name FROM ${team} WHERE "referralId" = ${input.id}
-        `,
+          (SELECT json_agg(json_build_object('id', t.id, 'name', t.name))
+           FROM ${team} t 
+           WHERE t."referralId" = ${input.id})`,
         createdAt: contact.createdAt,
         updatedAt: contact.updatedAt,
       })
@@ -47,6 +55,7 @@ export const contactRouter = createTRPCRouter({
   createContact: protectedProcedure
     .input(
       z.object({
+        name: z.string().optional(),
         firstName: z.string().optional(),
         lastName: z.string().optional(),
         email: z.string(),
@@ -67,6 +76,7 @@ export const contactRouter = createTRPCRouter({
       const result = await ctx.db
         .insert(contact)
         .values({
+          name: input.name ?? `${input.firstName} ${input.lastName}` ?? '',
           firstName: input.firstName ?? '',
           lastName: input.lastName ?? '',
           email: input.email,
@@ -78,6 +88,10 @@ export const contactRouter = createTRPCRouter({
 
       return result[0];
     }),
+
+  deleteContact: protectedProcedure.input(z.object({ id: z.string() })).mutation(({ ctx, input }) => {
+    return ctx.db.delete(contact).where(eq(contact.id, input.id));
+  }),
 
   getContactActivities: protectedProcedure.input(z.object({ id: z.string() })).query(({ ctx, input }) => {
     return ctx.db.select().from(contactActivity).where(eq(contactActivity.contactId, input.id)).orderBy(desc(contactActivity.createdAt));
@@ -137,5 +151,22 @@ export const contactRouter = createTRPCRouter({
         .update(contact)
         .set({ ...updateData, name })
         .where(eq(contact.id, id));
+    }),
+
+  checkExistingContacts: publicProcedure
+    .input(
+      z.object({
+        emails: z.array(z.string()),
+      })
+    )
+    .query(async ({ ctx, input }) => {
+      const existingContacts = await ctx.db
+        .select({
+          email: contact.email,
+        })
+        .from(contact)
+        .where(inArray(contact.email, input.emails));
+
+      return existingContacts.map((contact) => contact.email);
     }),
 });

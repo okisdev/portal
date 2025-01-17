@@ -333,6 +333,7 @@ export const team = pgTable('team', {
   leaderId: text().references(() => contact.id),
   subLeaderId: text().references(() => contact.id),
   referralId: text().references(() => contact.id),
+  campaignCode: text().unique(),
   createdBy: text()
     .notNull()
     .references(() => user.id),
@@ -382,7 +383,7 @@ export const teamMeeting = pgTable('teamMeeting', {
   title: text().notNull(),
   description: text(),
   meetingDate: timestamp({ mode: 'date' }).notNull(),
-  status: text('status', { enum: ['upcoming', 'completed', 'cancelled'] }).default('upcoming'),
+  status: text('status', { enum: ['upcoming', 'completed', 'cancelled', 'no_show'] }).default('upcoming'),
   createdBy: text()
     .notNull()
     .references(() => user.id),

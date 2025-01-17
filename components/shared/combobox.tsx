@@ -3,7 +3,7 @@
 import { Button } from '@/components/ui/button';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from '@/components/ui/command';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { cn } from '@/lib/utils';
+import { cn, generateUUID } from '@/lib/utils';
 import { Check, ChevronsUpDown } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
@@ -16,10 +16,69 @@ interface ComboboxProps {
   emptyText?: string;
   groupHeading?: string;
   allowCustom?: boolean;
+  renderItem?: (item: string) => React.ReactNode;
   className?: string;
 }
 
-export function Combobox({
+interface ComboboxCommandProps {
+  query: string;
+  setQuery: (value: string) => void;
+  value: string;
+  onChange: (value: string) => void;
+  setOpen: (value: boolean) => void;
+  items: string[];
+  searchPlaceholder: string;
+  emptyText: string;
+  groupHeading: string;
+  allowCustom: boolean;
+  renderItem?: (item: string) => React.ReactNode;
+}
+
+function ComboboxCommand({ query, setQuery, value, onChange, setOpen, items, searchPlaceholder, emptyText, groupHeading, allowCustom, renderItem }: ComboboxCommandProps) {
+  return (
+    <Command>
+      <CommandInput placeholder={searchPlaceholder} value={query} onValueChange={setQuery} />
+      <CommandEmpty>{emptyText}</CommandEmpty>
+      {allowCustom && query && (
+        <CommandGroup heading='Custom'>
+          <CommandItem
+            value={`custom-${query}`}
+            onSelect={() => {
+              onChange(query);
+              setOpen(false);
+            }}
+          >
+            Use "{query}"
+          </CommandItem>
+        </CommandGroup>
+      )}
+      <CommandGroup heading={groupHeading} className='max-h-[300px] overflow-y-auto'>
+        {items.map((item) => (
+          <CommandItem
+            key={item + generateUUID()}
+            value={item}
+            onSelect={() => {
+              onChange(item);
+              setOpen(false);
+            }}
+            className='flex cursor-pointer items-center gap-2'
+          >
+            {renderItem ? (
+              renderItem(item)
+            ) : (
+              <>
+                {item}
+                {value === item && <Check className='ml-auto h-4 w-4' />}
+              </>
+            )}
+          </CommandItem>
+        ))}
+      </CommandGroup>
+    </Command>
+  );
+}
+
+function Combobox({
   value,
   onChange,
   items = [],
@@ -28,6 +87,7 @@ export function Combobox({
   emptyText = 'No results found',
   groupHeading = 'Items',
   allowCustom = true,
+  renderItem,
   className,
 }: ComboboxProps) {
   const [open, setOpen] = useState(false);
@@ -47,41 +107,23 @@ export function Combobox({
           <ChevronsUpDown className='ml-2 h-4 w-4 shrink-0 opacity-50' />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className='w-[--radix-popper-anchor-width] p-0' align='start'>
-        <Command className='max-h-[300px] overflow-y-auto'>
-          <CommandInput placeholder={searchPlaceholder} onValueChange={setQuery} />
-          <CommandEmpty>{emptyText}</CommandEmpty>
-          {allowCustom && query && (
-            <CommandGroup heading='Custom' className=''>
-              <CommandItem
-                value={`custom-${query}`}
-                onSelect={() => {
-                  onChange(query);
-                  setOpen(false);
-                }}
-              >
-                Use "{query}"
-              </CommandItem>
-            </CommandGroup>
-          )}
-          <CommandGroup heading={groupHeading}>
-            {items.map((item) => (
-              <CommandItem
-                key={item}
-                value={item}
-                onSelect={() => {
-                  onChange(item);
-                  setOpen(false);
-                }}
-                className='cursor-pointer'
-              >
-                {item}
-                {value === item && <Check className='ml-auto h-4 w-4' />}
-              </CommandItem>
-            ))}
-          </CommandGroup>
-        </Command>
+      <PopoverContent className='w-[--radix-popper-anchor-width] p-0' align='end'>
+        <ComboboxCommand
+          query={query}
+          setQuery={setQuery}
+          value={value}
+          onChange={onChange}
+          setOpen={setOpen}
+          items={items}
+          searchPlaceholder={searchPlaceholder}
+          emptyText={emptyText}
+          groupHeading={groupHeading}
+          allowCustom={allowCustom}
+          renderItem={renderItem}
+        />
       </PopoverContent>
     </Popover>
   );
 }
+
+export { ComboboxCommand, Combobox };

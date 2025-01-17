@@ -188,7 +188,7 @@ export default function SubscriptionManagement() {
                       Create New Coupon
                     </Button>
                   </DialogTrigger>
-                  <DialogContent>
+                  <DialogContent className='max-h-[90vh] max-w-xl overflow-y-auto'>
                     <DialogHeader>
                       <DialogTitle>Create New Coupon</DialogTitle>
                     </DialogHeader>
@@ -348,7 +348,7 @@ export default function SubscriptionManagement() {
                     </Button>
                   </DialogTrigger>
                 </div>
-                <DialogContent>
+                <DialogContent className='max-h-[90vh] max-w-xl overflow-y-auto'>
                   <DialogHeader>
                     <DialogTitle>{editingPlan ? 'Edit Plan' : 'Create New Plan'}</DialogTitle>
                   </DialogHeader>

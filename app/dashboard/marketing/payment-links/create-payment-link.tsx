@@ -51,7 +51,7 @@ export function CreatePaymentLink() {
       <DialogTrigger asChild>
         <Button>Create Payment Link</Button>
       </DialogTrigger>
-      <DialogContent>
+      <DialogContent className='max-h-[90vh] max-w-xl overflow-y-auto'>
         <DialogHeader>
           <DialogTitle>Create Payment Link</DialogTitle>
         </DialogHeader>

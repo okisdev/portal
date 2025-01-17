@@ -79,8 +79,8 @@ export default function TasksPage() {
           <div key={task.id} className={`flex items-center justify-between rounded-lg border p-4 ${task.completed ? 'bg-gray-50' : 'bg-white'}`}>
             <div className='flex items-center gap-4'>
               <input type='checkbox' checked={task.completed} onChange={() => toggleComplete(task.id)} className='h-5 w-5 rounded border-gray-300 focus:ring-blue-500' />
-              <span className={task.completed ? 'text-gray-500 line-through' : ''}>{task.title}</span>
-              {task.dueDate && <span className='text-gray-500 text-sm'>Due: {new Date(task.dueDate).toLocaleDateString()}</span>}
+              <span className={task.completed ? 'text-neutral-500 line-through' : ''}>{task.title}</span>
+              {task.dueDate && <span className='text-neutral-500 text-sm'>Due: {new Date(task.dueDate).toLocaleDateString()}</span>}
               <span
                 className={`rounded-full px-2 py-1 text-xs ${
                   task.priority === 'high' ? 'bg-red-100 text-red-800' : task.priority === 'medium' ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800'
@@ -91,7 +91,7 @@ export default function TasksPage() {
             </div>
 
             <div className='flex gap-2'>
-              <button type='button' onClick={() => {}} className='p-2 text-gray-500 hover:text-gray-700'>
+              <button type='button' onClick={() => {}} className='p-2 text-neutral-500 hover:text-gray-700'>
                 <PencilIcon className='h-5 w-5' />
               </button>
               <button type='button' onClick={() => deleteTask(task.id)} className='p-2 text-red-500 hover:text-red-700'>

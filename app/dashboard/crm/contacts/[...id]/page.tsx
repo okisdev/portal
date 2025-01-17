@@ -3,26 +3,33 @@
 import { ColorBadge } from '@/components/shared/color-badge';
 import { Combobox } from '@/components/shared/combobox';
 import { DateTimePicker } from '@/components/shared/date-time-picker';
+import { EventDialog } from '@/components/shared/event-dialog';
+import { PageLoading } from '@/components/shared/page-loading';
 import { PhoneInput } from '@/components/shared/phone-input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { insuranceCompanies, sources } from '@/data/data';
 import type { Priority, Status } from '@/lib/schema';
-import { formatDate } from '@/lib/utils';
+import { cn, formatDate } from '@/lib/utils';
 import { api } from '@/utils/trpc/client';
-import { Building2, Calendar, CalendarIcon, Edit2, Mail, Phone, Trash2, Users } from 'lucide-react';
+import { Building2, Calendar, CalendarIcon, Edit2, Mail, MoreHorizontal, Phone, Trash2, Users } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
-import { notFound, useParams } from 'next/navigation';
-import { useState } from 'react';
+import { notFound, useParams, useRouter, useSearchParams } from 'next/navigation';
+import { useEffect, useState } from 'react';
 
 export default function ContactIdPage() {
+  const router = useRouter();
   const { id: contactId } = useParams<{ id: string }>();
+  const mode = useSearchParams().get('mode');
+
+  console.log(mode);
 
   const { data: session } = useSession();
 
@@ -39,9 +46,6 @@ export default function ContactIdPage() {
     contactId: contactId[0],
   });
   const { data: allTeams } = api.team.getAllTeams.useQuery();
-  const { data: contactTeams } = api.team.getContactTeams.useQuery({
-    contactId: contactId[0],
-  });
 
   const [newActivity, setNewActivity] = useState('');
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -61,6 +65,12 @@ export default function ContactIdPage() {
   const [appointmentNotes, setAppointmentNotes] = useState('');
   const [isTeamModalOpen, setIsTeamModalOpen] = useState(false);
   const [selectedTeam, setSelectedTeam] = useState<string>('');
+  const [editingAppointment, setEditingAppointment] = useState<{
+    id: string;
+    title: string;
+    description: string;
+    startAt: Date;
+  } | null>(null);
 
   const createContactActivity = api.contact.createContactActivity.useMutation({
     onSuccess: () => {
@@ -78,7 +88,7 @@ export default function ContactIdPage() {
 
   const updateContact = api.contact.updateContact.useMutation({
     onSuccess: () => {
-      setIsEditModalOpen(false);
+      handleCloseEditModal();
       utils.contact.getContactById.invalidate({ id: contactId[0] });
     },
   });
@@ -97,8 +107,43 @@ export default function ContactIdPage() {
     },
   });
 
+  const updateAppointment = api.calendar.updateEvent.useMutation({
+    onSuccess: () => {
+      setEditingAppointment(null);
+      utils.calendar.getAppointmentsByContactId.invalidate({ contactId: contactId[0] });
+    },
+  });
+
+  const handleEditAppointment = (data: any) => {
+    if (!editingAppointment) return;
+
+    updateAppointment.mutate({
+      id: editingAppointment.id,
+      title: data.title,
+      description: data.description,
+      startAt: data.startAt,
+      endAt: data.endAt,
+    });
+  };
+
+  useEffect(() => {
+    if (mode === 'edit' && contact) {
+      setEditForm({
+        firstName: contact.firstName || '',
+        lastName: contact.lastName || '',
+        email: contact.email || '',
+        phone: contact.phone || '',
+        company: contact.company || '',
+        status: contact.status || 'lead',
+        source: contact.source || '',
+        priority: contact.priority || 'low',
+      });
+      setIsEditModalOpen(true);
+    }
+  }, [mode, contact]);
+
   if (isLoading) {
-    return <div>Loading...</div>;
+    return <PageLoading />;
   }
 
   if (!isLoading && !contact) {
@@ -130,7 +175,6 @@ export default function ContactIdPage() {
   };
 
   const handleEditClick = () => {
-
     setEditForm({
       firstName: contact?.firstName || '',
       lastName: contact?.lastName || '',
@@ -207,6 +251,14 @@ export default function ContactIdPage() {
     });
   };
 
+  const handleCloseEditModal = () => {
+    setIsEditModalOpen(false);
+    const searchParams = new URLSearchParams(window.location.search);
+    searchParams.delete('mode');
+    const newUrl = `${window.location.pathname}${searchParams.toString() ? `?${searchParams.toString()}` : ''}`;
+    router.replace(newUrl);
+  };
+
   return (
     <div className='space-y-4 p-4'>
       <div className='flex items-center justify-between rounded-lg border bg-white p-4'>
@@ -217,24 +269,26 @@ export default function ContactIdPage() {
           </Avatar>
           <div className='space-y-1'>
             <div className='flex items-center gap-2'>
-              <h1 className='font-semibold text-xl'>{contact?.name}</h1>
-              <ColorBadge type='status' value={contact?.status || 'lead'} />
+              <h1 className='font-medium text-xl'>{contact?.name}</h1>
+              <ColorBadge type='contactStatus' value={contact?.status || 'lead'} />
             </div>
-            <div className='flex items-center gap-2 text-gray-500 text-sm'>
+            <div className='flex items-center gap-2 text-neutral-500 text-sm'>
               {contact?.company && (
                 <div className='flex items-center gap-1'>
                   <Building2 className='size-3' />
                   {contact.company}
                 </div>
               )}
-              <div className='flex items-center gap-1'>
-                <Users className='size-3' />
-                {contactTeams?.map((team) => (
-                  <Link key={team.id} href={`/dashboard/crm/contacts/team/${team.id}`} className='hover:text-gray-700'>
-                    {team.name}
-                  </Link>
-                ))}
-              </div>
+              {contact?.teams?.length && contact?.teams?.length > 0 && (
+                <div className='flex items-center gap-1'>
+                  <Users className='size-3' />
+                  {contact?.teams?.map((team) => (
+                    <Link key={team.id} href={`/dashboard/crm/contacts/team/${team.id}`} className='hover:text-gray-700'>
+                      {team.name}
+                    </Link>
+                  ))}
+                </div>
+              )}
               {contact?.email && (
                 <Link href={`mailto:${contact.email}`} className='flex items-center gap-1 hover:text-gray-700'>
                   <Mail className='size-3' />
@@ -291,13 +345,13 @@ export default function ContactIdPage() {
                   <Select value={contact?.status || 'lead'} onValueChange={handleStatusChange}>
                     <SelectTrigger className='h-8'>
                       <SelectValue>
-                        <ColorBadge type='status' value={contact?.status || 'lead'} />
+                        <ColorBadge type='contactStatus' value={contact?.status || 'lead'} />
                       </SelectValue>
                     </SelectTrigger>
                     <SelectContent>
                       {['lead', 'prospect', 'customer', 'churned', 'opportunity'].map((status) => (
                         <SelectItem key={status} value={status}>
-                          <ColorBadge type='status' value={status} />
+                          <ColorBadge type='contactStatus' value={status} />
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -306,7 +360,7 @@ export default function ContactIdPage() {
               },
             ].map((item) => (
               <div key={item.label} className='rounded-lg border bg-white p-3'>
-                <p className='text-gray-500 text-xs'>{item.label}</p>
+                <p className='text-neutral-500 text-xs'>{item.label}</p>
                 <div className='mt-1 text-sm'>{item.value}</div>
               </div>
             ))}
@@ -314,7 +368,7 @@ export default function ContactIdPage() {
 
           <div className='rounded-lg border bg-white p-4'>
             <div className='mb-4 flex items-center justify-between'>
-              <h2 className='font-semibold'>Activity</h2>
+              <h2 className='font-medium'>Activity</h2>
               <form onSubmit={handleSubmitActivity} className='ml-4 flex max-w-md flex-1 gap-2'>
                 <Input value={newActivity} onChange={(e) => setNewActivity(e.target.value)} placeholder='Add note...' className='h-8' />
                 <Button type='submit' size='sm' disabled={createContactActivity.isPending}>
@@ -330,10 +384,11 @@ export default function ContactIdPage() {
                   <div>
                     <div className='flex items-center gap-2 text-sm'>
                       <span className='font-medium'>{activity.title}</span>
-                      <span className='text-gray-500'>by {getInitiatorLabel(activity)}</span>
-                      <span className='text-gray-500'>{formatDate(new Date(activity.createdAt))}</span>
+                      <span className='text-neutral-500 text-xs'>
+                        by {getInitiatorLabel(activity)} - {formatDate(new Date(activity.createdAt))}
+                      </span>
                     </div>
-                    <p className='mt-1 text-gray-600 text-sm'>{activity.description}</p>
+                    <p className='mt-1 text-gray-600 text-xs'>{activity.description}</p>
                   </div>
                 </div>
               ))}
@@ -344,19 +399,43 @@ export default function ContactIdPage() {
         <div className='space-y-4'>
           <div className='rounded-lg border bg-white p-4'>
             <div className='mb-3 flex items-center justify-between'>
-              <h2 className='font-semibold'>Upcoming Meetings</h2>
+              <h2 className='font-medium'>Upcoming Meetings</h2>
             </div>
             <div className='space-y-3'>
               {appointments?.map((apt) => (
                 <div key={apt.id} className='flex items-center gap-3 text-sm'>
-                  <Calendar className='size-4 text-gray-500' />
+                  <Calendar className='size-4 text-neutral-500' />
                   <div className='flex-1'>
                     <p className='font-medium'>{apt.title}</p>
-                    <p className='text-gray-500 text-xs'>{formatDate(new Date(apt.startAt))}</p>
+                    <p className='text-neutral-500 text-xs'>{formatDate(new Date(apt.startAt))}</p>
                   </div>
-                  <Button variant='ghost' size='icon' onClick={() => deleteAppointment.mutate(apt.id)}>
-                    <Trash2 className='size-4' />
-                  </Button>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant='ghost' size='icon'>
+                        <MoreHorizontal className='size-4' />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align='end'>
+                      <DropdownMenuItem
+                        className='cursor-pointer'
+                        onClick={() =>
+                          setEditingAppointment({
+                            id: apt.id,
+                            title: apt.title,
+                            description: apt.description || '',
+                            startAt: new Date(apt.startAt),
+                          })
+                        }
+                      >
+                        <Edit2 className='mr-2 size-4' />
+                        Edit
+                      </DropdownMenuItem>
+                      <DropdownMenuItem className='cursor-pointer text-red-600' onClick={() => deleteAppointment.mutate(apt.id)}>
+                        <Trash2 className='mr-2 size-4' />
+                        Delete
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </div>
               ))}
             </div>
@@ -364,13 +443,13 @@ export default function ContactIdPage() {
 
           <div className='rounded-lg border bg-white p-4'>
             <div className='mb-3 flex items-center justify-between'>
-              <h2 className='font-semibold'>Recent Payments</h2>
+              <h2 className='font-medium'>Recent Payments</h2>
             </div>
             <div className='space-y-2'>
               {payments?.slice(0, 3).map((payment) => (
                 <div key={payment.id} className='flex items-center justify-between text-sm'>
                   <span>{formatDate(new Date(payment.created * 1000))}</span>
-                  <span className='font-medium'>
+                  <span className={cn('font-medium', payment.status === 'succeeded' ? 'text-green-600' : 'text-neutral-500')}>
                     {new Intl.NumberFormat('en-US', {
                       style: 'currency',
                       currency: payment.currency,
@@ -383,7 +462,7 @@ export default function ContactIdPage() {
 
           <div className='rounded-lg border bg-white p-4'>
             <div className='mb-3'>
-              <h2 className='font-semibold'>Team Roles</h2>
+              <h2 className='font-medium'>Team Roles</h2>
             </div>
             <div className='space-y-3'>
               {contact?.leadingTeams?.map((team) => (
@@ -391,7 +470,7 @@ export default function ContactIdPage() {
                   <Link href={`/dashboard/crm/contacts/team/${team.id}`} className='hover:text-blue-600'>
                     {team.name}
                   </Link>
-                  <span className='text-gray-500 text-xs'>Team Leader</span>
+                  <span className='text-neutral-500 text-xs'>Team Leader</span>
                 </div>
               ))}
               {contact?.subLeadingTeams?.map((team) => (
@@ -399,7 +478,7 @@ export default function ContactIdPage() {
                   <Link href={`/dashboard/crm/contacts/team/${team.id}`} className='hover:text-blue-600'>
                     {team.name}
                   </Link>
-                  <span className='text-gray-500 text-xs'>Sub Leader</span>
+                  <span className='text-neutral-500 text-xs'>Sub Leader</span>
                 </div>
               ))}
               {contact?.referralTeams?.map((team) => (
@@ -407,7 +486,7 @@ export default function ContactIdPage() {
                   <Link href={`/dashboard/crm/contacts/team/${team.id}`} className='hover:text-blue-600'>
                     {team.name}
                   </Link>
-                  <span className='text-gray-500 text-xs'>Referral</span>
+                  <span className='text-neutral-500 text-xs'>Referral</span>
                 </div>
               ))}
             </div>
@@ -415,8 +494,8 @@ export default function ContactIdPage() {
         </div>
       </div>
 
-      <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
-        <DialogContent>
+      <Dialog open={isEditModalOpen} onOpenChange={handleCloseEditModal}>
+        <DialogContent className='max-h-[90vh] max-w-xl overflow-y-auto'>
           <DialogHeader>
             <DialogTitle>Edit Contact Information</DialogTitle>
           </DialogHeader>
@@ -491,7 +570,7 @@ export default function ContactIdPage() {
               </Select>
             </div>
             <div className='flex justify-end space-x-2'>
-              <Button type='button' variant='outline' onClick={() => setIsEditModalOpen(false)}>
+              <Button type='button' variant='outline' onClick={handleCloseEditModal}>
                 Cancel
               </Button>
               <Button type='submit' disabled={updateContact.isPending}>
@@ -503,7 +582,7 @@ export default function ContactIdPage() {
       </Dialog>
 
       <Dialog open={isBookingModalOpen} onOpenChange={setIsBookingModalOpen}>
-        <DialogContent>
+        <DialogContent className='max-h-[90vh] max-w-xl overflow-y-auto'>
           <DialogHeader>
             <DialogTitle>Book Appointment</DialogTitle>
           </DialogHeader>
@@ -529,7 +608,7 @@ export default function ContactIdPage() {
       </Dialog>
 
       <Dialog open={isTeamModalOpen} onOpenChange={setIsTeamModalOpen}>
-        <DialogContent>
+        <DialogContent className='max-h-[90vh] max-w-xl overflow-y-auto'>
           <DialogHeader>
             <DialogTitle>Assign to Team</DialogTitle>
           </DialogHeader>
@@ -558,6 +637,25 @@ export default function ContactIdPage() {
           </div>
         </DialogContent>
       </Dialog>
+
+      <EventDialog
+        open={!!editingAppointment}
+        onOpenChange={(open) => !open && setEditingAppointment(null)}
+        onSubmit={handleEditAppointment}
+        isEditMode={true}
+        key={editingAppointment?.id}
+        defaultValues={
+          editingAppointment
+            ? {
+                title: editingAppointment.title,
+                description: editingAppointment.description,
+                startAt: new Date(editingAppointment.startAt),
+                endAt: new Date(editingAppointment.startAt.getTime() + 30 * 60000),
+              }
+            : undefined
+        }
+        folders={[{ id: 'default', name: 'Default Calendar' }]}
+      />
     </div>
   );
 }

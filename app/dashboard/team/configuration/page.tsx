@@ -85,11 +85,11 @@ export default function TeamConfiguration() {
                       </Avatar>
                       <div>
                         <p className='font-medium'>{member.name}</p>
-                        <p className='text-gray-500 text-sm'>{member.email}</p>
+                        <p className='text-neutral-500 text-sm'>{member.email}</p>
                       </div>
                     </div>
                     <div className='flex items-center space-x-2'>
-                      <span className='text-gray-500 text-sm'>{member.role}</span>
+                      <span className='text-neutral-500 text-sm'>{member.role}</span>
                       <Button variant='outline' size='sm'>
                         Manage
                       </Button>

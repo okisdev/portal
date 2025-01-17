@@ -12,9 +12,7 @@ export const teamRouter = createTRPCRouter({
         description: team.description,
         createdAt: team.createdAt,
         createdBy: team.createdBy,
-        _count: {
-          contacts: sql<number>`(SELECT COUNT(*) FROM ${teamContact} WHERE ${teamContact.teamId} = ${team.id})`,
-        },
+        contacts: sql<number>`(SELECT COUNT(*) FROM ${teamContact} WHERE ${teamContact.teamId} = ${team.id})`,
       })
       .from(team);
   }),
@@ -92,6 +90,7 @@ export const teamRouter = createTRPCRouter({
         leaderId: team.leaderId,
         subLeaderId: team.subLeaderId,
         referralId: team.referralId,
+        campaignCode: team.campaignCode,
         leader: sql<{ id: string; firstName: string; lastName: string } | null>`
           (SELECT row_to_json(c) 
            FROM ${contact} c 
@@ -178,7 +177,7 @@ export const teamRouter = createTRPCRouter({
     }),
 
   getTeamMeetings: protectedProcedure.input(z.object({ teamId: z.string() })).query(async ({ ctx, input }) => {
-    return await ctx.db
+    const meetings = await ctx.db
       .select({
         id: teamMeeting.id,
         title: teamMeeting.title,
@@ -197,6 +196,11 @@ export const teamRouter = createTRPCRouter({
       .leftJoin(contact, eq(teamMeeting.createdBy, contact.id))
       .where(eq(teamMeeting.teamId, input.teamId))
       .orderBy(teamMeeting.meetingDate);
+
+    return meetings.map((meeting) => ({
+      ...meeting,
+      status: meeting.meetingDate < new Date() ? 'completed' : meeting.status || 'upcoming',
+    }));
   }),
 
   createTeamMeeting: protectedProcedure
@@ -210,6 +214,9 @@ export const teamRouter = createTRPCRouter({
     )
     .mutation(async ({ ctx, input }) => {
       return await ctx.db.transaction(async (tx) => {
+        // Set initial status based on meeting date
+        const status = input.meetingDate < new Date() ? 'completed' : 'upcoming';
+
         const [newMeeting] = await tx
           .insert(teamMeeting)
           .values({
@@ -217,6 +224,7 @@ export const teamRouter = createTRPCRouter({
             title: input.title,
             description: input.description,
             meetingDate: input.meetingDate,
+            status: status,
             createdBy: ctx.session.user.id,
           })
           .returning();
@@ -304,4 +312,37 @@ export const teamRouter = createTRPCRouter({
         return deletedMeeting;
       });
     }),
+
+  addTeamMember: protectedProcedure
+    .input(
+      z.object({
+        teamId: z.string(),
+        contactId: z.string(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const existingMember = await ctx.db
+        .select()
+        .from(teamContact)
+        .where(and(eq(teamContact.teamId, input.teamId), eq(teamContact.contactId, input.contactId)))
+        .then((rows) => rows[0]);
+
+      if (existingMember) {
+        throw new Error('Contact is already a member of this team');
+      }
+
+      const [newMember] = await ctx.db
+        .insert(teamContact)
+        .values({
+          teamId: input.teamId,
+          contactId: input.contactId,
+        })
+        .returning();
+
+      return newMember;
+    }),
+
+  deleteTeam: protectedProcedure.input(z.object({ id: z.string() })).mutation(async ({ ctx, input }) => {
+    return await ctx.db.delete(team).where(eq(team.id, input.id));
+  }),
 });

@@ -1,5 +1,6 @@
 'use client';
 
+import { PageLoading } from '@/components/shared/page-loading';
 import { Button } from '@/components/ui/button';
 import { CheckCircle2, XCircle } from 'lucide-react';
 import Link from 'next/link';
@@ -59,7 +60,7 @@ const PaymentContent = () => {
 
 export default function PaymentPage() {
   return (
-    <Suspense fallback={<div>Loading...</div>}>
+    <Suspense fallback={<PageLoading />}>
       <PaymentContent />
     </Suspense>
   );

@@ -28,7 +28,7 @@ export function YearMonthPicker({ value, onChange, onClose }: YearMonthPickerPro
         <Button variant='outline' size='sm' onClick={() => updateYear(year - 1)}>
           <ChevronLeft className='h-4 w-4' />
         </Button>
-        <span className='text-lg font-semibold'>{year}年</span>
+        <span className='text-lg font-medium'>{year}年</span>
         <Button variant='outline' size='sm' onClick={() => updateYear(year + 1)}>
           <ChevronRight className='h-4 w-4' />
         </Button>

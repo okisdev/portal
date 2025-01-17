@@ -63,8 +63,8 @@ export default function RegisterPage() {
 
         <motion.div key='register-form' initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.2 }}>
           <div className='space-y-2 text-center'>
-            <h1 className='font-semibold text-2xl text-gray-900'>Create your account</h1>
-            <p className='text-gray-500'>Get started with your free account</p>
+            <h1 className='font-medium text-2xl text-gray-900'>Create your account</h1>
+            <p className='text-neutral-500'>Get started with your free account</p>
           </div>
 
           <form onSubmit={handleSubmit} className='mt-6 space-y-4'>
@@ -96,7 +96,7 @@ export default function RegisterPage() {
                 )}
               </button>
 
-              <p className='text-center text-gray-500 text-sm'>
+              <p className='text-center text-neutral-500 text-sm'>
                 Already have an account?{' '}
                 <a href='/login' className='text-blue-500 hover:text-blue-600'>
                   Sign in

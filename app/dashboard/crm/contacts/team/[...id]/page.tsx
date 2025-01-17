@@ -1,20 +1,27 @@
 'use client';
 
 import { ColorBadge } from '@/components/shared/color-badge';
-import { CreateEvent } from '@/components/shared/create-event';
+import { Combobox } from '@/components/shared/combobox';
+import { ComboboxCommand } from '@/components/shared/combobox';
+import { EventDialog } from '@/components/shared/event-dialog';
 import { PageHeader } from '@/components/shared/page-header';
+import { PageLoading } from '@/components/shared/page-loading';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
+import {} from '@/components/ui/command';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import {} from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { formatDate } from '@/lib/utils';
 import { api } from '@/utils/trpc/client';
-import { Calendar, Edit2, Trash2 } from 'lucide-react';
+import { Calendar, Edit2, Plus, Trash2 } from 'lucide-react';
+import Link from 'next/link';
 import { notFound, useParams } from 'next/navigation';
 import { useState } from 'react';
+import { toast } from 'sonner';
 
 export default function TeamIdPage() {
   const { id: teamId } = useParams<{ id: string }>();
@@ -46,12 +53,19 @@ export default function TeamIdPage() {
     leaderId: '',
     subLeaderId: '',
     referralId: '',
+    campaignCode: '',
   });
+  const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
+  const [searchValue, setSearchValue] = useState('');
 
   const updateTeam = api.team.updateTeam.useMutation({
     onSuccess: () => {
       setIsEditModalOpen(false);
       utils.team.getTeamById.invalidate({ id: teamId[0] });
+      toast.success('Team updated successfully');
+    },
+    onError: (error) => {
+      toast.error(error.message);
     },
   });
 
@@ -59,6 +73,10 @@ export default function TeamIdPage() {
     onSuccess: () => {
       setNewRemark('');
       utils.team.getTeamRemarks.invalidate({ teamId: teamId[0] });
+      toast.success('Remark created successfully');
+    },
+    onError: (error) => {
+      toast.error(error.message);
     },
   });
 
@@ -66,22 +84,53 @@ export default function TeamIdPage() {
     onSuccess: () => {
       setIsNewMeetingModalOpen(false);
       utils.team.getTeamMeetings.invalidate({ teamId: teamId[0] });
+      toast.success('Meeting created successfully');
+    },
+    onError: (error) => {
+      toast.error(error.message);
     },
   });
 
   const deleteTeamMeeting = api.team.deleteTeamMeeting.useMutation({
     onSuccess: () => {
       utils.team.getTeamMeetings.invalidate({ teamId: teamId[0] });
+      toast.success('Meeting deleted successfully');
+    },
+    onError: (error) => {
+      toast.error(error.message);
     },
   });
 
   const createFolder = api.calendar.createFolder.useMutation({
     onSuccess: () => {
       utils.calendar.getFolders.invalidate();
+      toast.success('Folder created successfully');
+    },
+    onError: (error) => {
+      toast.error(error.message);
     },
   });
 
-  if (isLoading) return <div>Loading...</div>;
+  const addTeamMember = api.team.addTeamMember.useMutation({
+    onSuccess: () => {
+      setIsAddMemberOpen(false);
+      utils.team.getTeamContacts.invalidate({ teamId: teamId[0] });
+      toast.success('Member added successfully');
+    },
+    onError: (error) => {
+      toast.error(error.message);
+    },
+  });
+
+  const handleAddMember = (contactId: string) => {
+    addTeamMember.mutate({
+      teamId: teamId[0],
+      contactId,
+    });
+  };
+
+  if (isLoading) return <PageLoading />;
+
   if (!team) return notFound();
 
   const handleEditClick = () => {
@@ -91,6 +140,7 @@ export default function TeamIdPage() {
       leaderId: team.leaderId || '',
       subLeaderId: team.subLeaderId || '',
       referralId: team.referralId || '',
+      campaignCode: team.campaignCode || '',
     });
     setIsEditModalOpen(true);
   };
@@ -136,38 +186,95 @@ export default function TeamIdPage() {
         title={team.name}
         description={team.description || ''}
         right={
-          <Button variant='outline' size='sm' className='h-8' onClick={handleEditClick}>
-            <Edit2 className='mr-1 size-4' /> Edit Team
-          </Button>
+          <div className='flex items-center gap-2'>
+            <Button variant='outline' size='sm' className='h-8' onClick={() => setIsNewMeetingModalOpen(true)}>
+              <Calendar className='mr-1 size-4' /> New Meeting
+            </Button>
+            <Button variant='outline' size='sm' className='h-8' onClick={handleEditClick}>
+              <Edit2 className='mr-1 size-4' /> Edit Team
+            </Button>
+          </div>
         }
       />
 
       <div className='grid grid-cols-3 gap-4'>
         <div className='col-span-2 space-y-4'>
-          <div className='rounded-lg border bg-white p-4'>
-            <h2 className='mb-4 font-semibold'>Team Members</h2>
-            <div className='space-y-3'>
-              {teamContacts?.map((member) => (
-                <div key={member.id} className='flex items-center justify-between rounded-lg border p-2'>
-                  <div className='flex items-center gap-2'>
-                    <Avatar className='size-8'>
-                      <AvatarFallback>{member.contact.firstName.charAt(0)}</AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <p className='font-medium'>
-                        {member.contact.firstName} {member.contact.lastName}
-                      </p>
-                      <p className='text-gray-500 text-sm'>{member.contact.email}</p>
-                    </div>
-                  </div>
-                </div>
-              ))}
+          <div className='space-y-2 rounded-lg border bg-white p-4'>
+            <div className='flex items-center justify-between'>
+              <p className='font-medium'>Team Members</p>
+              <Popover open={isAddMemberOpen} onOpenChange={setIsAddMemberOpen}>
+                <PopoverTrigger asChild>
+                  <Button variant='outline' size='sm' className='h-8'>
+                    <Plus className='mr-1 size-4' /> Add Member
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className='w-[300px] p-0' align='end'>
+                  <ComboboxCommand
+                    query={searchValue}
+                    setQuery={setSearchValue}
+                    value=''
+                    onChange={handleAddMember}
+                    setOpen={setIsAddMemberOpen}
+                    items={
+                      contacts
+                        ?.filter(
+                          (contact) =>
+                            !teamContacts?.some((member) => member.contact.id === contact.id) &&
+                            (contact.firstName.toLowerCase().includes(searchValue.toLowerCase()) ||
+                              contact.lastName.toLowerCase().includes(searchValue.toLowerCase()) ||
+                              contact.email.toLowerCase().includes(searchValue.toLowerCase()))
+                        )
+                        .map((contact) => contact.id) ?? []
+                    }
+                    searchPlaceholder='Search contacts...'
+                    emptyText='No contacts found.'
+                    groupHeading='Contacts'
+                    allowCustom={false}
+                    renderItem={(contactId) => {
+                      const contact = contacts?.find((c) => c.id === contactId);
+                      if (!contact) return null;
+                      return (
+                        <>
+                          <Avatar className='size-6'>
+                            <AvatarFallback>{contact.firstName.charAt(0)}</AvatarFallback>
+                          </Avatar>
+                          <div className='flex-1'>
+                            <p className='text-sm'>
+                              {contact.firstName} {contact.lastName}
+                            </p>
+                            <p className='text-neutral-500 text-xs'>{contact.email}</p>
+                          </div>
+                        </>
+                      );
+                    }}
+                  />
+                </PopoverContent>
+              </Popover>
             </div>
+            {teamContacts && teamContacts?.length > 0 && (
+              <div className='space-y-3'>
+                {teamContacts?.map((member) => (
+                  <Link key={member.id} href={`/dashboard/crm/contacts/${member.contact.id}`} className='flex items-center justify-between rounded-lg border p-2 transition-colors hover:bg-gray-50'>
+                    <div className='flex items-center gap-2'>
+                      <Avatar className='size-8'>
+                        <AvatarFallback>{member.contact.firstName.charAt(0)}</AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <p className='font-medium'>
+                          {member.contact.firstName} {member.contact.lastName}
+                        </p>
+                        <p className='text-neutral-500 text-sm'>{member.contact.email}</p>
+                      </div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            )}
           </div>
 
           <div className='rounded-lg border bg-white p-4'>
             <div className='mb-4 flex items-center justify-between'>
-              <h2 className='font-semibold'>Remarks</h2>
+              <h2 className='font-medium'>Remarks</h2>
               <form onSubmit={handleSubmitRemark} className='flex max-w-md flex-1 gap-2'>
                 <Input value={newRemark} onChange={(e) => setNewRemark(e.target.value)} placeholder='Add remark...' className='h-8' />
                 <Button type='submit' size='sm' disabled={createRemark.isPending}>
@@ -179,7 +286,7 @@ export default function TeamIdPage() {
               {teamRemarks?.map((remark) => (
                 <div key={remark.id} className='rounded-lg border p-3'>
                   <p className='text-sm'>{remark.content}</p>
-                  <p className='mt-1 text-gray-500 text-xs'>
+                  <p className='mt-1 text-neutral-500 text-xs'>
                     By {remark.createdBy} - {formatDate(new Date(remark.createdAt))}
                   </p>
                 </div>
@@ -189,49 +296,49 @@ export default function TeamIdPage() {
         </div>
 
         <div className='space-y-4'>
-          {/* Team Info Box */}
           <div className='rounded-lg border bg-white p-4'>
-            <h2 className='mb-3 font-semibold'>Team Information</h2>
-            <div className='space-y-3'>
+            <h2 className='mb-3 font-medium'>Team Information</h2>
+            <div className='space-y-1'>
               <div>
-                <Label className='text-gray-500 text-xs'>Team Leader</Label>
+                <Label className='text-neutral-500 text-xs'>Team Leader</Label>
                 <p className='text-sm'>
-                  {team.leader?.firstName} {team.leader?.lastName}
+                  <Link href={`/dashboard/crm/contacts/${team.leaderId}`}>{team.leaderId ? `${team.leader?.firstName} ${team.leader?.lastName}` : 'N/A'}</Link>
                 </p>
               </div>
               <div>
-                <Label className='text-gray-500 text-xs'>Sub Leader</Label>
+                <Label className='text-neutral-500 text-xs'>Sub Leader</Label>
                 <p className='text-sm'>
-                  {team.subLeader?.firstName} {team.subLeader?.lastName}
+                  <Link href={`/dashboard/crm/contacts/${team.subLeaderId}`}>{team.subLeaderId ? `${team.subLeader?.firstName} ${team.subLeader?.lastName}` : 'N/A'}</Link>
                 </p>
               </div>
               <div>
-                <Label className='text-gray-500 text-xs'>Referral</Label>
+                <Label className='text-neutral-500 text-xs'>Referral</Label>
                 <p className='text-sm'>
-                  {team.referral?.firstName} {team.referral?.lastName}
+                  <Link href={`/dashboard/crm/contacts/${team.referralId}`}>{team.referralId ? `${team.referral?.firstName} ${team.referral?.lastName}` : 'N/A'}</Link>
                 </p>
               </div>
               <div>
-                <Label className='text-gray-500 text-xs'>Created</Label>
-                <p className='text-sm'>{formatDate(new Date(team.createdAt))}</p>
+                <Label className='text-neutral-500 text-xs'>Campaign Code</Label>
+                <p className='text-sm'>{team.campaignCode || 'N/A'}</p>
+              </div>
+              <div className='items-cen flex justify-end'>
+                <p className='text-neutral-500 text-xs'>Created on {formatDate(new Date(team.createdAt))}</p>
               </div>
             </div>
           </div>
 
-          <div className='rounded-lg border bg-white p-4'>
-            <div className='mb-3 flex items-center justify-between'>
-              <h2 className='font-semibold'>Meetings</h2>
-              <Button variant='outline' size='sm' onClick={() => setIsNewMeetingModalOpen(true)}>
-                <Calendar className='mr-1 size-4' /> New Meeting
-              </Button>
-            </div>
+          <div className='space-y-3 rounded-lg border bg-white p-4'>
+            <h2 className='font-medium'>Meetings</h2>
             <div className='space-y-3'>
               {teamMeetings?.map((meeting) => (
                 <div key={meeting.id} className='flex items-center gap-3 text-sm'>
-                  <Calendar className='size-4 text-gray-500' />
+                  <Calendar className='size-4 text-neutral-500' />
                   <div className='flex-1'>
                     <p className='font-medium'>{meeting.title}</p>
-                    <p className='text-gray-500 text-xs'>{formatDate(new Date(meeting.meetingDate))}</p>
+                    <p className='text-neutral-500 text-xs'>
+                      {formatDate(new Date(meeting.meetingDate))}
+                      {meeting.status === 'completed' && ' (Past)'}
+                    </p>
                   </div>
                   <ColorBadge type='status' value={meeting.status || 'upcoming'} />
                   <Button
@@ -246,7 +353,7 @@ export default function TeamIdPage() {
                       }
                     }}
                   >
-                    <Trash2 className='size-4 text-gray-500' />
+                    <Trash2 className='size-4 text-neutral-500' />
                   </Button>
                 </div>
               ))}
@@ -256,7 +363,7 @@ export default function TeamIdPage() {
       </div>
 
       <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
-        <DialogContent>
+        <DialogContent className='max-h-[90vh] max-w-xl overflow-y-auto'>
           <DialogHeader>
             <DialogTitle>Edit Team Information</DialogTitle>
           </DialogHeader>
@@ -271,48 +378,66 @@ export default function TeamIdPage() {
             </div>
             <div className='space-y-2'>
               <Label>Team Leader</Label>
-              <Select value={editForm.leaderId} onValueChange={(value) => setEditForm({ ...editForm, leaderId: value })}>
-                <SelectTrigger>
-                  <SelectValue placeholder='Select team leader' />
-                </SelectTrigger>
-                <SelectContent>
-                  {contacts?.map((contact) => (
-                    <SelectItem key={contact.id} value={contact.id}>
-                      {contact.firstName} {contact.lastName}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Combobox
+                value={
+                  editForm.leaderId
+                    ? `${teamContacts?.find((m) => m.contact.id === editForm.leaderId)?.contact.firstName} ${teamContacts?.find((m) => m.contact.id === editForm.leaderId)?.contact.lastName}`
+                    : ''
+                }
+                onChange={(value) => {
+                  const member = teamContacts?.find((m) => `${m.contact.firstName} ${m.contact.lastName}` === value);
+                  setEditForm({ ...editForm, leaderId: member?.contact.id || '' });
+                }}
+                items={teamContacts?.map((member) => `${member.contact.firstName} ${member.contact.lastName}`) || []}
+                placeholder='Select team leader'
+                searchPlaceholder='Search team leader...'
+                allowCustom={false}
+                groupHeading='Contacts'
+              />
             </div>
             <div className='space-y-2'>
               <Label>Sub Leader</Label>
-              <Select value={editForm.subLeaderId} onValueChange={(value) => setEditForm({ ...editForm, subLeaderId: value })}>
-                <SelectTrigger>
-                  <SelectValue placeholder='Select sub leader' />
-                </SelectTrigger>
-                <SelectContent>
-                  {contacts?.map((contact) => (
-                    <SelectItem key={contact.id} value={contact.id}>
-                      {contact.firstName} {contact.lastName}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Combobox
+                value={
+                  editForm.subLeaderId
+                    ? `${teamContacts?.find((m) => m.contact.id === editForm.subLeaderId)?.contact.firstName} ${teamContacts?.find((m) => m.contact.id === editForm.subLeaderId)?.contact.lastName}`
+                    : ''
+                }
+                onChange={(value) => {
+                  const member = teamContacts?.find((m) => `${m.contact.firstName} ${m.contact.lastName}` === value);
+                  setEditForm({ ...editForm, subLeaderId: member?.contact.id || '' });
+                }}
+                items={teamContacts?.map((member) => `${member.contact.firstName} ${member.contact.lastName}`) || []}
+                placeholder='Select sub leader'
+                searchPlaceholder='Search sub leader...'
+                allowCustom={false}
+                groupHeading='Contacts'
+              />
             </div>
             <div className='space-y-2'>
               <Label>Referral</Label>
-              <Select value={editForm.referralId} onValueChange={(value) => setEditForm({ ...editForm, referralId: value })}>
-                <SelectTrigger>
-                  <SelectValue placeholder='Select referral' />
-                </SelectTrigger>
-                <SelectContent>
-                  {contacts?.map((contact) => (
-                    <SelectItem key={contact.id} value={contact.id}>
-                      {contact.firstName} {contact.lastName}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Combobox
+                value={
+                  editForm.referralId
+                    ? `${contacts?.find((c) => c.id === editForm.referralId)?.firstName} ${contacts?.find((c) => c.id === editForm.referralId)?.lastName} (${
+                        contacts?.find((c) => c.id === editForm.referralId)?.email
+                      })`
+                    : ''
+                }
+                onChange={(value) => {
+                  const contact = contacts?.find((c) => `${c.firstName} ${c.lastName} (${c.email})` === value);
+                  setEditForm({ ...editForm, referralId: contact?.id || '' });
+                }}
+                items={contacts?.map((contact) => `${contact.firstName} ${contact.lastName} (${contact.email})`) || []}
+                placeholder='Select referral'
+                searchPlaceholder='Search referral...'
+                allowCustom={false}
+                groupHeading='Contacts'
+              />
+            </div>
+            <div className='space-y-2'>
+              <Label>Campaign Code</Label>
+              <Input value={editForm.campaignCode} onChange={(e) => setEditForm({ ...editForm, campaignCode: e.target.value })} placeholder='Enter campaign code' />
             </div>
             <div className='flex justify-end space-x-2'>
               <Button type='button' variant='outline' onClick={() => setIsEditModalOpen(false)}>
@@ -326,7 +451,7 @@ export default function TeamIdPage() {
         </DialogContent>
       </Dialog>
 
-      <CreateEvent
+      <EventDialog
         open={isNewMeetingModalOpen}
         onOpenChange={setIsNewMeetingModalOpen}
         onSubmit={handleCreateMeeting}
