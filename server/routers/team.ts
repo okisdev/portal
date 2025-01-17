@@ -294,10 +294,8 @@ export const teamRouter = createTRPCRouter({
     )
     .mutation(async ({ ctx, input }) => {
       return await ctx.db.transaction(async (tx) => {
-        // Delete calendar event first
         await tx.delete(calendarEvent).where(eq(calendarEvent.metadata, JSON.stringify({ teamMeetingId: input.id })));
 
-        // Then delete team meeting
         const [deletedMeeting] = await tx
           .delete(teamMeeting)
           .where(and(eq(teamMeeting.id, input.id), eq(teamMeeting.teamId, input.teamId)))

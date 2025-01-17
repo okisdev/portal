@@ -1,7 +1,7 @@
 'use client';
 
 import { ColorBadge } from '@/components/shared/color-badge';
-import { DateTimePicker } from '@/components/shared/date-time-picker';
+import { CreateEvent } from '@/components/shared/create-event';
 import { PageHeader } from '@/components/shared/page-header';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -34,6 +34,8 @@ export default function TeamIdPage() {
     teamId: teamId[0],
   });
   const { data: contacts } = api.contact.getAllContacts.useQuery(); // For contact selection
+  const { data: folders } = api.calendar.getFolders.useQuery();
+  const { data: participantOptions } = api.calendar.getParticipantOptions.useQuery();
 
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [newRemark, setNewRemark] = useState('');
@@ -44,11 +46,6 @@ export default function TeamIdPage() {
     leaderId: '',
     subLeaderId: '',
     referralId: '',
-  });
-  const [newMeeting, setNewMeeting] = useState({
-    title: '',
-    description: '',
-    meetingDate: new Date(),
   });
 
   const updateTeam = api.team.updateTeam.useMutation({
@@ -75,6 +72,12 @@ export default function TeamIdPage() {
   const deleteTeamMeeting = api.team.deleteTeamMeeting.useMutation({
     onSuccess: () => {
       utils.team.getTeamMeetings.invalidate({ teamId: teamId[0] });
+    },
+  });
+
+  const createFolder = api.calendar.createFolder.useMutation({
+    onSuccess: () => {
+      utils.calendar.getFolders.invalidate();
     },
   });
 
@@ -110,15 +113,16 @@ export default function TeamIdPage() {
     });
   };
 
-  const handleSubmitMeeting = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newMeeting.title.trim()) return;
-
-    createMeeting.mutate({
+  const handleCreateMeeting = async (data: any) => {
+    await createMeeting.mutateAsync({
       teamId: teamId[0],
-      ...newMeeting,
+      title: data.title,
+      description: data.description ?? '',
+      meetingDate: data.startAt,
     });
   };
+
+  const meetingsFolder = folders?.find((f) => f.name === `Team ${team.name} Meetings`);
 
   return (
     <div className='space-y-4 p-4'>
@@ -316,43 +320,29 @@ export default function TeamIdPage() {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={isNewMeetingModalOpen} onOpenChange={setIsNewMeetingModalOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Schedule New Meeting</DialogTitle>
-          </DialogHeader>
-          <form onSubmit={handleSubmitMeeting} className='space-y-4' noValidate>
-            <div className='space-y-2'>
-              <Label>Title</Label>
-              <Input value={newMeeting.title} onChange={(e) => setNewMeeting({ ...newMeeting, title: e.target.value })} placeholder='Meeting title' />
-            </div>
-            <div className='space-y-2'>
-              <Label>Description</Label>
-              <Textarea value={newMeeting.description} onChange={(e) => setNewMeeting({ ...newMeeting, description: e.target.value })} placeholder='Meeting description' />
-            </div>
-            <div className='space-y-2'>
-              <Label>Date and Time</Label>
-              <div
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault();
-                  }
-                }}
-              >
-                <DateTimePicker value={newMeeting.meetingDate} onChange={(date) => setNewMeeting({ ...newMeeting, meetingDate: date })} showTimePicker />
-              </div>
-            </div>
-            <div className='flex justify-end space-x-2'>
-              <Button type='button' variant='outline' onClick={() => setIsNewMeetingModalOpen(false)}>
-                Cancel
-              </Button>
-              <Button type='submit' disabled={createMeeting.isPending}>
-                Schedule Meeting
-              </Button>
-            </div>
-          </form>
-        </DialogContent>
-      </Dialog>
+      <CreateEvent
+        open={isNewMeetingModalOpen}
+        onOpenChange={setIsNewMeetingModalOpen}
+        onSubmit={handleCreateMeeting}
+        defaultValues={{
+          startAt: new Date(),
+          endAt: new Date(Date.now() + 60 * 60 * 1000),
+          folderId: meetingsFolder?.id ?? '',
+        }}
+        folders={folders}
+        participantOptions={
+          participantOptions && {
+            users: participantOptions.users.map((u) => ({ id: u.id, name: u.name || '' })),
+            contacts: participantOptions.contacts,
+          }
+        }
+        onCreateFolder={async (name) => {
+          await createFolder.mutateAsync({
+            name,
+            color: `#${Math.floor(Math.random() * 16777215).toString(16)}`,
+          });
+        }}
+      />
     </div>
   );
 }
