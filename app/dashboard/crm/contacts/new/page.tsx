@@ -16,7 +16,7 @@ import { api } from '@/utils/trpc/client';
 import { Download, Upload } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import Papa from 'papaparse';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { toast } from 'sonner';
 
 interface ContactFormData {
@@ -61,6 +61,8 @@ export default function ImportContacts() {
   const [activeTab, setActiveTab] = useState('simple');
   const [duplicates, setDuplicates] = useState<DuplicateContact[]>([]);
   const [hasDuplicates, setHasDuplicates] = useState(false);
+  const [isCancelling, setIsCancelling] = useState(false);
+  const cancelUploadRef = useRef(false);
 
   const checkExistingContacts = api.contact.checkExistingContacts.useQuery({ emails: csvData.map((contact) => contact.email) }, { enabled: false });
 
@@ -235,6 +237,7 @@ export default function ImportContacts() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    cancelUploadRef.current = false;
 
     const formatName = (firstName: string, lastName?: string) => {
       if (firstName && lastName) return `${firstName} ${lastName}`;
@@ -242,6 +245,10 @@ export default function ImportContacts() {
     };
 
     const processBatch = async (contacts: typeof csvData, startIdx: number, batchSize: number, totalContacts: number) => {
+      if (cancelUploadRef.current) {
+        throw new Error('Upload cancelled');
+      }
+
       const endIdx = Math.min(startIdx + batchSize, contacts.length);
       const batch = contacts.slice(startIdx, endIdx);
 
@@ -273,15 +280,19 @@ export default function ImportContacts() {
 
         const toastId = toast.loading(`Processing contacts... (0/${totalContacts})`);
 
-        while (processedCount < totalContacts) {
+        while (processedCount < totalContacts && !cancelUploadRef.current) {
           processedCount = await processBatch(nonDuplicateContacts, processedCount, batchSize, totalContacts);
           toast.loading(`Processing contacts... (${processedCount}/${totalContacts})`, { id: toastId });
         }
 
-        toast.success(
-          totalContacts !== csvData.length ? `Created ${totalContacts} contacts (${csvData.length - totalContacts} duplicates skipped)` : `Successfully created ${totalContacts} contacts`,
-          { id: toastId }
-        );
+        if (cancelUploadRef.current) {
+          toast.error(`Upload cancelled. ${processedCount} contacts were processed.`, { id: toastId });
+        } else {
+          toast.success(
+            totalContacts !== csvData.length ? `Created ${totalContacts} contacts (${csvData.length - totalContacts} duplicates skipped)` : `Successfully created ${totalContacts} contacts`,
+            { id: toastId }
+          );
+        }
       } else {
         toast.promise(
           createContact.mutateAsync({
@@ -304,12 +315,23 @@ export default function ImportContacts() {
         router.push('/dashboard/crm/contacts');
         router.refresh();
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating contact:', error);
-      toast.error('Failed to create contacts');
+      if (error.message === 'Upload cancelled') {
+        toast.error('Upload cancelled by user');
+      } else {
+        toast.error('Failed to create contacts');
+      }
     } finally {
       setIsLoading(false);
+      setIsCancelling(false);
+      cancelUploadRef.current = false;
     }
+  };
+
+  const handleCancelUpload = () => {
+    setIsCancelling(true);
+    cancelUploadRef.current = true;
   };
 
   const downloadDuplicates = () => {
@@ -372,24 +394,28 @@ export default function ImportContacts() {
                 description={`Total: ${csvData.length} Duplicates Removed: ${duplicates.length}`}
                 right={
                   <div className='mt-6 flex gap-4'>
-                    <Button type='submit' disabled={isLoading} onClick={handleSubmit} className='w-full sm:w-auto'>
-                      {isLoading ? 'Creating...' : showPreview ? 'Import Contacts' : 'Create Contact'}
-                    </Button>
-                    <Button
-                      type='button'
-                      variant='outline'
-                      onClick={() => {
-                        if (showPreview) {
-                          setShowPreview(false);
-                          setCsvData([]);
-                        } else {
-                          router.back();
-                        }
-                      }}
-                      className='w-full sm:w-auto'
-                    >
-                      {showPreview ? 'Cancel Import' : 'Cancel'}
-                    </Button>
+                    {isLoading ? (
+                      <Button type='button' variant='destructive' onClick={handleCancelUpload} disabled={isCancelling} className='w-full sm:w-auto'>
+                        {isCancelling ? 'Cancelling...' : 'Cancel Upload'}
+                      </Button>
+                    ) : (
+                      <>
+                        <Button type='submit' disabled={isLoading} onClick={handleSubmit} className='w-full sm:w-auto'>
+                          Import Contacts
+                        </Button>
+                        <Button
+                          type='button'
+                          variant='outline'
+                          onClick={() => {
+                            setShowPreview(false);
+                            setCsvData([]);
+                          }}
+                          className='w-full sm:w-auto'
+                        >
+                          Cancel Import
+                        </Button>
+                      </>
+                    )}
                   </div>
                 }
               />
