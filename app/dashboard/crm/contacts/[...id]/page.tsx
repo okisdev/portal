@@ -355,10 +355,11 @@ export default function ContactIdPage() {
                   <div>
                     <div className='flex items-center gap-2 text-sm'>
                       <span className='font-medium'>{activity.title}</span>
-                      <span className='text-gray-500'>by {getInitiatorLabel(activity)}</span>
-                      <span className='text-gray-500'>{formatDate(new Date(activity.createdAt))}</span>
+                      <span className='text-gray-500 text-xs'>
+                        by {getInitiatorLabel(activity)} - {formatDate(new Date(activity.createdAt))}
+                      </span>
                     </div>
-                    <p className='mt-1 text-gray-600 text-sm'>{activity.description}</p>
+                    <p className='mt-1 text-gray-600 text-xs'>{activity.description}</p>
                   </div>
                 </div>
               ))}

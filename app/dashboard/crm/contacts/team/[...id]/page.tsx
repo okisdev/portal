@@ -295,15 +295,21 @@ export default function TeamIdPage() {
             <div className='space-y-3'>
               <div>
                 <Label className='text-gray-500 text-xs'>Team Leader</Label>
-                <p className='text-sm'>{team.leaderId ? `${team.leader?.firstName} ${team.leader?.lastName}` : 'N/A'}</p>
+                <p className='text-sm'>
+                  <Link href={`/dashboard/crm/contacts/${team.leaderId}`}>{team.leaderId ? `${team.leader?.firstName} ${team.leader?.lastName}` : 'N/A'}</Link>
+                </p>
               </div>
               <div>
                 <Label className='text-gray-500 text-xs'>Sub Leader</Label>
-                <p className='text-sm'>{team.subLeaderId ? `${team.subLeader?.firstName} ${team.subLeader?.lastName}` : 'N/A'}</p>
+                <p className='text-sm'>
+                  <Link href={`/dashboard/crm/contacts/${team.subLeaderId}`}>{team.subLeaderId ? `${team.subLeader?.firstName} ${team.subLeader?.lastName}` : 'N/A'}</Link>
+                </p>
               </div>
               <div>
                 <Label className='text-gray-500 text-xs'>Referral</Label>
-                <p className='text-sm'>{team.referralId ? `${team.referral?.firstName} ${team.referral?.lastName}` : 'N/A'}</p>
+                <p className='text-sm'>
+                  <Link href={`/dashboard/crm/contacts/${team.referralId}`}>{team.referralId ? `${team.referral?.firstName} ${team.referral?.lastName}` : 'N/A'}</Link>
+                </p>
               </div>
               <div>
                 <Label className='text-gray-500 text-xs'>Campaign Code</Label>
