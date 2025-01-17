@@ -1,11 +1,22 @@
-import { contact, team, teamContact, teamMember, user } from '@/drizzle/schema';
+import { contact, team, teamContact } from '@/drizzle/schema';
 import { createTRPCRouter, protectedProcedure } from '@/server/trpc';
-import { and, eq, exists } from 'drizzle-orm';
+import { and, eq, exists, sql } from 'drizzle-orm';
 import { z } from 'zod';
 
 export const teamRouter = createTRPCRouter({
   getAllTeams: protectedProcedure.query(async ({ ctx }) => {
-    return await ctx.db.select().from(team);
+    return await ctx.db
+      .select({
+        id: team.id,
+        name: team.name,
+        description: team.description,
+        createdAt: team.createdAt,
+        createdBy: team.createdBy,
+        _count: {
+          contacts: sql<number>`(SELECT COUNT(*) FROM ${teamContact} WHERE ${teamContact.teamId} = ${team.id})`,
+        },
+      })
+      .from(team);
   }),
 
   getContactTeams: protectedProcedure.input(z.object({ contactId: z.string() })).query(({ ctx, input }) => {
@@ -38,12 +49,6 @@ export const teamRouter = createTRPCRouter({
           createdBy: ctx.session.user.id,
         })
         .returning();
-
-      await ctx.db.insert(teamMember).values({
-        teamId: newTeam.id,
-        userId: ctx.session.user.id,
-        role: 'admin',
-      });
 
       return newTeam;
     }),
@@ -99,21 +104,5 @@ export const teamRouter = createTRPCRouter({
       .from(contact)
       .innerJoin(teamContact, eq(teamContact.contactId, contact.id))
       .where(eq(teamContact.teamId, input.teamId));
-  }),
-
-  getTeamMembers: protectedProcedure.input(z.object({ teamId: z.string() })).query(async ({ ctx, input }) => {
-    return await ctx.db
-      .select({
-        id: teamMember.id,
-        role: teamMember.role,
-        user: {
-          id: user.id,
-          name: user.name,
-          email: user.email,
-        },
-      })
-      .from(teamMember)
-      .innerJoin(user, eq(user.id, teamMember.userId))
-      .where(eq(teamMember.teamId, input.teamId));
   }),
 });

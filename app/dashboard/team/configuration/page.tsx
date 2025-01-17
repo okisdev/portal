@@ -37,7 +37,7 @@ export default function TeamConfiguration() {
   ]);
 
   return (
-    <div className='space-y-6 p-6'>
+    <div className='space-y-4 p-4'>
       <PageHeader title='Team Configuration' description='Manage your team configuration' />
 
       <Tabs defaultValue='general' className='space-y-4'>

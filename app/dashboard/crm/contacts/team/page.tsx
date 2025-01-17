@@ -1,5 +1,6 @@
 'use client';
 
+import { PageHeader } from '@/components/shared/page-header';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -46,12 +47,15 @@ export default function TeamPage() {
 
   return (
     <div className='space-y-4 p-4'>
-      <div className='flex items-center justify-between'>
-        <h1 className='font-semibold text-2xl'>Teams</h1>
-        <Button onClick={() => setIsCreateModalOpen(true)}>
-          <Plus className='mr-2 size-4' /> Create Team
-        </Button>
-      </div>
+      <PageHeader
+        title='Teams'
+        description='Manage teams and their contacts.'
+        right={
+          <Button variant='outline' className='h-8' onClick={() => setIsCreateModalOpen(true)}>
+            <Plus className='mr-2 size-4' /> Create Team
+          </Button>
+        }
+      />
 
       <div className='rounded-lg border bg-white'>
         <Table>
@@ -59,7 +63,7 @@ export default function TeamPage() {
             <TableRow>
               <TableHead>Team Name</TableHead>
               <TableHead>Description</TableHead>
-              <TableHead>Members</TableHead>
+              <TableHead>Contacts</TableHead>
               <TableHead>Created</TableHead>
             </TableRow>
           </TableHeader>
@@ -73,9 +77,7 @@ export default function TeamPage() {
                   </div>
                 </TableCell>
                 <TableCell>{team.description}</TableCell>
-                <TableCell>
-                  <div className='-space-x-2 flex'>{/* TODO: Add team members avatars here when available */}</div>
-                </TableCell>
+                <TableCell>{team._count.contacts}</TableCell>
                 <TableCell>{formatDate(new Date(team.createdAt))}</TableCell>
               </TableRow>
             ))}

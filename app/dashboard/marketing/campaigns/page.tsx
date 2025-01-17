@@ -66,7 +66,7 @@ export default function MarketingCampaignsPage() {
   const filteredCampaigns = sampleCampaigns.filter((campaign) => campaign.name.toLowerCase().includes(searchQuery.toLowerCase()));
 
   return (
-    <div className='space-y-6 p-6'>
+    <div className='space-y-4 p-4'>
       <PageHeader title='Marketing Campaigns' description='Create and manage marketing campaigns' right={<Button variant='outline'>New Campaign</Button>} />
 
       <div className='grid grid-cols-1 gap-4 md:grid-cols-3'>

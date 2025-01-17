@@ -337,22 +337,6 @@ export const team = pgTable('team', {
   updatedAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
 });
 
-export const teamMember = pgTable('teamMember', {
-  id: text()
-    .primaryKey()
-    .notNull()
-    .$defaultFn(() => crypto.randomUUID()),
-  teamId: text()
-    .notNull()
-    .references(() => team.id, { onDelete: 'cascade' }),
-  userId: text()
-    .notNull()
-    .references(() => user.id, { onDelete: 'cascade' }),
-  role: text('role', { enum: ['admin', 'member'] }).default('member'),
-  createdAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
-  updatedAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
-});
-
 export const teamContact = pgTable('teamContact', {
   id: text()
     .primaryKey()

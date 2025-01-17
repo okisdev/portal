@@ -158,7 +158,7 @@ export default function CRMContactsPage() {
   };
 
   return (
-    <div className='space-y-6 p-6'>
+    <div className='space-y-4 p-4'>
       <PageHeader title='Contacts' description='Manage contacts' />
 
       <div className='flex flex-col gap-4'>

@@ -75,7 +75,7 @@ export default function PaymentsPage() {
   const successRate = payments?.length ? (successfulPayments / payments.length) * 100 : 0;
 
   return (
-    <div className='space-y-6 p-6'>
+    <div className='space-y-4 p-4'>
       <PageHeader title='Payments' description='Manage your payments' />
 
       <Tabs defaultValue='overview' className='space-y-4'>
