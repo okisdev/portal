@@ -15,7 +15,7 @@ import { insuranceCompanies, sources } from '@/data/data';
 import type { Priority, Status } from '@/lib/schema';
 import { formatDate } from '@/lib/utils';
 import { api } from '@/utils/trpc/client';
-import { Building2, Calendar, CalendarIcon, Edit2, Mail, Phone, Trash2 } from 'lucide-react';
+import { Building2, Calendar, CalendarIcon, Edit2, Mail, Phone, Trash2, Users } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
 import { notFound, useParams } from 'next/navigation';
@@ -38,6 +38,10 @@ export default function ContactIdPage() {
   const { data: appointments } = api.calendar.getAppointmentsByContactId.useQuery({
     contactId: contactId[0],
   });
+  const { data: allTeams } = api.team.getAllTeams.useQuery();
+  const { data: contactTeams } = api.team.getContactTeams.useQuery({
+    contactId: contactId[0],
+  });
 
   const [newActivity, setNewActivity] = useState('');
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -55,11 +59,20 @@ export default function ContactIdPage() {
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
   const [appointmentDate, setAppointmentDate] = useState<Date>();
   const [appointmentNotes, setAppointmentNotes] = useState('');
+  const [isTeamModalOpen, setIsTeamModalOpen] = useState(false);
+  const [selectedTeam, setSelectedTeam] = useState<string>('');
 
   const createContactActivity = api.contact.createContactActivity.useMutation({
     onSuccess: () => {
       setNewActivity('');
       refetchActivities();
+    },
+  });
+
+  const assignToTeam = api.team.assignContactToTeam.useMutation({
+    onSuccess: () => {
+      setIsTeamModalOpen(false);
+      utils.contact.getContactById.invalidate({ id: contactId });
     },
   });
 
@@ -129,6 +142,14 @@ export default function ContactIdPage() {
       priority: contact?.priority || 'low',
     });
     setIsEditModalOpen(true);
+  };
+
+  const handleAssignTeam = () => {
+    if (!selectedTeam) return;
+    assignToTeam.mutate({
+      contactId,
+      teamId: selectedTeam,
+    });
   };
 
   const handleSubmitEdit = (e: React.FormEvent) => {
@@ -206,6 +227,14 @@ export default function ContactIdPage() {
                   {contact.company}
                 </div>
               )}
+              <div className='flex items-center gap-1'>
+                <Users className='size-3' />
+                {contactTeams?.map((team) => (
+                  <Link key={team.id} href={`/dashboard/crm/contacts/team/${team.id}`} className='hover:text-gray-700'>
+                    {team.name}
+                  </Link>
+                ))}
+              </div>
               {contact?.email && (
                 <Link href={`mailto:${contact.email}`} className='flex items-center gap-1 hover:text-gray-700'>
                   <Mail className='size-3' />
@@ -464,6 +493,37 @@ export default function ContactIdPage() {
               </Button>
             </div>
           </form>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isTeamModalOpen} onOpenChange={setIsTeamModalOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Assign to Team</DialogTitle>
+          </DialogHeader>
+
+          <div className='space-y-4'>
+            <div className='space-y-2'>
+              <Label>Select Team</Label>
+              <Select value={selectedTeam} onValueChange={setSelectedTeam}>
+                <SelectTrigger>
+                  <SelectValue placeholder='Select a team' />
+                </SelectTrigger>
+                <SelectContent>
+                  {allTeams?.map((team) => (
+                    <SelectItem key={team.id} value={team.id}>
+                      {team.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className='flex justify-end gap-2'>
+              <Button onClick={handleAssignTeam} disabled={assignToTeam.isPending || !selectedTeam}>
+                Assign
+              </Button>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
     </div>

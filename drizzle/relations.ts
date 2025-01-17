@@ -14,6 +14,9 @@ import {
   paymentTrack,
   session,
   subscriptionCoupon,
+  team,
+  teamContact,
+  teamMember,
   user,
 } from './schema';
 
@@ -32,6 +35,8 @@ export const userRelations = relations(user, ({ many }) => ({
   calendarEvents: many(calendarEvent),
   sharedCalendarEvents: many(calendarEventShare, { relationName: 'sharedWithUser' }),
   eventParticipations: many(calendarEventParticipant),
+  teams: many(teamMember),
+  createdTeams: many(team, { relationName: 'teamCreator' }),
 }));
 
 export const authenticatorRelations = relations(authenticator, ({ one }) => ({
@@ -58,6 +63,7 @@ export const contactRelations = relations(contact, ({ many, one }) => ({
     references: [user.id],
   }),
   eventParticipations: many(calendarEventParticipant),
+  teams: many(teamContact),
 }));
 
 export const contactConversationRelations = relations(contactConversation, ({ one }) => ({
@@ -158,5 +164,40 @@ export const calendarEventParticipantRelations = relations(calendarEventParticip
   contact: one(contact, {
     fields: [calendarEventParticipant.participantId],
     references: [contact.id],
+  }),
+}));
+
+export const teamRelations = relations(team, ({ many, one }) => ({
+  creator: one(user, {
+    fields: [team.createdBy],
+    references: [user.id],
+  }),
+  members: many(teamMember),
+  contacts: many(teamContact),
+}));
+
+export const teamMemberRelations = relations(teamMember, ({ one }) => ({
+  team: one(team, {
+    fields: [teamMember.teamId],
+    references: [team.id],
+  }),
+  user: one(user, {
+    fields: [teamMember.userId],
+    references: [user.id],
+  }),
+}));
+
+export const teamContactRelations = relations(teamContact, ({ one }) => ({
+  team: one(team, {
+    fields: [teamContact.teamId],
+    references: [team.id],
+  }),
+  contact: one(contact, {
+    fields: [teamContact.contactId],
+    references: [contact.id],
+  }),
+  assignedUser: one(user, {
+    fields: [teamContact.assignedTo],
+    references: [user.id],
   }),
 }));
