@@ -214,7 +214,7 @@ export default function ContactIdPage() {
           <div className='space-y-1'>
             <div className='flex items-center gap-2'>
               <h1 className='font-semibold text-xl'>{contact?.name}</h1>
-              <ColorBadge type='status' value={contact?.status || 'lead'} />
+              <ColorBadge type='contactStatus' value={contact?.status || 'lead'} />
             </div>
             <div className='flex items-center gap-2 text-gray-500 text-sm'>
               {contact?.company && (
@@ -223,10 +223,10 @@ export default function ContactIdPage() {
                   {contact.company}
                 </div>
               )}
-              {contact?.leadingTeams?.length && contact?.leadingTeams?.length > 0 && (
+              {contact?.teams?.length && contact?.teams?.length > 0 && (
                 <div className='flex items-center gap-1'>
                   <Users className='size-3' />
-                  {contact?.leadingTeams?.map((team) => (
+                  {contact?.teams?.map((team) => (
                     <Link key={team.id} href={`/dashboard/crm/contacts/team/${team.id}`} className='hover:text-gray-700'>
                       {team.name}
                     </Link>
@@ -289,13 +289,13 @@ export default function ContactIdPage() {
                   <Select value={contact?.status || 'lead'} onValueChange={handleStatusChange}>
                     <SelectTrigger className='h-8'>
                       <SelectValue>
-                        <ColorBadge type='status' value={contact?.status || 'lead'} />
+                        <ColorBadge type='contactStatus' value={contact?.status || 'lead'} />
                       </SelectValue>
                     </SelectTrigger>
                     <SelectContent>
                       {['lead', 'prospect', 'customer', 'churned', 'opportunity'].map((status) => (
                         <SelectItem key={status} value={status}>
-                          <ColorBadge type='status' value={status} />
+                          <ColorBadge type='contactStatus' value={status} />
                         </SelectItem>
                       ))}
                     </SelectContent>

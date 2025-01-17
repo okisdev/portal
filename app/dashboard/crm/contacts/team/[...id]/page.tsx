@@ -12,7 +12,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { formatDate } from '@/lib/utils';
 import { api } from '@/utils/trpc/client';
-import { Calendar, Edit2, Trash2 } from 'lucide-react';
+import { Calendar, Edit2, Plus, Trash2 } from 'lucide-react';
+import Link from 'next/link';
 import { notFound, useParams } from 'next/navigation';
 import { useState } from 'react';
 
@@ -144,11 +145,19 @@ export default function TeamIdPage() {
 
       <div className='grid grid-cols-3 gap-4'>
         <div className='col-span-2 space-y-4'>
-          <div className='rounded-lg border bg-white p-4'>
-            <h2 className='mb-4 font-semibold'>Team Members</h2>
+          <div className='space-y-2 rounded-lg border bg-white p-4'>
+            <div className='flex items-center justify-between'>
+              <p className='font-semibold'>Team Members</p>
+              <div className='flex items-center gap-2'>
+                <p className='text-gray-500 text-sm'>total {teamContacts?.length} members</p>
+                <Button variant='outline' size='sm' className='h-8'>
+                  <Plus className='mr-1 size-4' /> Add Member
+                </Button>
+              </div>
+            </div>
             <div className='space-y-3'>
               {teamContacts?.map((member) => (
-                <div key={member.id} className='flex items-center justify-between rounded-lg border p-2'>
+                <Link key={member.id} href={`/dashboard/crm/contacts/${member.contact.id}`} className='flex items-center justify-between rounded-lg border p-2 transition-colors hover:bg-gray-50'>
                   <div className='flex items-center gap-2'>
                     <Avatar className='size-8'>
                       <AvatarFallback>{member.contact.firstName.charAt(0)}</AvatarFallback>
@@ -160,7 +169,7 @@ export default function TeamIdPage() {
                       <p className='text-gray-500 text-sm'>{member.contact.email}</p>
                     </div>
                   </div>
-                </div>
+                </Link>
               ))}
             </div>
           </div>
@@ -231,7 +240,10 @@ export default function TeamIdPage() {
                   <Calendar className='size-4 text-gray-500' />
                   <div className='flex-1'>
                     <p className='font-medium'>{meeting.title}</p>
-                    <p className='text-gray-500 text-xs'>{formatDate(new Date(meeting.meetingDate))}</p>
+                    <p className='text-gray-500 text-xs'>
+                      {formatDate(new Date(meeting.meetingDate))}
+                      {meeting.status === 'completed' && ' (Past)'}
+                    </p>
                   </div>
                   <ColorBadge type='status' value={meeting.status || 'upcoming'} />
                   <Button

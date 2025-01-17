@@ -1,4 +1,4 @@
-import { contact, contactActivity, team } from '@/drizzle/schema';
+import { contact, contactActivity, team, teamContact } from '@/drizzle/schema';
 import { prioritySchema, statusSchema } from '@/lib/schema';
 import { createTRPCRouter, protectedProcedure } from '@/server/trpc';
 import { desc, eq, sql } from 'drizzle-orm';
@@ -27,6 +27,11 @@ export const contactRouter = createTRPCRouter({
         skills: contact.skills,
         status: contact.status,
         lastContactedAt: contact.lastContactedAt,
+        teams: sql<Array<{ id: string; name: string }>>`
+          (SELECT json_agg(json_build_object('id', t.id, 'name', t.name))
+           FROM ${team} t 
+           INNER JOIN ${teamContact} tc ON tc."teamId" = t.id
+           WHERE tc."contactId" = ${input.id})`,
         leadingTeams: sql<Array<{ id: string; name: string }>>`
           (SELECT json_agg(json_build_object('id', t.id, 'name', t.name))
            FROM ${team} t 

@@ -1,4 +1,4 @@
-import { boolean, foreignKey, integer, pgTable, serial, text, timestamp, unique, varchar } from 'drizzle-orm/pg-core';
+import { boolean, foreignKey, integer, pgTable, serial, text, timestamp, unique, uuid, varchar } from 'drizzle-orm/pg-core';
 
 export const verificationToken = pgTable('verificationToken', {
   identifier: text().notNull(),
@@ -382,10 +382,18 @@ export const teamMeeting = pgTable('teamMeeting', {
   title: text().notNull(),
   description: text(),
   meetingDate: timestamp({ mode: 'date' }).notNull(),
-  status: text('status', { enum: ['upcoming', 'completed', 'cancelled'] }).default('upcoming'),
+  status: text('status', { enum: ['upcoming', 'completed', 'cancelled', 'no_show'] }).default('upcoming'),
   createdBy: text()
     .notNull()
     .references(() => user.id),
   createdAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
   updatedAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
+});
+
+export const teamMembers = pgTable('team_members', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  teamId: uuid('teamId').references(() => team.id, { onDelete: 'cascade' }),
+  contactId: uuid('contactId').references(() => contact.id, { onDelete: 'cascade' }),
+  createdAt: timestamp('createdAt').defaultNow(),
+  updatedAt: timestamp('updatedAt').defaultNow(),
 });

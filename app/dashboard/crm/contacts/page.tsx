@@ -372,7 +372,7 @@ export default function CRMContactsPage() {
                         </div>
                       )}
                       {column.id === 'email' && contact.email}
-                      {column.id === 'status' && <ColorBadge type='status' value={contact.status} />}
+                      {column.id === 'status' && <ColorBadge type='contactStatus' value={contact.status} />}
                       {column.id === 'source' && <span className='capitalize'>{contact.source?.replace('_', ' ') || '—'}</span>}
                       {column.id === 'priority' && <ColorBadge type='priority' value={contact.priority ?? 'medium'} />}
                       {column.id === 'createdAt' && formatDate(new Date(contact.createdAt))}
