@@ -91,6 +91,38 @@ export default function ImportContacts() {
     return !row.firstName && !row.lastName && !row.email && !row.phone && !row.company;
   };
 
+  const parseFullName = (fullName: string): { firstName: string; lastName: string } => {
+    if (!fullName) return { firstName: '', lastName: '' };
+
+    // Trim and remove extra spaces
+    const cleanName = fullName.trim().replace(/\s+/g, ' ');
+
+    // Check if it's a Chinese name (contains Chinese characters)
+    if (/[\u4e00-\u9fa5]/.test(cleanName)) {
+      // For Chinese names, first character is lastName, rest is firstName
+      return {
+        lastName: cleanName.charAt(0),
+        firstName: cleanName.slice(1),
+      };
+    }
+
+    // For western names, split by space
+    const parts = cleanName.split(' ');
+    if (parts.length >= 2) {
+      // If there are multiple parts, treat last part as lastName
+      return {
+        firstName: parts.slice(0, -1).join(' '),
+        lastName: parts[parts.length - 1],
+      };
+    }
+
+    // If single word or unsure, use it as firstName
+    return {
+      firstName: cleanName,
+      lastName: '',
+    };
+  };
+
   const handleCsvUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -98,7 +130,34 @@ export default function ImportContacts() {
     Papa.parse(file, {
       header: true,
       complete: async (results) => {
-        const parsedData = (results.data as ContactFormData[]).filter((row) => !isRowEmpty(row));
+        const parsedData = (results.data as any[])
+          .filter((row) => row.name || row.firstName || row.email) // Filter empty rows
+          .map((row) => {
+            // If the row already has firstName/lastName, use those
+            if (row.firstName || row.lastName) {
+              return {
+                firstName: row.firstName || '',
+                lastName: row.lastName || '',
+                email: row.email || '',
+                phone: row.phone || '',
+                company: row.company || '',
+                status: row.status || 'lead',
+              };
+            }
+
+            // Otherwise parse from the name field
+            const { firstName, lastName } = parseFullName(row.name || '');
+            return {
+              firstName,
+              lastName,
+              email: row.email || '',
+              phone: row.phone || '',
+              company: row.company || '',
+              status: row.status || 'lead',
+            };
+          })
+          .filter((row) => !isRowEmpty(row));
+
         setCsvData(parsedData);
 
         const duplicatesMap = new Map<string, DuplicateContact[]>();
@@ -164,33 +223,61 @@ export default function ImportContacts() {
     e.preventDefault();
     setIsLoading(true);
 
+    const formatName = (firstName: string, lastName?: string) => {
+      if (firstName && lastName) return `${firstName} ${lastName}`;
+      return firstName || '';
+    };
+
     try {
       if (showPreview && csvData.length > 0) {
         const nonDuplicateContacts = csvData.filter((contact) => !isRowEmpty(contact) && !duplicates.some((d) => d.email === contact.email));
 
-        for (const contact of nonDuplicateContacts) {
-          await createContact.mutateAsync({
-            firstName: contact.firstName,
-            lastName: contact.lastName,
-            email: contact.email,
-            phone: contact.phone || '',
-          });
-        }
-        toast.success(`${nonDuplicateContacts.length} contacts created successfully`);
-        if (nonDuplicateContacts.length !== csvData.length) {
-          toast.info(`${csvData.length - nonDuplicateContacts.length} duplicate contacts were skipped`);
-        }
-      } else {
-        await createContact.mutateAsync({
-          firstName: formData.firstName,
-          lastName: formData.lastName,
-          email: formData.email,
-          phone: formData.phone || '',
-        });
-      }
+        await toast.promise(
+          Promise.all(
+            nonDuplicateContacts.map((contact) =>
+              createContact.mutateAsync({
+                firstName: contact.firstName,
+                lastName: contact.lastName,
+                name: formatName(contact.firstName, contact.lastName),
+                email: contact.email,
+                phone: contact.phone || '',
+              })
+            )
+          ),
+          {
+            loading: `Creating ${nonDuplicateContacts.length} contacts...`,
+            success: () => {
+              if (nonDuplicateContacts.length !== csvData.length) {
+                return `Created ${nonDuplicateContacts.length} contacts (${csvData.length - nonDuplicateContacts.length} duplicates skipped)`;
+              }
+              return `Successfully created ${nonDuplicateContacts.length} contacts`;
+            },
+            error: 'Failed to create contacts',
+          }
+        );
 
-      router.push('/dashboard/crm/contacts');
-      router.refresh();
+        router.push('/dashboard/crm/contacts');
+        router.refresh();
+      } else {
+        // Single contact creation
+        await toast.promise(
+          createContact.mutateAsync({
+            firstName: formData.firstName,
+            lastName: formData.lastName,
+            name: formatName(formData.firstName, formData.lastName),
+            email: formData.email,
+            phone: formData.phone || '',
+          }),
+          {
+            loading: 'Creating contact...',
+            success: 'Contact created successfully',
+            error: 'Failed to create contact',
+          }
+        );
+
+        router.push('/dashboard/crm/contacts');
+        router.refresh();
+      }
     } catch (error) {
       console.error('Error creating contact:', error);
     } finally {

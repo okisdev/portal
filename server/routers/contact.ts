@@ -55,6 +55,7 @@ export const contactRouter = createTRPCRouter({
   createContact: protectedProcedure
     .input(
       z.object({
+        name: z.string().optional(),
         firstName: z.string().optional(),
         lastName: z.string().optional(),
         email: z.string(),
@@ -75,6 +76,7 @@ export const contactRouter = createTRPCRouter({
       const result = await ctx.db
         .insert(contact)
         .values({
+          name: input.name ?? `${input.firstName} ${input.lastName}` ?? '',
           firstName: input.firstName ?? '',
           lastName: input.lastName ?? '',
           email: input.email,
