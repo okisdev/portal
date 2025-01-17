@@ -29,6 +29,7 @@ interface ContactFormData {
   jobTitle?: string;
   status: Status;
   source?: string;
+  remark?: string;
 }
 
 interface DuplicateContact {
@@ -51,6 +52,7 @@ export default function ImportContacts() {
     jobTitle: '',
     status: 'lead',
     source: '',
+    remark: '',
   });
 
   const [isLoading, setIsLoading] = useState(false);
@@ -63,10 +65,6 @@ export default function ImportContacts() {
   const checkExistingContacts = api.contact.checkExistingContacts.useQuery({ emails: csvData.map((contact) => contact.email) }, { enabled: false });
 
   const createContact = api.contact.createContact.useMutation({
-    onSuccess: () => {
-      toast.success('Contact created successfully');
-      router.push('/dashboard/crm/contacts');
-    },
     onError: (error) => {
       toast.error(error.message);
     },
@@ -144,6 +142,8 @@ export default function ImportContacts() {
                     phone: row.phone || '',
                     company: row.company || '',
                     status: row.status || 'lead',
+                    source: row.source || '',
+                    remark: row.remark || '',
                   };
                 }
 
@@ -155,6 +155,8 @@ export default function ImportContacts() {
                   phone: row.phone || '',
                   company: row.company || '',
                   status: row.status || 'lead',
+                  source: row.source || '',
+                  remark: row.remark || '',
                 };
               })
               .filter((row) => !isRowEmpty(row));
@@ -243,7 +245,7 @@ export default function ImportContacts() {
       if (showPreview && csvData.length > 0) {
         const nonDuplicateContacts = csvData.filter((contact) => !isRowEmpty(contact) && !duplicates.some((d) => d.email === contact.email));
 
-        await toast.promise(
+        toast.promise(
           Promise.all(
             nonDuplicateContacts.map((contact) =>
               createContact.mutateAsync({
@@ -252,6 +254,9 @@ export default function ImportContacts() {
                 name: formatName(contact.firstName, contact.lastName),
                 email: contact.email,
                 phone: contact.phone || '',
+                company: contact.company || '',
+                source: formData.source || '',
+                remark: formData.remark || '',
               })
             )
           ),
@@ -266,18 +271,17 @@ export default function ImportContacts() {
             error: 'Failed to create contacts',
           }
         );
-
-        router.push('/dashboard/crm/contacts');
-        router.refresh();
       } else {
-        // Single contact creation
-        await toast.promise(
+        toast.promise(
           createContact.mutateAsync({
             firstName: formData.firstName,
             lastName: formData.lastName,
             name: formatName(formData.firstName, formData.lastName),
             email: formData.email,
             phone: formData.phone || '',
+            company: formData.company || '',
+            source: formData.source || '',
+            remark: formData.remark || '',
           }),
           {
             loading: 'Creating contact...',
@@ -388,6 +392,8 @@ export default function ImportContacts() {
                       <TableHead>Phone</TableHead>
                       <TableHead>Company</TableHead>
                       <TableHead>Status</TableHead>
+                      <TableHead>Source</TableHead>
+                      <TableHead>Remark</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -423,6 +429,19 @@ export default function ImportContacts() {
                                 <SelectItem value='opportunity'>Opportunity</SelectItem>
                               </SelectContent>
                             </Select>
+                          </TableCell>
+                          <TableCell>
+                            <Combobox
+                              value={row.source ?? ''}
+                              onChange={(value) => handleCsvEdit(index, 'source', value)}
+                              items={sources}
+                              placeholder='Select source...'
+                              searchPlaceholder='Search source...'
+                              groupHeading='Sources'
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <Input value={row.remark} onChange={(e) => handleCsvEdit(index, 'remark', e.target.value)} />
                           </TableCell>
                         </TableRow>
                       ))}
@@ -513,29 +532,29 @@ export default function ImportContacts() {
                   />
                 </div>
               </div>
+
+              <div className='flex gap-4'>
+                <Button type='submit' disabled={isLoading} onClick={handleSubmit} className='w-full sm:w-auto'>
+                  {isLoading ? 'Creating...' : showPreview ? 'Import Contacts' : 'Create Contact'}
+                </Button>
+                <Button
+                  type='button'
+                  variant='outline'
+                  onClick={() => {
+                    if (showPreview) {
+                      setShowPreview(false);
+                      setCsvData([]);
+                    } else {
+                      router.back();
+                    }
+                  }}
+                  className='w-full sm:w-auto'
+                >
+                  {showPreview ? 'Cancel Import' : 'Cancel'}
+                </Button>
+              </div>
             </form>
           )}
-
-          <div className='mt-6 flex gap-4'>
-            <Button type='submit' disabled={isLoading} onClick={handleSubmit} className='w-full sm:w-auto'>
-              {isLoading ? 'Creating...' : showPreview ? 'Import Contacts' : 'Create Contact'}
-            </Button>
-            <Button
-              type='button'
-              variant='outline'
-              onClick={() => {
-                if (showPreview) {
-                  setShowPreview(false);
-                  setCsvData([]);
-                } else {
-                  router.back();
-                }
-              }}
-              className='w-full sm:w-auto'
-            >
-              {showPreview ? 'Cancel Import' : 'Cancel'}
-            </Button>
-          </div>
         </TabsContent>
 
         <TabsContent value='existing'>
