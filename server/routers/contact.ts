@@ -27,6 +27,7 @@ export const contactRouter = createTRPCRouter({
         skills: contact.skills,
         status: contact.status,
         lastContactedAt: contact.lastContactedAt,
+        notes: contact.notes,
         teams: sql<Array<{ id: string; name: string }>>`
           (SELECT json_agg(json_build_object('id', t.id, 'name', t.name))
            FROM ${team} t 
@@ -155,6 +156,7 @@ export const contactRouter = createTRPCRouter({
         status: statusSchema.optional(),
         source: z.string().optional(),
         lastContactedAt: z.date().optional(),
+        notes: z.string().optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {

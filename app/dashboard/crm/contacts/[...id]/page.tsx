@@ -27,9 +27,8 @@ import { useEffect, useState } from 'react';
 export default function ContactIdPage() {
   const router = useRouter();
   const { id: contactId } = useParams<{ id: string }>();
-  const mode = useSearchParams().get('mode');
-
-  console.log(mode);
+  const searchParams = useSearchParams();
+  const mode = searchParams.get('mode');
 
   const { data: session } = useSession();
 
@@ -47,7 +46,6 @@ export default function ContactIdPage() {
   });
   const { data: allTeams } = api.team.getAllTeams.useQuery();
 
-  const [newActivity, setNewActivity] = useState('');
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editForm, setEditForm] = useState({
     firstName: '',
@@ -58,6 +56,7 @@ export default function ContactIdPage() {
     status: 'lead' as Status,
     source: '',
     priority: 'medium' as Priority,
+    notes: '',
   });
 
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
@@ -71,13 +70,6 @@ export default function ContactIdPage() {
     description: string;
     startAt: Date;
   } | null>(null);
-
-  const createContactActivity = api.contact.createContactActivity.useMutation({
-    onSuccess: () => {
-      setNewActivity('');
-      refetchActivities();
-    },
-  });
 
   const assignToTeam = api.team.assignContactToTeam.useMutation({
     onSuccess: () => {
@@ -137,6 +129,7 @@ export default function ContactIdPage() {
         status: contact.status || 'lead',
         source: contact.source || '',
         priority: contact.priority || 'low',
+        notes: contact.notes || '',
       });
       setIsEditModalOpen(true);
     }
@@ -160,20 +153,6 @@ export default function ContactIdPage() {
     return activity.initiatorId || 'Unknown User';
   };
 
-  const handleSubmitActivity = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newActivity.trim()) return;
-
-    createContactActivity.mutate({
-      contactId: contactId[0],
-      type: 'note',
-      initiatorType: 'user',
-      initiatorId: session?.user.id || '',
-      title: 'Quick Note',
-      description: newActivity,
-    });
-  };
-
   const handleEditClick = () => {
     setEditForm({
       firstName: contact?.firstName || '',
@@ -184,12 +163,14 @@ export default function ContactIdPage() {
       status: contact?.status || 'lead',
       source: contact?.source || '',
       priority: contact?.priority || 'low',
+      notes: contact?.notes || '',
     });
     setIsEditModalOpen(true);
   };
 
   const handleAssignTeam = () => {
     if (!selectedTeam) return;
+
     assignToTeam.mutate({
       contactId,
       teamId: selectedTeam,
@@ -208,6 +189,7 @@ export default function ContactIdPage() {
       status: editForm.status,
       source: editForm.source,
       priority: editForm.priority,
+      notes: editForm.notes,
     });
   };
 
@@ -222,6 +204,7 @@ export default function ContactIdPage() {
       company: contact?.company || '',
       source: contact?.source || '',
       priority: contact?.priority || 'medium',
+      notes: contact?.notes || '',
     });
   };
 
@@ -236,11 +219,13 @@ export default function ContactIdPage() {
       company: contact?.company || '',
       source: contact?.source || '',
       status: contact?.status || 'lead',
+      notes: contact?.notes || '',
     });
   };
 
   const handleBookAppointment = (e: React.FormEvent) => {
     e.preventDefault();
+
     if (!appointmentDate) return;
 
     createAppointment.mutate({
@@ -260,235 +245,251 @@ export default function ContactIdPage() {
   };
 
   return (
-    <div className='space-y-4 p-4'>
-      <div className='flex items-center justify-between rounded-lg border bg-white p-4'>
-        <div className='flex items-center gap-4'>
-          <Avatar className='size-12'>
-            <AvatarImage src='' />
-            <AvatarFallback>{contact?.name?.charAt(0) || ''}</AvatarFallback>
-          </Avatar>
-          <div className='space-y-1'>
-            <div className='flex items-center gap-2'>
-              <h1 className='font-medium text-xl'>{contact?.name}</h1>
-              <ColorBadge type='contactStatus' value={contact?.status || 'lead'} />
-            </div>
-            <div className='flex items-center gap-2 text-neutral-500 text-sm'>
-              {contact?.company && (
-                <div className='flex items-center gap-1'>
-                  <Building2 className='size-3' />
-                  {contact.company}
+    <div className='container mx-auto space-y-6 p-6'>
+      <div className='grid grid-cols-1 gap-6 lg:grid-cols-3'>
+        {/* Left Panel - Contact Info */}
+        <div className='lg:col-span-1'>
+          <div className='rounded-lg border bg-white shadow-sm'>
+            {/* Contact Header */}
+            <div className='p-6 border-b'>
+              <div className='flex items-start gap-4'>
+                <Avatar className='size-16'>
+                  <AvatarImage src='' />
+                  <AvatarFallback>{contact?.name?.charAt(0) || ''}</AvatarFallback>
+                </Avatar>
+                <div className='flex-1 min-w-0'>
+                  <div className='flex items-center gap-2 mb-2'>
+                    <h1 className='text-xl font-semibold truncate'>{contact?.name}</h1>
+                    <ColorBadge type='contactStatus' value={contact?.status || 'lead'} />
+                  </div>
+                  <div className='space-y-1 text-sm text-muted-foreground'>
+                    {contact?.company && (
+                      <div className='flex items-center gap-2'>
+                        <Building2 className='size-4 shrink-0' />
+                        <span className='truncate'>{contact.company}</span>
+                      </div>
+                    )}
+                    {contact?.teams && contact.teams.length > 0 && (
+                      <div className='flex items-center gap-2'>
+                        <Users className='size-4 shrink-0' />
+                        <div className='flex flex-wrap gap-1'>
+                          {contact?.teams?.map((team) => (
+                            <Link key={team.id} href={`/dashboard/crm/contacts/team/${team.id}`} className='hover:text-primary'>
+                              {team.name}
+                            </Link>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    {contact?.email && (
+                      <Link href={`mailto:${contact.email}`} className='flex items-center gap-2 hover:text-primary'>
+                        <Mail className='size-4 shrink-0' />
+                        <span className='truncate'>{contact.email}</span>
+                      </Link>
+                    )}
+                    {contact?.phone && (
+                      <Link href={`https://wa.me/${contact.phone.replace(/\D/g, '')}`} className='flex items-center gap-2 hover:text-primary'>
+                        <Phone className='size-4 shrink-0' />
+                        <span>{contact.phone}</span>
+                      </Link>
+                    )}
+                  </div>
                 </div>
-              )}
-              {contact?.teams?.length && contact?.teams?.length > 0 && (
-                <div className='flex items-center gap-1'>
-                  <Users className='size-3' />
-                  {contact?.teams?.map((team) => (
-                    <Link key={team.id} href={`/dashboard/crm/contacts/team/${team.id}`} className='hover:text-gray-700'>
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className='px-6 py-4 border-b'>
+              <div className='flex gap-3'>
+                <Button variant='outline' size='sm' className='flex-1' onClick={() => setIsBookingModalOpen(true)}>
+                  <CalendarIcon className='mr-2 size-4' /> Book Meeting
+                </Button>
+                <Button variant='outline' size='sm' className='flex-1' onClick={handleEditClick}>
+                  <Edit2 className='mr-2 size-4' /> Edit
+                </Button>
+              </div>
+            </div>
+
+            {/* Contact Stats */}
+            <div className='p-6 border-b'>
+              <div className='grid grid-cols-1 gap-4'>
+                {[
+                  { label: 'Last Contact', value: contact?.lastContactedAt ? formatDate(new Date(contact.lastContactedAt)) : '—' },
+                  {
+                    label: 'Priority',
+                    value: (
+                      <Select value={contact?.priority || 'medium'} onValueChange={handlePriorityChange}>
+                        <SelectTrigger className='h-8'>
+                          <SelectValue>
+                            <ColorBadge type='priority' value={contact?.priority || 'medium'} />
+                          </SelectValue>
+                        </SelectTrigger>
+                        <SelectContent>
+                          {['high', 'medium', 'low'].map((priority) => (
+                            <SelectItem key={priority} value={priority}>
+                              <ColorBadge type='priority' value={priority} />
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    ),
+                  },
+                  {
+                    label: 'Status',
+                    value: (
+                      <Select value={contact?.status || 'lead'} onValueChange={handleStatusChange}>
+                        <SelectTrigger className='h-8'>
+                          <SelectValue>
+                            <ColorBadge type='contactStatus' value={contact?.status || 'lead'} />
+                          </SelectValue>
+                        </SelectTrigger>
+                        <SelectContent>
+                          {['lead', 'prospect', 'customer', 'churned', 'opportunity'].map((status) => (
+                            <SelectItem key={status} value={status}>
+                              <ColorBadge type='contactStatus' value={status} />
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    ),
+                  },
+                ].map((item) => (
+                  <div key={item.label} className='space-y-1.5'>
+                    <div className='text-sm text-muted-foreground'>{item.label}</div>
+                    <div>{item.value}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Quick Notes */}
+            <div className='p-6 border-b'>
+              <div className='flex items-center justify-between mb-4'>
+                <h2 className='font-medium'>Quick Notes</h2>
+                <Button variant='outline' size='sm' onClick={handleEditClick}>
+                  <Edit2 className='mr-2 size-4' /> Edit Notes
+                </Button>
+              </div>
+              <p className='text-sm text-muted-foreground whitespace-pre-wrap'>{contact?.notes || 'No notes added yet. Click edit to add notes about this contact.'}</p>
+            </div>
+
+            {/* Upcoming Meetings */}
+            <div className='p-6 border-b'>
+              <h2 className='font-medium mb-4'>Upcoming Meetings</h2>
+              <div className='space-y-4'>
+                {appointments?.map((apt) => (
+                  <div key={apt.id} className='flex items-center gap-3'>
+                    <Calendar className='size-4 text-muted-foreground shrink-0' />
+                    <div className='flex-1 min-w-0'>
+                      <p className='font-medium truncate'>{apt.title}</p>
+                      <p className='text-sm text-muted-foreground'>{formatDate(new Date(apt.startAt))}</p>
+                    </div>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant='ghost' size='icon' className='shrink-0'>
+                          <MoreHorizontal className='size-4' />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align='end'>
+                        <DropdownMenuItem
+                          onClick={() =>
+                            setEditingAppointment({
+                              id: apt.id,
+                              title: apt.title,
+                              description: apt.description || '',
+                              startAt: new Date(apt.startAt),
+                            })
+                          }
+                        >
+                          <Edit2 className='mr-2 size-4' />
+                          Edit
+                        </DropdownMenuItem>
+                        <DropdownMenuItem className='text-destructive' onClick={() => deleteAppointment.mutate(apt.id)}>
+                          <Trash2 className='mr-2 size-4' />
+                          Delete
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Recent Payments */}
+            <div className='p-6 border-b'>
+              <h2 className='font-medium mb-4'>Recent Payments</h2>
+              <div className='space-y-3'>
+                {payments?.slice(0, 3).map((payment) => (
+                  <div key={payment.id} className='flex items-center justify-between'>
+                    <span className='text-sm text-muted-foreground'>{formatDate(new Date(payment.created * 1000))}</span>
+                    <span className={cn('font-medium', payment.status === 'succeeded' ? 'text-green-600' : 'text-destructive')}>
+                      {new Intl.NumberFormat('en-US', {
+                        style: 'currency',
+                        currency: payment.currency,
+                      }).format(payment.amount)}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Team Roles */}
+            <div className='p-6'>
+              <h2 className='font-medium mb-4'>Team Roles</h2>
+              <div className='space-y-3'>
+                {contact?.leadingTeams?.map((team) => (
+                  <div key={team.id} className='flex items-center justify-between'>
+                    <Link href={`/dashboard/crm/contacts/team/${team.id}`} className='text-sm hover:text-primary'>
                       {team.name}
                     </Link>
-                  ))}
-                </div>
-              )}
-              {contact?.email && (
-                <Link href={`mailto:${contact.email}`} className='flex items-center gap-1 hover:text-gray-700'>
-                  <Mail className='size-3' />
-                  {contact.email}
-                </Link>
-              )}
-              {contact?.phone && (
-                <Link href={`https://wa.me/${contact.phone.replace(/\D/g, '')}`} className='flex items-center gap-1 hover:text-gray-700'>
-                  <Phone className='size-3' />
-                  {contact.phone}
-                </Link>
-              )}
-            </div>
-          </div>
-        </div>
-        <div className='flex gap-2'>
-          <Button variant='outline' size='sm' onClick={() => setIsBookingModalOpen(true)}>
-            <CalendarIcon className='mr-1 size-4' /> Book Meeting
-          </Button>
-          <Button variant='outline' size='sm' onClick={handleEditClick}>
-            <Edit2 className='mr-1 size-4' /> Edit
-          </Button>
-        </div>
-      </div>
-
-      <div className='grid grid-cols-3 gap-4'>
-        <div className='col-span-2 space-y-4'>
-          <div className='grid grid-cols-4 gap-4'>
-            {[
-              { label: 'Created', value: formatDate(new Date(contact?.createdAt || '')) },
-              { label: 'Last Contact', value: contact?.lastContactedAt ? formatDate(new Date(contact.lastContactedAt)) : '—' },
-              {
-                label: 'Priority',
-                value: (
-                  <Select value={contact?.priority || 'medium'} onValueChange={handlePriorityChange}>
-                    <SelectTrigger className='h-8'>
-                      <SelectValue>
-                        <ColorBadge type='priority' value={contact?.priority || 'medium'} />
-                      </SelectValue>
-                    </SelectTrigger>
-                    <SelectContent>
-                      {['high', 'medium', 'low'].map((priority) => (
-                        <SelectItem key={priority} value={priority}>
-                          <ColorBadge type='priority' value={priority} />
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                ),
-              },
-              {
-                label: 'Status',
-                value: (
-                  <Select value={contact?.status || 'lead'} onValueChange={handleStatusChange}>
-                    <SelectTrigger className='h-8'>
-                      <SelectValue>
-                        <ColorBadge type='contactStatus' value={contact?.status || 'lead'} />
-                      </SelectValue>
-                    </SelectTrigger>
-                    <SelectContent>
-                      {['lead', 'prospect', 'customer', 'churned', 'opportunity'].map((status) => (
-                        <SelectItem key={status} value={status}>
-                          <ColorBadge type='contactStatus' value={status} />
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                ),
-              },
-            ].map((item) => (
-              <div key={item.label} className='rounded-lg border bg-white p-3'>
-                <p className='text-neutral-500 text-xs'>{item.label}</p>
-                <div className='mt-1 text-sm'>{item.value}</div>
+                    <span className='text-xs text-muted-foreground'>Team Leader</span>
+                  </div>
+                ))}
+                {contact?.subLeadingTeams?.map((team) => (
+                  <div key={team.id} className='flex items-center justify-between'>
+                    <Link href={`/dashboard/crm/contacts/team/${team.id}`} className='text-sm hover:text-primary'>
+                      {team.name}
+                    </Link>
+                    <span className='text-xs text-muted-foreground'>Sub Leader</span>
+                  </div>
+                ))}
+                {contact?.referralTeams?.map((team) => (
+                  <div key={team.id} className='flex items-center justify-between'>
+                    <Link href={`/dashboard/crm/contacts/team/${team.id}`} className='text-sm hover:text-primary'>
+                      {team.name}
+                    </Link>
+                    <span className='text-xs text-muted-foreground'>Referral</span>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
-
-          <div className='rounded-lg border bg-white p-4'>
-            <div className='mb-4 flex items-center justify-between'>
-              <h2 className='font-medium'>Activity</h2>
-              <form onSubmit={handleSubmitActivity} className='ml-4 flex max-w-md flex-1 gap-2'>
-                <Input value={newActivity} onChange={(e) => setNewActivity(e.target.value)} placeholder='Add note...' className='h-8' />
-                <Button type='submit' size='sm' disabled={createContactActivity.isPending}>
-                  Add
-                </Button>
-              </form>
-            </div>
-
-            <div className='max-h-[500px] space-y-3 overflow-y-auto'>
-              {activities?.map((activity) => (
-                <div key={activity.id} className='flex gap-3 border-b pb-3 last:border-0'>
-                  <div className='mt-2 size-2 shrink-0 rounded-full bg-green-500' />
-                  <div>
-                    <div className='flex items-center gap-2 text-sm'>
-                      <span className='font-medium'>{activity.title}</span>
-                      <span className='text-neutral-500 text-xs'>
-                        by {getInitiatorLabel(activity)} - {formatDate(new Date(activity.createdAt))}
-                      </span>
-                    </div>
-                    <p className='mt-1 text-gray-600 text-xs'>{activity.description}</p>
-                  </div>
-                </div>
-              ))}
             </div>
           </div>
         </div>
 
-        <div className='space-y-4'>
-          <div className='rounded-lg border bg-white p-4'>
-            <div className='mb-3 flex items-center justify-between'>
-              <h2 className='font-medium'>Upcoming Meetings</h2>
-            </div>
-            <div className='space-y-3'>
-              {appointments?.map((apt) => (
-                <div key={apt.id} className='flex items-center gap-3 text-sm'>
-                  <Calendar className='size-4 text-neutral-500' />
-                  <div className='flex-1'>
-                    <p className='font-medium'>{apt.title}</p>
-                    <p className='text-neutral-500 text-xs'>{formatDate(new Date(apt.startAt))}</p>
+        {/* Right Panel - Activity Feed */}
+        <div className='lg:col-span-2'>
+          <div className='rounded-lg border bg-white shadow-sm'>
+            <div className='p-6'>
+              <div className='flex items-center justify-between mb-6'>
+                <h2 className='font-medium'>Activity History</h2>
+              </div>
+
+              <div className='space-y-4 max-h-[calc(100vh-16rem)] overflow-y-auto'>
+                {activities?.map((activity) => (
+                  <div key={activity.id} className='flex gap-4 pb-4 border-b last:border-0'>
+                    <div className='mt-1.5 size-2 rounded-full bg-primary shrink-0' />
+                    <div className='flex-1 min-w-0'>
+                      <div className='flex items-center gap-2 mb-1'>
+                        <span className='font-medium text-sm'>{activity.title}</span>
+                        <span className='text-xs text-muted-foreground'>
+                          by {getInitiatorLabel(activity)} - {formatDate(new Date(activity.createdAt))}
+                        </span>
+                      </div>
+                      <p className='text-sm text-muted-foreground'>{activity.description}</p>
+                    </div>
                   </div>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant='ghost' size='icon'>
-                        <MoreHorizontal className='size-4' />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align='end'>
-                      <DropdownMenuItem
-                        className='cursor-pointer'
-                        onClick={() =>
-                          setEditingAppointment({
-                            id: apt.id,
-                            title: apt.title,
-                            description: apt.description || '',
-                            startAt: new Date(apt.startAt),
-                          })
-                        }
-                      >
-                        <Edit2 className='mr-2 size-4' />
-                        Edit
-                      </DropdownMenuItem>
-                      <DropdownMenuItem className='cursor-pointer text-destructive' onClick={() => deleteAppointment.mutate(apt.id)}>
-                        <Trash2 className='mr-2 size-4' />
-                        Delete
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className='rounded-lg border bg-white p-4'>
-            <div className='mb-3 flex items-center justify-between'>
-              <h2 className='font-medium'>Recent Payments</h2>
-            </div>
-            <div className='space-y-2'>
-              {payments?.slice(0, 3).map((payment) => (
-                <div key={payment.id} className='flex items-center justify-between text-sm'>
-                  <span>{formatDate(new Date(payment.created * 1000))}</span>
-                  <span className={cn('font-medium', payment.status === 'succeeded' ? 'text-green-600' : 'text-neutral-500')}>
-                    {new Intl.NumberFormat('en-US', {
-                      style: 'currency',
-                      currency: payment.currency,
-                    }).format(payment.amount)}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className='rounded-lg border bg-white p-4'>
-            <div className='mb-3'>
-              <h2 className='font-medium'>Team Roles</h2>
-            </div>
-            <div className='space-y-3'>
-              {contact?.leadingTeams?.map((team) => (
-                <div key={team.id} className='flex items-center justify-between text-sm'>
-                  <Link href={`/dashboard/crm/contacts/team/${team.id}`} className='hover:text-blue-600'>
-                    {team.name}
-                  </Link>
-                  <span className='text-neutral-500 text-xs'>Team Leader</span>
-                </div>
-              ))}
-              {contact?.subLeadingTeams?.map((team) => (
-                <div key={team.id} className='flex items-center justify-between text-sm'>
-                  <Link href={`/dashboard/crm/contacts/team/${team.id}`} className='hover:text-blue-600'>
-                    {team.name}
-                  </Link>
-                  <span className='text-neutral-500 text-xs'>Sub Leader</span>
-                </div>
-              ))}
-              {contact?.referralTeams?.map((team) => (
-                <div key={team.id} className='flex items-center justify-between text-sm'>
-                  <Link href={`/dashboard/crm/contacts/team/${team.id}`} className='hover:text-blue-600'>
-                    {team.name}
-                  </Link>
-                  <span className='text-neutral-500 text-xs'>Referral</span>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           </div>
         </div>
@@ -568,6 +569,15 @@ export default function ContactIdPage() {
                   <SelectItem value='low'>Low</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+            <div className='space-y-2'>
+              <Label htmlFor='notes'>Quick Notes</Label>
+              <Textarea
+                id='notes'
+                value={editForm.notes}
+                onChange={(e) => setEditForm({ ...editForm, notes: e.target.value })}
+                placeholder='Add quick notes about the contact (e.g., easy-going, likes pets)'
+              />
             </div>
             <div className='flex justify-end space-x-2'>
               <Button type='button' variant='outline' onClick={handleCloseEditModal}>
