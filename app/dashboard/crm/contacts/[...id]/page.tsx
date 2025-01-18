@@ -56,9 +56,9 @@ export default function ContactIdPage() {
     status: 'lead' as Status,
     source: '',
     priority: 'medium' as Priority,
-    notes: '',
   });
 
+  const [newActivity, setNewActivity] = useState('');
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
   const [appointmentDate, setAppointmentDate] = useState<Date>();
   const [appointmentNotes, setAppointmentNotes] = useState('');
@@ -106,6 +106,13 @@ export default function ContactIdPage() {
     },
   });
 
+  const createContactActivity = api.contact.createContactActivity.useMutation({
+    onSuccess: () => {
+      setNewActivity('');
+      refetchActivities();
+    },
+  });
+
   const handleEditAppointment = (data: any) => {
     if (!editingAppointment) return;
 
@@ -129,7 +136,6 @@ export default function ContactIdPage() {
         status: contact.status || 'lead',
         source: contact.source || '',
         priority: contact.priority || 'low',
-        notes: contact.notes || '',
       });
       setIsEditModalOpen(true);
     }
@@ -163,7 +169,6 @@ export default function ContactIdPage() {
       status: contact?.status || 'lead',
       source: contact?.source || '',
       priority: contact?.priority || 'low',
-      notes: contact?.notes || '',
     });
     setIsEditModalOpen(true);
   };
@@ -189,7 +194,6 @@ export default function ContactIdPage() {
       status: editForm.status,
       source: editForm.source,
       priority: editForm.priority,
-      notes: editForm.notes,
     });
   };
 
@@ -204,7 +208,6 @@ export default function ContactIdPage() {
       company: contact?.company || '',
       source: contact?.source || '',
       priority: contact?.priority || 'medium',
-      notes: contact?.notes || '',
     });
   };
 
@@ -219,7 +222,6 @@ export default function ContactIdPage() {
       company: contact?.company || '',
       source: contact?.source || '',
       status: contact?.status || 'lead',
-      notes: contact?.notes || '',
     });
   };
 
@@ -244,25 +246,38 @@ export default function ContactIdPage() {
     router.replace(newUrl);
   };
 
+  const handleSubmitActivity = (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!newActivity.trim()) return;
+
+    createContactActivity.mutate({
+      contactId: contactId[0],
+      type: 'note',
+      initiatorType: 'user',
+      initiatorId: session?.user.id || '',
+      title: 'Quick Note',
+      description: newActivity,
+    });
+  };
+
   return (
     <div className='container mx-auto space-y-6 p-6'>
       <div className='grid grid-cols-1 gap-6 lg:grid-cols-3'>
-        {/* Left Panel - Contact Info */}
         <div className='lg:col-span-1'>
           <div className='rounded-lg border bg-white shadow-sm'>
-            {/* Contact Header */}
-            <div className='p-6 border-b'>
+            <div className='border-b p-6'>
               <div className='flex items-start gap-4'>
                 <Avatar className='size-16'>
                   <AvatarImage src='' />
                   <AvatarFallback>{contact?.name?.charAt(0) || ''}</AvatarFallback>
                 </Avatar>
-                <div className='flex-1 min-w-0'>
-                  <div className='flex items-center gap-2 mb-2'>
-                    <h1 className='text-xl font-semibold truncate'>{contact?.name}</h1>
+                <div className='min-w-0 flex-1'>
+                  <div className='mb-2 flex items-center gap-2'>
+                    <h1 className='truncate font-semibold text-xl'>{contact?.name}</h1>
                     <ColorBadge type='contactStatus' value={contact?.status || 'lead'} />
                   </div>
-                  <div className='space-y-1 text-sm text-muted-foreground'>
+                  <div className='space-y-1 text-muted-foreground text-sm'>
                     {contact?.company && (
                       <div className='flex items-center gap-2'>
                         <Building2 className='size-4 shrink-0' />
@@ -282,13 +297,13 @@ export default function ContactIdPage() {
                       </div>
                     )}
                     {contact?.email && (
-                      <Link href={`mailto:${contact.email}`} className='flex items-center gap-2 hover:text-primary'>
+                      <Link href={`mailto:${contact.email}`} target='_blank' rel='noopener noreferrer' className='flex items-center gap-2 hover:text-primary'>
                         <Mail className='size-4 shrink-0' />
                         <span className='truncate'>{contact.email}</span>
                       </Link>
                     )}
                     {contact?.phone && (
-                      <Link href={`https://wa.me/${contact.phone.replace(/\D/g, '')}`} className='flex items-center gap-2 hover:text-primary'>
+                      <Link href={`https://wa.me/${contact.phone.replace(/\D/g, '')}`} target='_blank' rel='noopener noreferrer' className='flex items-center gap-2 hover:text-primary'>
                         <Phone className='size-4 shrink-0' />
                         <span>{contact.phone}</span>
                       </Link>
@@ -298,8 +313,7 @@ export default function ContactIdPage() {
               </div>
             </div>
 
-            {/* Action Buttons */}
-            <div className='px-6 py-4 border-b'>
+            <div className='border-b px-6 py-4'>
               <div className='flex gap-3'>
                 <Button variant='outline' size='sm' className='flex-1' onClick={() => setIsBookingModalOpen(true)}>
                   <CalendarIcon className='mr-2 size-4' /> Book Meeting
@@ -310,8 +324,7 @@ export default function ContactIdPage() {
               </div>
             </div>
 
-            {/* Contact Stats */}
-            <div className='p-6 border-b'>
+            <div className='border-b p-6'>
               <div className='grid grid-cols-1 gap-4'>
                 {[
                   { label: 'Last Contact', value: contact?.lastContactedAt ? formatDate(new Date(contact.lastContactedAt)) : '—' },
@@ -355,34 +368,32 @@ export default function ContactIdPage() {
                   },
                 ].map((item) => (
                   <div key={item.label} className='space-y-1.5'>
-                    <div className='text-sm text-muted-foreground'>{item.label}</div>
+                    <div className='text-muted-foreground text-sm'>{item.label}</div>
                     <div>{item.value}</div>
                   </div>
                 ))}
               </div>
             </div>
 
-            {/* Quick Notes */}
-            <div className='p-6 border-b'>
-              <div className='flex items-center justify-between mb-4'>
+            <div className='border-b p-6'>
+              <div className='mb-4 flex items-center justify-between'>
                 <h2 className='font-medium'>Quick Notes</h2>
                 <Button variant='outline' size='sm' onClick={handleEditClick}>
                   <Edit2 className='mr-2 size-4' /> Edit Notes
                 </Button>
               </div>
-              <p className='text-sm text-muted-foreground whitespace-pre-wrap'>{contact?.notes || 'No notes added yet. Click edit to add notes about this contact.'}</p>
+              <p className='whitespace-pre-wrap text-muted-foreground text-sm'>{contact?.notes || 'No notes added yet. Click edit to add notes about this contact.'}</p>
             </div>
 
-            {/* Upcoming Meetings */}
-            <div className='p-6 border-b'>
-              <h2 className='font-medium mb-4'>Upcoming Meetings</h2>
+            <div className='border-b p-6'>
+              <h2 className='mb-4 font-medium'>Upcoming Meetings</h2>
               <div className='space-y-4'>
                 {appointments?.map((apt) => (
                   <div key={apt.id} className='flex items-center gap-3'>
-                    <Calendar className='size-4 text-muted-foreground shrink-0' />
-                    <div className='flex-1 min-w-0'>
-                      <p className='font-medium truncate'>{apt.title}</p>
-                      <p className='text-sm text-muted-foreground'>{formatDate(new Date(apt.startAt))}</p>
+                    <Calendar className='size-4 shrink-0 text-muted-foreground' />
+                    <div className='min-w-0 flex-1'>
+                      <p className='truncate font-medium'>{apt.title}</p>
+                      <p className='text-muted-foreground text-sm'>{formatDate(new Date(apt.startAt))}</p>
                     </div>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
@@ -415,13 +426,12 @@ export default function ContactIdPage() {
               </div>
             </div>
 
-            {/* Recent Payments */}
-            <div className='p-6 border-b'>
-              <h2 className='font-medium mb-4'>Recent Payments</h2>
+            <div className='border-b p-6'>
+              <h2 className='mb-4 font-medium'>Recent Payments</h2>
               <div className='space-y-3'>
                 {payments?.slice(0, 3).map((payment) => (
                   <div key={payment.id} className='flex items-center justify-between'>
-                    <span className='text-sm text-muted-foreground'>{formatDate(new Date(payment.created * 1000))}</span>
+                    <span className='text-muted-foreground text-sm'>{formatDate(new Date(payment.created * 1000))}</span>
                     <span className={cn('font-medium', payment.status === 'succeeded' ? 'text-green-600' : 'text-destructive')}>
                       {new Intl.NumberFormat('en-US', {
                         style: 'currency',
@@ -433,16 +443,15 @@ export default function ContactIdPage() {
               </div>
             </div>
 
-            {/* Team Roles */}
             <div className='p-6'>
-              <h2 className='font-medium mb-4'>Team Roles</h2>
+              <h2 className='mb-4 font-medium'>Team Roles</h2>
               <div className='space-y-3'>
                 {contact?.leadingTeams?.map((team) => (
                   <div key={team.id} className='flex items-center justify-between'>
                     <Link href={`/dashboard/crm/contacts/team/${team.id}`} className='text-sm hover:text-primary'>
                       {team.name}
                     </Link>
-                    <span className='text-xs text-muted-foreground'>Team Leader</span>
+                    <span className='text-muted-foreground text-xs'>Team Leader</span>
                   </div>
                 ))}
                 {contact?.subLeadingTeams?.map((team) => (
@@ -450,7 +459,7 @@ export default function ContactIdPage() {
                     <Link href={`/dashboard/crm/contacts/team/${team.id}`} className='text-sm hover:text-primary'>
                       {team.name}
                     </Link>
-                    <span className='text-xs text-muted-foreground'>Sub Leader</span>
+                    <span className='text-muted-foreground text-xs'>Sub Leader</span>
                   </div>
                 ))}
                 {contact?.referralTeams?.map((team) => (
@@ -458,7 +467,7 @@ export default function ContactIdPage() {
                     <Link href={`/dashboard/crm/contacts/team/${team.id}`} className='text-sm hover:text-primary'>
                       {team.name}
                     </Link>
-                    <span className='text-xs text-muted-foreground'>Referral</span>
+                    <span className='text-muted-foreground text-xs'>Referral</span>
                   </div>
                 ))}
               </div>
@@ -466,26 +475,31 @@ export default function ContactIdPage() {
           </div>
         </div>
 
-        {/* Right Panel - Activity Feed */}
         <div className='lg:col-span-2'>
           <div className='rounded-lg border bg-white shadow-sm'>
             <div className='p-6'>
-              <div className='flex items-center justify-between mb-6'>
-                <h2 className='font-medium'>Activity History</h2>
+              <div className='mb-6 flex items-center justify-between'>
+                <h2 className='font-medium'>Activity</h2>
+                <form onSubmit={handleSubmitActivity} className='flex max-w-md flex-1 gap-2'>
+                  <Input value={newActivity} onChange={(e) => setNewActivity(e.target.value)} placeholder='Add note...' className='h-9' />
+                  <Button type='submit' size='sm' disabled={createContactActivity.isPending}>
+                    Add
+                  </Button>
+                </form>
               </div>
 
-              <div className='space-y-4 max-h-[calc(100vh-16rem)] overflow-y-auto'>
+              <div className='max-h-[calc(100vh-16rem)] space-y-4 overflow-y-auto'>
                 {activities?.map((activity) => (
-                  <div key={activity.id} className='flex gap-4 pb-4 border-b last:border-0'>
-                    <div className='mt-1.5 size-2 rounded-full bg-primary shrink-0' />
-                    <div className='flex-1 min-w-0'>
-                      <div className='flex items-center gap-2 mb-1'>
+                  <div key={activity.id} className='flex gap-4 border-b pb-4 last:border-0'>
+                    <div className='mt-1.5 size-2 shrink-0 rounded-full bg-primary' />
+                    <div className='min-w-0 flex-1'>
+                      <div className='mb-1 flex items-center gap-2'>
                         <span className='font-medium text-sm'>{activity.title}</span>
-                        <span className='text-xs text-muted-foreground'>
+                        <span className='text-muted-foreground text-xs'>
                           by {getInitiatorLabel(activity)} - {formatDate(new Date(activity.createdAt))}
                         </span>
                       </div>
-                      <p className='text-sm text-muted-foreground'>{activity.description}</p>
+                      <p className='text-muted-foreground text-sm'>{activity.description}</p>
                     </div>
                   </div>
                 ))}
@@ -569,15 +583,6 @@ export default function ContactIdPage() {
                   <SelectItem value='low'>Low</SelectItem>
                 </SelectContent>
               </Select>
-            </div>
-            <div className='space-y-2'>
-              <Label htmlFor='notes'>Quick Notes</Label>
-              <Textarea
-                id='notes'
-                value={editForm.notes}
-                onChange={(e) => setEditForm({ ...editForm, notes: e.target.value })}
-                placeholder='Add quick notes about the contact (e.g., easy-going, likes pets)'
-              />
             </div>
             <div className='flex justify-end space-x-2'>
               <Button type='button' variant='outline' onClick={handleCloseEditModal}>

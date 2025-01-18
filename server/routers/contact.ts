@@ -63,7 +63,7 @@ export const contactRouter = createTRPCRouter({
         phone: z.string().optional(),
         company: z.string().optional(),
         source: z.string().optional(),
-        remark: z.string().optional(),
+        notes: z.string().optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -85,20 +85,9 @@ export const contactRouter = createTRPCRouter({
           phone: input.phone ?? '',
           company: input.company ?? '',
           source: input.source ?? '',
+          notes: input.notes ?? '',
         })
         .returning();
-
-      if (input.remark) {
-        await ctx.db.insert(contactActivity).values({
-          contactId: result[0].id,
-          userId: ctx.session?.user.id,
-          type: 'remark',
-          title: 'Remark',
-          description: input.remark,
-          initiatorType: 'user',
-          initiatorId: ctx.session?.user.id,
-        });
-      }
 
       return result[0];
     }),
