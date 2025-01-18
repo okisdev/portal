@@ -1,22 +1,25 @@
 'use client';
 
+import { DeleteAlertDialog } from '@/components/shared/delete-alert-dialog';
 import { PageHeader } from '@/components/shared/page-header';
 import { PageLoading } from '@/components/shared/page-loading';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import type { User, UserRole } from '@/lib/schema';
 import { api } from '@/utils/trpc/client';
-import { Delete, Pencil } from 'lucide-react';
+import { MoreHorizontal, Pencil, Trash } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
 export default function TeamPage() {
   const [editingUser, setEditingUser] = useState<User | null>(null);
+  const [userToDelete, setUserToDelete] = useState<User | null>(null);
 
   const utils = api.useUtils();
 
@@ -35,9 +38,11 @@ export default function TeamPage() {
     onSuccess: () => {
       utils.admin.getUsers.invalidate();
       toast.success('User deleted successfully');
+      setUserToDelete(null);
     },
     onError: (error) => {
       toast.error(error.message);
+      setUserToDelete(null);
     },
   });
 
@@ -116,13 +121,24 @@ export default function TeamPage() {
                   <TableCell>{user.username ?? 'N/A'}</TableCell>
                   <TableCell>{user.email}</TableCell>
                   <TableCell>{user.role}</TableCell>
-                  <TableCell className='space-x-2 text-right'>
-                    <Button variant='outline' size='sm' onClick={() => handleEditUser(user)}>
-                      <Pencil className='h-4 w-4' />
-                    </Button>
-                    <Button variant='destructive' size='sm' onClick={() => deleteUser(user.id)}>
-                      <Delete className='h-4 w-4' />
-                    </Button>
+                  <TableCell className='text-right'>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant='ghost' className='h-8 w-8 p-0'>
+                          <MoreHorizontal className='h-4 w-4' />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align='end'>
+                        <DropdownMenuItem className='cursor-pointer' onClick={() => handleEditUser(user)}>
+                          <Pencil className='mr-2 h-4 w-4' />
+                          Edit
+                        </DropdownMenuItem>
+                        <DropdownMenuItem className='cursor-pointer text-destructive' onClick={() => setUserToDelete(user)}>
+                          <Trash className='mr-2 h-4 w-4' />
+                          Delete
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </TableCell>
                 </TableRow>
               ))}
@@ -181,6 +197,14 @@ export default function TeamPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <DeleteAlertDialog
+        open={userToDelete !== null}
+        onOpenChange={(open) => !open && setUserToDelete(null)}
+        onConfirm={() => userToDelete && deleteUser(userToDelete.id)}
+        title='Delete User'
+        description='Are you sure you want to delete this user? This action cannot be undone and will remove all associated data.'
+      />
     </div>
   );
 }

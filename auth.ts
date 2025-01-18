@@ -1,7 +1,6 @@
 import { database } from '@/lib/database';
 import { credentialSchema } from '@/lib/schema';
 import { getUserFromDb } from '@/utils/database';
-import { encryptPassword } from '@/utils/password';
 import { DrizzleAdapter } from '@auth/drizzle-adapter';
 import bcrypt from 'bcrypt-edge';
 import NextAuth from 'next-auth';
@@ -21,13 +20,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         try {
           const { email, password } = await credentialSchema.parseAsync(credentials);
 
-          const pwHash = encryptPassword(password);
-
-          console.log(email, pwHash);
-
           const dbUser = await getUserFromDb(email);
-
-          console.log(dbUser);
 
           if (!dbUser || !dbUser.password) {
             throw new Error('Invalid credentials.');
@@ -54,8 +47,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       },
     }),
     Resend({
-      from: 'crm-no-reply@resend.okisdev.com',
-      name: 'CRM',
+      from: 'portal-no-reply@resend.okisdev.com',
+      name: 'Portal',
     }),
   ],
   session: {

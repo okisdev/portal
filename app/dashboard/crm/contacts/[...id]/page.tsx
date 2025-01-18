@@ -430,7 +430,7 @@ export default function ContactIdPage() {
                         <Edit2 className='mr-2 size-4' />
                         Edit
                       </DropdownMenuItem>
-                      <DropdownMenuItem className='cursor-pointer text-red-600' onClick={() => deleteAppointment.mutate(apt.id)}>
+                      <DropdownMenuItem className='cursor-pointer text-destructive' onClick={() => deleteAppointment.mutate(apt.id)}>
                         <Trash2 className='mr-2 size-4' />
                         Delete
                       </DropdownMenuItem>

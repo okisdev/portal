@@ -4,7 +4,7 @@ import type { ReactNode } from 'react';
 
 interface BannerProps {
   title: string;
-  description: string;
+  description?: string;
   variant?: 'warning' | 'success' | 'error' | 'info';
   action?: {
     label: string;
@@ -49,7 +49,7 @@ export function Banner({ title, description, variant = 'info', action }: BannerP
         <AlertCircle className={`h-5 w-5 ${styles.icon}`} />
         <h3 className={`font-medium ${styles.title}`}>{title}</h3>
       </div>
-      <p className={`mb-2 text-sm ${styles.description}`}>{description}</p>
+      {description && <p className={`mb-2 text-sm ${styles.description}`}>{description}</p>}
       {action && (
         <Button variant='outline' size='sm' onClick={action.onClick}>
           {action.icon}

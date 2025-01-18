@@ -6,8 +6,8 @@ import { Toaster } from '@/components/ui/sonner';
 import { cn } from '@/lib/utils';
 
 export const metadata: Metadata = {
-  title: 'CRM',
-  description: 'CRM',
+  title: 'Portal',
+  description: 'Portal',
 };
 
 export default function RootLayout({

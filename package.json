@@ -1,5 +1,8 @@
 {
-  "name": "crm",
+  "name": "portal",
+  "description": "Portal is a platform for managing your business.",
+  "author": "Harry Yep <git@hode.co.uk>",
+  "license": "UNLICENSED",
   "version": "0.0.1",
   "private": true,
   "scripts": {

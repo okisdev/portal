@@ -13,7 +13,7 @@ import type { CalendarEventWithParticipants, CalendarFolder } from '@/lib/schema
 import { cn } from '@/lib/utils';
 import { api } from '@/utils/trpc/client';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { ChevronDown, ChevronLeft, ChevronRight, MoreHorizontal, Plus } from 'lucide-react';
+import { ChevronDown, ChevronLeft, ChevronRight, MoreHorizontal, Pencil, Plus, Trash } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
@@ -48,7 +48,6 @@ export default function DashboardPersonalCalendar() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [yearMonthPickerOpen, setYearMonthPickerOpen] = useState(false);
-  const [isCalendarFolded, setIsCalendarFolded] = useState(false);
   const [isEventDialogOpen, setIsEventDialogOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<CalendarEventWithParticipants | null>(null);
   const [isEditMode, setIsEditMode] = useState(false);
@@ -349,85 +348,96 @@ export default function DashboardPersonalCalendar() {
           </Button>
 
           <div className='flex flex-col gap-2'>
-            {/* biome-ignore lint/a11y/useKeyWithClickEvents: <explanation> */}
-            <div className='flex cursor-pointer items-center gap-2' onClick={() => setIsCalendarFolded(!isCalendarFolded)}>
+            <div className='flex cursor-pointer items-center gap-2'>
               <div className='flex-1 text-sm'>Calendars</div>
-              <ChevronDown className={cn('h-4 w-4 transition-transform duration-200', isCalendarFolded && 'rotate-180')} />
+              <Button
+                variant='ghost'
+                size='icon'
+                className='h-6 w-6'
+                onClick={(e) => {
+                  e.stopPropagation();
+                  addCalendarForm.reset();
+                  setIsAddCalendarOpen(true);
+                }}
+              >
+                <Plus className='h-4 w-4' />
+              </Button>
             </div>
-            {!isCalendarFolded && (
-              <div className='flex w-full flex-col gap-2'>
-                <div className='flex flex-col space-y-1'>
-                  {folders?.map((folder) => (
-                    <div key={folder.id} className='flex items-center gap-2'>
-                      <Checkbox
-                        checked={!hiddenCalendars.has(folder.id)}
-                        onCheckedChange={(checked) => {
-                          setHiddenCalendars((prev) => {
-                            const next = new Set(prev);
-                            if (checked) {
-                              next.delete(folder.id);
-                            } else {
-                              next.add(folder.id);
+            <div className='flex w-full flex-col gap-2'>
+              <div className='flex flex-col space-y-1'>
+                {folders?.map((folder) => (
+                  <div key={folder.id} className='flex items-center gap-2'>
+                    <Checkbox
+                      checked={!hiddenCalendars.has(folder.id)}
+                      onCheckedChange={(checked) => {
+                        setHiddenCalendars((prev) => {
+                          const next = new Set(prev);
+                          if (checked) {
+                            next.delete(folder.id);
+                          } else {
+                            next.add(folder.id);
+                          }
+                          return next;
+                        });
+                      }}
+                    />
+                    <Button
+                      variant='ghost'
+                      className='h-8 flex-1 justify-start px-2'
+                      onClick={() => {
+                        setHiddenCalendars((prev) => {
+                          const next = new Set(prev);
+                          if (next.has(folder.id)) {
+                            next.delete(folder.id);
+                          } else {
+                            next.add(folder.id);
+                          }
+                          return next;
+                        });
+                      }}
+                    >
+                      <div className='mr-1 h-4 w-4 rounded-full' style={{ backgroundColor: folder.color ?? 'transparent' }} />
+                      {folder.name}
+                    </Button>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant='ghost' className='h-8 w-8 p-0' onClick={(e) => e.stopPropagation()}>
+                          <MoreHorizontal className='h-4 w-4' />
+                          <span className='sr-only'>Open menu</span>
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align='end'>
+                        <DropdownMenuItem
+                          className='cursor-pointer'
+                          onClick={() => {
+                            setSelectedCalendar(folder);
+                            calendarForm.reset({
+                              name: folder.name,
+                              color: folder.color ?? '#000000',
+                            });
+                            setIsEditCalendarOpen(true);
+                          }}
+                        >
+                          <Pencil className='mr-2 h-4 w-4' />
+                          Edit
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          className='cursor-pointer text-destructive'
+                          onClick={() => {
+                            if (window.confirm('Are you sure you want to delete this calendar?')) {
+                              deleteFolder.mutate(folder.id);
                             }
-                            return next;
-                          });
-                        }}
-                      />
-                      <Button
-                        variant='ghost'
-                        className='h-8 flex-1 justify-start px-2'
-                        onClick={() => {
-                          setHiddenCalendars((prev) => {
-                            const next = new Set(prev);
-                            if (next.has(folder.id)) {
-                              next.delete(folder.id);
-                            } else {
-                              next.add(folder.id);
-                            }
-                            return next;
-                          });
-                        }}
-                      >
-                        <div className='mr-1 h-4 w-4 rounded-full' style={{ backgroundColor: folder.color ?? 'transparent' }} />
-                        {folder.name}
-                      </Button>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant='ghost' className='h-8 w-8 p-0' onClick={(e) => e.stopPropagation()}>
-                            <MoreHorizontal className='h-4 w-4' />
-                            <span className='sr-only'>Open menu</span>
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align='end'>
-                          <DropdownMenuItem
-                            onClick={() => {
-                              setSelectedCalendar(folder);
-                              calendarForm.reset({
-                                name: folder.name,
-                                color: folder.color ?? '#000000',
-                              });
-                              setIsEditCalendarOpen(true);
-                            }}
-                          >
-                            Edit
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            className='text-red-600'
-                            onClick={() => {
-                              if (window.confirm('Are you sure you want to delete this calendar?')) {
-                                deleteFolder.mutate(folder.id);
-                              }
-                            }}
-                          >
-                            Delete
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
-                  ))}
-                </div>
+                          }}
+                        >
+                          <Trash className='mr-2 h-4 w-4' />
+                          Delete
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+                ))}
               </div>
-            )}
+            </div>
           </div>
         </div>
 

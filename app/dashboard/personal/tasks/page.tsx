@@ -94,7 +94,7 @@ export default function TasksPage() {
               <button type='button' onClick={() => {}} className='p-2 text-neutral-500 hover:text-gray-700'>
                 <PencilIcon className='h-5 w-5' />
               </button>
-              <button type='button' onClick={() => deleteTask(task.id)} className='p-2 text-red-500 hover:text-red-700'>
+              <button type='button' onClick={() => deleteTask(task.id)} className='p-2 text-destructive'>
                 <TrashIcon className='h-5 w-5' />
               </button>
             </div>

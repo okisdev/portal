@@ -168,7 +168,7 @@ export default function PaymentsPage() {
                       <p className='text-muted-foreground text-sm'>{format(new Date(payment.created * 1000), 'PPP')}</p>
                     </div>
                     <div className='flex items-center gap-4'>
-                      <span className={`capitalize ${payment.status === 'succeeded' ? 'text-green-600' : 'text-red-600'}`}>{payment.status}</span>
+                      <span className={`capitalize ${payment.status === 'succeeded' ? 'text-green-600' : 'text-destructive'}`}>{payment.status}</span>
                       <span className='font-bold'>{formatCurrency(payment.amount)}</span>
                     </div>
                   </div>

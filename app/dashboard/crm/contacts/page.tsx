@@ -388,11 +388,11 @@ export default function CRMContactsPage() {
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align='end'>
-                      <DropdownMenuItem onClick={(e) => handleEdit(contact.id, e)}>
+                      <DropdownMenuItem className='cursor-pointer' onClick={(e) => handleEdit(contact.id, e)}>
                         <Pencil className='mr-2 h-4 w-4' />
                         Edit
                       </DropdownMenuItem>
-                      <DropdownMenuItem className='text-red-600' onClick={(e) => handleDeleteClick(contact.id, e)}>
+                      <DropdownMenuItem className='cursor-pointer text-destructive' onClick={(e) => handleDeleteClick(contact.id, e)}>
                         <Trash2 className='mr-2 h-4 w-4' />
                         Delete
                       </DropdownMenuItem>

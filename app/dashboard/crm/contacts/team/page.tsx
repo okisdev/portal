@@ -12,7 +12,7 @@ import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { formatDate } from '@/lib/utils';
 import { api } from '@/utils/trpc/client';
-import { MoreHorizontal, Plus, Users } from 'lucide-react';
+import { MoreHorizontal, Pencil, Plus, Trash, Users } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { toast } from 'sonner';
@@ -117,15 +117,17 @@ export default function TeamPage() {
                         }}
                         className='cursor-pointer'
                       >
+                        <Pencil className='mr-2 h-4 w-4' />
                         Edit team
                       </DropdownMenuItem>
                       <DropdownMenuItem
-                        className='cursor-pointer text-red-600'
+                        className='cursor-pointer text-destructive'
                         onClick={(e) => {
                           e.stopPropagation();
                           setTeamToDelete(team.id);
                         }}
                       >
+                        <Trash className='mr-2 h-4 w-4' />
                         Delete team
                       </DropdownMenuItem>
                     </DropdownMenuContent>
