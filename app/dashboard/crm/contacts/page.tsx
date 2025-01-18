@@ -3,7 +3,7 @@
 import { ColorBadge } from '@/components/shared/color-badge';
 import { DeleteAlertDialog } from '@/components/shared/delete-alert-dialog';
 import { PageHeader } from '@/components/shared/page-header';
-import {} from '@/components/ui/alert-dialog';
+import { TableLoading } from '@/components/shared/table-loading';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -46,7 +46,7 @@ type ColumnConfig = {
 export default function CRMContactsPage() {
   const router = useRouter();
 
-  const { data: contacts } = api.contact.getAllContacts.useQuery();
+  const { data: contacts, isLoading } = api.contact.getAllContacts.useQuery();
 
   const utils = api.useUtils();
 
@@ -200,10 +200,10 @@ export default function CRMContactsPage() {
       <div className='flex flex-col gap-4'>
         <div className='flex items-center justify-between gap-4'>
           <div className='flex flex-row gap-2'>
-            <Input placeholder='Search contacts...' value={search} onChange={(e) => setSearch(e.target.value)} className='h-8 w-72 max-w-sm' />
+            <Input placeholder='Search contacts...' value={search} onChange={(e) => setSearch(e.target.value)} className='h-8 w-72 max-w-sm' disabled={isLoading} />
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant='outline' size='sm'>
+                <Button variant='outline' size='sm' disabled={isLoading}>
                   <Filter className='mr-2 h-4 w-4' />
                   Filters ({filters.conditions.length})
                 </Button>
@@ -295,7 +295,7 @@ export default function CRMContactsPage() {
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant='outline' size='sm'>
+                <Button variant='outline' size='sm' disabled={isLoading}>
                   <Check className='mr-2 h-4 w-4' />
                   Columns
                 </Button>
@@ -318,7 +318,7 @@ export default function CRMContactsPage() {
           <div className='flex flex-row gap-2'>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant='outline' className='flex h-8 items-center gap-2'>
+                <Button variant='outline' className='flex h-8 items-center gap-2' disabled={isLoading}>
                   Import
                   <ChevronDown className='h-4 w-4' />
                 </Button>
@@ -335,7 +335,7 @@ export default function CRMContactsPage() {
               </DropdownMenuContent>
             </DropdownMenu>
 
-            <Button variant='outline' asChild className='h-8'>
+            <Button variant='outline' asChild className='h-8' disabled={isLoading}>
               <Link href='/dashboard/crm/contacts/new'>Add Contact</Link>
             </Button>
           </div>
@@ -343,73 +343,77 @@ export default function CRMContactsPage() {
       </div>
 
       <div className='rounded-md border'>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              {columns.map((column) =>
-                column.visible ? (
-                  <TableHead key={column.id} onClick={() => handleSort(column.id)} className={cn('cursor-pointer', column.label === 'Actions' && 'text-right')}>
-                    {column.label} {sortConfig.column === column.id && <CaretSortIcon className='ml-2 inline' />}
-                  </TableHead>
-                ) : null
-              )}
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filteredContacts.map((contact) => (
-              <TableRow key={contact.id} className='cursor-pointer hover:bg-muted/50' onClick={() => router.push(`/dashboard/crm/contacts/${contact.id}`)}>
+        {isLoading ? (
+          <TableLoading columnCount={columns.filter((col) => col.visible).length - 1} rowCount={8} />
+        ) : (
+          <Table>
+            <TableHeader>
+              <TableRow>
                 {columns.map((column) =>
                   column.visible ? (
-                    <TableCell key={column.id}>
-                      {column.id === 'name' && (
-                        <div className='flex items-center gap-2'>
-                          <Avatar className='size-8'>
-                            <AvatarFallback>{contact.firstName?.[0] ?? contact.name?.[0] ?? contact.email?.[0] ?? ''}</AvatarFallback>
-                          </Avatar>
-                          <div>
-                            <div className='font-medium'>{contact.name}</div>
-                            <div className='text-neutral-500 text-xs'>{contact.email}</div>
-                          </div>
-                        </div>
-                      )}
-                      {column.id === 'email' && contact.email}
-                      {column.id === 'status' && <ColorBadge type='contactStatus' value={contact.status} />}
-                      {column.id === 'source' && <span className='capitalize'>{contact.source?.replace('_', ' ') || '—'}</span>}
-                      {column.id === 'priority' && <ColorBadge type='priority' value={contact.priority ?? 'medium'} />}
-                      {column.id === 'createdAt' && formatDate(new Date(contact.createdAt))}
-                    </TableCell>
+                    <TableHead key={column.id} onClick={() => handleSort(column.id)} className={cn('cursor-pointer', column.label === 'Actions' && 'text-right')}>
+                      {column.label} {sortConfig.column === column.id && <CaretSortIcon className='ml-2 inline' />}
+                    </TableHead>
                   ) : null
                 )}
-                <TableCell className='w-[50px]'>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                      <Button variant='ghost' className='h-8 w-8 p-0'>
-                        <MoreHorizontal className='h-4 w-4' />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align='end'>
-                      <DropdownMenuItem className='cursor-pointer' onClick={(e) => handleEdit(contact.id, e)}>
-                        <Pencil className='mr-2 h-4 w-4' />
-                        Edit
-                      </DropdownMenuItem>
-                      <DropdownMenuItem className='cursor-pointer text-destructive' onClick={(e) => handleDeleteClick(contact.id, e)}>
-                        <Trash2 className='mr-2 h-4 w-4' />
-                        Delete
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredContacts.map((contact) => (
+                <TableRow key={contact.id} className='cursor-pointer hover:bg-muted/50' onClick={() => router.push(`/dashboard/crm/contacts/${contact.id}`)}>
+                  {columns.map((column) =>
+                    column.visible ? (
+                      <TableCell key={column.id}>
+                        {column.id === 'name' && (
+                          <div className='flex items-center gap-2'>
+                            <Avatar className='size-8'>
+                              <AvatarFallback>{contact.firstName?.[0] ?? contact.name?.[0] ?? contact.email?.[0] ?? ''}</AvatarFallback>
+                            </Avatar>
+                            <div>
+                              <div className='font-medium'>{contact.name}</div>
+                              <div className='text-neutral-500 text-xs'>{contact.email}</div>
+                            </div>
+                          </div>
+                        )}
+                        {column.id === 'email' && contact.email}
+                        {column.id === 'status' && <ColorBadge type='contactStatus' value={contact.status} />}
+                        {column.id === 'source' && <span className='capitalize'>{contact.source?.replace('_', ' ') || '—'}</span>}
+                        {column.id === 'priority' && <ColorBadge type='priority' value={contact.priority ?? 'medium'} />}
+                        {column.id === 'createdAt' && formatDate(new Date(contact.createdAt))}
+                      </TableCell>
+                    ) : null
+                  )}
+                  <TableCell className='w-[50px]'>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                        <Button variant='ghost' className='h-8 w-8 p-0'>
+                          <MoreHorizontal className='h-4 w-4' />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align='end'>
+                        <DropdownMenuItem className='cursor-pointer' onClick={(e) => handleEdit(contact.id, e)}>
+                          <Pencil className='mr-2 h-4 w-4' />
+                          Edit
+                        </DropdownMenuItem>
+                        <DropdownMenuItem className='cursor-pointer text-destructive' onClick={(e) => handleDeleteClick(contact.id, e)}>
+                          <Trash2 className='mr-2 h-4 w-4' />
+                          Delete
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+            <TableFooter>
+              <TableRow>
+                <TableCell colSpan={4}>
+                  Showing {filteredContacts.length} of {contacts?.length} contacts
                 </TableCell>
               </TableRow>
-            ))}
-          </TableBody>
-          <TableFooter>
-            <TableRow>
-              <TableCell colSpan={4}>
-                Showing {filteredContacts.length} of {contacts?.length} contacts
-              </TableCell>
-            </TableRow>
-          </TableFooter>
-        </Table>
+            </TableFooter>
+          </Table>
+        )}
       </div>
 
       <DeleteAlertDialog

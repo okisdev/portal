@@ -2,8 +2,7 @@
 
 import { DeleteAlertDialog } from '@/components/shared/delete-alert-dialog';
 import { PageHeader } from '@/components/shared/page-header';
-import { PageLoading } from '@/components/shared/page-loading';
-import {} from '@/components/ui/alert-dialog';
+import { TableLoading } from '@/components/shared/table-loading';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -13,12 +12,15 @@ import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, Table
 import { formatDate } from '@/lib/utils';
 import { api } from '@/utils/trpc/client';
 import { MoreHorizontal, Pencil, Plus, Trash, Users } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
 export default function TeamPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+
+  const mode = searchParams.get('mode');
 
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [newTeamName, setNewTeamName] = useState('');
@@ -63,7 +65,22 @@ export default function TeamPage() {
   };
 
   if (isLoading) {
-    return <PageLoading />;
+    return (
+      <div className='space-y-4 p-4'>
+        <PageHeader
+          title='Teams'
+          description='Manage teams and their contacts.'
+          right={
+            <Button variant='outline' className='h-8' disabled>
+              <Plus className='mr-2 size-4' /> Create Team
+            </Button>
+          }
+        />
+        <div className='rounded-lg border bg-white'>
+          <TableLoading columnCount={4} rowCount={5} />
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -113,7 +130,7 @@ export default function TeamPage() {
                       <DropdownMenuItem
                         onClick={(e) => {
                           e.stopPropagation();
-                          router.push(`/dashboard/crm/contacts/team/${team.id}/edit`);
+                          router.push(`/dashboard/crm/contacts/team/${team.id}?mode=edit`);
                         }}
                         className='cursor-pointer'
                       >
