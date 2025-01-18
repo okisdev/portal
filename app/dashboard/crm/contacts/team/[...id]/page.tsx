@@ -8,23 +8,24 @@ import { PageHeader } from '@/components/shared/page-header';
 import { PageLoading } from '@/components/shared/page-loading';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import {} from '@/components/ui/command';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import {} from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { formatDate } from '@/lib/utils';
 import { api } from '@/utils/trpc/client';
 import { Calendar, Edit2, Plus, Trash2 } from 'lucide-react';
 import Link from 'next/link';
-import { notFound, useParams } from 'next/navigation';
-import { useState } from 'react';
+import { notFound, useParams, useRouter, useSearchParams } from 'next/navigation';
+import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
 export default function TeamIdPage() {
   const { id: teamId } = useParams<{ id: string }>();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const mode = searchParams.get('mode');
 
   const utils = api.useUtils();
 
@@ -58,9 +59,26 @@ export default function TeamIdPage() {
   const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
   const [searchValue, setSearchValue] = useState('');
 
+  // Effect to sync modal state with URL mode
+  useEffect(() => {
+    if (mode === 'edit' && team) {
+      setEditForm({
+        name: team.name,
+        description: team.description || '',
+        leaderId: team.leaderId || '',
+        subLeaderId: team.subLeaderId || '',
+        referralId: team.referralId || '',
+        campaignCode: team.campaignCode || '',
+      });
+      setIsEditModalOpen(true);
+    } else {
+      setIsEditModalOpen(false);
+    }
+  }, [mode, team]);
+
   const updateTeam = api.team.updateTeam.useMutation({
     onSuccess: () => {
-      setIsEditModalOpen(false);
+      router.push(`/dashboard/crm/contacts/team/${teamId[0]}`); // Remove mode param by navigating
       utils.team.getTeamById.invalidate({ id: teamId[0] });
       toast.success('Team updated successfully');
     },
@@ -134,15 +152,11 @@ export default function TeamIdPage() {
   if (!team) return notFound();
 
   const handleEditClick = () => {
-    setEditForm({
-      name: team.name,
-      description: team.description || '',
-      leaderId: team.leaderId || '',
-      subLeaderId: team.subLeaderId || '',
-      referralId: team.referralId || '',
-      campaignCode: team.campaignCode || '',
-    });
-    setIsEditModalOpen(true);
+    router.push(`/dashboard/crm/contacts/team/${teamId[0]}?mode=edit`);
+  };
+
+  const handleCloseEdit = () => {
+    router.push(`/dashboard/crm/contacts/team/${teamId[0]}`);
   };
 
   const handleSubmitEdit = (e: React.FormEvent) => {
@@ -362,7 +376,7 @@ export default function TeamIdPage() {
         </div>
       </div>
 
-      <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
+      <Dialog open={isEditModalOpen} onOpenChange={(open) => !open && handleCloseEdit()}>
         <DialogContent className='max-h-[90vh] max-w-xl overflow-y-auto'>
           <DialogHeader>
             <DialogTitle>Edit Team Information</DialogTitle>

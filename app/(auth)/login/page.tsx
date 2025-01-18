@@ -1,5 +1,6 @@
 'use client';
 
+import { Banner } from '@/components/shared/banner';
 import { Label } from '@/components/ui/label';
 import { AnimatePresence, motion } from 'framer-motion';
 import { CheckCircle2, Loader2 } from 'lucide-react';
@@ -95,7 +96,7 @@ export default function LoginPage() {
               </div>
 
               <form onSubmit={handleSubmit} className='mt-6 space-y-4'>
-                {error && <div className='rounded-lg bg-red-50 p-3 text-red-400 text-sm'>{error}</div>}
+                {error && <Banner title='Error' description={error} variant='error' />}
 
                 <div className='space-y-1'>
                   <Label className='mb-1 flex justify-between font-medium text-gray-700 text-sm'>

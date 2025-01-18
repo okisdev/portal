@@ -103,6 +103,7 @@ export const contact = pgTable('contact', {
   state: text(),
   country: text(),
   postalCode: text(),
+  notes: text(), // Quick notes about the contact (e.g., easy-going, likes pets)
   status: text('status', { enum: ['lead', 'prospect', 'customer', 'churned', 'opportunity'] })
     .notNull()
     .default('lead'),
