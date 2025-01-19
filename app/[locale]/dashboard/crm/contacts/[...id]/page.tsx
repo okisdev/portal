@@ -72,7 +72,7 @@ export default function ContactIdPage() {
     startAt: Date;
   } | null>(null);
   const [isNotesEditing, setIsNotesEditing] = useState(false);
-  const [editableNotes, setEditableNotes] = useState('');
+  const [editableRemark, setEditableRemark] = useState('');
 
   const assignToTeam = api.team.assignContactToTeam.useMutation({
     onSuccess: () => {
@@ -86,6 +86,13 @@ export default function ContactIdPage() {
       handleCloseEditModal();
       utils.contact.getContactById.invalidate({ id: contactId[0] });
       toast.success('Contact updated successfully');
+    },
+  });
+
+  const updateContactRemark = api.contact.updateContactRemark.useMutation({
+    onSuccess: () => {
+      utils.contact.getContactById.invalidate({ id: contactId[0] });
+      toast.success('Contact remark updated successfully');
     },
   });
 
@@ -130,17 +137,9 @@ export default function ContactIdPage() {
   };
 
   const handleSaveNotes = () => {
-    updateContact.mutate({
+    updateContactRemark.mutate({
       id: contactId[0],
-      notes: editableNotes,
-      firstName: contact?.firstName || '',
-      lastName: contact?.lastName || '',
-      email: contact?.email || '',
-      phone: contact?.phone || '',
-      company: contact?.company || '',
-      source: contact?.source || '',
-      status: contact?.status || 'lead',
-      priority: contact?.priority || 'medium',
+      remark: editableRemark,
     });
     setIsNotesEditing(false);
   };
@@ -162,10 +161,10 @@ export default function ContactIdPage() {
   }, [mode, contact]);
 
   useEffect(() => {
-    if (contact?.notes) {
-      setEditableNotes(contact.notes);
+    if (contact?.remark) {
+      setEditableRemark(contact.remark);
     }
-  }, [contact?.notes]);
+  }, [contact?.remark]);
 
   if (isLoading) {
     return <PageLoading />;
@@ -408,8 +407,8 @@ export default function ContactIdPage() {
                   className='h-8'
                   onClick={() => {
                     if (isNotesEditing) {
-                      if (contact?.notes === editableNotes) {
-                        setEditableNotes('');
+                      if (contact?.remark === editableRemark) {
+                        setEditableRemark('');
                         setIsNotesEditing(false);
                         return;
                       }
@@ -430,9 +429,9 @@ export default function ContactIdPage() {
                 </button>
               </div>
               {isNotesEditing ? (
-                <Textarea value={editableNotes} onChange={(e) => setEditableNotes(e.target.value)} className='min-h-[100px]' placeholder='Add notes about this contact...' />
+                <Textarea value={editableRemark} onChange={(e) => setEditableRemark(e.target.value)} className='min-h-[100px]' placeholder='Add remark about this contact...' />
               ) : (
-                <p className='whitespace-pre-wrap text-muted-foreground text-sm'>{contact?.notes || 'No notes added yet. Click edit to add notes about this contact.'}</p>
+                <p className='whitespace-pre-wrap text-muted-foreground text-sm'>{contact?.remark || 'No remark added yet. Click edit to add remark about this contact.'}</p>
               )}
             </div>
 

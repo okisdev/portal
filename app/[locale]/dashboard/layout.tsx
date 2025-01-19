@@ -1,4 +1,4 @@
-import DashboardProvider from '@/app/dashboard/provider';
+import DashboardProvider from '@/app/[locale]/dashboard/provider';
 import { auth } from '@/auth';
 import { DashboardHeader } from '@/components/dashboard/header';
 import { DashboardSidebar } from '@/components/dashboard/sidebar';

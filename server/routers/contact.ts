@@ -39,7 +39,7 @@ export const contactRouter = createTRPCRouter({
         skills: contact.skills,
         status: contact.status,
         lastContactedAt: contact.lastContactedAt,
-        notes: contact.notes,
+        remark: contact.remark,
         teams: sql<Array<{ id: string; name: string }>>`
           (SELECT json_agg(json_build_object('id', t.id, 'name', t.name))
            FROM ${team} t 
@@ -75,7 +75,7 @@ export const contactRouter = createTRPCRouter({
         phone: z.string().optional(),
         company: z.string().optional(),
         source: z.string().optional(),
-        notes: z.string().optional(),
+        remark: z.string().optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -97,12 +97,16 @@ export const contactRouter = createTRPCRouter({
           phone: input.phone ?? '',
           company: input.company ?? '',
           source: input.source ?? '',
-          notes: input.notes ?? '',
+          remark: input.remark ?? '',
         })
         .returning();
 
       return result[0];
     }),
+
+  updateContactRemark: protectedProcedure.input(z.object({ id: z.string(), remark: z.string() })).mutation(({ ctx, input }) => {
+    return ctx.db.update(contact).set({ remark: input.remark }).where(eq(contact.id, input.id));
+  }),
 
   deleteContact: protectedProcedure.input(z.object({ id: z.string() })).mutation(({ ctx, input }) => {
     return ctx.db.delete(contact).where(eq(contact.id, input.id));
@@ -157,7 +161,7 @@ export const contactRouter = createTRPCRouter({
         status: statusSchema.optional(),
         source: z.string().optional(),
         lastContactedAt: z.date().optional(),
-        notes: z.string().optional(),
+        remark: z.string().optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {

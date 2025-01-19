@@ -95,7 +95,7 @@ export const contact = pgTable('contact', {
   lastName: text().notNull(),
   email: text().notNull(),
   phone: text(),
-  gender: text(), // 'male', 'female', 'other'
+  gender: text(),
   company: text(),
   jobTitle: text(),
   address: text(),
@@ -103,16 +103,11 @@ export const contact = pgTable('contact', {
   state: text(),
   country: text(),
   postalCode: text(),
-  notes: text(), // Quick notes about the contact (e.g., easy-going, likes pets)
+  remark: text(),
   status: text('status', { enum: ['lead', 'prospect', 'customer', 'churned', 'opportunity'] })
     .notNull()
     .default('lead'),
   source: text(),
-  // 'social_media' - From social media platforms
-  // 'referral' - Referred by existing customer
-  // 'website' - Direct website visit
-  // 'cold_outreach' - From cold calling/emailing
-  // 'event' - From trade shows or events
   assignedTo: text().references(() => user.id), // sales rep or account manager
   stripeCustomerId: text(), // for payment integration
   createdAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
