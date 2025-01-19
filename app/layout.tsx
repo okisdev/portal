@@ -1,10 +1,9 @@
 import type { Metadata } from 'next';
 import '@/styles/globals.css';
+import BodyProvider from '@/app/body-provider';
 import { geistSans } from '@/app/font';
 import RootProvider from '@/app/provider';
-import { Toaster } from '@/components/ui/sonner';
 import { cn } from '@/lib/utils';
-import { ThemeProvider } from 'next-themes';
 
 export const metadata: Metadata = {
   title: 'Portal',
@@ -20,11 +19,7 @@ export default function RootLayout({
     <RootProvider>
       <html lang='en' suppressHydrationWarning>
         <body className={cn(geistSans.className, 'antialiased')}>
-          <ThemeProvider attribute='class' defaultTheme='system' value={{ light: 'light', dark: 'dark' }} disableTransitionOnChange>
-            {children}
-
-            <Toaster richColors />
-          </ThemeProvider>
+          <BodyProvider>{children}</BodyProvider>
         </body>
       </html>
     </RootProvider>
