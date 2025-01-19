@@ -52,17 +52,17 @@ export const marketingItems = [
 export const resourcesItems = [
   {
     title: 'Content',
-    url: '/dashboard/resources/content',
+    url: '/dashboard/resource/content',
     icon: File,
   },
   {
     title: 'Emails',
-    url: '/dashboard/resources/emails',
+    url: '/dashboard/resource/emails',
     icon: Mail,
   },
   {
     title: 'Media',
-    url: '/dashboard/resources/media',
+    url: '/dashboard/resource/media',
     icon: Image,
   },
 ];

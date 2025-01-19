@@ -324,6 +324,42 @@ export const calendarEventParticipant = pgTable('calendarEventParticipant', {
   updatedAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
 });
 
+export const resourceContent = pgTable('resourceContent', {
+  id: text()
+    .primaryKey()
+    .notNull()
+    .$defaultFn(() => crypto.randomUUID()),
+  title: text().notNull(),
+  description: text(),
+  content: text().notNull(),
+  tags: text(), // JSON array of tags
+  visibility: text('visibility', { enum: ['PUBLIC', 'SHARED', 'PRIVATE'] })
+    .notNull()
+    .default('PRIVATE'),
+  createdBy: text()
+    .notNull()
+    .references(() => user.id),
+  updatedBy: text().references(() => user.id),
+  createdAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
+  updatedAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
+});
+
+export const resourceContentShare = pgTable('resourceContentShare', {
+  id: text()
+    .primaryKey()
+    .notNull()
+    .$defaultFn(() => crypto.randomUUID()),
+  resourceId: text()
+    .notNull()
+    .references(() => resourceContent.id, { onDelete: 'cascade' }),
+  sharedWithUserId: text()
+    .notNull()
+    .references(() => user.id, { onDelete: 'cascade' }),
+  permission: text('permission', { enum: ['view', 'edit'] }).default('view'),
+  createdAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
+  updatedAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
+});
+
 export const team = pgTable('team', {
   id: text()
     .primaryKey()
