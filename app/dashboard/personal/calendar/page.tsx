@@ -22,6 +22,8 @@ import { z } from 'zod';
 const WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
+type CalendarView = 'month' | 'week' | 'day';
+
 const eventFormSchema = z.object({
   title: z.string().min(1, 'Title is required'),
   description: z.string().optional(),
@@ -47,6 +49,7 @@ const eventFormSchema = z.object({
 export default function DashboardPersonalCalendar() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState(new Date());
+  const [view, setView] = useState<CalendarView>('month');
   const [yearMonthPickerOpen, setYearMonthPickerOpen] = useState(false);
   const [isEventDialogOpen, setIsEventDialogOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<CalendarEventWithParticipants | null>(null);
@@ -224,11 +227,31 @@ export default function DashboardPersonalCalendar() {
   };
 
   const goToPreviousMonth = () => {
-    setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1));
+    if (view === 'month') {
+      setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1));
+    } else if (view === 'week') {
+      const newDate = new Date(currentDate);
+      newDate.setDate(newDate.getDate() - 7);
+      setCurrentDate(newDate);
+    } else {
+      const newDate = new Date(currentDate);
+      newDate.setDate(newDate.getDate() - 1);
+      setCurrentDate(newDate);
+    }
   };
 
   const goToNextMonth = () => {
-    setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1));
+    if (view === 'month') {
+      setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1));
+    } else if (view === 'week') {
+      const newDate = new Date(currentDate);
+      newDate.setDate(newDate.getDate() + 7);
+      setCurrentDate(newDate);
+    } else {
+      const newDate = new Date(currentDate);
+      newDate.setDate(newDate.getDate() + 1);
+      setCurrentDate(newDate);
+    }
   };
 
   const handleEditEvent = (event: CalendarEventWithParticipants) => {
@@ -279,6 +302,36 @@ export default function DashboardPersonalCalendar() {
     });
     setIsAddCalendarOpen(false);
     addCalendarForm.reset();
+  };
+
+  // Add helper functions for week and day views
+  const getWeekDays = (date: Date) => {
+    const start = new Date(date);
+    start.setDate(start.getDate() - start.getDay());
+    const days = [];
+    for (let i = 0; i < 7; i++) {
+      const day = new Date(start);
+      day.setDate(start.getDate() + i);
+      days.push(day);
+    }
+    return days;
+  };
+
+  const getHoursOfDay = () => {
+    const hours = [];
+    for (let i = 0; i < 24; i++) {
+      hours.push(i);
+    }
+    return hours;
+  };
+
+  const getEventsForDateAndHour = (date: Date, hour: number) => {
+    return (
+      events?.filter((event) => {
+        const eventDate = new Date(event.startAt);
+        return eventDate.getDate() === date.getDate() && eventDate.getMonth() === date.getMonth() && eventDate.getFullYear() === date.getFullYear() && eventDate.getHours() === hour;
+      }) ?? []
+    );
   };
 
   return (
@@ -456,10 +509,34 @@ export default function DashboardPersonalCalendar() {
                 </Button>
               </div>
               <h1 className='text-lg'>
-                {currentDate.getFullYear()} {MONTHS[currentDate.getMonth()]}
+                {view === 'month' ? (
+                  <>
+                    {currentDate.getFullYear()} {MONTHS[currentDate.getMonth()]}
+                  </>
+                ) : view === 'week' ? (
+                  <>
+                    {MONTHS[currentDate.getMonth()]} {currentDate.getDate()} - {MONTHS[new Date(currentDate.getTime() + 6 * 24 * 60 * 60 * 1000).getMonth()]}{' '}
+                    {new Date(currentDate.getTime() + 6 * 24 * 60 * 60 * 1000).getDate()}, {currentDate.getFullYear()}
+                  </>
+                ) : (
+                  <>
+                    {WEEKDAYS[currentDate.getDay()]}, {MONTHS[currentDate.getMonth()]} {currentDate.getDate()}, {currentDate.getFullYear()}
+                  </>
+                )}
               </h1>
             </div>
             <div className='flex items-center gap-2'>
+              <div className='flex rounded-md border'>
+                <Button variant={view === 'month' ? 'secondary' : 'ghost'} className='h-8 rounded-r-none' onClick={() => setView('month')}>
+                  Month
+                </Button>
+                <Button variant={view === 'week' ? 'secondary' : 'ghost'} className='h-8 rounded-none border-r border-l' onClick={() => setView('week')}>
+                  Week
+                </Button>
+                <Button variant={view === 'day' ? 'secondary' : 'ghost'} className='h-8 rounded-l-none' onClick={() => setView('day')}>
+                  Day
+                </Button>
+              </div>
               <Button variant='outline' className='h-8 w-auto' onClick={() => setIsEventDialogOpen(true)}>
                 <Plus className='h-4 w-4' />
                 Add event
@@ -467,176 +544,336 @@ export default function DashboardPersonalCalendar() {
             </div>
           </header>
 
-          <div className='grid flex-1 grid-cols-7'>
-            {WEEKDAYS.map((day) => (
-              <div key={day} className='border-r border-b p-2 text-muted-foreground text-sm'>
-                {day}
-              </div>
-            ))}
-            {getDaysInMonth(currentDate).map((date) => {
-              const events = getEventsForDate(date);
+          {view === 'month' ? (
+            <div className='grid flex-1 grid-cols-7'>
+              {WEEKDAYS.map((day) => (
+                <div key={day} className='border-r border-b p-2 text-muted-foreground text-sm'>
+                  {day}
+                </div>
+              ))}
+              {getDaysInMonth(currentDate).map((date) => {
+                const events = getEventsForDate(date);
 
-              return (
-                // biome-ignore lint/a11y/useKeyWithClickEvents: <explanation>
-                <div
-                  key={date.toISOString()}
-                  className={cn(
-                    'relative min-h-[120px] border-r border-b p-2',
-                    date.getMonth() !== currentDate.getMonth() && 'bg-muted/50',
-                    date.getDate() === selectedDate.getDate() && date.getMonth() === selectedDate.getMonth() && date.getFullYear() === selectedDate.getFullYear() && 'ring-2 ring-primary ring-inset'
-                  )}
-                  onClick={() => setSelectedDate(date)}
-                >
-                  <span
+                return (
+                  // biome-ignore lint/a11y/useKeyWithClickEvents: <explanation>
+                  <div
+                    key={date.toISOString()}
                     className={cn(
-                      'text-sm',
-                      date.getDate() === new Date().getDate() &&
-                        date.getMonth() === new Date().getMonth() &&
-                        date.getFullYear() === new Date().getFullYear() &&
-                        'inline-flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground'
+                      'relative min-h-[120px] border-r border-b p-2',
+                      date.getMonth() !== currentDate.getMonth() && 'bg-muted/50',
+                      date.getDate() === selectedDate.getDate() && date.getMonth() === selectedDate.getMonth() && date.getFullYear() === selectedDate.getFullYear() && 'ring-2 ring-primary ring-inset'
                     )}
+                    onClick={() => setSelectedDate(date)}
                   >
-                    {date.getDate()}
-                  </span>
-                  {events
-                    .filter((event) => !hiddenCalendars.has(event.folderId))
-                    .map((event) => {
-                      const folder = folders?.find((f) => f.id === event.folderId);
+                    <span
+                      className={cn(
+                        'text-sm',
+                        date.getDate() === new Date().getDate() &&
+                          date.getMonth() === new Date().getMonth() &&
+                          date.getFullYear() === new Date().getFullYear() &&
+                          'inline-flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground'
+                      )}
+                    >
+                      {date.getDate()}
+                    </span>
+                    {events
+                      .filter((event) => !hiddenCalendars.has(event.folderId))
+                      .map((event) => {
+                        const folder = folders?.find((f) => f.id === event.folderId);
 
-                      return (
-                        <Popover key={event.id}>
-                          <PopoverTrigger asChild>
-                            <Button
-                              variant='ghost'
-                              className='h-auto w-full justify-start truncate rounded border border-dashed p-1 text-xs'
-                              style={{
-                                backgroundColor: `${folder?.color}20`,
-                                borderColor: folder?.color ?? 'transparent',
-                                color: folder?.color ?? 'inherit',
-                              }}
-                              onClick={(e) => e.stopPropagation()}
-                            >
-                              {event.isAllDay ? (
-                                'All day'
-                              ) : (
-                                <>
-                                  {new Date(event.startAt).toLocaleTimeString([], {
-                                    hour: '2-digit',
-                                    minute: '2-digit',
-                                    hour12: false,
-                                  })}
-                                  {' - '}
-                                  {new Date(event.endAt).toLocaleTimeString([], {
-                                    hour: '2-digit',
-                                    minute: '2-digit',
-                                    hour12: false,
-                                  })}
-                                </>
-                              )}{' '}
-                              {event.title}
-                            </Button>
-                          </PopoverTrigger>
-                          <PopoverContent id='popover-content' className='w-80'>
-                            <div className='grid gap-2'>
-                              <div className='space-y-2'>
-                                <div className='flex items-center gap-2'>
-                                  <div className='h-3 w-3 rounded-full' style={{ backgroundColor: folder?.color ?? 'transparent' }} />
-                                  <h4 className='font-medium leading-none'>{event.title}</h4>
+                        return (
+                          <Popover key={event.id}>
+                            <PopoverTrigger asChild>
+                              <Button
+                                variant='ghost'
+                                className='h-auto w-full justify-start truncate rounded border border-dashed p-1 text-xs'
+                                style={{
+                                  backgroundColor: `${folder?.color}20`,
+                                  borderColor: folder?.color ?? 'transparent',
+                                  color: folder?.color ?? 'inherit',
+                                }}
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                {event.isAllDay ? (
+                                  'All day'
+                                ) : (
+                                  <>
+                                    {new Date(event.startAt).toLocaleTimeString([], {
+                                      hour: '2-digit',
+                                      minute: '2-digit',
+                                      hour12: false,
+                                    })}
+                                    {' - '}
+                                    {new Date(event.endAt).toLocaleTimeString([], {
+                                      hour: '2-digit',
+                                      minute: '2-digit',
+                                      hour12: false,
+                                    })}
+                                  </>
+                                )}{' '}
+                                {event.title}
+                              </Button>
+                            </PopoverTrigger>
+                            <PopoverContent id='popover-content' className='w-80'>
+                              <div className='grid gap-2'>
+                                <div className='space-y-2'>
+                                  <div className='flex items-center gap-2'>
+                                    <div className='h-3 w-3 rounded-full' style={{ backgroundColor: folder?.color ?? 'transparent' }} />
+                                    <h4 className='font-medium leading-none'>{event.title}</h4>
+                                  </div>
+                                  <p className='text-muted-foreground text-sm'>
+                                    {event.isAllDay ? (
+                                      'All day'
+                                    ) : (
+                                      <>
+                                        {new Date(event.startAt).toLocaleTimeString([], {
+                                          hour: '2-digit',
+                                          minute: '2-digit',
+                                          hour12: false,
+                                        })}
+                                        {' - '}
+                                        {new Date(event.endAt).toLocaleTimeString([], {
+                                          hour: '2-digit',
+                                          minute: '2-digit',
+                                          hour12: false,
+                                        })}
+                                      </>
+                                    )}
+                                  </p>
                                 </div>
-                                <p className='text-muted-foreground text-sm'>
-                                  {event.isAllDay ? (
-                                    'All day'
-                                  ) : (
-                                    <>
-                                      {new Date(event.startAt).toLocaleTimeString([], {
-                                        hour: '2-digit',
-                                        minute: '2-digit',
-                                        hour12: false,
-                                      })}
-                                      {' - '}
-                                      {new Date(event.endAt).toLocaleTimeString([], {
-                                        hour: '2-digit',
-                                        minute: '2-digit',
-                                        hour12: false,
-                                      })}
-                                    </>
-                                  )}
-                                </p>
-                              </div>
-                              <div className='space-y-2'>
-                                {event.description && (
-                                  <div className='grid gap-2'>
-                                    <div className='grid grid-cols-3 items-center gap-4'>
-                                      <p className='text-sm'>Description:</p>
-                                      <p className='col-span-2 text-sm'>{event.description}</p>
-                                    </div>
-                                  </div>
-                                )}
-                                {event.location && (
-                                  <div className='grid gap-2'>
-                                    <div className='grid grid-cols-3 items-center gap-4'>
-                                      <p className='text-sm'>Location:</p>
-                                      <p className='col-span-2 text-sm'>{event.location}</p>
-                                    </div>
-                                  </div>
-                                )}
-                                {event.participants && event.participants.length > 0 && (
-                                  <div className='grid gap-2'>
-                                    <div className='grid grid-cols-3 items-center gap-4'>
-                                      <p className='text-sm'>Participants:</p>
-                                      <div className='col-span-2 space-y-1'>
-                                        {event.participants.map((participant) => (
-                                          <div key={participant.id} className='flex items-center justify-between text-sm'>
-                                            <span>
-                                              {participant.participantType === 'contact' && <span className='text-blue-600'>Contact: {participant.name || 'Unknown'}</span>}
-                                              {participant.participantType === 'user' && <span className='text-green-600'>User: {participant.name || 'Unknown'}</span>}
-                                              {participant.participantType === 'external' && (
-                                                <span className='text-orange-600'>
-                                                  External: {participant.name} ({participant.email})
-                                                </span>
-                                              )}
-                                            </span>
-                                            <span className='text-xs capitalize text-muted-foreground'>{participant.status}</span>
-                                          </div>
-                                        ))}
+                                <div className='space-y-2'>
+                                  {event.description && (
+                                    <div className='grid gap-2'>
+                                      <div className='grid grid-cols-3 items-center gap-4'>
+                                        <p className='text-sm'>Description:</p>
+                                        <p className='col-span-2 text-sm'>{event.description}</p>
                                       </div>
                                     </div>
-                                  </div>
-                                )}
+                                  )}
+                                  {event.location && (
+                                    <div className='grid gap-2'>
+                                      <div className='grid grid-cols-3 items-center gap-4'>
+                                        <p className='text-sm'>Location:</p>
+                                        <p className='col-span-2 text-sm'>{event.location}</p>
+                                      </div>
+                                    </div>
+                                  )}
+                                  {event.participants && event.participants.length > 0 && (
+                                    <div className='grid gap-2'>
+                                      <div className='grid grid-cols-3 items-center gap-4'>
+                                        <p className='text-sm'>Participants:</p>
+                                        <div className='col-span-2 space-y-1'>
+                                          {event.participants.map((participant) => (
+                                            <div key={participant.id} className='flex items-center justify-between text-sm'>
+                                              <span>
+                                                {participant.participantType === 'contact' && <span className='text-blue-600'>Contact: {participant.name || 'Unknown'}</span>}
+                                                {participant.participantType === 'user' && <span className='text-green-600'>User: {participant.name || 'Unknown'}</span>}
+                                                {participant.participantType === 'external' && (
+                                                  <span className='text-orange-600'>
+                                                    External: {participant.name} ({participant.email})
+                                                  </span>
+                                                )}
+                                              </span>
+                                              <span className='text-xs capitalize text-muted-foreground'>{participant.status}</span>
+                                            </div>
+                                          ))}
+                                        </div>
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+                                <div className='flex justify-end gap-2'>
+                                  <Button
+                                    size='sm'
+                                    variant='destructive'
+                                    onClick={() => {
+                                      toast.promise(deleteEvent.mutateAsync(event.id), {
+                                        loading: 'Deleting event...',
+                                        success: 'Event deleted successfully',
+                                        error: 'Failed to delete event',
+                                      });
+                                    }}
+                                  >
+                                    Delete
+                                  </Button>
+                                  <Button
+                                    variant='outline'
+                                    size='sm'
+                                    onClick={() => {
+                                      handleEditEvent(event);
+                                    }}
+                                  >
+                                    Edit
+                                  </Button>
+                                </div>
                               </div>
-                              <div className='flex justify-end gap-2'>
+                            </PopoverContent>
+                          </Popover>
+                        );
+                      })}
+                  </div>
+                );
+              })}
+            </div>
+          ) : view === 'week' ? (
+            <div className='flex flex-1 flex-col'>
+              <div className='grid grid-cols-8 border-b'>
+                <div className='border-r p-2 text-muted-foreground text-sm'>Time</div>
+                {getWeekDays(currentDate).map((date) => (
+                  <div
+                    key={date.toISOString()}
+                    className={cn(
+                      'border-r p-2 text-sm',
+                      date.getDate() === new Date().getDate() && date.getMonth() === new Date().getMonth() && date.getFullYear() === new Date().getFullYear() && 'bg-accent'
+                    )}
+                  >
+                    <div className='font-medium'>{WEEKDAYS[date.getDay()]}</div>
+                    <div
+                      className={cn(
+                        'text-muted-foreground',
+                        date.getDate() === selectedDate.getDate() && date.getMonth() === selectedDate.getMonth() && date.getFullYear() === selectedDate.getFullYear() && 'text-primary font-medium'
+                      )}
+                    >
+                      {date.getDate()}
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className='flex-1 overflow-auto'>
+                <div className='grid grid-cols-8 divide-x h-[1440px]'>
+                  <div className='divide-y'>
+                    {getHoursOfDay().map((hour) => (
+                      <div key={hour} className='p-2 h-[60px] text-muted-foreground text-sm'>
+                        {hour.toString().padStart(2, '0')}:00
+                      </div>
+                    ))}
+                  </div>
+                  {getWeekDays(currentDate).map((date) => (
+                    <div key={date.toISOString()} className='relative divide-y'>
+                      {getHoursOfDay().map((hour) => {
+                        const hourEvents = getEventsForDateAndHour(date, hour);
+                        return (
+                          <div
+                            key={hour}
+                            className='h-[60px] w-full p-2 text-left'
+                            onClick={() => {
+                              const newDate = new Date(date);
+                              newDate.setHours(hour);
+                              setSelectedDate(newDate);
+                              setIsEventDialogOpen(true);
+                            }}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter' || e.key === ' ') {
+                                const newDate = new Date(date);
+                                newDate.setHours(hour);
+                                setSelectedDate(newDate);
+                                setIsEventDialogOpen(true);
+                              }
+                            }}
+                          >
+                            {hourEvents.map((event) => {
+                              const folder = folders?.find((f) => f.id === event.folderId);
+                              return (
                                 <Button
-                                  size='sm'
-                                  variant='destructive'
-                                  onClick={() => {
-                                    toast.promise(deleteEvent.mutateAsync(event.id), {
-                                      loading: 'Deleting event...',
-                                      success: 'Event deleted successfully',
-                                      error: 'Failed to delete event',
-                                    });
+                                  key={event.id}
+                                  variant='ghost'
+                                  className='h-auto w-full justify-start truncate rounded border border-dashed p-1 text-xs'
+                                  style={{
+                                    backgroundColor: `${folder?.color}20`,
+                                    borderColor: folder?.color ?? 'transparent',
+                                    color: folder?.color ?? 'inherit',
                                   }}
-                                >
-                                  Delete
-                                </Button>
-                                <Button
-                                  variant='outline'
-                                  size='sm'
-                                  onClick={() => {
+                                  onClick={(e) => {
+                                    e.stopPropagation();
                                     handleEditEvent(event);
                                   }}
                                 >
-                                  Edit
+                                  {event.title}
                                 </Button>
-                              </div>
-                            </div>
-                          </PopoverContent>
-                        </Popover>
+                              );
+                            })}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className='flex flex-1 flex-col'>
+              <div className='grid grid-cols-2 border-b'>
+                <div className='border-r p-2 text-muted-foreground text-sm'>Time</div>
+                <div
+                  className={cn(
+                    'border-r p-2 text-sm',
+                    currentDate.getDate() === new Date().getDate() && currentDate.getMonth() === new Date().getMonth() && currentDate.getFullYear() === new Date().getFullYear() && 'bg-accent'
+                  )}
+                >
+                  <div className='font-medium'>{WEEKDAYS[currentDate.getDay()]}</div>
+                  <div className='text-muted-foreground'>{currentDate.getDate()}</div>
+                </div>
+              </div>
+              <div className='flex-1 overflow-auto'>
+                <div className='grid h-[1440px] grid-cols-2 divide-x'>
+                  <div className='divide-y'>
+                    {getHoursOfDay().map((hour) => (
+                      <div key={hour} className='h-[60px] p-2 text-muted-foreground text-sm'>
+                        {hour.toString().padStart(2, '0')}:00
+                      </div>
+                    ))}
+                  </div>
+                  <div className='relative divide-y'>
+                    {getHoursOfDay().map((hour) => {
+                      const hourEvents = getEventsForDateAndHour(currentDate, hour);
+                      return (
+                        <div
+                          key={hour}
+                          className='h-[60px] w-full p-2 text-left'
+                          onClick={() => {
+                            const newDate = new Date(currentDate);
+                            newDate.setHours(hour);
+                            setSelectedDate(newDate);
+                            setIsEventDialogOpen(true);
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                              const newDate = new Date(currentDate);
+                              newDate.setHours(hour);
+                              setSelectedDate(newDate);
+                              setIsEventDialogOpen(true);
+                            }
+                          }}
+                        >
+                          {hourEvents.map((event) => {
+                            const folder = folders?.find((f) => f.id === event.folderId);
+                            return (
+                              <Button
+                                key={event.id}
+                                variant='ghost'
+                                className='h-auto w-full justify-start truncate rounded border border-dashed p-1 text-xs'
+                                style={{
+                                  backgroundColor: `${folder?.color}20`,
+                                  borderColor: folder?.color ?? 'transparent',
+                                  color: folder?.color ?? 'inherit',
+                                }}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleEditEvent(event);
+                                }}
+                              >
+                                {event.title}
+                              </Button>
+                            );
+                          })}
+                        </div>
                       );
                     })}
+                  </div>
                 </div>
-              );
-            })}
-          </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 

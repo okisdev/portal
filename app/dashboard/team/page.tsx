@@ -133,10 +133,12 @@ export default function TeamPage() {
                           <Pencil className='mr-2 h-4 w-4' />
                           Edit
                         </DropdownMenuItem>
-                        <DropdownMenuItem className='cursor-pointer text-destructive' onClick={() => setUserToDelete(user)}>
-                          <Trash className='mr-2 h-4 w-4' />
-                          Delete
-                        </DropdownMenuItem>
+                        {user.role !== 'ADMIN' && (
+                          <DropdownMenuItem className='cursor-pointer text-destructive' onClick={() => setUserToDelete(user)}>
+                            <Trash className='mr-2 h-4 w-4' />
+                            Delete
+                          </DropdownMenuItem>
+                        )}
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </TableCell>
