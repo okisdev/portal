@@ -18,15 +18,15 @@ import {
 } from '@/components/ui/sidebar';
 import { Skeleton } from '@/components/ui/skeleton';
 import { crmItems, languageItems, marketingItems, personalItems, resourcesItems, teamItems } from '@/config/dashboard';
+import { usePathname, useRouter } from '@/i18n/routing';
 import { api } from '@/utils/trpc/client';
-import { ChevronDown, ChevronRight, ChevronUp, Globe, Laptop, Moon, Plus, Settings, Sparkle, Sun, User2 } from 'lucide-react';
+import { ChevronDown, ChevronRight, ChevronUp, Globe, Laptop, LogOut, Moon, Plus, Settings, Sparkle, Sun, User2 } from 'lucide-react';
 import { signOut } from 'next-auth/react';
 import { useLocale } from 'next-intl';
 import { useTheme } from 'next-themes';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import type React from 'react';
-import { useState } from 'react';
+import { startTransition, useState } from 'react';
 
 type SidebarGroupSectionProps = {
   title: string;
@@ -41,6 +41,7 @@ type SidebarGroupSectionProps = {
 
 export function DashboardSidebar() {
   const router = useRouter();
+  const pathname = usePathname();
 
   const { data: me, isLoading } = api.account.getMeFromDatabase.useQuery();
 
@@ -49,6 +50,12 @@ export function DashboardSidebar() {
   const { theme, setTheme } = useTheme();
 
   const locale = useLocale();
+
+  const handleChangeLocale = (locale: string) => {
+    startTransition(() => {
+      router.replace(pathname, { locale });
+    });
+  };
 
   return (
     <Sidebar>
@@ -93,13 +100,14 @@ export function DashboardSidebar() {
               <DropdownMenuContent side='top' className='w-[--radix-popper-anchor-width]'>
                 <DropdownMenuItem asChild>
                   <Link href='/dashboard/account/settings' className='cursor-pointer'>
+                    <Settings className='mr-2 h-4 w-4' />
                     <span>Account</span>
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <DropdownMenuItem>
+                    <DropdownMenuItem className='cursor-pointer'>
                       {theme === 'system' ? <Laptop className='mr-2 h-4 w-4' /> : theme === 'dark' ? <Moon className='mr-2 h-4 w-4' /> : <Sun className='mr-2 h-4 w-4' />}
                       <span>Theme</span>
                       <ChevronRight className='ml-auto h-4 w-4' />
@@ -124,14 +132,14 @@ export function DashboardSidebar() {
                 </DropdownMenu>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <DropdownMenuItem>
+                    <DropdownMenuItem className='cursor-pointer'>
                       <Globe className='mr-2 h-4 w-4' />
                       <span>Language</span>
                       <ChevronRight className='ml-auto h-4 w-4' />
                     </DropdownMenuItem>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent side='right'>
-                    <DropdownMenuRadioGroup value={locale}>
+                    <DropdownMenuRadioGroup value={locale} onValueChange={handleChangeLocale}>
                       {languageItems.map((item) => (
                         <DropdownMenuRadioItem key={item.value} value={item.value} className='flex cursor-pointer items-center gap-2'>
                           <span>{item.flag}</span>
@@ -142,7 +150,8 @@ export function DashboardSidebar() {
                   </DropdownMenuContent>
                 </DropdownMenu>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem className='cursor-pointer' onClick={() => setShowSignOutDialog(true)}>
+                <DropdownMenuItem className='cursor-pointer text-red-500 dark:text-red-400' onClick={() => setShowSignOutDialog(true)}>
+                  <LogOut className='mr-2 h-4 w-4' />
                   <span>Sign out</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>

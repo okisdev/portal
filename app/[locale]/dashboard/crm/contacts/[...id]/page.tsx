@@ -20,6 +20,7 @@ import { cn, formatDate } from '@/lib/utils';
 import { api } from '@/utils/trpc/client';
 import { Building2, Calendar, CalendarIcon, Edit2, Mail, MoreHorizontal, Phone, Save, Trash2, Users, X } from 'lucide-react';
 import { useSession } from 'next-auth/react';
+import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { notFound, useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -30,6 +31,7 @@ export default function ContactIdPage() {
   const { id: contactId } = useParams<{ id: string }>();
   const searchParams = useSearchParams();
   const mode = searchParams.get('mode');
+  const t = useTranslations();
 
   const { data: session } = useSession();
 
@@ -274,7 +276,10 @@ export default function ContactIdPage() {
   const handleSubmitActivity = (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!newActivity.trim()) return;
+    if (!newActivity.trim()) {
+      toast.error('Activity cannot be empty');
+      return;
+    }
 
     createContactActivity.mutate({
       contactId: contactId[0],
@@ -290,7 +295,7 @@ export default function ContactIdPage() {
     <div className='container mx-auto space-y-6 p-6'>
       <div className='grid grid-cols-1 gap-6 lg:grid-cols-3'>
         <div className='lg:col-span-1'>
-          <div className='rounded-lg border bg-white shadow-sm'>
+          <div className='rounded-lg border bg-card text-card-foreground shadow-sm'>
             <div className='border-b p-6'>
               <div className='flex items-start gap-4'>
                 <Avatar className='size-16'>
@@ -299,7 +304,7 @@ export default function ContactIdPage() {
                 </Avatar>
                 <div className='min-w-0 flex-1'>
                   <div className='mb-2 flex items-center gap-2'>
-                    <h1 className='truncate font-semibold text-xl'>{contact?.name}</h1>
+                    <h1 className='truncate font-semibold text-foreground text-xl'>{contact?.name}</h1>
                   </div>
                   <div className='space-y-1 text-muted-foreground text-sm'>
                     {contact?.company && (
@@ -313,7 +318,7 @@ export default function ContactIdPage() {
                         <Users className='size-4 shrink-0' />
                         <div className='flex flex-wrap gap-1'>
                           {contact?.teams?.map((team) => (
-                            <Link key={team.id} href={`/dashboard/crm/contacts/team/${team.id}`} className='hover:text-primary'>
+                            <Link key={team.id} href={`/dashboard/crm/team/${team.id}`} className='hover:text-primary'>
                               {team.name}
                             </Link>
                           ))}
@@ -361,7 +366,7 @@ export default function ContactIdPage() {
                             <ColorBadge type='priority' value={contact?.priority || 'medium'} />
                           </SelectValue>
                         </SelectTrigger>
-                        <SelectContent>
+                        <SelectContent className='bg-popover text-popover-foreground'>
                           {['high', 'medium', 'low'].map((priority) => (
                             <SelectItem key={priority} value={priority}>
                               <ColorBadge type='priority' value={priority} />
@@ -380,7 +385,7 @@ export default function ContactIdPage() {
                             <ColorBadge type='contactStatus' value={contact?.status || 'lead'} />
                           </SelectValue>
                         </SelectTrigger>
-                        <SelectContent>
+                        <SelectContent className='bg-popover text-popover-foreground'>
                           {['lead', 'prospect', 'customer', 'churned', 'opportunity'].map((status) => (
                             <SelectItem key={status} value={status}>
                               <ColorBadge type='contactStatus' value={status} />
@@ -393,7 +398,7 @@ export default function ContactIdPage() {
                 ].map((item) => (
                   <div key={item.label} className='space-y-1.5'>
                     <div className='text-muted-foreground text-sm'>{item.label}</div>
-                    <div>{item.value}</div>
+                    <div className='text-foreground'>{item.value}</div>
                   </div>
                 ))}
               </div>
@@ -401,10 +406,10 @@ export default function ContactIdPage() {
 
             <div className='border-b p-6'>
               <div className='flex items-center justify-between'>
-                <h2 className='font-medium'>Remark</h2>
+                <h2 className='font-medium text-foreground'>{t('remark')}</h2>
                 <button
                   type='button'
-                  className='h-8'
+                  className='h-8 text-muted-foreground hover:text-foreground'
                   onClick={() => {
                     if (isNotesEditing) {
                       if (contact?.remark === editableRemark) {
@@ -429,20 +434,20 @@ export default function ContactIdPage() {
                 </button>
               </div>
               {isNotesEditing ? (
-                <Textarea value={editableRemark} onChange={(e) => setEditableRemark(e.target.value)} className='min-h-[100px]' placeholder='Add remark about this contact...' />
+                <Textarea value={editableRemark} onChange={(e) => setEditableRemark(e.target.value)} className='min-h-[100px] bg-background' placeholder='Add remark about this contact...' />
               ) : (
                 <p className='whitespace-pre-wrap text-muted-foreground text-sm'>{contact?.remark || 'No remark added yet. Click edit to add remark about this contact.'}</p>
               )}
             </div>
 
             <div className='border-b p-6'>
-              <h2 className='mb-4 font-medium'>Upcoming Meetings</h2>
+              <h2 className='mb-4 font-medium text-foreground'>Upcoming Meetings</h2>
               <div className='space-y-4'>
                 {appointments?.map((apt) => (
                   <div key={apt.id} className='flex items-center gap-3'>
                     <Calendar className='size-4 shrink-0 text-muted-foreground' />
                     <div className='min-w-0 flex-1'>
-                      <p className='truncate font-medium'>{apt.title}</p>
+                      <p className='truncate font-medium text-foreground'>{apt.title}</p>
                       <p className='text-muted-foreground text-sm'>{formatDate(new Date(apt.startAt))}</p>
                     </div>
                     <DropdownMenu>
@@ -451,7 +456,7 @@ export default function ContactIdPage() {
                           <MoreHorizontal className='size-4' />
                         </Button>
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent align='end'>
+                      <DropdownMenuContent align='end' className='bg-popover text-popover-foreground'>
                         <DropdownMenuItem
                           onClick={() =>
                             setEditingAppointment({
@@ -477,12 +482,12 @@ export default function ContactIdPage() {
             </div>
 
             <div className='border-b p-6'>
-              <h2 className='mb-4 font-medium'>Recent Payments</h2>
+              <h2 className='mb-4 font-medium text-foreground'>Recent Payments</h2>
               <div className='space-y-3'>
                 {payments?.slice(0, 3).map((payment) => (
                   <div key={payment.id} className='flex items-center justify-between'>
                     <span className='text-muted-foreground text-sm'>{formatDate(new Date(payment.created * 1000))}</span>
-                    <span className={cn('font-medium', payment.status === 'succeeded' ? 'text-green-600' : 'text-destructive')}>
+                    <span className={cn('font-medium', payment.status === 'succeeded' ? 'text-green-600 dark:text-green-400' : 'text-destructive')}>
                       {new Intl.NumberFormat('en-US', {
                         style: 'currency',
                         currency: payment.currency,
@@ -498,7 +503,7 @@ export default function ContactIdPage() {
               <div className='space-y-3'>
                 {contact?.leadingTeams?.map((team) => (
                   <div key={team.id} className='flex items-center justify-between'>
-                    <Link href={`/dashboard/crm/contacts/team/${team.id}`} className='text-sm hover:text-primary'>
+                    <Link href={`/dashboard/crm/team/${team.id}`} className='text-sm hover:text-primary'>
                       {team.name}
                     </Link>
                     <span className='text-muted-foreground text-xs'>Team Leader</span>
@@ -506,7 +511,7 @@ export default function ContactIdPage() {
                 ))}
                 {contact?.subLeadingTeams?.map((team) => (
                   <div key={team.id} className='flex items-center justify-between'>
-                    <Link href={`/dashboard/crm/contacts/team/${team.id}`} className='text-sm hover:text-primary'>
+                    <Link href={`/dashboard/crm/team/${team.id}`} className='text-sm hover:text-primary'>
                       {team.name}
                     </Link>
                     <span className='text-muted-foreground text-xs'>Sub Leader</span>
@@ -514,7 +519,7 @@ export default function ContactIdPage() {
                 ))}
                 {contact?.referralTeams?.map((team) => (
                   <div key={team.id} className='flex items-center justify-between'>
-                    <Link href={`/dashboard/crm/contacts/team/${team.id}`} className='text-sm hover:text-primary'>
+                    <Link href={`/dashboard/crm/team/${team.id}`} className='text-sm hover:text-primary'>
                       {team.name}
                     </Link>
                     <span className='text-muted-foreground text-xs'>Referral</span>
@@ -526,7 +531,7 @@ export default function ContactIdPage() {
         </div>
 
         <div className='lg:col-span-2'>
-          <div className='rounded-lg border bg-white shadow-sm'>
+          <div className='rounded-lg border bg-card text-card-foreground shadow-sm'>
             <div className='p-6'>
               <div className='mb-6 flex items-center justify-between'>
                 <h2 className='font-medium'>Activity</h2>
