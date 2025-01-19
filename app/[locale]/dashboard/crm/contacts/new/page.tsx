@@ -262,7 +262,7 @@ export default function ImportContacts() {
             phone: contact.phone || '',
             company: contact.company || '',
             source: formData.source || '',
-            notes: formData.remark || '',
+            remark: formData.remark || '',
           })
         )
       );
@@ -303,7 +303,7 @@ export default function ImportContacts() {
             phone: formData.phone || '',
             company: formData.company || '',
             source: formData.source || '',
-            notes: formData.remark || '',
+            remark: formData.remark || '',
           }),
           {
             loading: 'Creating contact...',

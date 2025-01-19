@@ -21,6 +21,7 @@ import { crmItems, languageItems, marketingItems, personalItems, resourcesItems,
 import { api } from '@/utils/trpc/client';
 import { ChevronDown, ChevronRight, ChevronUp, Globe, Laptop, Moon, Plus, Settings, Sparkle, Sun, User2 } from 'lucide-react';
 import { signOut } from 'next-auth/react';
+import { useLocale } from 'next-intl';
 import { useTheme } from 'next-themes';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -46,6 +47,8 @@ export function DashboardSidebar() {
   const [showSignOutDialog, setShowSignOutDialog] = useState(false);
 
   const { theme, setTheme } = useTheme();
+
+  const locale = useLocale();
 
   return (
     <Sidebar>
@@ -128,7 +131,7 @@ export function DashboardSidebar() {
                     </DropdownMenuItem>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent side='right'>
-                    <DropdownMenuRadioGroup>
+                    <DropdownMenuRadioGroup value={locale}>
                       {languageItems.map((item) => (
                         <DropdownMenuRadioItem key={item.value} value={item.value} className='flex cursor-pointer items-center gap-2'>
                           <span>{item.flag}</span>

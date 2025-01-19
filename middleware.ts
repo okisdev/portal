@@ -1,6 +1,11 @@
-// biome-ignore lint/performance/noBarrelFile: <explanation>
-export { auth as middleware } from '@/auth';
+import { auth } from '@/auth';
+import { routing } from '@/i18n/routing';
+import createMiddleware from 'next-intl/middleware';
+
+const i18nMiddleware = createMiddleware(routing);
+
+export default auth(i18nMiddleware);
 
 export const config = {
-  matcher: ['/((?!_next/static|_next/image|favicon.ico).*)'],
+  matcher: ['/((?!api|_next|.*\\..*).*)'],
 };
