@@ -1,45 +1,86 @@
 import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import * as React from 'react';
+import { useState } from 'react';
+import { MONTHS } from './constants';
 
-const MONTHS_ZH = ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'];
-
-interface YearMonthPickerProps {
+export interface YearMonthPickerProps {
   value: Date;
   onChange: (date: Date) => void;
   onClose: () => void;
 }
 
 export function YearMonthPicker({ value, onChange, onClose }: YearMonthPickerProps) {
-  const [year, setYear] = React.useState(value.getFullYear());
+  const [mode, setMode] = useState<'month' | 'year'>('month');
+  const [displayYear, setDisplayYear] = useState(value.getFullYear());
 
-  const updateYear = (newYear: number) => {
-    setYear(newYear);
+  const handlePrevious = () => {
+    if (mode === 'month') {
+      setDisplayYear(displayYear - 1);
+    } else {
+      setDisplayYear(displayYear - 12);
+    }
   };
 
-  const selectMonth = (monthIndex: number) => {
-    onChange(new Date(year, monthIndex, 1));
+  const handleNext = () => {
+    if (mode === 'month') {
+      setDisplayYear(displayYear + 1);
+    } else {
+      setDisplayYear(displayYear + 12);
+    }
+  };
+
+  const handleYearClick = (year: number) => {
+    setDisplayYear(year);
+    setMode('month');
+  };
+
+  const handleMonthClick = (month: number) => {
+    const newDate = new Date(value);
+    newDate.setFullYear(displayYear);
+    newDate.setMonth(month);
+    onChange(newDate);
     onClose();
   };
 
   return (
     <div className='p-2'>
-      <div className='flex justify-between items-center mb-4'>
-        <Button variant='outline' size='sm' onClick={() => updateYear(year - 1)}>
-          <ChevronLeft className='h-4 w-4' />
+      <div className='mb-2 flex items-center justify-between'>
+        <Button variant='ghost' className='font-medium text-sm' onClick={() => setMode(mode === 'month' ? 'year' : 'month')}>
+          {mode === 'month' ? displayYear : `${displayYear - 6} - ${displayYear + 5}`}
         </Button>
-        <span className='text-lg font-medium'>{year}年</span>
-        <Button variant='outline' size='sm' onClick={() => updateYear(year + 1)}>
-          <ChevronRight className='h-4 w-4' />
-        </Button>
-      </div>
-      <div className='grid grid-cols-3 gap-2'>
-        {MONTHS_ZH.map((monthName, index) => (
-          <Button key={monthName} variant='outline' className='w-full' onClick={() => selectMonth(index)}>
-            {monthName}
+        <div className='flex items-center gap-1'>
+          <Button variant='ghost' size='icon' className='h-7 w-7' onClick={handlePrevious}>
+            <ChevronLeft className='h-4 w-4' />
           </Button>
-        ))}
+          <Button variant='ghost' size='icon' className='h-7 w-7' onClick={handleNext}>
+            <ChevronRight className='h-4 w-4' />
+          </Button>
+        </div>
       </div>
+
+      {mode === 'month' ? (
+        <div className='grid grid-cols-3 gap-2'>
+          {MONTHS.map((month, index) => (
+            <Button
+              key={month}
+              variant='ghost'
+              className={cn('h-9', value.getMonth() === index && value.getFullYear() === displayYear && 'bg-primary text-primary-foreground')}
+              onClick={() => handleMonthClick(index)}
+            >
+              {month.slice(0, 3)}
+            </Button>
+          ))}
+        </div>
+      ) : (
+        <div className='grid grid-cols-3 gap-2'>
+          {Array.from({ length: 12 }, (_, i) => displayYear - 6 + i).map((year) => (
+            <Button key={year} variant='ghost' className={cn('h-9', value.getFullYear() === year && 'bg-primary text-primary-foreground')} onClick={() => handleYearClick(year)}>
+              {year}
+            </Button>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
