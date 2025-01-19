@@ -18,15 +18,15 @@ import {
 } from '@/components/ui/sidebar';
 import { Skeleton } from '@/components/ui/skeleton';
 import { crmItems, languageItems, marketingItems, personalItems, resourcesItems, teamItems } from '@/config/dashboard';
+import { usePathname, useRouter } from '@/i18n/routing';
 import { api } from '@/utils/trpc/client';
 import { ChevronDown, ChevronRight, ChevronUp, Globe, Laptop, Moon, Plus, Settings, Sparkle, Sun, User2 } from 'lucide-react';
 import { signOut } from 'next-auth/react';
 import { useLocale } from 'next-intl';
 import { useTheme } from 'next-themes';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import type React from 'react';
-import { useState } from 'react';
+import { startTransition, useState } from 'react';
 
 type SidebarGroupSectionProps = {
   title: string;
@@ -41,6 +41,7 @@ type SidebarGroupSectionProps = {
 
 export function DashboardSidebar() {
   const router = useRouter();
+  const pathname = usePathname();
 
   const { data: me, isLoading } = api.account.getMeFromDatabase.useQuery();
 
@@ -49,6 +50,12 @@ export function DashboardSidebar() {
   const { theme, setTheme } = useTheme();
 
   const locale = useLocale();
+
+  const handleChangeLocale = (locale: string) => {
+    startTransition(() => {
+      router.replace(pathname, { locale });
+    });
+  };
 
   return (
     <Sidebar>
@@ -131,7 +138,7 @@ export function DashboardSidebar() {
                     </DropdownMenuItem>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent side='right'>
-                    <DropdownMenuRadioGroup value={locale}>
+                    <DropdownMenuRadioGroup value={locale} onValueChange={handleChangeLocale}>
                       {languageItems.map((item) => (
                         <DropdownMenuRadioItem key={item.value} value={item.value} className='flex cursor-pointer items-center gap-2'>
                           <span>{item.flag}</span>

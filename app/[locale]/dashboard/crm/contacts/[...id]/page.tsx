@@ -20,6 +20,7 @@ import { cn, formatDate } from '@/lib/utils';
 import { api } from '@/utils/trpc/client';
 import { Building2, Calendar, CalendarIcon, Edit2, Mail, MoreHorizontal, Phone, Save, Trash2, Users, X } from 'lucide-react';
 import { useSession } from 'next-auth/react';
+import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { notFound, useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -30,6 +31,7 @@ export default function ContactIdPage() {
   const { id: contactId } = useParams<{ id: string }>();
   const searchParams = useSearchParams();
   const mode = searchParams.get('mode');
+  const t = useTranslations();
 
   const { data: session } = useSession();
 
@@ -401,7 +403,7 @@ export default function ContactIdPage() {
 
             <div className='border-b p-6'>
               <div className='flex items-center justify-between'>
-                <h2 className='font-medium'>Remark</h2>
+                <h2 className='font-medium'>{t('remark')}</h2>
                 <button
                   type='button'
                   className='h-8'
