@@ -1,4 +1,4 @@
-import { Calendar, Coins, Contact, Gift, Link, Settings, Tornado, Users } from 'lucide-react';
+import { Calendar, Coins, Contact, File, Gift, Image, Link, Mail, Settings, Tornado, Users } from 'lucide-react';
 
 export const personalItems = [
   {
@@ -49,6 +49,24 @@ export const marketingItems = [
   },
 ];
 
+export const resourcesItems = [
+  {
+    title: 'Content',
+    url: '/dashboard/resources/content',
+    icon: File,
+  },
+  {
+    title: 'Emails',
+    url: '/dashboard/resources/emails',
+    icon: Mail,
+  },
+  {
+    title: 'Media',
+    url: '/dashboard/resources/media',
+    icon: Image,
+  },
+];
+
 export const teamItems = [
   {
     title: 'Overview',
@@ -59,5 +77,23 @@ export const teamItems = [
     title: 'Configuration',
     url: '/dashboard/team/configuration',
     icon: Settings,
+  },
+];
+
+export const languageItems = [
+  {
+    title: 'English',
+    value: 'en',
+    flag: '🇺🇸',
+  },
+  {
+    title: '简体中文',
+    value: 'zh-CN',
+    flag: '🇨🇳',
+  },
+  {
+    title: '繁体中文',
+    value: 'zh-HK',
+    flag: '🇭🇰',
   },
 ];

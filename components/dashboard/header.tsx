@@ -12,23 +12,19 @@ import { cn } from '@/lib/utils';
 import { Bell } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import React from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 
 export function DashboardHeader() {
   const pathname = usePathname();
 
   const paths = pathname.replace('/dashboard/', '').split('/');
 
-  const formatPathSegment = (segment: string) => {
-    const words = segment.split('-');
+  const isDashboard = paths.length === 2 && paths[1] === 'dashboard';
 
-    return words.map((word) => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
-  };
-
-  const [open, setOpen] = React.useState(false);
+  const [open, setOpen] = useState(false);
   const { setTheme } = useTheme();
 
-  React.useEffect(() => {
+  useEffect(() => {
     const down = (e: KeyboardEvent) => {
       if ((e.key === 'k' && (e.metaKey || e.ctrlKey)) || e.key === '/') {
         if (
@@ -49,7 +45,13 @@ export function DashboardHeader() {
     return () => document.removeEventListener('keydown', down);
   }, []);
 
-  const runCommand = React.useCallback((command: () => unknown) => {
+  const formatPathSegment = (segment: string) => {
+    const words = segment.split('-');
+
+    return words.map((word) => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+  };
+
+  const runCommand = useCallback((command: () => unknown) => {
     setOpen(false);
     command();
   }, []);
@@ -70,7 +72,7 @@ export function DashboardHeader() {
                     <BreadcrumbLink href={`/dashboard/${paths.slice(0, index + 1).join('/')}`}>{formatPathSegment(path)}</BreadcrumbLink>
                   )}
                 </BreadcrumbItem>
-                {index < paths.length - 1 && <BreadcrumbSeparator />}
+                {index < paths.length - 1 && !isDashboard && <BreadcrumbSeparator />}
               </React.Fragment>
             ))}
           </BreadcrumbList>
