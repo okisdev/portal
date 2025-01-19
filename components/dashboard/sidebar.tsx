@@ -1,5 +1,6 @@
 'use client';
 
+import { ActionAlertDialog } from '@/components/shared/action-alert-dialog';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import {
@@ -15,12 +16,16 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from '@/components/ui/sidebar';
+import { Skeleton } from '@/components/ui/skeleton';
 import { crmItems, languageItems, marketingItems, personalItems, resourcesItems, teamItems } from '@/config/dashboard';
 import { api } from '@/utils/trpc/client';
 import { ChevronDown, ChevronRight, ChevronUp, Globe, Laptop, Moon, Plus, Settings, Sun, User2 } from 'lucide-react';
 import { signOut } from 'next-auth/react';
+import { useTheme } from 'next-themes';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import type React from 'react';
+import { useState } from 'react';
 
 type SidebarGroupSectionProps = {
   title: string;
@@ -35,7 +40,12 @@ type SidebarGroupSectionProps = {
 
 export function DashboardSidebar() {
   const router = useRouter();
-  const { data: me } = api.account.getMeFromDatabase.useQuery();
+
+  const { data: me, isLoading } = api.account.getMeFromDatabase.useQuery();
+
+  const [showSignOutDialog, setShowSignOutDialog] = useState(false);
+
+  const { theme, setTheme } = useTheme();
 
   return (
     <Sidebar>
@@ -69,7 +79,8 @@ export function DashboardSidebar() {
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <SidebarMenuButton>
-                  <User2 /> {me?.name ?? me?.email}
+                  <User2 />
+                  {isLoading ? <Skeleton className='h-4 w-[100px]' /> : <span>{me?.name ?? me?.email}</span>}
                   <ChevronUp className='ml-auto' />
                 </SidebarMenuButton>
               </DropdownMenuTrigger>
@@ -83,22 +94,22 @@ export function DashboardSidebar() {
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <DropdownMenuItem>
-                      <Sun className='mr-2 h-4 w-4' />
+                      {theme === 'system' ? <Laptop className='mr-2 h-4 w-4' /> : theme === 'dark' ? <Moon className='mr-2 h-4 w-4' /> : <Sun className='mr-2 h-4 w-4' />}
                       <span>Theme</span>
                       <ChevronRight className='ml-auto h-4 w-4' />
                     </DropdownMenuItem>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent side='right'>
-                    <DropdownMenuRadioGroup>
-                      <DropdownMenuRadioItem value='system'>
+                    <DropdownMenuRadioGroup value={theme} onValueChange={setTheme}>
+                      <DropdownMenuRadioItem value='system' className='flex cursor-pointer items-center gap-2' onClick={() => setTheme('system')}>
                         <Laptop className='mr-2 h-4 w-4' />
                         <span>System</span>
                       </DropdownMenuRadioItem>
-                      <DropdownMenuRadioItem value='light'>
+                      <DropdownMenuRadioItem value='light' className='flex cursor-pointer items-center gap-2' onClick={() => setTheme('light')}>
                         <Sun className='mr-2 h-4 w-4' />
                         <span>Light</span>
                       </DropdownMenuRadioItem>
-                      <DropdownMenuRadioItem value='dark'>
+                      <DropdownMenuRadioItem value='dark' className='flex cursor-pointer items-center gap-2' onClick={() => setTheme('dark')}>
                         <Moon className='mr-2 h-4 w-4' />
                         <span>Dark</span>
                       </DropdownMenuRadioItem>
@@ -116,7 +127,7 @@ export function DashboardSidebar() {
                   <DropdownMenuContent side='right'>
                     <DropdownMenuRadioGroup>
                       {languageItems.map((item) => (
-                        <DropdownMenuRadioItem key={item.value} value={item.value} className='flex items-center gap-2'>
+                        <DropdownMenuRadioItem key={item.value} value={item.value} className='flex cursor-pointer items-center gap-2'>
                           <span>{item.flag}</span>
                           <span>{item.title}</span>
                         </DropdownMenuRadioItem>
@@ -125,7 +136,7 @@ export function DashboardSidebar() {
                   </DropdownMenuContent>
                 </DropdownMenu>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => signOut()}>
+                <DropdownMenuItem className='cursor-pointer' onClick={() => setShowSignOutDialog(true)}>
                   <span>Sign out</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
@@ -133,6 +144,15 @@ export function DashboardSidebar() {
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarFooter>
+      <ActionAlertDialog
+        open={showSignOutDialog}
+        onOpenChange={setShowSignOutDialog}
+        onConfirm={() => signOut()}
+        title='Sign Out'
+        description='Are you sure you want to sign out of your account?'
+        cancelText='Cancel'
+        confirmText='Sign Out'
+      />
     </Sidebar>
   );
 }

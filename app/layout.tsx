@@ -4,6 +4,7 @@ import { geistSans } from '@/app/font';
 import RootProvider from '@/app/provider';
 import { Toaster } from '@/components/ui/sonner';
 import { cn } from '@/lib/utils';
+import { ThemeProvider } from 'next-themes';
 
 export const metadata: Metadata = {
   title: 'Portal',
@@ -17,11 +18,13 @@ export default function RootLayout({
 }>) {
   return (
     <RootProvider>
-      <html lang='en'>
+      <html lang='en' suppressHydrationWarning>
         <body className={cn(geistSans.className, 'antialiased')}>
-          {children}
+          <ThemeProvider attribute='class' defaultTheme='system' value={{ light: 'light', dark: 'dark' }} disableTransitionOnChange>
+            {children}
 
-          <Toaster richColors />
+            <Toaster richColors />
+          </ThemeProvider>
         </body>
       </html>
     </RootProvider>
