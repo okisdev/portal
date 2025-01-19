@@ -298,7 +298,11 @@ export default function DashboardPersonalCalendar() {
 
   const goToToday = () => {
     const today = new Date();
-    setCurrentDate(new Date(today.getFullYear(), today.getMonth(), 1));
+    if (view === 'month') {
+      setCurrentDate(new Date(today.getFullYear(), today.getMonth(), 1));
+    } else {
+      setCurrentDate(today);
+    }
     setSelectedDate(today);
   };
 

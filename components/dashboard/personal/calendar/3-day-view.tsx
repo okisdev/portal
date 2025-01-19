@@ -27,13 +27,13 @@ export function ThreeDayView({ currentDate, selectedDate, events, onTimeSelect, 
 
   return (
     <div className='flex min-h-0 flex-1 flex-col'>
-      <div className='grid grid-cols-4 border-b bg-background'>
-        <div className='border-r p-2 text-muted-foreground text-sm'>Time</div>
+      <div className='grid grid-cols-4 divide-x border-b bg-background'>
+        <div className='p-2 text-muted-foreground text-sm'>Time</div>
         {get3Days(currentDate).map((date) => (
           <div
             key={date.toISOString()}
             className={cn(
-              'border-r p-2 text-sm',
+              'p-2 text-sm',
               date.getDate() === new Date().getDate() && date.getMonth() === new Date().getMonth() && date.getFullYear() === new Date().getFullYear() && 'bg-accent',
               date.getDate() === selectedDate.getDate() && date.getMonth() === selectedDate.getMonth() && date.getFullYear() === selectedDate.getFullYear() && 'bg-primary/10'
             )}

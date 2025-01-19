@@ -346,73 +346,81 @@ export default function CRMContactsPage() {
         {isLoading ? (
           <TableLoading columnCount={columns.filter((col) => col.visible).length - 1} rowCount={8} />
         ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                {columns.map((column) =>
-                  column.visible ? (
-                    <TableHead key={column.id} onClick={() => handleSort(column.id)} className={cn('cursor-pointer', column.label === 'Actions' && 'text-right')}>
-                      {column.label} {sortConfig.column === column.id && <CaretSortIcon className='ml-2 inline' />}
-                    </TableHead>
-                  ) : null
-                )}
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredContacts.map((contact) => (
-                <TableRow key={contact.id} className='cursor-pointer hover:bg-muted/50' onClick={() => router.push(`/dashboard/crm/contacts/${contact.id}`)}>
+          <div className='relative'>
+            <Table>
+              <TableHeader className='sticky top-0 bg-background'>
+                <TableRow>
                   {columns.map((column) =>
                     column.visible ? (
-                      <TableCell key={column.id}>
-                        {column.id === 'name' && (
-                          <div className='flex items-center gap-2'>
-                            <Avatar className='size-8'>
-                              <AvatarFallback>{contact.firstName?.[0] ?? contact.name?.[0] ?? contact.email?.[0] ?? ''}</AvatarFallback>
-                            </Avatar>
-                            <div>
-                              <div className='font-medium'>{contact.name}</div>
-                              <div className='text-neutral-500 text-xs'>{contact.email}</div>
-                            </div>
-                          </div>
-                        )}
-                        {column.id === 'email' && contact.email}
-                        {column.id === 'status' && <ColorBadge type='contactStatus' value={contact.status} />}
-                        {column.id === 'source' && <span className='capitalize'>{contact.source?.replace('_', ' ') || '—'}</span>}
-                        {column.id === 'priority' && <ColorBadge type='priority' value={contact.priority ?? 'medium'} />}
-                        {column.id === 'createdAt' && formatDate(new Date(contact.createdAt))}
-                      </TableCell>
+                      <TableHead key={column.id} onClick={() => handleSort(column.id)} className={cn('cursor-pointer', column.label === 'Actions' && 'text-right')}>
+                        {column.label} {sortConfig.column === column.id && <CaretSortIcon className='ml-2 inline' />}
+                      </TableHead>
                     ) : null
                   )}
-                  <TableCell className='w-[50px]'>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                        <Button variant='ghost' className='h-8 w-8 p-0'>
-                          <MoreHorizontal className='h-4 w-4' />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align='end'>
-                        <DropdownMenuItem className='cursor-pointer' onClick={(e) => handleEdit(contact.id, e)}>
-                          <Pencil className='mr-2 h-4 w-4' />
-                          Edit
-                        </DropdownMenuItem>
-                        <DropdownMenuItem className='cursor-pointer text-destructive' onClick={(e) => handleDeleteClick(contact.id, e)}>
-                          <Trash2 className='mr-2 h-4 w-4' />
-                          Delete
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                </TableRow>
+              </TableHeader>
+            </Table>
+            <div className='max-h-[800px] overflow-auto'>
+              <Table>
+                <TableBody>
+                  {filteredContacts.map((contact) => (
+                    <TableRow key={contact.id} className='cursor-pointer hover:bg-muted/50' onClick={() => router.push(`/dashboard/crm/contacts/${contact.id}`)}>
+                      {columns.map((column) =>
+                        column.visible ? (
+                          <TableCell key={column.id}>
+                            {column.id === 'name' && (
+                              <div className='flex items-center gap-2'>
+                                <Avatar className='size-8'>
+                                  <AvatarFallback>{contact.firstName?.[0] ?? contact.name?.[0] ?? contact.email?.[0] ?? ''}</AvatarFallback>
+                                </Avatar>
+                                <div>
+                                  <div className='font-medium'>{contact.name}</div>
+                                  <div className='text-neutral-500 text-xs'>{contact.email}</div>
+                                </div>
+                              </div>
+                            )}
+                            {column.id === 'email' && contact.email}
+                            {column.id === 'status' && <ColorBadge type='contactStatus' value={contact.status} />}
+                            {column.id === 'source' && <span className='capitalize'>{contact.source?.replace('_', ' ') || '—'}</span>}
+                            {column.id === 'priority' && <ColorBadge type='priority' value={contact.priority ?? 'medium'} />}
+                            {column.id === 'createdAt' && formatDate(new Date(contact.createdAt))}
+                          </TableCell>
+                        ) : null
+                      )}
+                      <TableCell className='w-[50px]'>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                            <Button variant='ghost' className='h-8 w-8 p-0'>
+                              <MoreHorizontal className='h-4 w-4' />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align='end'>
+                            <DropdownMenuItem className='cursor-pointer' onClick={(e) => handleEdit(contact.id, e)}>
+                              <Pencil className='mr-2 h-4 w-4' />
+                              Edit
+                            </DropdownMenuItem>
+                            <DropdownMenuItem className='cursor-pointer text-destructive' onClick={(e) => handleDeleteClick(contact.id, e)}>
+                              <Trash2 className='mr-2 h-4 w-4' />
+                              Delete
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+            <Table>
+              <TableFooter>
+                <TableRow>
+                  <TableCell colSpan={4}>
+                    Showing {filteredContacts.length} of {contacts?.length} contacts
                   </TableCell>
                 </TableRow>
-              ))}
-            </TableBody>
-            <TableFooter>
-              <TableRow>
-                <TableCell colSpan={4}>
-                  Showing {filteredContacts.length} of {contacts?.length} contacts
-                </TableCell>
-              </TableRow>
-            </TableFooter>
-          </Table>
+              </TableFooter>
+            </Table>
+          </div>
         )}
       </div>
 
