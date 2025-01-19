@@ -4,6 +4,8 @@ import { database } from '@/lib/database';
 import { eq } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 
+export const runtime = 'edge';
+
 export async function POST(request: Request) {
   try {
     const session = await auth();

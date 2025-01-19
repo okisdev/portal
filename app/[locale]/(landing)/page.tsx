@@ -1,66 +1,123 @@
-import Image from 'next/image';
+import Link from 'next/link';
 
 export default function Home() {
   return (
-    <div className='grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]'>
-      <main className='flex flex-col gap-8 row-start-2 items-center sm:items-start'>
-        <Image className='dark:invert' src='/next.svg' alt='Next.js logo' width={180} height={38} priority />
-        <ol className='list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]'>
-          <li className='mb-2'>
-            Get started by editing <code className='bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-medium'>app/page.tsx</code>.
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
-
-        <div className='flex gap-4 items-center flex-col sm:flex-row'>
-          <a
-            className='rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5'
-            href='https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app'
-            target='_blank'
-            rel='noopener noreferrer'
-          >
-            <Image className='dark:invert' src='/vercel.svg' alt='Vercel logomark' width={20} height={20} />
-            Deploy now
-          </a>
-          <a
-            className='rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44'
-            href='https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app'
-            target='_blank'
-            rel='noopener noreferrer'
-          >
-            Read our docs
-          </a>
+    <div className='min-h-screen bg-gradient-to-b from-neutral-50 to-white dark:from-neutral-900 dark:to-neutral-800'>
+      <div className='relative isolate px-6 pt-14 lg:px-8'>
+        <div className='mx-auto max-w-2xl py-32 sm:py-48 lg:py-56'>
+          <div className='text-center'>
+            <h1 className='font-bold text-4xl text-neutral-900 tracking-tight sm:text-6xl dark:text-white'>Streamline Your Business Operations</h1>
+            <p className='mt-6 text-lg text-neutral-600 leading-8 dark:text-neutral-300'>
+              Powerful admin dashboard and CRM solution that helps you manage customers, track performance, and grow your business efficiently.
+            </p>
+            <div className='mt-10 flex items-center justify-center gap-x-6'>
+              <Link
+                href='/dashboard'
+                className='rounded-md bg-neutral-900 px-3.5 py-2.5 font-semibold text-sm text-white shadow-sm hover:bg-neutral-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-neutral-900 focus-visible:outline-offset-2 dark:bg-neutral-700 dark:hover:bg-neutral-600'
+              >
+                Open Dashboard
+              </Link>
+              <Link href='/demo' className='font-semibold text-neutral-900 text-sm leading-6 dark:text-white'>
+                Watch Demo <span aria-hidden='true'>→</span>
+              </Link>
+            </div>
+          </div>
         </div>
-      </main>
-      <footer className='row-start-3 flex gap-6 flex-wrap items-center justify-center'>
-        <a
-          className='flex items-center gap-2 hover:underline hover:underline-offset-4'
-          href='https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app'
-          target='_blank'
-          rel='noopener noreferrer'
-        >
-          <Image aria-hidden src='/file.svg' alt='File icon' width={16} height={16} />
-          Learn
-        </a>
-        <a
-          className='flex items-center gap-2 hover:underline hover:underline-offset-4'
-          href='https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app'
-          target='_blank'
-          rel='noopener noreferrer'
-        >
-          <Image aria-hidden src='/window.svg' alt='Window icon' width={16} height={16} />
-          Examples
-        </a>
-        <a
-          className='flex items-center gap-2 hover:underline hover:underline-offset-4'
-          href='https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app'
-          target='_blank'
-          rel='noopener noreferrer'
-        >
-          <Image aria-hidden src='/globe.svg' alt='Globe icon' width={16} height={16} />
-          Go to nextjs.org →
-        </a>
-      </footer>
+      </div>
+
+      <div className='py-24 sm:py-32'>
+        <div className='mx-auto max-w-7xl px-6 lg:px-8'>
+          <div className='mx-auto max-w-2xl lg:text-center'>
+            <h2 className='font-semibold text-base text-neutral-600 leading-7 dark:text-neutral-400'>Complete Solution</h2>
+            <p className='mt-2 font-bold text-3xl text-neutral-900 tracking-tight sm:text-4xl dark:text-white'>Everything you need to manage your business</p>
+          </div>
+          <div className='mx-auto mt-16 max-w-2xl sm:mt-20 lg:mt-24 lg:max-w-none'>
+            <div className='grid max-w-xl grid-cols-1 gap-x-8 gap-y-16 lg:max-w-none lg:grid-cols-3'>
+              {[
+                {
+                  title: 'Customer Management',
+                  description: 'Track customer interactions, manage relationships, and boost engagement.',
+                  icon: '👥',
+                },
+                {
+                  title: 'Analytics Dashboard',
+                  description: 'Real-time insights into sales, customer behavior, and business metrics.',
+                  icon: '📊',
+                },
+                {
+                  title: 'Task Automation',
+                  description: 'Automate repetitive tasks and streamline your workflow.',
+                  icon: '⚡',
+                },
+              ].map((feature) => (
+                <div key={feature.title} className='flex flex-col'>
+                  <div className='mb-6 text-4xl'>{feature.icon}</div>
+                  <div className='flex flex-auto flex-col'>
+                    <h3 className='font-semibold text-neutral-900 text-xl leading-8 tracking-tight dark:text-white'>{feature.title}</h3>
+                    <p className='mt-2 text-base text-neutral-600 leading-7 dark:text-neutral-300'>{feature.description}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className='bg-neutral-50/50 py-24 sm:py-32 dark:bg-neutral-800/50'>
+        <div className='mx-auto max-w-7xl px-6 lg:px-8'>
+          <div className='mx-auto max-w-xl text-center'>
+            <h2 className='font-semibold text-lg text-neutral-600 leading-8 tracking-tight dark:text-neutral-400'>Success Stories</h2>
+            <p className='mt-2 font-bold text-3xl text-neutral-900 tracking-tight sm:text-4xl dark:text-white'>Trusted by businesses worldwide</p>
+          </div>
+          <div className='mx-auto mt-16 flow-root max-w-2xl sm:mt-20 lg:mx-0 lg:max-w-none'>
+            <div className='grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3'>
+              {[
+                {
+                  quote: 'This platform has transformed how we manage our customer relationships.',
+                  author: 'Sarah Johnson',
+                  role: 'Operations Director',
+                },
+                {
+                  quote: 'The analytics dashboard gives us invaluable insights into our business.',
+                  author: 'Michael Chen',
+                  role: 'Business Owner',
+                },
+                {
+                  quote: 'Task automation saved us countless hours of manual work.',
+                  author: 'Emily Rodriguez',
+                  role: 'Sales Manager',
+                },
+              ].map((testimonial) => (
+                <div key={testimonial.author} className='rounded-2xl bg-white p-8 text-sm leading-6 shadow-sm dark:bg-neutral-800'>
+                  <p className='text-neutral-900 dark:text-white'>"{testimonial.quote}"</p>
+                  <div className='mt-6 flex items-center gap-x-4'>
+                    <div className='font-semibold text-neutral-900 dark:text-white'>{testimonial.author}</div>
+                    <div className='text-neutral-600 dark:text-neutral-400'>{testimonial.role}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className='relative isolate mt-32 px-6 py-32 sm:mt-56 sm:py-40 lg:px-8'>
+        <div className='mx-auto max-w-2xl text-center'>
+          <h2 className='font-bold text-3xl text-neutral-900 tracking-tight sm:text-4xl dark:text-white'>Ready to transform your business?</h2>
+          <p className='mx-auto mt-6 max-w-xl text-lg text-neutral-600 leading-8 dark:text-neutral-300'>Join thousands of businesses already using our platform to grow and succeed.</p>
+          <div className='mt-10 flex items-center justify-center gap-x-6'>
+            <Link
+              href='/signup'
+              className='rounded-md bg-neutral-900 px-3.5 py-2.5 font-semibold text-sm text-white shadow-sm hover:bg-neutral-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-neutral-900 focus-visible:outline-offset-2 dark:bg-neutral-700 dark:hover:bg-neutral-600'
+            >
+              Start Free Trial
+            </Link>
+            <Link href='/contact' className='font-semibold text-neutral-900 text-sm leading-6 dark:text-white'>
+              Contact Sales <span aria-hidden='true'>→</span>
+            </Link>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

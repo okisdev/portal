@@ -1,7 +1,6 @@
+import RootLayout from '@/components/root/layout';
 import { routing } from '@/i18n/routing';
 import type { Locale } from '@/types/i18n';
-import { NextIntlClientProvider } from 'next-intl';
-import { getMessages } from 'next-intl/server';
 import { notFound } from 'next/navigation';
 
 type Props = Readonly<{
@@ -14,11 +13,7 @@ export default async function LocaleLayout(props: Props) {
 
   const { locale } = await params;
 
-  if (!routing.locales.includes(locale as Locale)) {
-    notFound();
-  }
+  if (!routing.locales.includes(locale as Locale)) notFound();
 
-  const messages = await getMessages();
-
-  return <NextIntlClientProvider messages={messages}>{children}</NextIntlClientProvider>;
+  return <RootLayout params={{ locale }}>{children}</RootLayout>;
 }

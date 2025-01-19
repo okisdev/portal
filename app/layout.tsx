@@ -1,32 +1,17 @@
-import type { Metadata } from 'next';
+import type { ReactNode } from 'react';
 import '@/styles/globals.css';
-import BodyProvider from '@/app/body-provider';
 import RootProvider from '@/app/provider';
-import { cn } from '@/lib/utils';
-import { geistSans } from '@/styles/font';
+import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
   title: 'Portal',
-  description: 'Portal',
+  description: 'Streamline Your Business Operations',
 };
 
-type Props = Readonly<{
-  children: React.ReactNode;
-  params: Promise<{ locale: string }>;
-}>;
+type Props = {
+  children: ReactNode;
+};
 
-export default async function RootLayout(props: Props) {
-  const { params, children } = props;
-
-  const { locale } = await params;
-
-  return (
-    <RootProvider>
-      <html lang={locale} suppressHydrationWarning>
-        <body className={cn(geistSans.className, 'antialiased')}>
-          <BodyProvider>{children}</BodyProvider>
-        </body>
-      </html>
-    </RootProvider>
-  );
+export default function RootLayout({ children }: Props) {
+  return <RootProvider>{children}</RootProvider>;
 }
