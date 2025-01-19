@@ -67,11 +67,12 @@ export default function CRMContactsPage() {
 
   const [columns, setColumns] = useState<ColumnConfig[]>([
     { id: 'name', label: 'Name', visible: true },
-    { id: 'email', label: 'Email', visible: true },
+    { id: 'phone', label: 'Phone', visible: true },
+    { id: 'company', label: 'Company', visible: true },
     { id: 'status', label: 'Status', visible: true },
     { id: 'source', label: 'Source', visible: true },
     { id: 'priority', label: 'Priority', visible: true },
-    { id: 'createdAt', label: 'Created', visible: true },
+    { id: 'createdAt', label: 'Created', visible: false },
     { id: 'actions', label: 'Actions', visible: true },
   ]);
 
@@ -347,21 +348,19 @@ export default function CRMContactsPage() {
           <TableLoading columnCount={columns.filter((col) => col.visible).length - 1} rowCount={8} />
         ) : (
           <div className='relative'>
-            <Table>
-              <TableHeader className='sticky top-0 bg-background'>
-                <TableRow>
-                  {columns.map((column) =>
-                    column.visible ? (
-                      <TableHead key={column.id} onClick={() => handleSort(column.id)} className={cn('cursor-pointer', column.label === 'Actions' && 'text-right')}>
-                        {column.label} {sortConfig.column === column.id && <CaretSortIcon className='ml-2 inline' />}
-                      </TableHead>
-                    ) : null
-                  )}
-                </TableRow>
-              </TableHeader>
-            </Table>
             <div className='max-h-[800px] overflow-auto'>
               <Table>
+                <TableHeader className='sticky top-0 bg-background'>
+                  <TableRow>
+                    {columns.map((column) =>
+                      column.visible ? (
+                        <TableHead key={column.id} onClick={() => handleSort(column.id)} className={cn('cursor-pointer', column.label === 'Actions' && 'text-right')}>
+                          {column.label} {sortConfig.column === column.id && <CaretSortIcon className='ml-2 inline' />}
+                        </TableHead>
+                      ) : null
+                    )}
+                  </TableRow>
+                </TableHeader>
                 <TableBody>
                   {filteredContacts.map((contact) => (
                     <TableRow key={contact.id} className='cursor-pointer hover:bg-muted/50' onClick={() => router.push(`/dashboard/crm/contacts/${contact.id}`)}>
@@ -379,7 +378,8 @@ export default function CRMContactsPage() {
                                 </div>
                               </div>
                             )}
-                            {column.id === 'email' && contact.email}
+                            {column.id === 'phone' && contact.phone}
+                            {column.id === 'company' && contact.company}
                             {column.id === 'status' && <ColorBadge type='contactStatus' value={contact.status} />}
                             {column.id === 'source' && <span className='capitalize'>{contact.source?.replace('_', ' ') || '—'}</span>}
                             {column.id === 'priority' && <ColorBadge type='priority' value={contact.priority ?? 'medium'} />}
@@ -409,17 +409,15 @@ export default function CRMContactsPage() {
                     </TableRow>
                   ))}
                 </TableBody>
+                <TableFooter>
+                  <TableRow>
+                    <TableCell colSpan={4}>
+                      Showing {filteredContacts.length} of {contacts?.length} contacts
+                    </TableCell>
+                  </TableRow>
+                </TableFooter>
               </Table>
             </div>
-            <Table>
-              <TableFooter>
-                <TableRow>
-                  <TableCell colSpan={4}>
-                    Showing {filteredContacts.length} of {contacts?.length} contacts
-                  </TableCell>
-                </TableRow>
-              </TableFooter>
-            </Table>
           </div>
         )}
       </div>

@@ -1,4 +1,4 @@
-import type { CalendarEventWithParticipants } from '@/lib/schema';
+import type { CalendarEventWithParticipants, CalendarFolder } from '@/lib/schema';
 import { cn } from '@/lib/utils';
 import { WEEKDAYS } from './constants';
 import { TimeColumn } from './time-column';
@@ -8,13 +8,17 @@ interface DayViewProps {
   currentDate: Date;
   selectedDate: Date;
   events: CalendarEventWithParticipants[];
+  folders: CalendarFolder[];
+  hiddenCalendars: Set<string>;
   onTimeSelect: (date: Date, hour: number, minute: number, isStart: boolean, e?: React.MouseEvent) => void;
   isSelecting: boolean;
   isTimeSlotSelected: (date: Date, hour: number, minute: number) => boolean;
   onSelectionEnd: () => void;
+  onEventEdit?: (event: CalendarEventWithParticipants) => void;
+  onEventDelete?: (eventId: string) => void;
 }
 
-export function DayView({ currentDate, selectedDate, events, onTimeSelect, isSelecting, isTimeSlotSelected, onSelectionEnd }: DayViewProps) {
+export function DayView({ currentDate, selectedDate, events, folders, hiddenCalendars, onTimeSelect, isSelecting, isTimeSlotSelected, onSelectionEnd, onEventEdit, onEventDelete }: DayViewProps) {
   return (
     <div className='flex min-h-0 flex-1 flex-col'>
       <div className='grid grid-cols-[100px_1fr] divide-x border-b bg-background'>
@@ -33,7 +37,18 @@ export function DayView({ currentDate, selectedDate, events, onTimeSelect, isSel
       <div className='flex-1 overflow-y-auto'>
         <div className='-mr-[1px] grid grid-cols-[100px_1fr] divide-x' style={{ height: 'calc(60px * 24)' }}>
           <TimeColumn />
-          <TimeGrid date={currentDate} events={events} onTimeSelect={onTimeSelect} isSelecting={isSelecting} isTimeSlotSelected={isTimeSlotSelected} onSelectionEnd={onSelectionEnd} />
+          <TimeGrid
+            date={currentDate}
+            events={events}
+            folders={folders}
+            hiddenCalendars={hiddenCalendars}
+            onTimeSelect={onTimeSelect}
+            isSelecting={isSelecting}
+            isTimeSlotSelected={isTimeSlotSelected}
+            onSelectionEnd={onSelectionEnd}
+            onEventEdit={onEventEdit}
+            onEventDelete={onEventDelete}
+          />
         </div>
       </div>
     </div>

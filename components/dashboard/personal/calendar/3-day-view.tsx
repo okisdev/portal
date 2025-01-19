@@ -1,4 +1,4 @@
-import type { CalendarEventWithParticipants } from '@/lib/schema';
+import type { CalendarEventWithParticipants, CalendarFolder } from '@/lib/schema';
 import { cn } from '@/lib/utils';
 import { WEEKDAYS } from './constants';
 import { TimeColumn } from './time-column';
@@ -8,13 +8,29 @@ interface ThreeDayViewProps {
   currentDate: Date;
   selectedDate: Date;
   events: CalendarEventWithParticipants[];
+  folders: CalendarFolder[];
+  hiddenCalendars: Set<string>;
   onTimeSelect: (date: Date, hour: number, minute: number, isStart: boolean, e?: React.MouseEvent) => void;
   isSelecting: boolean;
   isTimeSlotSelected: (date: Date, hour: number, minute: number) => boolean;
   onSelectionEnd: () => void;
+  onEventEdit?: (event: CalendarEventWithParticipants) => void;
+  onEventDelete?: (eventId: string) => void;
 }
 
-export function ThreeDayView({ currentDate, selectedDate, events, onTimeSelect, isSelecting, isTimeSlotSelected, onSelectionEnd }: ThreeDayViewProps) {
+export function ThreeDayView({
+  currentDate,
+  selectedDate,
+  events,
+  folders,
+  hiddenCalendars,
+  onTimeSelect,
+  isSelecting,
+  isTimeSlotSelected,
+  onSelectionEnd,
+  onEventEdit,
+  onEventDelete,
+}: ThreeDayViewProps) {
   const get3Days = (date: Date) => {
     const days = [];
     for (let i = 0; i < 3; i++) {
@@ -51,10 +67,14 @@ export function ThreeDayView({ currentDate, selectedDate, events, onTimeSelect, 
               key={date.toISOString()}
               date={date}
               events={events}
+              folders={folders}
+              hiddenCalendars={hiddenCalendars}
               onTimeSelect={onTimeSelect}
               isSelecting={isSelecting}
               isTimeSlotSelected={isTimeSlotSelected}
               onSelectionEnd={onSelectionEnd}
+              onEventEdit={onEventEdit}
+              onEventDelete={onEventDelete}
             />
           ))}
         </div>

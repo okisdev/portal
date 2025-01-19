@@ -61,11 +61,12 @@ export function CalendarSidebar({ currentDate, selectedDate, onDateSelect, folde
             <YearMonthPicker
               value={currentDate}
               onChange={(date) => {
+                // Update both selected date and current date
                 onDateSelect(date);
-                // Also update the current date to show the selected month
-                const newDate = new Date(currentDate);
-                newDate.setFullYear(date.getFullYear());
-                newDate.setMonth(date.getMonth());
+                // Create a new date to avoid reference issues
+                const newDate = new Date(date);
+                // Set the date to the first of the month for consistent month view
+                newDate.setDate(1);
                 onDateSelect(newDate);
               }}
               onClose={() => {}}

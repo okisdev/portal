@@ -18,11 +18,12 @@ import { insuranceCompanies, sources } from '@/data/data';
 import type { Priority, Status } from '@/lib/schema';
 import { cn, formatDate } from '@/lib/utils';
 import { api } from '@/utils/trpc/client';
-import { Building2, Calendar, CalendarIcon, Edit2, Mail, MoreHorizontal, Phone, Trash2, Users } from 'lucide-react';
+import { Building2, Calendar, CalendarIcon, Edit2, Mail, MoreHorizontal, Phone, Save, Trash2, Users, X } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
 import { notFound, useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
 
 export default function ContactIdPage() {
   const router = useRouter();
@@ -70,6 +71,8 @@ export default function ContactIdPage() {
     description: string;
     startAt: Date;
   } | null>(null);
+  const [isNotesEditing, setIsNotesEditing] = useState(false);
+  const [editableNotes, setEditableNotes] = useState('');
 
   const assignToTeam = api.team.assignContactToTeam.useMutation({
     onSuccess: () => {
@@ -82,6 +85,7 @@ export default function ContactIdPage() {
     onSuccess: () => {
       handleCloseEditModal();
       utils.contact.getContactById.invalidate({ id: contactId[0] });
+      toast.success('Contact updated successfully');
     },
   });
 
@@ -125,6 +129,22 @@ export default function ContactIdPage() {
     });
   };
 
+  const handleSaveNotes = () => {
+    updateContact.mutate({
+      id: contactId[0],
+      notes: editableNotes,
+      firstName: contact?.firstName || '',
+      lastName: contact?.lastName || '',
+      email: contact?.email || '',
+      phone: contact?.phone || '',
+      company: contact?.company || '',
+      source: contact?.source || '',
+      status: contact?.status || 'lead',
+      priority: contact?.priority || 'medium',
+    });
+    setIsNotesEditing(false);
+  };
+
   useEffect(() => {
     if (mode === 'edit' && contact) {
       setEditForm({
@@ -140,6 +160,12 @@ export default function ContactIdPage() {
       setIsEditModalOpen(true);
     }
   }, [mode, contact]);
+
+  useEffect(() => {
+    if (contact?.notes) {
+      setEditableNotes(contact.notes);
+    }
+  }, [contact?.notes]);
 
   if (isLoading) {
     return <PageLoading />;
@@ -275,7 +301,6 @@ export default function ContactIdPage() {
                 <div className='min-w-0 flex-1'>
                   <div className='mb-2 flex items-center gap-2'>
                     <h1 className='truncate font-semibold text-xl'>{contact?.name}</h1>
-                    <ColorBadge type='contactStatus' value={contact?.status || 'lead'} />
                   </div>
                   <div className='space-y-1 text-muted-foreground text-sm'>
                     {contact?.company && (
@@ -376,13 +401,39 @@ export default function ContactIdPage() {
             </div>
 
             <div className='border-b p-6'>
-              <div className='mb-4 flex items-center justify-between'>
-                <h2 className='font-medium'>Quick Notes</h2>
-                <Button variant='outline' size='sm' onClick={handleEditClick}>
-                  <Edit2 className='mr-2 size-4' /> Edit Notes
-                </Button>
+              <div className='flex items-center justify-between'>
+                <h2 className='font-medium'>Remark</h2>
+                <button
+                  type='button'
+                  className='h-8'
+                  onClick={() => {
+                    if (isNotesEditing) {
+                      if (contact?.notes === editableNotes) {
+                        setEditableNotes('');
+                        setIsNotesEditing(false);
+                        return;
+                      }
+                      handleSaveNotes();
+                    } else {
+                      setIsNotesEditing(true);
+                    }
+                  }}
+                >
+                  {isNotesEditing ? (
+                    <div className='flex items-center gap-2'>
+                      <X className='size-4' />
+                      <Save className='size-4' />
+                    </div>
+                  ) : (
+                    <Edit2 className='size-4' />
+                  )}
+                </button>
               </div>
-              <p className='whitespace-pre-wrap text-muted-foreground text-sm'>{contact?.notes || 'No notes added yet. Click edit to add notes about this contact.'}</p>
+              {isNotesEditing ? (
+                <Textarea value={editableNotes} onChange={(e) => setEditableNotes(e.target.value)} className='min-h-[100px]' placeholder='Add notes about this contact...' />
+              ) : (
+                <p className='whitespace-pre-wrap text-muted-foreground text-sm'>{contact?.notes || 'No notes added yet. Click edit to add notes about this contact.'}</p>
+              )}
             </div>
 
             <div className='border-b p-6'>

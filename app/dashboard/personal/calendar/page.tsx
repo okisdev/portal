@@ -14,6 +14,7 @@ import { Input } from '@/components/ui/input';
 import type { CalendarEventWithParticipants, CalendarFolder } from '@/lib/schema';
 import { api } from '@/utils/trpc/client';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
@@ -44,9 +45,11 @@ const eventFormSchema = z.object({
 type CalendarView = 'month' | 'week' | '3days' | 'day';
 
 export default function DashboardPersonalCalendar() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState(new Date());
-  const [view, setView] = useState<CalendarView>('month');
+  const [view, setView] = useState<CalendarView>((searchParams.get('view') as CalendarView) || 'month');
   const [isEventDialogOpen, setIsEventDialogOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<CalendarEventWithParticipants | null>(null);
   const [isEditMode, setIsEditMode] = useState(false);
@@ -342,13 +345,30 @@ export default function DashboardPersonalCalendar() {
     }
   };
 
+  const updateView = (newView: CalendarView) => {
+    setView(newView);
+    const params = new URLSearchParams(searchParams.toString());
+    params.set('view', newView);
+    router.push(`?${params.toString()}`);
+    if (newView !== 'month') {
+      setCurrentDate(new Date(selectedDate));
+    } else {
+      setCurrentDate(new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1));
+    }
+  };
+
   return (
     <>
       <div className='flex h-full'>
         <CalendarSidebar
           currentDate={currentDate}
           selectedDate={selectedDate}
-          onDateSelect={setSelectedDate}
+          onDateSelect={(date) => {
+            setSelectedDate(date);
+            if (date.getMonth() !== currentDate.getMonth() || date.getFullYear() !== currentDate.getFullYear()) {
+              setCurrentDate(date);
+            }
+          }}
           folders={folders ?? []}
           hiddenCalendars={hiddenCalendars}
           onToggleCalendar={(folderId) => {
@@ -385,7 +405,7 @@ export default function DashboardPersonalCalendar() {
           <CalendarHeader
             currentDate={currentDate}
             view={view}
-            onViewChange={setView}
+            onViewChange={updateView}
             onTodayClick={goToToday}
             onPrevious={goToPrevious}
             onNext={goToNext}
@@ -414,30 +434,60 @@ export default function DashboardPersonalCalendar() {
               currentDate={currentDate}
               selectedDate={selectedDate}
               events={events ?? []}
+              folders={folders ?? []}
+              hiddenCalendars={hiddenCalendars}
               onTimeSelect={handleTimeSelection}
               isSelecting={isSelecting}
               isTimeSlotSelected={isTimeSlotSelected}
               onSelectionEnd={finishSelection}
+              onEventEdit={handleEditEvent}
+              onEventDelete={(eventId) => {
+                toast.promise(deleteEvent.mutateAsync(eventId), {
+                  loading: 'Deleting event...',
+                  success: 'Event deleted successfully',
+                  error: 'Failed to delete event',
+                });
+              }}
             />
           ) : view === '3days' ? (
             <ThreeDayView
               currentDate={currentDate}
               selectedDate={selectedDate}
               events={events ?? []}
+              folders={folders ?? []}
+              hiddenCalendars={hiddenCalendars}
               onTimeSelect={handleTimeSelection}
               isSelecting={isSelecting}
               isTimeSlotSelected={isTimeSlotSelected}
               onSelectionEnd={finishSelection}
+              onEventEdit={handleEditEvent}
+              onEventDelete={(eventId) => {
+                toast.promise(deleteEvent.mutateAsync(eventId), {
+                  loading: 'Deleting event...',
+                  success: 'Event deleted successfully',
+                  error: 'Failed to delete event',
+                });
+              }}
             />
           ) : (
             <DayView
               currentDate={currentDate}
               selectedDate={selectedDate}
               events={events ?? []}
+              folders={folders ?? []}
+              hiddenCalendars={hiddenCalendars}
               onTimeSelect={handleTimeSelection}
               isSelecting={isSelecting}
               isTimeSlotSelected={isTimeSlotSelected}
               onSelectionEnd={finishSelection}
+              onEventEdit={handleEditEvent}
+              onEventDelete={(eventId) => {
+                toast.promise(deleteEvent.mutateAsync(eventId), {
+                  loading: 'Deleting event...',
+                  success: 'Event deleted successfully',
+                  error: 'Failed to delete event',
+                });
+              }}
             />
           )}
         </div>
