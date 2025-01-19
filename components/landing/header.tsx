@@ -44,7 +44,7 @@ export default function Header() {
             Log in
           </Link>
           <Link
-            href='/signup'
+            href='/register'
             className='rounded-md bg-neutral-900 px-3 py-2 font-semibold text-sm text-white shadow-sm hover:bg-neutral-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-neutral-900 focus-visible:outline-offset-2 dark:bg-neutral-700 dark:hover:bg-neutral-600'
           >
             Sign up
@@ -97,7 +97,7 @@ export default function Header() {
                   Log in
                 </Link>
                 <Link
-                  href='/signup'
+                  href='/register'
                   className='block w-8/12 rounded-lg bg-neutral-900 px-3 py-2.5 font-semibold text-base text-white leading-7 hover:bg-neutral-800 dark:bg-neutral-700 dark:hover:bg-neutral-600'
                   onClick={() => setMobileMenuOpen(false)}
                 >
