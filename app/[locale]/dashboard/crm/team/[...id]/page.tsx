@@ -78,7 +78,7 @@ export default function TeamIdPage() {
 
   const updateTeam = api.team.updateTeam.useMutation({
     onSuccess: () => {
-      router.push(`/dashboard/crm/contacts/team/${teamId[0]}`); // Remove mode param by navigating
+      router.push(`/dashboard/crm/team/${teamId[0]}`); // Remove mode param by navigating
       utils.team.getTeamById.invalidate({ id: teamId[0] });
       toast.success('Team updated successfully');
     },
@@ -152,11 +152,11 @@ export default function TeamIdPage() {
   if (!team) return notFound();
 
   const handleEditClick = () => {
-    router.push(`/dashboard/crm/contacts/team/${teamId[0]}?mode=edit`);
+    router.push(`/dashboard/crm/team/${teamId[0]}?mode=edit`);
   };
 
   const handleCloseEdit = () => {
-    router.push(`/dashboard/crm/contacts/team/${teamId[0]}`);
+    router.push(`/dashboard/crm/team/${teamId[0]}`);
   };
 
   const handleSubmitEdit = (e: React.FormEvent) => {
@@ -213,7 +213,7 @@ export default function TeamIdPage() {
 
       <div className='grid grid-cols-3 gap-4'>
         <div className='col-span-2 space-y-4'>
-          <div className='space-y-2 rounded-lg border bg-white p-4'>
+          <div className='space-y-2 rounded-lg border bg-card p-4'>
             <div className='flex items-center justify-between'>
               <p className='font-medium'>Team Members</p>
               <Popover open={isAddMemberOpen} onOpenChange={setIsAddMemberOpen}>
@@ -256,7 +256,7 @@ export default function TeamIdPage() {
                             <p className='text-sm'>
                               {contact.firstName} {contact.lastName}
                             </p>
-                            <p className='text-neutral-500 text-xs'>{contact.email}</p>
+                            <p className='text-muted-foreground text-xs'>{contact.email}</p>
                           </div>
                         </>
                       );
@@ -268,7 +268,7 @@ export default function TeamIdPage() {
             {teamContacts && teamContacts?.length > 0 && (
               <div className='space-y-3'>
                 {teamContacts?.map((member) => (
-                  <Link key={member.id} href={`/dashboard/crm/contacts/${member.contact.id}`} className='flex items-center justify-between rounded-lg border p-2 transition-colors hover:bg-gray-50'>
+                  <Link key={member.id} href={`/dashboard/crm/contacts/${member.contact.id}`} className='flex items-center justify-between rounded-lg border p-2 transition-colors hover:bg-muted'>
                     <div className='flex items-center gap-2'>
                       <Avatar className='size-8'>
                         <AvatarFallback>{member.contact.firstName.charAt(0)}</AvatarFallback>
@@ -277,7 +277,7 @@ export default function TeamIdPage() {
                         <p className='font-medium'>
                           {member.contact.firstName} {member.contact.lastName}
                         </p>
-                        <p className='text-neutral-500 text-sm'>{member.contact.email}</p>
+                        <p className='text-muted-foreground text-sm'>{member.contact.email}</p>
                       </div>
                     </div>
                   </Link>
@@ -286,7 +286,7 @@ export default function TeamIdPage() {
             )}
           </div>
 
-          <div className='rounded-lg border bg-white p-4'>
+          <div className='rounded-lg border bg-card p-4'>
             <div className='mb-4 flex items-center justify-between'>
               <h2 className='font-medium'>Remarks</h2>
               <form onSubmit={handleSubmitRemark} className='flex max-w-md flex-1 gap-2'>
@@ -298,9 +298,9 @@ export default function TeamIdPage() {
             </div>
             <div className='space-y-3'>
               {teamRemarks?.map((remark) => (
-                <div key={remark.id} className='rounded-lg border p-3'>
+                <div key={remark.id} className='rounded-lg border bg-card p-3'>
                   <p className='text-sm'>{remark.content}</p>
-                  <p className='mt-1 text-neutral-500 text-xs'>
+                  <p className='mt-1 text-muted-foreground text-xs'>
                     By {remark.createdBy} - {formatDate(new Date(remark.createdAt))}
                   </p>
                 </div>
@@ -310,46 +310,46 @@ export default function TeamIdPage() {
         </div>
 
         <div className='space-y-4'>
-          <div className='rounded-lg border bg-white p-4'>
+          <div className='rounded-lg border bg-card p-4'>
             <h2 className='mb-3 font-medium'>Team Information</h2>
             <div className='space-y-1'>
               <div>
-                <Label className='text-neutral-500 text-xs'>Team Leader</Label>
+                <Label className='text-muted-foreground text-xs'>Team Leader</Label>
                 <p className='text-sm'>
                   <Link href={`/dashboard/crm/contacts/${team.leaderId}`}>{team.leaderId ? `${team.leader?.firstName} ${team.leader?.lastName}` : 'N/A'}</Link>
                 </p>
               </div>
               <div>
-                <Label className='text-neutral-500 text-xs'>Sub Leader</Label>
+                <Label className='text-muted-foreground text-xs'>Sub Leader</Label>
                 <p className='text-sm'>
                   <Link href={`/dashboard/crm/contacts/${team.subLeaderId}`}>{team.subLeaderId ? `${team.subLeader?.firstName} ${team.subLeader?.lastName}` : 'N/A'}</Link>
                 </p>
               </div>
               <div>
-                <Label className='text-neutral-500 text-xs'>Referral</Label>
+                <Label className='text-muted-foreground text-xs'>Referral</Label>
                 <p className='text-sm'>
                   <Link href={`/dashboard/crm/contacts/${team.referralId}`}>{team.referralId ? `${team.referral?.firstName} ${team.referral?.lastName}` : 'N/A'}</Link>
                 </p>
               </div>
               <div>
-                <Label className='text-neutral-500 text-xs'>Campaign Code</Label>
+                <Label className='text-muted-foreground text-xs'>Campaign Code</Label>
                 <p className='text-sm'>{team.campaignCode || 'N/A'}</p>
               </div>
               <div className='items-cen flex justify-end'>
-                <p className='text-neutral-500 text-xs'>Created on {formatDate(new Date(team.createdAt))}</p>
+                <p className='text-muted-foreground text-xs'>Created on {formatDate(new Date(team.createdAt))}</p>
               </div>
             </div>
           </div>
 
-          <div className='space-y-3 rounded-lg border bg-white p-4'>
+          <div className='space-y-3 rounded-lg border bg-card p-4'>
             <h2 className='font-medium'>Meetings</h2>
             <div className='space-y-3'>
               {teamMeetings?.map((meeting) => (
                 <div key={meeting.id} className='flex items-center gap-3 text-sm'>
-                  <Calendar className='size-4 text-neutral-500' />
+                  <Calendar className='size-4 text-muted-foreground' />
                   <div className='flex-1'>
                     <p className='font-medium'>{meeting.title}</p>
-                    <p className='text-neutral-500 text-xs'>
+                    <p className='text-muted-foreground text-xs'>
                       {formatDate(new Date(meeting.meetingDate))}
                       {meeting.status === 'completed' && ' (Past)'}
                     </p>
@@ -367,7 +367,7 @@ export default function TeamIdPage() {
                       }
                     }}
                   >
-                    <Trash2 className='size-4 text-neutral-500' />
+                    <Trash2 className='size-4 text-muted-foreground' />
                   </Button>
                 </div>
               ))}

@@ -20,7 +20,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { crmItems, languageItems, marketingItems, personalItems, resourcesItems, teamItems } from '@/config/dashboard';
 import { usePathname, useRouter } from '@/i18n/routing';
 import { api } from '@/utils/trpc/client';
-import { ChevronDown, ChevronRight, ChevronUp, Globe, Laptop, Moon, Plus, Settings, Sparkle, Sun, User2 } from 'lucide-react';
+import { ChevronDown, ChevronRight, ChevronUp, Globe, Laptop, LogOut, Moon, Plus, Settings, Sparkle, Sun, User2 } from 'lucide-react';
 import { signOut } from 'next-auth/react';
 import { useLocale } from 'next-intl';
 import { useTheme } from 'next-themes';
@@ -100,13 +100,14 @@ export function DashboardSidebar() {
               <DropdownMenuContent side='top' className='w-[--radix-popper-anchor-width]'>
                 <DropdownMenuItem asChild>
                   <Link href='/dashboard/account/settings' className='cursor-pointer'>
+                    <Settings className='mr-2 h-4 w-4' />
                     <span>Account</span>
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <DropdownMenuItem>
+                    <DropdownMenuItem className='cursor-pointer'>
                       {theme === 'system' ? <Laptop className='mr-2 h-4 w-4' /> : theme === 'dark' ? <Moon className='mr-2 h-4 w-4' /> : <Sun className='mr-2 h-4 w-4' />}
                       <span>Theme</span>
                       <ChevronRight className='ml-auto h-4 w-4' />
@@ -131,7 +132,7 @@ export function DashboardSidebar() {
                 </DropdownMenu>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <DropdownMenuItem>
+                    <DropdownMenuItem className='cursor-pointer'>
                       <Globe className='mr-2 h-4 w-4' />
                       <span>Language</span>
                       <ChevronRight className='ml-auto h-4 w-4' />
@@ -149,7 +150,8 @@ export function DashboardSidebar() {
                   </DropdownMenuContent>
                 </DropdownMenu>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem className='cursor-pointer' onClick={() => setShowSignOutDialog(true)}>
+                <DropdownMenuItem className='cursor-pointer text-red-500 dark:text-red-400' onClick={() => setShowSignOutDialog(true)}>
+                  <LogOut className='mr-2 h-4 w-4' />
                   <span>Sign out</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>

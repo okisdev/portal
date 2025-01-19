@@ -76,7 +76,7 @@ export default function TeamPage() {
             </Button>
           }
         />
-        <div className='rounded-lg border bg-white'>
+        <div className='rounded-lg border bg-card text-card-foreground'>
           <TableLoading columnCount={4} rowCount={5} />
         </div>
       </div>
@@ -95,7 +95,7 @@ export default function TeamPage() {
         }
       />
 
-      <div className='rounded-lg border bg-white'>
+      <div className='rounded-lg border bg-card text-card-foreground'>
         <Table>
           <TableHeader>
             <TableRow>
@@ -108,10 +108,10 @@ export default function TeamPage() {
           </TableHeader>
           <TableBody>
             {teams?.map((team) => (
-              <TableRow key={team.id} onClick={() => router.push(`/dashboard/crm/contacts/team/${team.id}`)} className='cursor-pointer hover:bg-muted/50'>
+              <TableRow key={team.id} onClick={() => router.push(`/dashboard/crm/team/${team.id}`)} className='cursor-pointer hover:bg-muted'>
                 <TableCell className='font-medium'>
                   <div className='flex items-center gap-2'>
-                    <Users className='size-4 text-neutral-500' />
+                    <Users className='size-4 text-muted-foreground' />
                     {team.name}
                   </div>
                 </TableCell>
@@ -130,7 +130,7 @@ export default function TeamPage() {
                       <DropdownMenuItem
                         onClick={(e) => {
                           e.stopPropagation();
-                          router.push(`/dashboard/crm/contacts/team/${team.id}?mode=edit`);
+                          router.push(`/dashboard/crm/team/${team.id}?mode=edit`);
                         }}
                         className='cursor-pointer'
                       >

@@ -1,5 +1,6 @@
 'use client';
 
+import { ColorBadge } from '@/components/shared/color-badge';
 import { PageHeader } from '@/components/shared/page-header';
 import { PencilIcon, PlusIcon, TrashIcon } from 'lucide-react';
 import { useState } from 'react';
@@ -64,10 +65,10 @@ export default function TasksPage() {
             value={newTask}
             onChange={(e) => setNewTask(e.target.value)}
             placeholder='Add a new task...'
-            className='flex-1 rounded-lg border px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500'
+            className='flex-1 rounded-lg border bg-background px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary'
             onKeyPress={(e) => e.key === 'Enter' && addTask()}
           />
-          <button type='button' onClick={addTask} className='flex items-center gap-2 rounded-lg bg-blue-500 px-4 py-2 text-white hover:bg-blue-600'>
+          <button type='button' onClick={addTask} className='flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-primary-foreground hover:bg-primary/90'>
             <PlusIcon className='h-5 w-5' />
             Add Task
           </button>
@@ -76,25 +77,19 @@ export default function TasksPage() {
 
       <div className='space-y-4'>
         {tasks.map((task) => (
-          <div key={task.id} className={`flex items-center justify-between rounded-lg border p-4 ${task.completed ? 'bg-gray-50' : 'bg-white'}`}>
+          <div key={task.id} className={`flex items-center justify-between rounded-lg border bg-card p-4 ${task.completed ? 'opacity-70' : ''}`}>
             <div className='flex items-center gap-4'>
-              <input type='checkbox' checked={task.completed} onChange={() => toggleComplete(task.id)} className='h-5 w-5 rounded border-gray-300 focus:ring-blue-500' />
-              <span className={task.completed ? 'text-neutral-500 line-through' : ''}>{task.title}</span>
-              {task.dueDate && <span className='text-neutral-500 text-sm'>Due: {new Date(task.dueDate).toLocaleDateString()}</span>}
-              <span
-                className={`rounded-full px-2 py-1 text-xs ${
-                  task.priority === 'high' ? 'bg-red-100 text-red-800' : task.priority === 'medium' ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800'
-                }`}
-              >
-                {task.priority}
-              </span>
+              <input type='checkbox' checked={task.completed} onChange={() => toggleComplete(task.id)} className='h-5 w-5 rounded border-muted focus:ring-2 focus:ring-primary' />
+              <span className={`text-foreground ${task.completed ? 'line-through opacity-70' : ''}`}>{task.title}</span>
+              {task.dueDate && <span className='text-muted-foreground text-sm'>Due: {new Date(task.dueDate).toLocaleDateString()}</span>}
+              <ColorBadge type='priority' value={task.priority} />
             </div>
 
             <div className='flex gap-2'>
-              <button type='button' onClick={() => {}} className='p-2 text-neutral-500 hover:text-gray-700'>
+              <button type='button' onClick={() => {}} className='p-2 text-muted-foreground hover:text-foreground'>
                 <PencilIcon className='h-5 w-5' />
               </button>
-              <button type='button' onClick={() => deleteTask(task.id)} className='p-2 text-destructive'>
+              <button type='button' onClick={() => deleteTask(task.id)} className='p-2 text-destructive hover:text-destructive/90'>
                 <TrashIcon className='h-5 w-5' />
               </button>
             </div>

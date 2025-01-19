@@ -21,7 +21,7 @@ export const crmItems = [
   },
   {
     title: 'Teams',
-    url: '/dashboard/crm/contacts/team',
+    url: '/dashboard/crm/team',
     icon: Users,
   },
   {
