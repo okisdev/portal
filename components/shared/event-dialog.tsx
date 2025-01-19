@@ -148,7 +148,16 @@ export function EventDialog({ open, onOpenChange, onSubmit, isEditMode = false, 
                 <FormItem>
                   <FormLabel>Location</FormLabel>
                   <FormControl>
-                    <Input {...field} />
+                    <Combobox
+                      value={field.value || ''}
+                      onChange={field.onChange}
+                      items={['Meeting Room 1', 'Meeting Room 2', 'Conference Room A', 'Conference Room B', 'Office', 'Virtual Meeting', 'Zoom', 'Google Meet', 'Microsoft Teams']}
+                      placeholder='Enter or select location'
+                      searchPlaceholder='Search locations...'
+                      emptyText='No locations found'
+                      groupHeading='Suggested Locations'
+                      allowCustom={true}
+                    />
                   </FormControl>
                 </FormItem>
               )}

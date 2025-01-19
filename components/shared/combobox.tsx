@@ -99,6 +99,12 @@ function Combobox({
     }
   }, [open]);
 
+  useEffect(() => {
+    if (value && !items.includes(value) && !allowCustom) {
+      onChange('');
+    }
+  }, [items, value, onChange, allowCustom]);
+
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>

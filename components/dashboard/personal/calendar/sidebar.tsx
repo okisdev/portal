@@ -1,3 +1,4 @@
+import { ActionAlertDialog } from '@/components/shared/action-alert-dialog';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -5,6 +6,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import type { CalendarFolder } from '@/lib/schema';
 import { cn } from '@/lib/utils';
 import { ChevronsUpDown, MoreHorizontal, Pencil, Plus, Trash } from 'lucide-react';
+import { useState } from 'react';
 import { MONTHS, WEEKDAYS } from './constants';
 import { YearMonthPicker } from './year-month-picker';
 
@@ -21,6 +23,8 @@ interface CalendarSidebarProps {
 }
 
 export function CalendarSidebar({ currentDate, selectedDate, onDateSelect, folders, hiddenCalendars, onToggleCalendar, onAddCalendar, onEditCalendar, onDeleteCalendar }: CalendarSidebarProps) {
+  const [folderToDelete, setFolderToDelete] = useState<string | null>(null);
+
   const getDaysInMonth = (date: Date) => {
     const year = date.getFullYear();
     const month = date.getMonth();
@@ -127,7 +131,7 @@ export function CalendarSidebar({ currentDate, selectedDate, onDateSelect, folde
                       <Pencil className='mr-2 h-4 w-4' />
                       Edit
                     </DropdownMenuItem>
-                    <DropdownMenuItem className='cursor-pointer text-destructive' onClick={() => onDeleteCalendar(folder.id)}>
+                    <DropdownMenuItem className='cursor-pointer text-destructive' onClick={() => setFolderToDelete(folder.id)}>
                       <Trash className='mr-2 h-4 w-4' />
                       Delete
                     </DropdownMenuItem>
@@ -138,6 +142,21 @@ export function CalendarSidebar({ currentDate, selectedDate, onDateSelect, folde
           </div>
         </div>
       </div>
+
+      <ActionAlertDialog
+        open={!!folderToDelete}
+        onOpenChange={(open) => !open && setFolderToDelete(null)}
+        onConfirm={() => {
+          if (folderToDelete) {
+            onDeleteCalendar(folderToDelete);
+            setFolderToDelete(null);
+          }
+        }}
+        title='Delete Calendar'
+        description='This action cannot be undone. This will permanently delete the calendar and all associated events.'
+        confirmText='Delete'
+        cancelText='Cancel'
+      />
     </div>
   );
 }

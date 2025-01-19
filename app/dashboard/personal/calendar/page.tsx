@@ -395,9 +395,11 @@ export default function DashboardPersonalCalendar() {
             setIsEditCalendarOpen(true);
           }}
           onDeleteCalendar={(folderId) => {
-            if (window.confirm('Are you sure you want to delete this calendar?')) {
-              deleteFolder.mutate(folderId);
-            }
+            toast.promise(deleteFolder.mutateAsync(folderId), {
+              loading: 'Deleting calendar...',
+              success: 'Calendar deleted successfully',
+              error: 'Failed to delete calendar',
+            });
           }}
         />
 

@@ -426,7 +426,10 @@ export default function CRMContactsPage() {
         open={deleteDialogOpen}
         onOpenChange={setDeleteDialogOpen}
         onConfirm={handleDeleteConfirm}
+        title='Delete Contact'
         description='This action cannot be undone. This will permanently delete the contact and remove their data from our servers.'
+        confirmText='Delete'
+        cancelText='Cancel'
       />
     </div>
   );
