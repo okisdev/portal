@@ -107,7 +107,7 @@ export default function Home() {
           <p className='mx-auto mt-6 max-w-xl text-lg text-neutral-600 leading-8 dark:text-neutral-300'>Join thousands of businesses already using our platform to grow and succeed.</p>
           <div className='mt-10 flex items-center justify-center gap-x-6'>
             <Link
-              href='/signup'
+              href='/register'
               className='rounded-md bg-neutral-900 px-3.5 py-2.5 font-semibold text-sm text-white shadow-sm hover:bg-neutral-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-neutral-900 focus-visible:outline-offset-2 dark:bg-neutral-700 dark:hover:bg-neutral-600'
             >
               Start Free Trial

@@ -350,7 +350,7 @@ export default function CRMContactsPage() {
           <div className='relative'>
             <div className='max-h-[800px] overflow-auto'>
               <Table>
-                <TableHeader className='sticky top-0 bg-background'>
+                <TableHeader className='sticky top-0'>
                   <TableRow>
                     {columns.map((column) =>
                       column.visible ? (

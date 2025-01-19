@@ -1,10 +1,14 @@
 import type { NextConfig } from 'next';
 import createNextIntlPlugin from 'next-intl/plugin';
+import ReactComponentName from 'react-scan/react-component-name/webpack';
 
 const withNextIntl = createNextIntlPlugin();
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  webpack: (config) => {
+    config.plugins.push(ReactComponentName({}));
+    return config;
+  },
   redirects: async () => {
     return [
       {
