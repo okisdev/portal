@@ -18,9 +18,9 @@ export default async function DashboardLayout({
     <DashboardProvider>
       <SidebarProvider>
         <DashboardSidebar />
-        <SidebarInset>
+        <SidebarInset className='max-h-screen'>
           <DashboardHeader />
-          <div className='flex-1'>{children}</div>
+          <div className='flex-1 overflow-hidden'>{children}</div>
         </SidebarInset>
       </SidebarProvider>
     </DashboardProvider>

@@ -1,6 +1,6 @@
 'use client';
 
-import { DeleteAlertDialog } from '@/components/shared/delete-alert-dialog';
+import { ActionAlertDialog } from '@/components/shared/action-alert-dialog';
 import { PageHeader } from '@/components/shared/page-header';
 import { PageLoading } from '@/components/shared/page-loading';
 import { Button } from '@/components/ui/button';
@@ -104,46 +104,54 @@ export default function TeamPage() {
           <CardDescription>Manage user roles and permissions</CardDescription>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Username</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Role</TableHead>
-                <TableHead className='text-right'>Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {users?.map((user) => (
-                <TableRow key={user.id}>
-                  <TableCell>{user.name ?? 'N/A'}</TableCell>
-                  <TableCell>{user.username ?? 'N/A'}</TableCell>
-                  <TableCell>{user.email}</TableCell>
-                  <TableCell>{user.role}</TableCell>
-                  <TableCell className='text-right'>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant='ghost' className='h-8 w-8 p-0'>
-                          <MoreHorizontal className='h-4 w-4' />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align='end'>
-                        <DropdownMenuItem className='cursor-pointer' onClick={() => handleEditUser(user)}>
-                          <Pencil className='mr-2 h-4 w-4' />
-                          Edit
-                        </DropdownMenuItem>
-                        <DropdownMenuItem className='cursor-pointer text-destructive' onClick={() => setUserToDelete(user)}>
-                          <Trash className='mr-2 h-4 w-4' />
-                          Delete
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
+          <div className='relative'>
+            <Table>
+              <TableHeader className='sticky top-0 bg-background'>
+                <TableRow>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Username</TableHead>
+                  <TableHead>Email</TableHead>
+                  <TableHead>Role</TableHead>
+                  <TableHead className='text-right'>Actions</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+            </Table>
+            <div className='max-h-[600px] overflow-auto'>
+              <Table>
+                <TableBody>
+                  {users?.map((user) => (
+                    <TableRow key={user.id}>
+                      <TableCell>{user.name ?? 'N/A'}</TableCell>
+                      <TableCell>{user.username ?? 'N/A'}</TableCell>
+                      <TableCell>{user.email}</TableCell>
+                      <TableCell>{user.role}</TableCell>
+                      <TableCell className='text-right'>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant='ghost' className='h-8 w-8 p-0'>
+                              <MoreHorizontal className='h-4 w-4' />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align='end'>
+                            <DropdownMenuItem className='cursor-pointer' onClick={() => handleEditUser(user)}>
+                              <Pencil className='mr-2 h-4 w-4' />
+                              Edit
+                            </DropdownMenuItem>
+                            {user.role !== 'ADMIN' && (
+                              <DropdownMenuItem className='cursor-pointer text-destructive' onClick={() => setUserToDelete(user)}>
+                                <Trash className='mr-2 h-4 w-4' />
+                                Delete
+                              </DropdownMenuItem>
+                            )}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          </div>
         </CardContent>
       </Card>
 
@@ -198,7 +206,7 @@ export default function TeamPage() {
         </DialogContent>
       </Dialog>
 
-      <DeleteAlertDialog
+      <ActionAlertDialog
         open={userToDelete !== null}
         onOpenChange={(open) => !open && setUserToDelete(null)}
         onConfirm={() => userToDelete && deleteUser(userToDelete.id)}

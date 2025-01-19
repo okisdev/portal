@@ -1,26 +1,24 @@
 'use client';
 
-import { YearMonthPicker } from '@/components/dashboard/personal/calendar/year-month-picker';
+import { ThreeDayView } from '@/components/dashboard/personal/calendar/3-day-view';
+import { DayView } from '@/components/dashboard/personal/calendar/day-view';
+import { CalendarHeader } from '@/components/dashboard/personal/calendar/header';
+import { MonthView } from '@/components/dashboard/personal/calendar/month-view';
+import { CalendarSidebar } from '@/components/dashboard/personal/calendar/sidebar';
+import { WeekView } from '@/components/dashboard/personal/calendar/week-view';
 import { EventDialog } from '@/components/shared/event-dialog';
 import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Form, FormControl, FormField, FormItem, FormLabel } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import type { CalendarEventWithParticipants, CalendarFolder } from '@/lib/schema';
-import { cn } from '@/lib/utils';
 import { api } from '@/utils/trpc/client';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { ChevronDown, ChevronLeft, ChevronRight, MoreHorizontal, Pencil, Plus, Trash } from 'lucide-react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
-
-const WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
 const eventFormSchema = z.object({
   title: z.string().min(1, 'Title is required'),
@@ -44,10 +42,14 @@ const eventFormSchema = z.object({
     .default([]),
 });
 
+type CalendarView = 'month' | 'week' | '3days' | 'day';
+
 export default function DashboardPersonalCalendar() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState(new Date());
-  const [yearMonthPickerOpen, setYearMonthPickerOpen] = useState(false);
+  const [view, setView] = useState<CalendarView>((searchParams.get('view') as CalendarView) || 'month');
   const [isEventDialogOpen, setIsEventDialogOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<CalendarEventWithParticipants | null>(null);
   const [isEditMode, setIsEditMode] = useState(false);
@@ -55,6 +57,9 @@ export default function DashboardPersonalCalendar() {
   const [isEditCalendarOpen, setIsEditCalendarOpen] = useState(false);
   const [selectedCalendar, setSelectedCalendar] = useState<CalendarFolder | null>(null);
   const [isAddCalendarOpen, setIsAddCalendarOpen] = useState(false);
+  const [selectionStart, setSelectionStart] = useState<{ date: Date; hour: number; minute: number } | null>(null);
+  const [selectionEnd, setSelectionEnd] = useState<{ date: Date; hour: number; minute: number } | null>(null);
+  const [isSelecting, setIsSelecting] = useState(false);
 
   const utils = api.useUtils();
 
@@ -189,74 +194,10 @@ export default function DashboardPersonalCalendar() {
     },
   });
 
-  const getDaysInMonth = (date: Date) => {
-    const year = date.getFullYear();
-    const month = date.getMonth();
-    const firstDay = new Date(year, month, 1);
-    const lastDay = new Date(year, month + 1, 0);
-    const days = [];
-
-    const firstDayOfWeek = firstDay.getDay();
-    for (let i = firstDayOfWeek - 1; i >= 0; i--) {
-      days.push(new Date(year, month, -i));
-    }
-
-    for (let i = 1; i <= lastDay.getDate(); i++) {
-      days.push(new Date(year, month, i));
-    }
-
-    const remainingDays = 42 - days.length;
-    for (let i = 1; i <= remainingDays; i++) {
-      days.push(new Date(year, month + 1, i));
-    }
-
-    return days;
-  };
-
-  const getEventsForDate = (date: Date) => {
-    return events?.filter((event) => event.startAt.getDate() === date.getDate() && event.startAt.getMonth() === date.getMonth() && event.startAt.getFullYear() === date.getFullYear()) ?? [];
-  };
-
-  const goToToday = () => {
-    const today = new Date();
-    setCurrentDate(new Date(today.getFullYear(), today.getMonth(), 1));
-    setSelectedDate(today);
-  };
-
-  const goToPreviousMonth = () => {
-    setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1));
-  };
-
-  const goToNextMonth = () => {
-    setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1));
-  };
-
   const handleEditEvent = (event: CalendarEventWithParticipants) => {
     setSelectedEvent(event);
     setIsEditMode(true);
     setIsEventDialogOpen(true);
-
-    // Introduce bug: Only pass the date part without preserving the time
-    const startDate = new Date(event.startAt.toDateString());
-    const endDate = new Date(event.endAt.toDateString());
-
-    form.reset({
-      title: event.title,
-      description: event.description ?? '',
-      location: event.location ?? '',
-      startAt: startDate, // Bug: Time information is lost
-      endAt: endDate, // Bug: Time information is lost
-      isAllDay: event.isAllDay ?? false,
-      isPublic: event.isPublic ?? false,
-      folderId: event.folderId,
-      participants: event.participants.map((p) => ({
-        type: p.participantType,
-        role: p.role ?? 'required',
-        id: p.participantId ?? undefined,
-        email: p.email ?? undefined,
-        name: p.name ?? undefined,
-      })),
-    });
   };
 
   const handleCalendarSubmit = (data: { name: string; color: string }) => {
@@ -281,362 +222,258 @@ export default function DashboardPersonalCalendar() {
     addCalendarForm.reset();
   };
 
+  const handleTimeSelection = (date: Date, hour: number, minute: number, isStart: boolean, e?: React.MouseEvent) => {
+    if (isStart && e?.currentTarget) {
+      const rect = e.currentTarget.getBoundingClientRect();
+      const relativeY = e.clientY - rect.top;
+      const minuteInBlock = Math.floor((relativeY / rect.height) * 60);
+      const calculatedMinute = Math.floor(minuteInBlock / 15) * 15;
+      setSelectionStart({ date: new Date(date), hour, minute: calculatedMinute });
+      setSelectionEnd({ date: new Date(date), hour, minute: calculatedMinute });
+      setIsSelecting(true);
+    } else if (isSelecting && e?.currentTarget) {
+      const rect = e.currentTarget.getBoundingClientRect();
+      const relativeY = e.clientY - rect.top;
+      const minuteInBlock = Math.floor((relativeY / rect.height) * 60);
+      const calculatedMinute = Math.floor(minuteInBlock / 15) * 15;
+      setSelectionEnd({ date: new Date(date), hour, minute: calculatedMinute });
+    }
+  };
+
+  const finishSelection = () => {
+    if (selectionStart && selectionEnd && isSelecting) {
+      const startDate = new Date(selectionStart.date);
+      startDate.setHours(selectionStart.hour, selectionStart.minute, 0, 0);
+      const endDate = new Date(selectionEnd.date);
+      endDate.setHours(selectionEnd.hour, selectionEnd.minute, 0, 0);
+
+      // Ensure start is before end
+      const [finalStartDate, finalEndDate] = startDate > endDate ? [endDate, startDate] : [startDate, endDate];
+
+      setSelectedDate(finalStartDate);
+      form.reset({
+        ...form.getValues(),
+        startAt: finalStartDate,
+        endAt: finalEndDate,
+        folderId: folders?.[0]?.id ?? '',
+      });
+      setIsEventDialogOpen(true);
+    }
+    setIsSelecting(false);
+    setSelectionStart(null);
+    setSelectionEnd(null);
+  };
+
+  const isTimeSlotSelected = (date: Date, hour: number, minute: number) => {
+    if (!selectionStart || !selectionEnd || !isSelecting) return false;
+
+    const timeSlot = new Date(date);
+    timeSlot.setHours(hour, minute, 0, 0);
+
+    const start = new Date(selectionStart.date);
+    start.setHours(selectionStart.hour, selectionStart.minute, 0, 0);
+    const end = new Date(selectionEnd.date);
+    end.setHours(selectionEnd.hour, selectionEnd.minute, 0, 0);
+
+    if (start > end) {
+      return timeSlot >= end && timeSlot <= start;
+    }
+    return timeSlot >= start && timeSlot <= end;
+  };
+
+  const goToToday = () => {
+    const today = new Date();
+    if (view === 'month') {
+      setCurrentDate(new Date(today.getFullYear(), today.getMonth(), 1));
+    } else {
+      setCurrentDate(today);
+    }
+    setSelectedDate(today);
+  };
+
+  const goToPrevious = () => {
+    if (view === 'month') {
+      setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1));
+    } else if (view === 'week') {
+      const newDate = new Date(currentDate);
+      newDate.setDate(newDate.getDate() - 7);
+      setCurrentDate(newDate);
+    } else if (view === '3days') {
+      const newDate = new Date(currentDate);
+      newDate.setDate(newDate.getDate() - 3);
+      setCurrentDate(newDate);
+    } else {
+      const newDate = new Date(currentDate);
+      newDate.setDate(newDate.getDate() - 1);
+      setCurrentDate(newDate);
+    }
+  };
+
+  const goToNext = () => {
+    if (view === 'month') {
+      setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1));
+    } else if (view === 'week') {
+      const newDate = new Date(currentDate);
+      newDate.setDate(newDate.getDate() + 7);
+      setCurrentDate(newDate);
+    } else if (view === '3days') {
+      const newDate = new Date(currentDate);
+      newDate.setDate(newDate.getDate() + 3);
+      setCurrentDate(newDate);
+    } else {
+      const newDate = new Date(currentDate);
+      newDate.setDate(newDate.getDate() + 1);
+      setCurrentDate(newDate);
+    }
+  };
+
+  const updateView = (newView: CalendarView) => {
+    setView(newView);
+    const params = new URLSearchParams(searchParams.toString());
+    params.set('view', newView);
+    router.push(`?${params.toString()}`);
+    if (newView !== 'month') {
+      setCurrentDate(new Date(selectedDate));
+    } else {
+      setCurrentDate(new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1));
+    }
+  };
+
   return (
     <>
-      <div className='flex'>
-        <div className='flex w-64 flex-col gap-4 border-r p-4'>
-          <div className='flex items-center justify-between'>
-            <Popover open={yearMonthPickerOpen} onOpenChange={setYearMonthPickerOpen}>
-              <PopoverTrigger asChild>
-                <Button variant='outline' className='w-full justify-start' onClick={() => setYearMonthPickerOpen(true)}>
-                  <span>
-                    {currentDate.getFullYear()} {MONTHS[currentDate.getMonth()]}
-                  </span>
-                  <ChevronDown className='ml-auto h-4 w-4' />
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className='w-auto p-0' align='start'>
-                <YearMonthPicker
-                  value={currentDate}
-                  onChange={(date) => {
-                    setCurrentDate(date);
-                    setYearMonthPickerOpen(false);
-                  }}
-                  onClose={() => setYearMonthPickerOpen(false)}
-                />
-              </PopoverContent>
-            </Popover>
-          </div>
-
-          <div className='grid grid-cols-7 gap-1 text-sm'>
-            {WEEKDAYS.map((day) => (
-              <div key={day} className='text-center text-muted-foreground'>
-                {day.slice(0, 1)}
-              </div>
-            ))}
-            {getDaysInMonth(currentDate)
-              .slice(0, 35)
-              .map((date) => (
-                <Button
-                  key={date.toISOString()}
-                  variant='ghost'
-                  className={cn(
-                    'h-6 w-6 p-0',
-                    date.getMonth() !== currentDate.getMonth() && 'text-muted-foreground',
-                    date.getDate() === selectedDate.getDate() &&
-                      date.getMonth() === selectedDate.getMonth() &&
-                      date.getFullYear() === selectedDate.getFullYear() &&
-                      'bg-primary text-primary-foreground'
-                  )}
-                  onClick={() => setSelectedDate(date)}
-                >
-                  {date.getDate()}
-                </Button>
-              ))}
-          </div>
-
-          <Button
-            className='flex items-center gap-2'
-            variant='outline'
-            onClick={() => {
-              addCalendarForm.reset();
-              setIsAddCalendarOpen(true);
-            }}
-          >
-            <Plus className='h-4 w-4' />
-            Add calendar
-          </Button>
-
-          <div className='flex flex-col gap-2'>
-            <div className='flex cursor-pointer items-center gap-2'>
-              <div className='flex-1 text-sm'>Calendars</div>
-              <Button
-                variant='ghost'
-                size='icon'
-                className='h-6 w-6'
-                onClick={(e) => {
-                  e.stopPropagation();
-                  addCalendarForm.reset();
-                  setIsAddCalendarOpen(true);
-                }}
-              >
-                <Plus className='h-4 w-4' />
-              </Button>
-            </div>
-            <div className='flex w-full flex-col gap-2'>
-              <div className='flex flex-col space-y-1'>
-                {folders?.map((folder) => (
-                  <div key={folder.id} className='flex items-center gap-2'>
-                    <Checkbox
-                      checked={!hiddenCalendars.has(folder.id)}
-                      onCheckedChange={(checked) => {
-                        setHiddenCalendars((prev) => {
-                          const next = new Set(prev);
-                          if (checked) {
-                            next.delete(folder.id);
-                          } else {
-                            next.add(folder.id);
-                          }
-                          return next;
-                        });
-                      }}
-                    />
-                    <Button
-                      variant='ghost'
-                      className='h-8 flex-1 justify-start px-2'
-                      onClick={() => {
-                        setHiddenCalendars((prev) => {
-                          const next = new Set(prev);
-                          if (next.has(folder.id)) {
-                            next.delete(folder.id);
-                          } else {
-                            next.add(folder.id);
-                          }
-                          return next;
-                        });
-                      }}
-                    >
-                      <div className='mr-1 h-4 w-4 rounded-full' style={{ backgroundColor: folder.color ?? 'transparent' }} />
-                      {folder.name}
-                    </Button>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant='ghost' className='h-8 w-8 p-0' onClick={(e) => e.stopPropagation()}>
-                          <MoreHorizontal className='h-4 w-4' />
-                          <span className='sr-only'>Open menu</span>
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align='end'>
-                        <DropdownMenuItem
-                          className='cursor-pointer'
-                          onClick={() => {
-                            setSelectedCalendar(folder);
-                            calendarForm.reset({
-                              name: folder.name,
-                              color: folder.color ?? '#000000',
-                            });
-                            setIsEditCalendarOpen(true);
-                          }}
-                        >
-                          <Pencil className='mr-2 h-4 w-4' />
-                          Edit
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          className='cursor-pointer text-destructive'
-                          onClick={() => {
-                            if (window.confirm('Are you sure you want to delete this calendar?')) {
-                              deleteFolder.mutate(folder.id);
-                            }
-                          }}
-                        >
-                          <Trash className='mr-2 h-4 w-4' />
-                          Delete
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
+      <div className='flex h-full'>
+        <CalendarSidebar
+          currentDate={currentDate}
+          selectedDate={selectedDate}
+          onDateSelect={(date) => {
+            setSelectedDate(date);
+            if (date.getMonth() !== currentDate.getMonth() || date.getFullYear() !== currentDate.getFullYear()) {
+              setCurrentDate(date);
+            }
+          }}
+          folders={folders ?? []}
+          hiddenCalendars={hiddenCalendars}
+          onToggleCalendar={(folderId) => {
+            setHiddenCalendars((prev) => {
+              const next = new Set(prev);
+              if (next.has(folderId)) {
+                next.delete(folderId);
+              } else {
+                next.add(folderId);
+              }
+              return next;
+            });
+          }}
+          onAddCalendar={() => {
+            addCalendarForm.reset();
+            setIsAddCalendarOpen(true);
+          }}
+          onEditCalendar={(folder) => {
+            setSelectedCalendar(folder);
+            calendarForm.reset({
+              name: folder.name,
+              color: folder.color ?? '#000000',
+            });
+            setIsEditCalendarOpen(true);
+          }}
+          onDeleteCalendar={(folderId) => {
+            toast.promise(deleteFolder.mutateAsync(folderId), {
+              loading: 'Deleting calendar...',
+              success: 'Calendar deleted successfully',
+              error: 'Failed to delete calendar',
+            });
+          }}
+        />
 
         <div className='flex flex-1 flex-col'>
-          <header className='flex items-center justify-between border-b px-4 py-2'>
-            <div className='flex items-center gap-4'>
-              <Button variant='outline' onClick={goToToday} className='h-8'>
-                Today
-              </Button>
-              <div className='flex items-center gap-2'>
-                <Button variant='ghost' size='icon' onClick={goToPreviousMonth}>
-                  <ChevronLeft className='h-4 w-4' />
-                </Button>
-                <Button variant='ghost' size='icon' onClick={goToNextMonth}>
-                  <ChevronRight className='h-4 w-4' />
-                </Button>
-              </div>
-              <h1 className='text-lg'>
-                {currentDate.getFullYear()} {MONTHS[currentDate.getMonth()]}
-              </h1>
-            </div>
-            <div className='flex items-center gap-2'>
-              <Button variant='outline' className='h-8 w-auto' onClick={() => setIsEventDialogOpen(true)}>
-                <Plus className='h-4 w-4' />
-                Add event
-              </Button>
-            </div>
-          </header>
+          <CalendarHeader
+            currentDate={currentDate}
+            view={view}
+            onViewChange={updateView}
+            onTodayClick={goToToday}
+            onPrevious={goToPrevious}
+            onNext={goToNext}
+            onAddEvent={() => setIsEventDialogOpen(true)}
+          />
 
-          <div className='grid flex-1 grid-cols-7'>
-            {WEEKDAYS.map((day) => (
-              <div key={day} className='border-r border-b p-2 text-muted-foreground text-sm'>
-                {day}
-              </div>
-            ))}
-            {getDaysInMonth(currentDate).map((date) => {
-              const events = getEventsForDate(date);
-
-              return (
-                // biome-ignore lint/a11y/useKeyWithClickEvents: <explanation>
-                <div
-                  key={date.toISOString()}
-                  className={cn(
-                    'relative min-h-[120px] border-r border-b p-2',
-                    date.getMonth() !== currentDate.getMonth() && 'bg-muted/50',
-                    date.getDate() === selectedDate.getDate() && date.getMonth() === selectedDate.getMonth() && date.getFullYear() === selectedDate.getFullYear() && 'ring-2 ring-primary ring-inset'
-                  )}
-                  onClick={() => setSelectedDate(date)}
-                >
-                  <span
-                    className={cn(
-                      'text-sm',
-                      date.getDate() === new Date().getDate() &&
-                        date.getMonth() === new Date().getMonth() &&
-                        date.getFullYear() === new Date().getFullYear() &&
-                        'inline-flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground'
-                    )}
-                  >
-                    {date.getDate()}
-                  </span>
-                  {events
-                    .filter((event) => !hiddenCalendars.has(event.folderId))
-                    .map((event) => {
-                      const folder = folders?.find((f) => f.id === event.folderId);
-
-                      return (
-                        <Popover key={event.id}>
-                          <PopoverTrigger asChild>
-                            <Button
-                              variant='ghost'
-                              className='h-auto w-full justify-start truncate rounded border border-dashed p-1 text-xs'
-                              style={{
-                                backgroundColor: `${folder?.color}20`,
-                                borderColor: folder?.color ?? 'transparent',
-                                color: folder?.color ?? 'inherit',
-                              }}
-                              onClick={(e) => e.stopPropagation()}
-                            >
-                              {event.isAllDay ? (
-                                'All day'
-                              ) : (
-                                <>
-                                  {new Date(event.startAt).toLocaleTimeString([], {
-                                    hour: '2-digit',
-                                    minute: '2-digit',
-                                    hour12: false,
-                                  })}
-                                  {' - '}
-                                  {new Date(event.endAt).toLocaleTimeString([], {
-                                    hour: '2-digit',
-                                    minute: '2-digit',
-                                    hour12: false,
-                                  })}
-                                </>
-                              )}{' '}
-                              {event.title}
-                            </Button>
-                          </PopoverTrigger>
-                          <PopoverContent id='popover-content' className='w-80'>
-                            <div className='grid gap-2'>
-                              <div className='space-y-2'>
-                                <div className='flex items-center gap-2'>
-                                  <div className='h-3 w-3 rounded-full' style={{ backgroundColor: folder?.color ?? 'transparent' }} />
-                                  <h4 className='font-medium leading-none'>{event.title}</h4>
-                                </div>
-                                <p className='text-muted-foreground text-sm'>
-                                  {event.isAllDay ? (
-                                    'All day'
-                                  ) : (
-                                    <>
-                                      {new Date(event.startAt).toLocaleTimeString([], {
-                                        hour: '2-digit',
-                                        minute: '2-digit',
-                                        hour12: false,
-                                      })}
-                                      {' - '}
-                                      {new Date(event.endAt).toLocaleTimeString([], {
-                                        hour: '2-digit',
-                                        minute: '2-digit',
-                                        hour12: false,
-                                      })}
-                                    </>
-                                  )}
-                                </p>
-                              </div>
-                              <div className='space-y-2'>
-                                {event.description && (
-                                  <div className='grid gap-2'>
-                                    <div className='grid grid-cols-3 items-center gap-4'>
-                                      <p className='text-sm'>Description:</p>
-                                      <p className='col-span-2 text-sm'>{event.description}</p>
-                                    </div>
-                                  </div>
-                                )}
-                                {event.location && (
-                                  <div className='grid gap-2'>
-                                    <div className='grid grid-cols-3 items-center gap-4'>
-                                      <p className='text-sm'>Location:</p>
-                                      <p className='col-span-2 text-sm'>{event.location}</p>
-                                    </div>
-                                  </div>
-                                )}
-                                {event.participants && event.participants.length > 0 && (
-                                  <div className='grid gap-2'>
-                                    <div className='grid grid-cols-3 items-center gap-4'>
-                                      <p className='text-sm'>Participants:</p>
-                                      <div className='col-span-2 space-y-1'>
-                                        {event.participants.map((participant) => (
-                                          <div key={participant.id} className='flex items-center justify-between text-sm'>
-                                            <span>
-                                              {participant.participantType === 'contact' && <span className='text-blue-600'>Contact: {participant.name || 'Unknown'}</span>}
-                                              {participant.participantType === 'user' && <span className='text-green-600'>User: {participant.name || 'Unknown'}</span>}
-                                              {participant.participantType === 'external' && (
-                                                <span className='text-orange-600'>
-                                                  External: {participant.name} ({participant.email})
-                                                </span>
-                                              )}
-                                            </span>
-                                            <span className='text-xs capitalize text-muted-foreground'>{participant.status}</span>
-                                          </div>
-                                        ))}
-                                      </div>
-                                    </div>
-                                  </div>
-                                )}
-                              </div>
-                              <div className='flex justify-end gap-2'>
-                                <Button
-                                  size='sm'
-                                  variant='destructive'
-                                  onClick={() => {
-                                    toast.promise(deleteEvent.mutateAsync(event.id), {
-                                      loading: 'Deleting event...',
-                                      success: 'Event deleted successfully',
-                                      error: 'Failed to delete event',
-                                    });
-                                  }}
-                                >
-                                  Delete
-                                </Button>
-                                <Button
-                                  variant='outline'
-                                  size='sm'
-                                  onClick={() => {
-                                    handleEditEvent(event);
-                                  }}
-                                >
-                                  Edit
-                                </Button>
-                              </div>
-                            </div>
-                          </PopoverContent>
-                        </Popover>
-                      );
-                    })}
-                </div>
-              );
-            })}
-          </div>
+          {view === 'month' ? (
+            <MonthView
+              currentDate={currentDate}
+              selectedDate={selectedDate}
+              setSelectedDate={setSelectedDate}
+              events={events ?? []}
+              folders={folders ?? []}
+              hiddenCalendars={hiddenCalendars}
+              onEventEdit={handleEditEvent}
+              onEventDelete={(eventId) => {
+                toast.promise(deleteEvent.mutateAsync(eventId), {
+                  loading: 'Deleting event...',
+                  success: 'Event deleted successfully',
+                  error: 'Failed to delete event',
+                });
+              }}
+            />
+          ) : view === 'week' ? (
+            <WeekView
+              currentDate={currentDate}
+              selectedDate={selectedDate}
+              events={events ?? []}
+              folders={folders ?? []}
+              hiddenCalendars={hiddenCalendars}
+              onTimeSelect={handleTimeSelection}
+              isSelecting={isSelecting}
+              isTimeSlotSelected={isTimeSlotSelected}
+              onSelectionEnd={finishSelection}
+              onEventEdit={handleEditEvent}
+              onEventDelete={(eventId) => {
+                toast.promise(deleteEvent.mutateAsync(eventId), {
+                  loading: 'Deleting event...',
+                  success: 'Event deleted successfully',
+                  error: 'Failed to delete event',
+                });
+              }}
+            />
+          ) : view === '3days' ? (
+            <ThreeDayView
+              currentDate={currentDate}
+              selectedDate={selectedDate}
+              events={events ?? []}
+              folders={folders ?? []}
+              hiddenCalendars={hiddenCalendars}
+              onTimeSelect={handleTimeSelection}
+              isSelecting={isSelecting}
+              isTimeSlotSelected={isTimeSlotSelected}
+              onSelectionEnd={finishSelection}
+              onEventEdit={handleEditEvent}
+              onEventDelete={(eventId) => {
+                toast.promise(deleteEvent.mutateAsync(eventId), {
+                  loading: 'Deleting event...',
+                  success: 'Event deleted successfully',
+                  error: 'Failed to delete event',
+                });
+              }}
+            />
+          ) : (
+            <DayView
+              currentDate={currentDate}
+              selectedDate={selectedDate}
+              events={events ?? []}
+              folders={folders ?? []}
+              hiddenCalendars={hiddenCalendars}
+              onTimeSelect={handleTimeSelection}
+              isSelecting={isSelecting}
+              isTimeSlotSelected={isTimeSlotSelected}
+              onSelectionEnd={finishSelection}
+              onEventEdit={handleEditEvent}
+              onEventDelete={(eventId) => {
+                toast.promise(deleteEvent.mutateAsync(eventId), {
+                  loading: 'Deleting event...',
+                  success: 'Event deleted successfully',
+                  error: 'Failed to delete event',
+                });
+              }}
+            />
+          )}
         </div>
       </div>
 

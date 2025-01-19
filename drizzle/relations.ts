@@ -12,6 +12,8 @@ import {
   contactDeal,
   notifications,
   paymentTrack,
+  resourceContent,
+  resourceContentShare,
   session,
   subscriptionCoupon,
   team,
@@ -167,6 +169,29 @@ export const calendarEventParticipantRelations = relations(calendarEventParticip
   contact: one(contact, {
     fields: [calendarEventParticipant.participantId],
     references: [contact.id],
+  }),
+}));
+
+export const resourceContentRelations = relations(resourceContent, ({ one, many }) => ({
+  creator: one(user, {
+    fields: [resourceContent.createdBy],
+    references: [user.id],
+  }),
+  updater: one(user, {
+    fields: [resourceContent.updatedBy],
+    references: [user.id],
+  }),
+  shares: many(resourceContentShare),
+}));
+
+export const resourceContentShareRelations = relations(resourceContentShare, ({ one }) => ({
+  resource: one(resourceContent, {
+    fields: [resourceContentShare.resourceId],
+    references: [resourceContent.id],
+  }),
+  sharedWithUser: one(user, {
+    fields: [resourceContentShare.sharedWithUserId],
+    references: [user.id],
   }),
 }));
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { DeleteAlertDialog } from '@/components/shared/delete-alert-dialog';
+import { ActionAlertDialog } from '@/components/shared/action-alert-dialog';
 import { PageHeader } from '@/components/shared/page-header';
 import { TableLoading } from '@/components/shared/table-loading';
 import { Button } from '@/components/ui/button';
@@ -163,7 +163,7 @@ export default function TeamPage() {
         </Table>
       </div>
 
-      <DeleteAlertDialog
+      <ActionAlertDialog
         open={!!teamToDelete}
         onOpenChange={(open) => !open && setTeamToDelete(null)}
         onConfirm={() => teamToDelete && handleDeleteTeam(teamToDelete)}

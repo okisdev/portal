@@ -4,6 +4,7 @@ import { authRouter } from '@/server/routers/auth';
 import { calendarRouter } from '@/server/routers/calendar';
 import { contactRouter } from '@/server/routers/contact';
 import { payRouter } from '@/server/routers/pay';
+import { resourceRouter } from '@/server/routers/resource';
 import { teamRouter } from '@/server/routers/team';
 import { userRouter } from '@/server/routers/user';
 import type { inferReactQueryProcedureOptions } from '@trpc/react-query';
@@ -23,6 +24,7 @@ export const appRouter = createTRPCRouter({
   pay: payRouter,
   team: teamRouter,
   user: userRouter,
+  resource: resourceRouter,
 });
 
 // export type definition of API

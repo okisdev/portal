@@ -12,6 +12,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { generateUUID } from '@/lib/utils';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { PlusIcon, X } from 'lucide-react';
+import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
@@ -64,18 +65,33 @@ export function EventDialog({ open, onOpenChange, onSubmit, isEditMode = false, 
   const form = useForm<EventFormData>({
     resolver: zodResolver(eventFormSchema),
     defaultValues: {
-      title: '',
-      description: '',
-      location: '',
-      startAt: new Date(),
-      endAt: new Date(),
-      isAllDay: false,
-      isPublic: false,
-      folderId: folders[0]?.id ?? '',
-      participants: initialParticipants,
-      ...defaultValues,
+      title: defaultValues?.title || '',
+      description: defaultValues?.description || '',
+      location: defaultValues?.location || '',
+      startAt: defaultValues?.startAt || new Date(),
+      endAt: defaultValues?.endAt || new Date(),
+      isAllDay: defaultValues?.isAllDay || false,
+      isPublic: defaultValues?.isPublic || false,
+      folderId: defaultValues?.folderId || folders[0]?.id || '',
+      participants: defaultValues?.participants || [],
     },
   });
+
+  useEffect(() => {
+    if (open) {
+      form.reset({
+        title: defaultValues?.title || '',
+        description: defaultValues?.description || '',
+        location: defaultValues?.location || '',
+        startAt: defaultValues?.startAt || new Date(),
+        endAt: defaultValues?.endAt || new Date(),
+        isAllDay: defaultValues?.isAllDay || false,
+        isPublic: defaultValues?.isPublic || false,
+        folderId: defaultValues?.folderId || folders[0]?.id || '',
+        participants: defaultValues?.participants || [],
+      });
+    }
+  }, [defaultValues, folders, form, open]);
 
   const handleCalendarSelect = async (value: string) => {
     if (onCreateFolder && !folders?.some((folder) => folder.name === value)) {
@@ -102,9 +118,8 @@ export function EventDialog({ open, onOpenChange, onSubmit, isEditMode = false, 
             endAt: new Date(),
             isAllDay: false,
             isPublic: false,
-            folderId: folders[0]?.id ?? '',
-            participants: initialParticipants,
-            ...defaultValues,
+            folderId: folders[0]?.id || '',
+            participants: [],
           });
         }
       }}
@@ -148,7 +163,16 @@ export function EventDialog({ open, onOpenChange, onSubmit, isEditMode = false, 
                 <FormItem>
                   <FormLabel>Location</FormLabel>
                   <FormControl>
-                    <Input {...field} />
+                    <Combobox
+                      value={field.value || ''}
+                      onChange={field.onChange}
+                      items={['Meeting Room 1', 'Meeting Room 2', 'Conference Room A', 'Conference Room B', 'Office', 'Virtual Meeting', 'Zoom', 'Google Meet', 'Microsoft Teams']}
+                      placeholder='Enter or select location'
+                      searchPlaceholder='Search locations...'
+                      emptyText='No locations found'
+                      groupHeading='Suggested Locations'
+                      allowCustom={true}
+                    />
                   </FormControl>
                 </FormItem>
               )}

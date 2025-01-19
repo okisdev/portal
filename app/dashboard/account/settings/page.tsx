@@ -12,10 +12,9 @@ import { toast } from 'sonner';
 
 export default function AccountSettingsPage() {
   const { data: me } = api.account.getMeFromDatabase.useQuery();
+
   const updateAccount = api.account.updateMe.useMutation();
   const updatePassword = api.account.updatePassword.useMutation();
-
-  console.log('me', me);
 
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
