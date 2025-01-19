@@ -198,24 +198,6 @@ export default function DashboardPersonalCalendar() {
     setSelectedEvent(event);
     setIsEditMode(true);
     setIsEventDialogOpen(true);
-
-    form.reset({
-      title: event.title,
-      description: event.description ?? '',
-      location: event.location ?? '',
-      startAt: event.startAt,
-      endAt: event.endAt,
-      isAllDay: event.isAllDay ?? false,
-      isPublic: event.isPublic ?? false,
-      folderId: event.folderId,
-      participants: event.participants.map((p) => ({
-        type: p.participantType,
-        role: p.role ?? 'required',
-        id: p.participantId ?? undefined,
-        email: p.email ?? undefined,
-        name: p.name ?? undefined,
-      })),
-    });
   };
 
   const handleCalendarSubmit = (data: { name: string; color: string }) => {

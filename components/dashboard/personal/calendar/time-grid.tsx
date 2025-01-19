@@ -1,3 +1,4 @@
+import { NameTag } from '@/components/shared/name-tag';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import type { CalendarEventWithParticipants, CalendarFolder } from '@/lib/schema';
@@ -122,8 +123,8 @@ export function TimeGrid({ date, events, folders, hiddenCalendars, onTimeSelect,
                                   {event.participants.map((participant) => (
                                     <div key={participant.id} className='flex items-center justify-between text-sm'>
                                       <span>
-                                        {participant.participantType === 'contact' && <span className='text-blue-600'>Contact: {participant.name || 'Unknown'}</span>}
-                                        {participant.participantType === 'user' && <span className='text-green-600'>User: {participant.name || 'Unknown'}</span>}
+                                        {participant.participantType === 'contact' && participant.participantId && <NameTag id={participant.participantId} type='contact' />}
+                                        {participant.participantType === 'user' && participant.participantId && <NameTag id={participant.participantId} type='user' />}
                                         {participant.participantType === 'external' && (
                                           <span className='text-orange-600'>
                                             External: {participant.name} ({participant.email})
