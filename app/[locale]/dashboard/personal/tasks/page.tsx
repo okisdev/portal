@@ -14,7 +14,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { api } from '@/utils/trpc/client';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { format } from 'date-fns';
-import { FilterIcon, LayoutGridIcon, ListIcon, PencilIcon, PlusIcon, TrashIcon } from 'lucide-react';
+import { AlignLeftIcon, FilterIcon, LayoutGridIcon, ListIcon, PencilIcon, PlusIcon, TrashIcon } from 'lucide-react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useCallback, useState } from 'react';
 import { useForm } from 'react-hook-form';
@@ -24,6 +24,7 @@ import { z } from 'zod';
 const taskFormSchema = z.object({
   title: z.string().min(1, 'Title is required'),
   description: z.string().optional(),
+  content: z.string().optional(),
   status: z.enum(['backlog', 'todo', 'in_progress', 'in_review', 'done']).default('todo'),
   priority: z.enum(['urgent', 'high', 'medium', 'low']).default('medium'),
   dueDate: z.date().optional(),
@@ -41,7 +42,7 @@ const STATUS_LABELS: Record<(typeof STATUSES)[number], string> = {
   done: 'Done',
 };
 
-function TaskCard({ task, onEdit, onDelete, onStatusChange }: any) {
+function TaskCard({ task, onEdit, onDelete, onStatusChange, onContentClick }: any) {
   return (
     <div className='group rounded-lg border bg-card p-4 shadow-sm transition-all hover:shadow-md'>
       <div className='flex items-center justify-between gap-4'>
@@ -49,6 +50,11 @@ function TaskCard({ task, onEdit, onDelete, onStatusChange }: any) {
           <div className='flex items-center justify-between'>
             <span className='font-medium text-foreground'>{task.title}</span>
             <div className='flex items-center gap-2 opacity-0 transition-opacity group-hover:opacity-100'>
+              {task.content && (
+                <Button variant='ghost' size='icon' onClick={() => onContentClick(task)} className='h-8 w-8'>
+                  <AlignLeftIcon className='h-4 w-4' />
+                </Button>
+              )}
               <Button variant='ghost' size='icon' onClick={() => onEdit(task)} className='h-8 w-8'>
                 <PencilIcon className='h-4 w-4' />
               </Button>
@@ -84,6 +90,7 @@ export default function TasksPage() {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<{ id: string; data: TaskFormValues } | null>(null);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [viewingContent, setViewingContent] = useState<{ id: string; title: string; content: string } | null>(null);
 
   const utils = api.useUtils();
   const { data: tasks = [] } = api.task.getAll.useQuery();
@@ -166,6 +173,14 @@ export default function TasksPage() {
     updateTask.mutate({
       id,
       data: { status: status as any },
+    });
+  };
+
+  const handleContentView = (task: any) => {
+    setViewingContent({
+      id: task.id,
+      title: task.title,
+      content: task.content || '',
     });
   };
 
@@ -271,9 +286,16 @@ export default function TasksPage() {
                     </SelectContent>
                   </Select>
                   <div className='flex flex-1 flex-col gap-1'>
-                    <span className='font-medium text-foreground'>{task.title}</span>
-                    {task.description && <p className='text-sm text-muted-foreground'>{task.description}</p>}
-                    <div className='flex items-center gap-3 text-sm text-muted-foreground'>
+                    <div className='flex items-center gap-2'>
+                      <span className='font-medium text-foreground'>{task.title}</span>
+                      {task.content && (
+                        <Button variant='ghost' size='icon' onClick={() => handleContentView(task)} className='h-6 w-6'>
+                          <AlignLeftIcon className='h-4 w-4' />
+                        </Button>
+                      )}
+                    </div>
+                    {task.description && <p className='text-muted-foreground text-sm'>{task.description}</p>}
+                    <div className='flex items-center gap-3 text-muted-foreground text-sm'>
                       {task.dueDate && <span>Due: {format(new Date(task.dueDate), 'MM/dd/yyyy HH:mm')}</span>}
                       <ColorBadge type='priority' value={task.priority} />
                     </div>
@@ -307,7 +329,7 @@ export default function TasksPage() {
               </div>
               <div className='flex flex-col gap-3'>
                 {tasksByStatus[status].map((task: any) => (
-                  <TaskCard key={task.id} task={task} onEdit={handleEdit} onDelete={handleDelete} onStatusChange={handleStatusChange} />
+                  <TaskCard key={task.id} task={task} onEdit={handleEdit} onDelete={handleDelete} onStatusChange={handleStatusChange} onContentClick={handleContentView} />
                 ))}
                 {tasksByStatus[status].length === 0 && (
                   <div className='flex h-24 items-center justify-center rounded-lg border border-dashed'>
@@ -361,6 +383,20 @@ export default function TasksPage() {
                     <FormLabel>Description</FormLabel>
                     <FormControl>
                       <Textarea placeholder='Task description' {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name='content'
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Content</FormLabel>
+                    <FormControl>
+                      <Textarea placeholder='Add detailed content for your task...' className='min-h-[200px]' {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -439,6 +475,19 @@ export default function TasksPage() {
               </DialogFooter>
             </form>
           </Form>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!viewingContent} onOpenChange={(open) => !open && setViewingContent(null)}>
+        <DialogContent className='sm:max-w-2xl'>
+          <DialogHeader>
+            <DialogTitle>{viewingContent?.title}</DialogTitle>
+          </DialogHeader>
+          <div className='prose prose-sm dark:prose-invert max-w-none'>
+            {viewingContent?.content.split('\n').map((line, i) => (
+              <p key={i}>{line}</p>
+            ))}
+          </div>
         </DialogContent>
       </Dialog>
     </div>

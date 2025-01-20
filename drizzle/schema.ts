@@ -443,6 +443,7 @@ export const userTask = pgTable('userTask', {
     .references(() => user.id, { onDelete: 'cascade' }),
   title: text().notNull(),
   description: text(),
+  content: text(), // Rich text content for detailed task documentation
   status: text('status', { enum: ['backlog', 'todo', 'in_progress', 'in_review', 'done'] }).default('todo'),
   priority: text('priority', { enum: ['urgent', 'high', 'medium', 'low'] }).default('medium'),
   dueDate: timestamp({ mode: 'date' }),
