@@ -1,4 +1,4 @@
-import { resourceContent, resourceContentShare } from '@/drizzle/schema';
+import { resourceContent, resourceContentShare, resourceEmails } from '@/drizzle/schema';
 import { createTRPCRouter, protectedProcedure } from '@/server/trpc';
 import { and, eq, inArray, like, or } from 'drizzle-orm';
 import { z } from 'zod';
@@ -6,6 +6,15 @@ import { z } from 'zod';
 const resourceContentSchema = z.object({
   title: z.string().min(1),
   description: z.string().optional(),
+  content: z.string().min(1),
+  tags: z.array(z.string()).optional(),
+  visibility: z.enum(['PUBLIC', 'SHARED', 'PRIVATE']),
+});
+
+const resourceEmailSchema = z.object({
+  title: z.string().min(1),
+  description: z.string().optional(),
+  subject: z.string().min(1),
   content: z.string().min(1),
   tags: z.array(z.string()).optional(),
   visibility: z.enum(['PUBLIC', 'SHARED', 'PRIVATE']),
@@ -200,4 +209,114 @@ export const resourceRouter = createTRPCRouter({
 
       return ctx.db.delete(resourceContentShare).where(and(eq(resourceContentShare.resourceId, input.resourceId), eq(resourceContentShare.sharedWithUserId, input.userId)));
     }),
+
+  // Create new email template
+  createEmail: protectedProcedure.input(resourceEmailSchema).mutation(async ({ ctx, input }) => {
+    const [newEmail] = await ctx.db
+      .insert(resourceEmails)
+      .values({
+        ...input,
+        tags: input.tags ? JSON.stringify(input.tags) : null,
+        createdBy: ctx.session.user.id,
+        updatedBy: ctx.session.user.id,
+      })
+      .returning();
+
+    return newEmail;
+  }),
+
+  // Get all accessible email templates for the current user
+  getEmails: protectedProcedure
+    .input(
+      z
+        .object({
+          search: z.string().optional(),
+          tags: z.array(z.string()).optional(),
+          visibility: z.enum(['PUBLIC', 'SHARED', 'PRIVATE']).optional(),
+        })
+        .optional()
+    )
+    .query(async ({ ctx, input }) => {
+      const userId = ctx.session.user.id;
+      let conditions = or(eq(resourceEmails.createdBy, userId), eq(resourceEmails.visibility, 'PUBLIC'));
+
+      if (input?.visibility) {
+        conditions = and(conditions, eq(resourceEmails.visibility, input.visibility));
+      }
+
+      if (input?.search) {
+        conditions = and(conditions, or(like(resourceEmails.title, `%${input.search}%`), like(resourceEmails.description, `%${input.search}%`), like(resourceEmails.subject, `%${input.search}%`)));
+      }
+
+      if (input?.tags && input.tags.length > 0) {
+        const tagConditions = input.tags.map((tag) => like(resourceEmails.tags, `%${tag}%`));
+        conditions = and(conditions, or(...tagConditions));
+      }
+
+      return ctx.db.select().from(resourceEmails).where(conditions);
+    }),
+
+  // Get a single email template by ID
+  getEmail: protectedProcedure.input(z.string()).query(async ({ ctx, input }) => {
+    const userId = ctx.session.user.id;
+
+    const result = await ctx.db
+      .select()
+      .from(resourceEmails)
+      .where(and(eq(resourceEmails.id, input), or(eq(resourceEmails.createdBy, userId), eq(resourceEmails.visibility, 'PUBLIC'))))
+      .limit(1);
+
+    return result[0];
+  }),
+
+  // Update email template
+  updateEmail: protectedProcedure
+    .input(
+      z.object({
+        id: z.string(),
+        data: resourceEmailSchema.partial(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const userId = ctx.session.user.id;
+
+      // Check if user has permission to edit
+      const existing = await ctx.db
+        .select()
+        .from(resourceEmails)
+        .where(and(eq(resourceEmails.id, input.id), eq(resourceEmails.createdBy, userId)))
+        .limit(1);
+
+      if (!existing[0]) {
+        throw new Error('Not authorized to edit this email template');
+      }
+
+      return ctx.db
+        .update(resourceEmails)
+        .set({
+          ...input.data,
+          tags: input.data.tags ? JSON.stringify(input.data.tags) : undefined,
+          updatedBy: userId,
+          updatedAt: new Date(),
+        })
+        .where(eq(resourceEmails.id, input.id));
+    }),
+
+  // Delete email template
+  deleteEmail: protectedProcedure.input(z.string()).mutation(async ({ ctx, input }) => {
+    const userId = ctx.session.user.id;
+
+    // Only creator can delete
+    const existing = await ctx.db
+      .select()
+      .from(resourceEmails)
+      .where(and(eq(resourceEmails.id, input), eq(resourceEmails.createdBy, userId)))
+      .limit(1);
+
+    if (!existing[0]) {
+      throw new Error('Not authorized to delete this email template');
+    }
+
+    return ctx.db.delete(resourceEmails).where(eq(resourceEmails.id, input));
+  }),
 });

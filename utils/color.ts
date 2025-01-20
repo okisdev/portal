@@ -7,7 +7,7 @@ export const getBadgeColor = (variant: string) => {
     case 'low':
       return 'bg-green-100 text-green-800';
     default:
-      return 'bg-gray-100 text-gray-800';
+      return 'bg-neutral-100 text-neutral-800';
   }
 };
 
@@ -24,7 +24,7 @@ export function getStatusBadgeColor(status: string) {
     case 'opportunity':
       return 'bg-purple-100 text-purple-800';
     default:
-      return 'bg-gray-100 text-gray-800';
+      return 'bg-neutral-100 text-neutral-800';
   }
 }
 
@@ -37,6 +37,6 @@ export function getPriorityBadgeColor(priority: string) {
     case 'low':
       return 'bg-green-100 text-green-800';
     default:
-      return 'bg-gray-100 text-gray-800';
+      return 'bg-neutral-100 text-neutral-800';
   }
 }

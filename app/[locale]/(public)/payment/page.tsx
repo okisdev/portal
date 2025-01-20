@@ -19,7 +19,7 @@ const PaymentContent = () => {
             <CheckCircle2 className='h-16 w-16 text-green-500' />
           </div>
           <h1 className='font-bold text-2xl'>Payment Successful!</h1>
-          <p className='text-gray-600'>Thank you for your payment. Your subscription has been activated.</p>
+          <p className='text-neutral-600'>Thank you for your payment. Your subscription has been activated.</p>
           {/* <Button asChild>
             <Link href='/dashboard'>Go to Dashboard</Link>
           </Button> */}
@@ -36,7 +36,7 @@ const PaymentContent = () => {
             <XCircle className='h-16 w-16 text-red-500' />
           </div>
           <h1 className='font-bold text-2xl'>Payment Cancelled</h1>
-          <p className='text-gray-600'>Your payment was cancelled. No charges were made.</p>
+          <p className='text-neutral-600'>Your payment was cancelled. No charges were made.</p>
           {/* <Button asChild>
             <Link href='/'>Return Home</Link>
           </Button> */}

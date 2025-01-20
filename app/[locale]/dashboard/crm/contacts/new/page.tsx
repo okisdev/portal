@@ -596,7 +596,7 @@ export default function ImportContacts() {
         </TabsContent>
 
         <TabsContent value='existing'>
-          <div className='p-4 text-center text-gray-500'>
+          <div className='p-4 text-center text-neutral-500'>
             <h3 className='mb-2 font-medium text-lg'>Import Existing Users</h3>
             <p>Upload a CSV file containing existing user data to import.</p>
             {/* Add specific implementation for existing users import */}

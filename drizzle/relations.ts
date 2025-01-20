@@ -14,6 +14,7 @@ import {
   paymentTrack,
   resourceContent,
   resourceContentShare,
+  resourceEmails,
   session,
   subscriptionCoupon,
   team,
@@ -191,6 +192,17 @@ export const resourceContentShareRelations = relations(resourceContentShare, ({ 
   }),
   sharedWithUser: one(user, {
     fields: [resourceContentShare.sharedWithUserId],
+    references: [user.id],
+  }),
+}));
+
+export const resourceEmailsRelations = relations(resourceEmails, ({ one }) => ({
+  creator: one(user, {
+    fields: [resourceEmails.createdBy],
+    references: [user.id],
+  }),
+  updater: one(user, {
+    fields: [resourceEmails.updatedBy],
     references: [user.id],
   }),
 }));

@@ -355,6 +355,27 @@ export const resourceContentShare = pgTable('resourceContentShare', {
   updatedAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
 });
 
+export const resourceEmails = pgTable('resourceEmails', {
+  id: text()
+    .primaryKey()
+    .notNull()
+    .$defaultFn(() => crypto.randomUUID()),
+  title: text().notNull(),
+  description: text(),
+  subject: text().notNull(),
+  content: text().notNull(),
+  tags: text(), // JSON array of tags
+  visibility: text('visibility', { enum: ['PUBLIC', 'SHARED', 'PRIVATE'] })
+    .notNull()
+    .default('PRIVATE'),
+  createdBy: text()
+    .notNull()
+    .references(() => user.id),
+  updatedBy: text().references(() => user.id),
+  createdAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
+  updatedAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
+});
+
 export const team = pgTable('team', {
   id: text()
     .primaryKey()
