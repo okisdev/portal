@@ -10,13 +10,15 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { DropdownMenuCheckboxItem } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { statusSchema } from '@/lib/schema';
 import { cn, formatDate } from '@/lib/utils';
 import { api } from '@/utils/trpc/client';
 import { CaretSortIcon } from '@radix-ui/react-icons';
 import { Check, ChevronDown, Filter, Import, MoreHorizontal, Pencil, Trash2, X } from 'lucide-react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { useMemo, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { usePathname } from 'next/navigation';
+import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
 type SortConfig = {
@@ -45,6 +47,8 @@ type ColumnConfig = {
 
 export default function CRMContactsPage() {
   const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
 
   const { data: contacts, isLoading } = api.contact.getAllContacts.useQuery();
 
@@ -95,12 +99,104 @@ export default function CRMContactsPage() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [contactToDelete, setContactToDelete] = useState<string | null>(null);
 
+  const handleStatusFilter = (status: string | null) => {
+    if (status === null) {
+      // Clear all filters
+      setFilters({ conditions: [], matchAll: true });
+      return;
+    }
+
+    // If clicking the same status filter again, clear it
+    if (filters.conditions.some((c) => c.field === 'status' && c.value === status)) {
+      setFilters({ conditions: [], matchAll: true });
+      return;
+    }
+
+    // Set the new status filter
+    setFilters({
+      conditions: [{ field: 'status', operator: '=', value: status }],
+      matchAll: true,
+    });
+  };
+
+  // Initialize filters from URL on mount
+  useEffect(() => {
+    const filtersParam = searchParams.get('filters');
+    if (filtersParam) {
+      try {
+        const decodedFilters = JSON.parse(decodeURIComponent(filtersParam)) as FilterConfig;
+        setFilters(decodedFilters);
+      } catch (e) {
+        console.error('Failed to parse filters from URL:', e);
+      }
+    }
+
+    const searchParam = searchParams.get('search');
+    if (searchParam) {
+      setSearch(searchParam);
+    }
+
+    const sortParam = searchParams.get('sort');
+    if (sortParam) {
+      try {
+        const [column, direction] = sortParam.split(':');
+        setSortConfig({ column, direction: direction as 'asc' | 'desc' });
+      } catch (e) {
+        console.error('Failed to parse sort from URL:', e);
+      }
+    }
+
+    // Check for status in URL
+    const statusParam = searchParams.get('status');
+    if (statusParam) {
+      handleStatusFilter(statusParam);
+    }
+  }, [searchParams]); // Add searchParams as dependency
+
+  // Update URL when filters change
+  useEffect(() => {
+    const params = new URLSearchParams(searchParams);
+
+    // Update filters in URL
+    if (filters.conditions.length > 0) {
+      params.set('filters', encodeURIComponent(JSON.stringify(filters)));
+
+      // Add status shortcut param if it's a status filter
+      const statusFilter = filters.conditions.find((c) => c.field === 'status' && c.operator === '=');
+      if (statusFilter) {
+        params.set('status', statusFilter.value);
+      } else {
+        params.delete('status');
+      }
+    } else {
+      params.delete('filters');
+      params.delete('status');
+    }
+
+    // Update search in URL
+    if (search) {
+      params.set('search', search);
+    } else {
+      params.delete('search');
+    }
+
+    // Update sort in URL
+    if (sortConfig.column) {
+      params.set('sort', `${sortConfig.column}:${sortConfig.direction}`);
+    } else {
+      params.delete('sort');
+    }
+
+    // Update URL without causing a page reload
+    const newUrl = `${pathname}?${params.toString()}`;
+    router.replace(newUrl);
+  }, [filters, search, sortConfig, pathname, searchParams]);
+
   const filteredContacts = useMemo(() => {
     if (!contacts) return [];
 
     return contacts
       .filter((contact) => {
-        // Apply search filter
         if (search) {
           const searchTerm = search.toLowerCase();
           const fullName = `${contact.firstName} ${contact.lastName}`.toLowerCase();
@@ -111,13 +207,11 @@ export default function CRMContactsPage() {
           return fullName.includes(searchTerm) || email.includes(searchTerm) || status.includes(searchTerm) || source.includes(searchTerm);
         }
 
-        // Apply filter conditions
         if (filters.conditions.length === 0) return true;
 
         const results = filters.conditions.map((condition) => {
           let fieldValue = '';
 
-          // Handle composite fields like name
           if (condition.field === 'name') {
             fieldValue = `${contact.firstName} ${contact.lastName}`;
           } else {
@@ -319,7 +413,7 @@ export default function CRMContactsPage() {
           <div className='flex flex-row gap-2'>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant='outline' className='flex h-8 items-center gap-2' disabled={isLoading}>
+                <Button variant='outline' size='sm' className='flex h-8 items-center gap-2' disabled={isLoading}>
                   Import
                   <ChevronDown className='h-4 w-4' />
                 </Button>
@@ -336,10 +430,30 @@ export default function CRMContactsPage() {
               </DropdownMenuContent>
             </DropdownMenu>
 
-            <Button variant='outline' asChild className='h-8' disabled={isLoading}>
+            <Button variant='outline' size='sm' asChild className='h-8' disabled={isLoading}>
               <Link href='/dashboard/crm/contacts/new'>Add Contact</Link>
             </Button>
           </div>
+        </div>
+      </div>
+
+      <div className='flex flex-col gap-2'>
+        <div className='flex flex-wrap items-center gap-2'>
+          {statusSchema.options.map((status) => {
+            const isActive = filters.conditions.some((c) => c.field === 'status' && c.value === status);
+            return (
+              <Button key={status} variant={isActive ? 'default' : 'outline'} size='sm' onClick={() => handleStatusFilter(status)} className={cn('capitalize', isActive && 'shadow-sm')}>
+                <ColorBadge type='contactStatus' value={status} className='mr-2' />
+                {status}
+              </Button>
+            );
+          })}
+          {filters.conditions.length > 0 && (
+            <Button variant='ghost' size='sm' onClick={() => handleStatusFilter(null)} className='ml-2'>
+              <X className='mr-2 h-4 w-4' />
+              Clear filters
+            </Button>
+          )}
         </div>
       </div>
 
