@@ -111,7 +111,7 @@ export function DashboardHeader() {
             </CommandGroup>
           </CommandList>
         </CommandDialog>
-        <Button type='button' variant='ghost' className='px-3 py-1' asChild>
+        <Button type='button' variant='ghost' className='hidden px-3 py-1 md:block' asChild>
           <Link href='/dashboard/account/notifications'>
             <Bell className='h-4 w-4' />
           </Link>

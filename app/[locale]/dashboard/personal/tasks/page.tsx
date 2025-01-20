@@ -1,20 +1,24 @@
 'use client';
 
+import { ActionAlertDialog } from '@/components/shared/action-alert-dialog';
 import { ColorBadge } from '@/components/shared/color-badge';
 import { DateTimePicker } from '@/components/shared/date-time-picker';
 import { PageHeader } from '@/components/shared/page-header';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { api } from '@/utils/trpc/client';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { format } from 'date-fns';
-import { AlignLeftIcon, FilterIcon, LayoutGridIcon, ListIcon, PencilIcon, PlusIcon, TrashIcon } from 'lucide-react';
+import { AlignLeftIcon, FilterIcon, LayoutGridIcon, ListIcon, MoreVerticalIcon, PencilIcon, PlusIcon, TrashIcon } from 'lucide-react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useCallback, useState } from 'react';
 import { useForm } from 'react-hook-form';
@@ -43,33 +47,57 @@ const STATUS_LABELS: Record<(typeof STATUSES)[number], string> = {
 };
 
 function TaskCard({ task, onEdit, onDelete, onStatusChange, onContentClick }: any) {
+  const [isDeleteAlertOpen, setIsDeleteAlertOpen] = useState(false);
+
   return (
     <div className='group rounded-lg border bg-card p-4 shadow-sm transition-all hover:shadow-md'>
       <div className='flex items-center justify-between gap-4'>
-        <div className='flex flex-1 flex-col gap-2'>
+        <div className='flex flex-1 flex-col gap-1'>
           <div className='flex items-center justify-between'>
-            <span className='font-medium text-foreground'>{task.title}</span>
-            <div className='flex items-center gap-2 opacity-0 transition-opacity group-hover:opacity-100'>
+            <div className='flex items-center gap-2'>
+              <span className='font-medium text-foreground text-sm'>{task.title}</span>
               {task.content && (
-                <Button variant='ghost' size='icon' onClick={() => onContentClick(task)} className='h-8 w-8'>
+                <Button variant='ghost' size='icon' onClick={() => onContentClick(task)} className='h-6 w-6'>
                   <AlignLeftIcon className='h-4 w-4' />
                 </Button>
               )}
-              <Button variant='ghost' size='icon' onClick={() => onEdit(task)} className='h-8 w-8'>
-                <PencilIcon className='h-4 w-4' />
-              </Button>
-              <Button variant='ghost' size='icon' onClick={() => onDelete(task.id)} className='h-8 w-8 text-destructive hover:text-destructive/90'>
-                <TrashIcon className='h-4 w-4' />
-              </Button>
             </div>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant='ghost' size='icon' className='h-8 w-8 opacity-0 group-hover:opacity-100'>
+                  <MoreVerticalIcon className='h-4 w-4' />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align='end'>
+                <DropdownMenuItem onClick={() => onEdit(task)}>
+                  <PencilIcon className='mr-2 h-4 w-4' />
+                  Edit
+                </DropdownMenuItem>
+                <DropdownMenuItem className='text-destructive' onClick={() => setIsDeleteAlertOpen(true)}>
+                  <TrashIcon className='mr-2 h-4 w-4' />
+                  Delete
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
-          {task.description && <p className='text-sm text-muted-foreground'>{task.description}</p>}
-          <div className='flex items-center gap-3 text-sm text-muted-foreground'>
+          {task.description && <p className='text-muted-foreground text-xs'>{task.description}</p>}
+          <div className='flex items-center gap-3 text-muted-foreground text-xs'>
             {task.dueDate && <span>Due: {format(new Date(task.dueDate), 'MM/dd/yyyy HH:mm')}</span>}
             <ColorBadge type='priority' value={task.priority} />
           </div>
         </div>
       </div>
+
+      <ActionAlertDialog
+        open={isDeleteAlertOpen}
+        onOpenChange={setIsDeleteAlertOpen}
+        onConfirm={() => {
+          onDelete(task.id);
+          setIsDeleteAlertOpen(false);
+        }}
+        title='Delete Task'
+        description='Are you sure you want to delete this task? This action cannot be undone.'
+      />
     </div>
   );
 }
@@ -92,13 +120,25 @@ export default function TasksPage() {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [viewingContent, setViewingContent] = useState<{ id: string; title: string; content: string } | null>(null);
 
+  // Add state for keep creating mode
+  const [keepCreating, setKeepCreating] = useState(false);
+
   const utils = api.useUtils();
   const { data: tasks = [] } = api.task.getAll.useQuery();
   const createTask = api.task.create.useMutation({
     onSuccess: () => {
       utils.task.getAll.invalidate();
-      setIsCreateOpen(false);
-      form.reset();
+      if (!keepCreating) {
+        setIsCreateOpen(false);
+      }
+      form.reset({
+        title: '',
+        description: '',
+        content: '',
+        status: 'todo',
+        priority: 'medium',
+        dueDate: undefined,
+      });
       toast.success('Task created successfully');
     },
   });
@@ -164,9 +204,7 @@ export default function TasksPage() {
   };
 
   const handleDelete = (id: string) => {
-    if (confirm('Are you sure you want to delete this task?')) {
-      deleteTask.mutate({ id });
-    }
+    deleteTask.mutate({ id });
   };
 
   const handleStatusChange = (id: string, status: string) => {
@@ -214,142 +252,166 @@ export default function TasksPage() {
   }, {} as Record<(typeof STATUSES)[number], typeof tasks>);
 
   return (
-    <div className='container mx-auto max-w-7xl space-y-8 p-6'>
-      <PageHeader title='Personal Tasks' description='Manage your personal tasks and stay organized' />
+    <div className='flex h-full flex-col'>
+      <div className='container mx-auto max-w-7xl space-y-8 px-6 py-6 pb-0 2xl:px-0'>
+        <PageHeader title='Personal Tasks' description='Manage your personal tasks and stay organized' />
 
-      <div className='flex items-center justify-between gap-4'>
-        <div className='flex items-center gap-2'>
-          <Button variant='outline' className='h-8' onClick={() => setIsCreateOpen(true)}>
-            <PlusIcon className='mr-2 h-4 w-4' />
-            Add Task
-          </Button>
+        <div className='flex items-center justify-between gap-4'>
+          <div className='flex items-center gap-2'>
+            <Button variant='outline' className='h-8' onClick={() => setIsCreateOpen(true)}>
+              <PlusIcon className='mr-2 h-4 w-4' />
+              Add Task
+            </Button>
 
-          <Popover open={isFilterOpen} onOpenChange={setIsFilterOpen}>
-            <PopoverTrigger asChild>
-              <Button variant='outline' className='h-8 gap-2'>
-                <FilterIcon className='h-4 w-4' />
-                Filter
-                {visibleStatuses.length !== STATUSES.length && <span className='rounded-full bg-primary px-2 py-0.5 text-primary-foreground text-xs'>{visibleStatuses.length}</span>}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className='w-80' align='start'>
-              <div className='space-y-4'>
-                <h4 className='font-medium'>Filter by Status</h4>
-                <div className='space-y-2'>
-                  {STATUSES.map((status) => (
-                    <div key={status} className='flex items-center space-x-2'>
-                      <Checkbox
-                        id={status}
-                        checked={visibleStatuses.includes(status)}
-                        onCheckedChange={(checked) => {
-                          const newStatuses = checked ? [...visibleStatuses, status] : visibleStatuses.filter((s) => s !== status);
-                          updateVisibleStatuses(newStatuses);
-                        }}
-                      />
-                      <label htmlFor={status} className='text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70'>
-                        {STATUS_LABELS[status]}
-                      </label>
-                    </div>
-                  ))}
+            <Popover open={isFilterOpen} onOpenChange={setIsFilterOpen}>
+              <PopoverTrigger asChild>
+                <Button variant='outline' className='h-8 gap-2'>
+                  <FilterIcon className='h-4 w-4' />
+                  Filter
+                  {visibleStatuses.length !== STATUSES.length && <span className='rounded-full bg-primary px-2 py-0.5 text-primary-foreground text-xs'>{visibleStatuses.length}</span>}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className='w-80' align='start'>
+                <div className='space-y-4'>
+                  <h4 className='font-medium'>Filter by Status</h4>
+                  <div className='space-y-2'>
+                    {STATUSES.map((status) => (
+                      <div key={status} className='flex items-center space-x-2'>
+                        <Checkbox
+                          id={status}
+                          checked={visibleStatuses.includes(status)}
+                          onCheckedChange={(checked) => {
+                            const newStatuses = checked ? [...visibleStatuses, status] : visibleStatuses.filter((s) => s !== status);
+                            updateVisibleStatuses(newStatuses);
+                          }}
+                        />
+                        <label htmlFor={status} className='font-medium text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70'>
+                          {STATUS_LABELS[status]}
+                        </label>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            </PopoverContent>
-          </Popover>
-        </div>
+              </PopoverContent>
+            </Popover>
+          </div>
 
-        <div className='flex items-center gap-2'>
-          <Button variant={viewMode === 'list' ? 'default' : 'outline'} size='icon' onClick={() => updateViewMode('list')} className='h-8 w-8'>
-            <ListIcon className='h-4 w-4' />
-          </Button>
-          <Button variant={viewMode === 'kanban' ? 'default' : 'outline'} size='icon' onClick={() => updateViewMode('kanban')} className='h-8 w-8'>
-            <LayoutGridIcon className='h-4 w-4' />
-          </Button>
+          <div className='flex items-center gap-2'>
+            <Button variant={viewMode === 'list' ? 'default' : 'outline'} size='icon' onClick={() => updateViewMode('list')} className='h-8 w-8'>
+              <ListIcon className='h-4 w-4' />
+            </Button>
+            <Button variant={viewMode === 'kanban' ? 'default' : 'outline'} size='icon' onClick={() => updateViewMode('kanban')} className='h-8 w-8'>
+              <LayoutGridIcon className='h-4 w-4' />
+            </Button>
+          </div>
         </div>
       </div>
 
-      {viewMode === 'list' ? (
-        <div className='grid gap-4'>
-          {filteredTasks.map((task: any) => (
-            <div key={task.id} className='group rounded-lg border bg-card p-4 shadow-sm transition-all hover:shadow-md'>
-              <div className='flex items-center justify-between gap-4'>
-                <div className='flex flex-1 items-center gap-4'>
-                  <Select value={task.status} onValueChange={(value) => handleStatusChange(task.id, value)}>
-                    <SelectTrigger className='w-[180px]'>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value='backlog'>Backlog</SelectItem>
-                      <SelectItem value='todo'>To Do</SelectItem>
-                      <SelectItem value='in_progress'>In Progress</SelectItem>
-                      <SelectItem value='in_review'>In Review</SelectItem>
-                      <SelectItem value='done'>Done</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <div className='flex flex-1 flex-col gap-1'>
-                    <div className='flex items-center gap-2'>
-                      <span className='font-medium text-foreground'>{task.title}</span>
-                      {task.content && (
-                        <Button variant='ghost' size='icon' onClick={() => handleContentView(task)} className='h-6 w-6'>
-                          <AlignLeftIcon className='h-4 w-4' />
-                        </Button>
-                      )}
+      <div className='flex-1 overflow-hidden p-6 pt-8'>
+        <div className='h-full overflow-auto'>
+          {viewMode === 'list' ? (
+            <div className='container mx-auto max-w-7xl space-y-8'>
+              {STATUSES.filter((status) => visibleStatuses.includes(status)).map((status) => {
+                const tasksInStatus = filteredTasks.filter((task) => task.status === status);
+                if (tasksInStatus.length === 0) return null;
+
+                return (
+                  <div key={status} className='space-y-4'>
+                    <div className='flex items-center justify-between'>
+                      <h3 className='font-semibold text-lg'>{STATUS_LABELS[status]}</h3>
+                      <span className='rounded-full bg-muted px-2 py-1 text-xs'>{tasksInStatus.length}</span>
                     </div>
-                    {task.description && <p className='text-muted-foreground text-sm'>{task.description}</p>}
-                    <div className='flex items-center gap-3 text-muted-foreground text-sm'>
-                      {task.dueDate && <span>Due: {format(new Date(task.dueDate), 'MM/dd/yyyy HH:mm')}</span>}
-                      <ColorBadge type='priority' value={task.priority} />
+                    <div className='grid gap-4'>
+                      {tasksInStatus.map((task: any) => (
+                        <div key={task.id} className='group rounded-lg border bg-card p-4 shadow-sm transition-all hover:shadow-md'>
+                          <div className='flex items-center justify-between gap-4'>
+                            <div className='flex flex-1 flex-col gap-1'>
+                              <div className='flex items-center gap-2'>
+                                <span className='font-medium text-foreground'>{task.title}</span>
+                                {task.content && (
+                                  <Button variant='ghost' size='icon' onClick={() => handleContentView(task)} className='h-6 w-6'>
+                                    <AlignLeftIcon className='h-4 w-4' />
+                                  </Button>
+                                )}
+                              </div>
+                              {task.description && <p className='text-muted-foreground text-sm'>{task.description}</p>}
+                              <div className='flex items-center gap-3 text-muted-foreground text-sm'>
+                                {task.dueDate && <span>Due: {format(new Date(task.dueDate), 'MM/dd/yyyy HH:mm')}</span>}
+                                <ColorBadge type='priority' value={task.priority} />
+                              </div>
+                            </div>
+
+                            <div className='flex items-center gap-2 opacity-0 transition-opacity group-hover:opacity-100'>
+                              <Button variant='ghost' size='icon' onClick={() => handleEdit(task)} className='h-8 w-8'>
+                                <PencilIcon className='h-4 w-4' />
+                              </Button>
+                              <Button variant='ghost' size='icon' onClick={() => handleDelete(task.id)} className='h-8 w-8 text-destructive hover:text-destructive/90'>
+                                <TrashIcon className='h-4 w-4' />
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   </div>
+                );
+              })}
+              {filteredTasks.length === 0 && (
+                <div className='flex h-32 items-center justify-center rounded-lg border bg-card'>
+                  <p className='text-muted-foreground'>{tasks.length === 0 ? 'No tasks yet. Add your first task above!' : 'No tasks match your filters.'}</p>
                 </div>
-
-                <div className='flex items-center gap-2 opacity-0 transition-opacity group-hover:opacity-100'>
-                  <Button variant='ghost' size='icon' onClick={() => handleEdit(task)} className='h-8 w-8'>
-                    <PencilIcon className='h-4 w-4' />
-                  </Button>
-                  <Button variant='ghost' size='icon' onClick={() => handleDelete(task.id)} className='h-8 w-8 text-destructive hover:text-destructive/90'>
-                    <TrashIcon className='h-4 w-4' />
-                  </Button>
-                </div>
-              </div>
+              )}
             </div>
-          ))}
-          {filteredTasks.length === 0 && (
-            <div className='flex h-32 items-center justify-center rounded-lg border bg-card'>
-              <p className='text-muted-foreground'>{tasks.length === 0 ? 'No tasks yet. Add your first task above!' : 'No tasks match your filters.'}</p>
+          ) : (
+            <div className='container mx-auto max-w-7xl'>
+              <div className='grid h-full grid-cols-1 gap-6 md:grid-cols-5'>
+                {STATUSES.filter((status) => visibleStatuses.includes(status)).map((status) => (
+                  <div key={status} className='flex h-full flex-col'>
+                    <div className='flex items-center justify-between pb-4'>
+                      <h3 className='font-semibold'>{STATUS_LABELS[status]}</h3>
+                      <span className='rounded-full bg-muted px-2 py-1 text-xs'>{tasksByStatus[status].length}</span>
+                    </div>
+                    <div className='flex-1 overflow-hidden rounded-lg border bg-muted/50'>
+                      <div className='h-full overflow-y-auto p-4'>
+                        <div className='flex flex-col gap-3'>
+                          {tasksByStatus[status].map((task: any) => (
+                            <TaskCard key={task.id} task={task} onEdit={handleEdit} onDelete={handleDelete} onStatusChange={handleStatusChange} onContentClick={handleContentView} />
+                          ))}
+                          {tasksByStatus[status].length === 0 && (
+                            <div className='flex h-24 items-center justify-center rounded-lg border border-dashed'>
+                              <p className='text-muted-foreground text-sm'>No tasks</p>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
         </div>
-      ) : (
-        <div className='grid grid-cols-1 gap-6 md:grid-cols-5'>
-          {STATUSES.filter((status) => visibleStatuses.includes(status)).map((status) => (
-            <div key={status} className='flex flex-col gap-4'>
-              <div className='flex items-center justify-between'>
-                <h3 className='font-semibold'>{STATUS_LABELS[status]}</h3>
-                <span className='rounded-full bg-muted px-2 py-1 text-xs'>{tasksByStatus[status].length}</span>
-              </div>
-              <div className='flex flex-col gap-3'>
-                {tasksByStatus[status].map((task: any) => (
-                  <TaskCard key={task.id} task={task} onEdit={handleEdit} onDelete={handleDelete} onStatusChange={handleStatusChange} onContentClick={handleContentView} />
-                ))}
-                {tasksByStatus[status].length === 0 && (
-                  <div className='flex h-24 items-center justify-center rounded-lg border border-dashed'>
-                    <p className='text-sm text-muted-foreground'>No tasks</p>
-                  </div>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
+      </div>
 
       <Dialog
         open={isCreateOpen || !!editingTask}
         onOpenChange={(open) => {
           if (open) {
+            if (!editingTask) {
+              form.reset({
+                title: '',
+                description: '',
+                content: '',
+                status: 'todo',
+                priority: 'medium',
+                dueDate: undefined,
+              });
+            }
             setIsCreateOpen(true);
           } else {
             setIsCreateOpen(false);
             setEditingTask(null);
+            setKeepCreating(false);
           }
         }}
       >
@@ -468,7 +530,13 @@ export default function TasksPage() {
                 )}
               />
 
-              <DialogFooter>
+              <DialogFooter className='flex items-center gap-4'>
+                {!editingTask && (
+                  <div className='flex flex-1 items-center gap-2'>
+                    <Switch id='keep-creating' checked={keepCreating} onCheckedChange={setKeepCreating} />
+                    <Label htmlFor='keep-creating'>Keep creating</Label>
+                  </div>
+                )}
                 <Button type='submit' disabled={createTask.isPending || updateTask.isPending}>
                   {editingTask ? 'Update Task' : 'Create Task'}
                 </Button>
@@ -485,7 +553,7 @@ export default function TasksPage() {
           </DialogHeader>
           <div className='prose prose-sm dark:prose-invert max-w-none'>
             {viewingContent?.content.split('\n').map((line, i) => (
-              <p key={i}>{line}</p>
+              <p key={`${viewingContent.id}-line-${i}`}>{line}</p>
             ))}
           </div>
         </DialogContent>
