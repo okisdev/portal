@@ -12,7 +12,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { api } from '@/utils/trpc/client';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { format } from 'date-fns';
-import { PencilIcon, PlusIcon, TrashIcon } from 'lucide-react';
+import { LayoutGridIcon, ListIcon, PencilIcon, PlusIcon, TrashIcon } from 'lucide-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
@@ -27,8 +27,46 @@ const taskFormSchema = z.object({
 });
 
 type TaskFormValues = z.infer<typeof taskFormSchema>;
+type ViewMode = 'list' | 'kanban';
+
+const STATUSES = ['backlog', 'todo', 'in_progress', 'in_review', 'done'] as const;
+const STATUS_LABELS: Record<(typeof STATUSES)[number], string> = {
+  backlog: 'Backlog',
+  todo: 'To Do',
+  in_progress: 'In Progress',
+  in_review: 'In Review',
+  done: 'Done',
+};
+
+function TaskCard({ task, onEdit, onDelete, onStatusChange }: any) {
+  return (
+    <div className='group rounded-lg border bg-card p-4 shadow-sm transition-all hover:shadow-md'>
+      <div className='flex items-center justify-between gap-4'>
+        <div className='flex flex-1 flex-col gap-2'>
+          <div className='flex items-center justify-between'>
+            <span className='font-medium text-foreground'>{task.title}</span>
+            <div className='flex items-center gap-2 opacity-0 transition-opacity group-hover:opacity-100'>
+              <Button variant='ghost' size='icon' onClick={() => onEdit(task)} className='h-8 w-8'>
+                <PencilIcon className='h-4 w-4' />
+              </Button>
+              <Button variant='ghost' size='icon' onClick={() => onDelete(task.id)} className='h-8 w-8 text-destructive hover:text-destructive/90'>
+                <TrashIcon className='h-4 w-4' />
+              </Button>
+            </div>
+          </div>
+          {task.description && <p className='text-sm text-muted-foreground'>{task.description}</p>}
+          <div className='flex items-center gap-3 text-sm text-muted-foreground'>
+            {task.dueDate && <span>Due: {format(new Date(task.dueDate), 'MM/dd/yyyy HH:mm')}</span>}
+            <ColorBadge type='priority' value={task.priority} />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function TasksPage() {
+  const [viewMode, setViewMode] = useState<ViewMode>('list');
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<{ id: string; data: TaskFormValues } | null>(null);
 
@@ -116,8 +154,13 @@ export default function TasksPage() {
     });
   };
 
+  const tasksByStatus = STATUSES.reduce((acc, status) => {
+    acc[status] = tasks.filter((task: any) => task.status === status);
+    return acc;
+  }, {} as Record<(typeof STATUSES)[number], typeof tasks>);
+
   return (
-    <div className='container mx-auto max-w-4xl space-y-8 p-6'>
+    <div className='container mx-auto max-w-7xl space-y-8 p-6'>
       <PageHeader title='Personal Tasks' description='Manage your personal tasks and stay organized' />
 
       <div className='flex items-center justify-between gap-4'>
@@ -125,52 +168,84 @@ export default function TasksPage() {
           <PlusIcon className='mr-2 h-4 w-4' />
           Add Task
         </Button>
+
+        <div className='flex items-center gap-2'>
+          <Button variant={viewMode === 'list' ? 'default' : 'outline'} size='icon' onClick={() => setViewMode('list')} className='h-8 w-8'>
+            <ListIcon className='h-4 w-4' />
+          </Button>
+          <Button variant={viewMode === 'kanban' ? 'default' : 'outline'} size='icon' onClick={() => setViewMode('kanban')} className='h-8 w-8'>
+            <LayoutGridIcon className='h-4 w-4' />
+          </Button>
+        </div>
       </div>
 
-      <div className='grid gap-4'>
-        {tasks.map((task: any) => (
-          <div key={task.id} className='group rounded-lg border bg-card p-4 shadow-sm transition-all hover:shadow-md'>
-            <div className='flex items-center justify-between gap-4'>
-              <div className='flex flex-1 items-center gap-4'>
-                <Select value={task.status} onValueChange={(value) => handleStatusChange(task.id, value)}>
-                  <SelectTrigger className='w-[180px]'>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value='backlog'>Backlog</SelectItem>
-                    <SelectItem value='todo'>To Do</SelectItem>
-                    <SelectItem value='in_progress'>In Progress</SelectItem>
-                    <SelectItem value='in_review'>In Review</SelectItem>
-                    <SelectItem value='done'>Done</SelectItem>
-                  </SelectContent>
-                </Select>
-                <div className='flex flex-1 flex-col gap-1'>
-                  <span className='font-medium text-foreground'>{task.title}</span>
-                  {task.description && <p className='text-sm text-muted-foreground'>{task.description}</p>}
-                  <div className='flex items-center gap-3 text-sm text-muted-foreground'>
-                    {task.dueDate && <span>Due: {format(new Date(task.dueDate), 'MM/dd/yyyy HH:mm')}</span>}
-                    <ColorBadge type='priority' value={task.priority} />
+      {viewMode === 'list' ? (
+        <div className='grid gap-4'>
+          {tasks.map((task: any) => (
+            <div key={task.id} className='group rounded-lg border bg-card p-4 shadow-sm transition-all hover:shadow-md'>
+              <div className='flex items-center justify-between gap-4'>
+                <div className='flex flex-1 items-center gap-4'>
+                  <Select value={task.status} onValueChange={(value) => handleStatusChange(task.id, value)}>
+                    <SelectTrigger className='w-[180px]'>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value='backlog'>Backlog</SelectItem>
+                      <SelectItem value='todo'>To Do</SelectItem>
+                      <SelectItem value='in_progress'>In Progress</SelectItem>
+                      <SelectItem value='in_review'>In Review</SelectItem>
+                      <SelectItem value='done'>Done</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <div className='flex flex-1 flex-col gap-1'>
+                    <span className='font-medium text-foreground'>{task.title}</span>
+                    {task.description && <p className='text-sm text-muted-foreground'>{task.description}</p>}
+                    <div className='flex items-center gap-3 text-sm text-muted-foreground'>
+                      {task.dueDate && <span>Due: {format(new Date(task.dueDate), 'MM/dd/yyyy HH:mm')}</span>}
+                      <ColorBadge type='priority' value={task.priority} />
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              <div className='flex items-center gap-2 opacity-0 transition-opacity group-hover:opacity-100'>
-                <Button variant='ghost' size='icon' onClick={() => handleEdit(task)} className='h-8 w-8'>
-                  <PencilIcon className='h-4 w-4' />
-                </Button>
-                <Button variant='ghost' size='icon' onClick={() => handleDelete(task.id)} className='h-8 w-8 text-destructive hover:text-destructive/90'>
-                  <TrashIcon className='h-4 w-4' />
-                </Button>
+                <div className='flex items-center gap-2 opacity-0 transition-opacity group-hover:opacity-100'>
+                  <Button variant='ghost' size='icon' onClick={() => handleEdit(task)} className='h-8 w-8'>
+                    <PencilIcon className='h-4 w-4' />
+                  </Button>
+                  <Button variant='ghost' size='icon' onClick={() => handleDelete(task.id)} className='h-8 w-8 text-destructive hover:text-destructive/90'>
+                    <TrashIcon className='h-4 w-4' />
+                  </Button>
+                </div>
               </div>
             </div>
-          </div>
-        ))}
-        {tasks.length === 0 && (
-          <div className='flex h-32 items-center justify-center rounded-lg border bg-card'>
-            <p className='text-muted-foreground'>No tasks yet. Add your first task above!</p>
-          </div>
-        )}
-      </div>
+          ))}
+          {tasks.length === 0 && (
+            <div className='flex h-32 items-center justify-center rounded-lg border bg-card'>
+              <p className='text-muted-foreground'>No tasks yet. Add your first task above!</p>
+            </div>
+          )}
+        </div>
+      ) : (
+        <div className='grid grid-cols-1 gap-6 md:grid-cols-5'>
+          {STATUSES.map((status) => (
+            <div key={status} className='flex flex-col gap-4'>
+              <div className='flex items-center justify-between'>
+                <h3 className='font-semibold'>{STATUS_LABELS[status]}</h3>
+                <span className='rounded-full bg-muted px-2 py-1 text-xs'>{tasksByStatus[status].length}</span>
+              </div>
+              <div className='flex flex-col gap-3'>
+                {tasksByStatus[status].map((task: any) => (
+                  <TaskCard key={task.id} task={task} onEdit={handleEdit} onDelete={handleDelete} onStatusChange={handleStatusChange} />
+                ))}
+                {tasksByStatus[status].length === 0 && (
+                  <div className='flex h-24 items-center justify-center rounded-lg border border-dashed'>
+                    <p className='text-sm text-muted-foreground'>No tasks</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
 
       <Dialog
         open={isCreateOpen || !!editingTask}
