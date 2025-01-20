@@ -156,7 +156,7 @@ export default function TeamPage() {
       </Card>
 
       <Dialog open={editingUser !== null} onOpenChange={(open) => !open && setEditingUser(null)}>
-        <DialogContent className='sm:max-w-[425px]'>
+        <DialogContent className='max-h-[90vh] max-w-xl overflow-y-auto'>
           <DialogHeader>
             <DialogTitle>Edit User</DialogTitle>
           </DialogHeader>

@@ -21,7 +21,6 @@ const resourceEmailSchema = z.object({
 });
 
 export const resourceRouter = createTRPCRouter({
-  // Create new resource content
   createContent: protectedProcedure.input(resourceContentSchema).mutation(async ({ ctx, input }) => {
     return ctx.db.insert(resourceContent).values({
       ...input,
@@ -31,7 +30,6 @@ export const resourceRouter = createTRPCRouter({
     });
   }),
 
-  // Get all accessible resource content for the current user
   getContents: protectedProcedure
     .input(
       z
@@ -50,7 +48,6 @@ export const resourceRouter = createTRPCRouter({
         and(eq(resourceContent.visibility, 'SHARED'), eq(resourceContentShare.sharedWithUserId, userId))
       );
 
-      // Apply filters if provided
       if (input?.visibility) {
         conditions = and(conditions, eq(resourceContent.visibility, input.visibility));
       }
@@ -60,7 +57,6 @@ export const resourceRouter = createTRPCRouter({
       }
 
       if (input?.tags && input.tags.length > 0) {
-        // Note: This is a simplified tag search. In production, you might want to use a more sophisticated approach
         const tagConditions = input.tags.map((tag) => like(resourceContent.tags, `%${tag}%`));
         conditions = and(conditions, or(...tagConditions));
       }
@@ -68,7 +64,6 @@ export const resourceRouter = createTRPCRouter({
       return ctx.db.select().from(resourceContent).leftJoin(resourceContentShare, eq(resourceContent.id, resourceContentShare.resourceId)).where(conditions);
     }),
 
-  // Get a single resource content by ID
   getContent: protectedProcedure.input(z.string()).query(async ({ ctx, input }) => {
     const userId = ctx.session.user.id;
 
@@ -87,7 +82,6 @@ export const resourceRouter = createTRPCRouter({
     return result[0];
   }),
 
-  // Update resource content
   updateContent: protectedProcedure
     .input(
       z.object({
@@ -98,7 +92,6 @@ export const resourceRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       const userId = ctx.session.user.id;
 
-      // Check if user has permission to edit
       const existing = await ctx.db
         .select()
         .from(resourceContent)
@@ -126,11 +119,9 @@ export const resourceRouter = createTRPCRouter({
         .where(eq(resourceContent.id, input.id));
     }),
 
-  // Delete resource content
   deleteContent: protectedProcedure.input(z.string()).mutation(async ({ ctx, input }) => {
     const userId = ctx.session.user.id;
 
-    // Only creator can delete
     const existing = await ctx.db
       .select()
       .from(resourceContent)
@@ -144,7 +135,6 @@ export const resourceRouter = createTRPCRouter({
     return ctx.db.delete(resourceContent).where(eq(resourceContent.id, input));
   }),
 
-  // Share resource content with users
   shareContent: protectedProcedure
     .input(
       z.object({
@@ -156,7 +146,6 @@ export const resourceRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       const userId = ctx.session.user.id;
 
-      // Check if user is the creator
       const existing = await ctx.db
         .select()
         .from(resourceContent)
@@ -167,15 +156,12 @@ export const resourceRouter = createTRPCRouter({
         throw new Error('Not authorized to share this content');
       }
 
-      // Update content to SHARED if it's PRIVATE
       if (existing[0].visibility === 'PRIVATE') {
         await ctx.db.update(resourceContent).set({ visibility: 'SHARED' }).where(eq(resourceContent.id, input.resourceId));
       }
 
-      // Remove existing shares for these users
       await ctx.db.delete(resourceContentShare).where(and(eq(resourceContentShare.resourceId, input.resourceId), inArray(resourceContentShare.sharedWithUserId, input.userIds)));
 
-      // Add new shares
       return ctx.db.insert(resourceContentShare).values(
         input.userIds.map((userId) => ({
           resourceId: input.resourceId,
@@ -196,7 +182,6 @@ export const resourceRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       const userId = ctx.session.user.id;
 
-      // Check if user is the creator
       const existing = await ctx.db
         .select()
         .from(resourceContent)
@@ -210,7 +195,6 @@ export const resourceRouter = createTRPCRouter({
       return ctx.db.delete(resourceContentShare).where(and(eq(resourceContentShare.resourceId, input.resourceId), eq(resourceContentShare.sharedWithUserId, input.userId)));
     }),
 
-  // Create new email template
   createEmail: protectedProcedure.input(resourceEmailSchema).mutation(async ({ ctx, input }) => {
     const [newEmail] = await ctx.db
       .insert(resourceEmails)
@@ -225,7 +209,6 @@ export const resourceRouter = createTRPCRouter({
     return newEmail;
   }),
 
-  // Get all accessible email templates for the current user
   getEmails: protectedProcedure
     .input(
       z
@@ -256,7 +239,6 @@ export const resourceRouter = createTRPCRouter({
       return ctx.db.select().from(resourceEmails).where(conditions);
     }),
 
-  // Get a single email template by ID
   getEmail: protectedProcedure.input(z.string()).query(async ({ ctx, input }) => {
     const userId = ctx.session.user.id;
 
@@ -269,7 +251,6 @@ export const resourceRouter = createTRPCRouter({
     return result[0];
   }),
 
-  // Update email template
   updateEmail: protectedProcedure
     .input(
       z.object({
@@ -280,7 +261,6 @@ export const resourceRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       const userId = ctx.session.user.id;
 
-      // Check if user has permission to edit
       const existing = await ctx.db
         .select()
         .from(resourceEmails)
@@ -302,11 +282,9 @@ export const resourceRouter = createTRPCRouter({
         .where(eq(resourceEmails.id, input.id));
     }),
 
-  // Delete email template
   deleteEmail: protectedProcedure.input(z.string()).mutation(async ({ ctx, input }) => {
     const userId = ctx.session.user.id;
 
-    // Only creator can delete
     const existing = await ctx.db
       .select()
       .from(resourceEmails)

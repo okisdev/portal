@@ -7,16 +7,16 @@ import {
   calendarFolder,
   contact,
   contactActivity,
-  contactConversation,
   contactDeal,
-  notifications,
   paymentTrack,
+  resourceContent,
   session,
   subscriptionCoupon,
   subscriptionPlan,
   team,
   teamActivity,
   user,
+  userNotifications,
   userTask,
 } from '@/drizzle/schema';
 import { createSelectSchema } from 'drizzle-zod';
@@ -27,15 +27,10 @@ export const credentialSchema = z.object({
   password: z.string().min(1, 'Password is required').min(8, 'Password must be more than 8 characters').max(32, 'Password must be less than 32 characters'),
 });
 
-export const statusSchema = z.enum(['lead', 'prospect', 'customer', 'churned', 'opportunity']);
+export const statusSchema = z.enum(['lead', 'appointment', 'pitch', 'trial', 'final', 'closed', 'junk']);
 
 export type Status = z.infer<typeof statusSchema>;
 
-// 'lead' - Initial contact, needs qualification
-// 'prospect' - Qualified lead, actively engaged
-// 'customer' - Current paying customer
-// 'churned' - Previous customer, no longer active
-// 'opportunity' - Qualified lead with high potential
 export const prioritySchema = z.enum(['urgent', 'high', 'medium', 'low']);
 
 export type Priority = z.infer<typeof prioritySchema>;
@@ -76,10 +71,6 @@ export const contactSchema = createSelectSchema(contact);
 
 export type Contact = z.infer<typeof contactSchema>;
 
-export const contactConversationSchema = createSelectSchema(contactConversation);
-
-export type ContactConversation = z.infer<typeof contactConversationSchema>;
-
 export const contactDealSchema = createSelectSchema(contactDeal);
 
 export type ContactDeal = z.infer<typeof contactDealSchema>;
@@ -100,7 +91,7 @@ export const subscriptionPlanSchema = createSelectSchema(subscriptionPlan);
 
 export type SubscriptionPlan = z.infer<typeof subscriptionPlanSchema>;
 
-export const notificationsSchema = createSelectSchema(notifications);
+export const notificationsSchema = createSelectSchema(userNotifications);
 
 export type Notifications = z.infer<typeof notificationsSchema>;
 
@@ -124,9 +115,14 @@ export type CalendarEventWithParticipants = CalendarEvent & {
   participants: CalendarEventParticipant[];
 };
 
+export const resourceContentSchema = createSelectSchema(resourceContent);
+
+export type ResourceContent = z.infer<typeof resourceContentSchema>;
+
 export const appointmentSchema = z.object({
   title: z.string(),
   description: z.string(),
-  date: z.date(),
+  startAt: z.date(),
+  endAt: z.date(),
   contactId: z.string(),
 });

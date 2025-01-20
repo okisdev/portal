@@ -8,9 +8,9 @@ import {
   calendarFolder,
   contact,
   contactActivity,
-  contactConversation,
+  contactCampaign,
   contactDeal,
-  notifications,
+  marketingCampaign,
   paymentTrack,
   resourceContent,
   resourceContentShare,
@@ -22,6 +22,7 @@ import {
   teamContact,
   teamMeeting,
   user,
+  userNotifications,
   userTask,
 } from './schema';
 
@@ -60,10 +61,10 @@ export const sessionRelations = relations(session, ({ one }) => ({
 }));
 
 export const contactRelations = relations(contact, ({ many, one }) => ({
-  remarks: many(contactConversation),
   deals: many(contactDeal),
   activities: many(contactActivity),
   payments: many(paymentTrack),
+  campaigns: many(contactCampaign),
   assignedUser: one(user, {
     fields: [contact.assignedTo],
     references: [user.id],
@@ -73,17 +74,6 @@ export const contactRelations = relations(contact, ({ many, one }) => ({
   leadingTeams: many(team, { relationName: 'teamLeader' }),
   subLeadingTeams: many(team, { relationName: 'teamSubLeader' }),
   referralTeams: many(team, { relationName: 'teamReferral' }),
-}));
-
-export const contactConversationRelations = relations(contactConversation, ({ one }) => ({
-  contact: one(contact, {
-    fields: [contactConversation.contactId],
-    references: [contact.id],
-  }),
-  user: one(user, {
-    fields: [contactConversation.userId],
-    references: [user.id],
-  }),
 }));
 
 export const contactDealRelations = relations(contactDeal, ({ one }) => ({
@@ -122,9 +112,9 @@ export const subscriptionCouponRelations = relations(subscriptionCoupon, ({ one 
   }),
 }));
 
-export const notificationRelations = relations(notifications, ({ one }) => ({
+export const notificationRelations = relations(userNotifications, ({ one }) => ({
   user: one(user, {
-    fields: [notifications.userId],
+    fields: [userNotifications.userId],
     references: [user.id],
   }),
 }));
@@ -207,6 +197,29 @@ export const resourceEmailsRelations = relations(resourceEmails, ({ one }) => ({
   updater: one(user, {
     fields: [resourceEmails.updatedBy],
     references: [user.id],
+  }),
+}));
+
+export const marketingCampaignRelations = relations(marketingCampaign, ({ one, many }) => ({
+  creator: one(user, {
+    fields: [marketingCampaign.createdBy],
+    references: [user.id],
+  }),
+  updater: one(user, {
+    fields: [marketingCampaign.updatedBy],
+    references: [user.id],
+  }),
+  contactCampaigns: many(contactCampaign),
+}));
+
+export const contactCampaignRelations = relations(contactCampaign, ({ one }) => ({
+  contact: one(contact, {
+    fields: [contactCampaign.contactId],
+    references: [contact.id],
+  }),
+  campaign: one(marketingCampaign, {
+    fields: [contactCampaign.campaignId],
+    references: [marketingCampaign.id],
   }),
 }));
 

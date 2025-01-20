@@ -1,6 +1,7 @@
 'use client';
 
 import { ActionAlertDialog } from '@/components/shared/action-alert-dialog';
+import { Button } from '@/components/ui/button';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import {
@@ -20,7 +21,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { crmItems, languageItems, marketingItems, personalItems, resourcesItems, teamItems } from '@/config/dashboard';
 import { usePathname, useRouter } from '@/i18n/routing';
 import { api } from '@/utils/trpc/client';
-import { ChevronDown, ChevronRight, ChevronUp, Globe, Laptop, LogOut, Moon, Plus, Settings, Sparkle, Sun, User2 } from 'lucide-react';
+import { Bell, ChevronDown, ChevronRight, ChevronUp, Globe, Laptop, LogOut, Moon, Plus, Settings, Sparkle, Sun, User2 } from 'lucide-react';
 import { signOut } from 'next-auth/react';
 import { useLocale } from 'next-intl';
 import { useTheme } from 'next-themes';
@@ -88,7 +89,7 @@ export function DashboardSidebar() {
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
-          <SidebarMenuItem>
+          <SidebarMenuItem className='flex items-center justify-between space-x-1'>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <SidebarMenuButton>
@@ -156,6 +157,11 @@ export function DashboardSidebar() {
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
+            <Button type='button' variant='ghost' className='h-8 px-2' asChild>
+              <Link href='/dashboard/account/notifications'>
+                <Bell className='h-4 w-4' />
+              </Link>
+            </Button>
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarFooter>

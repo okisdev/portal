@@ -1,7 +1,7 @@
 import { calendarEvent, calendarEventParticipant, calendarFolder, contact, user } from '@/drizzle/schema';
 import { appointmentSchema } from '@/lib/schema';
 import { createTRPCRouter, protectedProcedure } from '@/server/trpc';
-import { and, desc, eq, gte, inArray, lte} from 'drizzle-orm';
+import { and, desc, eq, gte, inArray, lte } from 'drizzle-orm';
 import { z } from 'zod';
 
 export const calendarRouter = createTRPCRouter({
@@ -194,7 +194,7 @@ export const calendarRouter = createTRPCRouter({
   }),
 
   createAppointment: protectedProcedure.input(appointmentSchema).mutation(async ({ ctx, input }) => {
-    const { title, description, date, contactId } = input;
+    const { title, description, startAt, endAt, contactId } = input;
 
     // Create the calendar event
     const [event] = await ctx.db
@@ -203,8 +203,8 @@ export const calendarRouter = createTRPCRouter({
         userId: ctx.session.user.id,
         title,
         description,
-        startAt: date,
-        endAt: new Date(date.getTime() + 60 * 60 * 1000), // 1 hour duration
+        startAt,
+        endAt,
         isAllDay: false,
         isPublic: false,
         folderId:
@@ -231,26 +231,20 @@ export const calendarRouter = createTRPCRouter({
     return event;
   }),
 
-  getAppointmentsByContactId: protectedProcedure
-    .input(z.object({ contactId: z.string() }))
-    .query(async ({ ctx, input }) => {
-      return await ctx.db
-        .select({
-          id: calendarEvent.id,
-          title: calendarEvent.title,
-          description: calendarEvent.description,
-          startAt: calendarEvent.startAt,
-          endAt: calendarEvent.endAt,
-        })
-        .from(calendarEvent)
-        .innerJoin(
-          calendarEventParticipant,
-          and(
-            eq(calendarEventParticipant.eventId, calendarEvent.id),
-            eq(calendarEventParticipant.participantId, input.contactId),
-            eq(calendarEventParticipant.participantType, 'contact')
-          )
-        )
-        .orderBy(desc(calendarEvent.startAt));
-    }),
+  getAppointmentsByContactId: protectedProcedure.input(z.object({ contactId: z.string() })).query(async ({ ctx, input }) => {
+    return await ctx.db
+      .select({
+        id: calendarEvent.id,
+        title: calendarEvent.title,
+        description: calendarEvent.description,
+        startAt: calendarEvent.startAt,
+        endAt: calendarEvent.endAt,
+      })
+      .from(calendarEvent)
+      .innerJoin(
+        calendarEventParticipant,
+        and(eq(calendarEventParticipant.eventId, calendarEvent.id), eq(calendarEventParticipant.participantId, input.contactId), eq(calendarEventParticipant.participantType, 'contact'))
+      )
+      .orderBy(desc(calendarEvent.startAt));
+  }),
 });
