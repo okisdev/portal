@@ -38,12 +38,13 @@ export default function TeamIdPage() {
   const { data: teamMeetings } = api.team.getTeamMeetings.useQuery({
     teamId: teamId[0],
   });
-  const { data: teamRemarks } = api.team.getTeamRemarks.useQuery({
-    teamId: teamId[0],
-  });
-  const { data: contacts } = api.contact.getAllContacts.useQuery(); // For contact selection
+
+  const { data: contacts } = api.contact.getAllContacts.useQuery();
   const { data: folders } = api.calendar.getFolders.useQuery();
   const { data: participantOptions } = api.calendar.getParticipantOptions.useQuery();
+  const { data: teamActivities } = api.team.getTeamActivities.useQuery({
+    teamId: teamId[0],
+  });
 
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [newRemark, setNewRemark] = useState('');
@@ -55,11 +56,11 @@ export default function TeamIdPage() {
     subLeaderId: '',
     referralId: '',
     campaignCode: '',
+    remarks: '',
   });
   const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
   const [searchValue, setSearchValue] = useState('');
 
-  // Effect to sync modal state with URL mode
   useEffect(() => {
     if (mode === 'edit' && team) {
       setEditForm({
@@ -69,6 +70,7 @@ export default function TeamIdPage() {
         subLeaderId: team.subLeaderId || '',
         referralId: team.referralId || '',
         campaignCode: team.campaignCode || '',
+        remarks: team.remarks || '',
       });
       setIsEditModalOpen(true);
     } else {
@@ -87,10 +89,20 @@ export default function TeamIdPage() {
     },
   });
 
-  const createRemark = api.team.createTeamRemark.useMutation({
+  const createTeamActivity = api.team.createTeamActivity.useMutation({
+    onSuccess: () => {
+      utils.team.getTeamActivities.invalidate({ teamId: teamId[0] });
+      toast.success('Activity created successfully');
+    },
+    onError: (error) => {
+      toast.error(error.message);
+    },
+  });
+
+  const updateTeamRemarks = api.team.updateTeamRemarks.useMutation({
     onSuccess: () => {
       setNewRemark('');
-      utils.team.getTeamRemarks.invalidate({ teamId: teamId[0] });
+      utils.team.getTeamById.invalidate({ id: teamId[0] });
       toast.success('Remark created successfully');
     },
     onError: (error) => {
@@ -167,13 +179,15 @@ export default function TeamIdPage() {
     });
   };
 
-  const handleSubmitRemark = (e: React.FormEvent) => {
+  const handleSubmitActivity = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newRemark.trim()) return;
 
-    createRemark.mutate({
+    createTeamActivity.mutate({
       teamId: teamId[0],
-      content: newRemark,
+      type: 'note',
+      title: 'Note',
+      description: newRemark,
     });
   };
 
@@ -288,21 +302,18 @@ export default function TeamIdPage() {
 
           <div className='rounded-lg border bg-card p-4'>
             <div className='mb-4 flex items-center justify-between'>
-              <h2 className='font-medium'>Remarks</h2>
-              <form onSubmit={handleSubmitRemark} className='flex max-w-md flex-1 gap-2'>
-                <Input value={newRemark} onChange={(e) => setNewRemark(e.target.value)} placeholder='Add remark...' className='h-8' />
-                <Button type='submit' size='sm' disabled={createRemark.isPending}>
+              <h2 className='font-medium'>Activities</h2>
+              <form onSubmit={handleSubmitActivity} className='flex max-w-md flex-1 gap-2'>
+                <Input value={newRemark} onChange={(e) => setNewRemark(e.target.value)} placeholder='Add activity...' className='h-8' />
+                <Button type='submit' size='sm' disabled={createTeamActivity.isPending}>
                   Add
                 </Button>
               </form>
             </div>
             <div className='space-y-3'>
-              {teamRemarks?.map((remark) => (
-                <div key={remark.id} className='rounded-lg border bg-card p-3'>
-                  <p className='text-sm'>{remark.content}</p>
-                  <p className='mt-1 text-muted-foreground text-xs'>
-                    By {remark.createdBy} - {formatDate(new Date(remark.createdAt))}
-                  </p>
+              {teamActivities?.map((activity) => (
+                <div key={activity.id} className='rounded-lg border bg-card p-3'>
+                  <p className='text-sm'>{activity.description}</p>
                 </div>
               ))}
             </div>
@@ -334,6 +345,10 @@ export default function TeamIdPage() {
               <div>
                 <Label className='text-muted-foreground text-xs'>Campaign Code</Label>
                 <p className='text-sm'>{team.campaignCode || 'N/A'}</p>
+              </div>
+              <div>
+                <Label className='text-muted-foreground text-xs'>Remarks</Label>
+                <p className='text-sm'>{team.remarks || 'No remarks available'}</p>
               </div>
               <div className='items-cen flex justify-end'>
                 <p className='text-muted-foreground text-xs'>Created on {formatDate(new Date(team.createdAt))}</p>
@@ -452,6 +467,10 @@ export default function TeamIdPage() {
             <div className='space-y-2'>
               <Label>Campaign Code</Label>
               <Input value={editForm.campaignCode} onChange={(e) => setEditForm({ ...editForm, campaignCode: e.target.value })} placeholder='Enter campaign code' />
+            </div>
+            <div className='space-y-2'>
+              <Label>Remarks</Label>
+              <Textarea value={editForm.remarks} onChange={(e) => setEditForm({ ...editForm, remarks: e.target.value })} placeholder='Enter team remarks' />
             </div>
             <div className='flex justify-end space-x-2'>
               <Button type='button' variant='outline' onClick={() => setIsEditModalOpen(false)}>

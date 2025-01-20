@@ -22,6 +22,15 @@ export default function EmailDetailPage() {
 
   const utils = api.useUtils();
 
+  const handleCopyHtml = async () => {
+    try {
+      await navigator.clipboard.writeText(editorContent);
+      toast.success('HTML code copied to clipboard');
+    } catch (error) {
+      toast.error('Failed to copy HTML code');
+    }
+  };
+
   // Query to fetch the email template
   const { data: template, isLoading } = api.resource.getEmail.useQuery(id || '', {
     enabled: !!id,
@@ -119,6 +128,9 @@ export default function EmailDetailPage() {
           <div className='flex gap-2'>
             <Button onClick={() => router.push('/dashboard/resource/emails')} variant='outline'>
               Back
+            </Button>
+            <Button onClick={handleCopyHtml} variant='outline' className='text-neutral-600 hover:bg-neutral-50'>
+              Copy HTML
             </Button>
             <Button onClick={handleDeleteTemplate} variant='outline' className='text-red-600 hover:bg-red-50'>
               Delete

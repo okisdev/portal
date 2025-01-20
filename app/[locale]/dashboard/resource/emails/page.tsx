@@ -36,6 +36,15 @@ export default function EmailsPage() {
 
   const utils = api.useUtils();
 
+  const handleCopyHtml = async () => {
+    try {
+      await navigator.clipboard.writeText(editorContent);
+      toast.success('HTML code copied to clipboard');
+    } catch (error) {
+      toast.error('Failed to copy HTML code');
+    }
+  };
+
   // Query to fetch all email templates
   const { data: templates, isLoading } = api.resource.getEmails.useQuery();
 
@@ -150,9 +159,14 @@ export default function EmailsPage() {
               <h3 className='font-medium text-base text-neutral-700'>{selectedTemplate ? 'Edit Template' : 'New Template'}</h3>
               <div className='flex gap-2'>
                 {selectedTemplate && (
-                  <Button onClick={handleDeleteTemplate} variant='outline' className='text-red-600 hover:bg-red-50'>
-                    Delete
-                  </Button>
+                  <>
+                    <Button onClick={handleCopyHtml} variant='outline' className='text-neutral-600 hover:bg-neutral-50'>
+                      Copy HTML
+                    </Button>
+                    <Button onClick={handleDeleteTemplate} variant='outline' className='text-red-600 hover:bg-red-50'>
+                      Delete
+                    </Button>
+                  </>
                 )}
                 <Button onClick={handleSaveTemplate} className='bg-neutral-900 text-white hover:bg-neutral-800'>
                   {selectedTemplate ? 'Update' : 'Save'} Template

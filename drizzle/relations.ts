@@ -18,9 +18,9 @@ import {
   session,
   subscriptionCoupon,
   team,
+  teamActivity,
   teamContact,
   teamMeeting,
-  teamRemark,
   user,
 } from './schema';
 
@@ -213,7 +213,7 @@ export const teamRelations = relations(team, ({ many, one }) => ({
     references: [user.id],
   }),
   contacts: many(teamContact),
-  remarks: many(teamRemark),
+  activities: many(teamActivity),
   leader: one(contact, {
     fields: [team.leaderId],
     references: [contact.id],
@@ -243,13 +243,13 @@ export const teamContactRelations = relations(teamContact, ({ one }) => ({
   }),
 }));
 
-export const teamRemarkRelations = relations(teamRemark, ({ one }) => ({
+export const teamActivityRelations = relations(teamActivity, ({ one }) => ({
   team: one(team, {
-    fields: [teamRemark.teamId],
+    fields: [teamActivity.teamId],
     references: [team.id],
   }),
-  creator: one(user, {
-    fields: [teamRemark.createdBy],
+  user: one(user, {
+    fields: [teamActivity.userId],
     references: [user.id],
   }),
 }));
