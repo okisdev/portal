@@ -22,6 +22,7 @@ import {
   teamContact,
   teamMeeting,
   user,
+  userTask,
 } from './schema';
 
 export const accountRelations = relations(account, ({ one }) => ({
@@ -40,6 +41,8 @@ export const userRelations = relations(user, ({ many }) => ({
   sharedCalendarEvents: many(calendarEventShare, { relationName: 'sharedWithUser' }),
   eventParticipations: many(calendarEventParticipant),
   createdTeams: many(team, { relationName: 'teamCreator' }),
+  tasks: many(userTask, { relationName: 'userTasks' }),
+  assignedTasks: many(userTask, { relationName: 'assignedTasks' }),
 }));
 
 export const authenticatorRelations = relations(authenticator, ({ one }) => ({
@@ -263,4 +266,20 @@ export const teamPitchingRelations = relations(teamMeeting, ({ one }) => ({
     fields: [teamMeeting.createdBy],
     references: [user.id],
   }),
+}));
+
+export const userTaskRelations = relations(userTask, ({ one, many }) => ({
+  user: one(user, {
+    fields: [userTask.userId],
+    references: [user.id],
+  }),
+  assignee: one(user, {
+    fields: [userTask.assignedTo],
+    references: [user.id],
+  }),
+  parentTask: one(userTask, {
+    fields: [userTask.parentTaskId],
+    references: [userTask.id],
+  }),
+  subtasks: many(userTask, { relationName: 'subtasks' }),
 }));

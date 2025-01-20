@@ -14,7 +14,10 @@ import {
   session,
   subscriptionCoupon,
   subscriptionPlan,
+  team,
+  teamActivity,
   user,
+  userTask,
 } from '@/drizzle/schema';
 import { createSelectSchema } from 'drizzle-zod';
 import { z } from 'zod';
@@ -44,6 +47,18 @@ export type UserRole = z.infer<typeof userRoleSchema>;
 export const userSchema = createSelectSchema(user);
 
 export type User = z.infer<typeof userSchema>;
+
+export const userTaskSchema = createSelectSchema(userTask);
+
+export type UserTask = z.infer<typeof userTaskSchema>;
+
+export const teamSchema = createSelectSchema(team);
+
+export type Team = z.infer<typeof teamSchema>;
+
+export const teamActivitySchema = createSelectSchema(teamActivity);
+
+export type TeamActivity = z.infer<typeof teamActivitySchema>;
 
 export const accountSchema = createSelectSchema(account);
 

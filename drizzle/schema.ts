@@ -432,6 +432,31 @@ export const teamActivity = pgTable('teamActivity', {
   updatedAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
 });
 
+// @ts-ignore - Self-referential table limitation
+export const userTask = pgTable('userTask', {
+  id: text()
+    .primaryKey()
+    .notNull()
+    .$defaultFn(() => crypto.randomUUID()),
+  userId: text()
+    .notNull()
+    .references(() => user.id, { onDelete: 'cascade' }),
+  title: text().notNull(),
+  description: text(),
+  status: text('status', { enum: ['backlog', 'todo', 'in_progress', 'in_review', 'done'] }).default('todo'),
+  priority: text('priority', { enum: ['urgent', 'high', 'medium', 'low'] }).default('medium'),
+  dueDate: timestamp({ mode: 'date' }),
+  completedAt: timestamp({ mode: 'date' }),
+  assignedTo: text().references(() => user.id), // can be assigned to another user
+  labels: text(), // JSON array of labels/tags
+  attachments: text(), // JSON array of attachment URLs/metadata
+  // @ts-ignore - Self-referential table limitation
+  parentTaskId: text().references(() => userTask.id), // for subtasks
+  metadata: text(), // JSON string for additional data
+  createdAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
+  updatedAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
+});
+
 export const teamMeeting = pgTable('teamMeeting', {
   id: text()
     .primaryKey()
