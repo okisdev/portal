@@ -4,16 +4,19 @@ import { ColorBadge } from '@/components/shared/color-badge';
 import { DateTimePicker } from '@/components/shared/date-time-picker';
 import { PageHeader } from '@/components/shared/page-header';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { api } from '@/utils/trpc/client';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { format } from 'date-fns';
-import { LayoutGridIcon, ListIcon, PencilIcon, PlusIcon, TrashIcon } from 'lucide-react';
-import { useState } from 'react';
+import { FilterIcon, LayoutGridIcon, ListIcon, PencilIcon, PlusIcon, TrashIcon } from 'lucide-react';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { useCallback, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
@@ -66,9 +69,21 @@ function TaskCard({ task, onEdit, onDelete, onStatusChange }: any) {
 }
 
 export default function TasksPage() {
-  const [viewMode, setViewMode] = useState<ViewMode>('list');
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
+  // Get view mode from URL or default to list
+  const defaultViewMode = (searchParams.get('view') as ViewMode) || 'list';
+  const [viewMode, setViewMode] = useState<ViewMode>(defaultViewMode);
+
+  // Get visible statuses from URL or show all by default
+  const defaultVisibleStatuses = searchParams.get('statuses')?.split(',') || STATUSES;
+  const [visibleStatuses, setVisibleStatuses] = useState<(typeof STATUSES)[number][]>(defaultVisibleStatuses as (typeof STATUSES)[number][]);
+
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<{ id: string; data: TaskFormValues } | null>(null);
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
 
   const utils = api.useUtils();
   const { data: tasks = [] } = api.task.getAll.useQuery();
@@ -154,8 +169,32 @@ export default function TasksPage() {
     });
   };
 
+  // Update URL when view mode changes
+  const updateViewMode = useCallback(
+    (mode: ViewMode) => {
+      const params = new URLSearchParams(searchParams);
+      params.set('view', mode);
+      router.push(`${pathname}?${params.toString()}`);
+      setViewMode(mode);
+    },
+    [pathname, router, searchParams]
+  );
+
+  // Update URL when visible statuses change
+  const updateVisibleStatuses = useCallback(
+    (statuses: (typeof STATUSES)[number][]) => {
+      const params = new URLSearchParams(searchParams);
+      params.set('statuses', statuses.join(','));
+      router.push(`${pathname}?${params.toString()}`);
+      setVisibleStatuses(statuses);
+    },
+    [pathname, router, searchParams]
+  );
+
+  // Filter tasks based on visible statuses
+  const filteredTasks = tasks.filter((task: any) => visibleStatuses.includes(task.status));
   const tasksByStatus = STATUSES.reduce((acc, status) => {
-    acc[status] = tasks.filter((task: any) => task.status === status);
+    acc[status] = filteredTasks.filter((task: any) => task.status === status);
     return acc;
   }, {} as Record<(typeof STATUSES)[number], typeof tasks>);
 
@@ -164,16 +203,50 @@ export default function TasksPage() {
       <PageHeader title='Personal Tasks' description='Manage your personal tasks and stay organized' />
 
       <div className='flex items-center justify-between gap-4'>
-        <Button variant='outline' onClick={() => setIsCreateOpen(true)}>
-          <PlusIcon className='mr-2 h-4 w-4' />
-          Add Task
-        </Button>
+        <div className='flex items-center gap-2'>
+          <Button variant='outline' className='h-8' onClick={() => setIsCreateOpen(true)}>
+            <PlusIcon className='mr-2 h-4 w-4' />
+            Add Task
+          </Button>
+
+          <Popover open={isFilterOpen} onOpenChange={setIsFilterOpen}>
+            <PopoverTrigger asChild>
+              <Button variant='outline' className='h-8 gap-2'>
+                <FilterIcon className='h-4 w-4' />
+                Filter
+                {visibleStatuses.length !== STATUSES.length && <span className='rounded-full bg-primary px-2 py-0.5 text-primary-foreground text-xs'>{visibleStatuses.length}</span>}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className='w-80' align='start'>
+              <div className='space-y-4'>
+                <h4 className='font-medium'>Filter by Status</h4>
+                <div className='space-y-2'>
+                  {STATUSES.map((status) => (
+                    <div key={status} className='flex items-center space-x-2'>
+                      <Checkbox
+                        id={status}
+                        checked={visibleStatuses.includes(status)}
+                        onCheckedChange={(checked) => {
+                          const newStatuses = checked ? [...visibleStatuses, status] : visibleStatuses.filter((s) => s !== status);
+                          updateVisibleStatuses(newStatuses);
+                        }}
+                      />
+                      <label htmlFor={status} className='text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70'>
+                        {STATUS_LABELS[status]}
+                      </label>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </PopoverContent>
+          </Popover>
+        </div>
 
         <div className='flex items-center gap-2'>
-          <Button variant={viewMode === 'list' ? 'default' : 'outline'} size='icon' onClick={() => setViewMode('list')} className='h-8 w-8'>
+          <Button variant={viewMode === 'list' ? 'default' : 'outline'} size='icon' onClick={() => updateViewMode('list')} className='h-8 w-8'>
             <ListIcon className='h-4 w-4' />
           </Button>
-          <Button variant={viewMode === 'kanban' ? 'default' : 'outline'} size='icon' onClick={() => setViewMode('kanban')} className='h-8 w-8'>
+          <Button variant={viewMode === 'kanban' ? 'default' : 'outline'} size='icon' onClick={() => updateViewMode('kanban')} className='h-8 w-8'>
             <LayoutGridIcon className='h-4 w-4' />
           </Button>
         </div>
@@ -181,7 +254,7 @@ export default function TasksPage() {
 
       {viewMode === 'list' ? (
         <div className='grid gap-4'>
-          {tasks.map((task: any) => (
+          {filteredTasks.map((task: any) => (
             <div key={task.id} className='group rounded-lg border bg-card p-4 shadow-sm transition-all hover:shadow-md'>
               <div className='flex items-center justify-between gap-4'>
                 <div className='flex flex-1 items-center gap-4'>
@@ -218,15 +291,15 @@ export default function TasksPage() {
               </div>
             </div>
           ))}
-          {tasks.length === 0 && (
+          {filteredTasks.length === 0 && (
             <div className='flex h-32 items-center justify-center rounded-lg border bg-card'>
-              <p className='text-muted-foreground'>No tasks yet. Add your first task above!</p>
+              <p className='text-muted-foreground'>{tasks.length === 0 ? 'No tasks yet. Add your first task above!' : 'No tasks match your filters.'}</p>
             </div>
           )}
         </div>
       ) : (
         <div className='grid grid-cols-1 gap-6 md:grid-cols-5'>
-          {STATUSES.map((status) => (
+          {STATUSES.filter((status) => visibleStatuses.includes(status)).map((status) => (
             <div key={status} className='flex flex-col gap-4'>
               <div className='flex items-center justify-between'>
                 <h3 className='font-semibold'>{STATUS_LABELS[status]}</h3>
