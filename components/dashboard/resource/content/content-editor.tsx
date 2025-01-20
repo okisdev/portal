@@ -4,7 +4,27 @@ import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import type { ResourceContent } from '@/lib/schema';
 import { Eye, EyeOff, Trash } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
+
+// Debounce hook
+function useDebounce<T extends (...args: any[]) => any>(callback: T, delay: number) {
+  const [timeoutId, setTimeoutId] = useState<NodeJS.Timeout | null>(null);
+
+  return useCallback(
+    (...args: Parameters<T>) => {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+
+      const newTimeoutId = setTimeout(() => {
+        callback(...args);
+      }, delay);
+
+      setTimeoutId(newTimeoutId);
+    },
+    [callback, delay]
+  );
+}
 
 interface ContentEditorProps {
   content: ResourceContent | null;
@@ -21,6 +41,13 @@ export function ContentEditor({ content, onUpdate, onDelete, isLoading }: Conten
   const [tempDescription, setTempDescription] = useState(content?.description || '');
   const [editorContent, setEditorContent] = useState(content?.content || '');
 
+  // Debounced update handlers
+  const debouncedContentUpdate = useDebounce((value: string) => {
+    onUpdate({
+      content: value,
+    });
+  }, 1000); // 1 second delay
+
   useEffect(() => {
     if (content) {
       setTempTitle(content.title);
@@ -33,29 +60,27 @@ export function ContentEditor({ content, onUpdate, onDelete, isLoading }: Conten
   }, [content]);
 
   const handleTitleEdit = () => {
-    if (!isViewMode && content) {
+    if (!isViewMode && content && tempTitle !== content.title) {
       onUpdate({
         title: tempTitle,
       });
-      setEditingTitle(false);
     }
+    setEditingTitle(false);
   };
 
   const handleDescriptionEdit = () => {
-    if (!isViewMode && content) {
+    if (!isViewMode && content && tempDescription !== content.description) {
       onUpdate({
         description: tempDescription || undefined,
       });
-      setEditingDescription(false);
     }
+    setEditingDescription(false);
   };
 
   const handleContentChange = (value: string) => {
     if (!isViewMode) {
       setEditorContent(value);
-      onUpdate({
-        content: value,
-      });
+      debouncedContentUpdate(value);
     }
   };
 
@@ -68,7 +93,7 @@ export function ContentEditor({ content, onUpdate, onDelete, isLoading }: Conten
           {editingTitle && !isViewMode ? (
             <Input value={tempTitle} onChange={(e) => setTempTitle(e.target.value)} onBlur={handleTitleEdit} onKeyDown={(e) => e.key === 'Enter' && handleTitleEdit()} className='h-8 font-medium' />
           ) : (
-            <button type='button' className='w-full text-left font-medium hover:bg-accent/50 px-2 py-1 rounded' onClick={() => !isViewMode && setEditingTitle(true)} disabled={isViewMode}>
+            <button type='button' className='w-full rounded px-2 py-1 text-left font-medium hover:bg-accent/50' onClick={() => !isViewMode && setEditingTitle(true)} disabled={isViewMode}>
               {content.title}
             </button>
           )}
@@ -78,12 +103,12 @@ export function ContentEditor({ content, onUpdate, onDelete, isLoading }: Conten
               onChange={(e) => setTempDescription(e.target.value)}
               onBlur={handleDescriptionEdit}
               onKeyDown={(e) => e.key === 'Enter' && handleDescriptionEdit()}
-              className='h-8 text-sm text-muted-foreground'
+              className='h-8 text-muted-foreground text-sm'
             />
           ) : (
             <button
               type='button'
-              className='w-full text-left text-muted-foreground text-sm hover:bg-accent/50 px-2 py-1 rounded'
+              className='w-full rounded px-2 py-1 text-left text-muted-foreground text-sm hover:bg-accent/50'
               onClick={() => !isViewMode && setEditingDescription(true)}
               disabled={isViewMode}
             >
