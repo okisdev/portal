@@ -15,7 +15,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { insuranceCompanies, sources } from '@/data/data';
-import type { Priority, Status } from '@/lib/schema';
+import { type Priority, type Status, statusSchema } from '@/lib/schema';
 import { cn, formatDate } from '@/lib/utils';
 import { api } from '@/utils/trpc/client';
 import { Building2, Calendar, CalendarIcon, Edit2, Mail, MoreHorizontal, Phone, Save, Trash2, Users, X } from 'lucide-react';
@@ -387,7 +387,7 @@ export default function ContactIdPage() {
                           </SelectValue>
                         </SelectTrigger>
                         <SelectContent className='bg-popover text-popover-foreground'>
-                          {['lead', 'prospect', 'customer', 'churned', 'opportunity'].map((status) => (
+                          {statusSchema.options.map((status) => (
                             <SelectItem key={status} value={status}>
                               <ColorBadge type='contactStatus' value={status} />
                             </SelectItem>
@@ -608,11 +608,11 @@ export default function ContactIdPage() {
                   <SelectValue placeholder='Select status' />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value='lead'>Lead</SelectItem>
-                  <SelectItem value='prospect'>Prospect</SelectItem>
-                  <SelectItem value='customer'>Customer</SelectItem>
-                  <SelectItem value='churned'>Churned</SelectItem>
-                  <SelectItem value='opportunity'>Opportunity</SelectItem>
+                  {statusSchema.options.map((status) => (
+                    <SelectItem key={status} value={status}>
+                      <ColorBadge type='contactStatus' value={status} />
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>

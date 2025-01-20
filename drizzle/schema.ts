@@ -104,7 +104,7 @@ export const contact = pgTable('contact', {
   country: text(),
   postalCode: text(),
   remark: text(),
-  status: text('status', { enum: ['lead', 'prospect', 'customer', 'churned', 'opportunity'] })
+  status: text('status', { enum: ['lead', 'appointment', 'pitch', 'trial', 'final', 'closed', 'junk'] })
     .notNull()
     .default('lead'),
   source: text(),
@@ -118,23 +118,6 @@ export const contact = pgTable('contact', {
   currentRole: text(), // current job role
   industry: text(), // industry they work in
   skills: text(), // comma-separated list of skills
-});
-
-export const contactConversation = pgTable('contactConversation', {
-  id: text()
-    .primaryKey()
-    .notNull()
-    .$defaultFn(() => crypto.randomUUID()),
-  contactId: text()
-    .notNull()
-    .references(() => contact.id, { onDelete: 'cascade' }),
-  userId: text()
-    .notNull()
-    .references(() => user.id), // who made the remark
-  content: text().notNull(),
-  type: text().default('note'), // 'note', 'call', 'meeting', 'email'
-  createdAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
-  updatedAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
 });
 
 export const contactDeal = pgTable('contactDeal', {
@@ -235,7 +218,7 @@ export const subscriptionPlan = pgTable('subscriptionPlan', {
   updatedAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
 });
 
-export const notifications = pgTable('notifications', {
+export const userNotifications = pgTable('userNotifications', {
   id: serial('id').primaryKey(),
   userId: varchar('user_id').notNull(),
   type: varchar('type').notNull(),

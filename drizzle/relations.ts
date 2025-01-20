@@ -8,9 +8,7 @@ import {
   calendarFolder,
   contact,
   contactActivity,
-  contactConversation,
   contactDeal,
-  notifications,
   paymentTrack,
   resourceContent,
   resourceContentShare,
@@ -22,6 +20,7 @@ import {
   teamContact,
   teamMeeting,
   user,
+  userNotifications,
   userTask,
 } from './schema';
 
@@ -60,7 +59,6 @@ export const sessionRelations = relations(session, ({ one }) => ({
 }));
 
 export const contactRelations = relations(contact, ({ many, one }) => ({
-  remarks: many(contactConversation),
   deals: many(contactDeal),
   activities: many(contactActivity),
   payments: many(paymentTrack),
@@ -73,17 +71,6 @@ export const contactRelations = relations(contact, ({ many, one }) => ({
   leadingTeams: many(team, { relationName: 'teamLeader' }),
   subLeadingTeams: many(team, { relationName: 'teamSubLeader' }),
   referralTeams: many(team, { relationName: 'teamReferral' }),
-}));
-
-export const contactConversationRelations = relations(contactConversation, ({ one }) => ({
-  contact: one(contact, {
-    fields: [contactConversation.contactId],
-    references: [contact.id],
-  }),
-  user: one(user, {
-    fields: [contactConversation.userId],
-    references: [user.id],
-  }),
 }));
 
 export const contactDealRelations = relations(contactDeal, ({ one }) => ({
@@ -122,9 +109,9 @@ export const subscriptionCouponRelations = relations(subscriptionCoupon, ({ one 
   }),
 }));
 
-export const notificationRelations = relations(notifications, ({ one }) => ({
+export const notificationRelations = relations(userNotifications, ({ one }) => ({
   user: one(user, {
-    fields: [notifications.userId],
+    fields: [userNotifications.userId],
     references: [user.id],
   }),
 }));

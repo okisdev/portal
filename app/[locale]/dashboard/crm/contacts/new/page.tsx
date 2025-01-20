@@ -1,6 +1,7 @@
 'use client';
 
 import { Banner } from '@/components/shared/banner';
+import { ColorBadge } from '@/components/shared/color-badge';
 import { Combobox } from '@/components/shared/combobox';
 import { PageHeader } from '@/components/shared/page-header';
 import { Button } from '@/components/ui/button';
@@ -10,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { insuranceCompanies, sources } from '@/data/data';
-import type { Status } from '@/lib/schema';
+import { type Status, statusSchema } from '@/lib/schema';
 import { generateUUID } from '@/lib/utils';
 import { api } from '@/utils/trpc/client';
 import { Download, Upload } from 'lucide-react';
@@ -460,11 +461,11 @@ export default function ImportContacts() {
                                 <SelectValue />
                               </SelectTrigger>
                               <SelectContent>
-                                <SelectItem value='lead'>Lead</SelectItem>
-                                <SelectItem value='prospect'>Prospect</SelectItem>
-                                <SelectItem value='customer'>Customer</SelectItem>
-                                <SelectItem value='churned'>Churned</SelectItem>
-                                <SelectItem value='opportunity'>Opportunity</SelectItem>
+                                {statusSchema.options.map((status) => (
+                                  <SelectItem key={status} value={status}>
+                                    <ColorBadge type='contactStatus' value={status} />
+                                  </SelectItem>
+                                ))}
                               </SelectContent>
                             </Select>
                           </TableCell>
@@ -549,11 +550,11 @@ export default function ImportContacts() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value='lead'>Lead</SelectItem>
-                      <SelectItem value='prospect'>Prospect</SelectItem>
-                      <SelectItem value='customer'>Customer</SelectItem>
-                      <SelectItem value='churned'>Churned</SelectItem>
-                      <SelectItem value='opportunity'>Opportunity</SelectItem>
+                      {statusSchema.options.map((status) => (
+                        <SelectItem key={status} value={status}>
+                          <ColorBadge type='contactStatus' value={status} />
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
