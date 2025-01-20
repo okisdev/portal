@@ -1,5 +1,6 @@
 'use client';
 
+import { ActionAlertDialog } from '@/components/shared/action-alert-dialog';
 import { ColorBadge } from '@/components/shared/color-badge';
 import { Combobox } from '@/components/shared/combobox';
 import { ComboboxCommand } from '@/components/shared/combobox';
@@ -49,6 +50,8 @@ export default function TeamIdPage() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [newRemark, setNewRemark] = useState('');
   const [isNewMeetingModalOpen, setIsNewMeetingModalOpen] = useState(false);
+  const [activityToDelete, setActivityToDelete] = useState<string | null>(null);
+  const [meetingToDelete, setMeetingToDelete] = useState<string | null>(null);
   const [editForm, setEditForm] = useState({
     name: '',
     description: '',
@@ -148,6 +151,16 @@ export default function TeamIdPage() {
       toast.success('Member added successfully');
     },
     onError: (error) => {
+      toast.error(error.message);
+    },
+  });
+
+  const deleteTeamActivity = api.team.deleteTeamActivity.useMutation({
+    onSuccess: () => {
+      utils.team.getTeamActivities.invalidate({ teamId: teamId[0] });
+      toast.success('Activity deleted successfully');
+    },
+    onError: (error: any) => {
       toast.error(error.message);
     },
   });
@@ -312,8 +325,24 @@ export default function TeamIdPage() {
             </div>
             <div className='space-y-3'>
               {teamActivities?.map((activity) => (
-                <div key={activity.id} className='rounded-lg border bg-card p-3'>
-                  <p className='text-sm'>{activity.description}</p>
+                <div key={activity.id} className='flex items-start justify-between rounded-lg border bg-card p-3'>
+                  <div className='space-y-1'>
+                    <div className='flex items-center gap-2'>
+                      <p className='font-medium text-sm'>{activity.title}</p>
+                      <ColorBadge type='status' value={activity.type} />
+                    </div>
+                    <p className='text-sm'>{activity.description}</p>
+                    <p className='text-muted-foreground text-xs'>{formatDate(new Date(activity.createdAt))}</p>
+                  </div>
+                  <Button
+                    variant='ghost'
+                    size='sm'
+                    onClick={() => {
+                      setActivityToDelete(activity.id);
+                    }}
+                  >
+                    <Trash2 className='size-4 text-muted-foreground' />
+                  </Button>
                 </div>
               ))}
             </div>
@@ -374,12 +403,7 @@ export default function TeamIdPage() {
                     variant='ghost'
                     size='sm'
                     onClick={() => {
-                      if (confirm('Are you sure you want to delete this meeting?')) {
-                        deleteTeamMeeting.mutate({
-                          id: meeting.id,
-                          teamId: teamId[0],
-                        });
-                      }
+                      setMeetingToDelete(meeting.id);
                     }}
                   >
                     <Trash2 className='size-4 text-muted-foreground' />
@@ -502,6 +526,38 @@ export default function TeamIdPage() {
             color: `#${Math.floor(Math.random() * 16777215).toString(16)}`,
           });
         }}
+      />
+
+      <ActionAlertDialog
+        open={!!activityToDelete}
+        onOpenChange={(open) => !open && setActivityToDelete(null)}
+        onConfirm={() => {
+          if (activityToDelete) {
+            deleteTeamActivity.mutate({
+              id: activityToDelete,
+              teamId: teamId[0],
+            });
+            setActivityToDelete(null);
+          }
+        }}
+        title='Delete Activity'
+        description='Are you sure you want to delete this activity? This action cannot be undone.'
+      />
+
+      <ActionAlertDialog
+        open={!!meetingToDelete}
+        onOpenChange={(open) => !open && setMeetingToDelete(null)}
+        onConfirm={() => {
+          if (meetingToDelete) {
+            deleteTeamMeeting.mutate({
+              id: meetingToDelete,
+              teamId: teamId[0],
+            });
+            setMeetingToDelete(null);
+          }
+        }}
+        title='Delete Meeting'
+        description='Are you sure you want to delete this meeting? This action cannot be undone.'
       />
     </div>
   );
