@@ -2,20 +2,22 @@
 
 import { ActionAlertDialog } from '@/components/shared/action-alert-dialog';
 import { PageHeader } from '@/components/shared/page-header';
+import { TipTapEditor } from '@/components/shared/tiptap-editor';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Switch } from '@/components/ui/switch';
-import { Textarea } from '@/components/ui/textarea';
+import type { ResourceContent } from '@/lib/schema';
 import { api } from '@/utils/trpc/client';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Edit, Eye, PlusCircle, Search, Share2, Trash } from 'lucide-react';
+import { Edit, PlusCircle, Save, Search, Trash } from 'lucide-react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
@@ -31,21 +33,12 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
-interface Content {
-  id: string;
-  title: string;
-  description: string | null;
-  content: string;
-  tags: string | null;
-  visibility: 'PUBLIC' | 'SHARED' | 'PRIVATE';
-  createdBy: string;
-  updatedBy: string | null;
-  createdAt: Date;
-  updatedAt: Date;
-}
-
 export default function ContentPage() {
-  const [selectedContent, setSelectedContent] = useState<Content | null>(null);
+  const searchParams = useSearchParams();
+  const id = searchParams.get('id');
+  const router = useRouter();
+
+  const [currentContent, setCurrentContent] = useState<ResourceContent | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [keepCreating, setKeepCreating] = useState(false);
@@ -62,17 +55,12 @@ export default function ContentPage() {
     },
   });
 
-  // Queries
-  const contentsQuery = api.resource.getContents.useQuery(
-    {
-      search: searchQuery || undefined,
-    },
-    {
-      enabled: true,
-    }
-  );
+  const { data: contents, isLoading: contentsLoading } = api.resource.getContents.useQuery();
 
-  // Mutations
+  const { data: content, isLoading: contentLoading } = api.resource.getContent.useQuery(id || '', {
+    enabled: !!id,
+  });
+
   const createContent = api.resource.createContent.useMutation({
     onSuccess: () => {
       toast.success('Content created successfully');
@@ -80,7 +68,6 @@ export default function ContentPage() {
       if (!keepCreating) {
         setIsEditing(false);
       }
-      contentsQuery.refetch();
     },
     onError: (error) => {
       toast.error('Error creating content', {
@@ -94,7 +81,6 @@ export default function ContentPage() {
       toast.success('Content updated successfully');
       form.reset();
       setIsEditing(false);
-      contentsQuery.refetch();
     },
     onError: (error) => {
       toast.error('Error updating content', {
@@ -106,8 +92,8 @@ export default function ContentPage() {
   const deleteContent = api.resource.deleteContent.useMutation({
     onSuccess: () => {
       toast.success('Content deleted successfully');
-      setSelectedContent(null);
-      contentsQuery.refetch();
+      setCurrentContent(null);
+      router.push('/dashboard/resource/content');
     },
     onError: (error) => {
       toast.error('Error deleting content', {
@@ -116,11 +102,10 @@ export default function ContentPage() {
     },
   });
 
-  // Form handlers
   const onSubmit = (data: FormValues) => {
-    if (selectedContent && isEditing) {
+    if (currentContent && isEditing) {
       updateContent.mutate({
-        id: selectedContent.id,
+        id: currentContent.id,
         data,
       });
     } else {
@@ -128,22 +113,25 @@ export default function ContentPage() {
     }
   };
 
-  // Effect to populate form when editing
   useEffect(() => {
-    if (selectedContent && isEditing) {
-      form.reset({
-        title: selectedContent.title,
-        description: selectedContent.description || '',
-        content: selectedContent.content,
-        tags: selectedContent.tags ? JSON.parse(selectedContent.tags) : [],
-        visibility: selectedContent.visibility,
-      });
+    if (content) {
+      setCurrentContent(content.resourceContent);
+
+      if (isEditing) {
+        form.reset({
+          title: content.resourceContent.title,
+          description: content.resourceContent.description || '',
+          content: content.resourceContent.content,
+          tags: content.resourceContent.tags ? JSON.parse(content.resourceContent.tags) : [],
+          visibility: content.resourceContent.visibility,
+        });
+      }
     }
-  }, [selectedContent, isEditing, form]);
+  }, [content, isEditing, form]);
 
   const handleDelete = () => {
-    if (selectedContent) {
-      deleteContent.mutate(selectedContent.id);
+    if (currentContent) {
+      deleteContent.mutate(currentContent.id);
       setIsDeleteDialogOpen(false);
     }
   };
@@ -153,105 +141,19 @@ export default function ContentPage() {
       <div className='w-1/3 border-r p-4'>
         <div className='mb-4 flex items-center justify-between'>
           <PageHeader title='Contents' />
-          <Dialog>
-            <DialogTrigger asChild>
-              <Button
-                variant='outline'
-                className='h-8'
-                onClick={() => {
-                  setSelectedContent(null);
-                  setIsEditing(false);
-                  form.reset();
-                }}
-              >
-                <PlusCircle className='h-4 w-4' />
-                New
-              </Button>
-            </DialogTrigger>
-            <DialogContent className='max-h-[90vh] max-w-xl overflow-y-auto'>
-              <DialogHeader>
-                <DialogTitle>{isEditing ? 'Edit Content' : 'New Content'}</DialogTitle>
-              </DialogHeader>
-              <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-4'>
-                  <FormField
-                    control={form.control}
-                    name='title'
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Title</FormLabel>
-                        <FormControl>
-                          <Input {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name='description'
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Description</FormLabel>
-                        <FormControl>
-                          <Input {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name='content'
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Content</FormLabel>
-                        <FormControl>
-                          <Textarea {...field} rows={10} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name='visibility'
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Visibility</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder='Select visibility' />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value='PRIVATE'>Private</SelectItem>
-                            <SelectItem value='SHARED'>Shared</SelectItem>
-                            <SelectItem value='PUBLIC'>Public</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <DialogFooter className='flex items-center justify-between'>
-                    <div className='flex items-center space-x-2'>
-                      {!isEditing && (
-                        <div className='flex items-center space-x-2'>
-                          <Switch id='keep-creating' checked={keepCreating} onCheckedChange={setKeepCreating} />
-                          <Label htmlFor='keep-creating'>Keep creating</Label>
-                        </div>
-                      )}
-                    </div>
-                    <Button type='submit' disabled={createContent.isPending || updateContent.isPending}>
-                      {isEditing ? 'Update' : 'Create'}
-                    </Button>
-                  </DialogFooter>
-                </form>
-              </Form>
-            </DialogContent>
-          </Dialog>
+          <Button
+            variant='outline'
+            className='h-8'
+            onClick={() => {
+              router.push('/dashboard/resource/content');
+              setCurrentContent(null);
+              setIsEditing(false);
+              form.reset();
+            }}
+          >
+            <PlusCircle className='h-4 w-4' />
+            New
+          </Button>
         </div>
 
         <div className='relative mb-4'>
@@ -260,13 +162,22 @@ export default function ContentPage() {
         </div>
 
         <ScrollArea className='h-[calc(100vh-200px)]'>
-          {contentsQuery.data?.map((item) => (
-            <Card
-              key={item.resourceContent.id}
-              className={`mb-2 cursor-pointer hover:bg-accent ${selectedContent?.id === item.resourceContent.id ? 'border-primary' : ''}`}
-              onClick={() => setSelectedContent(item.resourceContent)}
-            >
-              <CardContent className='p-4'>
+          {contentsLoading ? (
+            <div className='flex h-full flex-col items-center justify-center space-y-2'>
+              <Skeleton className='h-20 w-full' />
+              <Skeleton className='h-20 w-full' />
+              <Skeleton className='h-20 w-full' />
+            </div>
+          ) : (
+            contents?.map((item) => (
+              <button
+                type='button'
+                key={item.resourceContent.id}
+                className={`mb-2 w-full cursor-pointer rounded-lg p-4 text-left transition-colors hover:bg-accent/50 ${currentContent?.id === item.resourceContent.id ? 'bg-accent' : ''}`}
+                onClick={() => {
+                  router.push(`?id=${item.resourceContent.id}`);
+                }}
+              >
                 <div className='flex items-center justify-between'>
                   <h3 className='font-semibold'>{item.resourceContent.title}</h3>
                   <Badge variant={item.resourceContent.visibility === 'PUBLIC' ? 'default' : item.resourceContent.visibility === 'SHARED' ? 'secondary' : 'outline'}>
@@ -275,21 +186,30 @@ export default function ContentPage() {
                 </div>
                 <p className='text-muted-foreground text-sm'>{item.resourceContent.description}</p>
                 <p className='mt-2 text-muted-foreground text-xs'>Created: {new Date(item.resourceContent.createdAt).toLocaleDateString()}</p>
-              </CardContent>
-            </Card>
-          ))}
+              </button>
+            ))
+          )}
         </ScrollArea>
       </div>
 
       <div className='flex-1 p-4'>
-        {selectedContent ? (
-          <div className='h-full'>
-            <div className='mb-4 flex items-center justify-between'>
-              <h2 className='font-bold text-2xl'>{selectedContent.title}</h2>
+        {id ? (
+          <div className='h-full space-y-4'>
+            <div className='flex items-center justify-between'>
+              <div className='flex flex-col space-y-0.5'>
+                {contentLoading ? (
+                  <>
+                    <Skeleton className='h-4 w-36' />
+                    <Skeleton className='h-4 w-36' />
+                  </>
+                ) : (
+                  <>
+                    <h2 className='font-medium'>{currentContent?.title}</h2>
+                    <p className='text-muted-foreground text-sm'>{currentContent?.description}</p>
+                  </>
+                )}
+              </div>
               <div className='space-x-2'>
-                <Button variant='outline' size='icon'>
-                  <Eye className='h-4 w-4' />
-                </Button>
                 <Dialog>
                   <DialogTrigger asChild>
                     <Button variant='outline' size='icon' onClick={() => setIsEditing(true)}>
@@ -335,7 +255,20 @@ export default function ContentPage() {
                             <FormItem>
                               <FormLabel>Content</FormLabel>
                               <FormControl>
-                                <Textarea {...field} rows={10} />
+                                <TipTapEditor
+                                  content={currentContent?.content ?? ''}
+                                  onChange={(value) => {
+                                    if (currentContent) {
+                                      setCurrentContent({
+                                        ...currentContent,
+                                        content: value,
+                                      });
+                                      field.onChange(value);
+                                    }
+                                  }}
+                                  editable={true}
+                                  className='border-none'
+                                />
                               </FormControl>
                               <FormMessage />
                             </FormItem>
@@ -372,27 +305,127 @@ export default function ContentPage() {
                     </Form>
                   </DialogContent>
                 </Dialog>
+                <Button
+                  variant='outline'
+                  size='icon'
+                  onClick={() => {
+                    if (currentContent) {
+                      updateContent.mutate({
+                        id: currentContent.id,
+                        data: {
+                          content: currentContent.content,
+                        },
+                      });
+                    }
+                  }}
+                >
+                  <Save className='h-4 w-4' />
+                </Button>
                 <Button variant='outline' size='icon' onClick={() => setIsDeleteDialogOpen(true)}>
                   <Trash className='h-4 w-4' />
                 </Button>
-                <Button variant='outline' size='icon'>
-                  <Share2 className='h-4 w-4' />
-                </Button>
               </div>
             </div>
-            <Card className='h-[calc(100vh-200px)]'>
-              <CardContent className='p-4'>
+            <div className='h-[calc(100vh-150px)] rounded-lg border bg-background'>
+              <div className='flex-1'>
                 <ScrollArea className='h-full'>
-                  <div className='prose max-w-none'>
-                    <p className='mb-4 text-muted-foreground'>{selectedContent.description}</p>
-                    <p className='rounded-lg bg-muted p-4'>{selectedContent.content}</p>
-                  </div>
+                  <TipTapEditor
+                    content={currentContent?.content ?? ''}
+                    onChange={(value) => {
+                      if (currentContent) {
+                        setCurrentContent({
+                          ...currentContent,
+                          content: value,
+                        });
+                      }
+                    }}
+                    editable={true}
+                    className='border-none'
+                  />
                 </ScrollArea>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           </div>
         ) : (
-          <div className='flex h-full items-center justify-center text-muted-foreground'>Select a content to preview</div>
+          <div className='h-full'>
+            <div className='mb-4'>
+              <h2 className='font-medium text-xl'>New Content</h2>
+            </div>
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-4'>
+                <FormField
+                  control={form.control}
+                  name='title'
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Title</FormLabel>
+                      <FormControl>
+                        <Input {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name='description'
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Description</FormLabel>
+                      <FormControl>
+                        <Input {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name='content'
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Content</FormLabel>
+                      <FormControl>
+                        <TipTapEditor content={field.value} onChange={field.onChange} className='min-h-[400px]' />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name='visibility'
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Visibility</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder='Select visibility' />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value='PRIVATE'>Private</SelectItem>
+                          <SelectItem value='SHARED'>Shared</SelectItem>
+                          <SelectItem value='PUBLIC'>Public</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <div className='flex items-center justify-between'>
+                  <div className='flex items-center space-x-2'>
+                    <Switch id='keep-creating' checked={keepCreating} onCheckedChange={setKeepCreating} />
+                    <Label htmlFor='keep-creating'>Keep creating</Label>
+                  </div>
+                  <Button type='submit' disabled={createContent.isPending}>
+                    Create
+                  </Button>
+                </div>
+              </form>
+            </Form>
+          </div>
         )}
       </div>
 

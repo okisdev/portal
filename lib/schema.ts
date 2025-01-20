@@ -11,6 +11,7 @@ import {
   contactDeal,
   notifications,
   paymentTrack,
+  resourceContent,
   session,
   subscriptionCoupon,
   subscriptionPlan,
@@ -123,6 +124,10 @@ export type CalendarEventParticipant = z.infer<typeof calendarEventParticipantSc
 export type CalendarEventWithParticipants = CalendarEvent & {
   participants: CalendarEventParticipant[];
 };
+
+export const resourceContentSchema = createSelectSchema(resourceContent);
+
+export type ResourceContent = z.infer<typeof resourceContentSchema>;
 
 export const appointmentSchema = z.object({
   title: z.string(),

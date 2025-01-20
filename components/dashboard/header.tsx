@@ -9,8 +9,6 @@ import { CommandDialog, CommandEmpty, CommandGroup, CommandInput, CommandItem, C
 import { Separator } from '@/components/ui/separator';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { cn } from '@/lib/utils';
-import { Bell } from 'lucide-react';
-import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import React, { useCallback, useEffect, useState } from 'react';
 
@@ -111,11 +109,6 @@ export function DashboardHeader() {
             </CommandGroup>
           </CommandList>
         </CommandDialog>
-        <Button type='button' variant='ghost' className='hidden px-3 py-1 md:block' asChild>
-          <Link href='/dashboard/account/notifications'>
-            <Bell className='h-4 w-4' />
-          </Link>
-        </Button>
       </div>
     </header>
   );
