@@ -16,6 +16,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { api } from '@/utils/trpc/client';
+import { DndContext, type DragEndEvent, MouseSensor, TouchSensor, useDraggable, useDroppable, useSensor, useSensors } from '@dnd-kit/core';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { format } from 'date-fns';
 import { AlignLeftIcon, FilterIcon, LayoutGridIcon, ListIcon, MoreVerticalIcon, PencilIcon, PlusIcon, TrashIcon } from 'lucide-react';
@@ -48,9 +49,26 @@ const STATUS_LABELS: Record<(typeof STATUSES)[number], string> = {
 
 function TaskCard({ task, onEdit, onDelete, onStatusChange, onContentClick }: any) {
   const [isDeleteAlertOpen, setIsDeleteAlertOpen] = useState(false);
+  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
+    id: task.id,
+  });
+
+  const style = transform
+    ? {
+        transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
+        opacity: isDragging ? 0.5 : undefined,
+      }
+    : undefined;
 
   return (
-    <div className='group rounded-lg border bg-card p-4 shadow-sm transition-all hover:shadow-md'>
+    <div
+      ref={setNodeRef}
+      style={style}
+      {...listeners}
+      {...attributes}
+      className={`group z-50 cursor-grab rounded-lg border bg-card p-4 shadow-sm transition-all hover:shadow-md active:cursor-grabbing ${isDragging ? 'scale-105 shadow-lg ring-2 ring-primary' : ''}`}
+      data-task-id={task.id}
+    >
       <div className='flex items-center justify-between gap-4'>
         <div className='flex flex-1 flex-col gap-1'>
           <div className='flex items-center justify-between'>
@@ -98,6 +116,28 @@ function TaskCard({ task, onEdit, onDelete, onStatusChange, onContentClick }: an
         title='Delete Task'
         description='Are you sure you want to delete this task? This action cannot be undone.'
       />
+    </div>
+  );
+}
+
+interface DroppableColumnProps {
+  status: string;
+  children: [React.ReactNode, React.ReactNode]; // Tuple type for header and content
+}
+
+function DroppableColumn({ status, children }: DroppableColumnProps) {
+  const { setNodeRef, isOver } = useDroppable({
+    id: `droppable-${status}`,
+  });
+
+  const [header, content] = children;
+
+  return (
+    <div ref={setNodeRef} data-status={status} className='flex h-full flex-col'>
+      <div className='flex items-center justify-between pb-4'>{header}</div>
+      <div className={`flex-1 overflow-hidden rounded-lg border transition-colors duration-200 ${isOver ? 'border-primary/50 bg-primary/10' : 'bg-muted/50'}`} id={`droppable-${status}`}>
+        <div className='h-full overflow-y-auto p-4'>{content}</div>
+      </div>
     </div>
   );
 }
@@ -251,8 +291,39 @@ export default function TasksPage() {
     return acc;
   }, {} as Record<(typeof STATUSES)[number], typeof tasks>);
 
+  // Add DnD sensors
+  const mouseSensor = useSensor(MouseSensor, {
+    activationConstraint: {
+      distance: 10, // 10px movement before activation
+    },
+  });
+  const touchSensor = useSensor(TouchSensor, {
+    activationConstraint: {
+      delay: 250, // Wait 250ms before activating
+      tolerance: 5, // 5px tolerance
+    },
+  });
+  const sensors = useSensors(mouseSensor, touchSensor);
+
+  // Handle drag end
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over) return;
+
+    const taskId = active.id as string;
+    const newStatus = (over.id as string).replace('droppable-', '');
+
+    // Update task status
+    updateTask.mutate({
+      id: taskId,
+      data: { status: newStatus as any },
+    });
+  };
+
+  const [isDragging, setIsDragging] = useState(false);
+
   return (
-    <div className='flex h-full flex-col'>
+    <div className={`flex h-full flex-col ${isDragging ? 'cursor-grabbing' : ''}`}>
       <div className='container mx-auto max-w-7xl space-y-8 px-6 py-6 pb-0 2xl:px-0'>
         <PageHeader title='Personal Tasks' description='Manage your personal tasks and stay organized' />
 
@@ -363,32 +434,44 @@ export default function TasksPage() {
               )}
             </div>
           ) : (
-            <div className='container mx-auto max-w-7xl'>
-              <div className='grid h-full grid-cols-1 gap-6 md:grid-cols-5'>
-                {STATUSES.filter((status) => visibleStatuses.includes(status)).map((status) => (
-                  <div key={status} className='flex h-full flex-col'>
-                    <div className='flex items-center justify-between pb-4'>
-                      <h3 className='font-semibold'>{STATUS_LABELS[status]}</h3>
-                      <span className='rounded-full bg-muted px-2 py-1 text-xs'>{tasksByStatus[status].length}</span>
-                    </div>
-                    <div className='flex-1 overflow-hidden rounded-lg border bg-muted/50'>
-                      <div className='h-full overflow-y-auto p-4'>
-                        <div className='flex flex-col gap-3'>
-                          {tasksByStatus[status].map((task: any) => (
-                            <TaskCard key={task.id} task={task} onEdit={handleEdit} onDelete={handleDelete} onStatusChange={handleStatusChange} onContentClick={handleContentView} />
-                          ))}
-                          {tasksByStatus[status].length === 0 && (
-                            <div className='flex h-24 items-center justify-center rounded-lg border border-dashed'>
-                              <p className='text-muted-foreground text-sm'>No tasks</p>
-                            </div>
-                          )}
-                        </div>
+            <DndContext
+              sensors={sensors}
+              onDragEnd={(event) => {
+                setIsDragging(false);
+                handleDragEnd(event);
+              }}
+              onDragStart={() => {
+                setIsDragging(true);
+              }}
+              onDragCancel={() => {
+                setIsDragging(false);
+              }}
+            >
+              <div className='container mx-auto max-w-7xl'>
+                <div className='grid h-full grid-cols-1 gap-6 md:grid-cols-5'>
+                  {STATUSES.filter((status) => visibleStatuses.includes(status)).map((status) => (
+                    <DroppableColumn key={status} status={status}>
+                      <div className='flex items-center justify-between'>
+                        <h3 className='font-semibold'>{STATUS_LABELS[status]}</h3>
+                        <span className='rounded-full bg-muted px-2 py-1 text-xs'>{tasksByStatus[status].length}</span>
                       </div>
-                    </div>
-                  </div>
-                ))}
+                      <div className='flex flex-col gap-3'>
+                        {tasksByStatus[status].map((task: any) => (
+                          <div key={task.id}>
+                            <TaskCard task={task} onEdit={handleEdit} onDelete={handleDelete} onStatusChange={handleStatusChange} onContentClick={handleContentView} />
+                          </div>
+                        ))}
+                        {tasksByStatus[status].length === 0 && (
+                          <div className='flex h-24 items-center justify-center rounded-lg border border-dashed'>
+                            <p className='text-muted-foreground text-sm'>No tasks</p>
+                          </div>
+                        )}
+                      </div>
+                    </DroppableColumn>
+                  ))}
+                </div>
               </div>
-            </div>
+            </DndContext>
           )}
         </div>
       </div>
