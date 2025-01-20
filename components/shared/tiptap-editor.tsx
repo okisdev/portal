@@ -127,7 +127,7 @@ export function TipTapEditor({ content, onChange, placeholder = 'Start writing..
           </ToolbarButton>
         </div>
       )}
-      <EditorContent editor={editor} className='prose prose-sm dark:prose-invert max-w-none py-4' />
+      <EditorContent editor={editor} className='prose prose-sm dark:prose-invert max-w-none p-4' />
     </div>
   );
 }
