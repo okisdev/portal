@@ -14,12 +14,13 @@ import {
   paymentTrack,
   resourceContent,
   resourceContentShare,
+  resourceEmails,
   session,
   subscriptionCoupon,
   team,
+  teamActivity,
   teamContact,
   teamMeeting,
-  teamRemark,
   user,
 } from './schema';
 
@@ -195,13 +196,24 @@ export const resourceContentShareRelations = relations(resourceContentShare, ({ 
   }),
 }));
 
+export const resourceEmailsRelations = relations(resourceEmails, ({ one }) => ({
+  creator: one(user, {
+    fields: [resourceEmails.createdBy],
+    references: [user.id],
+  }),
+  updater: one(user, {
+    fields: [resourceEmails.updatedBy],
+    references: [user.id],
+  }),
+}));
+
 export const teamRelations = relations(team, ({ many, one }) => ({
   creator: one(user, {
     fields: [team.createdBy],
     references: [user.id],
   }),
   contacts: many(teamContact),
-  remarks: many(teamRemark),
+  activities: many(teamActivity),
   leader: one(contact, {
     fields: [team.leaderId],
     references: [contact.id],
@@ -231,13 +243,13 @@ export const teamContactRelations = relations(teamContact, ({ one }) => ({
   }),
 }));
 
-export const teamRemarkRelations = relations(teamRemark, ({ one }) => ({
+export const teamActivityRelations = relations(teamActivity, ({ one }) => ({
   team: one(team, {
-    fields: [teamRemark.teamId],
+    fields: [teamActivity.teamId],
     references: [team.id],
   }),
-  creator: one(user, {
-    fields: [teamRemark.createdBy],
+  user: one(user, {
+    fields: [teamActivity.userId],
     references: [user.id],
   }),
 }));

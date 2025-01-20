@@ -81,7 +81,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className='flex min-h-screen items-center justify-center bg-white'>
+    <div className='flex min-h-screen items-center justify-center bg-background'>
       <div className='w-full max-w-md space-y-6 p-8'>
         <div className='flex items-center justify-center'>
           <div className='h-12 w-12 rounded-xl bg-gradient-to-br from-blue-400 to-blue-500 shadow-lg' />
@@ -91,34 +91,40 @@ export default function LoginPage() {
           {!emailSent ? (
             <motion.div key='login-form' initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.2 }}>
               <div className='space-y-2 text-center'>
-                <h1 className='font-medium text-2xl text-gray-900'>Log in to your account</h1>
-                <p className='text-neutral-500'>Welcome back! Please enter your details.</p>
+                <h1 className='font-medium text-2xl text-foreground'>Log in to your account</h1>
+                <p className='text-muted-foreground'>Welcome back! Please enter your details.</p>
               </div>
 
               <form onSubmit={handleSubmit} className='mt-6 space-y-4'>
                 {error && <Banner title='Error' description={error} variant='error' />}
 
                 <div className='space-y-1'>
-                  <Label className='mb-1 flex justify-between font-medium text-gray-700 text-sm'>
+                  <Label className='mb-1 flex justify-between font-medium text-foreground text-sm'>
                     <span>Email</span>
                     <button type='button' onClick={() => setIsPasswordLogin(!isPasswordLogin)} className='text-blue-500'>
                       {isPasswordLogin ? 'use magic link' : 'use password'}
                     </button>
                   </Label>
-                  <input type='email' required name='email' className='w-full rounded-lg border p-2 focus:outline-none focus:ring-2 focus:ring-blue-400' placeholder='Enter your email' />
+                  <input type='email' required name='email' className='w-full rounded-lg border bg-background p-2 focus:outline-none focus:ring-2 focus:ring-blue-400' placeholder='Enter your email' />
                 </div>
 
                 {isPasswordLogin && (
                   <div className='space-y-1'>
-                    <Label className='mb-1 block font-medium text-gray-700 text-sm'>Password</Label>
-                    <input type='password' required name='password' className='w-full rounded-lg border p-2 focus:outline-none focus:ring-2 focus:ring-blue-400' placeholder='Enter your password' />
+                    <Label className='mb-1 block font-medium text-foreground text-sm'>Password</Label>
+                    <input
+                      type='password'
+                      required
+                      name='password'
+                      className='w-full rounded-lg border bg-background p-2 focus:outline-none focus:ring-2 focus:ring-blue-400'
+                      placeholder='Enter your password'
+                    />
                   </div>
                 )}
 
                 <div className='flex items-center justify-between'>
                   <label className='flex items-center'>
-                    <input type='checkbox' className='h-4 w-4 rounded border-gray-300 text-blue-500 focus:ring-blue-400' />
-                    <span className='ml-2 text-neutral-500 text-sm'>Remember for 30 days</span>
+                    <input type='checkbox' className='h-4 w-4 rounded border-neutral-300 text-blue-500 focus:ring-blue-400' />
+                    <span className='ml-2 text-muted-foreground text-sm'>Remember for 30 days</span>
                   </label>
                   {isPasswordLogin && (
                     <a href='/forgot-password' className='text-blue-500 text-sm hover:text-blue-600'>
@@ -144,7 +150,7 @@ export default function LoginPage() {
                       'Send Magic Link'
                     )}
                   </button>
-                  <p className='text-center text-neutral-500 text-sm'>
+                  <p className='text-center text-muted-foreground text-sm'>
                     Don't have an account?{' '}
                     <a href='/register' className='text-blue-500 hover:text-blue-600'>
                       Sign up
@@ -166,9 +172,9 @@ export default function LoginPage() {
                 <CheckCircle2 className='h-12 w-12 text-green-500' />
               </div>
               <div className='space-y-2'>
-                <h2 className='font-medium text-2xl text-gray-900'>Check your email</h2>
-                <p className='text-neutral-500'>
-                  We've sent a magic link to <span className='font-medium text-gray-700'>{sentEmail}</span>
+                <h2 className='font-medium text-2xl text-foreground'>Check your email</h2>
+                <p className='text-muted-foreground'>
+                  We've sent a magic link to <span className='font-medium text-foreground'>{sentEmail}</span>
                 </p>
               </div>
               <button

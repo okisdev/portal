@@ -355,6 +355,27 @@ export const resourceContentShare = pgTable('resourceContentShare', {
   updatedAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
 });
 
+export const resourceEmails = pgTable('resourceEmails', {
+  id: text()
+    .primaryKey()
+    .notNull()
+    .$defaultFn(() => crypto.randomUUID()),
+  title: text().notNull(),
+  description: text(),
+  subject: text().notNull(),
+  content: text().notNull(),
+  tags: text(), // JSON array of tags
+  visibility: text('visibility', { enum: ['PUBLIC', 'SHARED', 'PRIVATE'] })
+    .notNull()
+    .default('PRIVATE'),
+  createdBy: text()
+    .notNull()
+    .references(() => user.id),
+  updatedBy: text().references(() => user.id),
+  createdAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
+  updatedAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
+});
+
 export const team = pgTable('team', {
   id: text()
     .primaryKey()
@@ -366,6 +387,7 @@ export const team = pgTable('team', {
   subLeaderId: text().references(() => contact.id),
   referralId: text().references(() => contact.id),
   campaignCode: text().unique(),
+  remarks: text(),
   createdBy: text()
     .notNull()
     .references(() => user.id),
@@ -389,7 +411,7 @@ export const teamContact = pgTable('teamContact', {
   updatedAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
 });
 
-export const teamRemark = pgTable('teamRemark', {
+export const teamActivity = pgTable('teamActivity', {
   id: text()
     .primaryKey()
     .notNull()
@@ -397,11 +419,17 @@ export const teamRemark = pgTable('teamRemark', {
   teamId: text()
     .notNull()
     .references(() => team.id, { onDelete: 'cascade' }),
-  content: text().notNull(),
-  createdBy: text()
+  userId: text()
     .notNull()
-    .references(() => user.id),
+    .references(() => user.id), // who performed the activity
+  type: text().notNull(), // 'meeting_created', 'meeting_updated', 'member_added', 'member_removed', 'remark_updated', 'team_updated', etc.
+  initiatorType: text().notNull().default('system'), // 'user', 'system'
+  initiatorId: text(), // id of the initiator
+  title: text().notNull(), // e.g., "Added new team member"
+  description: text(), // optional detailed description
+  metadata: text(), // JSON string for additional data specific to activity type
   createdAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
+  updatedAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
 });
 
 export const teamMeeting = pgTable('teamMeeting', {

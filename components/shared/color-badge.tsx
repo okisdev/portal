@@ -16,9 +16,9 @@ export function ColorBadge({ type, value, className }: ColorBadgeProps) {
       case 'cancelled':
         return 'bg-red-100 text-red-800';
       case 'no_show':
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-neutral-100 text-neutral-800';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-neutral-100 text-neutral-800';
     }
   };
 
@@ -35,7 +35,7 @@ export function ColorBadge({ type, value, className }: ColorBadgeProps) {
       case 'opportunity':
         return 'bg-purple-100 text-purple-800';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-neutral-100 text-neutral-800';
     }
   };
 
@@ -48,7 +48,7 @@ export function ColorBadge({ type, value, className }: ColorBadgeProps) {
       case 'low':
         return 'bg-green-100 text-green-800';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-neutral-100 text-neutral-800';
     }
   };
 
@@ -61,7 +61,7 @@ export function ColorBadge({ type, value, className }: ColorBadgeProps) {
       case 'priority':
         return getPriorityColor(value);
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-neutral-100 text-neutral-800';
     }
   };
 

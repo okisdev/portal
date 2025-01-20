@@ -266,7 +266,7 @@ export function EventDialog({ open, onOpenChange, onSubmit, isEditMode = false, 
                       const participants = form.getValues('participants');
                       form.setValue('participants', [...participants, { type: 'external', email: '', name: '', role: 'required' }]);
                     }}
-                    className='flex items-center justify-center rounded-full bg-gray-100 p-1 transition-colors hover:bg-gray-200'
+                    className='flex items-center justify-center rounded-full bg-neutral-100 p-1 transition-colors hover:bg-neutral-200'
                   >
                     <PlusIcon className='size-4' />
                   </button>

@@ -1,4 +1,4 @@
-import { calendarEvent, calendarEventParticipant, calendarFolder, contact, team, teamContact, teamMeeting, teamRemark } from '@/drizzle/schema';
+import { calendarEvent, calendarEventParticipant, calendarFolder, contact, team, teamActivity, teamContact, teamMeeting } from '@/drizzle/schema';
 import { createTRPCRouter, protectedProcedure } from '@/server/trpc';
 import { and, eq, exists, sql } from 'drizzle-orm';
 import { z } from 'zod';
@@ -91,6 +91,7 @@ export const teamRouter = createTRPCRouter({
         subLeaderId: team.subLeaderId,
         referralId: team.referralId,
         campaignCode: team.campaignCode,
+        remarks: team.remarks,
         leader: sql<{ id: string; firstName: string; lastName: string } | null>`
           (SELECT row_to_json(c) 
            FROM ${contact} c 
@@ -122,6 +123,7 @@ export const teamRouter = createTRPCRouter({
           .string()
           .optional()
           .transform((val) => val?.toUpperCase()),
+        remarks: z.string().optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -134,6 +136,7 @@ export const teamRouter = createTRPCRouter({
           subLeaderId: input.subLeaderId,
           referralId: input.referralId,
           campaignCode: input.campaignCode,
+          remarks: input.remarks,
           updatedAt: new Date(),
         })
         .where(eq(team.id, input.id))
@@ -142,43 +145,59 @@ export const teamRouter = createTRPCRouter({
       return updated;
     }),
 
-  getTeamRemarks: protectedProcedure.input(z.object({ teamId: z.string() })).query(async ({ ctx, input }) => {
+  updateTeamRemarks: protectedProcedure.input(z.object({ id: z.string(), remarks: z.string() })).mutation(async ({ ctx, input }) => {
+    return await ctx.db.update(team).set({ remarks: input.remarks }).where(eq(team.id, input.id));
+  }),
+
+  getTeamActivities: protectedProcedure.input(z.object({ teamId: z.string() })).query(async ({ ctx, input }) => {
     return await ctx.db
       .select({
-        id: teamRemark.id,
-        content: teamRemark.content,
-        createdAt: teamRemark.createdAt,
-        createdBy: teamRemark.createdBy,
-        creator: {
+        id: teamActivity.id,
+        type: teamActivity.type,
+        title: teamActivity.title,
+        description: teamActivity.description,
+        metadata: teamActivity.metadata,
+        createdAt: teamActivity.createdAt,
+        user: {
           id: contact.id,
           firstName: contact.firstName,
           lastName: contact.lastName,
         },
       })
-      .from(teamRemark)
-      .leftJoin(contact, eq(teamRemark.createdBy, contact.id))
-      .where(eq(teamRemark.teamId, input.teamId))
-      .orderBy(teamRemark.createdAt);
+      .from(teamActivity)
+      .leftJoin(contact, eq(teamActivity.userId, contact.id))
+      .where(eq(teamActivity.teamId, input.teamId))
+      .orderBy(teamActivity.createdAt);
   }),
 
-  createTeamRemark: protectedProcedure
+  createTeamActivity: protectedProcedure
     .input(
       z.object({
         teamId: z.string(),
-        content: z.string(),
+        type: z.string(),
+        title: z.string(),
+        description: z.string().optional(),
+        metadata: z.string().optional(),
+        initiatorType: z.enum(['user', 'system']).default('user'),
+        initiatorId: z.string().optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
-      const [newRemark] = await ctx.db
-        .insert(teamRemark)
+      const [newActivity] = await ctx.db
+        .insert(teamActivity)
         .values({
           teamId: input.teamId,
-          content: input.content,
-          createdBy: ctx.session.user.id,
+          userId: ctx.session.user.id,
+          type: input.type,
+          title: input.title,
+          description: input.description,
+          metadata: input.metadata,
+          initiatorType: input.initiatorType,
+          initiatorId: input.initiatorId,
         })
         .returning();
 
-      return newRemark;
+      return newActivity;
     }),
 
   getTeamMeetings: protectedProcedure.input(z.object({ teamId: z.string() })).query(async ({ ctx, input }) => {
@@ -316,6 +335,17 @@ export const teamRouter = createTRPCRouter({
 
         return deletedMeeting;
       });
+    }),
+
+  deleteTeamActivity: protectedProcedure
+    .input(
+      z.object({
+        id: z.string(),
+        teamId: z.string(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      return await ctx.db.delete(teamActivity).where(eq(teamActivity.id, input.id));
     }),
 
   addTeamMember: protectedProcedure

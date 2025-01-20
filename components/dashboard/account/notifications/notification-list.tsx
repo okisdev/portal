@@ -36,7 +36,7 @@ export function NotificationList() {
                   })}
               </time>
             </div>
-            <p className='mt-1 text-gray-600'>{notification.message}</p>
+            <p className='mt-1 text-neutral-600'>{notification.message}</p>
           </div>
           {!notification.read && (
             <Button variant='ghost' size='sm' className='shrink-0' onClick={() => markAsRead.mutate(notification.id)}>

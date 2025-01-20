@@ -55,7 +55,7 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className='flex min-h-screen items-center justify-center bg-white'>
+    <div className='flex min-h-screen items-center justify-center bg-background'>
       <div className='w-full max-w-md space-y-6 p-8'>
         <div className='flex items-center justify-center'>
           <div className='h-12 w-12 rounded-xl bg-gradient-to-br from-blue-400 to-blue-500 shadow-lg' />
@@ -63,21 +63,27 @@ export default function RegisterPage() {
 
         <motion.div key='register-form' initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.2 }}>
           <div className='space-y-2 text-center'>
-            <h1 className='font-medium text-2xl text-gray-900'>Create your account</h1>
-            <p className='text-neutral-500'>Get started with your free account</p>
+            <h1 className='font-medium text-2xl text-foreground'>Create your account</h1>
+            <p className='text-muted-foreground'>Get started with your free account</p>
           </div>
 
           <form onSubmit={handleSubmit} className='mt-6 space-y-4'>
-            {error && <div className='rounded-lg bg-red-50 p-3 text-red-400 text-sm'>{error}</div>}
+            {error && <div className='rounded-lg bg-destructive/10 p-3 text-destructive text-sm'>{error}</div>}
 
             <div className='space-y-1'>
-              <Label className='mb-1 block font-medium text-gray-700 text-sm'>Email</Label>
-              <input type='email' required name='email' className='w-full rounded-lg border p-2 focus:outline-none focus:ring-2 focus:ring-blue-400' placeholder='Enter your email' />
+              <Label className='mb-1 block font-medium text-foreground text-sm'>Email</Label>
+              <input type='email' required name='email' className='w-full rounded-lg border bg-background p-2 focus:outline-none focus:ring-2 focus:ring-blue-400' placeholder='Enter your email' />
             </div>
 
             <div className='space-y-1'>
-              <Label className='mb-1 block font-medium text-gray-700 text-sm'>Password</Label>
-              <input type='password' required name='password' className='w-full rounded-lg border p-2 focus:outline-none focus:ring-2 focus:ring-blue-400' placeholder='Create a password' />
+              <Label className='mb-1 block font-medium text-foreground text-sm'>Password</Label>
+              <input
+                type='password'
+                required
+                name='password'
+                className='w-full rounded-lg border bg-background p-2 focus:outline-none focus:ring-2 focus:ring-blue-400'
+                placeholder='Create a password'
+              />
             </div>
 
             <div className='space-y-3'>
@@ -96,7 +102,7 @@ export default function RegisterPage() {
                 )}
               </button>
 
-              <p className='text-center text-neutral-500 text-sm'>
+              <p className='text-center text-muted-foreground text-sm'>
                 Already have an account?{' '}
                 <a href='/login' className='text-blue-500 hover:text-blue-600'>
                   Sign in
