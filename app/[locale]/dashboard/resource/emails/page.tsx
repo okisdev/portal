@@ -3,6 +3,7 @@
 import { PageHeader } from '@/components/shared/page-header';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 import { api } from '@/utils/trpc/client';
@@ -36,7 +37,7 @@ export default function EmailsPage() {
   const utils = api.useUtils();
 
   // Query to fetch all email templates
-  const { data: templates = [] } = api.resource.getEmails.useQuery();
+  const { data: templates, isLoading } = api.resource.getEmails.useQuery();
 
   // Mutation to create a new template
   const createMutation = api.resource.createEmail.useMutation({
@@ -46,17 +47,6 @@ export default function EmailsPage() {
       if (newTemplate?.id) {
         router.push(`/dashboard/resource/emails/${newTemplate.id}`);
       }
-    },
-    onError: (error) => {
-      toast.error(error.message);
-    },
-  });
-
-  // Mutation to update a template
-  const updateMutation = api.resource.updateEmail.useMutation({
-    onSuccess: () => {
-      toast.success('Email template updated successfully');
-      utils.resource.getEmails.invalidate();
     },
     onError: (error) => {
       toast.error(error.message);
@@ -125,7 +115,14 @@ export default function EmailsPage() {
               </Button>
             </div>
             <div className='space-y-1'>
-              {templates.map((template) => (
+              {isLoading && (
+                <div className='space-y-2 rounded-md bg-white/60 text-center'>
+                  <Skeleton className='h-4 w-full' />
+                  <Skeleton className='h-4 w-full' />
+                  <Skeleton className='h-4 w-full' />
+                </div>
+              )}
+              {templates?.map((template) => (
                 <button
                   type='button'
                   key={template.id}
@@ -139,7 +136,7 @@ export default function EmailsPage() {
                   {template.description && <p className='mt-1 line-clamp-2 text-neutral-500 text-xs'>{template.description}</p>}
                 </button>
               ))}
-              {templates.length === 0 && (
+              {templates && templates.length === 0 && (
                 <div className='rounded-md bg-white/60 px-3 py-8 text-center'>
                   <p className='text-neutral-500 text-sm'>No templates yet</p>
                   <p className='text-neutral-400 text-xs'>Create your first template to get started</p>
