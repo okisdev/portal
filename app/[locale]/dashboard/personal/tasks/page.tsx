@@ -284,7 +284,7 @@ export default function TasksPage() {
           }
         }}
       >
-        <DialogContent>
+        <DialogContent className='max-h-[90vh] max-w-xl overflow-y-auto'>
           <DialogHeader>
             <DialogTitle>{editingTask ? 'Edit Task' : 'Create New Task'}</DialogTitle>
             <DialogDescription>Fill in the details for your task.</DialogDescription>
@@ -416,7 +416,7 @@ export default function TasksPage() {
       </Dialog>
 
       <Dialog open={!!viewingContent} onOpenChange={(open) => !open && setViewingContent(null)}>
-        <DialogContent className='sm:max-w-2xl'>
+        <DialogContent className='max-h-[90vh] max-w-xl overflow-y-auto'>
           <DialogHeader>
             <DialogTitle>{viewingContent?.title}</DialogTitle>
           </DialogHeader>

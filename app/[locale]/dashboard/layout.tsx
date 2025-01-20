@@ -20,7 +20,7 @@ export default async function DashboardLayout({
         <DashboardSidebar />
         <SidebarInset className='max-h-screen'>
           <DashboardHeader />
-          <div className='flex-1 overflow-hidden'>{children}</div>
+          <div className='flex-1 overflow-y-auto'>{children}</div>
         </SidebarInset>
       </SidebarProvider>
     </DashboardProvider>

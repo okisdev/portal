@@ -4,6 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { CopyButton } from '@/components/ui/copy-button';
 import { formatDate } from '@/lib/utils';
 import type { ColumnDef } from '@tanstack/react-table';
+import Link from 'next/link';
 import type { PaymentLink } from './types';
 
 export const columns: ColumnDef<PaymentLink>[] = [
@@ -11,10 +12,10 @@ export const columns: ColumnDef<PaymentLink>[] = [
     accessorKey: 'contact.name',
     header: 'Contact',
     cell: ({ row }) => (
-      <div>
+      <Link href={`/dashboard/crm/contacts/${row.original.contact.id}`} className='flex flex-col'>
         <div>{row.original.contact.name}</div>
         <div className='text-muted-foreground text-sm'>{row.original.contact.email}</div>
-      </div>
+      </Link>
     ),
   },
   {

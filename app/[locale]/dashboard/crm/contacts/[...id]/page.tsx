@@ -357,6 +357,7 @@ export default function ContactIdPage() {
               <div className='grid grid-cols-1 gap-4'>
                 {[
                   { label: 'Last Contact', value: contact?.lastContactedAt ? formatDate(new Date(contact.lastContactedAt)) : '—' },
+                  { label: 'Source', value: contact?.source || '—' },
                   {
                     label: 'Priority',
                     value: (

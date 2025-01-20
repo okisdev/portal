@@ -164,11 +164,11 @@ export default function ContentPage() {
                   form.reset();
                 }}
               >
-                <PlusCircle className='mr-2 h-4 w-4' />
-                New Content
+                <PlusCircle className='h-4 w-4' />
+                New
               </Button>
             </DialogTrigger>
-            <DialogContent className='sm:max-w-[600px]'>
+            <DialogContent className='max-h-[90vh] max-w-xl overflow-y-auto'>
               <DialogHeader>
                 <DialogTitle>{isEditing ? 'Edit Content' : 'New Content'}</DialogTitle>
               </DialogHeader>
@@ -296,7 +296,7 @@ export default function ContentPage() {
                       <Edit className='h-4 w-4' />
                     </Button>
                   </DialogTrigger>
-                  <DialogContent className='sm:max-w-[600px]'>
+                  <DialogContent className='max-h-[90vh] max-w-xl overflow-y-auto'>
                     <DialogHeader>
                       <DialogTitle>Edit Content</DialogTitle>
                     </DialogHeader>
@@ -385,7 +385,7 @@ export default function ContentPage() {
                 <ScrollArea className='h-full'>
                   <div className='prose max-w-none'>
                     <p className='mb-4 text-muted-foreground'>{selectedContent.description}</p>
-                    <pre className='rounded-lg bg-muted p-4'>{selectedContent.content}</pre>
+                    <p className='rounded-lg bg-muted p-4'>{selectedContent.content}</p>
                   </div>
                 </ScrollArea>
               </CardContent>
