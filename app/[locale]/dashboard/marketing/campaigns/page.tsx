@@ -6,50 +6,32 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { formatCurrency } from '@/utils/format';
+import { api } from '@/utils/trpc/client';
 import { SearchIcon } from 'lucide-react';
+import Link from 'next/link';
 import { useState } from 'react';
+
+type CampaignStatus = 'draft' | 'scheduled' | 'active' | 'paused' | 'completed' | 'cancelled';
+type CampaignType = 'email' | 'social' | 'event' | 'referral' | 'other';
 
 interface Campaign {
   id: string;
   name: string;
-  status: 'active' | 'draft' | 'completed';
-  type: string;
-  startDate: string;
-  budget: number;
-  performance: number;
+  description: string | null;
+  type: CampaignType;
+  status: CampaignStatus;
+  startDate: Date | null;
+  endDate: Date | null;
+  budget: number | null;
+  targetAudience: string | null;
+  goals: string | null;
+  metrics: string | null;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
-const sampleCampaigns: Campaign[] = [
-  {
-    id: '1',
-    name: 'Summer Sale 2024',
-    status: 'active',
-    type: 'Email',
-    startDate: '2024-06-01',
-    budget: 5000,
-    performance: 85,
-  },
-  {
-    id: '2',
-    name: 'New Product Launch',
-    status: 'draft',
-    type: 'Social Media',
-    startDate: '2024-07-15',
-    budget: 10000,
-    performance: 0,
-  },
-  {
-    id: '3',
-    name: 'Holiday Campaign',
-    status: 'completed',
-    type: 'Multi-channel',
-    startDate: '2023-12-01',
-    budget: 15000,
-    performance: 92,
-  },
-];
-
-const getStatusColor = (status: Campaign['status']) => {
+const getStatusColor = (status: CampaignStatus) => {
   switch (status) {
     case 'active':
       return 'bg-green-100 text-green-800';
@@ -57,17 +39,46 @@ const getStatusColor = (status: Campaign['status']) => {
       return 'bg-neutral-100 text-neutral-800';
     case 'completed':
       return 'bg-blue-100 text-blue-800';
+    case 'scheduled':
+      return 'bg-yellow-100 text-yellow-800';
+    case 'paused':
+      return 'bg-orange-100 text-orange-800';
+    case 'cancelled':
+      return 'bg-red-100 text-red-800';
   }
 };
 
 export default function MarketingCampaignsPage() {
   const [searchQuery, setSearchQuery] = useState('');
 
-  const filteredCampaigns = sampleCampaigns.filter((campaign) => campaign.name.toLowerCase().includes(searchQuery.toLowerCase()));
+  const { data: campaigns = [], isLoading } = api.marketing.getAllCampaigns.useQuery();
+
+  const filteredCampaigns = campaigns.filter((campaign) => campaign.name.toLowerCase().includes(searchQuery.toLowerCase()));
+
+  const activeCampaigns = campaigns.filter((c) => c.status === 'active');
+  const totalBudget = campaigns.reduce((acc, c) => acc + (c.budget || 0), 0);
+  const completedCampaigns = campaigns.filter((c) => c.status === 'completed');
+  const avgConversion =
+    completedCampaigns.length > 0
+      ? Math.round(
+          completedCampaigns.reduce((acc, c) => {
+            const metrics = c.metrics ? JSON.parse(c.metrics) : {};
+            return acc + (metrics.conversionRate || 0);
+          }, 0) / completedCampaigns.length
+        )
+      : 0;
 
   return (
     <div className='space-y-4 p-4'>
-      <PageHeader title='Marketing Campaigns' description='Create and manage marketing campaigns' right={<Button variant='outline'>New Campaign</Button>} />
+      <PageHeader
+        title='Marketing Campaigns'
+        description='Create and manage marketing campaigns'
+        right={
+          <Link href='/dashboard/marketing/campaigns/new'>
+            <Button variant='outline'>New Campaign</Button>
+          </Link>
+        }
+      />
 
       <div className='grid grid-cols-1 gap-4 md:grid-cols-3'>
         <Card>
@@ -75,7 +86,7 @@ export default function MarketingCampaignsPage() {
             <CardTitle className='font-medium text-sm'>Active Campaigns</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className='font-bold text-2xl'>{sampleCampaigns.filter((c) => c.status === 'active').length}</div>
+            <div className='font-bold text-2xl'>{activeCampaigns.length}</div>
           </CardContent>
         </Card>
         <Card>
@@ -83,17 +94,15 @@ export default function MarketingCampaignsPage() {
             <CardTitle className='font-medium text-sm'>Total Budget</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className='font-bold text-2xl'>${sampleCampaigns.reduce((acc, c) => acc + c.budget, 0).toLocaleString()}</div>
+            <div className='font-bold text-2xl'>{formatCurrency(totalBudget)}</div>
           </CardContent>
         </Card>
         <Card>
           <CardHeader>
-            <CardTitle className='font-medium text-sm'>Avg. Performance</CardTitle>
+            <CardTitle className='font-medium text-sm'>Avg. Conversion Rate</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className='font-bold text-2xl'>
-              {Math.round(sampleCampaigns.filter((c) => c.status === 'completed').reduce((acc, c) => acc + c.performance, 0) / sampleCampaigns.filter((c) => c.status === 'completed').length)}%
-            </div>
+            <div className='font-bold text-2xl'>{avgConversion}%</div>
           </CardContent>
         </Card>
       </div>
@@ -112,22 +121,38 @@ export default function MarketingCampaignsPage() {
               <TableHead>Type</TableHead>
               <TableHead>Start Date</TableHead>
               <TableHead>Budget</TableHead>
-              <TableHead>Performance</TableHead>
+              <TableHead>Goals</TableHead>
+              <TableHead>Target Audience</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredCampaigns.map((campaign) => (
-              <TableRow key={campaign.id}>
-                <TableCell className='font-medium'>{campaign.name}</TableCell>
-                <TableCell>
-                  <Badge className={getStatusColor(campaign.status)}>{campaign.status.charAt(0).toUpperCase() + campaign.status.slice(1)}</Badge>
+            {isLoading ? (
+              <TableRow>
+                <TableCell colSpan={7} className='text-center py-4'>
+                  Loading campaigns...
                 </TableCell>
-                <TableCell>{campaign.type}</TableCell>
-                <TableCell>{new Date(campaign.startDate).toLocaleDateString()}</TableCell>
-                <TableCell>${campaign.budget.toLocaleString()}</TableCell>
-                <TableCell>{campaign.status === 'draft' ? '-' : `${campaign.performance}%`}</TableCell>
               </TableRow>
-            ))}
+            ) : filteredCampaigns.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={7} className='text-center py-4'>
+                  No campaigns found
+                </TableCell>
+              </TableRow>
+            ) : (
+              filteredCampaigns.map((campaign) => (
+                <TableRow key={campaign.id}>
+                  <TableCell className='font-medium'>{campaign.name}</TableCell>
+                  <TableCell>
+                    <Badge className={getStatusColor(campaign.status)}>{campaign.status.charAt(0).toUpperCase() + campaign.status.slice(1)}</Badge>
+                  </TableCell>
+                  <TableCell>{campaign.type}</TableCell>
+                  <TableCell>{campaign.startDate ? new Date(campaign.startDate).toLocaleDateString() : '-'}</TableCell>
+                  <TableCell>{campaign.budget ? formatCurrency(campaign.budget) : '-'}</TableCell>
+                  <TableCell>{campaign.goals ? JSON.parse(campaign.goals).main : '-'}</TableCell>
+                  <TableCell>{campaign.targetAudience ? JSON.parse(campaign.targetAudience).summary : '-'}</TableCell>
+                </TableRow>
+              ))
+            )}
           </TableBody>
         </Table>
       </Card>

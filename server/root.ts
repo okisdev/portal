@@ -3,6 +3,7 @@ import { adminRouter } from '@/server/routers/admin';
 import { authRouter } from '@/server/routers/auth';
 import { calendarRouter } from '@/server/routers/calendar';
 import { contactRouter } from '@/server/routers/contact';
+import { marketingRouter } from '@/server/routers/marketing';
 import { payRouter } from '@/server/routers/pay';
 import { resourceRouter } from '@/server/routers/resource';
 import { taskRouter } from '@/server/routers/task';
@@ -27,6 +28,7 @@ export const appRouter = createTRPCRouter({
   user: userRouter,
   task: taskRouter,
   resource: resourceRouter,
+  marketing: marketingRouter,
 });
 
 // export type definition of API

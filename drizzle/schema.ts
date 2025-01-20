@@ -359,6 +359,53 @@ export const resourceEmails = pgTable('resourceEmails', {
   updatedAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
 });
 
+export const marketingCampaign = pgTable('marketingCampaign', {
+  id: text()
+    .primaryKey()
+    .notNull()
+    .$defaultFn(() => crypto.randomUUID()),
+  name: text().notNull(),
+  description: text(),
+  type: text('type', { enum: ['email', 'social', 'event', 'referral', 'other'] }).notNull(),
+  status: text('status', { enum: ['draft', 'scheduled', 'active', 'paused', 'completed', 'cancelled'] })
+    .notNull()
+    .default('draft'),
+  startDate: timestamp({ mode: 'date' }),
+  endDate: timestamp({ mode: 'date' }),
+  budget: integer(), // in cents
+  targetAudience: text(), // JSON string for target audience criteria
+  goals: text(), // JSON string for campaign goals
+  metrics: text(), // JSON string for tracking metrics
+  createdBy: text()
+    .notNull()
+    .references(() => user.id),
+  updatedBy: text().references(() => user.id),
+  createdAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
+  updatedAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
+});
+
+export const contactCampaign = pgTable('contactCampaign', {
+  id: text()
+    .primaryKey()
+    .notNull()
+    .$defaultFn(() => crypto.randomUUID()),
+  contactId: text()
+    .notNull()
+    .references(() => contact.id, { onDelete: 'cascade' }),
+  campaignId: text()
+    .notNull()
+    .references(() => marketingCampaign.id, { onDelete: 'cascade' }),
+  status: text('status', { enum: ['pending', 'engaged', 'converted', 'bounced', 'unsubscribed'] })
+    .notNull()
+    .default('pending'),
+  signupDate: timestamp({ mode: 'date' }).notNull().defaultNow(),
+  conversionDate: timestamp({ mode: 'date' }),
+  source: text(), // how they joined the campaign
+  metadata: text(), // JSON string for additional tracking data
+  createdAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
+  updatedAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
+});
+
 export const team = pgTable('team', {
   id: text()
     .primaryKey()
