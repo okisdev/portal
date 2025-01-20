@@ -1,13 +1,12 @@
 'use client';
 
-import { ActionAlertDialog } from '@/components/shared/action-alert-dialog';
-import { ColorBadge } from '@/components/shared/color-badge';
+import KanbanBoard from '@/components/dashboard/personal/tasks/kanban';
+import TaskList from '@/components/dashboard/personal/tasks/list';
 import { DateTimePicker } from '@/components/shared/date-time-picker';
 import { PageHeader } from '@/components/shared/page-header';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -16,12 +15,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { api } from '@/utils/trpc/client';
-import { DndContext, type DragEndEvent, MouseSensor, TouchSensor, useDraggable, useDroppable, useSensor, useSensors } from '@dnd-kit/core';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { format } from 'date-fns';
-import { AlignLeftIcon, FilterIcon, LayoutGridIcon, ListIcon, MoreVerticalIcon, PencilIcon, PlusIcon, TrashIcon } from 'lucide-react';
+import { FilterIcon, LayoutGridIcon, ListIcon, PlusIcon } from 'lucide-react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { useCallback, useState } from 'react';
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
@@ -39,108 +36,26 @@ type TaskFormValues = z.infer<typeof taskFormSchema>;
 type ViewMode = 'list' | 'kanban';
 
 const STATUSES = ['backlog', 'todo', 'in_progress', 'in_review', 'done'] as const;
-const STATUS_LABELS: Record<(typeof STATUSES)[number], string> = {
-  backlog: 'Backlog',
-  todo: 'To Do',
-  in_progress: 'In Progress',
-  in_review: 'In Review',
-  done: 'Done',
-};
 
-function TaskCard({ task, onEdit, onDelete, onStatusChange, onContentClick }: any) {
-  const [isDeleteAlertOpen, setIsDeleteAlertOpen] = useState(false);
-  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
-    id: task.id,
-  });
-
-  const style = transform
-    ? {
-        transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
-        opacity: isDragging ? 0.5 : undefined,
-      }
-    : undefined;
-
-  return (
-    <div
-      ref={setNodeRef}
-      style={style}
-      {...listeners}
-      {...attributes}
-      className={`group z-50 cursor-grab rounded-lg border bg-card p-4 shadow-sm transition-all hover:shadow-md active:cursor-grabbing ${isDragging ? 'scale-105 shadow-lg ring-2 ring-primary' : ''}`}
-      data-task-id={task.id}
-    >
-      <div className='flex items-center justify-between gap-4'>
-        <div className='flex flex-1 flex-col gap-1'>
-          <div className='flex items-center justify-between'>
-            <div className='flex items-center gap-2'>
-              <span className='font-medium text-foreground text-sm'>{task.title}</span>
-              {task.content && (
-                <Button variant='ghost' size='icon' onClick={() => onContentClick(task)} className='h-6 w-6'>
-                  <AlignLeftIcon className='h-4 w-4' />
-                </Button>
-              )}
-            </div>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant='ghost' size='icon' className='h-8 w-8 opacity-0 group-hover:opacity-100'>
-                  <MoreVerticalIcon className='h-4 w-4' />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align='end'>
-                <DropdownMenuItem onClick={() => onEdit(task)}>
-                  <PencilIcon className='mr-2 h-4 w-4' />
-                  Edit
-                </DropdownMenuItem>
-                <DropdownMenuItem className='text-destructive' onClick={() => setIsDeleteAlertOpen(true)}>
-                  <TrashIcon className='mr-2 h-4 w-4' />
-                  Delete
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-          {task.description && <p className='text-muted-foreground text-xs'>{task.description}</p>}
-          <div className='flex items-center gap-3 text-muted-foreground text-xs'>
-            {task.dueDate && <span>Due: {format(new Date(task.dueDate), 'MM/dd/yyyy HH:mm')}</span>}
-            <ColorBadge type='priority' value={task.priority} />
-          </div>
-        </div>
-      </div>
-
-      <ActionAlertDialog
-        open={isDeleteAlertOpen}
-        onOpenChange={setIsDeleteAlertOpen}
-        onConfirm={() => {
-          onDelete(task.id);
-          setIsDeleteAlertOpen(false);
-        }}
-        title='Delete Task'
-        description='Are you sure you want to delete this task? This action cannot be undone.'
-      />
-    </div>
-  );
+interface Task {
+  id: string;
+  title: string;
+  description?: string;
+  content?: string;
+  status: 'backlog' | 'todo' | 'in_progress' | 'in_review' | 'done';
+  priority: 'urgent' | 'high' | 'medium' | 'low';
+  dueDate?: Date;
 }
 
-interface DroppableColumnProps {
-  status: string;
-  children: [React.ReactNode, React.ReactNode]; // Tuple type for header and content
-}
-
-function DroppableColumn({ status, children }: DroppableColumnProps) {
-  const { setNodeRef, isOver } = useDroppable({
-    id: `droppable-${status}`,
-  });
-
-  const [header, content] = children;
-
-  return (
-    <div ref={setNodeRef} data-status={status} className='flex h-full flex-col'>
-      <div className='flex items-center justify-between pb-4'>{header}</div>
-      <div className={`flex-1 overflow-hidden rounded-lg border transition-colors duration-200 ${isOver ? 'border-primary/50 bg-primary/10' : 'bg-muted/50'}`} id={`droppable-${status}`}>
-        <div className='h-full overflow-y-auto p-4'>{content}</div>
-      </div>
-    </div>
-  );
-}
+const transformTask = (task: any): Task => ({
+  id: task.id,
+  title: task.title,
+  description: task.description || undefined,
+  content: task.content || undefined,
+  status: task.status || 'todo',
+  priority: task.priority || 'medium',
+  dueDate: task.dueDate ? new Date(task.dueDate) : undefined,
+});
 
 export default function TasksPage() {
   const router = useRouter();
@@ -159,12 +74,11 @@ export default function TasksPage() {
   const [editingTask, setEditingTask] = useState<{ id: string; data: TaskFormValues } | null>(null);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [viewingContent, setViewingContent] = useState<{ id: string; title: string; content: string } | null>(null);
-
-  // Add state for keep creating mode
   const [keepCreating, setKeepCreating] = useState(false);
 
   const utils = api.useUtils();
-  const { data: tasks = [] } = api.task.getAll.useQuery();
+  const { data: apiTasks = [] } = api.task.getAll.useQuery();
+  const tasks = apiTasks.map(transformTask);
   const createTask = api.task.create.useMutation({
     onSuccess: () => {
       utils.task.getAll.invalidate();
@@ -201,25 +115,27 @@ export default function TasksPage() {
     defaultValues: {
       title: '',
       description: '',
+      content: '',
       status: 'todo',
       priority: 'medium',
     },
   });
 
   const onSubmit = (data: TaskFormValues) => {
+    const formData = {
+      ...data,
+      description: data.description || undefined,
+      content: data.content || undefined,
+      dueDate: data.dueDate,
+    };
+
     if (editingTask) {
       updateTask.mutate({
         id: editingTask.id,
-        data: {
-          ...data,
-          dueDate: data.dueDate,
-        },
+        data: formData,
       });
     } else {
-      createTask.mutate({
-        ...data,
-        dueDate: data.dueDate,
-      });
+      createTask.mutate(formData);
     }
   };
 
@@ -229,6 +145,7 @@ export default function TasksPage() {
       data: {
         title: task.title,
         description: task.description || '',
+        content: task.content || '',
         status: task.status,
         priority: task.priority,
         dueDate: task.dueDate ? new Date(task.dueDate) : undefined,
@@ -237,6 +154,7 @@ export default function TasksPage() {
     form.reset({
       title: task.title,
       description: task.description || '',
+      content: task.content || '',
       status: task.status,
       priority: task.priority,
       dueDate: task.dueDate ? new Date(task.dueDate) : undefined,
@@ -263,67 +181,23 @@ export default function TasksPage() {
   };
 
   // Update URL when view mode changes
-  const updateViewMode = useCallback(
-    (mode: ViewMode) => {
-      const params = new URLSearchParams(searchParams);
-      params.set('view', mode);
-      router.push(`${pathname}?${params.toString()}`);
-      setViewMode(mode);
-    },
-    [pathname, router, searchParams]
-  );
-
-  // Update URL when visible statuses change
-  const updateVisibleStatuses = useCallback(
-    (statuses: (typeof STATUSES)[number][]) => {
-      const params = new URLSearchParams(searchParams);
-      params.set('statuses', statuses.join(','));
-      router.push(`${pathname}?${params.toString()}`);
-      setVisibleStatuses(statuses);
-    },
-    [pathname, router, searchParams]
-  );
-
-  // Filter tasks based on visible statuses
-  const filteredTasks = tasks.filter((task: any) => visibleStatuses.includes(task.status));
-  const tasksByStatus = STATUSES.reduce((acc, status) => {
-    acc[status] = filteredTasks.filter((task: any) => task.status === status);
-    return acc;
-  }, {} as Record<(typeof STATUSES)[number], typeof tasks>);
-
-  // Add DnD sensors
-  const mouseSensor = useSensor(MouseSensor, {
-    activationConstraint: {
-      distance: 10, // 10px movement before activation
-    },
-  });
-  const touchSensor = useSensor(TouchSensor, {
-    activationConstraint: {
-      delay: 250, // Wait 250ms before activating
-      tolerance: 5, // 5px tolerance
-    },
-  });
-  const sensors = useSensors(mouseSensor, touchSensor);
-
-  // Handle drag end
-  const handleDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event;
-    if (!over) return;
-
-    const taskId = active.id as string;
-    const newStatus = (over.id as string).replace('droppable-', '');
-
-    // Update task status
-    updateTask.mutate({
-      id: taskId,
-      data: { status: newStatus as any },
-    });
+  const updateViewMode = (mode: ViewMode) => {
+    const params = new URLSearchParams(searchParams);
+    params.set('view', mode);
+    router.push(`${pathname}?${params.toString()}`);
+    setViewMode(mode);
   };
 
-  const [isDragging, setIsDragging] = useState(false);
+  // Update URL when visible statuses change
+  const updateVisibleStatuses = (statuses: (typeof STATUSES)[number][]) => {
+    const params = new URLSearchParams(searchParams);
+    params.set('statuses', statuses.join(','));
+    router.push(`${pathname}?${params.toString()}`);
+    setVisibleStatuses(statuses);
+  };
 
   return (
-    <div className={`flex h-full flex-col ${isDragging ? 'cursor-grabbing' : ''}`}>
+    <div className='flex h-full flex-col'>
       <div className='container mx-auto max-w-7xl space-y-8 px-6 py-6 pb-0 2xl:px-0'>
         <PageHeader title='Personal Tasks' description='Manage your personal tasks and stay organized' />
 
@@ -357,7 +231,7 @@ export default function TasksPage() {
                           }}
                         />
                         <label htmlFor={status} className='font-medium text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70'>
-                          {STATUS_LABELS[status]}
+                          {status}
                         </label>
                       </div>
                     ))}
@@ -381,97 +255,9 @@ export default function TasksPage() {
       <div className='flex-1 overflow-hidden p-6 pt-8'>
         <div className='h-full overflow-auto'>
           {viewMode === 'list' ? (
-            <div className='container mx-auto max-w-7xl space-y-8'>
-              {STATUSES.filter((status) => visibleStatuses.includes(status)).map((status) => {
-                const tasksInStatus = filteredTasks.filter((task) => task.status === status);
-                if (tasksInStatus.length === 0) return null;
-
-                return (
-                  <div key={status} className='space-y-4'>
-                    <div className='flex items-center justify-between'>
-                      <h3 className='font-semibold text-lg'>{STATUS_LABELS[status]}</h3>
-                      <span className='rounded-full bg-muted px-2 py-1 text-xs'>{tasksInStatus.length}</span>
-                    </div>
-                    <div className='grid gap-4'>
-                      {tasksInStatus.map((task: any) => (
-                        <div key={task.id} className='group rounded-lg border bg-card p-4 shadow-sm transition-all hover:shadow-md'>
-                          <div className='flex items-center justify-between gap-4'>
-                            <div className='flex flex-1 flex-col gap-1'>
-                              <div className='flex items-center gap-2'>
-                                <span className='font-medium text-foreground'>{task.title}</span>
-                                {task.content && (
-                                  <Button variant='ghost' size='icon' onClick={() => handleContentView(task)} className='h-6 w-6'>
-                                    <AlignLeftIcon className='h-4 w-4' />
-                                  </Button>
-                                )}
-                              </div>
-                              {task.description && <p className='text-muted-foreground text-sm'>{task.description}</p>}
-                              <div className='flex items-center gap-3 text-muted-foreground text-sm'>
-                                {task.dueDate && <span>Due: {format(new Date(task.dueDate), 'MM/dd/yyyy HH:mm')}</span>}
-                                <ColorBadge type='priority' value={task.priority} />
-                              </div>
-                            </div>
-
-                            <div className='flex items-center gap-2 opacity-0 transition-opacity group-hover:opacity-100'>
-                              <Button variant='ghost' size='icon' onClick={() => handleEdit(task)} className='h-8 w-8'>
-                                <PencilIcon className='h-4 w-4' />
-                              </Button>
-                              <Button variant='ghost' size='icon' onClick={() => handleDelete(task.id)} className='h-8 w-8 text-destructive hover:text-destructive/90'>
-                                <TrashIcon className='h-4 w-4' />
-                              </Button>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                );
-              })}
-              {filteredTasks.length === 0 && (
-                <div className='flex h-32 items-center justify-center rounded-lg border bg-card'>
-                  <p className='text-muted-foreground'>{tasks.length === 0 ? 'No tasks yet. Add your first task above!' : 'No tasks match your filters.'}</p>
-                </div>
-              )}
-            </div>
+            <TaskList tasks={tasks} visibleStatuses={visibleStatuses} onEdit={handleEdit} onDelete={handleDelete} onContentView={handleContentView} />
           ) : (
-            <DndContext
-              sensors={sensors}
-              onDragEnd={(event) => {
-                setIsDragging(false);
-                handleDragEnd(event);
-              }}
-              onDragStart={() => {
-                setIsDragging(true);
-              }}
-              onDragCancel={() => {
-                setIsDragging(false);
-              }}
-            >
-              <div className='container mx-auto max-w-7xl'>
-                <div className='grid h-full grid-cols-1 gap-6 md:grid-cols-5'>
-                  {STATUSES.filter((status) => visibleStatuses.includes(status)).map((status) => (
-                    <DroppableColumn key={status} status={status}>
-                      <div className='flex items-center justify-between'>
-                        <h3 className='font-semibold'>{STATUS_LABELS[status]}</h3>
-                        <span className='rounded-full bg-muted px-2 py-1 text-xs'>{tasksByStatus[status].length}</span>
-                      </div>
-                      <div className='flex flex-col gap-3'>
-                        {tasksByStatus[status].map((task: any) => (
-                          <div key={task.id}>
-                            <TaskCard task={task} onEdit={handleEdit} onDelete={handleDelete} onStatusChange={handleStatusChange} onContentClick={handleContentView} />
-                          </div>
-                        ))}
-                        {tasksByStatus[status].length === 0 && (
-                          <div className='flex h-24 items-center justify-center rounded-lg border border-dashed'>
-                            <p className='text-muted-foreground text-sm'>No tasks</p>
-                          </div>
-                        )}
-                      </div>
-                    </DroppableColumn>
-                  ))}
-                </div>
-              </div>
-            </DndContext>
+            <KanbanBoard tasks={tasks} visibleStatuses={visibleStatuses} onEdit={handleEdit} onDelete={handleDelete} onContentView={handleContentView} onStatusChange={handleStatusChange} />
           )}
         </div>
       </div>
