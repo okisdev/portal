@@ -63,7 +63,8 @@ export default function ContactIdPage() {
 
   const [newActivity, setNewActivity] = useState('');
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
-  const [appointmentDate, setAppointmentDate] = useState<Date>();
+  const [appointmentStartDate, setAppointmentStartDate] = useState<Date>();
+  const [appointmentEndDate, setAppointmentEndDate] = useState<Date>();
   const [appointmentNotes, setAppointmentNotes] = useState('');
   const [isTeamModalOpen, setIsTeamModalOpen] = useState(false);
   const [selectedTeam, setSelectedTeam] = useState<string>('');
@@ -101,14 +102,24 @@ export default function ContactIdPage() {
   const createAppointment = api.calendar.createAppointment.useMutation({
     onSuccess: () => {
       setIsBookingModalOpen(false);
-      setAppointmentDate(undefined);
+      setAppointmentStartDate(undefined);
+      setAppointmentEndDate(undefined);
       setAppointmentNotes('');
+      utils.contact.getContactById.invalidate({ id: contactId[0] });
+      toast.success('Appointment created successfully');
+    },
+    onError: (error) => {
+      toast.error(error.message);
     },
   });
 
   const deleteAppointment = api.calendar.deleteEvent.useMutation({
     onSuccess: () => {
       utils.calendar.getAppointmentsByContactId.invalidate({ contactId: contactId[0] });
+      toast.success('Appointment deleted successfully');
+    },
+    onError: (error) => {
+      toast.error(error.message);
     },
   });
 
@@ -116,6 +127,10 @@ export default function ContactIdPage() {
     onSuccess: () => {
       setEditingAppointment(null);
       utils.calendar.getAppointmentsByContactId.invalidate({ contactId: contactId[0] });
+      toast.success('Appointment updated successfully');
+    },
+    onError: (error) => {
+      toast.error(error.message);
     },
   });
 
@@ -123,6 +138,10 @@ export default function ContactIdPage() {
     onSuccess: () => {
       setNewActivity('');
       refetchActivities();
+      toast.success('Activity created successfully');
+    },
+    onError: (error) => {
+      toast.error(error.message);
     },
   });
 
@@ -200,6 +219,18 @@ export default function ContactIdPage() {
     setIsEditModalOpen(true);
   };
 
+  const handleOpenBookingModal = () => {
+    const now = new Date();
+    // Set default start time to next hour
+    const startDate = new Date(now.setHours(now.getHours() + 1, 0, 0, 0));
+    // Set default end time to one hour after start time
+    const endDate = new Date(startDate.getTime() + 60 * 60 * 1000);
+
+    setAppointmentStartDate(startDate);
+    setAppointmentEndDate(endDate);
+    setIsBookingModalOpen(true);
+  };
+
   const handleAssignTeam = () => {
     if (!selectedTeam) return;
 
@@ -255,12 +286,21 @@ export default function ContactIdPage() {
   const handleBookAppointment = (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!appointmentDate) return;
+    if (!appointmentStartDate || !appointmentEndDate) {
+      toast.error('Please select both start and end times for the appointment');
+      return;
+    }
+
+    if (appointmentEndDate <= appointmentStartDate) {
+      toast.error('End time must be after start time');
+      return;
+    }
 
     createAppointment.mutate({
       title: `Meeting with ${contact?.name}`,
       description: appointmentNotes,
-      date: appointmentDate,
+      startAt: appointmentStartDate,
+      endAt: appointmentEndDate,
       contactId: contactId[0],
     });
   };
@@ -344,7 +384,7 @@ export default function ContactIdPage() {
 
             <div className='border-b px-6 py-4'>
               <div className='flex gap-3'>
-                <Button variant='outline' size='sm' className='flex-1' onClick={() => setIsBookingModalOpen(true)}>
+                <Button variant='outline' size='sm' className='flex-1' onClick={handleOpenBookingModal}>
                   <CalendarIcon className='mr-2 size-4' /> Book Meeting
                 </Button>
                 <Button variant='outline' size='sm' className='flex-1' onClick={handleEditClick}>
@@ -659,8 +699,12 @@ export default function ContactIdPage() {
           </DialogHeader>
           <form onSubmit={handleBookAppointment} className='space-y-4'>
             <div className='space-y-2'>
-              <Label>Date and Time</Label>
-              <DateTimePicker value={appointmentDate || new Date()} onChange={setAppointmentDate} showTimePicker={true} />
+              <Label>Start Time</Label>
+              <DateTimePicker value={appointmentStartDate || new Date()} onChange={setAppointmentStartDate} showTimePicker={true} />
+            </div>
+            <div className='space-y-2'>
+              <Label>End Time</Label>
+              <DateTimePicker value={appointmentEndDate || new Date()} onChange={setAppointmentEndDate} showTimePicker={true} />
             </div>
             <div className='space-y-2'>
               <Label>Notes</Label>
@@ -670,7 +714,7 @@ export default function ContactIdPage() {
               <Button type='button' variant='outline' onClick={() => setIsBookingModalOpen(false)}>
                 Cancel
               </Button>
-              <Button type='submit' disabled={createAppointment.isPending || !appointmentDate}>
+              <Button type='submit' disabled={createAppointment.isPending || !appointmentStartDate || !appointmentEndDate}>
                 {createAppointment.isPending ? 'Booking...' : 'Book Appointment'}
               </Button>
             </div>

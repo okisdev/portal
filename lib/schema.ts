@@ -122,6 +122,7 @@ export type ResourceContent = z.infer<typeof resourceContentSchema>;
 export const appointmentSchema = z.object({
   title: z.string(),
   description: z.string(),
-  date: z.date(),
+  startAt: z.date(),
+  endAt: z.date(),
   contactId: z.string(),
 });
