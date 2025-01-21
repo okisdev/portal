@@ -106,15 +106,12 @@ export default function CRMContactsPage() {
       return;
     }
 
-    // If clicking the same status filter again, clear it
-    if (filters.conditions.some((c) => c.field === 'status' && c.value === status)) {
-      setFilters({ conditions: [], matchAll: true });
-      return;
-    }
+    // Set the new status filter, replacing any existing status filter
+    const newConditions = filters.conditions.filter((c) => c.field !== 'status');
+    newConditions.push({ field: 'status', operator: '=', value: status });
 
-    // Set the new status filter
     setFilters({
-      conditions: [{ field: 'status', operator: '=', value: status }],
+      conditions: newConditions,
       matchAll: true,
     });
   };
@@ -128,6 +125,12 @@ export default function CRMContactsPage() {
         setFilters(decodedFilters);
       } catch (e) {
         console.error('Failed to parse filters from URL:', e);
+      }
+    } else {
+      // Check for status in URL if no filters param exists
+      const statusParam = searchParams.get('status');
+      if (statusParam) {
+        handleStatusFilter(statusParam);
       }
     }
 
@@ -145,13 +148,7 @@ export default function CRMContactsPage() {
         console.error('Failed to parse sort from URL:', e);
       }
     }
-
-    // Check for status in URL
-    const statusParam = searchParams.get('status');
-    if (statusParam) {
-      handleStatusFilter(statusParam);
-    }
-  }, [searchParams]); // Add searchParams as dependency
+  }, []); // Remove searchParams dependency to prevent re-initialization
 
   // Update URL when filters change
   useEffect(() => {
@@ -439,12 +436,12 @@ export default function CRMContactsPage() {
 
       <div className='flex flex-col gap-2'>
         <div className='flex flex-wrap items-center gap-2'>
+          <p className='text-muted-foreground text-sm'>Status</p>
           {statusSchema.options.map((status) => {
             const isActive = filters.conditions.some((c) => c.field === 'status' && c.value === status);
             return (
-              <Button key={status} variant={isActive ? 'default' : 'outline'} size='sm' onClick={() => handleStatusFilter(status)} className={cn('capitalize', isActive && 'shadow-sm')}>
-                <ColorBadge type='contactStatus' value={status} className='mr-2' />
-                {status}
+              <Button key={status} variant={isActive ? 'secondary' : 'outline'} size='sm' onClick={() => handleStatusFilter(status)} className={cn('capitalize', isActive && 'shadow-sm')}>
+                <ColorBadge type='contactStatus' value={status} />
               </Button>
             );
           })}

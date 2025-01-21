@@ -4,6 +4,7 @@ import { ColorBadge } from '@/components/shared/color-badge';
 import { Combobox } from '@/components/shared/combobox';
 import { DateTimePicker } from '@/components/shared/date-time-picker';
 import { EventDialog } from '@/components/shared/event-dialog';
+import { NameTag } from '@/components/shared/name-tag';
 import { PageLoading } from '@/components/shared/page-loading';
 import { PhoneInput } from '@/components/shared/phone-input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -323,10 +324,10 @@ export default function ContactIdPage() {
 
     createContactActivity.mutate({
       contactId: contactId[0],
-      type: 'note',
+      type: 'NOTE_ADDED',
       initiatorType: 'user',
       initiatorId: session?.user.id || '',
-      title: 'Quick Note',
+      title: 'Note Added',
       description: newActivity,
     });
   };
@@ -575,11 +576,11 @@ export default function ContactIdPage() {
           <div className='rounded-lg border bg-card text-card-foreground shadow-sm'>
             <div className='p-6'>
               <div className='mb-6 flex items-center justify-between'>
-                <h2 className='font-medium'>Activity</h2>
+                <h2 className='font-medium'>Activity Timeline</h2>
                 <form onSubmit={handleSubmitActivity} className='flex max-w-md flex-1 gap-2'>
-                  <Input value={newActivity} onChange={(e) => setNewActivity(e.target.value)} placeholder='Add note...' className='h-9' />
+                  <Input value={newActivity} onChange={(e) => setNewActivity(e.target.value)} placeholder='Add a note...' className='h-9' />
                   <Button type='submit' size='sm' disabled={createContactActivity.isPending}>
-                    Add
+                    Add Note
                   </Button>
                 </form>
               </div>
@@ -587,15 +588,41 @@ export default function ContactIdPage() {
               <div className='max-h-[calc(100vh-16rem)] space-y-4 overflow-y-auto'>
                 {activities?.map((activity) => (
                   <div key={activity.id} className='flex gap-4 border-b pb-4 last:border-0'>
-                    <div className='mt-1.5 size-2 shrink-0 rounded-full bg-primary' />
+                    <div
+                      className={cn(
+                        'mt-1.5 size-2 shrink-0 rounded-full',
+                        // Color coding based on activity type
+                        activity.type.startsWith('CONTACT_') && 'bg-blue-500',
+                        activity.type.startsWith('MEETING_') && 'bg-green-500',
+                        activity.type.startsWith('TEAM_') && 'bg-purple-500',
+                        activity.type.startsWith('DEAL_') && 'bg-yellow-500',
+                        activity.type === 'NOTE_ADDED' && 'bg-gray-500',
+                        activity.type.includes('STATUS') && 'bg-orange-500',
+                        activity.type.includes('PRIORITY') && 'bg-pink-500',
+                        activity.type.includes('PAYMENT') && 'bg-emerald-500'
+                      )}
+                    />
                     <div className='min-w-0 flex-1'>
                       <div className='mb-1 flex items-center gap-2'>
                         <span className='font-medium text-sm'>{activity.title}</span>
                         <span className='text-muted-foreground text-xs'>
-                          by {getInitiatorLabel(activity)} - {formatDate(new Date(activity.createdAt))}
+                          {activity.initiatorType === 'system' ? (
+                            'by System'
+                          ) : (
+                            <>
+                              by <NameTag id={activity.userId} type='user' />
+                            </>
+                          )}
+                          {' - '}
+                          {formatDate(new Date(activity.createdAt))}
                         </span>
                       </div>
                       <p className='text-muted-foreground text-sm'>{activity.description}</p>
+                      {activity.metadata && (
+                        <div className='mt-2 rounded-md bg-muted/50 p-2 text-xs'>
+                          <pre className='whitespace-pre-wrap font-mono'>{JSON.stringify(JSON.parse(activity.metadata), null, 2)}</pre>
+                        </div>
+                      )}
                     </div>
                   </div>
                 ))}

@@ -1,7 +1,63 @@
-import { calendarEvent, calendarEventParticipant, calendarFolder, contact, team, teamActivity, teamContact, teamMeeting } from '@/drizzle/schema';
+import { calendarEvent, calendarEventParticipant, calendarFolder, contact, contactActivity, team, teamActivity, teamContact, teamMeeting } from '@/drizzle/schema';
 import { createTRPCRouter, protectedProcedure } from '@/server/trpc';
 import { and, eq, exists, sql } from 'drizzle-orm';
 import { z } from 'zod';
+
+const activityTypeEnum = z.enum([
+  // Contact Management
+  'CONTACT_CREATED',
+  'CONTACT_UPDATED',
+  'CONTACT_DELETED',
+
+  // Status Changes
+  'STATUS_CHANGED',
+  'PRIORITY_CHANGED',
+
+  // Engagement
+  'MEETING_SCHEDULED',
+  'MEETING_UPDATED',
+  'MEETING_CANCELLED',
+  'CALL_LOGGED',
+  'EMAIL_SENT',
+  'NOTE_ADDED',
+
+  // Team Management
+  'TEAM_ASSIGNED',
+  'TEAM_REMOVED',
+
+  // Deal Management
+  'DEAL_CREATED',
+  'DEAL_UPDATED',
+  'DEAL_CLOSED',
+
+  // Payment
+  'PAYMENT_LINK_CLICKED',
+  'PAYMENT_COMPLETED',
+]);
+
+// Helper function to create contact activity
+const createContactActivityHelper = async (
+  ctx: any,
+  input: {
+    contactId: string;
+    type: z.infer<typeof activityTypeEnum>;
+    title: string;
+    description: string;
+    initiatorType?: 'user' | 'contact' | 'system';
+    metadata?: Record<string, any>;
+  }
+) => {
+  return ctx.db.insert(contactActivity).values({
+    contactId: input.contactId,
+    userId: ctx.session?.user.id,
+    type: input.type,
+    initiatorType: input.initiatorType || 'system',
+    initiatorId: ctx.session?.user.id,
+    title: input.title,
+    description: input.description,
+    metadata: input.metadata ? JSON.stringify(input.metadata) : null,
+  });
+};
 
 export const teamRouter = createTRPCRouter({
   getAllTeams: protectedProcedure.query(async ({ ctx }) => {
@@ -59,6 +115,7 @@ export const teamRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ ctx, input }) => {
+      // Check if already assigned
       const existing = await ctx.db
         .select()
         .from(teamContact)
@@ -67,7 +124,16 @@ export const teamRouter = createTRPCRouter({
 
       if (existing) return existing;
 
-      const [result] = await ctx.db
+      // Get team details for activity log
+      const teamDetails = await ctx.db
+        .select({
+          name: team.name,
+        })
+        .from(team)
+        .where(eq(team.id, input.teamId))
+        .then((rows) => rows[0]);
+
+      const result = await ctx.db
         .insert(teamContact)
         .values({
           teamId: input.teamId,
@@ -75,7 +141,56 @@ export const teamRouter = createTRPCRouter({
         })
         .returning();
 
-      return result;
+      // Log team assignment activity
+      await createContactActivityHelper(ctx, {
+        contactId: input.contactId,
+        type: 'TEAM_ASSIGNED',
+        title: 'Assigned to Team',
+        description: `Contact was assigned to team "${teamDetails.name}"`,
+        metadata: {
+          teamId: input.teamId,
+          teamName: teamDetails.name,
+        },
+      });
+
+      return result[0];
+    }),
+
+  removeContactFromTeam: protectedProcedure
+    .input(
+      z.object({
+        contactId: z.string(),
+        teamId: z.string(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      // Get team details for activity log
+      const teamDetails = await ctx.db
+        .select({
+          name: team.name,
+        })
+        .from(team)
+        .where(eq(team.id, input.teamId))
+        .then((rows) => rows[0]);
+
+      const result = await ctx.db
+        .delete(teamContact)
+        .where(and(eq(teamContact.teamId, input.teamId), eq(teamContact.contactId, input.contactId)))
+        .returning();
+
+      // Log team removal activity
+      await createContactActivityHelper(ctx, {
+        contactId: input.contactId,
+        type: 'TEAM_REMOVED',
+        title: 'Removed from Team',
+        description: `Contact was removed from team "${teamDetails.name}"`,
+        metadata: {
+          teamId: input.teamId,
+          teamName: teamDetails.name,
+        },
+      });
+
+      return result[0];
     }),
 
   getTeamById: protectedProcedure.input(z.object({ id: z.string() })).query(async ({ ctx, input }) => {

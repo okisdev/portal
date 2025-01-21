@@ -147,13 +147,47 @@ export const contactActivity = pgTable('contactActivity', {
     .references(() => contact.id, { onDelete: 'cascade' }),
   userId: text()
     .notNull()
-    .references(() => user.id), // who performed the activity
-  type: text().notNull(), // 'call', 'email', 'meeting', 'note', 'status_change', 'deal_created', 'deal_updated', 'payment_link_clicked', etc.
-  initiatorType: text().notNull().default('system'), // 'user', 'contact', 'system'
-  initiatorId: text(), // id of the initiator
-  title: text().notNull(), // e.g., "Called client about new proposal"
-  description: text(), // optional detailed description
-  metadata: text(), // JSON string for additional data specific to activity type
+    .references(() => user.id),
+  type: text('type', {
+    enum: [
+      // Contact Management
+      'CONTACT_CREATED',
+      'CONTACT_UPDATED',
+      'CONTACT_DELETED',
+
+      // Status Changes
+      'STATUS_CHANGED',
+      'PRIORITY_CHANGED',
+
+      // Engagement
+      'MEETING_SCHEDULED',
+      'MEETING_UPDATED',
+      'MEETING_CANCELLED',
+      'CALL_LOGGED',
+      'EMAIL_SENT',
+      'NOTE_ADDED',
+
+      // Team Management
+      'TEAM_ASSIGNED',
+      'TEAM_REMOVED',
+
+      // Deal Management
+      'DEAL_CREATED',
+      'DEAL_UPDATED',
+      'DEAL_CLOSED',
+
+      // Payment
+      'PAYMENT_LINK_CLICKED',
+      'PAYMENT_COMPLETED',
+    ],
+  }).notNull(),
+  initiatorType: text('initiatorType', { enum: ['user', 'contact', 'system'] })
+    .notNull()
+    .default('system'),
+  initiatorId: text('initiatorId'),
+  title: text().notNull(),
+  description: text(),
+  metadata: text(), // JSON string for additional data
   createdAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
   updatedAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
 });
