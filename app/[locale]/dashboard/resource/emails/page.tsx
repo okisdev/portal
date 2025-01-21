@@ -1,13 +1,13 @@
 'use client';
 
 import { PageHeader } from '@/components/shared/page-header';
+import { TipTapEditor } from '@/components/shared/tiptap-editor';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 import { api } from '@/utils/trpc/client';
-import { Editor } from '@maily-to/core';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { toast } from 'sonner';
@@ -111,15 +111,15 @@ export default function EmailsPage() {
   };
 
   return (
-    <div className='h-full'>
-      <div className='container mx-auto px-8 py-6'>
+    <div className='flex h-full flex-col'>
+      <div className='container mx-auto flex h-full flex-col px-8 py-6'>
         <PageHeader title='Email Templates' description='Create and manage your email templates' />
 
-        <div className='mt-8 grid grid-cols-12 gap-8'>
+        <div className='mt-8 grid flex-1 grid-cols-12 gap-8'>
           <div className='col-span-3'>
             <div className='mb-4 flex items-center justify-between'>
               <h3 className='font-medium text-base text-neutral-700'>Templates</h3>
-              <Button onClick={resetForm} variant='outline' size='sm' className='text-neutral-600 hover:text-neutral-900'>
+              <Button onClick={resetForm} variant='outline' size='sm' className='h-8'>
                 + New
               </Button>
             </div>
@@ -154,7 +154,7 @@ export default function EmailsPage() {
             </div>
           </div>
 
-          <div className='col-span-9'>
+          <div className='col-span-9 flex flex-col'>
             <div className='mb-4 flex items-center justify-between'>
               <h3 className='font-medium text-base text-neutral-700'>{selectedTemplate ? 'Edit Template' : 'New Template'}</h3>
               <div className='flex gap-2'>
@@ -168,13 +168,13 @@ export default function EmailsPage() {
                     </Button>
                   </>
                 )}
-                <Button onClick={handleSaveTemplate} className='bg-neutral-900 text-white hover:bg-neutral-800'>
+                <Button variant='outline' size='sm' onClick={handleSaveTemplate} className='h-8'>
                   {selectedTemplate ? 'Update' : 'Save'} Template
                 </Button>
               </div>
             </div>
 
-            <div className='space-y-4'>
+            <div className='flex flex-1 flex-col space-y-4'>
               <div>
                 <Input placeholder='Template Title' value={title} onChange={(e) => setTitle(e.target.value)} className='mb-2' />
                 <Textarea placeholder='Template Description (optional)' value={description} onChange={(e) => setDescription(e.target.value)} rows={2} />
@@ -182,20 +182,8 @@ export default function EmailsPage() {
 
               <Input placeholder='Email Subject' value={subject} onChange={(e) => setSubject(e.target.value)} />
 
-              <div className='flex h-[600px] flex-col overflow-hidden rounded-lg bg-white shadow-sm ring-1 ring-neutral-200'>
-                <div className='flex-1 overflow-y-auto'>
-                  <Editor
-                    contentHtml={editorContent}
-                    onUpdate={(editor) => {
-                      setEditorContent(editor.getHTML());
-                    }}
-                    config={{
-                      hasMenuBar: true,
-                      spellCheck: true,
-                      autofocus: 'end',
-                    }}
-                  />
-                </div>
+              <div className='min-h-0 flex-1'>
+                <TipTapEditor content={editorContent} onChange={setEditorContent} placeholder='Write your email content here...' className='h-full' />
               </div>
             </div>
           </div>

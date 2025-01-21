@@ -10,6 +10,7 @@ import Underline from '@tiptap/extension-underline';
 import { EditorContent, useEditor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import { AlignCenter, AlignLeft, AlignRight, Bold, Image as ImageIcon, Italic, Link as LinkIcon, List, ListOrdered, Quote, Redo, Strikethrough, Underline as UnderlineIcon, Undo } from 'lucide-react';
+import { useEffect } from 'react';
 
 interface TipTapEditorProps {
   content: string;
@@ -43,7 +44,7 @@ export function TipTapEditor({ content, onChange, placeholder = 'Start writing..
         types: ['heading', 'paragraph'],
       }),
     ],
-    content,
+    content: content,
     editable: editable && !disabled,
     onUpdate: ({ editor }) => {
       onChange(editor.getHTML());
@@ -54,6 +55,12 @@ export function TipTapEditor({ content, onChange, placeholder = 'Start writing..
       },
     },
   });
+
+  useEffect(() => {
+    if (editor && content !== editor.getHTML()) {
+      editor.commands.setContent(content);
+    }
+  }, [content, editor]);
 
   if (!editor) {
     return null;
