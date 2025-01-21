@@ -86,6 +86,7 @@ export default function CRMContactsPage() {
   const filterFields = [
     { label: 'Name', value: 'name' },
     { label: 'Email', value: 'email' },
+    { label: 'Company', value: 'company' },
     { label: 'Status', value: 'status' },
     { label: 'Priority', value: 'priority' },
     { label: 'Source', value: 'source' },
