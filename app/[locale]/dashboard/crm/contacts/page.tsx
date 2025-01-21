@@ -101,8 +101,11 @@ export default function CRMContactsPage() {
 
   const handleStatusFilter = (status: string | null) => {
     if (status === null) {
-      // Clear all filters
-      setFilters({ conditions: [], matchAll: true });
+      // Clear status filter only
+      setFilters({
+        ...filters,
+        conditions: filters.conditions.filter((c) => c.field !== 'status'),
+      });
       return;
     }
 
@@ -118,20 +121,25 @@ export default function CRMContactsPage() {
 
   // Initialize filters from URL on mount
   useEffect(() => {
-    const filtersParam = searchParams.get('filters');
-    if (filtersParam) {
-      try {
-        const decodedFilters = JSON.parse(decodeURIComponent(filtersParam)) as FilterConfig;
-        setFilters(decodedFilters);
-      } catch (e) {
-        console.error('Failed to parse filters from URL:', e);
+    const newConditions: FilterCondition[] = [];
+
+    // Check for individual filter parameters
+    for (const field of filterFields) {
+      const value = searchParams.get(field.value);
+      if (value) {
+        newConditions.push({
+          field: field.value,
+          operator: '=',
+          value: value,
+        });
       }
-    } else {
-      // Check for status in URL if no filters param exists
-      const statusParam = searchParams.get('status');
-      if (statusParam) {
-        handleStatusFilter(statusParam);
-      }
+    }
+
+    if (newConditions.length > 0) {
+      setFilters({
+        conditions: newConditions,
+        matchAll: true,
+      });
     }
 
     const searchParam = searchParams.get('search');
@@ -148,26 +156,22 @@ export default function CRMContactsPage() {
         console.error('Failed to parse sort from URL:', e);
       }
     }
-  }, []); // Remove searchParams dependency to prevent re-initialization
+  }, []);
 
   // Update URL when filters change
   useEffect(() => {
     const params = new URLSearchParams(searchParams);
 
-    // Update filters in URL
-    if (filters.conditions.length > 0) {
-      params.set('filters', encodeURIComponent(JSON.stringify(filters)));
+    // Clear all filter-related params first
+    for (const field of filterFields) {
+      params.delete(field.value);
+    }
 
-      // Add status shortcut param if it's a status filter
-      const statusFilter = filters.conditions.find((c) => c.field === 'status' && c.operator === '=');
-      if (statusFilter) {
-        params.set('status', statusFilter.value);
-      } else {
-        params.delete('status');
+    // Update individual filter parameters
+    for (const condition of filters.conditions) {
+      if (condition.operator === '=') {
+        params.set(condition.field, condition.value);
       }
-    } else {
-      params.delete('filters');
-      params.delete('status');
     }
 
     // Update search in URL
@@ -188,6 +192,34 @@ export default function CRMContactsPage() {
     const newUrl = `${pathname}?${params.toString()}`;
     router.replace(newUrl);
   }, [filters, search, sortConfig, pathname, searchParams]);
+
+  const handleFilterChange = (index: number, field: string, operator: FilterOperator, value: string) => {
+    const newConditions = [...filters.conditions];
+
+    // Remove any existing filter for this field
+    const existingIndex = newConditions.findIndex((c) => c.field === field);
+    if (existingIndex !== -1 && existingIndex !== index) {
+      newConditions.splice(existingIndex, 1);
+    }
+
+    if (index >= newConditions.length) {
+      newConditions.push({ field, operator, value });
+    } else {
+      newConditions[index] = { field, operator, value };
+    }
+
+    setFilters((prev) => ({
+      ...prev,
+      conditions: newConditions,
+    }));
+  };
+
+  const handleRemoveFilter = (index: number) => {
+    setFilters((prev) => ({
+      ...prev,
+      conditions: prev.conditions.filter((_, i) => i !== index),
+    }));
+  };
 
   const filteredContacts = useMemo(() => {
     if (!contacts) return [];
@@ -310,16 +342,8 @@ export default function CRMContactsPage() {
                   </div>
 
                   {filters.conditions.map((condition, index) => (
-                    <div key={condition.field} className='flex items-center gap-2'>
-                      <select
-                        className='h-8 rounded-md border px-2 text-sm'
-                        value={condition.field}
-                        onChange={(e) => {
-                          const newConditions = [...filters.conditions];
-                          newConditions[index].field = e.target.value;
-                          setFilters((f) => ({ ...f, conditions: newConditions }));
-                        }}
-                      >
+                    <div key={`${condition.field}-${index}`} className='flex items-center gap-2'>
+                      <select className='h-8 rounded-md border px-2 text-sm' value={condition.field} onChange={(e) => handleFilterChange(index, e.target.value, condition.operator, condition.value)}>
                         {filterFields.map((field) => (
                           <option key={field.value} value={field.value}>
                             {field.label}
@@ -330,11 +354,7 @@ export default function CRMContactsPage() {
                       <select
                         className='h-8 rounded-md border px-2 text-sm'
                         value={condition.operator}
-                        onChange={(e) => {
-                          const newConditions = [...filters.conditions];
-                          newConditions[index].operator = e.target.value as FilterOperator;
-                          setFilters((f) => ({ ...f, conditions: newConditions }));
-                        }}
+                        onChange={(e) => handleFilterChange(index, condition.field, e.target.value as FilterOperator, condition.value)}
                       >
                         {filterOperators.map((op) => (
                           <option key={op.value} value={op.value}>
@@ -343,26 +363,9 @@ export default function CRMContactsPage() {
                         ))}
                       </select>
 
-                      <Input
-                        className='h-8'
-                        value={condition.value}
-                        onChange={(e) => {
-                          const newConditions = [...filters.conditions];
-                          newConditions[index].value = e.target.value;
-                          setFilters((f) => ({ ...f, conditions: newConditions }));
-                        }}
-                      />
+                      <Input className='h-8' value={condition.value} onChange={(e) => handleFilterChange(index, condition.field, condition.operator, e.target.value)} />
 
-                      <Button
-                        variant='ghost'
-                        size='sm'
-                        onClick={() => {
-                          setFilters((f) => ({
-                            ...f,
-                            conditions: f.conditions.filter((_, i) => i !== index),
-                          }));
-                        }}
-                      >
+                      <Button variant='ghost' size='sm' onClick={() => handleRemoveFilter(index)}>
                         <X className='h-4 w-4' />
                       </Button>
                     </div>
@@ -375,7 +378,7 @@ export default function CRMContactsPage() {
                     onClick={() => {
                       setFilters((f) => ({
                         ...f,
-                        conditions: [...f.conditions, { field: 'name', operator: 'contains', value: '' }],
+                        conditions: [...f.conditions, { field: filterFields[0].value, operator: '=', value: '' }],
                       }));
                     }}
                   >
