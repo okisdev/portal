@@ -20,6 +20,9 @@ export default async function RootLayout(props: Props) {
   return (
     <html lang={locale} suppressHydrationWarning>
       <head>
+        <meta name='apple-mobile-web-app-title' content='Portal' />
+        <meta name='theme-color' media='(prefers-color-scheme: light)' content='white' />
+        <meta name='theme-color' media='(prefers-color-scheme: dark)' content='black' />
         {/* <Script src='https://unpkg.com/react-scan/dist/auto.global.js' async /> */}
         <Script src='https://unpkg.com/react-scan/dist/install-hook.global.js' strategy='beforeInteractive' />
       </head>
