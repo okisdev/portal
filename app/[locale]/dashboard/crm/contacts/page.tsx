@@ -474,6 +474,13 @@ export default function CRMContactsPage() {
                 ))}
               </DropdownMenuContent>
             </DropdownMenu>
+
+            {filters.conditions.length > 0 && (
+              <Button variant='outline' size='sm' onClick={() => setFilters({ conditions: [], matchAll: true })}>
+                <X className='h-4 w-4' />
+                Clear
+              </Button>
+            )}
           </div>
           <div className='flex flex-row gap-2'>
             <DropdownMenu>
@@ -508,34 +515,22 @@ export default function CRMContactsPage() {
           {statusSchema.options.map((status) => {
             const isActive = filters.conditions.some((c) => c.field === 'status' && c.value === status);
             return (
-              <Button key={status} variant={isActive ? 'secondary' : 'outline'} size='sm' onClick={() => handleStatusFilter(status)} className={cn('capitalize', isActive && 'shadow-sm')}>
-                <ColorBadge type='contactStatus' value={status} />
-              </Button>
+              <button type='button' key={status} onClick={() => handleStatusFilter(status)}>
+                <ColorBadge type='contactStatus' value={status} className={cn('capitalize', isActive && 'ring-1 ring-offset-1 ring-offset-background')} />
+              </button>
             );
           })}
-          {filters.conditions.some((c) => c.field === 'status') && (
-            <Button variant='ghost' size='sm' onClick={() => handleStatusFilter(null)} className='ml-2'>
-              <X className='h-4 w-4' />
-              Clear
-            </Button>
-          )}
         </div>
         <div className='flex flex-wrap items-center gap-2'>
           <p className='text-muted-foreground text-sm'>Source</p>
           {sourceSchema.options.map((source) => {
             const isActive = filters.conditions.some((c) => c.field === 'source' && c.value === source);
             return (
-              <Button key={source} variant={isActive ? 'secondary' : 'outline'} size='sm' onClick={() => handleSourceFilter(source)} className={cn('capitalize', isActive && 'shadow-sm')}>
-                <ColorBadge type='contactStatus' value={source} />
-              </Button>
+              <button type='button' key={source} onClick={() => handleSourceFilter(source)}>
+                <ColorBadge type='contactStatus' value={source} className={cn('capitalize', isActive && 'ring-1 ring-offset-1 ring-offset-background')} />
+              </button>
             );
           })}
-          {filters.conditions.some((c) => c.field === 'source') && (
-            <Button variant='ghost' size='sm' onClick={() => handleSourceFilter(null)} className='ml-2'>
-              <X className='h-4 w-4' />
-              Clear
-            </Button>
-          )}
         </div>
       </div>
 
