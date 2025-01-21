@@ -11,7 +11,16 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import {} from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuPortal,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -22,7 +31,7 @@ import { insuranceCompanies, sources } from '@/data/data';
 import { type Priority, type Status, statusSchema } from '@/lib/schema';
 import { cn, formatDate } from '@/lib/utils';
 import { api } from '@/utils/trpc/client';
-import { ArrowUpRight, Building2, Calendar, Edit2, Mail, MoreHorizontal, Phone, Plus, Save, Trash2, Users, X } from 'lucide-react';
+import { ArrowUpRight, Building2, Calendar, Edit2, Mail, MessageSquare, MoreHorizontal, Phone, Plus, Save, Send, Trash2, Users, X } from 'lucide-react';
 import { Info } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import { useTranslations } from 'next-intl';
@@ -368,9 +377,9 @@ export default function ContactIdPage() {
   };
 
   return (
-    <div className='container mx-auto space-y-6 p-6 min-h-[calc(100vh-4rem)]'>
-      <div className='grid grid-cols-1 gap-6 lg:grid-cols-3 h-[calc(100vh-6rem)]'>
-        <div className='lg:col-span-1 overflow-y-auto'>
+    <div className='container mx-auto min-h-[calc(100vh-4rem)] space-y-6 p-6'>
+      <div className='grid h-[calc(100vh-6rem)] grid-cols-1 gap-6 lg:grid-cols-3'>
+        <div className='overflow-y-auto lg:col-span-1'>
           <div className='rounded-lg border bg-card text-card-foreground shadow-sm'>
             <div className='border-b p-6'>
               <div className='flex items-start gap-4'>
@@ -415,9 +424,37 @@ export default function ContactIdPage() {
                     )}
                   </div>
                 </div>
-                <button type='button' className='my-1 text-muted-foreground hover:text-foreground' onClick={handleEditClick}>
-                  <Edit2 className='size-4' />
-                </button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button type='button' className='my-1 text-muted-foreground outline-none hover:text-foreground'>
+                      <MoreHorizontal className='size-4' />
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align='end' className='bg-popover text-popover-foreground'>
+                    <DropdownMenuItem onClick={handleEditClick} className='cursor-pointer'>
+                      <Edit2 className='mr-2 size-4' />
+                      Edit
+                    </DropdownMenuItem>
+                    <DropdownMenuSub>
+                      <DropdownMenuSubTrigger className='cursor-pointer'>
+                        <Send className='mr-2 size-4' />
+                        Send
+                      </DropdownMenuSubTrigger>
+                      <DropdownMenuPortal>
+                        <DropdownMenuSubContent>
+                          <DropdownMenuItem className='cursor-pointer'>
+                            <Mail className='mr-2 size-4' />
+                            Email
+                          </DropdownMenuItem>
+                          <DropdownMenuItem className='cursor-pointer'>
+                            <MessageSquare className='mr-2 size-4' />
+                            Message
+                          </DropdownMenuItem>
+                        </DropdownMenuSubContent>
+                      </DropdownMenuPortal>
+                    </DropdownMenuSub>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
             </div>
 
@@ -618,18 +655,19 @@ export default function ContactIdPage() {
           </div>
         </div>
 
-        <div className='lg:col-span-2 h-full'>
+        <div className='h-full lg:col-span-2'>
           <div className='h-full rounded-lg border bg-card text-card-foreground shadow-sm'>
             <div className='h-full p-6'>
-              <Tabs defaultValue='activity' className='h-full flex flex-col'>
+              <Tabs defaultValue='activity' className='flex h-full flex-col'>
                 <TabsList className='grid w-full grid-cols-3'>
                   <TabsTrigger value='activity'>Activity</TabsTrigger>
                   <TabsTrigger value='subscription'>Subscription</TabsTrigger>
                   <TabsTrigger value='management'>Management</TabsTrigger>
                 </TabsList>
-                <TabsContent value='activity' className='flex-1 flex flex-col relative'>
+                <TabsContent value='activity' className='relative flex flex-1 flex-col'>
                   <div className='absolute inset-0 overflow-y-auto pb-[4.5rem]'>
                     <div className='space-y-1'>
+                      {activities?.length === 0 && <p className='text-muted-foreground text-sm'>No activities found.</p>}
                       {activities
                         ?.filter((activity) => activity.type !== 'CONTACT_UPDATED')
                         .map((activity, index) => {
