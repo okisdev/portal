@@ -368,9 +368,9 @@ export default function ContactIdPage() {
   };
 
   return (
-    <div className='container mx-auto space-y-6 p-6'>
-      <div className='grid grid-cols-1 gap-6 lg:grid-cols-3'>
-        <div className='lg:col-span-1'>
+    <div className='container mx-auto space-y-6 p-6 min-h-[calc(100vh-4rem)]'>
+      <div className='grid grid-cols-1 gap-6 lg:grid-cols-3 h-[calc(100vh-6rem)]'>
+        <div className='lg:col-span-1 overflow-y-auto'>
           <div className='rounded-lg border bg-card text-card-foreground shadow-sm'>
             <div className='border-b p-6'>
               <div className='flex items-start gap-4'>
@@ -618,140 +618,144 @@ export default function ContactIdPage() {
           </div>
         </div>
 
-        <div className='lg:col-span-2'>
+        <div className='lg:col-span-2 h-full'>
           <div className='h-full rounded-lg border bg-card text-card-foreground shadow-sm'>
-            <div className='p-6'>
-              <Tabs defaultValue='activity' className='space-y-4'>
+            <div className='h-full p-6'>
+              <Tabs defaultValue='activity' className='h-full flex flex-col'>
                 <TabsList className='grid w-full grid-cols-3'>
                   <TabsTrigger value='activity'>Activity</TabsTrigger>
                   <TabsTrigger value='subscription'>Subscription</TabsTrigger>
                   <TabsTrigger value='management'>Management</TabsTrigger>
                 </TabsList>
-                <TabsContent value='activity' className='flex w-full flex-col gap-4'>
-                  <div className='max-h-[calc(100vh-16rem)] space-y-1 overflow-y-auto'>
-                    {activities
-                      ?.filter((activity) => activity.type !== 'CONTACT_UPDATED')
-                      .map((activity, index) => {
-                        const currentDate = new Date(activity.createdAt).toDateString();
-                        const prevDate = index > 0 ? new Date(activities[index - 1].createdAt).toDateString() : null;
-                        const showDateDivider = currentDate !== prevDate;
+                <TabsContent value='activity' className='flex-1 flex flex-col relative'>
+                  <div className='absolute inset-0 overflow-y-auto pb-[4.5rem]'>
+                    <div className='space-y-1'>
+                      {activities
+                        ?.filter((activity) => activity.type !== 'CONTACT_UPDATED')
+                        .map((activity, index) => {
+                          const currentDate = new Date(activity.createdAt).toDateString();
+                          const prevDate = index > 0 ? new Date(activities[index - 1].createdAt).toDateString() : null;
+                          const showDateDivider = currentDate !== prevDate;
 
-                        return (
-                          <div key={activity.id} id={`note-${activity.id}`}>
-                            {showDateDivider && (
-                              <div className='sticky top-0 bg-background/95 py-2 backdrop-blur supports-[backdrop-filter]:bg-background/60'>
-                                <p className='font-medium text-muted-foreground text-sm'>{currentDate}</p>
-                              </div>
-                            )}
-                            <div
-                              className={cn(
-                                'flex items-start gap-3 border-l-2 py-3 pr-2 pl-4 hover:bg-muted/30',
-                                highlightedNote === activity.id && 'bg-neutral-500/20 dark:bg-neutral-500/50',
-                                activity.metadata && JSON.parse(activity.metadata).replyTo && 'ml-4'
-                              )}
-                              style={{
-                                borderLeftColor:
-                                  activity.type === 'NOTE_ADDED'
-                                    ? 'rgb(59 130 246)'
-                                    : activity.type.startsWith('CONTACT_')
-                                    ? 'rgb(34 197 94)'
-                                    : activity.type.startsWith('MEETING_')
-                                    ? 'rgb(168 85 247)'
-                                    : activity.type.startsWith('TEAM_')
-                                    ? 'rgb(234 179 8)'
-                                    : activity.type.startsWith('DEAL_')
-                                    ? 'rgb(236 72 153)'
-                                    : activity.type.includes('STATUS')
-                                    ? 'rgb(249 115 22)'
-                                    : activity.type.includes('PRIORITY')
-                                    ? 'rgb(239 68 68)'
-                                    : activity.type.includes('PAYMENT')
-                                    ? 'rgb(16 185 129)'
-                                    : 'rgb(156 163 175)',
-                              }}
-                            >
-                              <div className='flex-1 space-y-1'>
-                                <div className='flex w-full items-center justify-between'>
-                                  <div className='flex items-center gap-2 text-sm'>
-                                    <span className='font-medium'>{activity.title}</span>
-                                    <span className='text-muted-foreground text-xs'>•</span>
-                                    {activity.initiatorType === 'system' ? (
-                                      <span className='text-muted-foreground text-xs'>by System</span>
-                                    ) : (
-                                      <span className='text-muted-foreground text-xs'>
-                                        by <NameTag id={activity.userId} type='user' />
-                                      </span>
-                                    )}
-                                    <span className='text-muted-foreground text-xs'>•</span>
-                                    <span className='text-muted-foreground text-xs'>{new Date(activity.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                                  </div>
-                                  <div className='flex items-center gap-2'>
-                                    {activity.metadata && (
-                                      <Popover>
-                                        <PopoverTrigger asChild>
-                                          <button type='button' className='rounded-md bg-muted/50 px-1 py-0.5 text-muted-foreground text-xs hover:bg-muted'>
-                                            <Info className='mr-1 inline-block size-3' />
-                                            View Details
-                                          </button>
-                                        </PopoverTrigger>
-                                        <PopoverContent className='w-80'>
-                                          <pre className='whitespace-pre-wrap font-mono text-xs'>{JSON.stringify(JSON.parse(activity.metadata), null, 2)}</pre>
-                                        </PopoverContent>
-                                      </Popover>
-                                    )}
-                                    {activity.type === 'NOTE_ADDED' && (
-                                      <button type='button' onClick={() => setReplyingTo(activity.id)} className='rounded-md bg-muted/50 px-1 py-0.5 text-muted-foreground text-xs hover:bg-muted'>
-                                        Reply
-                                      </button>
-                                    )}
-                                  </div>
+                          return (
+                            <div key={activity.id} id={`note-${activity.id}`}>
+                              {showDateDivider && (
+                                <div className='sticky top-0 bg-background/95 py-2 backdrop-blur supports-[backdrop-filter]:bg-background/60'>
+                                  <p className='font-medium text-muted-foreground text-sm'>{currentDate}</p>
                                 </div>
-                                <div className={cn('text-sm', activity.type === 'NOTE_ADDED' ? 'rounded-md bg-blue-50 p-3 dark:bg-blue-950/50' : '')}>{activity.description}</div>
-                                {replyingTo === activity.id && (
-                                  <form onSubmit={handleReplySubmit} className='mt-2 flex items-start gap-2'>
-                                    <div className='flex-1'>
-                                      <Input value={replyText} onChange={(e) => setReplyText(e.target.value)} placeholder='Write a reply...' className='h-8' />
-                                    </div>
-                                    <div className='flex gap-1'>
-                                      <Button type='submit' size='sm' disabled={createContactActivity.isPending}>
-                                        Reply
-                                      </Button>
-                                      <Button
-                                        type='button'
-                                        size='sm'
-                                        variant='outline'
-                                        onClick={() => {
-                                          setReplyingTo(null);
-                                          setReplyText('');
-                                        }}
-                                      >
-                                        Cancel
-                                      </Button>
-                                    </div>
-                                  </form>
+                              )}
+                              <div
+                                className={cn(
+                                  'flex items-start gap-3 border-l-2 py-3 pr-2 pl-4 hover:bg-muted/30',
+                                  highlightedNote === activity.id && 'bg-neutral-500/20 dark:bg-neutral-500/50',
+                                  activity.metadata && JSON.parse(activity.metadata).replyTo && 'ml-4'
                                 )}
-                                {activity.metadata && JSON.parse(activity.metadata).replyTo && (
-                                  <button
-                                    type='button'
-                                    onClick={() => scrollToNote(JSON.parse(activity.metadata as string).replyTo)}
-                                    className='mt-1 flex items-center gap-1 text-muted-foreground text-xs hover:text-foreground'
-                                  >
-                                    <ArrowUpRight className='size-3' />
-                                    Jump to original note
-                                  </button>
-                                )}
+                                style={{
+                                  borderLeftColor:
+                                    activity.type === 'NOTE_ADDED'
+                                      ? 'rgb(59 130 246)'
+                                      : activity.type.startsWith('CONTACT_')
+                                      ? 'rgb(34 197 94)'
+                                      : activity.type.startsWith('MEETING_')
+                                      ? 'rgb(168 85 247)'
+                                      : activity.type.startsWith('TEAM_')
+                                      ? 'rgb(234 179 8)'
+                                      : activity.type.startsWith('DEAL_')
+                                      ? 'rgb(236 72 153)'
+                                      : activity.type.includes('STATUS')
+                                      ? 'rgb(249 115 22)'
+                                      : activity.type.includes('PRIORITY')
+                                      ? 'rgb(239 68 68)'
+                                      : activity.type.includes('PAYMENT')
+                                      ? 'rgb(16 185 129)'
+                                      : 'rgb(156 163 175)',
+                                }}
+                              >
+                                <div className='flex-1 space-y-1'>
+                                  <div className='flex w-full items-center justify-between'>
+                                    <div className='flex items-center gap-2 text-sm'>
+                                      <span className='font-medium'>{activity.title}</span>
+                                      <span className='text-muted-foreground text-xs'>•</span>
+                                      {activity.initiatorType === 'system' ? (
+                                        <span className='text-muted-foreground text-xs'>by System</span>
+                                      ) : (
+                                        <span className='text-muted-foreground text-xs'>
+                                          by <NameTag id={activity.userId} type='user' />
+                                        </span>
+                                      )}
+                                      <span className='text-muted-foreground text-xs'>•</span>
+                                      <span className='text-muted-foreground text-xs'>{new Date(activity.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                                    </div>
+                                    <div className='flex items-center gap-2'>
+                                      {activity.metadata && (
+                                        <Popover>
+                                          <PopoverTrigger asChild>
+                                            <button type='button' className='rounded-md bg-muted/50 px-1 py-0.5 text-muted-foreground text-xs hover:bg-muted'>
+                                              <Info className='mr-1 inline-block size-3' />
+                                              View Details
+                                            </button>
+                                          </PopoverTrigger>
+                                          <PopoverContent className='w-80'>
+                                            <pre className='whitespace-pre-wrap font-mono text-xs'>{JSON.stringify(JSON.parse(activity.metadata), null, 2)}</pre>
+                                          </PopoverContent>
+                                        </Popover>
+                                      )}
+                                      {activity.type === 'NOTE_ADDED' && (
+                                        <button type='button' onClick={() => setReplyingTo(activity.id)} className='rounded-md bg-muted/50 px-1 py-0.5 text-muted-foreground text-xs hover:bg-muted'>
+                                          Reply
+                                        </button>
+                                      )}
+                                    </div>
+                                  </div>
+                                  <div className={cn('text-sm', activity.type === 'NOTE_ADDED' ? 'rounded-md bg-blue-50 p-3 dark:bg-blue-950/50' : '')}>{activity.description}</div>
+                                  {replyingTo === activity.id && (
+                                    <form onSubmit={handleReplySubmit} className='mt-2 flex items-start gap-2'>
+                                      <div className='flex-1'>
+                                        <Input value={replyText} onChange={(e) => setReplyText(e.target.value)} placeholder='Write a reply...' className='h-8' />
+                                      </div>
+                                      <div className='flex gap-1'>
+                                        <Button type='submit' size='sm' disabled={createContactActivity.isPending}>
+                                          Reply
+                                        </Button>
+                                        <Button
+                                          type='button'
+                                          size='sm'
+                                          variant='outline'
+                                          onClick={() => {
+                                            setReplyingTo(null);
+                                            setReplyText('');
+                                          }}
+                                        >
+                                          Cancel
+                                        </Button>
+                                      </div>
+                                    </form>
+                                  )}
+                                  {activity.metadata && JSON.parse(activity.metadata).replyTo && (
+                                    <button
+                                      type='button'
+                                      onClick={() => scrollToNote(JSON.parse(activity.metadata as string).replyTo)}
+                                      className='mt-1 flex items-center gap-1 text-muted-foreground text-xs hover:text-foreground'
+                                    >
+                                      <ArrowUpRight className='size-3' />
+                                      Jump to original note
+                                    </button>
+                                  )}
+                                </div>
                               </div>
                             </div>
-                          </div>
-                        );
-                      })}
+                          );
+                        })}
+                    </div>
                   </div>
-                  <form onSubmit={handleSubmitActivity} className='flex max-w-full flex-1 gap-2 pt-4'>
-                    <Input value={newActivity} onChange={(e) => setNewActivity(e.target.value)} placeholder='Add a note...' className='h-8' />
-                    <Button type='submit' size='sm' disabled={createContactActivity.isPending}>
-                      Add Note
-                    </Button>
-                  </form>
+                  <div className='absolute right-0 bottom-0 left-0 bg-background pt-4'>
+                    <form onSubmit={handleSubmitActivity} className='flex max-w-full gap-2'>
+                      <Input value={newActivity} onChange={(e) => setNewActivity(e.target.value)} placeholder='Add a note...' className='h-8' />
+                      <Button type='submit' size='sm' disabled={createContactActivity.isPending}>
+                        Add Note
+                      </Button>
+                    </form>
+                  </div>
                 </TabsContent>
                 <TabsContent value='subscription' className='flex w-full flex-col gap-4'>
                   <p>Subscription</p>
