@@ -10,6 +10,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { DropdownMenuCheckboxItem } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { useDebounce } from '@/hooks/use-debounce';
 import { statusSchema } from '@/lib/schema';
 import { cn, formatDate } from '@/lib/utils';
 import { api } from '@/utils/trpc/client';
@@ -61,6 +62,7 @@ export default function CRMContactsPage() {
   });
 
   const [search, setSearch] = useState('');
+  const debouncedSearch = useDebounce(search, 300);
 
   const [sortConfig, setSortConfig] = useState<SortConfig>({ column: '', direction: 'asc' });
 
@@ -226,8 +228,8 @@ export default function CRMContactsPage() {
 
     return contacts
       .filter((contact) => {
-        if (search) {
-          const searchTerm = search.toLowerCase();
+        if (debouncedSearch) {
+          const searchTerm = debouncedSearch.toLowerCase();
           const fullName = `${contact.firstName} ${contact.lastName}`.toLowerCase();
           const email = contact.email.toLowerCase();
           const status = contact.status.toLowerCase();
@@ -289,7 +291,7 @@ export default function CRMContactsPage() {
         if (aValue > bValue) return sortConfig.direction === 'asc' ? 1 : -1;
         return 0;
       });
-  }, [contacts, filters, sortConfig, search]);
+  }, [contacts, filters, sortConfig, debouncedSearch]);
 
   const handleSort = (column: string) => {
     setSortConfig((current) => ({
