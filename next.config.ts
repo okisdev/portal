@@ -12,9 +12,29 @@ const nextConfig: NextConfig = {
   redirects: async () => {
     return [
       {
+        source: '/dashboard/account',
+        destination: '/dashboard/account/settings',
+        permanent: false,
+      },
+      {
         source: '/dashboard/crm',
         destination: '/dashboard/crm/contacts',
-        permanent: true,
+        permanent: false,
+      },
+      {
+        source: '/dashboard/marketing',
+        destination: '/dashboard/marketing/campaigns',
+        permanent: false,
+      },
+      {
+        source: '/dashboard/personal',
+        destination: '/dashboard/personal/calendar',
+        permanent: false,
+      },
+      {
+        source: '/dashboard/resource',
+        destination: '/dashboard/resource/content',
+        permanent: false,
       },
     ];
   },

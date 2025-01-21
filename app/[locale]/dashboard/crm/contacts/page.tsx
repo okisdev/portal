@@ -10,7 +10,8 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { DropdownMenuCheckboxItem } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { statusSchema } from '@/lib/schema';
+import { useDebounce } from '@/hooks/use-debounce';
+import { sourceSchema, statusSchema } from '@/lib/schema';
 import { cn, formatDate } from '@/lib/utils';
 import { api } from '@/utils/trpc/client';
 import { CaretSortIcon } from '@radix-ui/react-icons';
@@ -61,6 +62,7 @@ export default function CRMContactsPage() {
   });
 
   const [search, setSearch] = useState('');
+  const debouncedSearch = useDebounce(search, 300);
 
   const [sortConfig, setSortConfig] = useState<SortConfig>({ column: '', direction: 'asc' });
 
@@ -101,34 +103,81 @@ export default function CRMContactsPage() {
 
   const handleStatusFilter = (status: string | null) => {
     if (status === null) {
-      // Clear all filters
-      setFilters({ conditions: [], matchAll: true });
+      // Clear all status filters
+      setFilters({
+        ...filters,
+        conditions: filters.conditions.filter((c) => c.field !== 'status'),
+      });
       return;
     }
 
-    // If clicking the same status filter again, clear it
-    if (filters.conditions.some((c) => c.field === 'status' && c.value === status)) {
-      setFilters({ conditions: [], matchAll: true });
+    // Check if the status is already active
+    const isActive = filters.conditions.some((c) => c.field === 'status' && c.value === status);
+    if (isActive) {
+      // If active, remove it
+      setFilters({
+        ...filters,
+        conditions: filters.conditions.filter((c) => !(c.field === 'status' && c.value === status)),
+      });
       return;
     }
 
-    // Set the new status filter
+    // Add the new status filter without removing existing ones
     setFilters({
-      conditions: [{ field: 'status', operator: '=', value: status }],
-      matchAll: true,
+      ...filters,
+      conditions: [...filters.conditions, { field: 'status', operator: '=', value: status }],
+    });
+  };
+
+  const handleSourceFilter = (source: string | null) => {
+    if (source === null) {
+      // Clear all source filters
+      setFilters({
+        ...filters,
+        conditions: filters.conditions.filter((c) => c.field !== 'source'),
+      });
+      return;
+    }
+
+    // Check if the source is already active
+    const isActive = filters.conditions.some((c) => c.field === 'source' && c.value === source);
+    if (isActive) {
+      // If active, remove it
+      setFilters({
+        ...filters,
+        conditions: filters.conditions.filter((c) => !(c.field === 'source' && c.value === source)),
+      });
+      return;
+    }
+
+    // Add the new source filter without removing existing ones
+    setFilters({
+      ...filters,
+      conditions: [...filters.conditions, { field: 'source', operator: '=', value: source }],
     });
   };
 
   // Initialize filters from URL on mount
   useEffect(() => {
-    const filtersParam = searchParams.get('filters');
-    if (filtersParam) {
-      try {
-        const decodedFilters = JSON.parse(decodeURIComponent(filtersParam)) as FilterConfig;
-        setFilters(decodedFilters);
-      } catch (e) {
-        console.error('Failed to parse filters from URL:', e);
+    const newConditions: FilterCondition[] = [];
+
+    // Check for individual filter parameters
+    for (const field of filterFields) {
+      const values = searchParams.getAll(field.value);
+      for (const value of values) {
+        newConditions.push({
+          field: field.value,
+          operator: '=',
+          value: value,
+        });
       }
+    }
+
+    if (newConditions.length > 0) {
+      setFilters({
+        conditions: newConditions,
+        matchAll: true,
+      });
     }
 
     const searchParam = searchParams.get('search');
@@ -145,32 +194,38 @@ export default function CRMContactsPage() {
         console.error('Failed to parse sort from URL:', e);
       }
     }
-
-    // Check for status in URL
-    const statusParam = searchParams.get('status');
-    if (statusParam) {
-      handleStatusFilter(statusParam);
-    }
-  }, [searchParams]); // Add searchParams as dependency
+  }, []);
 
   // Update URL when filters change
   useEffect(() => {
     const params = new URLSearchParams(searchParams);
 
-    // Update filters in URL
-    if (filters.conditions.length > 0) {
-      params.set('filters', encodeURIComponent(JSON.stringify(filters)));
+    // Clear all filter-related params first
+    for (const field of filterFields) {
+      params.delete(field.value);
+    }
 
-      // Add status shortcut param if it's a status filter
-      const statusFilter = filters.conditions.find((c) => c.field === 'status' && c.operator === '=');
-      if (statusFilter) {
-        params.set('status', statusFilter.value);
-      } else {
-        params.delete('status');
+    // Group conditions by field
+    const groupedConditions = filters.conditions.reduce((acc, condition) => {
+      if (!acc[condition.field]) {
+        acc[condition.field] = [];
       }
-    } else {
-      params.delete('filters');
-      params.delete('status');
+      acc[condition.field].push(condition.value);
+      return acc;
+    }, {} as Record<string, string[]>);
+
+    // Update filter parameters
+    for (const [field, values] of Object.entries(groupedConditions)) {
+      if (values.length === 1) {
+        params.set(field, values[0]);
+      } else if (values.length > 1) {
+        // Delete any existing single value
+        params.delete(field);
+        // Add each value as a separate parameter
+        for (const value of values) {
+          params.append(field, value);
+        }
+      }
     }
 
     // Update search in URL
@@ -192,13 +247,41 @@ export default function CRMContactsPage() {
     router.replace(newUrl);
   }, [filters, search, sortConfig, pathname, searchParams]);
 
+  const handleFilterChange = (index: number, field: string, operator: FilterOperator, value: string) => {
+    const newConditions = [...filters.conditions];
+
+    // Remove any existing filter for this field
+    const existingIndex = newConditions.findIndex((c) => c.field === field);
+    if (existingIndex !== -1 && existingIndex !== index) {
+      newConditions.splice(existingIndex, 1);
+    }
+
+    if (index >= newConditions.length) {
+      newConditions.push({ field, operator, value });
+    } else {
+      newConditions[index] = { field, operator, value };
+    }
+
+    setFilters((prev) => ({
+      ...prev,
+      conditions: newConditions,
+    }));
+  };
+
+  const handleRemoveFilter = (index: number) => {
+    setFilters((prev) => ({
+      ...prev,
+      conditions: prev.conditions.filter((_, i) => i !== index),
+    }));
+  };
+
   const filteredContacts = useMemo(() => {
     if (!contacts) return [];
 
     return contacts
       .filter((contact) => {
-        if (search) {
-          const searchTerm = search.toLowerCase();
+        if (debouncedSearch) {
+          const searchTerm = debouncedSearch.toLowerCase();
           const fullName = `${contact.firstName} ${contact.lastName}`.toLowerCase();
           const email = contact.email.toLowerCase();
           const status = contact.status.toLowerCase();
@@ -209,35 +292,46 @@ export default function CRMContactsPage() {
 
         if (filters.conditions.length === 0) return true;
 
-        const results = filters.conditions.map((condition) => {
-          let fieldValue = '';
-
-          if (condition.field === 'name') {
-            fieldValue = `${contact.firstName} ${contact.lastName}`;
-          } else {
-            fieldValue = String(contact[condition.field as keyof typeof contact] || '');
+        // Group conditions by field
+        const groupedConditions = filters.conditions.reduce((acc, condition) => {
+          if (!acc[condition.field]) {
+            acc[condition.field] = [];
           }
+          acc[condition.field].push(condition);
+          return acc;
+        }, {} as Record<string, FilterCondition[]>);
 
-          fieldValue = fieldValue.toLowerCase();
-          const compareValue = condition.value.toLowerCase();
+        // Check each field group separately
+        return Object.entries(groupedConditions).every(([field, conditions]) => {
+          // OR operation within the same field
+          return conditions.some((condition) => {
+            let fieldValue = '';
 
-          switch (condition.operator) {
-            case '=':
-              return fieldValue === compareValue;
-            case '!=':
-              return fieldValue !== compareValue;
-            case 'contains':
-              return fieldValue.includes(compareValue);
-            case 'startsWith':
-              return fieldValue.startsWith(compareValue);
-            case 'endsWith':
-              return fieldValue.endsWith(compareValue);
-            default:
-              return false;
-          }
+            if (condition.field === 'name') {
+              fieldValue = `${contact.firstName} ${contact.lastName}`;
+            } else {
+              fieldValue = String(contact[condition.field as keyof typeof contact] || '');
+            }
+
+            fieldValue = fieldValue.toLowerCase();
+            const compareValue = condition.value.toLowerCase();
+
+            switch (condition.operator) {
+              case '=':
+                return fieldValue === compareValue;
+              case '!=':
+                return fieldValue !== compareValue;
+              case 'contains':
+                return fieldValue.includes(compareValue);
+              case 'startsWith':
+                return fieldValue.startsWith(compareValue);
+              case 'endsWith':
+                return fieldValue.endsWith(compareValue);
+              default:
+                return false;
+            }
+          });
         });
-
-        return filters.matchAll ? results.every(Boolean) : results.some(Boolean);
       })
       .sort((a, b) => {
         if (!sortConfig.column) return 0;
@@ -260,7 +354,7 @@ export default function CRMContactsPage() {
         if (aValue > bValue) return sortConfig.direction === 'asc' ? 1 : -1;
         return 0;
       });
-  }, [contacts, filters, sortConfig, search]);
+  }, [contacts, filters, sortConfig, debouncedSearch]);
 
   const handleSort = (column: string) => {
     setSortConfig((current) => ({
@@ -313,16 +407,8 @@ export default function CRMContactsPage() {
                   </div>
 
                   {filters.conditions.map((condition, index) => (
-                    <div key={condition.field} className='flex items-center gap-2'>
-                      <select
-                        className='h-8 rounded-md border px-2 text-sm'
-                        value={condition.field}
-                        onChange={(e) => {
-                          const newConditions = [...filters.conditions];
-                          newConditions[index].field = e.target.value;
-                          setFilters((f) => ({ ...f, conditions: newConditions }));
-                        }}
-                      >
+                    <div key={`${condition.field}-${index}`} className='flex items-center gap-2'>
+                      <select className='h-8 rounded-md border px-2 text-sm' value={condition.field} onChange={(e) => handleFilterChange(index, e.target.value, condition.operator, condition.value)}>
                         {filterFields.map((field) => (
                           <option key={field.value} value={field.value}>
                             {field.label}
@@ -333,11 +419,7 @@ export default function CRMContactsPage() {
                       <select
                         className='h-8 rounded-md border px-2 text-sm'
                         value={condition.operator}
-                        onChange={(e) => {
-                          const newConditions = [...filters.conditions];
-                          newConditions[index].operator = e.target.value as FilterOperator;
-                          setFilters((f) => ({ ...f, conditions: newConditions }));
-                        }}
+                        onChange={(e) => handleFilterChange(index, condition.field, e.target.value as FilterOperator, condition.value)}
                       >
                         {filterOperators.map((op) => (
                           <option key={op.value} value={op.value}>
@@ -346,26 +428,9 @@ export default function CRMContactsPage() {
                         ))}
                       </select>
 
-                      <Input
-                        className='h-8'
-                        value={condition.value}
-                        onChange={(e) => {
-                          const newConditions = [...filters.conditions];
-                          newConditions[index].value = e.target.value;
-                          setFilters((f) => ({ ...f, conditions: newConditions }));
-                        }}
-                      />
+                      <Input className='h-8' value={condition.value} onChange={(e) => handleFilterChange(index, condition.field, condition.operator, e.target.value)} />
 
-                      <Button
-                        variant='ghost'
-                        size='sm'
-                        onClick={() => {
-                          setFilters((f) => ({
-                            ...f,
-                            conditions: f.conditions.filter((_, i) => i !== index),
-                          }));
-                        }}
-                      >
+                      <Button variant='ghost' size='sm' onClick={() => handleRemoveFilter(index)}>
                         <X className='h-4 w-4' />
                       </Button>
                     </div>
@@ -378,7 +443,7 @@ export default function CRMContactsPage() {
                     onClick={() => {
                       setFilters((f) => ({
                         ...f,
-                        conditions: [...f.conditions, { field: 'name', operator: 'contains', value: '' }],
+                        conditions: [...f.conditions, { field: filterFields[0].value, operator: '=', value: '' }],
                       }));
                     }}
                   >
@@ -409,6 +474,13 @@ export default function CRMContactsPage() {
                 ))}
               </DropdownMenuContent>
             </DropdownMenu>
+
+            {filters.conditions.length > 0 && (
+              <Button variant='outline' size='sm' onClick={() => setFilters({ conditions: [], matchAll: true })}>
+                <X className='h-4 w-4' />
+                Clear
+              </Button>
+            )}
           </div>
           <div className='flex flex-row gap-2'>
             <DropdownMenu>
@@ -439,21 +511,26 @@ export default function CRMContactsPage() {
 
       <div className='flex flex-col gap-2'>
         <div className='flex flex-wrap items-center gap-2'>
+          <p className='text-muted-foreground text-sm'>Status</p>
           {statusSchema.options.map((status) => {
             const isActive = filters.conditions.some((c) => c.field === 'status' && c.value === status);
             return (
-              <Button key={status} variant={isActive ? 'default' : 'outline'} size='sm' onClick={() => handleStatusFilter(status)} className={cn('capitalize', isActive && 'shadow-sm')}>
-                <ColorBadge type='contactStatus' value={status} className='mr-2' />
-                {status}
-              </Button>
+              <button type='button' key={status} onClick={() => handleStatusFilter(status)}>
+                <ColorBadge type='contactStatus' value={status} className={cn('capitalize', isActive && 'ring-1 ring-offset-1 ring-offset-background')} />
+              </button>
             );
           })}
-          {filters.conditions.length > 0 && (
-            <Button variant='ghost' size='sm' onClick={() => handleStatusFilter(null)} className='ml-2'>
-              <X className='mr-2 h-4 w-4' />
-              Clear filters
-            </Button>
-          )}
+        </div>
+        <div className='flex flex-wrap items-center gap-2'>
+          <p className='text-muted-foreground text-sm'>Source</p>
+          {sourceSchema.options.map((source) => {
+            const isActive = filters.conditions.some((c) => c.field === 'source' && c.value === source);
+            return (
+              <button type='button' key={source} onClick={() => handleSourceFilter(source)}>
+                <ColorBadge type='contactStatus' value={source} className={cn('capitalize', isActive && 'ring-1 ring-offset-1 ring-offset-background')} />
+              </button>
+            );
+          })}
         </div>
       </div>
 

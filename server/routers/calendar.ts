@@ -1,8 +1,64 @@
-import { calendarEvent, calendarEventParticipant, calendarFolder, contact, user } from '@/drizzle/schema';
+import { calendarEvent, calendarEventParticipant, calendarFolder, contact, contactActivity, user } from '@/drizzle/schema';
 import { appointmentSchema } from '@/lib/schema';
 import { createTRPCRouter, protectedProcedure } from '@/server/trpc';
 import { and, desc, eq, gte, inArray, lte } from 'drizzle-orm';
 import { z } from 'zod';
+
+const activityTypeEnum = z.enum([
+  // Contact Management
+  'CONTACT_CREATED',
+  'CONTACT_UPDATED',
+  'CONTACT_DELETED',
+
+  // Status Changes
+  'STATUS_CHANGED',
+  'PRIORITY_CHANGED',
+
+  // Engagement
+  'MEETING_SCHEDULED',
+  'MEETING_UPDATED',
+  'MEETING_CANCELLED',
+  'CALL_LOGGED',
+  'EMAIL_SENT',
+  'NOTE_ADDED',
+
+  // Team Management
+  'TEAM_ASSIGNED',
+  'TEAM_REMOVED',
+
+  // Deal Management
+  'DEAL_CREATED',
+  'DEAL_UPDATED',
+  'DEAL_CLOSED',
+
+  // Payment
+  'PAYMENT_LINK_CLICKED',
+  'PAYMENT_COMPLETED',
+]);
+
+// Helper function to create contact activity
+const createContactActivityHelper = async (
+  ctx: any,
+  input: {
+    contactId: string;
+    type: z.infer<typeof activityTypeEnum>;
+    title: string;
+    description: string;
+    initiatorType?: 'user' | 'contact' | 'system';
+    metadata?: Record<string, any>;
+  }
+) => {
+  return ctx.db.insert(contactActivity).values({
+    contactId: input.contactId,
+    userId: ctx.session?.user.id,
+    type: input.type,
+    initiatorType: input.initiatorType || 'system',
+    initiatorId: ctx.session?.user.id,
+    title: input.title,
+    description: input.description,
+    metadata: input.metadata ? JSON.stringify(input.metadata) : null,
+  });
+};
 
 export const calendarRouter = createTRPCRouter({
   getFolders: protectedProcedure.query(({ ctx }) => {
@@ -130,28 +186,90 @@ export const calendarRouter = createTRPCRouter({
     .input(
       z.object({
         id: z.string(),
-        title: z.string().optional(),
+        title: z.string(),
         description: z.string().optional(),
-        location: z.string().optional(),
-        startAt: z.date().optional(),
-        endAt: z.date().optional(),
-        isAllDay: z.boolean().optional(),
-        isPublic: z.boolean().optional(),
-        folderId: z.string().optional(),
-        recurrence: z.string().optional(),
-        metadata: z.string().optional(),
+        startAt: z.date(),
+        endAt: z.date(),
       })
     )
-    .mutation(({ ctx, input }) => {
-      const { id, ...updateData } = input;
-      return ctx.db
+    .mutation(async ({ ctx, input }) => {
+      // Get contact participant
+      const participant = await ctx.db
+        .select({
+          participantId: calendarEventParticipant.participantId,
+        })
+        .from(calendarEventParticipant)
+        .where(and(eq(calendarEventParticipant.eventId, input.id), eq(calendarEventParticipant.participantType, 'contact')))
+        .then((rows) => rows[0]);
+
+      const result = await ctx.db
         .update(calendarEvent)
-        .set(updateData)
-        .where(and(eq(calendarEvent.id, input.id), eq(calendarEvent.userId, ctx.session.user.id)));
+        .set({
+          title: input.title,
+          description: input.description,
+          startAt: input.startAt,
+          endAt: input.endAt,
+        })
+        .where(eq(calendarEvent.id, input.id))
+        .returning();
+
+      if (participant?.participantId) {
+        // Log meeting update activity
+        await createContactActivityHelper(ctx, {
+          contactId: participant.participantId,
+          type: 'MEETING_UPDATED',
+          title: 'Meeting Updated',
+          description: `Meeting "${input.title}" was updated to ${new Date(input.startAt).toLocaleString()}${input.description ? ` - ${input.description}` : ''}`,
+          metadata: {
+            eventId: input.id,
+            title: input.title,
+            startAt: input.startAt,
+            endAt: input.endAt,
+            description: input.description,
+          },
+        });
+      }
+
+      return result[0];
     }),
 
-  deleteEvent: protectedProcedure.input(z.string()).mutation(({ ctx, input }) => {
-    return ctx.db.delete(calendarEvent).where(and(eq(calendarEvent.id, input), eq(calendarEvent.userId, ctx.session.user.id)));
+  deleteEvent: protectedProcedure.input(z.string()).mutation(async ({ ctx, input }) => {
+    // Get event details before deletion
+    const event = await ctx.db
+      .select({
+        id: calendarEvent.id,
+        title: calendarEvent.title,
+        startAt: calendarEvent.startAt,
+      })
+      .from(calendarEvent)
+      .where(eq(calendarEvent.id, input))
+      .then((rows) => rows[0]);
+
+    // Get contact participant before deletion
+    const participant = await ctx.db
+      .select({
+        participantId: calendarEventParticipant.participantId,
+      })
+      .from(calendarEventParticipant)
+      .where(and(eq(calendarEventParticipant.eventId, input), eq(calendarEventParticipant.participantType, 'contact')))
+      .then((rows) => rows[0]);
+
+    if (participant?.participantId) {
+      // Log meeting cancellation activity
+      await createContactActivityHelper(ctx, {
+        contactId: participant.participantId,
+        type: 'MEETING_CANCELLED',
+        title: 'Meeting Cancelled',
+        description: `Meeting "${event.title}" scheduled for ${new Date(event.startAt).toLocaleString()} was cancelled.`,
+        metadata: {
+          eventId: event.id,
+          title: event.title,
+          startAt: event.startAt,
+        },
+      });
+    }
+
+    return ctx.db.delete(calendarEvent).where(eq(calendarEvent.id, input));
   }),
 
   updateFolder: protectedProcedure
@@ -226,6 +344,20 @@ export const calendarRouter = createTRPCRouter({
       participantId: contactId,
       status: 'accepted',
       role: 'required',
+    });
+
+    // Log meeting creation activity
+    await createContactActivityHelper(ctx, {
+      contactId,
+      type: 'MEETING_SCHEDULED',
+      title: 'Meeting Scheduled',
+      description: `Meeting "${title}" scheduled for ${new Date(startAt).toLocaleString()}${description ? ` - ${description}` : ''}`,
+      metadata: {
+        eventId: event.id,
+        startAt,
+        endAt,
+        description,
+      },
     });
 
     return event;

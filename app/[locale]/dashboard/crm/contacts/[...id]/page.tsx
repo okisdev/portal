@@ -4,21 +4,35 @@ import { ColorBadge } from '@/components/shared/color-badge';
 import { Combobox } from '@/components/shared/combobox';
 import { DateTimePicker } from '@/components/shared/date-time-picker';
 import { EventDialog } from '@/components/shared/event-dialog';
+import { NameTag } from '@/components/shared/name-tag';
 import { PageLoading } from '@/components/shared/page-loading';
 import { PhoneInput } from '@/components/shared/phone-input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
+import {} from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuPortal,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import { insuranceCompanies, sources } from '@/data/data';
 import { type Priority, type Status, statusSchema } from '@/lib/schema';
 import { cn, formatDate } from '@/lib/utils';
 import { api } from '@/utils/trpc/client';
-import { Building2, Calendar, CalendarIcon, Edit2, Mail, MoreHorizontal, Phone, Save, Trash2, Users, X } from 'lucide-react';
+import { ArrowUpRight, Building2, Calendar, Edit2, Mail, MessageSquare, MoreHorizontal, Phone, Plus, Save, Send, Trash2, Users, X } from 'lucide-react';
+import { Info } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
@@ -40,7 +54,7 @@ export default function ContactIdPage() {
   const { data: contact, isLoading } = api.contact.getContactById.useQuery({
     id: contactId[0],
   });
-  const { data: activities, refetch: refetchActivities } = api.contact.getContactActivities.useQuery({
+  const { data: activities } = api.contact.getContactActivities.useQuery({
     id: contactId[0],
   });
   const { data: payments } = api.pay.getPaymentByContactEmail.useQuery({ email: contact?.email || '' }, { enabled: !!contact?.email });
@@ -68,6 +82,9 @@ export default function ContactIdPage() {
   const [appointmentNotes, setAppointmentNotes] = useState('');
   const [isTeamModalOpen, setIsTeamModalOpen] = useState(false);
   const [selectedTeam, setSelectedTeam] = useState<string>('');
+  const [replyingTo, setReplyingTo] = useState<string | null>(null);
+  const [replyText, setReplyText] = useState('');
+  const [highlightedNote, setHighlightedNote] = useState<string | null>(null);
   const [editingAppointment, setEditingAppointment] = useState<{
     id: string;
     title: string;
@@ -81,6 +98,7 @@ export default function ContactIdPage() {
     onSuccess: () => {
       setIsTeamModalOpen(false);
       utils.contact.getContactById.invalidate({ id: contactId });
+      utils.contact.getContactActivities.invalidate({ id: contactId });
     },
   });
 
@@ -88,6 +106,7 @@ export default function ContactIdPage() {
     onSuccess: () => {
       handleCloseEditModal();
       utils.contact.getContactById.invalidate({ id: contactId[0] });
+      utils.contact.getContactActivities.invalidate({ id: contactId[0] });
       toast.success('Contact updated successfully');
     },
   });
@@ -95,6 +114,7 @@ export default function ContactIdPage() {
   const updateContactRemark = api.contact.updateContactRemark.useMutation({
     onSuccess: () => {
       utils.contact.getContactById.invalidate({ id: contactId[0] });
+      utils.contact.getContactActivities.invalidate({ id: contactId[0] });
       toast.success('Contact remark updated successfully');
     },
   });
@@ -105,7 +125,9 @@ export default function ContactIdPage() {
       setAppointmentStartDate(undefined);
       setAppointmentEndDate(undefined);
       setAppointmentNotes('');
+      utils.calendar.getAppointmentsByContactId.invalidate({ contactId: contactId[0] });
       utils.contact.getContactById.invalidate({ id: contactId[0] });
+      utils.contact.getContactActivities.invalidate({ id: contactId[0] });
       toast.success('Appointment created successfully');
     },
     onError: (error) => {
@@ -116,6 +138,7 @@ export default function ContactIdPage() {
   const deleteAppointment = api.calendar.deleteEvent.useMutation({
     onSuccess: () => {
       utils.calendar.getAppointmentsByContactId.invalidate({ contactId: contactId[0] });
+      utils.contact.getContactActivities.invalidate({ id: contactId[0] });
       toast.success('Appointment deleted successfully');
     },
     onError: (error) => {
@@ -127,6 +150,7 @@ export default function ContactIdPage() {
     onSuccess: () => {
       setEditingAppointment(null);
       utils.calendar.getAppointmentsByContactId.invalidate({ contactId: contactId[0] });
+      utils.contact.getContactActivities.invalidate({ id: contactId[0] });
       toast.success('Appointment updated successfully');
     },
     onError: (error) => {
@@ -137,7 +161,7 @@ export default function ContactIdPage() {
   const createContactActivity = api.contact.createContactActivity.useMutation({
     onSuccess: () => {
       setNewActivity('');
-      refetchActivities();
+      utils.contact.getContactActivities.invalidate({ id: contactId[0] });
       toast.success('Activity created successfully');
     },
     onError: (error) => {
@@ -194,16 +218,6 @@ export default function ContactIdPage() {
   if (!isLoading && !contact) {
     notFound();
   }
-
-  const getInitiatorLabel = (activity: { initiatorType: string; type: string; initiatorId: string | null }) => {
-    if (activity.initiatorType === 'contact') {
-      return 'Contact';
-    }
-    if (activity.initiatorType === 'system') {
-      return 'System';
-    }
-    return activity.initiatorId || 'Unknown User';
-  };
 
   const handleEditClick = () => {
     setEditForm({
@@ -323,18 +337,49 @@ export default function ContactIdPage() {
 
     createContactActivity.mutate({
       contactId: contactId[0],
-      type: 'note',
+      type: 'NOTE_ADDED',
       initiatorType: 'user',
       initiatorId: session?.user.id || '',
-      title: 'Quick Note',
+      title: 'Note Added',
       description: newActivity,
     });
   };
 
+  const handleReplySubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!replyText.trim() || !replyingTo) {
+      toast.error('Reply cannot be empty');
+      return;
+    }
+
+    createContactActivity.mutate({
+      contactId: contactId[0],
+      type: 'NOTE_ADDED',
+      initiatorType: 'user',
+      initiatorId: session?.user.id || '',
+      title: 'Note Reply',
+      description: replyText,
+      metadata: { replyTo: replyingTo },
+    });
+
+    setReplyText('');
+    setReplyingTo(null);
+  };
+
+  const scrollToNote = (noteId: string) => {
+    const element = document.getElementById(`note-${noteId}`);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      setHighlightedNote(noteId);
+      setTimeout(() => setHighlightedNote(null), 2000);
+    }
+  };
+
   return (
-    <div className='container mx-auto space-y-6 p-6'>
-      <div className='grid grid-cols-1 gap-6 lg:grid-cols-3'>
-        <div className='lg:col-span-1'>
+    <div className='container mx-auto min-h-[calc(100vh-4rem)] space-y-6 p-6'>
+      <div className='grid h-[calc(100vh-6rem)] grid-cols-1 gap-6 lg:grid-cols-3'>
+        <div className='overflow-y-auto lg:col-span-1'>
           <div className='rounded-lg border bg-card text-card-foreground shadow-sm'>
             <div className='border-b p-6'>
               <div className='flex items-start gap-4'>
@@ -379,28 +424,57 @@ export default function ContactIdPage() {
                     )}
                   </div>
                 </div>
-              </div>
-            </div>
-
-            <div className='border-b px-6 py-4'>
-              <div className='flex gap-3'>
-                <Button variant='outline' size='sm' className='flex-1' onClick={handleOpenBookingModal}>
-                  <CalendarIcon className='mr-2 size-4' /> Book Meeting
-                </Button>
-                <Button variant='outline' size='sm' className='flex-1' onClick={handleEditClick}>
-                  <Edit2 className='mr-2 size-4' /> Edit
-                </Button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button type='button' className='my-1 text-muted-foreground outline-none hover:text-foreground'>
+                      <MoreHorizontal className='size-4' />
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align='end' className='bg-popover text-popover-foreground'>
+                    <DropdownMenuItem onClick={handleEditClick} className='cursor-pointer'>
+                      <Edit2 className='mr-2 size-4' />
+                      Edit
+                    </DropdownMenuItem>
+                    <DropdownMenuSub>
+                      <DropdownMenuSubTrigger className='cursor-pointer'>
+                        <Send className='mr-2 size-4' />
+                        Send
+                      </DropdownMenuSubTrigger>
+                      <DropdownMenuPortal>
+                        <DropdownMenuSubContent>
+                          <DropdownMenuItem className='cursor-pointer'>
+                            <Mail className='mr-2 size-4' />
+                            Email
+                          </DropdownMenuItem>
+                          <DropdownMenuItem className='cursor-pointer'>
+                            <MessageSquare className='mr-2 size-4' />
+                            Message
+                          </DropdownMenuItem>
+                        </DropdownMenuSubContent>
+                      </DropdownMenuPortal>
+                    </DropdownMenuSub>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
             </div>
 
             <div className='border-b p-6'>
               <div className='grid grid-cols-1 gap-4'>
-                {[
-                  { label: 'Last Contact', value: contact?.lastContactedAt ? formatDate(new Date(contact.lastContactedAt)) : '—' },
-                  { label: 'Source', value: contact?.source || '—' },
-                  {
-                    label: 'Priority',
-                    value: (
+                <div className='grid grid-cols-2 gap-4'>
+                  {[
+                    { label: 'Last Contact', value: contact?.lastContactedAt ? formatDate(new Date(contact.lastContactedAt)) : '—' },
+                    { label: 'Source', value: contact?.source || '—' },
+                  ].map((item) => (
+                    <div key={item.label} className='space-y-1.5'>
+                      <div className='text-muted-foreground text-xs'>{item.label}</div>
+                      <div className='text-foreground'>{item.value}</div>
+                    </div>
+                  ))}
+                </div>
+                <div className='grid grid-cols-2 gap-4'>
+                  <div className='space-y-1.5'>
+                    <div className='text-muted-foreground text-xs'>Priority</div>
+                    <div className='text-foreground'>
                       <Select value={contact?.priority || 'medium'} onValueChange={handlePriorityChange}>
                         <SelectTrigger className='h-8'>
                           <SelectValue>
@@ -415,11 +489,11 @@ export default function ContactIdPage() {
                           ))}
                         </SelectContent>
                       </Select>
-                    ),
-                  },
-                  {
-                    label: 'Status',
-                    value: (
+                    </div>
+                  </div>
+                  <div className='space-y-1.5'>
+                    <div className='text-muted-foreground text-xs'>Status</div>
+                    <div className='text-foreground'>
                       <Select value={contact?.status || 'lead'} onValueChange={handleStatusChange}>
                         <SelectTrigger className='h-8'>
                           <SelectValue>
@@ -434,23 +508,18 @@ export default function ContactIdPage() {
                           ))}
                         </SelectContent>
                       </Select>
-                    ),
-                  },
-                ].map((item) => (
-                  <div key={item.label} className='space-y-1.5'>
-                    <div className='text-muted-foreground text-sm'>{item.label}</div>
-                    <div className='text-foreground'>{item.value}</div>
+                    </div>
                   </div>
-                ))}
+                </div>
               </div>
             </div>
 
-            <div className='border-b p-6'>
+            <div className='space-y-2 border-b p-6'>
               <div className='flex items-center justify-between'>
                 <h2 className='font-medium text-foreground'>{t('remark')}</h2>
                 <button
                   type='button'
-                  className='h-8 text-muted-foreground hover:text-foreground'
+                  className='text-muted-foreground hover:text-foreground'
                   onClick={() => {
                     if (isNotesEditing) {
                       if (contact?.remark === editableRemark) {
@@ -481,21 +550,27 @@ export default function ContactIdPage() {
               )}
             </div>
 
-            <div className='border-b p-6'>
-              <h2 className='mb-4 font-medium text-foreground'>Upcoming Meetings</h2>
+            <div className='space-y-2 border-b p-6'>
+              <div className='flex items-center justify-between'>
+                <h2 className='font-medium text-foreground'>Meetings</h2>
+                <button type='button' className='text-muted-foreground hover:text-foreground' onClick={handleOpenBookingModal}>
+                  <Plus className='size-4' />
+                </button>
+              </div>
               <div className='space-y-4'>
+                {appointments?.length === 0 && <p className='text-muted-foreground text-sm'>No meetings found.</p>}
                 {appointments?.map((apt) => (
                   <div key={apt.id} className='flex items-center gap-3'>
                     <Calendar className='size-4 shrink-0 text-muted-foreground' />
                     <div className='min-w-0 flex-1'>
-                      <p className='truncate font-medium text-foreground'>{apt.title}</p>
-                      <p className='text-muted-foreground text-sm'>{formatDate(new Date(apt.startAt))}</p>
+                      <p className='truncate font-medium text-foreground text-sm'>{apt.title}</p>
+                      <p className='text-muted-foreground text-xs'>{formatDate(new Date(apt.startAt))}</p>
                     </div>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button variant='ghost' size='icon' className='shrink-0'>
+                        <button type='button' className='shrink-0 text-muted-foreground hover:text-foreground'>
                           <MoreHorizontal className='size-4' />
-                        </Button>
+                        </button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align='end' className='bg-popover text-popover-foreground'>
                         <DropdownMenuItem
@@ -522,9 +597,15 @@ export default function ContactIdPage() {
               </div>
             </div>
 
-            <div className='border-b p-6'>
-              <h2 className='mb-4 font-medium text-foreground'>Recent Payments</h2>
+            <div className='space-y-2 border-b p-6'>
+              <div className='flex items-center justify-between'>
+                <h2 className='font-medium text-foreground'>Payments</h2>
+                <button type='button' className='text-muted-foreground hover:text-foreground'>
+                  <Plus className='size-4' />
+                </button>
+              </div>
               <div className='space-y-3'>
+                {payments?.length === 0 && <p className='text-muted-foreground text-sm'>No payments found.</p>}
                 {payments?.slice(0, 3).map((payment) => (
                   <div key={payment.id} className='flex items-center justify-between'>
                     <span className='text-muted-foreground text-sm'>{formatDate(new Date(payment.created * 1000))}</span>
@@ -542,6 +623,9 @@ export default function ContactIdPage() {
             <div className='p-6'>
               <h2 className='mb-4 font-medium'>Team Roles</h2>
               <div className='space-y-3'>
+                {contact?.leadingTeams?.length === 0 && contact?.subLeadingTeams?.length === 0 && contact?.referralTeams?.length === 0 && (
+                  <p className='text-muted-foreground text-sm'>No team roles found.</p>
+                )}
                 {contact?.leadingTeams?.map((team) => (
                   <div key={team.id} className='flex items-center justify-between'>
                     <Link href={`/dashboard/crm/team/${team.id}`} className='text-sm hover:text-primary'>
@@ -571,35 +655,153 @@ export default function ContactIdPage() {
           </div>
         </div>
 
-        <div className='lg:col-span-2'>
-          <div className='rounded-lg border bg-card text-card-foreground shadow-sm'>
-            <div className='p-6'>
-              <div className='mb-6 flex items-center justify-between'>
-                <h2 className='font-medium'>Activity</h2>
-                <form onSubmit={handleSubmitActivity} className='flex max-w-md flex-1 gap-2'>
-                  <Input value={newActivity} onChange={(e) => setNewActivity(e.target.value)} placeholder='Add note...' className='h-9' />
-                  <Button type='submit' size='sm' disabled={createContactActivity.isPending}>
-                    Add
-                  </Button>
-                </form>
-              </div>
+        <div className='h-full lg:col-span-2'>
+          <div className='h-full rounded-lg border bg-card text-card-foreground shadow-sm'>
+            <div className='h-full p-6'>
+              <Tabs defaultValue='activity' className='flex h-full flex-col'>
+                <TabsList className='grid w-full grid-cols-3'>
+                  <TabsTrigger value='activity'>Activity</TabsTrigger>
+                  <TabsTrigger value='subscription'>Subscription</TabsTrigger>
+                  <TabsTrigger value='management'>Management</TabsTrigger>
+                </TabsList>
+                <TabsContent value='activity' className='relative flex flex-1 flex-col'>
+                  <div className='absolute inset-0 overflow-y-auto pb-[4.5rem]'>
+                    <div className='space-y-1'>
+                      {activities?.length === 0 && <p className='text-muted-foreground text-sm'>No activities found.</p>}
+                      {activities
+                        ?.filter((activity) => activity.type !== 'CONTACT_UPDATED')
+                        .map((activity, index) => {
+                          const currentDate = new Date(activity.createdAt).toDateString();
+                          const prevDate = index > 0 ? new Date(activities[index - 1].createdAt).toDateString() : null;
+                          const showDateDivider = currentDate !== prevDate;
 
-              <div className='max-h-[calc(100vh-16rem)] space-y-4 overflow-y-auto'>
-                {activities?.map((activity) => (
-                  <div key={activity.id} className='flex gap-4 border-b pb-4 last:border-0'>
-                    <div className='mt-1.5 size-2 shrink-0 rounded-full bg-primary' />
-                    <div className='min-w-0 flex-1'>
-                      <div className='mb-1 flex items-center gap-2'>
-                        <span className='font-medium text-sm'>{activity.title}</span>
-                        <span className='text-muted-foreground text-xs'>
-                          by {getInitiatorLabel(activity)} - {formatDate(new Date(activity.createdAt))}
-                        </span>
-                      </div>
-                      <p className='text-muted-foreground text-sm'>{activity.description}</p>
+                          return (
+                            <div key={activity.id} id={`note-${activity.id}`}>
+                              {showDateDivider && (
+                                <div className='sticky top-0 bg-background/95 py-2 backdrop-blur supports-[backdrop-filter]:bg-background/60'>
+                                  <p className='font-medium text-muted-foreground text-sm'>{currentDate}</p>
+                                </div>
+                              )}
+                              <div
+                                className={cn(
+                                  'flex items-start gap-3 border-l-2 py-3 pr-2 pl-4 hover:bg-muted/30',
+                                  highlightedNote === activity.id && 'bg-neutral-500/20 dark:bg-neutral-500/50',
+                                  activity.metadata && JSON.parse(activity.metadata).replyTo && 'ml-4'
+                                )}
+                                style={{
+                                  borderLeftColor:
+                                    activity.type === 'NOTE_ADDED'
+                                      ? 'rgb(59 130 246)'
+                                      : activity.type.startsWith('CONTACT_')
+                                      ? 'rgb(34 197 94)'
+                                      : activity.type.startsWith('MEETING_')
+                                      ? 'rgb(168 85 247)'
+                                      : activity.type.startsWith('TEAM_')
+                                      ? 'rgb(234 179 8)'
+                                      : activity.type.startsWith('DEAL_')
+                                      ? 'rgb(236 72 153)'
+                                      : activity.type.includes('STATUS')
+                                      ? 'rgb(249 115 22)'
+                                      : activity.type.includes('PRIORITY')
+                                      ? 'rgb(239 68 68)'
+                                      : activity.type.includes('PAYMENT')
+                                      ? 'rgb(16 185 129)'
+                                      : 'rgb(156 163 175)',
+                                }}
+                              >
+                                <div className='flex-1 space-y-1'>
+                                  <div className='flex w-full items-center justify-between'>
+                                    <div className='flex items-center gap-2 text-sm'>
+                                      <span className='font-medium'>{activity.title}</span>
+                                      <span className='text-muted-foreground text-xs'>•</span>
+                                      {activity.initiatorType === 'system' ? (
+                                        <span className='text-muted-foreground text-xs'>by System</span>
+                                      ) : (
+                                        <span className='text-muted-foreground text-xs'>
+                                          by <NameTag id={activity.userId} type='user' />
+                                        </span>
+                                      )}
+                                      <span className='text-muted-foreground text-xs'>•</span>
+                                      <span className='text-muted-foreground text-xs'>{new Date(activity.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                                    </div>
+                                    <div className='flex items-center gap-2'>
+                                      {activity.metadata && (
+                                        <Popover>
+                                          <PopoverTrigger asChild>
+                                            <button type='button' className='rounded-md bg-muted/50 px-1 py-0.5 text-muted-foreground text-xs hover:bg-muted'>
+                                              <Info className='mr-1 inline-block size-3' />
+                                              View Details
+                                            </button>
+                                          </PopoverTrigger>
+                                          <PopoverContent className='w-80'>
+                                            <pre className='whitespace-pre-wrap font-mono text-xs'>{JSON.stringify(JSON.parse(activity.metadata), null, 2)}</pre>
+                                          </PopoverContent>
+                                        </Popover>
+                                      )}
+                                      {activity.type === 'NOTE_ADDED' && (
+                                        <button type='button' onClick={() => setReplyingTo(activity.id)} className='rounded-md bg-muted/50 px-1 py-0.5 text-muted-foreground text-xs hover:bg-muted'>
+                                          Reply
+                                        </button>
+                                      )}
+                                    </div>
+                                  </div>
+                                  <div className={cn('text-sm', activity.type === 'NOTE_ADDED' ? 'rounded-md bg-blue-50 p-3 dark:bg-blue-950/50' : '')}>{activity.description}</div>
+                                  {replyingTo === activity.id && (
+                                    <form onSubmit={handleReplySubmit} className='mt-2 flex items-start gap-2'>
+                                      <div className='flex-1'>
+                                        <Input value={replyText} onChange={(e) => setReplyText(e.target.value)} placeholder='Write a reply...' className='h-8' />
+                                      </div>
+                                      <div className='flex gap-1'>
+                                        <Button type='submit' size='sm' disabled={createContactActivity.isPending}>
+                                          Reply
+                                        </Button>
+                                        <Button
+                                          type='button'
+                                          size='sm'
+                                          variant='outline'
+                                          onClick={() => {
+                                            setReplyingTo(null);
+                                            setReplyText('');
+                                          }}
+                                        >
+                                          Cancel
+                                        </Button>
+                                      </div>
+                                    </form>
+                                  )}
+                                  {activity.metadata && JSON.parse(activity.metadata).replyTo && (
+                                    <button
+                                      type='button'
+                                      onClick={() => scrollToNote(JSON.parse(activity.metadata as string).replyTo)}
+                                      className='mt-1 flex items-center gap-1 text-muted-foreground text-xs hover:text-foreground'
+                                    >
+                                      <ArrowUpRight className='size-3' />
+                                      Jump to original note
+                                    </button>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
                     </div>
                   </div>
-                ))}
-              </div>
+                  <div className='absolute right-0 bottom-0 left-0 bg-background pt-4'>
+                    <form onSubmit={handleSubmitActivity} className='flex max-w-full gap-2'>
+                      <Input value={newActivity} onChange={(e) => setNewActivity(e.target.value)} placeholder='Add a note...' className='h-8' />
+                      <Button type='submit' size='sm' disabled={createContactActivity.isPending}>
+                        Add Note
+                      </Button>
+                    </form>
+                  </div>
+                </TabsContent>
+                <TabsContent value='subscription' className='flex w-full flex-col gap-4'>
+                  <p>Subscription</p>
+                </TabsContent>
+                <TabsContent value='management' className='flex w-full flex-col gap-4'>
+                  <p>Management</p>
+                </TabsContent>
+              </Tabs>
             </div>
           </div>
         </div>

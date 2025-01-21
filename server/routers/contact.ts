@@ -1,8 +1,64 @@
 import { contact, contactActivity, team, teamContact } from '@/drizzle/schema';
 import { prioritySchema, statusSchema } from '@/lib/schema';
 import { createTRPCRouter, protectedProcedure, publicProcedure } from '@/server/trpc';
-import { desc, eq, inArray, sql } from 'drizzle-orm';
+import { asc, desc, eq, inArray, sql } from 'drizzle-orm';
 import { z } from 'zod';
+
+const activityTypeEnum = z.enum([
+  // Contact Management
+  'CONTACT_CREATED',
+  'CONTACT_UPDATED',
+  'CONTACT_DELETED',
+
+  // Status Changes
+  'STATUS_CHANGED',
+  'PRIORITY_CHANGED',
+
+  // Engagement
+  'MEETING_SCHEDULED',
+  'MEETING_UPDATED',
+  'MEETING_CANCELLED',
+  'CALL_LOGGED',
+  'EMAIL_SENT',
+  'NOTE_ADDED',
+
+  // Team Management
+  'TEAM_ASSIGNED',
+  'TEAM_REMOVED',
+
+  // Deal Management
+  'DEAL_CREATED',
+  'DEAL_UPDATED',
+  'DEAL_CLOSED',
+
+  // Payment
+  'PAYMENT_LINK_CLICKED',
+  'PAYMENT_COMPLETED',
+]);
+
+// Helper function to create contact activity
+const createContactActivityHelper = async (
+  ctx: any,
+  input: {
+    contactId: string;
+    type: z.infer<typeof activityTypeEnum>;
+    title: string;
+    description: string;
+    initiatorType?: 'user' | 'contact' | 'system';
+    metadata?: Record<string, any>;
+  }
+) => {
+  return ctx.db.insert(contactActivity).values({
+    contactId: input.contactId,
+    userId: ctx.session?.user.id,
+    type: input.type,
+    initiatorType: input.initiatorType || 'system',
+    initiatorId: ctx.session?.user.id,
+    title: input.title,
+    description: input.description,
+    metadata: input.metadata ? JSON.stringify(input.metadata) : null,
+  });
+};
 
 export const contactRouter = createTRPCRouter({
   getAllContacts: protectedProcedure.query(({ ctx }) => {
@@ -101,30 +157,67 @@ export const contactRouter = createTRPCRouter({
         })
         .returning();
 
+      // Log contact creation activity
+      await createContactActivityHelper(ctx, {
+        contactId: result[0].id,
+        type: 'CONTACT_CREATED',
+        title: 'Contact Created',
+        description: `Contact ${result[0].name} (${result[0].email}) was created${input.source ? ` from ${input.source}` : ''}.`,
+        metadata: { source: input.source },
+      });
+
       return result[0];
     }),
 
-  updateContactRemark: protectedProcedure.input(z.object({ id: z.string(), remark: z.string() })).mutation(({ ctx, input }) => {
-    return ctx.db.update(contact).set({ remark: input.remark }).where(eq(contact.id, input.id));
+  updateContactRemark: protectedProcedure.input(z.object({ id: z.string(), remark: z.string() })).mutation(async ({ ctx, input }) => {
+    await ctx.db.update(contact).set({ remark: input.remark }).where(eq(contact.id, input.id));
+
+    // Log remark update activity
+    await createContactActivityHelper(ctx, {
+      contactId: input.id,
+      type: 'NOTE_ADDED',
+      title: 'Remark Updated',
+      description: `Contact remark was updated to: ${input.remark}`,
+    });
   }),
 
-  deleteContact: protectedProcedure.input(z.object({ id: z.string() })).mutation(({ ctx, input }) => {
+  deleteContact: protectedProcedure.input(z.object({ id: z.string() })).mutation(async ({ ctx, input }) => {
+    // Get contact details before deletion for activity log
+    const contactDetails = await ctx.db
+      .select({
+        name: contact.name,
+        email: contact.email,
+      })
+      .from(contact)
+      .where(eq(contact.id, input.id))
+      .then((rows) => rows[0]);
+
+    // Log deletion activity before actually deleting
+    await createContactActivityHelper(ctx, {
+      contactId: input.id,
+      type: 'CONTACT_DELETED',
+      title: 'Contact Deleted',
+      description: `Contact ${contactDetails.name} (${contactDetails.email}) was deleted.`,
+      metadata: { name: contactDetails.name, email: contactDetails.email },
+    });
+
     return ctx.db.delete(contact).where(eq(contact.id, input.id));
   }),
 
   getContactActivities: protectedProcedure.input(z.object({ id: z.string() })).query(({ ctx, input }) => {
-    return ctx.db.select().from(contactActivity).where(eq(contactActivity.contactId, input.id)).orderBy(desc(contactActivity.createdAt));
+    return ctx.db.select().from(contactActivity).where(eq(contactActivity.contactId, input.id)).orderBy(asc(contactActivity.createdAt));
   }),
 
   createContactActivity: protectedProcedure
     .input(
       z.object({
         contactId: z.string(),
-        type: z.string(),
+        type: activityTypeEnum,
         title: z.string(),
         description: z.string(),
         initiatorType: z.enum(['user', 'contact', 'system']),
         initiatorId: z.string(),
+        metadata: z.record(z.any()).optional(),
       })
     )
     .mutation(({ ctx, input }) => {
@@ -136,6 +229,7 @@ export const contactRouter = createTRPCRouter({
         initiatorId: input.initiatorId,
         title: input.title,
         description: input.description,
+        metadata: input.metadata ? JSON.stringify(input.metadata) : null,
       });
     }),
 
@@ -167,10 +261,73 @@ export const contactRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       const { id, ...updateData } = input;
       const name = `${input.firstName} ${input.lastName}`;
-      return await ctx.db
+
+      // Get current contact data for comparison
+      const currentContact = await ctx.db
+        .select()
+        .from(contact)
+        .where(eq(contact.id, id))
+        .then((rows) => rows[0]);
+
+      const result = await ctx.db
         .update(contact)
         .set({ ...updateData, name })
         .where(eq(contact.id, id));
+
+      // Log status change if status was updated
+      if (input.status && input.status !== currentContact.status) {
+        await createContactActivityHelper(ctx, {
+          contactId: id,
+          type: 'STATUS_CHANGED',
+          title: 'Status Changed',
+          description: `Contact status changed from ${currentContact.status} to ${input.status}`,
+          metadata: {
+            oldStatus: currentContact.status,
+            newStatus: input.status,
+          },
+        });
+      }
+
+      // Log priority change if priority was updated
+      if (input.priority && input.priority !== currentContact.priority) {
+        await createContactActivityHelper(ctx, {
+          contactId: id,
+          type: 'PRIORITY_CHANGED',
+          title: 'Priority Changed',
+          description: `Contact priority changed from ${currentContact.priority} to ${input.priority}`,
+          metadata: {
+            oldPriority: currentContact.priority,
+            newPriority: input.priority,
+          },
+        });
+      }
+
+      // Log general update for other field changes
+      const changedFields = Object.keys(updateData).filter((key) => updateData[key as keyof typeof updateData] !== currentContact[key as keyof typeof currentContact]);
+
+      if (changedFields.length > 0) {
+        await createContactActivityHelper(ctx, {
+          contactId: id,
+          type: 'CONTACT_UPDATED',
+          title: 'Contact Updated',
+          description: `Updated contact fields: ${changedFields.join(', ')}`,
+          metadata: {
+            changedFields,
+            updates: changedFields.reduce(
+              (acc, field) =>
+                Object.assign(acc, {
+                  [field]: {
+                    old: currentContact[field as keyof typeof currentContact],
+                    new: updateData[field as keyof typeof updateData],
+                  },
+                }),
+              {} as Record<string, { old: any; new: any }>
+            ),
+          },
+        });
+      }
+
+      return result;
     }),
 
   checkExistingContacts: publicProcedure

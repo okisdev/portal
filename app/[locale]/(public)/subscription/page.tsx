@@ -45,9 +45,9 @@ const SubscriptionContent = () => {
 
       await createContactActivity.mutateAsync({
         contactId: contact.id,
-        type: 'subscription_page',
-        title: 'Started Subscription Checkout',
-        description: `Started checkout for plan with coupon code: ${couponCode}`,
+        type: 'PAYMENT_COMPLETED',
+        title: 'Subscription Checkout',
+        description: `Completed checkout with coupon code: ${couponCode}`,
         initiatorType: 'contact',
         initiatorId: contact.id,
       });

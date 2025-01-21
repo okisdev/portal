@@ -35,6 +35,10 @@ export const prioritySchema = z.enum(['urgent', 'high', 'medium', 'low']);
 
 export type Priority = z.infer<typeof prioritySchema>;
 
+export const sourceSchema = z.enum(['Pitching', 'Referral', 'Website', 'Email', 'IG', 'LinkedIn', 'Facebook', 'Other']);
+
+export type Source = z.infer<typeof sourceSchema>;
+
 export const userRoleSchema = z.enum(['ADMIN', 'SALES', 'MANAGER', 'USER']);
 
 export type UserRole = z.infer<typeof userRoleSchema>;

@@ -1,11 +1,11 @@
 'use client';
 
 import { PageHeader } from '@/components/shared/page-header';
+import { TipTapEditor } from '@/components/shared/tiptap-editor';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { api } from '@/utils/trpc/client';
-import { Editor } from '@maily-to/core';
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
@@ -121,8 +121,8 @@ export default function EmailDetailPage() {
   }
 
   return (
-    <div className='h-full'>
-      <div className='container mx-auto px-8 py-6'>
+    <div className='flex h-full flex-col'>
+      <div className='container mx-auto flex h-full flex-col px-8 py-6'>
         <div className='mb-6 flex items-center justify-between'>
           <PageHeader title='Edit Email Template' description='Make changes to your email template' />
           <div className='flex gap-2'>
@@ -141,7 +141,7 @@ export default function EmailDetailPage() {
           </div>
         </div>
 
-        <div className='mt-8 space-y-4'>
+        <div className='flex flex-1 flex-col space-y-4'>
           <div>
             <Input placeholder='Template Title' value={title} onChange={(e) => setTitle(e.target.value)} className='mb-2' />
             <Textarea placeholder='Template Description (optional)' value={description} onChange={(e) => setDescription(e.target.value)} rows={2} />
@@ -149,20 +149,8 @@ export default function EmailDetailPage() {
 
           <Input placeholder='Email Subject' value={subject} onChange={(e) => setSubject(e.target.value)} />
 
-          <div className='flex h-[600px] flex-col overflow-hidden rounded-lg bg-white shadow-sm ring-1 ring-neutral-200'>
-            <div className='flex-1 overflow-y-auto'>
-              <Editor
-                contentHtml={editorContent}
-                onUpdate={(editor) => {
-                  setEditorContent(editor.getHTML());
-                }}
-                config={{
-                  hasMenuBar: true,
-                  spellCheck: true,
-                  autofocus: 'end',
-                }}
-              />
-            </div>
+          <div className='min-h-0 flex-1'>
+            <TipTapEditor content={editorContent} onChange={setEditorContent} placeholder='Write your email content here...' className='h-full' />
           </div>
         </div>
       </div>
