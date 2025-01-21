@@ -1,6 +1,6 @@
-export const insuranceCompanies = ['AIA', 'AXA', 'FWD', 'HSBC', 'Prudential', 'Manulife'];
+export const insuranceCompanies = ['AIA', 'AXA', 'BoC Life', 'China Life', 'Chubb', 'FWD', 'Manulife', 'YF Life', 'MetLife', 'Prudential', 'Sun Life', 'HSBC', 'Ping An', 'HANG SENG'];
 
-export const sources = ['Pitching', 'Referral', 'Website', 'Email', 'IG', 'LinkedIn', 'Facebook', 'Other'];
+export const sources = ['Pitching', 'Referral', 'Website', 'Email', 'Instagram', 'LinkedIn', 'Facebook', 'Other'];
 
 export const phoneCountries = [
   { value: 'af', label: '🇦🇫 Afghanistan', code: '+93' },

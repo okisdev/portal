@@ -2,8 +2,8 @@
 
 import { ColorBadge } from '@/components/shared/color-badge';
 import { Combobox } from '@/components/shared/combobox';
-import { DateTimePicker } from '@/components/shared/date-time-picker';
 import { EventDialog } from '@/components/shared/event-dialog';
+import type { EventFormData } from '@/components/shared/event-dialog';
 import { NameTag } from '@/components/shared/name-tag';
 import { PageLoading } from '@/components/shared/page-loading';
 import { PhoneInput } from '@/components/shared/phone-input';
@@ -62,6 +62,7 @@ export default function ContactIdPage() {
     contactId: contactId[0],
   });
   const { data: allTeams } = api.team.getAllTeams.useQuery();
+  const { data: calendarFolders } = api.calendar.getFolders.useQuery();
 
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editForm, setEditForm] = useState({
@@ -77,9 +78,6 @@ export default function ContactIdPage() {
 
   const [newActivity, setNewActivity] = useState('');
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
-  const [appointmentStartDate, setAppointmentStartDate] = useState<Date>();
-  const [appointmentEndDate, setAppointmentEndDate] = useState<Date>();
-  const [appointmentNotes, setAppointmentNotes] = useState('');
   const [isTeamModalOpen, setIsTeamModalOpen] = useState(false);
   const [selectedTeam, setSelectedTeam] = useState<string>('');
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
@@ -122,9 +120,6 @@ export default function ContactIdPage() {
   const createAppointment = api.calendar.createAppointment.useMutation({
     onSuccess: () => {
       setIsBookingModalOpen(false);
-      setAppointmentStartDate(undefined);
-      setAppointmentEndDate(undefined);
-      setAppointmentNotes('');
       utils.calendar.getAppointmentsByContactId.invalidate({ contactId: contactId[0] });
       utils.contact.getContactById.invalidate({ id: contactId[0] });
       utils.contact.getContactActivities.invalidate({ id: contactId[0] });
@@ -234,14 +229,6 @@ export default function ContactIdPage() {
   };
 
   const handleOpenBookingModal = () => {
-    const now = new Date();
-    // Set default start time to next hour
-    const startDate = new Date(now.setHours(now.getHours() + 1, 0, 0, 0));
-    // Set default end time to one hour after start time
-    const endDate = new Date(startDate.getTime() + 60 * 60 * 1000);
-
-    setAppointmentStartDate(startDate);
-    setAppointmentEndDate(endDate);
     setIsBookingModalOpen(true);
   };
 
@@ -297,24 +284,12 @@ export default function ContactIdPage() {
     });
   };
 
-  const handleBookAppointment = (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!appointmentStartDate || !appointmentEndDate) {
-      toast.error('Please select both start and end times for the appointment');
-      return;
-    }
-
-    if (appointmentEndDate <= appointmentStartDate) {
-      toast.error('End time must be after start time');
-      return;
-    }
-
+  const handleBookAppointment = (data: EventFormData) => {
     createAppointment.mutate({
-      title: `Meeting with ${contact?.name}`,
-      description: appointmentNotes,
-      startAt: appointmentStartDate,
-      endAt: appointmentEndDate,
+      title: data.title,
+      description: data.description || '',
+      startAt: data.startAt,
+      endAt: data.endAt,
       contactId: contactId[0],
     });
   };
@@ -395,7 +370,9 @@ export default function ContactIdPage() {
                     {contact?.company && (
                       <div className='flex items-center gap-2'>
                         <Building2 className='size-4 shrink-0' />
-                        <span className='truncate'>{contact.company}</span>
+                        <Link href={`/dashboard/crm/contacts?company=${contact.company}`} className='hover:text-primary'>
+                          {contact.company}
+                        </Link>
                       </div>
                     )}
                     {contact?.teams && contact.teams.length > 0 && (
@@ -467,7 +444,7 @@ export default function ContactIdPage() {
                   ].map((item) => (
                     <div key={item.label} className='space-y-1.5'>
                       <div className='text-muted-foreground text-xs'>{item.label}</div>
-                      <div className='text-foreground'>{item.value}</div>
+                      <div className='text-foreground text-sm'>{item.value}</div>
                     </div>
                   ))}
                 </div>
@@ -894,35 +871,37 @@ export default function ContactIdPage() {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={isBookingModalOpen} onOpenChange={setIsBookingModalOpen}>
-        <DialogContent className='max-h-[90vh] max-w-xl overflow-y-auto'>
-          <DialogHeader>
-            <DialogTitle>Book Appointment</DialogTitle>
-          </DialogHeader>
-          <form onSubmit={handleBookAppointment} className='space-y-4'>
-            <div className='space-y-2'>
-              <Label>Start Time</Label>
-              <DateTimePicker value={appointmentStartDate || new Date()} onChange={setAppointmentStartDate} showTimePicker={true} />
-            </div>
-            <div className='space-y-2'>
-              <Label>End Time</Label>
-              <DateTimePicker value={appointmentEndDate || new Date()} onChange={setAppointmentEndDate} showTimePicker={true} />
-            </div>
-            <div className='space-y-2'>
-              <Label>Notes</Label>
-              <Textarea value={appointmentNotes} onChange={(e) => setAppointmentNotes(e.target.value)} placeholder='Add any notes about the appointment...' />
-            </div>
-            <div className='flex justify-end space-x-2'>
-              <Button type='button' variant='outline' onClick={() => setIsBookingModalOpen(false)}>
-                Cancel
-              </Button>
-              <Button type='submit' disabled={createAppointment.isPending || !appointmentStartDate || !appointmentEndDate}>
-                {createAppointment.isPending ? 'Booking...' : 'Book Appointment'}
-              </Button>
-            </div>
-          </form>
-        </DialogContent>
-      </Dialog>
+      <EventDialog
+        open={!!editingAppointment}
+        onOpenChange={(open) => !open && setEditingAppointment(null)}
+        onSubmit={handleEditAppointment}
+        isEditMode={true}
+        key={editingAppointment?.id}
+        defaultValues={
+          editingAppointment
+            ? {
+                title: editingAppointment.title,
+                description: editingAppointment.description,
+                startAt: new Date(editingAppointment.startAt),
+                endAt: new Date(editingAppointment.startAt.getTime() + 30 * 60000),
+              }
+            : undefined
+        }
+        folders={calendarFolders}
+      />
+
+      <EventDialog
+        open={isBookingModalOpen}
+        onOpenChange={setIsBookingModalOpen}
+        onSubmit={handleBookAppointment}
+        defaultValues={{
+          title: `Meeting with ${contact?.name}`,
+          startAt: new Date(),
+          endAt: new Date(Date.now() + 30 * 60000),
+          folderId: 'default',
+        }}
+        folders={calendarFolders}
+      />
 
       <Dialog open={isTeamModalOpen} onOpenChange={setIsTeamModalOpen}>
         <DialogContent className='max-h-[90vh] max-w-xl overflow-y-auto'>
@@ -954,25 +933,6 @@ export default function ContactIdPage() {
           </div>
         </DialogContent>
       </Dialog>
-
-      <EventDialog
-        open={!!editingAppointment}
-        onOpenChange={(open) => !open && setEditingAppointment(null)}
-        onSubmit={handleEditAppointment}
-        isEditMode={true}
-        key={editingAppointment?.id}
-        defaultValues={
-          editingAppointment
-            ? {
-                title: editingAppointment.title,
-                description: editingAppointment.description,
-                startAt: new Date(editingAppointment.startAt),
-                endAt: new Date(editingAppointment.startAt.getTime() + 30 * 60000),
-              }
-            : undefined
-        }
-        folders={[{ id: 'default', name: 'Default Calendar' }]}
-      />
     </div>
   );
 }

@@ -45,6 +45,7 @@ const createContactActivityHelper = async (
     title: string;
     description: string;
     initiatorType?: 'user' | 'contact' | 'system';
+    initiatorId?: string;
     metadata?: Record<string, any>;
   }
 ) => {
@@ -53,7 +54,7 @@ const createContactActivityHelper = async (
     userId: ctx.session?.user.id,
     type: input.type,
     initiatorType: input.initiatorType || 'system',
-    initiatorId: ctx.session?.user.id,
+    initiatorId: input.initiatorId || ctx.session?.user.id,
     title: input.title,
     description: input.description,
     metadata: input.metadata ? JSON.stringify(input.metadata) : null,
@@ -220,6 +221,8 @@ export const calendarRouter = createTRPCRouter({
           type: 'MEETING_UPDATED',
           title: 'Meeting Updated',
           description: `Meeting "${input.title}" was updated to ${new Date(input.startAt).toLocaleString()}${input.description ? ` - ${input.description}` : ''}`,
+          initiatorType: 'user',
+          initiatorId: ctx.session?.user.id,
           metadata: {
             eventId: input.id,
             title: input.title,
@@ -261,6 +264,8 @@ export const calendarRouter = createTRPCRouter({
         type: 'MEETING_CANCELLED',
         title: 'Meeting Cancelled',
         description: `Meeting "${event.title}" scheduled for ${new Date(event.startAt).toLocaleString()} was cancelled.`,
+        initiatorType: 'user',
+        initiatorId: ctx.session?.user.id,
         metadata: {
           eventId: event.id,
           title: event.title,
@@ -314,6 +319,12 @@ export const calendarRouter = createTRPCRouter({
   createAppointment: protectedProcedure.input(appointmentSchema).mutation(async ({ ctx, input }) => {
     const { title, description, startAt, endAt, contactId } = input;
 
+    const contactStatus = await ctx.db
+      .select({ status: contact.status })
+      .from(contact)
+      .where(eq(contact.id, contactId))
+      .then((rows) => rows[0]?.status);
+
     // Create the calendar event
     const [event] = await ctx.db
       .insert(calendarEvent)
@@ -337,6 +348,10 @@ export const calendarRouter = createTRPCRouter({
       })
       .returning();
 
+    if (contactStatus === 'lead') {
+      await ctx.db.update(contact).set({ status: 'appointment' }).where(eq(contact.id, contactId));
+    }
+
     // Add the contact as a participant
     await ctx.db.insert(calendarEventParticipant).values({
       eventId: event.id,
@@ -352,6 +367,8 @@ export const calendarRouter = createTRPCRouter({
       type: 'MEETING_SCHEDULED',
       title: 'Meeting Scheduled',
       description: `Meeting "${title}" scheduled for ${new Date(startAt).toLocaleString()}${description ? ` - ${description}` : ''}`,
+      initiatorType: 'user',
+      initiatorId: ctx.session?.user.id,
       metadata: {
         eventId: event.id,
         startAt,

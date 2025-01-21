@@ -45,6 +45,7 @@ const createContactActivityHelper = async (
     title: string;
     description: string;
     initiatorType?: 'user' | 'contact' | 'system';
+    initiatorId?: string;
     metadata?: Record<string, any>;
   }
 ) => {
@@ -53,7 +54,7 @@ const createContactActivityHelper = async (
     userId: ctx.session?.user.id,
     type: input.type,
     initiatorType: input.initiatorType || 'system',
-    initiatorId: ctx.session?.user.id,
+    initiatorId: input.initiatorId || ctx.session?.user.id,
     title: input.title,
     description: input.description,
     metadata: input.metadata ? JSON.stringify(input.metadata) : null,
@@ -164,6 +165,8 @@ export const contactRouter = createTRPCRouter({
         title: 'Contact Created',
         description: `Contact ${result[0].name} (${result[0].email}) was created${input.source ? ` from ${input.source}` : ''}.`,
         metadata: { source: input.source },
+        initiatorType: 'user',
+        initiatorId: ctx.session?.user.id,
       });
 
       return result[0];
@@ -178,6 +181,8 @@ export const contactRouter = createTRPCRouter({
       type: 'NOTE_ADDED',
       title: 'Remark Updated',
       description: `Contact remark was updated to: ${input.remark}`,
+      initiatorType: 'user',
+      initiatorId: ctx.session?.user.id,
     });
   }),
 
@@ -199,6 +204,8 @@ export const contactRouter = createTRPCRouter({
       title: 'Contact Deleted',
       description: `Contact ${contactDetails.name} (${contactDetails.email}) was deleted.`,
       metadata: { name: contactDetails.name, email: contactDetails.email },
+      initiatorType: 'user',
+      initiatorId: ctx.session?.user.id,
     });
 
     return ctx.db.delete(contact).where(eq(contact.id, input.id));
@@ -281,6 +288,8 @@ export const contactRouter = createTRPCRouter({
           type: 'STATUS_CHANGED',
           title: 'Status Changed',
           description: `Contact status changed from ${currentContact.status} to ${input.status}`,
+          initiatorType: 'user',
+          initiatorId: ctx.session?.user.id,
           metadata: {
             oldStatus: currentContact.status,
             newStatus: input.status,
@@ -295,6 +304,8 @@ export const contactRouter = createTRPCRouter({
           type: 'PRIORITY_CHANGED',
           title: 'Priority Changed',
           description: `Contact priority changed from ${currentContact.priority} to ${input.priority}`,
+          initiatorType: 'user',
+          initiatorId: ctx.session?.user.id,
           metadata: {
             oldPriority: currentContact.priority,
             newPriority: input.priority,
@@ -324,6 +335,8 @@ export const contactRouter = createTRPCRouter({
               {} as Record<string, { old: any; new: any }>
             ),
           },
+          initiatorType: 'user',
+          initiatorId: ctx.session?.user.id,
         });
       }
 
