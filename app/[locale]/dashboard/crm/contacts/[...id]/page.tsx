@@ -423,12 +423,21 @@ export default function ContactIdPage() {
 
             <div className='border-b p-6'>
               <div className='grid grid-cols-1 gap-4'>
-                {[
-                  { label: 'Last Contact', value: contact?.lastContactedAt ? formatDate(new Date(contact.lastContactedAt)) : '—' },
-                  { label: 'Source', value: contact?.source || '—' },
-                  {
-                    label: 'Priority',
-                    value: (
+                <div className='grid grid-cols-2 gap-4'>
+                  {[
+                    { label: 'Last Contact', value: contact?.lastContactedAt ? formatDate(new Date(contact.lastContactedAt)) : '—' },
+                    { label: 'Source', value: contact?.source || '—' },
+                  ].map((item) => (
+                    <div key={item.label} className='space-y-1.5'>
+                      <div className='text-muted-foreground text-xs'>{item.label}</div>
+                      <div className='text-foreground'>{item.value}</div>
+                    </div>
+                  ))}
+                </div>
+                <div className='grid grid-cols-2 gap-4'>
+                  <div className='space-y-1.5'>
+                    <div className='text-muted-foreground text-xs'>Priority</div>
+                    <div className='text-foreground'>
                       <Select value={contact?.priority || 'medium'} onValueChange={handlePriorityChange}>
                         <SelectTrigger className='h-8'>
                           <SelectValue>
@@ -443,11 +452,11 @@ export default function ContactIdPage() {
                           ))}
                         </SelectContent>
                       </Select>
-                    ),
-                  },
-                  {
-                    label: 'Status',
-                    value: (
+                    </div>
+                  </div>
+                  <div className='space-y-1.5'>
+                    <div className='text-muted-foreground text-xs'>Status</div>
+                    <div className='text-foreground'>
                       <Select value={contact?.status || 'lead'} onValueChange={handleStatusChange}>
                         <SelectTrigger className='h-8'>
                           <SelectValue>
@@ -462,14 +471,9 @@ export default function ContactIdPage() {
                           ))}
                         </SelectContent>
                       </Select>
-                    ),
-                  },
-                ].map((item) => (
-                  <div key={item.label} className='space-y-1.5'>
-                    <div className='text-muted-foreground text-sm'>{item.label}</div>
-                    <div className='text-foreground'>{item.value}</div>
+                    </div>
                   </div>
-                ))}
+                </div>
               </div>
             </div>
 
@@ -624,12 +628,6 @@ export default function ContactIdPage() {
                   <TabsTrigger value='management'>Management</TabsTrigger>
                 </TabsList>
                 <TabsContent value='activity' className='flex w-full flex-col gap-4'>
-                  <form onSubmit={handleSubmitActivity} className='flex max-w-md flex-1 gap-2'>
-                    <Input value={newActivity} onChange={(e) => setNewActivity(e.target.value)} placeholder='Add a note...' className='h-8' />
-                    <Button type='submit' size='sm' disabled={createContactActivity.isPending}>
-                      Add Note
-                    </Button>
-                  </form>
                   <div className='max-h-[calc(100vh-16rem)] space-y-1 overflow-y-auto'>
                     {activities
                       ?.filter((activity) => activity.type !== 'CONTACT_UPDATED')
@@ -748,6 +746,12 @@ export default function ContactIdPage() {
                         );
                       })}
                   </div>
+                  <form onSubmit={handleSubmitActivity} className='flex max-w-full flex-1 gap-2 pt-4'>
+                    <Input value={newActivity} onChange={(e) => setNewActivity(e.target.value)} placeholder='Add a note...' className='h-8' />
+                    <Button type='submit' size='sm' disabled={createContactActivity.isPending}>
+                      Add Note
+                    </Button>
+                  </form>
                 </TabsContent>
                 <TabsContent value='subscription' className='flex w-full flex-col gap-4'>
                   <p>Subscription</p>

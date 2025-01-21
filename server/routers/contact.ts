@@ -1,7 +1,7 @@
 import { contact, contactActivity, team, teamContact } from '@/drizzle/schema';
 import { prioritySchema, statusSchema } from '@/lib/schema';
 import { createTRPCRouter, protectedProcedure, publicProcedure } from '@/server/trpc';
-import { desc, eq, inArray, sql } from 'drizzle-orm';
+import { asc, desc, eq, inArray, sql } from 'drizzle-orm';
 import { z } from 'zod';
 
 const activityTypeEnum = z.enum([
@@ -205,7 +205,7 @@ export const contactRouter = createTRPCRouter({
   }),
 
   getContactActivities: protectedProcedure.input(z.object({ id: z.string() })).query(({ ctx, input }) => {
-    return ctx.db.select().from(contactActivity).where(eq(contactActivity.contactId, input.id)).orderBy(desc(contactActivity.createdAt));
+    return ctx.db.select().from(contactActivity).where(eq(contactActivity.contactId, input.id)).orderBy(asc(contactActivity.createdAt));
   }),
 
   createContactActivity: protectedProcedure
