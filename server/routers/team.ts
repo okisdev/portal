@@ -44,6 +44,7 @@ const createContactActivityHelper = async (
     title: string;
     description: string;
     initiatorType?: 'user' | 'contact' | 'system';
+    initiatorId?: string;
     metadata?: Record<string, any>;
   }
 ) => {
@@ -52,7 +53,7 @@ const createContactActivityHelper = async (
     userId: ctx.session?.user.id,
     type: input.type,
     initiatorType: input.initiatorType || 'system',
-    initiatorId: ctx.session?.user.id,
+    initiatorId: input.initiatorId || ctx.session?.user.id,
     title: input.title,
     description: input.description,
     metadata: input.metadata ? JSON.stringify(input.metadata) : null,
@@ -147,6 +148,8 @@ export const teamRouter = createTRPCRouter({
         type: 'TEAM_ASSIGNED',
         title: 'Assigned to Team',
         description: `Contact was assigned to team "${teamDetails.name}"`,
+        initiatorType: 'user',
+        initiatorId: ctx.session?.user.id,
         metadata: {
           teamId: input.teamId,
           teamName: teamDetails.name,
@@ -184,6 +187,8 @@ export const teamRouter = createTRPCRouter({
         type: 'TEAM_REMOVED',
         title: 'Removed from Team',
         description: `Contact was removed from team "${teamDetails.name}"`,
+        initiatorType: 'user',
+        initiatorId: ctx.session?.user.id,
         metadata: {
           teamId: input.teamId,
           teamName: teamDetails.name,

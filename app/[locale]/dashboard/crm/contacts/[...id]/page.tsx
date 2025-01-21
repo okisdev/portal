@@ -467,7 +467,7 @@ export default function ContactIdPage() {
                   ].map((item) => (
                     <div key={item.label} className='space-y-1.5'>
                       <div className='text-muted-foreground text-xs'>{item.label}</div>
-                      <div className='text-foreground'>{item.value}</div>
+                      <div className='text-foreground text-sm'>{item.value}</div>
                     </div>
                   ))}
                 </div>

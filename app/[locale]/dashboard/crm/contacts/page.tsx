@@ -78,6 +78,7 @@ export default function CRMContactsPage() {
     { id: 'status', label: 'Status', visible: true },
     { id: 'source', label: 'Source', visible: true },
     { id: 'priority', label: 'Priority', visible: true },
+    { id: 'remark', label: 'Remark', visible: true },
     { id: 'createdAt', label: 'Created', visible: false },
     { id: 'actions', label: 'Actions', visible: true },
   ]);
@@ -430,9 +431,9 @@ export default function CRMContactsPage() {
 
                       <Input className='h-8' value={condition.value} onChange={(e) => handleFilterChange(index, condition.field, condition.operator, e.target.value)} />
 
-                      <Button variant='ghost' size='sm' onClick={() => handleRemoveFilter(index)}>
+                      <button type='button' className='size-4 p-0' onClick={() => handleRemoveFilter(index)}>
                         <X className='h-4 w-4' />
-                      </Button>
+                      </button>
                     </div>
                   ))}
 
@@ -574,6 +575,7 @@ export default function CRMContactsPage() {
                             {column.id === 'status' && <ColorBadge type='contactStatus' value={contact.status} />}
                             {column.id === 'source' && <span className='capitalize'>{contact.source?.replace('_', ' ') || '—'}</span>}
                             {column.id === 'priority' && <ColorBadge type='priority' value={contact.priority ?? 'medium'} />}
+                            {column.id === 'remark' && contact.remark}
                             {column.id === 'createdAt' && formatDate(new Date(contact.createdAt))}
                           </TableCell>
                         ) : null
