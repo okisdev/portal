@@ -4,7 +4,7 @@ import { Label } from '@/components/ui/label';
 import { encryptPassword } from '@/utils/password';
 import { api } from '@/utils/trpc/client';
 import { motion } from 'framer-motion';
-import { Loader2 } from 'lucide-react';
+import { ArrowLeft, Loader2, Sparkle } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { toast } from 'sonner';
@@ -14,6 +14,8 @@ export default function RegisterPage() {
 
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
 
   const registerAccount = api.auth.register.useMutation();
 
@@ -56,15 +58,19 @@ export default function RegisterPage() {
 
   return (
     <div className='flex min-h-screen items-center justify-center bg-background'>
+      <button type='button' onClick={() => window.history.back()} className='absolute top-4 left-4 flex items-center text-neutral-600 hover:text-neutral-800'>
+        <ArrowLeft className='h-5 w-5 mr-1' />
+        Back
+      </button>
       <div className='w-full max-w-md space-y-6 p-8'>
         <div className='flex items-center justify-center'>
-          <div className='h-12 w-12 rounded-xl bg-gradient-to-br from-blue-400 to-blue-500 shadow-lg' />
+          <Sparkle className='h-12 w-12' />
         </div>
 
         <motion.div key='register-form' initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.2 }}>
           <div className='space-y-2 text-center'>
             <h1 className='font-medium text-2xl text-foreground'>Create your account</h1>
-            <p className='text-muted-foreground'>Get started with your free account</p>
+            <p className='text-muted-foreground'>Get started with your free Portal account</p>
           </div>
 
           <form onSubmit={handleSubmit} className='mt-6 space-y-4'>
@@ -72,7 +78,15 @@ export default function RegisterPage() {
 
             <div className='space-y-1'>
               <Label className='mb-1 block font-medium text-foreground text-sm'>Email</Label>
-              <input type='email' required name='email' className='w-full rounded-lg border bg-background p-2 focus:outline-none focus:ring-2 focus:ring-blue-400' placeholder='Enter your email' />
+              <input
+                type='email'
+                required
+                name='email'
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className='w-full rounded-lg border bg-background p-2 focus:outline-none focus:ring-2 focus:ring-neutral-400'
+                placeholder='Enter your email'
+              />
             </div>
 
             <div className='space-y-1'>
@@ -81,7 +95,9 @@ export default function RegisterPage() {
                 type='password'
                 required
                 name='password'
-                className='w-full rounded-lg border bg-background p-2 focus:outline-none focus:ring-2 focus:ring-blue-400'
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className='w-full rounded-lg border bg-background p-2 focus:outline-none focus:ring-2 focus:ring-neutral-400'
                 placeholder='Create a password'
               />
             </div>
@@ -89,8 +105,8 @@ export default function RegisterPage() {
             <div className='space-y-3'>
               <button
                 type='submit'
-                disabled={loading}
-                className='flex w-full items-center justify-center rounded-lg bg-blue-500 px-4 py-2 font-medium text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50'
+                disabled={loading || !email || !password}
+                className='flex w-full items-center justify-center rounded-lg bg-neutral-700 px-4 py-2 font-medium text-white transition-colors disabled:cursor-not-allowed disabled:opacity-50'
               >
                 {loading ? (
                   <>
@@ -104,7 +120,7 @@ export default function RegisterPage() {
 
               <p className='text-center text-muted-foreground text-sm'>
                 Already have an account?{' '}
-                <a href='/login' className='text-blue-500 hover:text-blue-600'>
+                <a href='/login' className='text-neutral-600 hover:text-neutral-800 hover:underline'>
                   Sign in
                 </a>
               </p>

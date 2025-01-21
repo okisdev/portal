@@ -3,7 +3,7 @@
 import { Banner } from '@/components/shared/banner';
 import { Label } from '@/components/ui/label';
 import { AnimatePresence, motion } from 'framer-motion';
-import { CheckCircle2, Loader2 } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, Loader2, Sparkle } from 'lucide-react';
 import { signIn } from 'next-auth/react';
 import { useState } from 'react';
 import { toast } from 'sonner';
@@ -14,6 +14,8 @@ export default function LoginPage() {
   const [emailSent, setEmailSent] = useState(false);
   const [sentEmail, setSentEmail] = useState('');
   const [isPasswordLogin, setIsPasswordLogin] = useState(true);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -82,16 +84,20 @@ export default function LoginPage() {
 
   return (
     <div className='flex min-h-screen items-center justify-center bg-background'>
+      <button type='button' onClick={() => window.history.back()} className='absolute top-4 left-4 flex items-center text-neutral-600 hover:text-neutral-800'>
+        <ArrowLeft className='h-5 w-5 mr-1' />
+        Back
+      </button>
       <div className='w-full max-w-md space-y-6 p-8'>
         <div className='flex items-center justify-center'>
-          <div className='h-12 w-12 rounded-xl bg-gradient-to-br from-blue-400 to-blue-500 shadow-lg' />
+          <Sparkle className='h-12 w-12' />
         </div>
 
         <AnimatePresence mode='wait'>
           {!emailSent ? (
             <motion.div key='login-form' initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.2 }}>
               <div className='space-y-2 text-center'>
-                <h1 className='font-medium text-2xl text-foreground'>Log in to your account</h1>
+                <h1 className='font-medium text-2xl text-foreground'>Log in to your Portal account</h1>
                 <p className='text-muted-foreground'>Welcome back! Please enter your details.</p>
               </div>
 
@@ -101,11 +107,19 @@ export default function LoginPage() {
                 <div className='space-y-1'>
                   <Label className='mb-1 flex justify-between font-medium text-foreground text-sm'>
                     <span>Email</span>
-                    <button type='button' onClick={() => setIsPasswordLogin(!isPasswordLogin)} className='text-blue-500'>
+                    <button type='button' onClick={() => setIsPasswordLogin(!isPasswordLogin)} className='text-neutral-600 hover:text-neutral-800 hover:underline'>
                       {isPasswordLogin ? 'use magic link' : 'use password'}
                     </button>
                   </Label>
-                  <input type='email' required name='email' className='w-full rounded-lg border bg-background p-2 focus:outline-none focus:ring-2 focus:ring-blue-400' placeholder='Enter your email' />
+                  <input
+                    type='email'
+                    required
+                    name='email'
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className='w-full rounded-lg border bg-background p-2 focus:outline-none focus:ring-2 focus:ring-neutral-400'
+                    placeholder='Enter your email'
+                  />
                 </div>
 
                 {isPasswordLogin && (
@@ -115,7 +129,9 @@ export default function LoginPage() {
                       type='password'
                       required
                       name='password'
-                      className='w-full rounded-lg border bg-background p-2 focus:outline-none focus:ring-2 focus:ring-blue-400'
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      className='w-full rounded-lg border bg-background p-2 focus:outline-none focus:ring-2 focus:ring-neutral-400'
                       placeholder='Enter your password'
                     />
                   </div>
@@ -123,11 +139,11 @@ export default function LoginPage() {
 
                 <div className='flex items-center justify-between'>
                   <label className='flex items-center'>
-                    <input type='checkbox' className='h-4 w-4 rounded border-neutral-300 text-blue-500 focus:ring-blue-400' />
+                    <input type='checkbox' className='h-3 w-3 rounded border-neutral-300 text-neutral-500 accent-neutral-500 focus:ring-neutral-400 focus:ring-offset-0' />
                     <span className='ml-2 text-muted-foreground text-sm'>Remember for 30 days</span>
                   </label>
                   {isPasswordLogin && (
-                    <a href='/forgot-password' className='text-blue-500 text-sm hover:text-blue-600'>
+                    <a href='/forgot-password' className='text-neutral-600 text-sm hover:text-neutral-800 hover:underline'>
                       Forgot password?
                     </a>
                   )}
@@ -136,8 +152,8 @@ export default function LoginPage() {
                 <div className='space-y-3'>
                   <button
                     type='submit'
-                    disabled={loading}
-                    className='flex w-full items-center justify-center rounded-lg bg-blue-500 px-4 py-2 font-medium text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50'
+                    disabled={loading || !email || (isPasswordLogin && !password)}
+                    className='flex w-full items-center justify-center rounded-lg bg-neutral-700 px-4 py-2 font-medium text-white transition-colors disabled:cursor-not-allowed disabled:opacity-50'
                   >
                     {loading ? (
                       <>
@@ -152,7 +168,7 @@ export default function LoginPage() {
                   </button>
                   <p className='text-center text-muted-foreground text-sm'>
                     Don't have an account?{' '}
-                    <a href='/register' className='text-blue-500 hover:text-blue-600'>
+                    <a href='/register' className='text-neutral-600 hover:text-neutral-800 hover:underline'>
                       Sign up
                     </a>
                   </p>
@@ -183,7 +199,7 @@ export default function LoginPage() {
                   setEmailSent(false);
                   setSentEmail('');
                 }}
-                className='text-blue-500 text-sm hover:text-blue-600'
+                className='text-neutral-500 text-sm hover:text-neutral-600'
               >
                 Use a different email
               </button>
