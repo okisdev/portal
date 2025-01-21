@@ -22,7 +22,7 @@ import { insuranceCompanies, sources } from '@/data/data';
 import { type Priority, type Status, statusSchema } from '@/lib/schema';
 import { cn, formatDate } from '@/lib/utils';
 import { api } from '@/utils/trpc/client';
-import { Building2, Calendar, Edit2, Mail, MoreHorizontal, Phone, Plus, Save, Trash2, Users, X } from 'lucide-react';
+import { ArrowUpRight, Building2, Calendar, Edit2, Mail, MoreHorizontal, Phone, Plus, Save, Trash2, Users, X } from 'lucide-react';
 import { Info } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import { useTranslations } from 'next-intl';
@@ -73,6 +73,9 @@ export default function ContactIdPage() {
   const [appointmentNotes, setAppointmentNotes] = useState('');
   const [isTeamModalOpen, setIsTeamModalOpen] = useState(false);
   const [selectedTeam, setSelectedTeam] = useState<string>('');
+  const [replyingTo, setReplyingTo] = useState<string | null>(null);
+  const [replyText, setReplyText] = useState('');
+  const [highlightedNote, setHighlightedNote] = useState<string | null>(null);
   const [editingAppointment, setEditingAppointment] = useState<{
     id: string;
     title: string;
@@ -331,6 +334,37 @@ export default function ContactIdPage() {
       title: 'Note Added',
       description: newActivity,
     });
+  };
+
+  const handleReplySubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!replyText.trim() || !replyingTo) {
+      toast.error('Reply cannot be empty');
+      return;
+    }
+
+    createContactActivity.mutate({
+      contactId: contactId[0],
+      type: 'NOTE_ADDED',
+      initiatorType: 'user',
+      initiatorId: session?.user.id || '',
+      title: 'Note Reply',
+      description: replyText,
+      metadata: { replyTo: replyingTo },
+    });
+
+    setReplyText('');
+    setReplyingTo(null);
+  };
+
+  const scrollToNote = (noteId: string) => {
+    const element = document.getElementById(`note-${noteId}`);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      setHighlightedNote(noteId);
+      setTimeout(() => setHighlightedNote(null), 2000);
+    }
   };
 
   return (
@@ -605,14 +639,18 @@ export default function ContactIdPage() {
                         const showDateDivider = currentDate !== prevDate;
 
                         return (
-                          <div key={activity.id}>
+                          <div key={activity.id} id={`note-${activity.id}`}>
                             {showDateDivider && (
                               <div className='sticky top-0 bg-background/95 py-2 backdrop-blur supports-[backdrop-filter]:bg-background/60'>
                                 <p className='font-medium text-muted-foreground text-sm'>{currentDate}</p>
                               </div>
                             )}
                             <div
-                              className='flex items-start gap-3 border-l-2 py-3 pl-4 hover:bg-muted/30'
+                              className={cn(
+                                'flex items-start gap-3 border-l-2 py-3 pr-2 pl-4 hover:bg-muted/30',
+                                highlightedNote === activity.id && 'bg-neutral-500/20 dark:bg-neutral-500/50',
+                                activity.metadata && JSON.parse(activity.metadata).replyTo && 'ml-4'
+                              )}
                               style={{
                                 borderLeftColor:
                                   activity.type === 'NOTE_ADDED'
@@ -649,21 +687,61 @@ export default function ContactIdPage() {
                                     <span className='text-muted-foreground text-xs'>•</span>
                                     <span className='text-muted-foreground text-xs'>{new Date(activity.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                                   </div>
-                                  {activity.metadata && (
-                                    <Popover>
-                                      <PopoverTrigger asChild>
-                                        <button type='button' className='rounded-md bg-muted/50 px-1 py-0.5 text-muted-foreground text-xs hover:bg-muted'>
-                                          <Info className='mr-1 inline-block size-3' />
-                                          View Details
-                                        </button>
-                                      </PopoverTrigger>
-                                      <PopoverContent className='w-80'>
-                                        <pre className='whitespace-pre-wrap font-mono text-xs'>{JSON.stringify(JSON.parse(activity.metadata), null, 2)}</pre>
-                                      </PopoverContent>
-                                    </Popover>
-                                  )}
+                                  <div className='flex items-center gap-2'>
+                                    {activity.metadata && (
+                                      <Popover>
+                                        <PopoverTrigger asChild>
+                                          <button type='button' className='rounded-md bg-muted/50 px-1 py-0.5 text-muted-foreground text-xs hover:bg-muted'>
+                                            <Info className='mr-1 inline-block size-3' />
+                                            View Details
+                                          </button>
+                                        </PopoverTrigger>
+                                        <PopoverContent className='w-80'>
+                                          <pre className='whitespace-pre-wrap font-mono text-xs'>{JSON.stringify(JSON.parse(activity.metadata), null, 2)}</pre>
+                                        </PopoverContent>
+                                      </Popover>
+                                    )}
+                                    {activity.type === 'NOTE_ADDED' && (
+                                      <button type='button' onClick={() => setReplyingTo(activity.id)} className='rounded-md bg-muted/50 px-1 py-0.5 text-muted-foreground text-xs hover:bg-muted'>
+                                        Reply
+                                      </button>
+                                    )}
+                                  </div>
                                 </div>
                                 <div className={cn('text-sm', activity.type === 'NOTE_ADDED' ? 'rounded-md bg-blue-50 p-3 dark:bg-blue-950/50' : '')}>{activity.description}</div>
+                                {replyingTo === activity.id && (
+                                  <form onSubmit={handleReplySubmit} className='mt-2 flex items-start gap-2'>
+                                    <div className='flex-1'>
+                                      <Input value={replyText} onChange={(e) => setReplyText(e.target.value)} placeholder='Write a reply...' className='h-8' />
+                                    </div>
+                                    <div className='flex gap-1'>
+                                      <Button type='submit' size='sm' disabled={createContactActivity.isPending}>
+                                        Reply
+                                      </Button>
+                                      <Button
+                                        type='button'
+                                        size='sm'
+                                        variant='outline'
+                                        onClick={() => {
+                                          setReplyingTo(null);
+                                          setReplyText('');
+                                        }}
+                                      >
+                                        Cancel
+                                      </Button>
+                                    </div>
+                                  </form>
+                                )}
+                                {activity.metadata && JSON.parse(activity.metadata).replyTo && (
+                                  <button
+                                    type='button'
+                                    onClick={() => scrollToNote(JSON.parse(activity.metadata as string).replyTo)}
+                                    className='mt-1 flex items-center gap-1 text-muted-foreground text-xs hover:text-foreground'
+                                  >
+                                    <ArrowUpRight className='size-3' />
+                                    Jump to original note
+                                  </button>
+                                )}
                               </div>
                             </div>
                           </div>
