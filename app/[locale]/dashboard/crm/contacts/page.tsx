@@ -11,7 +11,7 @@ import { DropdownMenuCheckboxItem } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useDebounce } from '@/hooks/use-debounce';
-import { statusSchema } from '@/lib/schema';
+import { sourceSchema, statusSchema } from '@/lib/schema';
 import { cn, formatDate } from '@/lib/utils';
 import { api } from '@/utils/trpc/client';
 import { CaretSortIcon } from '@radix-ui/react-icons';
@@ -103,7 +103,7 @@ export default function CRMContactsPage() {
 
   const handleStatusFilter = (status: string | null) => {
     if (status === null) {
-      // Clear status filter only
+      // Clear all status filters
       setFilters({
         ...filters,
         conditions: filters.conditions.filter((c) => c.field !== 'status'),
@@ -111,13 +111,49 @@ export default function CRMContactsPage() {
       return;
     }
 
-    // Set the new status filter, replacing any existing status filter
-    const newConditions = filters.conditions.filter((c) => c.field !== 'status');
-    newConditions.push({ field: 'status', operator: '=', value: status });
+    // Check if the status is already active
+    const isActive = filters.conditions.some((c) => c.field === 'status' && c.value === status);
+    if (isActive) {
+      // If active, remove it
+      setFilters({
+        ...filters,
+        conditions: filters.conditions.filter((c) => !(c.field === 'status' && c.value === status)),
+      });
+      return;
+    }
 
+    // Add the new status filter without removing existing ones
     setFilters({
-      conditions: newConditions,
-      matchAll: true,
+      ...filters,
+      conditions: [...filters.conditions, { field: 'status', operator: '=', value: status }],
+    });
+  };
+
+  const handleSourceFilter = (source: string | null) => {
+    if (source === null) {
+      // Clear all source filters
+      setFilters({
+        ...filters,
+        conditions: filters.conditions.filter((c) => c.field !== 'source'),
+      });
+      return;
+    }
+
+    // Check if the source is already active
+    const isActive = filters.conditions.some((c) => c.field === 'source' && c.value === source);
+    if (isActive) {
+      // If active, remove it
+      setFilters({
+        ...filters,
+        conditions: filters.conditions.filter((c) => !(c.field === 'source' && c.value === source)),
+      });
+      return;
+    }
+
+    // Add the new source filter without removing existing ones
+    setFilters({
+      ...filters,
+      conditions: [...filters.conditions, { field: 'source', operator: '=', value: source }],
     });
   };
 
@@ -127,8 +163,8 @@ export default function CRMContactsPage() {
 
     // Check for individual filter parameters
     for (const field of filterFields) {
-      const value = searchParams.get(field.value);
-      if (value) {
+      const values = searchParams.getAll(field.value);
+      for (const value of values) {
         newConditions.push({
           field: field.value,
           operator: '=',
@@ -169,10 +205,26 @@ export default function CRMContactsPage() {
       params.delete(field.value);
     }
 
-    // Update individual filter parameters
-    for (const condition of filters.conditions) {
-      if (condition.operator === '=') {
-        params.set(condition.field, condition.value);
+    // Group conditions by field
+    const groupedConditions = filters.conditions.reduce((acc, condition) => {
+      if (!acc[condition.field]) {
+        acc[condition.field] = [];
+      }
+      acc[condition.field].push(condition.value);
+      return acc;
+    }, {} as Record<string, string[]>);
+
+    // Update filter parameters
+    for (const [field, values] of Object.entries(groupedConditions)) {
+      if (values.length === 1) {
+        params.set(field, values[0]);
+      } else if (values.length > 1) {
+        // Delete any existing single value
+        params.delete(field);
+        // Add each value as a separate parameter
+        for (const value of values) {
+          params.append(field, value);
+        }
       }
     }
 
@@ -240,35 +292,46 @@ export default function CRMContactsPage() {
 
         if (filters.conditions.length === 0) return true;
 
-        const results = filters.conditions.map((condition) => {
-          let fieldValue = '';
-
-          if (condition.field === 'name') {
-            fieldValue = `${contact.firstName} ${contact.lastName}`;
-          } else {
-            fieldValue = String(contact[condition.field as keyof typeof contact] || '');
+        // Group conditions by field
+        const groupedConditions = filters.conditions.reduce((acc, condition) => {
+          if (!acc[condition.field]) {
+            acc[condition.field] = [];
           }
+          acc[condition.field].push(condition);
+          return acc;
+        }, {} as Record<string, FilterCondition[]>);
 
-          fieldValue = fieldValue.toLowerCase();
-          const compareValue = condition.value.toLowerCase();
+        // Check each field group separately
+        return Object.entries(groupedConditions).every(([field, conditions]) => {
+          // OR operation within the same field
+          return conditions.some((condition) => {
+            let fieldValue = '';
 
-          switch (condition.operator) {
-            case '=':
-              return fieldValue === compareValue;
-            case '!=':
-              return fieldValue !== compareValue;
-            case 'contains':
-              return fieldValue.includes(compareValue);
-            case 'startsWith':
-              return fieldValue.startsWith(compareValue);
-            case 'endsWith':
-              return fieldValue.endsWith(compareValue);
-            default:
-              return false;
-          }
+            if (condition.field === 'name') {
+              fieldValue = `${contact.firstName} ${contact.lastName}`;
+            } else {
+              fieldValue = String(contact[condition.field as keyof typeof contact] || '');
+            }
+
+            fieldValue = fieldValue.toLowerCase();
+            const compareValue = condition.value.toLowerCase();
+
+            switch (condition.operator) {
+              case '=':
+                return fieldValue === compareValue;
+              case '!=':
+                return fieldValue !== compareValue;
+              case 'contains':
+                return fieldValue.includes(compareValue);
+              case 'startsWith':
+                return fieldValue.startsWith(compareValue);
+              case 'endsWith':
+                return fieldValue.endsWith(compareValue);
+              default:
+                return false;
+            }
+          });
         });
-
-        return filters.matchAll ? results.every(Boolean) : results.some(Boolean);
       })
       .sort((a, b) => {
         if (!sortConfig.column) return 0;
@@ -450,10 +513,27 @@ export default function CRMContactsPage() {
               </Button>
             );
           })}
-          {filters.conditions.length > 0 && (
+          {filters.conditions.some((c) => c.field === 'status') && (
             <Button variant='ghost' size='sm' onClick={() => handleStatusFilter(null)} className='ml-2'>
-              <X className='mr-2 h-4 w-4' />
-              Clear filters
+              <X className='h-4 w-4' />
+              Clear
+            </Button>
+          )}
+        </div>
+        <div className='flex flex-wrap items-center gap-2'>
+          <p className='text-muted-foreground text-sm'>Source</p>
+          {sourceSchema.options.map((source) => {
+            const isActive = filters.conditions.some((c) => c.field === 'source' && c.value === source);
+            return (
+              <Button key={source} variant={isActive ? 'secondary' : 'outline'} size='sm' onClick={() => handleSourceFilter(source)} className={cn('capitalize', isActive && 'shadow-sm')}>
+                <ColorBadge type='contactStatus' value={source} />
+              </Button>
+            );
+          })}
+          {filters.conditions.some((c) => c.field === 'source') && (
+            <Button variant='ghost' size='sm' onClick={() => handleSourceFilter(null)} className='ml-2'>
+              <X className='h-4 w-4' />
+              Clear
             </Button>
           )}
         </div>
