@@ -9,7 +9,11 @@
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "biome:check": "biome check",
+    "biome:format": "biome format --write",
+    "biome:lint": "biome lint --write",
+    "biome:fix": "biome format --write && biome lint --write"
   },
   "dependencies": {
     "@auth/drizzle-adapter": "^1.7.4",

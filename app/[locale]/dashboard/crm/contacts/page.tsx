@@ -254,13 +254,16 @@ export default function CRMContactsPage() {
 
         if (filters.conditions.length === 0) return true;
 
-        const groupedConditions = filters.conditions.reduce((acc, condition) => {
-          if (!acc[condition.field]) {
-            acc[condition.field] = [];
-          }
-          acc[condition.field].push(condition);
-          return acc;
-        }, {} as Record<string, FilterCondition[]>);
+        const groupedConditions = filters.conditions.reduce(
+          (acc, condition) => {
+            if (!acc[condition.field]) {
+              acc[condition.field] = [];
+            }
+            acc[condition.field].push(condition);
+            return acc;
+          },
+          {} as Record<string, FilterCondition[]>
+        );
 
         return Object.entries(groupedConditions).every(([field, conditions]) => {
           return conditions.some((condition) => {

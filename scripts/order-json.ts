@@ -20,10 +20,13 @@ const formatAndSortJsonFiles = async () => {
       // Sort the keys alphabetically
       const sortedJson = Object.keys(jsonData)
         .sort()
-        .reduce((sortedObj, key) => {
-          sortedObj[key] = jsonData[key];
-          return sortedObj;
-        }, {} as Record<string, string>);
+        .reduce(
+          (sortedObj, key) => {
+            sortedObj[key] = jsonData[key];
+            return sortedObj;
+          },
+          {} as Record<string, string>
+        );
 
       // Write the formatted and sorted JSON back to the file
       fs.writeFileSync(filePath, JSON.stringify(sortedJson, null, 2));
