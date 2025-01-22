@@ -28,9 +28,13 @@ export default function RegisterPage() {
     register,
     handleSubmit,
     formState: { errors },
+    watch,
   } = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
   });
+
+  const email = watch('email');
+  const password = watch('password');
 
   const registerAccount = api.auth.register.useMutation();
 
@@ -72,26 +76,21 @@ export default function RegisterPage() {
 
         <div className='space-y-1'>
           <Label className='mb-1 block font-medium text-foreground text-sm'>Email</Label>
-          <input type='email' {...register('email')} className='w-full rounded-lg border bg-background p-2 focus:outline-none focus:ring-2 focus:ring-neutral-400' placeholder='Enter your email' />
-          {errors.email && <p className='mt-1 text-red-500 text-sm'>{errors.email.message}</p>}
+          <input type='email' {...register('email')} className='w-full rounded-lg border bg-background p-2 focus:outline-none focus:ring-2 focus:ring-ring' placeholder='Enter your email' />
+          {errors.email && <p className='mt-1 text-destructive text-sm'>{errors.email.message}</p>}
         </div>
 
         <div className='space-y-1'>
           <Label className='mb-1 block font-medium text-foreground text-sm'>Password</Label>
-          <input
-            type='password'
-            {...register('password')}
-            className='w-full rounded-lg border bg-background p-2 focus:outline-none focus:ring-2 focus:ring-neutral-400'
-            placeholder='Create a password'
-          />
-          {errors.password && <p className='mt-1 text-red-500 text-sm'>{errors.password.message}</p>}
+          <input type='password' {...register('password')} className='w-full rounded-lg border bg-background p-2 focus:outline-none focus:ring-2 focus:ring-ring' placeholder='Create a password' />
+          {errors.password && <p className='mt-1 text-destructive text-sm'>{errors.password.message}</p>}
         </div>
 
         <div className='space-y-3'>
           <button
             type='submit'
-            disabled={loading}
-            className='flex w-full items-center justify-center rounded-lg bg-neutral-700 px-4 py-2 font-medium text-white transition-colors disabled:cursor-not-allowed disabled:opacity-50'
+            disabled={loading || !email || !password}
+            className='flex w-full items-center justify-center rounded-lg bg-primary px-4 py-2 font-medium text-primary-foreground transition-colors hover:bg-primary/80 disabled:cursor-not-allowed disabled:opacity-50'
           >
             {loading ? (
               <>
@@ -105,7 +104,7 @@ export default function RegisterPage() {
 
           <p className='text-center text-muted-foreground text-sm'>
             Already have an account?{' '}
-            <a href='/login' className='text-neutral-600 hover:text-neutral-800 hover:underline'>
+            <a href='/login' className='text-muted-foreground underline hover:text-foreground'>
               Sign in
             </a>
           </p>

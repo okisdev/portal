@@ -8,6 +8,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 import { api } from '@/utils/trpc/client';
+import { Plus } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { toast } from 'sonner';
@@ -118,9 +119,9 @@ export default function EmailsPage() {
         <div className='mt-8 grid flex-1 grid-cols-12 gap-8'>
           <div className='col-span-3'>
             <div className='mb-4 flex items-center justify-between'>
-              <h3 className='font-medium text-base text-neutral-700'>Templates</h3>
+              <h3 className='font-medium text-base text-neutral-700 dark:text-neutral-100'>Templates</h3>
               <Button onClick={resetForm} variant='outline' size='sm' className='h-8'>
-                + New
+                <Plus className='h-4 w-4' /> New
               </Button>
             </div>
             <div className='space-y-1'>
@@ -136,13 +137,13 @@ export default function EmailsPage() {
                   type='button'
                   key={template.id}
                   className={cn(
-                    'w-full cursor-pointer rounded-md border border-neutral-200 px-3 py-2 text-left transition-colors',
-                    selectedTemplate?.id === template.id ? 'bg-white shadow-sm ring-1 ring-neutral-200' : 'hover:bg-white/60'
+                    'w-full cursor-pointer rounded-md border border-neutral-200 px-3 py-2 text-left transition-colors dark:border-neutral-800',
+                    selectedTemplate?.id === template.id ? 'bg-white shadow-sm ring-1 ring-neutral-200 dark:ring-neutral-800' : 'hover:bg-white/60 dark:hover:bg-neutral-900/60'
                   )}
                   onClick={() => handleSelectTemplate(template)}
                 >
-                  <span className='font-medium text-neutral-900 text-sm'>{template.title}</span>
-                  {template.description && <p className='mt-1 line-clamp-2 text-neutral-500 text-xs'>{template.description}</p>}
+                  <span className='font-medium text-neutral-900 text-sm dark:text-neutral-100'>{template.title}</span>
+                  {template.description && <p className='mt-1 line-clamp-2 text-neutral-500 text-xs dark:text-neutral-400'>{template.description}</p>}
                 </button>
               ))}
               {templates && templates.length === 0 && (

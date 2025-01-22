@@ -1,4 +1,4 @@
-import { Calendar, Coins, Contact, File, Gift, Image, Link, Mail, QrCode, Settings, Tornado, Users } from 'lucide-react';
+import { Calendar, Coins, Contact, File, Gift, Link, QrCode, Settings, Tornado, Users } from 'lucide-react';
 
 export const workspaceItems = [
   {
@@ -55,16 +55,16 @@ export const resourcesItems = [
     url: '/dashboard/resource/content',
     icon: File,
   },
-  {
-    title: 'Emails',
-    url: '/dashboard/resource/emails',
-    icon: Mail,
-  },
-  {
-    title: 'Media',
-    url: '/dashboard/resource/media',
-    icon: Image,
-  },
+  // {
+  //   title: 'Emails',
+  //   url: '/dashboard/resource/emails',
+  //   icon: Mail,
+  // },
+  // {
+  //   title: 'Media',
+  //   url: '/dashboard/resource/media',
+  //   icon: Image,
+  // },
 ];
 
 export const toolsItems = [

@@ -112,6 +112,7 @@ export function CalendarSidebar({ currentDate, selectedDate, onDateSelect, folde
         </div>
         <div className='flex w-full flex-col gap-2'>
           <div className='flex flex-col space-y-1'>
+            {folders?.length === 0 && <div className='text-muted-foreground text-sm'>No calendars found</div>}
             {folders?.map((folder) => (
               <div key={folder.id} className='flex items-center gap-2'>
                 <Checkbox checked={!hiddenCalendars.has(folder.id)} onCheckedChange={(checked) => onToggleCalendar(folder.id)} />
