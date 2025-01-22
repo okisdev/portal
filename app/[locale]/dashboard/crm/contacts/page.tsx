@@ -12,7 +12,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Input } from '@/components/ui/input';
 import { useDebounce } from '@/hooks/use-debounce';
 import { type Contact, sourceSchema, statusSchema } from '@/lib/schema';
-import { cn, formatDate } from '@/lib/utils';
+import { formatDate } from '@/lib/utils';
 import { api } from '@/utils/trpc/client';
 import {
   type ColumnDef,
@@ -25,7 +25,7 @@ import {
   getSortedRowModel,
   useReactTable,
 } from '@tanstack/react-table';
-import { Check, Filter, Import, MoreHorizontal, Pencil, Trash2, X } from 'lucide-react';
+import { Check, Eye, Filter, Import, MoreHorizontal, Trash2, X } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { usePathname } from 'next/navigation';
@@ -327,9 +327,9 @@ export default function CRMContactsPage() {
     }
   };
 
-  const handleEdit = (id: string, e: React.MouseEvent) => {
+  const handleView = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    router.push(`/dashboard/crm/contacts/${id}?mode=edit`);
+    router.push(`/dashboard/crm/contacts/${id}`);
   };
 
   const tableColumns: ColumnDef<Contact>[] = [
@@ -404,9 +404,9 @@ export default function CRMContactsPage() {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align='end'>
-            <DropdownMenuItem className='cursor-pointer' onClick={(e) => handleEdit(row.original.id, e)}>
-              <Pencil className='mr-2 h-4 w-4' />
-              Edit
+            <DropdownMenuItem className='cursor-pointer' onClick={(e) => handleView(row.original.id, e)}>
+              <Eye className='mr-2 h-4 w-4' />
+              View
             </DropdownMenuItem>
             <DropdownMenuItem className='cursor-pointer text-destructive' onClick={(e) => handleDeleteClick(row.original.id, e)}>
               <Trash2 className='mr-2 h-4 w-4' />
@@ -586,7 +586,7 @@ export default function CRMContactsPage() {
             const isActive = filters.conditions.some((c) => c.field === 'status' && c.value === status);
             return (
               <button type='button' key={status} onClick={() => handleStatusFilter(status)}>
-                <ColorBadge type='contactStatus' value={status} className={cn('capitalize', isActive && 'ring-1 ring-offset-1 ring-offset-background')} />
+                <ColorBadge type='contactStatus' value={status} className='capitalize' isActive={isActive} />
               </button>
             );
           })}
@@ -597,7 +597,7 @@ export default function CRMContactsPage() {
             const isActive = filters.conditions.some((c) => c.field === 'source' && c.value === source);
             return (
               <button type='button' key={source} onClick={() => handleSourceFilter(source)}>
-                <ColorBadge type='contactStatus' value={source} className={cn('capitalize', isActive && 'ring-1 ring-offset-1 ring-offset-background')} />
+                <ColorBadge type='source' value={source} className='capitalize' isActive={isActive} />
               </button>
             );
           })}
