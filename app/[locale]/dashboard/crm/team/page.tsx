@@ -1,12 +1,13 @@
 'use client';
 
 import { ActionAlertDialog } from '@/components/shared/action-alert-dialog';
+import { Combobox } from '@/components/shared/combobox';
 import { PageHeader } from '@/components/shared/page-header';
 import { TableLoading } from '@/components/shared/table-loading';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -24,7 +25,8 @@ import {
   getSortedRowModel,
   useReactTable,
 } from '@tanstack/react-table';
-import { ChevronDown, MoreHorizontal, Pencil, Plus, Trash, Users } from 'lucide-react';
+import { MoreHorizontal, Pencil, Plus, Trash, Users } from 'lucide-react';
+import { Check } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { toast } from 'sonner';
@@ -50,6 +52,7 @@ export default function CRMTeamsPage() {
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = useState({});
+  const [selectedColumn, setSelectedColumn] = useState('');
 
   const utils = api.useUtils();
   const { data: teams, isLoading } = api.team.getAllTeams.useQuery();
@@ -173,6 +176,11 @@ export default function CRMTeamsPage() {
     getFilteredRowModel: getFilteredRowModel(),
     onColumnVisibilityChange: setColumnVisibility,
     onRowSelectionChange: setRowSelection,
+    initialState: {
+      pagination: {
+        pageSize: 13,
+      },
+    },
     state: {
       sorting,
       columnFilters,
@@ -210,34 +218,47 @@ export default function CRMTeamsPage() {
         }
       />
 
-      <div>
-        <div className='flex items-center py-4'>
-          <Input
-            placeholder='Filter teams...'
-            value={(table.getColumn('name')?.getFilterValue() as string) ?? ''}
-            onChange={(event) => table.getColumn('name')?.setFilterValue(event.target.value)}
-            className='max-w-sm'
-          />
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant='outline' className='ml-auto'>
-                Columns <ChevronDown className='ml-2 h-4 w-4' />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align='end'>
-              {table
-                .getAllColumns()
-                .filter((column) => column.getCanHide())
-                .map((column) => {
-                  return (
-                    <DropdownMenuCheckboxItem key={column.id} className='capitalize' checked={column.getIsVisible()} onCheckedChange={(value) => column.toggleVisibility(!!value)}>
-                      {column.id}
-                    </DropdownMenuCheckboxItem>
-                  );
-                })}
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
+      <div className='flex items-center py-4'>
+        <Input
+          placeholder='Filter teams...'
+          value={(table.getColumn('name')?.getFilterValue() as string) ?? ''}
+          onChange={(event) => table.getColumn('name')?.setFilterValue(event.target.value)}
+          className='h-8 max-w-sm'
+        />
+        <Combobox
+          value={selectedColumn}
+          onChange={(value) => {
+            setSelectedColumn(value);
+            const column = table.getAllColumns().find((col) => col.id === value);
+            if (column) {
+              column.toggleVisibility(!column.getIsVisible());
+            }
+          }}
+          items={table
+            .getAllColumns()
+            .filter((column) => column.getCanHide())
+            .map((column) => column.id)}
+          placeholder='Columns'
+          searchPlaceholder='Search columns...'
+          emptyText='No columns found'
+          groupHeading='Available Columns'
+          allowCustom={false}
+          renderItem={(item) => {
+            const column = table.getAllColumns().find((col) => col.id === item);
+            return (
+              <div className='flex w-full items-center justify-between'>
+                <span className='capitalize'>{item}</span>
+                {column?.getIsVisible() && <Check className='h-4 w-4' />}
+              </div>
+            );
+          }}
+          className='ml-2 w-48'
+          size='sm'
+          alwaysPlaceHolder={true}
+        />
+      </div>
+
+      <div className='rounded-md border'>
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
