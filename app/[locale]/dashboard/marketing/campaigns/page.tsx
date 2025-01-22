@@ -60,8 +60,8 @@ export default function MarketingCampaignsPage() {
 
   const activeCampaigns = campaigns.filter((c) => c.status === 'active');
   const completedCampaigns = campaigns.filter((c) => c.status === 'completed');
-  const totalContacts = campaigns.reduce((acc, c) => acc + (c.contactCount || 0), 0);
-  const totalConversions = campaigns.reduce((acc, c) => acc + (c.convertedCount || 0), 0);
+  const totalContacts = campaigns.reduce((acc, c) => acc + (typeof c.contactCount === 'number' ? c.contactCount : 0), 0);
+  const totalConversions = campaigns.reduce((acc, c) => acc + (typeof c.convertedCount === 'number' ? c.convertedCount : 0), 0);
   const avgConversionRate = totalContacts > 0 ? Math.round((totalConversions / totalContacts) * 100) : 0;
 
   const handleEditCampaign = (e: React.MouseEvent, campaign: MarketingCampaign) => {
@@ -140,7 +140,7 @@ export default function MarketingCampaignsPage() {
       </div>
 
       <div className='relative'>
-        <SearchIcon className='absolute top-3 left-3 h-4 w-4 text-neutral-400' />
+        <SearchIcon className='absolute top-2.5 left-3 h-4 w-4 text-neutral-400' />
         <Input placeholder='Search campaigns...' className='pl-10' value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
       </div>
 
@@ -173,7 +173,7 @@ export default function MarketingCampaignsPage() {
               </TableRow>
             ) : (
               filteredCampaigns.map((campaign) => (
-                <TableRow key={campaign.id} onClick={() => router.push(`/dashboard/marketing/campaigns/${campaign.id}`)}>
+                <TableRow key={campaign.id} className='cursor-pointer hover:bg-muted/50' onClick={() => router.push(`/dashboard/marketing/campaigns/${campaign.id}`)}>
                   <TableCell className='font-medium'>
                     <Link href={`/dashboard/marketing/campaigns/${campaign.id}`} className='hover:underline'>
                       {campaign.name}

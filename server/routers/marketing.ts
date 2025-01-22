@@ -7,7 +7,26 @@ import { z } from 'zod';
 export const marketingRouter = createTRPCRouter({
   // Campaign Management
   getAllCampaigns: protectedProcedure.query(({ ctx }) => {
-    return ctx.db.select().from(marketingCampaign).orderBy(desc(marketingCampaign.createdAt));
+    return ctx.db
+      .select({
+        id: marketingCampaign.id,
+        name: marketingCampaign.name,
+        campaignCode: marketingCampaign.campaignCode,
+        description: marketingCampaign.description,
+        type: marketingCampaign.type,
+        status: marketingCampaign.status,
+        metrics: marketingCampaign.metrics,
+        contactCount: sql<number>`COUNT(DISTINCT ${contactCampaign.contactId})`,
+        convertedCount: sql<number>`COUNT(DISTINCT CASE WHEN ${contactCampaign.status} = 'converted' THEN ${contactCampaign.contactId} END)`,
+        createdAt: marketingCampaign.createdAt,
+        updatedAt: marketingCampaign.updatedAt,
+        createdBy: marketingCampaign.createdBy,
+        updatedBy: marketingCampaign.updatedBy,
+      })
+      .from(marketingCampaign)
+      .leftJoin(contactCampaign, eq(contactCampaign.campaignId, marketingCampaign.id))
+      .groupBy(marketingCampaign.id)
+      .orderBy(desc(marketingCampaign.createdAt));
   }),
 
   getCampaignById: protectedProcedure.input(z.object({ id: z.string() })).query(({ ctx, input }) => {

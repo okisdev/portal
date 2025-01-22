@@ -126,7 +126,10 @@ export type ResourceContent = z.infer<typeof resourceContentSchema>;
 
 export const marketingCampaignSchema = createSelectSchema(marketingCampaign);
 
-export type MarketingCampaign = z.infer<typeof marketingCampaignSchema>;
+export type MarketingCampaign = z.infer<typeof marketingCampaignSchema> & {
+  contactCount?: number;
+  convertedCount?: number;
+};
 
 export const appointmentSchema = z.object({
   title: z.string(),
