@@ -8,7 +8,7 @@ import type { User } from 'next-auth';
 import Credentials from 'next-auth/providers/credentials';
 import Resend from 'next-auth/providers/resend';
 
-export const { handlers, auth, signIn, sign_out } = NextAuth({
+export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: DrizzleAdapter(database),
   providers: [
     Credentials({
