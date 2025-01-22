@@ -26,6 +26,7 @@ import {
 } from '@tanstack/react-table';
 import { MoreHorizontal, Pencil, Plus, Trash, Users } from 'lucide-react';
 import { Check } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { toast } from 'sonner';
@@ -41,6 +42,7 @@ type TeamWithCount = {
 
 export default function CRMTeamsPage() {
   const router = useRouter();
+  const t = useTranslations();
 
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [newTeamName, setNewTeamName] = useState('');
@@ -106,7 +108,7 @@ export default function CRMTeamsPage() {
     },
     {
       accessorKey: 'name',
-      header: 'Team Name',
+      header: t('team_name'),
       cell: ({ row }) => (
         <div className='flex items-center gap-2'>
           <Users className='size-4 text-muted-foreground' />
@@ -116,15 +118,15 @@ export default function CRMTeamsPage() {
     },
     {
       accessorKey: 'description',
-      header: 'Description',
+      header: t('description'),
     },
     {
       accessorKey: 'contacts',
-      header: 'Contacts',
+      header: t('contacts'),
     },
     {
       accessorKey: 'createdAt',
-      header: 'Created',
+      header: t('created'),
       cell: ({ row }) => formatDate(new Date(row.getValue('createdAt'))),
     },
     {
@@ -146,7 +148,7 @@ export default function CRMTeamsPage() {
               className='cursor-pointer'
             >
               <Pencil className='mr-2 h-4 w-4' />
-              Edit team
+              {t('edit_team')}
             </DropdownMenuItem>
             <DropdownMenuItem
               className='cursor-pointer text-destructive'
@@ -156,7 +158,7 @@ export default function CRMTeamsPage() {
               }}
             >
               <Trash className='mr-2 h-4 w-4' />
-              Delete team
+              {t('delete_team')}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -192,11 +194,11 @@ export default function CRMTeamsPage() {
     return (
       <div className='space-y-4 p-4'>
         <PageHeader
-          title='Teams'
-          description='Manage teams and their contacts.'
+          title={t('teams')}
+          description={t('teams_description')}
           right={
             <Button variant='outline' className='h-8' disabled>
-              <Plus className='mr-2 size-4' /> Create Team
+              <Plus className='mr-2 size-4' /> {t('create_team')}
             </Button>
           }
         />
@@ -208,11 +210,11 @@ export default function CRMTeamsPage() {
   return (
     <div className='space-y-4 p-4'>
       <PageHeader
-        title='Teams'
-        description='Manage teams and their contacts.'
+        title={t('teams')}
+        description={t('teams_description')}
         right={
           <Button variant='outline' className='h-8' onClick={() => setIsCreateModalOpen(true)}>
-            <Plus className='mr-2 size-4' /> Create Team
+            <Plus className='mr-2 size-4' /> {t('create_team')}
           </Button>
         }
       />
@@ -237,7 +239,7 @@ export default function CRMTeamsPage() {
             .getAllColumns()
             .filter((column) => column.getCanHide())
             .map((column) => column.id)}
-          placeholder='Columns'
+          placeholder={t('columns')}
           searchPlaceholder='Search columns...'
           emptyText='No columns found'
           groupHeading='Available Columns'
@@ -263,29 +265,29 @@ export default function CRMTeamsPage() {
         open={!!teamToDelete}
         onOpenChange={(open) => !open && setTeamToDelete(null)}
         onConfirm={() => teamToDelete && handleDeleteTeam(teamToDelete)}
-        description='This action cannot be undone. This will permanently delete the team and remove all associated data.'
+        description={t('delete_team_description')}
       />
 
       <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
         <DialogContent className='max-h-[90vh] max-w-xl overflow-y-auto'>
           <DialogHeader>
-            <DialogTitle>Create New Team</DialogTitle>
+            <DialogTitle>{t('create_new_team')}</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleCreateTeam} className='space-y-4'>
             <div className='space-y-2'>
-              <Label>Team Name</Label>
+              <Label>{t('team_name')}</Label>
               <Input value={newTeamName} onChange={(e) => setNewTeamName(e.target.value)} placeholder='Enter team name...' />
             </div>
             <div className='space-y-2'>
-              <Label>Description</Label>
+              <Label>{t('description')}</Label>
               <Input value={newTeamDescription} onChange={(e) => setNewTeamDescription(e.target.value)} placeholder='Enter team description...' />
             </div>
             <div className='flex justify-end gap-2'>
               <Button type='button' variant='outline' onClick={() => setIsCreateModalOpen(false)}>
-                Cancel
+                {t('cancel')}
               </Button>
               <Button type='submit' disabled={createTeam.isPending}>
-                Create Team
+                {t('create_team')}
               </Button>
             </div>
           </form>

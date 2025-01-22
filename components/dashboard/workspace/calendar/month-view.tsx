@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Popover, PopoverTrigger } from '@/components/ui/popover';
 import type { CalendarEventWithParticipants, CalendarFolder } from '@/lib/schema';
 import { cn } from '@/lib/utils';
+import { useTranslations } from 'next-intl';
 import { WEEKDAYS } from './constants';
 
 interface MonthViewProps {
@@ -17,6 +18,8 @@ interface MonthViewProps {
 }
 
 export function MonthView({ currentDate, selectedDate, setSelectedDate, events, folders, hiddenCalendars, onEventEdit, onEventDelete }: MonthViewProps) {
+  const t = useTranslations();
+
   const getDaysInMonth = (date: Date) => {
     const year = date.getFullYear();
     const month = date.getMonth();
@@ -49,7 +52,7 @@ export function MonthView({ currentDate, selectedDate, setSelectedDate, events, 
     <div className='grid flex-1 grid-cols-7'>
       {WEEKDAYS.map((day) => (
         <div key={day} className='border-r border-b p-2 text-muted-foreground text-sm'>
-          {day}
+          {t(day)}
         </div>
       ))}
       {getDaysInMonth(currentDate).map((date) => {

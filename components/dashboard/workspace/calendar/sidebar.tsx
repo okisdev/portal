@@ -6,6 +6,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import type { CalendarFolder } from '@/lib/schema';
 import { cn } from '@/lib/utils';
 import { ChevronsUpDown, MoreHorizontal, Pencil, Plus, Trash } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { MONTHS, WEEKDAYS } from './constants';
 import { YearMonthPicker } from './year-month-picker';
@@ -23,6 +24,8 @@ interface CalendarSidebarProps {
 }
 
 export function CalendarSidebar({ currentDate, selectedDate, onDateSelect, folders, hiddenCalendars, onToggleCalendar, onAddCalendar, onEditCalendar, onDeleteCalendar }: CalendarSidebarProps) {
+  const t = useTranslations();
+
   const [folderToDelete, setFolderToDelete] = useState<string | null>(null);
 
   const getDaysInMonth = (date: Date) => {
@@ -82,7 +85,7 @@ export function CalendarSidebar({ currentDate, selectedDate, onDateSelect, folde
       <div className='grid grid-cols-7 gap-1 text-sm'>
         {WEEKDAYS.map((day) => (
           <div key={day} className='text-center text-muted-foreground'>
-            {day.slice(0, 1)}
+            {t(day.slice(0, 1))}
           </div>
         ))}
         {getDaysInMonth(currentDate)

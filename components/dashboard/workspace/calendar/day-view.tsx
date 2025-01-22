@@ -1,5 +1,6 @@
 import type { CalendarEventWithParticipants, CalendarFolder } from '@/lib/schema';
 import { cn } from '@/lib/utils';
+import { useTranslations } from 'next-intl';
 import { WEEKDAYS } from './constants';
 import { TimeColumn } from './time-column';
 import { TimeGrid } from './time-grid';
@@ -19,10 +20,12 @@ interface DayViewProps {
 }
 
 export function DayView({ currentDate, selectedDate, events, folders, hiddenCalendars, onTimeSelect, isSelecting, isTimeSlotSelected, onSelectionEnd, onEventEdit, onEventDelete }: DayViewProps) {
+  const t = useTranslations();
+
   return (
     <div className='flex min-h-0 flex-1 flex-col'>
       <div className='grid grid-cols-[100px_1fr] divide-x border-b bg-background'>
-        <div className='p-2 text-muted-foreground text-sm'>Time</div>
+        <div className='p-2 text-muted-foreground text-sm'>{t('time')}</div>
         <div
           className={cn(
             'p-2 text-sm',
@@ -30,7 +33,7 @@ export function DayView({ currentDate, selectedDate, events, folders, hiddenCale
             currentDate.getDate() === selectedDate.getDate() && currentDate.getMonth() === selectedDate.getMonth() && currentDate.getFullYear() === selectedDate.getFullYear() && 'bg-primary/10'
           )}
         >
-          <div className='font-medium'>{WEEKDAYS[currentDate.getDay()]}</div>
+          <div className='font-medium'>{t(WEEKDAYS[currentDate.getDay()])}</div>
           <div className='text-muted-foreground'>{currentDate.getDate()}</div>
         </div>
       </div>

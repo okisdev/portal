@@ -414,22 +414,22 @@ export default function ContactIdPage() {
                   <DropdownMenuContent align='end' className='bg-popover text-popover-foreground'>
                     <DropdownMenuItem onClick={handleEditClick} className='cursor-pointer'>
                       <Edit2 className='mr-2 size-4' />
-                      Edit
+                      {t('edit')}
                     </DropdownMenuItem>
                     <DropdownMenuSub>
                       <DropdownMenuSubTrigger className='cursor-pointer'>
                         <Send className='mr-2 size-4' />
-                        Send
+                        {t('send')}
                       </DropdownMenuSubTrigger>
                       <DropdownMenuPortal>
                         <DropdownMenuSubContent>
                           <DropdownMenuItem onClick={() => setIsEmailModalOpen(true)} className='cursor-pointer'>
                             <Mail className='mr-2 size-4' />
-                            Email
+                            {t('email')}
                           </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => setIsMessageModalOpen(true)} className='cursor-pointer'>
                             <MessageSquare className='mr-2 size-4' />
-                            Message
+                            {t('message')}
                           </DropdownMenuItem>
                         </DropdownMenuSubContent>
                       </DropdownMenuPortal>
@@ -443,8 +443,8 @@ export default function ContactIdPage() {
               <div className='grid grid-cols-1 gap-4'>
                 <div className='grid grid-cols-2 gap-4'>
                   {[
-                    { label: 'Last Contact', value: contact?.lastContactedAt ? formatDate(new Date(contact.lastContactedAt)) : '—' },
-                    { label: 'Source', value: contact?.source || '—' },
+                    { label: t('last_contact'), value: contact?.lastContactedAt ? formatDate(new Date(contact.lastContactedAt)) : '—' },
+                    { label: t('source'), value: contact?.source || '—' },
                   ].map((item) => (
                     <div key={item.label} className='space-y-1.5'>
                       <div className='text-muted-foreground text-xs'>{item.label}</div>
@@ -454,7 +454,7 @@ export default function ContactIdPage() {
                 </div>
                 <div className='grid grid-cols-2 gap-4'>
                   <div className='space-y-1.5'>
-                    <div className='text-muted-foreground text-xs'>Priority</div>
+                    <div className='text-muted-foreground text-xs'>{t('priority')}</div>
                     <div className='text-foreground'>
                       <Select value={contact?.priority || 'medium'} onValueChange={handlePriorityChange}>
                         <SelectTrigger className='h-8'>
@@ -473,7 +473,7 @@ export default function ContactIdPage() {
                     </div>
                   </div>
                   <div className='space-y-1.5'>
-                    <div className='text-muted-foreground text-xs'>Status</div>
+                    <div className='text-muted-foreground text-xs'>{t('status')}</div>
                     <div className='text-foreground'>
                       <Select value={contact?.status || 'lead'} onValueChange={handleStatusChange}>
                         <SelectTrigger className='h-8'>
@@ -533,13 +533,13 @@ export default function ContactIdPage() {
 
             <div className='space-y-2 border-b p-6'>
               <div className='flex items-center justify-between'>
-                <h2 className='font-medium text-foreground'>Meetings</h2>
+                <h2 className='font-medium text-foreground'>{t('meetings')}</h2>
                 <button type='button' className='text-muted-foreground hover:text-foreground' onClick={handleOpenBookingModal}>
                   <Plus className='size-4' />
                 </button>
               </div>
               <div className='space-y-4'>
-                {appointments?.length === 0 && <p className='text-muted-foreground text-sm'>No meetings found.</p>}
+                {appointments?.length === 0 && <p className='text-muted-foreground text-sm'>{t('no_meetings_found')}</p>}
                 {appointments?.map((apt) => (
                   <div key={apt.id} className='flex items-center gap-3'>
                     <Calendar className='size-4 shrink-0 text-muted-foreground' />
@@ -565,7 +565,7 @@ export default function ContactIdPage() {
                           }
                         >
                           <Edit2 className='mr-2 size-4' />
-                          Edit
+                          {t('edit')}
                         </DropdownMenuItem>
                         <DropdownMenuItem className='text-destructive' onClick={() => deleteAppointment.mutate(apt.id)}>
                           <Trash2 className='mr-2 size-4' />
@@ -580,13 +580,13 @@ export default function ContactIdPage() {
 
             <div className='space-y-2 border-b p-6'>
               <div className='flex items-center justify-between'>
-                <h2 className='font-medium text-foreground'>Payments</h2>
+                <h2 className='font-medium text-foreground'>{t('payments')}</h2>
                 <button type='button' className='text-muted-foreground hover:text-foreground'>
                   <Plus className='size-4' />
                 </button>
               </div>
               <div className='space-y-3'>
-                {payments?.length === 0 && <p className='text-muted-foreground text-sm'>No payments found.</p>}
+                {payments?.length === 0 && <p className='text-muted-foreground text-sm'>{t('no_payments_found')}</p>}
                 {payments?.slice(0, 3).map((payment) => (
                   <div key={payment.id} className='flex items-center justify-between'>
                     <span className='text-muted-foreground text-sm'>{formatDate(new Date(payment.created * 1000))}</span>
@@ -628,7 +628,7 @@ export default function ContactIdPage() {
                     <Link href={`/dashboard/crm/team/${team.id}`} className='text-sm hover:text-primary'>
                       {team.name}
                     </Link>
-                    <span className='text-muted-foreground text-xs'>Referral</span>
+                    <span className='text-muted-foreground text-xs'>{t('referral')}</span>
                   </div>
                 ))}
               </div>
@@ -641,14 +641,14 @@ export default function ContactIdPage() {
             <div className='h-full p-6'>
               <Tabs defaultValue='activity' className='flex h-full flex-col'>
                 <TabsList className='grid w-full grid-cols-3'>
-                  <TabsTrigger value='activity'>Activity</TabsTrigger>
-                  <TabsTrigger value='subscription'>Subscription</TabsTrigger>
-                  <TabsTrigger value='management'>Management</TabsTrigger>
+                  <TabsTrigger value='activity'>{t('activity')}</TabsTrigger>
+                  <TabsTrigger value='subscription'>{t('subscription')}</TabsTrigger>
+                  <TabsTrigger value='management'>{t('management')}</TabsTrigger>
                 </TabsList>
                 <TabsContent value='activity' className='relative flex flex-1 flex-col'>
                   <div className='absolute inset-0 overflow-y-auto pb-[4.5rem]'>
                     <div className='space-y-1'>
-                      {activities?.length === 0 && <p className='text-muted-foreground text-sm'>No activities found.</p>}
+                      {activities?.length === 0 && <p className='text-muted-foreground text-sm'>{t('no_activities_found')}</p>}
                       {activities
                         ?.filter((activity) => activity.type !== 'CONTACT_UPDATED')
                         .map((activity, index) => {
@@ -715,7 +715,7 @@ export default function ContactIdPage() {
                                           <PopoverTrigger asChild>
                                             <button type='button' className='rounded-md bg-muted/50 px-1 py-0.5 text-muted-foreground text-xs hover:bg-muted'>
                                               <Info className='mr-1 inline-block size-3' />
-                                              View Details
+                                              {t('view_details')}
                                             </button>
                                           </PopoverTrigger>
                                           <PopoverContent className='w-80'>
@@ -725,7 +725,7 @@ export default function ContactIdPage() {
                                       )}
                                       {activity.type === 'NOTE_ADDED' && (
                                         <button type='button' onClick={() => setReplyingTo(activity.id)} className='rounded-md bg-muted/50 px-1 py-0.5 text-muted-foreground text-xs hover:bg-muted'>
-                                          Reply
+                                          {t('reply')}
                                         </button>
                                       )}
                                     </div>
@@ -738,7 +738,7 @@ export default function ContactIdPage() {
                                       </div>
                                       <div className='flex gap-1'>
                                         <Button type='submit' size='sm' disabled={createContactActivity.isPending}>
-                                          Reply
+                                          {t('reply')}
                                         </Button>
                                         <Button
                                           type='button'
@@ -775,16 +775,16 @@ export default function ContactIdPage() {
                     <form onSubmit={handleSubmitActivity} className='flex max-w-full gap-2'>
                       <Input value={newActivity} onChange={(e) => setNewActivity(e.target.value)} placeholder='Add a note...' className='h-8' />
                       <Button type='submit' size='sm' disabled={createContactActivity.isPending}>
-                        Add Note
+                        {t('add_note')}
                       </Button>
                     </form>
                   </div>
                 </TabsContent>
                 <TabsContent value='subscription' className='flex w-full flex-col gap-4'>
-                  <p>Subscription</p>
+                  <p>{t('subscription')}</p>
                 </TabsContent>
                 <TabsContent value='management' className='flex w-full flex-col gap-4'>
-                  <p>Management</p>
+                  <p>{t('management')}</p>
                 </TabsContent>
               </Tabs>
             </div>
@@ -800,24 +800,24 @@ export default function ContactIdPage() {
           <form onSubmit={handleSubmitEdit} className='space-y-4'>
             <div className='grid grid-cols-2 gap-4'>
               <div className='space-y-2'>
-                <Label htmlFor='firstName'>First Name</Label>
+                <Label htmlFor='firstName'>{t('first_name')}</Label>
                 <Input id='firstName' value={editForm.firstName} onChange={(e) => setEditForm({ ...editForm, firstName: e.target.value })} />
               </div>
               <div className='space-y-2'>
-                <Label htmlFor='lastName'>Last Name</Label>
+                <Label htmlFor='lastName'>{t('last_name')}</Label>
                 <Input id='lastName' value={editForm.lastName} onChange={(e) => setEditForm({ ...editForm, lastName: e.target.value })} />
               </div>
             </div>
             <div className='space-y-2'>
-              <Label htmlFor='email'>Email</Label>
+              <Label htmlFor='email'>{t('email')}</Label>
               <Input id='email' type='email' value={editForm.email} onChange={(e) => setEditForm({ ...editForm, email: e.target.value })} />
             </div>
             <div className='space-y-2'>
-              <Label htmlFor='phone'>Phone</Label>
+              <Label htmlFor='phone'>{t('phone')}</Label>
               <PhoneInput id='phone' value={editForm.phone} onChange={(value) => setEditForm({ ...editForm, phone: value })} />
             </div>
             <div className='space-y-2'>
-              <Label htmlFor='company'>Company</Label>
+              <Label htmlFor='company'>{t('company')}</Label>
               <Combobox
                 value={editForm.company}
                 onChange={(value) => setEditForm({ ...editForm, company: value })}
@@ -828,7 +828,7 @@ export default function ContactIdPage() {
               />
             </div>
             <div className='space-y-2'>
-              <Label htmlFor='status'>Status</Label>
+              <Label htmlFor='status'>{t('status')}</Label>
 
               <Select value={editForm.status} onValueChange={(value) => setEditForm({ ...editForm, status: value as Status })}>
                 <SelectTrigger>
@@ -844,7 +844,7 @@ export default function ContactIdPage() {
               </Select>
             </div>
             <div className='space-y-2'>
-              <Label htmlFor='source'>Source</Label>
+              <Label htmlFor='source'>{t('source')}</Label>
               <Combobox
                 value={editForm.source}
                 onChange={(value) => setEditForm({ ...editForm, source: value })}
@@ -855,24 +855,24 @@ export default function ContactIdPage() {
               />
             </div>
             <div className='space-y-2'>
-              <Label htmlFor='priority'>Priority</Label>
+              <Label htmlFor='priority'>{t('priority')}</Label>
               <Select value={editForm.priority} onValueChange={(value) => setEditForm({ ...editForm, priority: value as Priority })}>
                 <SelectTrigger>
                   <SelectValue placeholder='Select priority' />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value='high'>High</SelectItem>
-                  <SelectItem value='medium'>Medium</SelectItem>
-                  <SelectItem value='low'>Low</SelectItem>
+                  <SelectItem value='high'>{t('high')}</SelectItem>
+                  <SelectItem value='medium'>{t('medium')}</SelectItem>
+                  <SelectItem value='low'>{t('low')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div className='flex justify-end space-x-2'>
               <Button type='button' variant='outline' onClick={handleCloseEditModal}>
-                Cancel
+                {t('cancel')}
               </Button>
               <Button type='submit' disabled={updateContact.isPending}>
-                {updateContact.isPending ? 'Saving...' : 'Save Changes'}
+                {updateContact.isPending ? t('saving') : t('save_changes')}
               </Button>
             </div>
           </form>
