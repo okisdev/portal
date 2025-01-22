@@ -18,6 +18,8 @@ interface ComboboxProps {
   allowCustom?: boolean;
   renderItem?: (item: string) => React.ReactNode;
   className?: string;
+  size?: 'sm' | 'lg' | 'default' | 'icon' | null | undefined;
+  alwaysPlaceHolder?: boolean;
 }
 
 interface ComboboxCommandProps {
@@ -89,6 +91,8 @@ function Combobox({
   allowCustom = true,
   renderItem,
   className,
+  size = 'default',
+  alwaysPlaceHolder = false,
 }: ComboboxProps) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
@@ -108,8 +112,8 @@ function Combobox({
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <Button variant='outline' aria-expanded={open} className={cn('w-full justify-between px-3 font-normal', className)}>
-          {value || placeholder}
+        <Button variant='outline' size={size} aria-expanded={open} className={cn('w-full justify-between px-3 font-normal', className)}>
+          {alwaysPlaceHolder ? placeholder : value || placeholder}
           <ChevronsUpDown className='ml-2 h-4 w-4 shrink-0 opacity-50' />
         </Button>
       </PopoverTrigger>

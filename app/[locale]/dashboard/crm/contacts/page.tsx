@@ -1,5 +1,19 @@
 'use client';
 
+import { ActionAlertDialog } from '@/components/shared/action-alert-dialog';
+import { ColorBadge } from '@/components/shared/color-badge';
+import { Combobox } from '@/components/shared/combobox';
+import { PageHeader } from '@/components/shared/page-header';
+import { TableLoading } from '@/components/shared/table-loading';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Input } from '@/components/ui/input';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { useDebounce } from '@/hooks/use-debounce';
+import { type Contact, sourceSchema, statusSchema } from '@/lib/schema';
+import { cn, formatDate } from '@/lib/utils';
+import { api } from '@/utils/trpc/client';
 import {
   type ColumnDef,
   type ColumnFiltersState,
@@ -12,26 +26,12 @@ import {
   getSortedRowModel,
   useReactTable,
 } from '@tanstack/react-table';
+import { Check, Filter, Import, MoreHorizontal, Pencil, Trash2, X } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { usePathname } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
-
-import { ActionAlertDialog } from '@/components/shared/action-alert-dialog';
-import { ColorBadge } from '@/components/shared/color-badge';
-import { PageHeader } from '@/components/shared/page-header';
-import { TableLoading } from '@/components/shared/table-loading';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Button } from '@/components/ui/button';
-import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Input } from '@/components/ui/input';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { useDebounce } from '@/hooks/use-debounce';
-import { type Contact, sourceSchema, statusSchema } from '@/lib/schema';
-import { cn, formatDate } from '@/lib/utils';
-import { api } from '@/utils/trpc/client';
-import { ChevronDown, Filter, Import, MoreHorizontal, Pencil, Trash2, X } from 'lucide-react';
 
 type SortConfig = {
   column: string;
@@ -49,12 +49,6 @@ type FilterCondition = {
 type FilterConfig = {
   conditions: FilterCondition[];
   matchAll: boolean;
-};
-
-type ColumnConfig = {
-  id: string;
-  label: string;
-  visible: boolean;
 };
 
 export default function CRMContactsPage() {
@@ -86,18 +80,6 @@ export default function CRMContactsPage() {
     conditions: [],
     matchAll: true,
   });
-
-  const [columns, setColumns] = useState<ColumnConfig[]>([
-    { id: 'name', label: 'Name', visible: true },
-    { id: 'phone', label: 'Phone', visible: true },
-    { id: 'company', label: 'Company', visible: true },
-    { id: 'status', label: 'Status', visible: true },
-    { id: 'source', label: 'Source', visible: true },
-    { id: 'priority', label: 'Priority', visible: true },
-    { id: 'remark', label: 'Remark', visible: true },
-    { id: 'createdAt', label: 'Created', visible: false },
-    { id: 'actions', label: 'Actions', visible: true },
-  ]);
 
   const filterFields = [
     { label: 'Name', value: 'name' },
@@ -332,22 +314,15 @@ export default function CRMContactsPage() {
       });
   }, [contacts, filters, sortConfig, debouncedSearch]);
 
-  const handleSort = (column: string) => {
-    setSortConfig((current) => ({
-      column,
-      direction: current.column === column && current.direction === 'asc' ? 'desc' : 'asc',
-    }));
-  };
-
   const handleDeleteClick = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
     setContactToDelete(id);
     setDeleteDialogOpen(true);
   };
 
-  const handleDeleteConfirm = async () => {
+  const handleDeleteConfirm = () => {
     if (contactToDelete) {
-      await deleteContact.mutate({ id: contactToDelete });
+      deleteContact.mutate({ id: contactToDelete });
       setDeleteDialogOpen(false);
       setContactToDelete(null);
     }
@@ -520,26 +495,37 @@ export default function CRMContactsPage() {
               </DropdownMenuContent>
             </DropdownMenu>
 
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant='outline' className='ml-auto'>
-                  Columns <ChevronDown className='ml-2 h-4 w-4' />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align='end'>
-                {table
-                  .getAllColumns()
-                  .filter((column) => column.getCanHide())
-                  .map((column) => {
-                    return (
-                      <DropdownMenuCheckboxItem key={column.id} className='capitalize' checked={column.getIsVisible()} onCheckedChange={(value) => column.toggleVisibility(!!value)}>
-                        {column.id}
-                      </DropdownMenuCheckboxItem>
-                    );
-                  })}
-              </DropdownMenuContent>
-            </DropdownMenu>
-
+            <Combobox
+              value={selectedColumn}
+              onChange={(value) => {
+                setSelectedColumn(value);
+                const column = table.getAllColumns().find((col) => col.id === value);
+                if (column) {
+                  column.toggleVisibility(!column.getIsVisible());
+                }
+              }}
+              items={table
+                .getAllColumns()
+                .filter((column) => column.getCanHide())
+                .map((column) => column.id)}
+              placeholder='Columns'
+              searchPlaceholder='Search columns...'
+              emptyText='No columns found'
+              groupHeading='Available Columns'
+              allowCustom={false}
+              renderItem={(item) => {
+                const column = table.getAllColumns().find((col) => col.id === item);
+                return (
+                  <div className='flex w-full items-center justify-between'>
+                    <span className='capitalize'>{item}</span>
+                    {column?.getIsVisible() && <Check className='h-4 w-4' />}
+                  </div>
+                );
+              }}
+              className='w-48'
+              size='sm'
+              alwaysPlaceHolder={true}
+            />
             {filters.conditions.length > 0 && (
               <Button variant='outline' size='sm' onClick={() => setFilters({ conditions: [], matchAll: true })}>
                 <X className='h-4 w-4' />
@@ -547,6 +533,7 @@ export default function CRMContactsPage() {
               </Button>
             )}
           </div>
+
           <div className='flex flex-row gap-2'>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -601,7 +588,7 @@ export default function CRMContactsPage() {
 
       <div className='rounded-md border'>
         {isLoading ? (
-          <TableLoading columnCount={tableColumns.length} rowCount={8} />
+          <TableLoading columnCount={tableColumns.length} rowCount={15} />
         ) : (
           <div className='relative'>
             <div className='max-h-[800px] overflow-auto'>
@@ -638,7 +625,7 @@ export default function CRMContactsPage() {
         )}
       </div>
 
-      <div className='flex items-center justify-end space-x-2 py-4'>
+      <div className='flex items-center justify-between'>
         <div className='flex-1 text-muted-foreground text-sm'>
           {table.getFilteredSelectedRowModel().rows.length} of {table.getFilteredRowModel().rows.length} row(s) selected.
         </div>
