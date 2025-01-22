@@ -1,75 +1,10 @@
 import { contact, contactActivity, contactCampaign, marketingCampaign, team, teamContact } from '@/drizzle/schema';
-import { prioritySchema, statusSchema } from '@/lib/schema';
+import { activityTypeSchema, prioritySchema, statusSchema } from '@/lib/schema';
+import { createContactActivityHelper } from '@/server/helper/contact';
 import { createTRPCRouter, protectedProcedure, publicProcedure } from '@/server/trpc';
 import { sendEmail } from '@/utils/email';
 import { asc, desc, eq, inArray, sql } from 'drizzle-orm';
 import { z } from 'zod';
-
-const activityTypeEnum = z.enum([
-  // Contact Management
-  'CONTACT_CREATED',
-  'CONTACT_UPDATED',
-  'CONTACT_DELETED',
-
-  // Status Changes
-  'STATUS_CHANGED',
-  'PRIORITY_CHANGED',
-
-  // Engagement
-  'MEETING_SCHEDULED',
-  'MEETING_UPDATED',
-  'MEETING_CANCELLED',
-  'CALL_LOGGED',
-  'EMAIL_SENT',
-  'NOTE_ADDED',
-
-  // Team Management
-  'TEAM_ASSIGNED',
-  'TEAM_REMOVED',
-
-  // Campaign Management
-  'CAMPAIGN_ASSIGNED',
-  'CAMPAIGN_UPDATED',
-  'CAMPAIGN_REMOVED',
-
-  // Email
-  'EMAIL_SENT',
-  'EMAIL_SCHEDULED',
-
-  // Deal Management
-  'DEAL_CREATED',
-  'DEAL_UPDATED',
-  'DEAL_CLOSED',
-
-  // Payment
-  'PAYMENT_LINK_CLICKED',
-  'PAYMENT_COMPLETED',
-]);
-
-// Helper function to create contact activity
-const createContactActivityHelper = async (
-  ctx: any,
-  input: {
-    contactId: string;
-    type: z.infer<typeof activityTypeEnum>;
-    title: string;
-    description: string;
-    initiatorType?: 'user' | 'contact' | 'system';
-    initiatorId?: string;
-    metadata?: Record<string, any>;
-  }
-) => {
-  return ctx.db.insert(contactActivity).values({
-    contactId: input.contactId,
-    userId: ctx.session?.user.id,
-    type: input.type,
-    initiatorType: input.initiatorType || 'system',
-    initiatorId: input.initiatorId || ctx.session?.user.id,
-    title: input.title,
-    description: input.description,
-    metadata: input.metadata ? JSON.stringify(input.metadata) : null,
-  });
-};
 
 export const contactRouter = createTRPCRouter({
   getAllContacts: protectedProcedure.query(({ ctx }) => {
@@ -258,7 +193,7 @@ export const contactRouter = createTRPCRouter({
     .input(
       z.object({
         contactId: z.string(),
-        type: activityTypeEnum,
+        type: activityTypeSchema,
         title: z.string(),
         description: z.string(),
         initiatorType: z.enum(['user', 'contact', 'system']),

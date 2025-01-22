@@ -1,10 +1,10 @@
 'use client';
 
+import { TipTapEditor } from '@/components/shared/tiptap-editor';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import type { Contact } from '@/lib/schema';
 import { generateUUID } from '@/lib/utils';
 import { api } from '@/utils/trpc/client';
@@ -30,6 +30,8 @@ interface EmailFormData {
 export function SendEmail({ open, onOpenChange, recipient }: SendEmailProps) {
   if (!recipient) return null;
 
+  const utils = api.useUtils();
+
   const { data: session } = useSession();
   const [showCcBcc, setShowCcBcc] = useState(false);
   const [formData, setFormData] = useState<EmailFormData>({
@@ -45,6 +47,7 @@ export function SendEmail({ open, onOpenChange, recipient }: SendEmailProps) {
   const sendEmail = api.contact.sendEmail.useMutation({
     onSuccess: () => {
       toast.success('Email sent successfully');
+      utils.contact.getContactById.invalidate({ id: recipient.id });
       handleClose();
     },
     onError: (error) => {
@@ -183,13 +186,8 @@ export function SendEmail({ open, onOpenChange, recipient }: SendEmailProps) {
           )}
 
           <div className='space-y-4'>
-            <Input placeholder='Subject' className='border-0 px-0 text-lg' value={formData.subject} onChange={(e) => setFormData((prev) => ({ ...prev, subject: e.target.value }))} />
-            <Textarea
-              placeholder='Write your message...'
-              className='min-h-[200px] border-0 px-0'
-              value={formData.content}
-              onChange={(e) => setFormData((prev) => ({ ...prev, content: e.target.value }))}
-            />
+            <Input placeholder='Subject' value={formData.subject} onChange={(e) => setFormData((prev) => ({ ...prev, subject: e.target.value }))} />
+            <TipTapEditor content={formData.content} onChange={(content) => setFormData((prev) => ({ ...prev, content }))} placeholder='Write your message...' className='min-h-[200px]' />
           </div>
 
           <div className='space-y-4 border-t pt-4'>

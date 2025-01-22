@@ -1,64 +1,8 @@
-import { calendarEvent, calendarEventParticipant, calendarFolder, contact, contactActivity, team, teamActivity, teamContact, teamMeeting } from '@/drizzle/schema';
+import { calendarEvent, calendarEventParticipant, calendarFolder, contact, team, teamActivity, teamContact, teamMeeting } from '@/drizzle/schema';
+import { createContactActivityHelper } from '@/server/helper/contact';
 import { createTRPCRouter, protectedProcedure } from '@/server/trpc';
 import { and, eq, exists, sql } from 'drizzle-orm';
 import { z } from 'zod';
-
-const activityTypeEnum = z.enum([
-  // Contact Management
-  'CONTACT_CREATED',
-  'CONTACT_UPDATED',
-  'CONTACT_DELETED',
-
-  // Status Changes
-  'STATUS_CHANGED',
-  'PRIORITY_CHANGED',
-
-  // Engagement
-  'MEETING_SCHEDULED',
-  'MEETING_UPDATED',
-  'MEETING_CANCELLED',
-  'CALL_LOGGED',
-  'EMAIL_SENT',
-  'NOTE_ADDED',
-
-  // Team Management
-  'TEAM_ASSIGNED',
-  'TEAM_REMOVED',
-
-  // Deal Management
-  'DEAL_CREATED',
-  'DEAL_UPDATED',
-  'DEAL_CLOSED',
-
-  // Payment
-  'PAYMENT_LINK_CLICKED',
-  'PAYMENT_COMPLETED',
-]);
-
-// Helper function to create contact activity
-const createContactActivityHelper = async (
-  ctx: any,
-  input: {
-    contactId: string;
-    type: z.infer<typeof activityTypeEnum>;
-    title: string;
-    description: string;
-    initiatorType?: 'user' | 'contact' | 'system';
-    initiatorId?: string;
-    metadata?: Record<string, any>;
-  }
-) => {
-  return ctx.db.insert(contactActivity).values({
-    contactId: input.contactId,
-    userId: ctx.session?.user.id,
-    type: input.type,
-    initiatorType: input.initiatorType || 'system',
-    initiatorId: input.initiatorId || ctx.session?.user.id,
-    title: input.title,
-    description: input.description,
-    metadata: input.metadata ? JSON.stringify(input.metadata) : null,
-  });
-};
 
 export const teamRouter = createTRPCRouter({
   getAllTeams: protectedProcedure.query(async ({ ctx }) => {

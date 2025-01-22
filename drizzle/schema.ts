@@ -167,6 +167,8 @@ export const contactActivity = pgTable('contactActivity', {
       'MEETING_CANCELLED',
       'CALL_LOGGED',
       'EMAIL_SENT',
+      'EMAIL_SCHEDULED',
+      'MESSAGE_SENT',
       'NOTE_ADDED',
 
       // Team Management
@@ -183,10 +185,6 @@ export const contactActivity = pgTable('contactActivity', {
       'DEAL_CREATED',
       'DEAL_UPDATED',
       'DEAL_CLOSED',
-
-      // Email
-      'EMAIL_SENT',
-      'EMAIL_SCHEDULED',
 
       // Payment
       'PAYMENT_LINK_CLICKED',
