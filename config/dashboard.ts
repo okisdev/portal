@@ -1,4 +1,4 @@
-import { Calendar, Coins, Contact, File, Gift, Link, QrCode, Settings, Tornado, Users } from 'lucide-react';
+import { Calendar, Contact, File, Gift, QrCode, Settings, Tornado, Users } from 'lucide-react';
 
 export const workspaceItems = [
   {
@@ -24,11 +24,11 @@ export const crmItems = [
     url: '/dashboard/crm/team',
     icon: Users,
   },
-  {
-    title: 'Payments',
-    url: '/dashboard/crm/payments',
-    icon: Coins,
-  },
+  // {
+  //   title: 'Payments',
+  //   url: '/dashboard/crm/payments',
+  //   icon: Coins,
+  // },
 ];
 
 export const marketingItems = [
@@ -37,16 +37,16 @@ export const marketingItems = [
     url: '/dashboard/marketing/campaigns',
     icon: Gift,
   },
-  {
-    title: 'Payment Links',
-    url: '/dashboard/marketing/payment-links',
-    icon: Link,
-  },
-  {
-    title: 'Subscription Management',
-    url: '/dashboard/marketing/subscription-management',
-    icon: Link,
-  },
+  // {
+  //   title: 'Payment Links',
+  //   url: '/dashboard/marketing/payment-links',
+  //   icon: Link,
+  // },
+  // {
+  //   title: 'Subscription Management',
+  //   url: '/dashboard/marketing/subscription-management',
+  //   icon: Link,
+  // },
 ];
 
 export const resourcesItems = [

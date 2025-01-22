@@ -368,6 +368,7 @@ export default function CRMContactsPage() {
     {
       accessorKey: 'company',
       header: 'Company',
+      cell: ({ row }) => <span className='capitalize'>{row.original.company || '—'}</span>,
     },
     {
       accessorKey: 'status',
