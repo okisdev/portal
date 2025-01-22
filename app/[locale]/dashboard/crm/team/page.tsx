@@ -12,15 +12,12 @@ import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, Table
 import { formatDate } from '@/lib/utils';
 import { api } from '@/utils/trpc/client';
 import { MoreHorizontal, Pencil, Plus, Trash, Users } from 'lucide-react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
 export default function TeamPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-
-  const mode = searchParams.get('mode');
 
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [newTeamName, setNewTeamName] = useState('');

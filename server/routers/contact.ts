@@ -1,4 +1,4 @@
-import { contact, contactActivity, contactCampaign, team, teamContact } from '@/drizzle/schema';
+import { contact, contactActivity, contactCampaign, marketingCampaign, team, teamContact } from '@/drizzle/schema';
 import { prioritySchema, statusSchema } from '@/lib/schema';
 import { createTRPCRouter, protectedProcedure, publicProcedure } from '@/server/trpc';
 import { asc, desc, eq, inArray, sql } from 'drizzle-orm';
@@ -25,6 +25,11 @@ const activityTypeEnum = z.enum([
   // Team Management
   'TEAM_ASSIGNED',
   'TEAM_REMOVED',
+
+  // Campaign Management
+  'CAMPAIGN_ASSIGNED',
+  'CAMPAIGN_UPDATED',
+  'CAMPAIGN_REMOVED',
 
   // Deal Management
   'DEAL_CREATED',
@@ -180,13 +185,19 @@ export const contactRouter = createTRPCRouter({
           source: input.source ?? 'direct',
         });
 
+        const campaignCode = await ctx.db
+          .select({ code: marketingCampaign.campaignCode, name: marketingCampaign.name })
+          .from(marketingCampaign)
+          .where(eq(marketingCampaign.id, input.campaignId))
+          .then((rows) => rows[0]);
+
         // Log campaign assignment activity
         await createContactActivityHelper(ctx, {
           contactId: result[0].id,
-          type: 'TEAM_ASSIGNED',
+          type: 'CAMPAIGN_ASSIGNED',
           title: 'Campaign Assigned',
-          description: `Contact was assigned to campaign ID: ${input.campaignId}`,
-          metadata: { campaignId: input.campaignId },
+          description: `Contact was assigned to campaign: ${campaignCode.name} (${campaignCode.code})`,
+          metadata: { campaignId: input.campaignId, campaignCode: campaignCode.code },
           initiatorType: 'user',
           initiatorId: ctx.session?.user.id,
         });

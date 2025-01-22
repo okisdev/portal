@@ -172,6 +172,12 @@ export const contactActivity = pgTable('contactActivity', {
       // Team Management
       'TEAM_ASSIGNED',
       'TEAM_REMOVED',
+      'TEAM_UPDATED',
+
+      // Campaign Management
+      'CAMPAIGN_ASSIGNED',
+      'CAMPAIGN_REMOVED',
+      'CAMPAIGN_UPDATED',
 
       // Deal Management
       'DEAL_CREATED',
