@@ -416,6 +416,11 @@ export default function CRMContactsPage() {
     getFilteredRowModel: getFilteredRowModel(),
     onColumnVisibilityChange: setColumnVisibility,
     onRowSelectionChange: setRowSelection,
+    initialState: {
+      pagination: {
+        pageSize: 13,
+      },
+    },
     state: {
       sorting,
       columnFilters,
@@ -588,7 +593,7 @@ export default function CRMContactsPage() {
 
       <div className='rounded-md border'>
         {isLoading ? (
-          <TableLoading columnCount={tableColumns.length} rowCount={15} />
+          <TableLoading columnCount={tableColumns.length} rowCount={13} />
         ) : (
           <div className='relative'>
             <div className='max-h-[800px] overflow-auto'>
