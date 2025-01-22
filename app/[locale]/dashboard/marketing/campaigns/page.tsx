@@ -6,30 +6,12 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { formatCurrency } from '@/utils/format';
 import { api } from '@/utils/trpc/client';
 import { SearchIcon } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
 
 type CampaignStatus = 'draft' | 'scheduled' | 'active' | 'paused' | 'completed' | 'cancelled';
-type CampaignType = 'email' | 'social' | 'event' | 'referral' | 'other';
-
-interface Campaign {
-  id: string;
-  name: string;
-  description: string | null;
-  type: CampaignType;
-  status: CampaignStatus;
-  startDate: Date | null;
-  endDate: Date | null;
-  budget: number | null;
-  targetAudience: string | null;
-  goals: string | null;
-  metrics: string | null;
-  createdAt: Date;
-  updatedAt: Date;
-}
 
 const getStatusColor = (status: CampaignStatus) => {
   switch (status) {
@@ -56,17 +38,10 @@ export default function MarketingCampaignsPage() {
   const filteredCampaigns = campaigns.filter((campaign) => campaign.name.toLowerCase().includes(searchQuery.toLowerCase()));
 
   const activeCampaigns = campaigns.filter((c) => c.status === 'active');
-  const totalBudget = campaigns.reduce((acc, c) => acc + (c.budget || 0), 0);
   const completedCampaigns = campaigns.filter((c) => c.status === 'completed');
-  const avgConversion =
-    completedCampaigns.length > 0
-      ? Math.round(
-          completedCampaigns.reduce((acc, c) => {
-            const metrics = c.metrics ? JSON.parse(c.metrics) : {};
-            return acc + (metrics.conversionRate || 0);
-          }, 0) / completedCampaigns.length
-        )
-      : 0;
+  const totalContacts = campaigns.reduce((acc, c) => acc + (c.contactCount || 0), 0);
+  const totalConversions = campaigns.reduce((acc, c) => acc + (c.convertedCount || 0), 0);
+  const avgConversionRate = totalContacts > 0 ? Math.round((totalConversions / totalContacts) * 100) : 0;
 
   return (
     <div className='space-y-4 p-4'>
@@ -75,7 +50,9 @@ export default function MarketingCampaignsPage() {
         description='Create and manage marketing campaigns'
         right={
           <Link href='/dashboard/marketing/campaigns/new'>
-            <Button variant='outline'>New Campaign</Button>
+            <Button variant='outline' size='sm' className='h-8'>
+              New Campaign
+            </Button>
           </Link>
         }
       />
@@ -91,10 +68,10 @@ export default function MarketingCampaignsPage() {
         </Card>
         <Card>
           <CardHeader>
-            <CardTitle className='font-medium text-sm'>Total Budget</CardTitle>
+            <CardTitle className='font-medium text-sm'>Total Contacts</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className='font-bold text-2xl'>{formatCurrency(totalBudget)}</div>
+            <div className='font-bold text-2xl'>{totalContacts}</div>
           </CardContent>
         </Card>
         <Card>
@@ -102,7 +79,7 @@ export default function MarketingCampaignsPage() {
             <CardTitle className='font-medium text-sm'>Avg. Conversion Rate</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className='font-bold text-2xl'>{avgConversion}%</div>
+            <div className='font-bold text-2xl'>{avgConversionRate}%</div>
           </CardContent>
         </Card>
       </div>
@@ -117,39 +94,55 @@ export default function MarketingCampaignsPage() {
           <TableHeader>
             <TableRow>
               <TableHead>Campaign Name</TableHead>
+              <TableHead>Code</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Type</TableHead>
-              <TableHead>Start Date</TableHead>
-              <TableHead>Budget</TableHead>
-              <TableHead>Goals</TableHead>
-              <TableHead>Target Audience</TableHead>
+              <TableHead>Contacts</TableHead>
+              <TableHead>Conversions</TableHead>
+              <TableHead>Created</TableHead>
+              <TableHead>Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={7} className='text-center py-4'>
+                <TableCell colSpan={8} className='py-4 text-center'>
                   Loading campaigns...
                 </TableCell>
               </TableRow>
             ) : filteredCampaigns.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className='text-center py-4'>
+                <TableCell colSpan={8} className='py-4 text-center'>
                   No campaigns found
                 </TableCell>
               </TableRow>
             ) : (
               filteredCampaigns.map((campaign) => (
                 <TableRow key={campaign.id}>
-                  <TableCell className='font-medium'>{campaign.name}</TableCell>
+                  <TableCell className='font-medium'>
+                    <Link href={`/dashboard/marketing/campaigns/${campaign.id}`} className='hover:underline'>
+                      {campaign.name}
+                    </Link>
+                  </TableCell>
+                  <TableCell>{campaign.campaignCode || '-'}</TableCell>
                   <TableCell>
                     <Badge className={getStatusColor(campaign.status)}>{campaign.status.charAt(0).toUpperCase() + campaign.status.slice(1)}</Badge>
                   </TableCell>
                   <TableCell>{campaign.type}</TableCell>
-                  <TableCell>{campaign.startDate ? new Date(campaign.startDate).toLocaleDateString() : '-'}</TableCell>
-                  <TableCell>{campaign.budget ? formatCurrency(campaign.budget) : '-'}</TableCell>
-                  <TableCell>{campaign.goals ? JSON.parse(campaign.goals).main : '-'}</TableCell>
-                  <TableCell>{campaign.targetAudience ? JSON.parse(campaign.targetAudience).summary : '-'}</TableCell>
+                  <TableCell>{campaign.contactCount}</TableCell>
+                  <TableCell>
+                    {campaign.convertedCount} ({campaign.contactCount > 0 ? Math.round((campaign.convertedCount / campaign.contactCount) * 100) : 0}%)
+                  </TableCell>
+                  <TableCell>{new Date(campaign.createdAt).toLocaleDateString()}</TableCell>
+                  <TableCell>
+                    <div className='flex gap-2'>
+                      <Link href={`/dashboard/marketing/campaigns/${campaign.id}`}>
+                        <Button variant='outline' size='sm'>
+                          View
+                        </Button>
+                      </Link>
+                    </div>
+                  </TableCell>
                 </TableRow>
               ))
             )}

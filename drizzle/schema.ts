@@ -399,17 +399,13 @@ export const marketingCampaign = pgTable('marketingCampaign', {
     .notNull()
     .$defaultFn(() => crypto.randomUUID()),
   name: text().notNull(),
+  campaignCode: text().unique(),
   description: text(),
   type: text('type', { enum: ['email', 'social', 'event', 'referral', 'other'] }).notNull(),
   status: text('status', { enum: ['draft', 'scheduled', 'active', 'paused', 'completed', 'cancelled'] })
     .notNull()
     .default('draft'),
-  startDate: timestamp({ mode: 'date' }),
-  endDate: timestamp({ mode: 'date' }),
-  budget: integer(), // in cents
-  targetAudience: text(), // JSON string for target audience criteria
-  goals: text(), // JSON string for campaign goals
-  metrics: text(), // JSON string for tracking metrics
+  metrics: text(),
   createdBy: text()
     .notNull()
     .references(() => user.id),
