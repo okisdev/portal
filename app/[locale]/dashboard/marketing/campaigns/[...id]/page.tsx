@@ -3,6 +3,7 @@
 import { ActionAlertDialog } from '@/components/shared/action-alert-dialog';
 import { ColorBadge } from '@/components/shared/color-badge';
 import { PageHeader } from '@/components/shared/page-header';
+import { PageLoading } from '@/components/shared/page-loading';
 import { TableLoading } from '@/components/shared/table-loading';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -14,7 +15,7 @@ import { useDebounce } from '@/hooks/use-debounce';
 import { cn, formatDate } from '@/lib/utils';
 import { api } from '@/utils/trpc/client';
 import { CaretSortIcon } from '@radix-ui/react-icons';
-import { Filter, MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
+import { Eye, Filter, MoreHorizontal, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useMemo, useState } from 'react';
@@ -223,7 +224,7 @@ export default function CampaignDetailsPage() {
   };
 
   if (campaignLoading) {
-    return <div>Loading...</div>;
+    return <PageLoading />;
   }
 
   if (!campaign) {
@@ -417,8 +418,8 @@ export default function CampaignDetailsPage() {
                                     </DropdownMenuTrigger>
                                     <DropdownMenuContent align='end'>
                                       <DropdownMenuItem onClick={(e) => router.push(`/dashboard/crm/contacts/${contact.id}?mode=edit`)}>
-                                        <Pencil className='mr-2 h-4 w-4' />
-                                        Edit
+                                        <Eye className='mr-2 h-4 w-4' />
+                                        View
                                       </DropdownMenuItem>
                                       <DropdownMenuItem className='text-destructive' onClick={(e) => handleDeleteClick(contact.id, e)}>
                                         <Trash2 className='mr-2 h-4 w-4' />
