@@ -1,3 +1,19 @@
 {
-  "remark": "備註"
+  "account": "帳戶",
+  "cancel": "取消",
+  "crm": "客戶關係管理",
+  "dark": "黑暗的",
+  "language": "語言",
+  "light": "光",
+  "marketing": "行銷",
+  "remark": "備註",
+  "resources": "資源",
+  "settings": "設定",
+  "sign_out": "登出",
+  "sign_out_description": "您確定要登出您的帳戶嗎？",
+  "system": "系統",
+  "team": "團隊",
+  "theme": "主題",
+  "tools": "工具",
+  "workspace": "工作空間"
 }

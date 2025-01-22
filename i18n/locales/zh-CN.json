@@ -1,3 +1,19 @@
 {
-  "remark": "备注"
+  "account": "帐户",
+  "cancel": "取消",
+  "crm": "客户关系管理",
+  "dark": "黑暗的",
+  "language": "语言",
+  "light": "光",
+  "marketing": "营销",
+  "remark": "备注",
+  "resources": "资源",
+  "settings": "设置",
+  "sign_out": "登出",
+  "sign_out_description": "您确定要退出您的帐户吗？",
+  "system": "系统",
+  "team": "团队",
+  "theme": "主题",
+  "tools": "工具",
+  "workspace": "工作空间"
 }
