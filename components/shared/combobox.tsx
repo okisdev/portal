@@ -37,11 +37,13 @@ interface ComboboxCommandProps {
 }
 
 function ComboboxCommand({ query, setQuery, value, onChange, setOpen, items, searchPlaceholder, emptyText, groupHeading, allowCustom, renderItem }: ComboboxCommandProps) {
+  const filteredItems = items.filter((item) => item.toLowerCase().includes(query.toLowerCase()));
+
   return (
     <Command>
       <CommandInput placeholder={searchPlaceholder} value={query} onValueChange={setQuery} />
       <CommandEmpty>{emptyText}</CommandEmpty>
-      {allowCustom && query && (
+      {allowCustom && query && !filteredItems.includes(query) && (
         <CommandGroup heading='Custom'>
           <CommandItem
             value={`custom-${query}`}
@@ -55,7 +57,7 @@ function ComboboxCommand({ query, setQuery, value, onChange, setOpen, items, sea
         </CommandGroup>
       )}
       <CommandGroup heading={groupHeading} className='max-h-[300px] overflow-y-auto'>
-        {items.map((item) => (
+        {filteredItems.map((item) => (
           <CommandItem
             key={item + generateUUID()}
             value={item}

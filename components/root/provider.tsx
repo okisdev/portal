@@ -16,7 +16,7 @@ export default function BodyProvider({
 
       <Toaster richColors />
 
-      <ProgressBar height='2px' color='#000' options={{ showSpinner: false }} shallowRouting />
+      <ProgressBar height='2px' color='hsl(var(--foreground))' options={{ showSpinner: false }} shallowRouting />
 
       <Monitoring
         apiKey='--MU9ty2MGH89Zw9QvNvP-VVc41VepvG'
