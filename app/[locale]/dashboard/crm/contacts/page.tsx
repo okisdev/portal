@@ -177,16 +177,16 @@ export default function CRMContactsPage() {
       }
     }
 
-    if (newConditions.length > 0) {
-      setFilters({
-        conditions: newConditions,
-        matchAll: true,
-      });
-    }
+    setFilters({
+      conditions: newConditions,
+      matchAll: true,
+    });
 
     const searchParam = searchParams.get('search');
     if (searchParam) {
       setSearch(searchParam);
+    } else {
+      setSearch('');
     }
 
     const sortParam = searchParams.get('sort');
@@ -197,59 +197,34 @@ export default function CRMContactsPage() {
       } catch (e) {
         console.error('Failed to parse sort from URL:', e);
       }
+    } else {
+      setSortConfig({ column: '', direction: 'asc' });
     }
-  }, []);
+  }, [searchParams]);
 
   // Update URL when filters change
   useEffect(() => {
-    const params = new URLSearchParams(searchParams);
+    const params = new URLSearchParams();
 
-    // Clear all filter-related params first
-    for (const field of filterFields) {
-      params.delete(field.value);
-    }
-
-    // Group conditions by field
-    const groupedConditions = filters.conditions.reduce((acc, condition) => {
-      if (!acc[condition.field]) {
-        acc[condition.field] = [];
-      }
-      acc[condition.field].push(condition.value);
-      return acc;
-    }, {} as Record<string, string[]>);
-
-    // Update filter parameters
-    for (const [field, values] of Object.entries(groupedConditions)) {
-      if (values.length === 1) {
-        params.set(field, values[0]);
-      } else if (values.length > 1) {
-        // Delete any existing single value
-        params.delete(field);
-        // Add each value as a separate parameter
-        for (const value of values) {
-          params.append(field, value);
-        }
-      }
+    // Add filter parameters
+    for (const condition of filters.conditions) {
+      params.append(condition.field, condition.value);
     }
 
     // Update search in URL
     if (search) {
       params.set('search', search);
-    } else {
-      params.delete('search');
     }
 
     // Update sort in URL
     if (sortConfig.column) {
       params.set('sort', `${sortConfig.column}:${sortConfig.direction}`);
-    } else {
-      params.delete('sort');
     }
 
     // Update URL without causing a page reload
-    const newUrl = `${pathname}?${params.toString()}`;
-    router.replace(newUrl);
-  }, [filters, search, sortConfig, pathname, searchParams]);
+    const newUrl = params.toString() ? `${pathname}?${params.toString()}` : pathname;
+    router.replace(newUrl, { scroll: false });
+  }, [filters, search, sortConfig, pathname]);
 
   const handleFilterChange = (index: number, field: string, operator: FilterOperator, value: string) => {
     const newConditions = [...filters.conditions];

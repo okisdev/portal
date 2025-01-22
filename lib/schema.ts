@@ -8,6 +8,7 @@ import {
   contact,
   contactActivity,
   contactDeal,
+  marketingCampaign,
   paymentTrack,
   resourceContent,
   session,
@@ -122,6 +123,10 @@ export type CalendarEventWithParticipants = CalendarEvent & {
 export const resourceContentSchema = createSelectSchema(resourceContent);
 
 export type ResourceContent = z.infer<typeof resourceContentSchema>;
+
+export const marketingCampaignSchema = createSelectSchema(marketingCampaign);
+
+export type MarketingCampaign = z.infer<typeof marketingCampaignSchema>;
 
 export const appointmentSchema = z.object({
   title: z.string(),

@@ -382,4 +382,8 @@ export const contactRouter = createTRPCRouter({
 
       return existingContacts.map((contact) => contact.email);
     }),
+
+  getContactsByCampaignId: protectedProcedure.input(z.object({ campaignId: z.string() })).query(async ({ ctx, input }) => {
+    return ctx.db.select().from(contact).where(eq(contact.campaignId, input.campaignId));
+  }),
 });

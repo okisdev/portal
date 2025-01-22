@@ -119,6 +119,7 @@ export const contact = pgTable('contact', {
   industry: text(), // industry they work in
   skills: text(), // comma-separated list of skills
   campaignId: text().references(() => marketingCampaign.id),
+  externalId: text(), // external ID from other systems
 });
 
 export const contactDeal = pgTable('contactDeal', {

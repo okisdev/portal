@@ -1,7 +1,7 @@
 import { cn } from '@/lib/utils';
 
 type ColorBadgeProps = {
-  type: 'status' | 'contactStatus' | 'priority';
+  type: 'status' | 'contactStatus' | 'priority' | 'campaignStatus';
   value: string;
   className?: string;
 };
@@ -56,6 +56,23 @@ export function ColorBadge({ type, value, className }: ColorBadgeProps) {
     }
   };
 
+  const getCampaignStatusColor = (campaignStatus: string) => {
+    switch (campaignStatus) {
+      case 'active':
+        return 'bg-green-100 text-green-800';
+      case 'draft':
+        return 'bg-neutral-100 text-neutral-800';
+      case 'completed':
+        return 'bg-blue-100 text-blue-800';
+      case 'scheduled':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'paused':
+        return 'bg-orange-100 text-orange-800';
+      case 'cancelled':
+        return 'bg-red-100 text-red-800';
+    }
+  };
+
   const getColorClass = () => {
     switch (type) {
       case 'status':
@@ -64,6 +81,8 @@ export function ColorBadge({ type, value, className }: ColorBadgeProps) {
         return getContactStatusColor(value);
       case 'priority':
         return getPriorityColor(value);
+      case 'campaignStatus':
+        return getCampaignStatusColor(value);
       default:
         return 'bg-neutral-100 text-neutral-800 hover:bg-neutral-200 hover:text-neutral-900';
     }
