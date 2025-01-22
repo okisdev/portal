@@ -15,6 +15,7 @@ import {
   AlignRight,
   Bold,
   Code,
+  FileText,
   Image as ImageIcon,
   Italic,
   Link as LinkIcon,
@@ -27,6 +28,9 @@ import {
   Undo,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import TurndownService from 'turndown';
+
+type EditorMode = 'rich-text' | 'html' | 'markdown';
 
 interface TipTapEditorProps {
   content: string;
@@ -35,11 +39,34 @@ interface TipTapEditorProps {
   editable?: boolean;
   className?: string;
   disabled?: boolean;
+  defaultMode?: EditorMode;
 }
 
-export function TipTapEditor({ content, onChange, placeholder = 'Start writing...', editable = true, className, disabled = false }: TipTapEditorProps) {
-  const [isHtmlMode, setIsHtmlMode] = useState(false);
+const turndownService = new TurndownService({
+  headingStyle: 'atx',
+  codeBlockStyle: 'fenced',
+});
+
+// Customize turndown for WhatsApp-style markdown
+turndownService.addRule('bold', {
+  filter: ['strong', 'b'],
+  replacement: (content) => `*${content}*`,
+});
+
+turndownService.addRule('italic', {
+  filter: ['em', 'i'],
+  replacement: (content) => `_${content}_`,
+});
+
+turndownService.addRule('strikethrough', {
+  filter: ['del', 's'],
+  replacement: (content) => `~${content}~`,
+});
+
+export function TipTapEditor({ content, onChange, placeholder = 'Start writing...', editable = true, className, disabled = false, defaultMode = 'rich-text' }: TipTapEditorProps) {
+  const [mode, setMode] = useState<EditorMode>(defaultMode);
   const [htmlContent, setHtmlContent] = useState(content);
+  const [markdownContent, setMarkdownContent] = useState('');
 
   const editor = useEditor({
     extensions: [
@@ -64,11 +91,13 @@ export function TipTapEditor({ content, onChange, placeholder = 'Start writing..
       }),
     ],
     content: content,
-    editable: editable && !disabled && !isHtmlMode,
+    editable: editable && !disabled && mode === 'rich-text',
     onUpdate: ({ editor }) => {
       const html = editor.getHTML();
       setHtmlContent(html);
-      onChange(html);
+      const markdown = turndownService.turndown(html);
+      setMarkdownContent(markdown);
+      onChange(mode === 'markdown' ? markdown : html);
     },
     editorProps: {
       attributes: {
@@ -81,22 +110,35 @@ export function TipTapEditor({ content, onChange, placeholder = 'Start writing..
     if (editor && content !== editor.getHTML()) {
       editor.commands.setContent(content);
       setHtmlContent(content);
+      setMarkdownContent(turndownService.turndown(content));
     }
   }, [content, editor]);
 
   useEffect(() => {
-    if (isHtmlMode && editor) {
-      setHtmlContent(editor.getHTML());
+    if (editor) {
+      if (mode === 'markdown') {
+        setMarkdownContent(turndownService.turndown(editor.getHTML()));
+      } else if (mode === 'html') {
+        setHtmlContent(editor.getHTML());
+      }
     }
-  }, [isHtmlMode, editor]);
+  }, [mode, editor]);
 
   const handleHtmlChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const newHtml = e.target.value;
     setHtmlContent(newHtml);
-    onChange(newHtml);
     if (editor) {
       editor.commands.setContent(newHtml);
     }
+    const markdown = turndownService.turndown(newHtml);
+    setMarkdownContent(markdown);
+    onChange(mode === 'markdown' ? markdown : newHtml);
+  };
+
+  const handleMarkdownChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const newMarkdown = e.target.value;
+    setMarkdownContent(newMarkdown);
+    onChange(newMarkdown);
   };
 
   if (!editor) {
@@ -126,67 +168,87 @@ export function TipTapEditor({ content, onChange, placeholder = 'Start writing..
   return (
     <div className={cn('rounded-lg border', className)}>
       {editable && (
-        <div className='flex flex-wrap items-center gap-1 border-b bg-muted/50 p-1'>
-          <Button type='button' variant='ghost' size='sm' className={cn('gap-2', isHtmlMode && 'bg-muted')} onClick={() => setIsHtmlMode(!isHtmlMode)}>
-            <Code className='h-4 w-4' />
-            {isHtmlMode ? 'Rich Text' : 'HTML'}
-          </Button>
+        <div className='flex flex-col items-start gap-1 border-b bg-muted/50 p-1'>
+          <div className='flex gap-1'>
+            <Button type='button' variant='ghost' size='sm' className={cn('gap-2', mode === 'rich-text' && 'bg-muted')} onClick={() => setMode('rich-text')}>
+              <FileText className='h-4 w-4' />
+              Rich Text
+            </Button>
+            <Button type='button' variant='ghost' size='sm' className={cn('gap-2', mode === 'markdown' && 'bg-muted')} onClick={() => setMode('markdown')}>
+              <FileText className='h-4 w-4' />
+              Markdown
+            </Button>
+            <Button type='button' variant='ghost' size='sm' className={cn('gap-2', mode === 'html' && 'bg-muted')} onClick={() => setMode('html')}>
+              <Code className='h-4 w-4' />
+              HTML
+            </Button>
+          </div>
 
-          {!isHtmlMode && (
-            <>
-              <ToolbarButton onClick={() => editor.chain().focus().toggleBold().run()} isActive={editor.isActive('bold')}>
-                <Bold className='h-4 w-4' />
-              </ToolbarButton>
-              <ToolbarButton onClick={() => editor.chain().focus().toggleItalic().run()} isActive={editor.isActive('italic')}>
-                <Italic className='h-4 w-4' />
-              </ToolbarButton>
-              <ToolbarButton onClick={() => editor.chain().focus().toggleUnderline().run()} isActive={editor.isActive('underline')}>
-                <UnderlineIcon className='h-4 w-4' />
-              </ToolbarButton>
-              <ToolbarButton onClick={() => editor.chain().focus().toggleStrike().run()} isActive={editor.isActive('strike')}>
-                <Strikethrough className='h-4 w-4' />
-              </ToolbarButton>
-              <ToolbarButton onClick={setLink} isActive={editor.isActive('link')}>
-                <LinkIcon className='h-4 w-4' />
-              </ToolbarButton>
-              <ToolbarButton onClick={addImage}>
-                <ImageIcon className='h-4 w-4' />
-              </ToolbarButton>
-              <ToolbarButton onClick={() => editor.chain().focus().setTextAlign('left').run()} isActive={editor.isActive({ textAlign: 'left' })}>
-                <AlignLeft className='h-4 w-4' />
-              </ToolbarButton>
-              <ToolbarButton onClick={() => editor.chain().focus().setTextAlign('center').run()} isActive={editor.isActive({ textAlign: 'center' })}>
-                <AlignCenter className='h-4 w-4' />
-              </ToolbarButton>
-              <ToolbarButton onClick={() => editor.chain().focus().setTextAlign('right').run()} isActive={editor.isActive({ textAlign: 'right' })}>
-                <AlignRight className='h-4 w-4' />
-              </ToolbarButton>
-              <ToolbarButton onClick={() => editor.chain().focus().toggleBulletList().run()} isActive={editor.isActive('bulletList')}>
-                <List className='h-4 w-4' />
-              </ToolbarButton>
-              <ToolbarButton onClick={() => editor.chain().focus().toggleOrderedList().run()} isActive={editor.isActive('orderedList')}>
-                <ListOrdered className='h-4 w-4' />
-              </ToolbarButton>
-              <ToolbarButton onClick={() => editor.chain().focus().toggleBlockquote().run()} isActive={editor.isActive('blockquote')}>
-                <Quote className='h-4 w-4' />
-              </ToolbarButton>
-              <ToolbarButton onClick={() => editor.chain().focus().undo().run()}>
-                <Undo className='h-4 w-4' />
-              </ToolbarButton>
-              <ToolbarButton onClick={() => editor.chain().focus().redo().run()}>
-                <Redo className='h-4 w-4' />
-              </ToolbarButton>
-            </>
-          )}
+          <div>
+            {mode === 'rich-text' && (
+              <>
+                <ToolbarButton onClick={() => editor.chain().focus().toggleBold().run()} isActive={editor.isActive('bold')}>
+                  <Bold className='h-4 w-4' />
+                </ToolbarButton>
+                <ToolbarButton onClick={() => editor.chain().focus().toggleItalic().run()} isActive={editor.isActive('italic')}>
+                  <Italic className='h-4 w-4' />
+                </ToolbarButton>
+                <ToolbarButton onClick={() => editor.chain().focus().toggleUnderline().run()} isActive={editor.isActive('underline')}>
+                  <UnderlineIcon className='h-4 w-4' />
+                </ToolbarButton>
+                <ToolbarButton onClick={() => editor.chain().focus().toggleStrike().run()} isActive={editor.isActive('strike')}>
+                  <Strikethrough className='h-4 w-4' />
+                </ToolbarButton>
+                <ToolbarButton onClick={setLink} isActive={editor.isActive('link')}>
+                  <LinkIcon className='h-4 w-4' />
+                </ToolbarButton>
+                <ToolbarButton onClick={addImage}>
+                  <ImageIcon className='h-4 w-4' />
+                </ToolbarButton>
+                <ToolbarButton onClick={() => editor.chain().focus().setTextAlign('left').run()} isActive={editor.isActive({ textAlign: 'left' })}>
+                  <AlignLeft className='h-4 w-4' />
+                </ToolbarButton>
+                <ToolbarButton onClick={() => editor.chain().focus().setTextAlign('center').run()} isActive={editor.isActive({ textAlign: 'center' })}>
+                  <AlignCenter className='h-4 w-4' />
+                </ToolbarButton>
+                <ToolbarButton onClick={() => editor.chain().focus().setTextAlign('right').run()} isActive={editor.isActive({ textAlign: 'right' })}>
+                  <AlignRight className='h-4 w-4' />
+                </ToolbarButton>
+                <ToolbarButton onClick={() => editor.chain().focus().toggleBulletList().run()} isActive={editor.isActive('bulletList')}>
+                  <List className='h-4 w-4' />
+                </ToolbarButton>
+                <ToolbarButton onClick={() => editor.chain().focus().toggleOrderedList().run()} isActive={editor.isActive('orderedList')}>
+                  <ListOrdered className='h-4 w-4' />
+                </ToolbarButton>
+                <ToolbarButton onClick={() => editor.chain().focus().toggleBlockquote().run()} isActive={editor.isActive('blockquote')}>
+                  <Quote className='h-4 w-4' />
+                </ToolbarButton>
+                <ToolbarButton onClick={() => editor.chain().focus().undo().run()}>
+                  <Undo className='h-4 w-4' />
+                </ToolbarButton>
+                <ToolbarButton onClick={() => editor.chain().focus().redo().run()}>
+                  <Redo className='h-4 w-4' />
+                </ToolbarButton>
+              </>
+            )}
+          </div>
         </div>
       )}
 
-      {isHtmlMode ? (
+      {mode === 'html' ? (
         <textarea
           value={htmlContent}
           onChange={handleHtmlChange}
           className='min-h-[200px] w-full resize-none rounded-lg p-4 font-mono text-sm'
           placeholder='Enter HTML content...'
+          disabled={disabled}
+        />
+      ) : mode === 'markdown' ? (
+        <textarea
+          value={markdownContent}
+          onChange={handleMarkdownChange}
+          className='min-h-[200px] w-full resize-none rounded-lg p-4 font-mono text-sm'
+          placeholder='Enter Markdown content...'
           disabled={disabled}
         />
       ) : (

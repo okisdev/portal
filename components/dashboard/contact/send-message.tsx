@@ -66,6 +66,9 @@ export function SendMessage({ open, onOpenChange, recipient }: SendMessageProps)
       initiatorId: session?.user.id || '',
       title: 'WhatsApp Message Sent',
       description: message,
+      metadata: {
+        message,
+      },
     });
 
     // Open WhatsApp with the message
@@ -145,7 +148,7 @@ export function SendMessage({ open, onOpenChange, recipient }: SendMessageProps)
                   Use Template
                 </Button>
               </div>
-              <TipTapEditor content={message} onChange={setMessage} placeholder='Write your message...' className='min-h-[200px]' />
+              <TipTapEditor content={message} onChange={setMessage} placeholder='Write your message...' className='min-h-[200px]' defaultMode='markdown' />
             </div>
           )}
         </div>
