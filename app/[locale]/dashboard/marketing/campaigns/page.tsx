@@ -2,21 +2,34 @@
 
 import { ColorBadge } from '@/components/shared/color-badge';
 import { PageHeader } from '@/components/shared/page-header';
+import { PaginationTable } from '@/components/shared/pagination-table';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Form, FormControl, FormField, FormItem, FormLabel } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Textarea } from '@/components/ui/textarea';
 import type { MarketingCampaign } from '@/lib/schema';
 import { api } from '@/utils/trpc/client';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { CaretSortIcon } from '@radix-ui/react-icons';
+import {
+  type ColumnDef,
+  type ColumnFiltersState,
+  type SortingState,
+  type VisibilityState,
+  getCoreRowModel,
+  getFilteredRowModel,
+  getPaginationRowModel,
+  getSortedRowModel,
+  useReactTable,
+} from '@tanstack/react-table';
 import { SearchIcon } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
@@ -33,8 +46,12 @@ type CampaignFormValues = z.infer<typeof campaignFormSchema>;
 
 export default function MarketingCampaignsPage() {
   const router = useRouter();
-
   const utils = api.useUtils();
+
+  const [sorting, setSorting] = useState<SortingState>([]);
+  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
+  const [rowSelection, setRowSelection] = useState({});
 
   const [searchQuery, setSearchQuery] = useState('');
   const [editingCampaign, setEditingCampaign] = useState<{
@@ -62,10 +79,11 @@ export default function MarketingCampaignsPage() {
     },
   });
 
-  const filteredCampaigns = campaigns.filter((campaign) => campaign.name.toLowerCase().includes(searchQuery.toLowerCase()));
+  const filteredCampaigns = useMemo(() => {
+    return campaigns.filter((campaign) => campaign.name.toLowerCase().includes(searchQuery.toLowerCase()));
+  }, [campaigns, searchQuery]);
 
   const activeCampaigns = campaigns.filter((c) => c.status === 'active');
-  const completedCampaigns = campaigns.filter((c) => c.status === 'completed');
   const totalContacts = campaigns.reduce((acc, c) => acc + (typeof c.contactCount === 'number' ? c.contactCount : 0), 0);
   const totalConversions = campaigns.reduce((acc, c) => acc + (typeof c.convertedCount === 'number' ? c.convertedCount : 0), 0);
   const avgConversionRate = totalContacts > 0 ? Math.round((totalConversions / totalContacts) * 100) : 0;
@@ -85,6 +103,127 @@ export default function MarketingCampaignsPage() {
     });
     form.reset(formData);
   };
+
+  const columns: ColumnDef<MarketingCampaign>[] = [
+    {
+      id: 'select',
+      header: ({ table }) => (
+        <Checkbox
+          checked={table.getIsAllPageRowsSelected() || (table.getIsSomePageRowsSelected() && 'indeterminate')}
+          onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+          aria-label='Select all'
+        />
+      ),
+      cell: ({ row }) => <Checkbox checked={row.getIsSelected()} onCheckedChange={(value) => row.toggleSelected(!!value)} aria-label='Select row' />,
+      enableSorting: false,
+      enableHiding: false,
+    },
+    {
+      accessorKey: 'name',
+      header: ({ column }) => (
+        <Button variant='ghost' onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
+          Campaign Name {column.getIsSorted() && <CaretSortIcon className='ml-2 inline' />}
+        </Button>
+      ),
+      cell: ({ row }) => (
+        <Link href={`/dashboard/marketing/campaigns/${row.original.id}`} className='hover:underline font-medium'>
+          {row.original.name}
+        </Link>
+      ),
+    },
+    {
+      accessorKey: 'campaignCode',
+      header: ({ column }) => (
+        <Button variant='ghost' onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
+          Code {column.getIsSorted() && <CaretSortIcon className='ml-2 inline' />}
+        </Button>
+      ),
+      cell: ({ row }) => row.original.campaignCode || '-',
+    },
+    {
+      accessorKey: 'status',
+      header: ({ column }) => (
+        <Button variant='ghost' onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
+          Status {column.getIsSorted() && <CaretSortIcon className='ml-2 inline' />}
+        </Button>
+      ),
+      cell: ({ row }) => <ColorBadge type='campaignStatus' value={row.original.status} />,
+    },
+    {
+      accessorKey: 'type',
+      header: ({ column }) => (
+        <Button variant='ghost' onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
+          Type {column.getIsSorted() && <CaretSortIcon className='ml-2 inline' />}
+        </Button>
+      ),
+      cell: ({ row }) => <span className='capitalize'>{row.original.type}</span>,
+    },
+    {
+      accessorKey: 'contactCount',
+      header: ({ column }) => (
+        <Button variant='ghost' onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
+          Contacts {column.getIsSorted() && <CaretSortIcon className='ml-2 inline' />}
+        </Button>
+      ),
+    },
+    {
+      id: 'conversions',
+      header: ({ column }) => (
+        <Button variant='ghost' onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
+          Conversions {column.getIsSorted() && <CaretSortIcon className='ml-2 inline' />}
+        </Button>
+      ),
+      cell: ({ row }) => (
+        <span>
+          {row.original.convertedCount} ({row.original.contactCount ? Math.round((row.original.convertedCount ?? 0 / row.original.contactCount) * 100) : 0}%)
+        </span>
+      ),
+    },
+    {
+      accessorKey: 'createdAt',
+      header: ({ column }) => (
+        <Button variant='ghost' onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
+          Created {column.getIsSorted() && <CaretSortIcon className='ml-2 inline' />}
+        </Button>
+      ),
+      cell: ({ row }) => new Date(row.original.createdAt).toLocaleDateString(),
+    },
+    {
+      id: 'actions',
+      header: 'Actions',
+      cell: ({ row }) => (
+        <div className='flex justify-end gap-2'>
+          <Button variant='outline' size='sm' onClick={(e) => handleEditCampaign(e, row.original)}>
+            Edit
+          </Button>
+        </div>
+      ),
+    },
+  ];
+
+  const table = useReactTable({
+    data: filteredCampaigns,
+    columns,
+    onSortingChange: setSorting,
+    onColumnFiltersChange: setColumnFilters,
+    getCoreRowModel: getCoreRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    onColumnVisibilityChange: setColumnVisibility,
+    onRowSelectionChange: setRowSelection,
+    initialState: {
+      pagination: {
+        pageSize: 13,
+      },
+    },
+    state: {
+      sorting,
+      columnFilters,
+      columnVisibility,
+      rowSelection,
+    },
+  });
 
   const onSubmit = async (data: CampaignFormValues) => {
     if (!editingCampaign) return;
@@ -145,62 +284,13 @@ export default function MarketingCampaignsPage() {
         <Input placeholder='Search campaigns...' className='pl-10' value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
       </div>
 
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Campaign Name</TableHead>
-            <TableHead>Code</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead>Type</TableHead>
-            <TableHead>Contacts</TableHead>
-            <TableHead>Conversions</TableHead>
-            <TableHead>Created</TableHead>
-            <TableHead className='text-right'>Actions</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {isLoading ? (
-            <TableRow>
-              <TableCell colSpan={8} className='py-4 text-center'>
-                Loading campaigns...
-              </TableCell>
-            </TableRow>
-          ) : filteredCampaigns.length === 0 ? (
-            <TableRow>
-              <TableCell colSpan={8} className='py-4 text-center'>
-                No campaigns found
-              </TableCell>
-            </TableRow>
-          ) : (
-            filteredCampaigns.map((campaign) => (
-              <TableRow key={campaign.id} className='cursor-pointer hover:bg-muted/50' onClick={() => router.push(`/dashboard/marketing/campaigns/${campaign.id}`)}>
-                <TableCell className='font-medium'>
-                  <Link href={`/dashboard/marketing/campaigns/${campaign.id}`} className='hover:underline'>
-                    {campaign.name}
-                  </Link>
-                </TableCell>
-                <TableCell>{campaign.campaignCode || '-'}</TableCell>
-                <TableCell>
-                  <ColorBadge type='campaignStatus' value={campaign.status} />
-                </TableCell>
-                <TableCell>{campaign.type}</TableCell>
-                <TableCell>{campaign.contactCount}</TableCell>
-                <TableCell>
-                  {campaign.convertedCount} ({campaign.contactCount > 0 ? Math.round((campaign.convertedCount / campaign.contactCount) * 100) : 0}%)
-                </TableCell>
-                <TableCell>{new Date(campaign.createdAt).toLocaleDateString()}</TableCell>
-                <TableCell className='text-right'>
-                  <div className='flex justify-end gap-2'>
-                    <Button variant='outline' size='sm' onClick={(e) => handleEditCampaign(e, campaign)}>
-                      Edit
-                    </Button>
-                  </div>
-                </TableCell>
-              </TableRow>
-            ))
-          )}
-        </TableBody>
-      </Table>
+      <PaginationTable
+        table={table}
+        columns={columns}
+        loading={isLoading}
+        onRowClick={(row) => router.push(`/dashboard/marketing/campaigns/${row.id}`)}
+        rowClassName='cursor-pointer hover:bg-muted/50'
+      />
 
       <Dialog open={!!editingCampaign} onOpenChange={(open) => !open && setEditingCampaign(null)}>
         <DialogContent className='max-h-[90vh] max-w-xl overflow-y-auto'>
