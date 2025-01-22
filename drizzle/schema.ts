@@ -118,6 +118,7 @@ export const contact = pgTable('contact', {
   currentRole: text(), // current job role
   industry: text(), // industry they work in
   skills: text(), // comma-separated list of skills
+  campaignId: text().references(() => marketingCampaign.id),
 });
 
 export const contactDeal = pgTable('contactDeal', {

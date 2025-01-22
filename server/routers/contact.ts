@@ -1,4 +1,4 @@
-import { contact, contactActivity, team, teamContact } from '@/drizzle/schema';
+import { contact, contactActivity, contactCampaign, team, teamContact } from '@/drizzle/schema';
 import { prioritySchema, statusSchema } from '@/lib/schema';
 import { createTRPCRouter, protectedProcedure, publicProcedure } from '@/server/trpc';
 import { asc, desc, eq, inArray, sql } from 'drizzle-orm';
@@ -133,6 +133,7 @@ export const contactRouter = createTRPCRouter({
         company: z.string().optional(),
         source: z.string().optional(),
         remark: z.string().optional(),
+        campaignId: z.string().optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -155,6 +156,7 @@ export const contactRouter = createTRPCRouter({
           company: input.company ?? '',
           source: input.source ?? '',
           remark: input.remark ?? '',
+          campaignId: input.campaignId,
         })
         .returning();
 
@@ -164,10 +166,31 @@ export const contactRouter = createTRPCRouter({
         type: 'CONTACT_CREATED',
         title: 'Contact Created',
         description: `Contact ${result[0].name} (${result[0].email}) was created${input.source ? ` from ${input.source}` : ''}.`,
-        metadata: { source: input.source },
+        metadata: { source: input.source, campaignId: input.campaignId },
         initiatorType: 'user',
         initiatorId: ctx.session?.user.id,
       });
+
+      // If campaign is provided, create contact campaign entry
+      if (input.campaignId) {
+        await ctx.db.insert(contactCampaign).values({
+          contactId: result[0].id,
+          campaignId: input.campaignId,
+          status: 'pending',
+          source: input.source ?? 'direct',
+        });
+
+        // Log campaign assignment activity
+        await createContactActivityHelper(ctx, {
+          contactId: result[0].id,
+          type: 'TEAM_ASSIGNED',
+          title: 'Campaign Assigned',
+          description: `Contact was assigned to campaign ID: ${input.campaignId}`,
+          metadata: { campaignId: input.campaignId },
+          initiatorType: 'user',
+          initiatorId: ctx.session?.user.id,
+        });
+      }
 
       return result[0];
     }),

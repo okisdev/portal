@@ -28,6 +28,7 @@ interface ContactFormData {
   status: Status;
   source?: string;
   remark?: string;
+  campaignId?: string;
 }
 
 interface DuplicateContact {
@@ -47,8 +48,10 @@ export default function ContactUpload() {
   const [hasDuplicates, setHasDuplicates] = useState(false);
   const [isCancelling, setIsCancelling] = useState(false);
   const cancelUploadRef = useRef(false);
+  const [selectedCampaignId, setSelectedCampaignId] = useState<string | undefined>(undefined);
 
   const checkExistingContacts = api.contact.checkExistingContacts.useQuery({ emails: csvData.map((contact) => contact.email) }, { enabled: false });
+  const { data: campaigns } = api.marketing.getAllCampaigns.useQuery();
 
   const createContact = api.contact.createContact.useMutation({
     onError: (error) => {
@@ -115,6 +118,7 @@ export default function ContactUpload() {
                     status: row.status || 'lead',
                     source: row.source || '',
                     remark: row.remark || '',
+                    campaignId: row.campaignId || '',
                   };
                 }
 
@@ -128,6 +132,7 @@ export default function ContactUpload() {
                   status: row.status || 'lead',
                   source: row.source || '',
                   remark: row.remark || '',
+                  campaignId: row.campaignId || '',
                 };
               })
               .filter((row) => !isRowEmpty(row));
@@ -232,6 +237,7 @@ export default function ContactUpload() {
             company: contact.company || '',
             source: contact.source || '',
             remark: contact.remark || '',
+            campaignId: selectedCampaignId,
           })
         )
       );
@@ -332,20 +338,37 @@ export default function ContactUpload() {
               </Button>
             ) : (
               <>
-                <Button type='submit' disabled={isLoading} onClick={handleSubmit} className='w-full sm:w-auto'>
-                  Import Contacts
-                </Button>
-                <Button
-                  type='button'
-                  variant='outline'
-                  onClick={() => {
-                    setShowPreview(false);
-                    setCsvData([]);
-                  }}
-                  className='w-full sm:w-auto'
-                >
-                  Cancel Import
-                </Button>
+                <div className='flex flex-1 items-center gap-4'>
+                  <div className='w-64'>
+                    <Combobox
+                      value={selectedCampaignId ?? ''}
+                      onChange={(value) => setSelectedCampaignId(value)}
+                      items={campaigns?.map((c) => c.id) ?? []}
+                      placeholder='Select a campaign (optional)'
+                      searchPlaceholder='Search campaigns...'
+                      groupHeading='Campaigns'
+                      allowCustom={false}
+                      renderItem={(id) => {
+                        const campaign = campaigns?.find((c) => c.id === id);
+                        return campaign?.name ?? id;
+                      }}
+                    />
+                  </div>
+                  <Button type='submit' disabled={isLoading} onClick={handleSubmit} className='w-full sm:w-auto'>
+                    Import Contacts
+                  </Button>
+                  <Button
+                    type='button'
+                    variant='outline'
+                    onClick={() => {
+                      setShowPreview(false);
+                      setCsvData([]);
+                    }}
+                    className='w-full sm:w-auto'
+                  >
+                    Cancel Import
+                  </Button>
+                </div>
               </>
             )}
           </div>
