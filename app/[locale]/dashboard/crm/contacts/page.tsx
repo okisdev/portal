@@ -2,12 +2,12 @@
 
 import { ActionAlertDialog } from '@/components/shared/action-alert-dialog';
 import { ColorBadge } from '@/components/shared/color-badge';
+import { Combobox } from '@/components/shared/combobox';
 import { PageHeader } from '@/components/shared/page-header';
 import { TableLoading } from '@/components/shared/table-loading';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { DropdownMenuCheckboxItem } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useDebounce } from '@/hooks/use-debounce';
@@ -15,7 +15,7 @@ import { sourceSchema, statusSchema } from '@/lib/schema';
 import { cn, formatDate } from '@/lib/utils';
 import { api } from '@/utils/trpc/client';
 import { CaretSortIcon } from '@radix-ui/react-icons';
-import { Check, ChevronDown, Filter, Import, MoreHorizontal, Pencil, Trash2, X } from 'lucide-react';
+import { Check, Filter, Import, MoreHorizontal, Pencil, Trash2, X } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { usePathname } from 'next/navigation';
@@ -102,6 +102,8 @@ export default function CRMContactsPage() {
 
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [contactToDelete, setContactToDelete] = useState<string | null>(null);
+
+  const [selectedColumn, setSelectedColumn] = useState<string>('');
 
   const handleStatusFilter = (status: string | null) => {
     if (status === null) {
@@ -455,27 +457,32 @@ export default function CRMContactsPage() {
               </DropdownMenuContent>
             </DropdownMenu>
 
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant='outline' size='sm' disabled={isLoading}>
-                  <Check className='mr-2 h-4 w-4' />
-                  Columns
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent>
-                {columns.map((column) => (
-                  <DropdownMenuCheckboxItem
-                    key={column.id}
-                    checked={column.visible}
-                    onCheckedChange={(checked) => {
-                      setColumns((prev) => prev.map((col) => (col.id === column.id ? { ...col, visible: checked } : col)));
-                    }}
-                  >
-                    {column.label}
-                  </DropdownMenuCheckboxItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <Combobox
+              value={selectedColumn}
+              onChange={(value) => {
+                setSelectedColumn(value);
+                const column = columns.find((col) => col.label === value);
+                if (column) {
+                  setColumns((prev) => prev.map((col) => (col.id === column.id ? { ...col, visible: !col.visible } : col)));
+                }
+              }}
+              items={columns.map((col) => col.label)}
+              placeholder='Columns'
+              searchPlaceholder='Search columns...'
+              emptyText='No columns found'
+              groupHeading='Available Columns'
+              allowCustom={false}
+              renderItem={(item) => {
+                const column = columns.find((col) => col.label === item);
+                return (
+                  <div className='flex w-full items-center justify-between'>
+                    <span>{item}</span>
+                    {column?.visible && <Check className='h-4 w-4' />}
+                  </div>
+                );
+              }}
+              className='h-8'
+            />
 
             {filters.conditions.length > 0 && (
               <Button variant='outline' size='sm' onClick={() => setFilters({ conditions: [], matchAll: true })}>
@@ -488,8 +495,8 @@ export default function CRMContactsPage() {
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant='outline' size='sm' className='flex h-8 items-center gap-2' disabled={isLoading}>
+                  <Import className='mr-2 h-4 w-4' />
                   Import
-                  <ChevronDown className='h-4 w-4' />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent>
@@ -543,7 +550,7 @@ export default function CRMContactsPage() {
           <div className='relative'>
             <div className='max-h-[800px] overflow-auto'>
               <Table>
-                <TableHeader className='sticky top-0'>
+                <TableHeader className='sticky'>
                   <TableRow>
                     {columns.map((column) =>
                       column.visible ? (
