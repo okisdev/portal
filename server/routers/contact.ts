@@ -78,6 +78,7 @@ export const contactRouter = createTRPCRouter({
         company: z.string().optional(),
         source: z.string().optional(),
         remark: z.string().optional(),
+        status: z.string().optional(),
         campaignId: z.string().optional(),
       })
     )
@@ -100,6 +101,7 @@ export const contactRouter = createTRPCRouter({
           phone: input.phone ?? '',
           company: input.company ?? '',
           source: input.source ?? '',
+          status: input.status ?? 'lead',
           remark: input.remark ?? '',
           campaignId: input.campaignId,
         })

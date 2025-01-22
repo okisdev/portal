@@ -2,12 +2,11 @@
 
 import { Combobox } from '@/components/shared/combobox';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { insuranceCompanies, sources } from '@/data/data';
-import type { Status } from '@/lib/schema';
+import { statusSchema } from '@/lib/schema';
 import { api } from '@/utils/trpc/client';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter } from 'next/navigation';
@@ -15,26 +14,6 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
-
-interface ContactFormData {
-  firstName: string;
-  lastName: string;
-  email: string;
-  phone?: string;
-  gender?: string;
-  company?: string;
-  jobTitle?: string;
-  status: Status;
-  source?: string;
-  remark?: string;
-  campaignId?: string;
-}
-
-interface FormErrors {
-  email?: string;
-  phone?: string;
-  contactInfo?: string;
-}
 
 const formSchema = z.object({
   firstName: z.string().min(1, 'First name is required'),
@@ -44,26 +23,13 @@ const formSchema = z.object({
   company: z.string().optional(),
   source: z.string().optional(),
   remark: z.string().optional(),
+  status: z.string().optional(),
   campaignId: z.string().optional(),
 });
 
 export default function ManualContactForm() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
-  const [errors, setErrors] = useState<FormErrors>({});
-  const [formData, setFormData] = useState<ContactFormData>({
-    firstName: '',
-    lastName: '',
-    email: '',
-    phone: '',
-    gender: '',
-    company: '',
-    jobTitle: '',
-    status: 'lead',
-    source: '',
-    remark: '',
-    campaignId: '',
-  });
 
   const { data: campaigns } = api.marketing.getAllCampaigns.useQuery();
 
@@ -77,6 +43,7 @@ export default function ManualContactForm() {
       company: '',
       source: '',
       remark: '',
+      status: 'lead',
       campaignId: '',
     },
   });
@@ -113,155 +80,178 @@ export default function ManualContactForm() {
   };
 
   return (
-    <Card>
-      <CardContent className='pt-6'>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleSubmit)} className='space-y-4'>
-            <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
-              <FormField
-                control={form.control}
-                name='firstName'
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>First Name</FormLabel>
-                    <FormControl>
-                      <Input placeholder='John' {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(handleSubmit)} className='space-y-4'>
+        <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
+          <FormField
+            control={form.control}
+            name='firstName'
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>First Name</FormLabel>
+                <FormControl>
+                  <Input placeholder='John' {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
-              <FormField
-                control={form.control}
-                name='lastName'
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Last Name</FormLabel>
-                    <FormControl>
-                      <Input placeholder='Doe' {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
+          <FormField
+            control={form.control}
+            name='lastName'
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Last Name</FormLabel>
+                <FormControl>
+                  <Input placeholder='Doe' {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
 
-            <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
-              <FormField
-                control={form.control}
-                name='email'
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Email</FormLabel>
-                    <FormControl>
-                      <Input type='email' placeholder='john@example.com' {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+        <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
+          <FormField
+            control={form.control}
+            name='email'
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Email</FormLabel>
+                <FormControl>
+                  <Input type='email' placeholder='john@example.com' {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
-              <FormField
-                control={form.control}
-                name='phone'
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Phone</FormLabel>
-                    <FormControl>
-                      <Input type='tel' placeholder='+852 12345678' {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
+          <FormField
+            control={form.control}
+            name='phone'
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Phone</FormLabel>
+                <FormControl>
+                  <Input type='tel' placeholder='+852 12345678' {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
 
-            <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
-              <FormField
-                control={form.control}
-                name='company'
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Company</FormLabel>
-                    <FormControl>
-                      <Combobox
-                        value={field.value ?? ''}
-                        onChange={field.onChange}
-                        items={insuranceCompanies}
-                        placeholder='Select a company'
-                        searchPlaceholder='Search companies...'
-                        groupHeading='Companies'
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+        <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
+          <FormField
+            control={form.control}
+            name='company'
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Company</FormLabel>
+                <FormControl>
+                  <Combobox
+                    value={field.value ?? ''}
+                    onChange={field.onChange}
+                    items={insuranceCompanies}
+                    placeholder='Select a company'
+                    searchPlaceholder='Search companies...'
+                    groupHeading='Companies'
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
-              <FormField
-                control={form.control}
-                name='source'
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Source</FormLabel>
-                    <FormControl>
-                      <Combobox value={field.value ?? ''} onChange={field.onChange} items={sources} placeholder='Select source...' searchPlaceholder='Search source...' groupHeading='Sources' />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
+          <FormField
+            control={form.control}
+            name='source'
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Source</FormLabel>
+                <FormControl>
+                  <Combobox value={field.value ?? ''} onChange={field.onChange} items={sources} placeholder='Select source...' searchPlaceholder='Search source...' groupHeading='Sources' />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
 
-            <FormField
-              control={form.control}
-              name='campaignId'
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Campaign</FormLabel>
-                  <FormControl>
-                    <Combobox
-                      value={field.value ?? ''}
-                      onChange={field.onChange}
-                      items={campaigns?.map((c) => c.id) ?? []}
-                      placeholder='Select a campaign'
-                      searchPlaceholder='Search campaigns...'
-                      groupHeading='Campaigns'
-                      allowCustom={false}
-                      renderItem={(id) => {
-                        const campaign = campaigns?.find((c) => c.id === id);
-                        return campaign?.name ?? id;
-                      }}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+        <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
+          <FormField
+            control={form.control}
+            name='status'
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Status</FormLabel>
+                <FormControl>
+                  <Combobox
+                    value={field.value ?? ''}
+                    onChange={field.onChange}
+                    items={statusSchema.options}
+                    placeholder='Select a status'
+                    searchPlaceholder='Search status...'
+                    groupHeading='Statuses'
+                    allowCustom={false}
+                    renderItem={(id) => {
+                      const status = statusSchema.options.find((s) => s === id);
+                      return status ?? id;
+                    }}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name='campaignId'
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Campaign</FormLabel>
+                <FormControl>
+                  <Combobox
+                    value={field.value ?? ''}
+                    onChange={field.onChange}
+                    items={campaigns?.map((c) => c.id) ?? []}
+                    placeholder='Select a campaign'
+                    searchPlaceholder='Search campaigns...'
+                    groupHeading='Campaigns'
+                    allowCustom={false}
+                    renderItem={(id) => {
+                      const campaign = campaigns?.find((c) => c.id === id);
+                      return campaign?.name ?? id;
+                    }}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
 
-            <FormField
-              control={form.control}
-              name='remark'
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Remark</FormLabel>
-                  <FormControl>
-                    <Textarea placeholder='Any additional notes...' {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+        <FormField
+          control={form.control}
+          name='remark'
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Remark</FormLabel>
+              <FormControl>
+                <Textarea placeholder='Any additional notes...' {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
-            <div className='flex justify-end'>
-              <Button type='submit' disabled={isLoading}>
-                {isLoading ? 'Creating...' : 'Create Contact'}
-              </Button>
-            </div>
-          </form>
-        </Form>
-      </CardContent>
-    </Card>
+        <div className='flex justify-end'>
+          <Button type='submit' disabled={isLoading}>
+            {isLoading ? 'Creating...' : 'Create Contact'}
+          </Button>
+        </div>
+      </form>
+    </Form>
   );
 }
