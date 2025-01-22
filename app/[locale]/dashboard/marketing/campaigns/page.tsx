@@ -53,7 +53,13 @@ export default function MarketingCampaignsPage() {
 
   const form = useForm<CampaignFormValues>({
     resolver: zodResolver(campaignFormSchema),
-    defaultValues: editingCampaign?.data,
+    defaultValues: editingCampaign?.data || {
+      name: '',
+      campaignCode: '',
+      description: '',
+      type: 'email',
+      status: 'draft',
+    },
   });
 
   const filteredCampaigns = campaigns.filter((campaign) => campaign.name.toLowerCase().includes(searchQuery.toLowerCase()));
@@ -66,23 +72,18 @@ export default function MarketingCampaignsPage() {
 
   const handleEditCampaign = (e: React.MouseEvent, campaign: MarketingCampaign) => {
     e.stopPropagation();
-    setEditingCampaign({
-      id: campaign.id,
-      data: {
-        name: campaign.name,
-        campaignCode: campaign.campaignCode || undefined,
-        description: campaign.description || undefined,
-        type: campaign.type,
-        status: campaign.status,
-      },
-    });
-    form.reset({
+    const formData = {
       name: campaign.name,
-      campaignCode: campaign.campaignCode || undefined,
-      description: campaign.description || undefined,
+      campaignCode: campaign.campaignCode || '',
+      description: campaign.description || '',
       type: campaign.type,
       status: campaign.status,
+    };
+    setEditingCampaign({
+      id: campaign.id,
+      data: formData,
     });
+    form.reset(formData);
   };
 
   const onSubmit = async (data: CampaignFormValues) => {
@@ -144,64 +145,62 @@ export default function MarketingCampaignsPage() {
         <Input placeholder='Search campaigns...' className='pl-10' value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
       </div>
 
-      <Card>
-        <Table>
-          <TableHeader>
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Campaign Name</TableHead>
+            <TableHead>Code</TableHead>
+            <TableHead>Status</TableHead>
+            <TableHead>Type</TableHead>
+            <TableHead>Contacts</TableHead>
+            <TableHead>Conversions</TableHead>
+            <TableHead>Created</TableHead>
+            <TableHead className='text-right'>Actions</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {isLoading ? (
             <TableRow>
-              <TableHead>Campaign Name</TableHead>
-              <TableHead>Code</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Type</TableHead>
-              <TableHead>Contacts</TableHead>
-              <TableHead>Conversions</TableHead>
-              <TableHead>Created</TableHead>
-              <TableHead className='text-right'>Actions</TableHead>
+              <TableCell colSpan={8} className='py-4 text-center'>
+                Loading campaigns...
+              </TableCell>
             </TableRow>
-          </TableHeader>
-          <TableBody>
-            {isLoading ? (
-              <TableRow>
-                <TableCell colSpan={8} className='py-4 text-center'>
-                  Loading campaigns...
+          ) : filteredCampaigns.length === 0 ? (
+            <TableRow>
+              <TableCell colSpan={8} className='py-4 text-center'>
+                No campaigns found
+              </TableCell>
+            </TableRow>
+          ) : (
+            filteredCampaigns.map((campaign) => (
+              <TableRow key={campaign.id} className='cursor-pointer hover:bg-muted/50' onClick={() => router.push(`/dashboard/marketing/campaigns/${campaign.id}`)}>
+                <TableCell className='font-medium'>
+                  <Link href={`/dashboard/marketing/campaigns/${campaign.id}`} className='hover:underline'>
+                    {campaign.name}
+                  </Link>
+                </TableCell>
+                <TableCell>{campaign.campaignCode || '-'}</TableCell>
+                <TableCell>
+                  <ColorBadge type='campaignStatus' value={campaign.status} />
+                </TableCell>
+                <TableCell>{campaign.type}</TableCell>
+                <TableCell>{campaign.contactCount}</TableCell>
+                <TableCell>
+                  {campaign.convertedCount} ({campaign.contactCount > 0 ? Math.round((campaign.convertedCount / campaign.contactCount) * 100) : 0}%)
+                </TableCell>
+                <TableCell>{new Date(campaign.createdAt).toLocaleDateString()}</TableCell>
+                <TableCell className='text-right'>
+                  <div className='flex justify-end gap-2'>
+                    <Button variant='outline' size='sm' onClick={(e) => handleEditCampaign(e, campaign)}>
+                      Edit
+                    </Button>
+                  </div>
                 </TableCell>
               </TableRow>
-            ) : filteredCampaigns.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={8} className='py-4 text-center'>
-                  No campaigns found
-                </TableCell>
-              </TableRow>
-            ) : (
-              filteredCampaigns.map((campaign) => (
-                <TableRow key={campaign.id} className='cursor-pointer hover:bg-muted/50' onClick={() => router.push(`/dashboard/marketing/campaigns/${campaign.id}`)}>
-                  <TableCell className='font-medium'>
-                    <Link href={`/dashboard/marketing/campaigns/${campaign.id}`} className='hover:underline'>
-                      {campaign.name}
-                    </Link>
-                  </TableCell>
-                  <TableCell>{campaign.campaignCode || '-'}</TableCell>
-                  <TableCell>
-                    <ColorBadge type='campaignStatus' value={campaign.status} />
-                  </TableCell>
-                  <TableCell>{campaign.type}</TableCell>
-                  <TableCell>{campaign.contactCount}</TableCell>
-                  <TableCell>
-                    {campaign.convertedCount} ({campaign.contactCount > 0 ? Math.round((campaign.convertedCount / campaign.contactCount) * 100) : 0}%)
-                  </TableCell>
-                  <TableCell>{new Date(campaign.createdAt).toLocaleDateString()}</TableCell>
-                  <TableCell className='text-right'>
-                    <div className='flex justify-end gap-2'>
-                      <Button variant='outline' size='sm' onClick={(e) => handleEditCampaign(e, campaign)}>
-                        Edit
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </Card>
+            ))
+          )}
+        </TableBody>
+      </Table>
 
       <Dialog open={!!editingCampaign} onOpenChange={(open) => !open && setEditingCampaign(null)}>
         <DialogContent className='max-h-[90vh] max-w-xl overflow-y-auto'>

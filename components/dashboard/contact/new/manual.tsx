@@ -23,7 +23,7 @@ const formSchema = z.object({
   company: z.string().optional(),
   source: z.string().optional(),
   remark: z.string().optional(),
-  status: z.string().optional(),
+  status: statusSchema.optional(),
   campaignId: z.string().optional(),
 });
 

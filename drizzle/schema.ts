@@ -440,8 +440,8 @@ export const contactCampaign = pgTable('contactCampaign', {
     .default('pending'),
   signupDate: timestamp({ mode: 'date' }).notNull().defaultNow(),
   conversionDate: timestamp({ mode: 'date' }),
-  source: text(), // how they joined the campaign
-  metadata: text(), // JSON string for additional tracking data
+  source: text(),
+  metadata: text(),
   createdAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
   updatedAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
 });
