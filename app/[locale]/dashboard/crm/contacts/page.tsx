@@ -1,26 +1,37 @@
 'use client';
 
-import { ActionAlertDialog } from '@/components/shared/action-alert-dialog';
-import { ColorBadge } from '@/components/shared/color-badge';
-import { Combobox } from '@/components/shared/combobox';
-import { PageHeader } from '@/components/shared/page-header';
-import { TableLoading } from '@/components/shared/table-loading';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Button } from '@/components/ui/button';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Input } from '@/components/ui/input';
-import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { useDebounce } from '@/hooks/use-debounce';
-import { sourceSchema, statusSchema } from '@/lib/schema';
-import { cn, formatDate } from '@/lib/utils';
-import { api } from '@/utils/trpc/client';
-import { CaretSortIcon } from '@radix-ui/react-icons';
-import { Check, Filter, Import, MoreHorizontal, Pencil, Trash2, X } from 'lucide-react';
+import {
+  type ColumnDef,
+  type ColumnFiltersState,
+  type SortingState,
+  type VisibilityState,
+  flexRender,
+  getCoreRowModel,
+  getFilteredRowModel,
+  getPaginationRowModel,
+  getSortedRowModel,
+  useReactTable,
+} from '@tanstack/react-table';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { usePathname } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
+
+import { ActionAlertDialog } from '@/components/shared/action-alert-dialog';
+import { ColorBadge } from '@/components/shared/color-badge';
+import { PageHeader } from '@/components/shared/page-header';
+import { TableLoading } from '@/components/shared/table-loading';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
+import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Input } from '@/components/ui/input';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { useDebounce } from '@/hooks/use-debounce';
+import { type Contact, sourceSchema, statusSchema } from '@/lib/schema';
+import { cn, formatDate } from '@/lib/utils';
+import { api } from '@/utils/trpc/client';
+import { ChevronDown, Filter, Import, MoreHorizontal, Pencil, Trash2, X } from 'lucide-react';
 
 type SortConfig = {
   column: string;
@@ -60,6 +71,11 @@ export default function CRMContactsPage() {
       utils.contact.getAllContacts.invalidate();
     },
   });
+
+  const [sorting, setSorting] = useState<SortingState>([]);
+  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
+  const [rowSelection, setRowSelection] = useState({});
 
   const [search, setSearch] = useState('');
   const debouncedSearch = useDebounce(search, 300);
@@ -107,7 +123,6 @@ export default function CRMContactsPage() {
 
   const handleStatusFilter = (status: string | null) => {
     if (status === null) {
-      // Clear all status filters
       setFilters({
         ...filters,
         conditions: filters.conditions.filter((c) => c.field !== 'status'),
@@ -115,10 +130,8 @@ export default function CRMContactsPage() {
       return;
     }
 
-    // Check if the status is already active
     const isActive = filters.conditions.some((c) => c.field === 'status' && c.value === status);
     if (isActive) {
-      // If active, remove it
       setFilters({
         ...filters,
         conditions: filters.conditions.filter((c) => !(c.field === 'status' && c.value === status)),
@@ -126,7 +139,6 @@ export default function CRMContactsPage() {
       return;
     }
 
-    // Add the new status filter without removing existing ones
     setFilters({
       ...filters,
       conditions: [...filters.conditions, { field: 'status', operator: '=', value: status }],
@@ -135,7 +147,6 @@ export default function CRMContactsPage() {
 
   const handleSourceFilter = (source: string | null) => {
     if (source === null) {
-      // Clear all source filters
       setFilters({
         ...filters,
         conditions: filters.conditions.filter((c) => c.field !== 'source'),
@@ -143,10 +154,8 @@ export default function CRMContactsPage() {
       return;
     }
 
-    // Check if the source is already active
     const isActive = filters.conditions.some((c) => c.field === 'source' && c.value === source);
     if (isActive) {
-      // If active, remove it
       setFilters({
         ...filters,
         conditions: filters.conditions.filter((c) => !(c.field === 'source' && c.value === source)),
@@ -154,18 +163,15 @@ export default function CRMContactsPage() {
       return;
     }
 
-    // Add the new source filter without removing existing ones
     setFilters({
       ...filters,
       conditions: [...filters.conditions, { field: 'source', operator: '=', value: source }],
     });
   };
 
-  // Initialize filters from URL on mount
   useEffect(() => {
     const newConditions: FilterCondition[] = [];
 
-    // Check for individual filter parameters
     for (const field of filterFields) {
       const values = searchParams.getAll(field.value);
       for (const value of values) {
@@ -202,26 +208,21 @@ export default function CRMContactsPage() {
     }
   }, [searchParams]);
 
-  // Update URL when filters change
   useEffect(() => {
     const params = new URLSearchParams();
 
-    // Add filter parameters
     for (const condition of filters.conditions) {
       params.append(condition.field, condition.value);
     }
 
-    // Update search in URL
     if (search) {
       params.set('search', search);
     }
 
-    // Update sort in URL
     if (sortConfig.column) {
       params.set('sort', `${sortConfig.column}:${sortConfig.direction}`);
     }
 
-    // Update URL without causing a page reload
     const newUrl = params.toString() ? `${pathname}?${params.toString()}` : pathname;
     router.replace(newUrl, { scroll: false });
   }, [filters, search, sortConfig, pathname]);
@@ -229,7 +230,6 @@ export default function CRMContactsPage() {
   const handleFilterChange = (index: number, field: string, operator: FilterOperator, value: string) => {
     const newConditions = [...filters.conditions];
 
-    // Remove any existing filter for this field
     const existingIndex = newConditions.findIndex((c) => c.field === field);
     if (existingIndex !== -1 && existingIndex !== index) {
       newConditions.splice(existingIndex, 1);
@@ -271,7 +271,6 @@ export default function CRMContactsPage() {
 
         if (filters.conditions.length === 0) return true;
 
-        // Group conditions by field
         const groupedConditions = filters.conditions.reduce((acc, condition) => {
           if (!acc[condition.field]) {
             acc[condition.field] = [];
@@ -280,9 +279,7 @@ export default function CRMContactsPage() {
           return acc;
         }, {} as Record<string, FilterCondition[]>);
 
-        // Check each field group separately
         return Object.entries(groupedConditions).every(([field, conditions]) => {
-          // OR operation within the same field
           return conditions.some((condition) => {
             let fieldValue = '';
 
@@ -361,6 +358,97 @@ export default function CRMContactsPage() {
     router.push(`/dashboard/crm/contacts/${id}?mode=edit`);
   };
 
+  const tableColumns: ColumnDef<Contact>[] = [
+    {
+      accessorKey: 'name',
+      header: 'Name',
+      cell: ({ row }) => (
+        <div className='flex items-center gap-2'>
+          <Avatar className='size-8'>
+            <AvatarFallback>{row.original.firstName?.[0] ?? row.original.name?.[0] ?? row.original.email?.[0] ?? ''}</AvatarFallback>
+          </Avatar>
+          <div>
+            <div className='font-medium'>{row.original.name}</div>
+            <div className='text-neutral-500 text-xs'>{row.original.email}</div>
+          </div>
+        </div>
+      ),
+    },
+    {
+      accessorKey: 'phone',
+      header: 'Phone',
+    },
+    {
+      accessorKey: 'company',
+      header: 'Company',
+    },
+    {
+      accessorKey: 'status',
+      header: 'Status',
+      cell: ({ row }) => <ColorBadge type='contactStatus' value={row.original.status} />,
+    },
+    {
+      accessorKey: 'source',
+      header: 'Source',
+      cell: ({ row }) => <span className='capitalize'>{row.original.source?.replace('_', ' ') || '—'}</span>,
+    },
+    {
+      accessorKey: 'priority',
+      header: 'Priority',
+      cell: ({ row }) => <ColorBadge type='priority' value={row.original.priority ?? 'medium'} />,
+    },
+    {
+      accessorKey: 'remark',
+      header: 'Remark',
+    },
+    {
+      accessorKey: 'createdAt',
+      header: 'Created',
+      cell: ({ row }) => formatDate(new Date(row.original.createdAt)),
+    },
+    {
+      id: 'actions',
+      cell: ({ row }) => (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+            <Button variant='ghost' className='h-8 w-8 p-0'>
+              <MoreHorizontal className='h-4 w-4' />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align='end'>
+            <DropdownMenuItem className='cursor-pointer' onClick={(e) => handleEdit(row.original.id, e)}>
+              <Pencil className='mr-2 h-4 w-4' />
+              Edit
+            </DropdownMenuItem>
+            <DropdownMenuItem className='cursor-pointer text-destructive' onClick={(e) => handleDeleteClick(row.original.id, e)}>
+              <Trash2 className='mr-2 h-4 w-4' />
+              Delete
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      ),
+    },
+  ];
+
+  const table = useReactTable({
+    data: filteredContacts,
+    columns: tableColumns,
+    onSortingChange: setSorting,
+    onColumnFiltersChange: setColumnFilters,
+    getCoreRowModel: getCoreRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    onColumnVisibilityChange: setColumnVisibility,
+    onRowSelectionChange: setRowSelection,
+    state: {
+      sorting,
+      columnFilters,
+      columnVisibility,
+      rowSelection,
+    },
+  });
+
   return (
     <div className='space-y-4 p-4'>
       <PageHeader title='Contacts' description='Manage contacts' />
@@ -432,32 +520,25 @@ export default function CRMContactsPage() {
               </DropdownMenuContent>
             </DropdownMenu>
 
-            <Combobox
-              value={selectedColumn}
-              onChange={(value) => {
-                setSelectedColumn(value);
-                const column = columns.find((col) => col.label === value);
-                if (column) {
-                  setColumns((prev) => prev.map((col) => (col.id === column.id ? { ...col, visible: !col.visible } : col)));
-                }
-              }}
-              items={columns.map((col) => col.label)}
-              placeholder='Columns'
-              searchPlaceholder='Search columns...'
-              emptyText='No columns found'
-              groupHeading='Available Columns'
-              allowCustom={false}
-              renderItem={(item) => {
-                const column = columns.find((col) => col.label === item);
-                return (
-                  <div className='flex w-full items-center justify-between'>
-                    <span>{item}</span>
-                    {column?.visible && <Check className='h-4 w-4' />}
-                  </div>
-                );
-              }}
-              className='h-8'
-            />
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant='outline' className='ml-auto'>
+                  Columns <ChevronDown className='ml-2 h-4 w-4' />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align='end'>
+                {table
+                  .getAllColumns()
+                  .filter((column) => column.getCanHide())
+                  .map((column) => {
+                    return (
+                      <DropdownMenuCheckboxItem key={column.id} className='capitalize' checked={column.getIsVisible()} onCheckedChange={(value) => column.toggleVisibility(!!value)}>
+                        {column.id}
+                      </DropdownMenuCheckboxItem>
+                    );
+                  })}
+              </DropdownMenuContent>
+            </DropdownMenu>
 
             {filters.conditions.length > 0 && (
               <Button variant='outline' size='sm' onClick={() => setFilters({ conditions: [], matchAll: true })}>
@@ -520,82 +601,55 @@ export default function CRMContactsPage() {
 
       <div className='rounded-md border'>
         {isLoading ? (
-          <TableLoading columnCount={columns.filter((col) => col.visible).length - 1} rowCount={8} />
+          <TableLoading columnCount={tableColumns.length} rowCount={8} />
         ) : (
           <div className='relative'>
             <div className='max-h-[800px] overflow-auto'>
               <Table>
-                <TableHeader className='sticky'>
-                  <TableRow>
-                    {columns.map((column) =>
-                      column.visible ? (
-                        <TableHead key={column.id} onClick={() => handleSort(column.id)} className={cn('cursor-pointer', column.label === 'Actions' && 'text-right')}>
-                          {column.label} {sortConfig.column === column.id && <CaretSortIcon className='ml-2 inline' />}
-                        </TableHead>
-                      ) : null
-                    )}
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredContacts.map((contact) => (
-                    <TableRow key={contact.id} className='cursor-pointer hover:bg-muted/50' onClick={() => router.push(`/dashboard/crm/contacts/${contact.id}`)}>
-                      {columns.map((column) =>
-                        column.visible ? (
-                          <TableCell key={column.id}>
-                            {column.id === 'name' && (
-                              <div className='flex items-center gap-2'>
-                                <Avatar className='size-8'>
-                                  <AvatarFallback>{contact.firstName?.[0] ?? contact.name?.[0] ?? contact.email?.[0] ?? ''}</AvatarFallback>
-                                </Avatar>
-                                <div>
-                                  <div className='font-medium'>{contact.name}</div>
-                                  <div className='text-neutral-500 text-xs'>{contact.email}</div>
-                                </div>
-                              </div>
-                            )}
-                            {column.id === 'phone' && contact.phone}
-                            {column.id === 'company' && contact.company}
-                            {column.id === 'status' && <ColorBadge type='contactStatus' value={contact.status} />}
-                            {column.id === 'source' && <span className='capitalize'>{contact.source?.replace('_', ' ') || '—'}</span>}
-                            {column.id === 'priority' && <ColorBadge type='priority' value={contact.priority ?? 'medium'} />}
-                            {column.id === 'remark' && contact.remark}
-                            {column.id === 'createdAt' && formatDate(new Date(contact.createdAt))}
-                          </TableCell>
-                        ) : null
-                      )}
-                      <TableCell className='w-[50px]'>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                            <Button variant='ghost' className='h-8 w-8 p-0'>
-                              <MoreHorizontal className='h-4 w-4' />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align='end'>
-                            <DropdownMenuItem className='cursor-pointer' onClick={(e) => handleEdit(contact.id, e)}>
-                              <Pencil className='mr-2 h-4 w-4' />
-                              Edit
-                            </DropdownMenuItem>
-                            <DropdownMenuItem className='cursor-pointer text-destructive' onClick={(e) => handleDeleteClick(contact.id, e)}>
-                              <Trash2 className='mr-2 h-4 w-4' />
-                              Delete
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
+                <TableHeader>
+                  {table.getHeaderGroups().map((headerGroup) => (
+                    <TableRow key={headerGroup.id}>
+                      {headerGroup.headers.map((header) => (
+                        <TableHead key={header.id}>{header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}</TableHead>
+                      ))}
                     </TableRow>
                   ))}
+                </TableHeader>
+                <TableBody>
+                  {table.getRowModel().rows?.length ? (
+                    table.getRowModel().rows.map((row) => (
+                      <TableRow key={row.id} data-state={row.getIsSelected() && 'selected'} onClick={() => router.push(`/dashboard/crm/contacts/${row.original.id}`)}>
+                        {row.getVisibleCells().map((cell) => (
+                          <TableCell key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</TableCell>
+                        ))}
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan={tableColumns.length} className='h-24 text-center'>
+                        No results.
+                      </TableCell>
+                    </TableRow>
+                  )}
                 </TableBody>
-                <TableFooter>
-                  <TableRow>
-                    <TableCell colSpan={4}>
-                      Showing {filteredContacts.length} of {contacts?.length} contacts
-                    </TableCell>
-                  </TableRow>
-                </TableFooter>
               </Table>
             </div>
           </div>
         )}
+      </div>
+
+      <div className='flex items-center justify-end space-x-2 py-4'>
+        <div className='flex-1 text-muted-foreground text-sm'>
+          {table.getFilteredSelectedRowModel().rows.length} of {table.getFilteredRowModel().rows.length} row(s) selected.
+        </div>
+        <div className='space-x-2'>
+          <Button variant='outline' size='sm' onClick={() => table.previousPage()} disabled={!table.getCanPreviousPage()}>
+            Previous
+          </Button>
+          <Button variant='outline' size='sm' onClick={() => table.nextPage()} disabled={!table.getCanNextPage()}>
+            Next
+          </Button>
+        </div>
       </div>
 
       <ActionAlertDialog
