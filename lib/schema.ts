@@ -8,6 +8,7 @@ import {
   contact,
   contactActivity,
   contactDeal,
+  marketingCampaign,
   paymentTrack,
   resourceContent,
   session,
@@ -26,6 +27,48 @@ export const credentialSchema = z.object({
   email: z.string().min(1, 'Email is required').email('Invalid email'),
   password: z.string().min(1, 'Password is required').min(8, 'Password must be more than 8 characters').max(32, 'Password must be less than 32 characters'),
 });
+
+export const activityTypeSchema = z.enum([
+  // Contact Management
+  'CONTACT_CREATED',
+  'CONTACT_UPDATED',
+  'CONTACT_DELETED',
+
+  // Status Changes
+  'STATUS_CHANGED',
+  'PRIORITY_CHANGED',
+
+  // Engagement
+  'MEETING_SCHEDULED',
+  'MEETING_UPDATED',
+  'MEETING_CANCELLED',
+  'CALL_LOGGED',
+  'EMAIL_SENT',
+  'EMAIL_SCHEDULED',
+  'MESSAGE_SENT',
+  'NOTE_ADDED',
+
+  // Team Management
+  'TEAM_ASSIGNED',
+  'TEAM_REMOVED',
+  'TEAM_UPDATED',
+
+  // Campaign Management
+  'CAMPAIGN_ASSIGNED',
+  'CAMPAIGN_REMOVED',
+  'CAMPAIGN_UPDATED',
+
+  // Deal Management
+  'DEAL_CREATED',
+  'DEAL_UPDATED',
+  'DEAL_CLOSED',
+
+  // Payment
+  'PAYMENT_LINK_CLICKED',
+  'PAYMENT_COMPLETED',
+]);
+
+export type ActivityType = z.infer<typeof activityTypeSchema>;
 
 export const statusSchema = z.enum(['lead', 'appointment', 'pitch', 'trial', 'final', 'closed', 'junk']);
 
@@ -122,6 +165,13 @@ export type CalendarEventWithParticipants = CalendarEvent & {
 export const resourceContentSchema = createSelectSchema(resourceContent);
 
 export type ResourceContent = z.infer<typeof resourceContentSchema>;
+
+export const marketingCampaignSchema = createSelectSchema(marketingCampaign);
+
+export type MarketingCampaign = z.infer<typeof marketingCampaignSchema> & {
+  contactCount?: number;
+  convertedCount?: number;
+};
 
 export const appointmentSchema = z.object({
   title: z.string(),

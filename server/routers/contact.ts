@@ -1,65 +1,10 @@
-import { contact, contactActivity, team, teamContact } from '@/drizzle/schema';
-import { prioritySchema, statusSchema } from '@/lib/schema';
+import { contact, contactActivity, contactCampaign, marketingCampaign, team, teamContact } from '@/drizzle/schema';
+import { activityTypeSchema, prioritySchema, statusSchema } from '@/lib/schema';
+import { createContactActivityHelper } from '@/server/helper/contact';
 import { createTRPCRouter, protectedProcedure, publicProcedure } from '@/server/trpc';
+import { sendEmail } from '@/utils/email';
 import { asc, desc, eq, inArray, sql } from 'drizzle-orm';
 import { z } from 'zod';
-
-const activityTypeEnum = z.enum([
-  // Contact Management
-  'CONTACT_CREATED',
-  'CONTACT_UPDATED',
-  'CONTACT_DELETED',
-
-  // Status Changes
-  'STATUS_CHANGED',
-  'PRIORITY_CHANGED',
-
-  // Engagement
-  'MEETING_SCHEDULED',
-  'MEETING_UPDATED',
-  'MEETING_CANCELLED',
-  'CALL_LOGGED',
-  'EMAIL_SENT',
-  'NOTE_ADDED',
-
-  // Team Management
-  'TEAM_ASSIGNED',
-  'TEAM_REMOVED',
-
-  // Deal Management
-  'DEAL_CREATED',
-  'DEAL_UPDATED',
-  'DEAL_CLOSED',
-
-  // Payment
-  'PAYMENT_LINK_CLICKED',
-  'PAYMENT_COMPLETED',
-]);
-
-// Helper function to create contact activity
-const createContactActivityHelper = async (
-  ctx: any,
-  input: {
-    contactId: string;
-    type: z.infer<typeof activityTypeEnum>;
-    title: string;
-    description: string;
-    initiatorType?: 'user' | 'contact' | 'system';
-    initiatorId?: string;
-    metadata?: Record<string, any>;
-  }
-) => {
-  return ctx.db.insert(contactActivity).values({
-    contactId: input.contactId,
-    userId: ctx.session?.user.id,
-    type: input.type,
-    initiatorType: input.initiatorType || 'system',
-    initiatorId: input.initiatorId || ctx.session?.user.id,
-    title: input.title,
-    description: input.description,
-    metadata: input.metadata ? JSON.stringify(input.metadata) : null,
-  });
-};
 
 export const contactRouter = createTRPCRouter({
   getAllContacts: protectedProcedure.query(({ ctx }) => {
@@ -133,6 +78,7 @@ export const contactRouter = createTRPCRouter({
         company: z.string().optional(),
         source: z.string().optional(),
         remark: z.string().optional(),
+        campaignId: z.string().optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -155,6 +101,7 @@ export const contactRouter = createTRPCRouter({
           company: input.company ?? '',
           source: input.source ?? '',
           remark: input.remark ?? '',
+          campaignId: input.campaignId,
         })
         .returning();
 
@@ -164,10 +111,37 @@ export const contactRouter = createTRPCRouter({
         type: 'CONTACT_CREATED',
         title: 'Contact Created',
         description: `Contact ${result[0].name} (${result[0].email}) was created${input.source ? ` from ${input.source}` : ''}.`,
-        metadata: { source: input.source },
+        metadata: { source: input.source, campaignId: input.campaignId },
         initiatorType: 'user',
         initiatorId: ctx.session?.user.id,
       });
+
+      // If campaign is provided, create contact campaign entry
+      if (input.campaignId) {
+        await ctx.db.insert(contactCampaign).values({
+          contactId: result[0].id,
+          campaignId: input.campaignId,
+          status: 'pending',
+          source: input.source ?? 'direct',
+        });
+
+        const campaignCode = await ctx.db
+          .select({ code: marketingCampaign.campaignCode, name: marketingCampaign.name })
+          .from(marketingCampaign)
+          .where(eq(marketingCampaign.id, input.campaignId))
+          .then((rows) => rows[0]);
+
+        // Log campaign assignment activity
+        await createContactActivityHelper(ctx, {
+          contactId: result[0].id,
+          type: 'CAMPAIGN_ASSIGNED',
+          title: 'Campaign Assigned',
+          description: `Contact was assigned to campaign: ${campaignCode.name} (${campaignCode.code})`,
+          metadata: { campaignId: input.campaignId, campaignCode: campaignCode.code },
+          initiatorType: 'user',
+          initiatorId: ctx.session?.user.id,
+        });
+      }
 
       return result[0];
     }),
@@ -219,7 +193,7 @@ export const contactRouter = createTRPCRouter({
     .input(
       z.object({
         contactId: z.string(),
-        type: activityTypeEnum,
+        type: activityTypeSchema,
         title: z.string(),
         description: z.string(),
         initiatorType: z.enum(['user', 'contact', 'system']),
@@ -358,5 +332,63 @@ export const contactRouter = createTRPCRouter({
         .where(inArray(contact.email, input.emails));
 
       return existingContacts.map((contact) => contact.email);
+    }),
+
+  getContactsByCampaignId: protectedProcedure.input(z.object({ campaignId: z.string() })).query(async ({ ctx, input }) => {
+    return ctx.db.select().from(contact).where(eq(contact.campaignId, input.campaignId));
+  }),
+
+  sendEmail: protectedProcedure
+    .input(
+      z.object({
+        to: z.string().email(),
+        subject: z.string(),
+        content: z.string(),
+        cc: z.array(z.string().email()),
+        bcc: z.array(z.string().email()),
+        attachments: z.array(z.any()),
+        contactId: z.string(),
+      })
+    )
+    .mutation(async ({ input, ctx }) => {
+      try {
+        if (!ctx.session.user.email) {
+          throw new Error('User email is not set');
+        }
+
+        await sendEmail({
+          from: ctx.session.user.email,
+          to: input.to,
+          subject: input.subject,
+          content: input.content,
+          cc: input.cc,
+          bcc: input.bcc,
+          attachments: input.attachments,
+        });
+
+        // Log the email activity
+        await ctx.db.insert(contactActivity).values({
+          type: 'EMAIL_SENT',
+          title: 'Email Sent',
+          description: `Email sent to ${input.to} with subject: ${input.subject}`,
+          initiatorType: 'user',
+          userId: ctx.session.user.id,
+          contactId: input.contactId,
+          metadata: JSON.stringify({
+            to: input.to,
+            subject: input.subject,
+            content: input.content,
+            cc: input.cc,
+            bcc: input.bcc,
+            attachments: input.attachments,
+          }),
+        });
+
+        return {
+          success: true,
+        };
+      } catch (error) {
+        throw new Error('Failed to send email');
+      }
     }),
 });

@@ -69,6 +69,10 @@ export const contactRelations = relations(contact, ({ many, one }) => ({
     fields: [contact.assignedTo],
     references: [user.id],
   }),
+  campaign: one(marketingCampaign, {
+    fields: [contact.campaignId],
+    references: [marketingCampaign.id],
+  }),
   eventParticipations: many(calendarEventParticipant),
   teams: many(teamContact),
   leadingTeams: many(team, { relationName: 'teamLeader' }),

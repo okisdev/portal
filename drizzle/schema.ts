@@ -118,6 +118,8 @@ export const contact = pgTable('contact', {
   currentRole: text(), // current job role
   industry: text(), // industry they work in
   skills: text(), // comma-separated list of skills
+  campaignId: text().references(() => marketingCampaign.id),
+  externalId: text(), // external ID from other systems
 });
 
 export const contactDeal = pgTable('contactDeal', {
@@ -165,11 +167,19 @@ export const contactActivity = pgTable('contactActivity', {
       'MEETING_CANCELLED',
       'CALL_LOGGED',
       'EMAIL_SENT',
+      'EMAIL_SCHEDULED',
+      'MESSAGE_SENT',
       'NOTE_ADDED',
 
       // Team Management
       'TEAM_ASSIGNED',
       'TEAM_REMOVED',
+      'TEAM_UPDATED',
+
+      // Campaign Management
+      'CAMPAIGN_ASSIGNED',
+      'CAMPAIGN_REMOVED',
+      'CAMPAIGN_UPDATED',
 
       // Deal Management
       'DEAL_CREATED',
@@ -399,17 +409,13 @@ export const marketingCampaign = pgTable('marketingCampaign', {
     .notNull()
     .$defaultFn(() => crypto.randomUUID()),
   name: text().notNull(),
+  campaignCode: text().unique(),
   description: text(),
   type: text('type', { enum: ['email', 'social', 'event', 'referral', 'other'] }).notNull(),
   status: text('status', { enum: ['draft', 'scheduled', 'active', 'paused', 'completed', 'cancelled'] })
     .notNull()
     .default('draft'),
-  startDate: timestamp({ mode: 'date' }),
-  endDate: timestamp({ mode: 'date' }),
-  budget: integer(), // in cents
-  targetAudience: text(), // JSON string for target audience criteria
-  goals: text(), // JSON string for campaign goals
-  metrics: text(), // JSON string for tracking metrics
+  metrics: text(),
   createdBy: text()
     .notNull()
     .references(() => user.id),

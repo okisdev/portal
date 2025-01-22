@@ -7,16 +7,18 @@ const resourceContentSchema = z.object({
   title: z.string().min(1),
   description: z.string().optional(),
   content: z.string().min(1),
-  tags: z.array(z.string()).optional(),
+  tags: z.array(z.string()).default([]).optional(),
   visibility: z.enum(['PUBLIC', 'SHARED', 'PRIVATE']),
 });
+
+export type ResourceContent = z.infer<typeof resourceContentSchema>;
 
 const resourceEmailSchema = z.object({
   title: z.string().min(1),
   description: z.string().optional(),
   subject: z.string().min(1),
   content: z.string().min(1),
-  tags: z.array(z.string()).optional(),
+  tags: z.array(z.string()).default([]).optional(),
   visibility: z.enum(['PUBLIC', 'SHARED', 'PRIVATE']),
 });
 
@@ -36,7 +38,7 @@ export const resourceRouter = createTRPCRouter({
         .object({
           search: z.string().optional(),
           tags: z.array(z.string()).optional(),
-          visibility: z.enum(['PUBLIC', 'SHARED', 'PRIVATE']).optional(),
+          visibility: z.array(z.enum(['PUBLIC', 'SHARED', 'PRIVATE'])).optional(),
         })
         .optional()
     )
@@ -49,7 +51,7 @@ export const resourceRouter = createTRPCRouter({
       );
 
       if (input?.visibility) {
-        conditions = and(conditions, eq(resourceContent.visibility, input.visibility));
+        conditions = and(conditions, inArray(resourceContent.visibility, input.visibility));
       }
 
       if (input?.search) {

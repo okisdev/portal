@@ -7,7 +7,26 @@ import { z } from 'zod';
 export const marketingRouter = createTRPCRouter({
   // Campaign Management
   getAllCampaigns: protectedProcedure.query(({ ctx }) => {
-    return ctx.db.select().from(marketingCampaign).orderBy(desc(marketingCampaign.createdAt));
+    return ctx.db
+      .select({
+        id: marketingCampaign.id,
+        name: marketingCampaign.name,
+        campaignCode: marketingCampaign.campaignCode,
+        description: marketingCampaign.description,
+        type: marketingCampaign.type,
+        status: marketingCampaign.status,
+        metrics: marketingCampaign.metrics,
+        contactCount: sql<number>`COUNT(DISTINCT ${contactCampaign.contactId})`,
+        convertedCount: sql<number>`COUNT(DISTINCT CASE WHEN ${contactCampaign.status} = 'converted' THEN ${contactCampaign.contactId} END)`,
+        createdAt: marketingCampaign.createdAt,
+        updatedAt: marketingCampaign.updatedAt,
+        createdBy: marketingCampaign.createdBy,
+        updatedBy: marketingCampaign.updatedBy,
+      })
+      .from(marketingCampaign)
+      .leftJoin(contactCampaign, eq(contactCampaign.campaignId, marketingCampaign.id))
+      .groupBy(marketingCampaign.id)
+      .orderBy(desc(marketingCampaign.createdAt));
   }),
 
   getCampaignById: protectedProcedure.input(z.object({ id: z.string() })).query(({ ctx, input }) => {
@@ -15,14 +34,10 @@ export const marketingRouter = createTRPCRouter({
       .select({
         id: marketingCampaign.id,
         name: marketingCampaign.name,
+        campaignCode: marketingCampaign.campaignCode,
         description: marketingCampaign.description,
         type: marketingCampaign.type,
         status: marketingCampaign.status,
-        startDate: marketingCampaign.startDate,
-        endDate: marketingCampaign.endDate,
-        budget: marketingCampaign.budget,
-        targetAudience: marketingCampaign.targetAudience,
-        goals: marketingCampaign.goals,
         metrics: marketingCampaign.metrics,
         contactCount: sql<number>`COUNT(DISTINCT ${contactCampaign.contactId})`,
         convertedCount: sql<number>`COUNT(DISTINCT CASE WHEN ${contactCampaign.status} = 'converted' THEN ${contactCampaign.contactId} END)`,
@@ -40,15 +55,11 @@ export const marketingRouter = createTRPCRouter({
     .input(
       z.object({
         name: z.string(),
+        campaignCode: z.string().optional(),
         description: z.string().optional(),
         type: z.enum(['email', 'social', 'event', 'referral', 'other']),
         status: z.enum(['draft', 'scheduled', 'active', 'paused', 'completed', 'cancelled']).optional(),
-        startDate: z.date().optional(),
-        endDate: z.date().optional(),
-        budget: z.number().optional(),
-        targetAudience: z.string().optional(), // JSON string
-        goals: z.string().optional(), // JSON string
-        metrics: z.string().optional(), // JSON string
+        metrics: z.string().optional(),
       })
     )
     .mutation(({ ctx, input }) => {
@@ -66,14 +77,10 @@ export const marketingRouter = createTRPCRouter({
       z.object({
         id: z.string(),
         name: z.string().optional(),
+        campaignCode: z.string().optional(),
         description: z.string().optional(),
         type: z.enum(['email', 'social', 'event', 'referral', 'other']).optional(),
         status: z.enum(['draft', 'scheduled', 'active', 'paused', 'completed', 'cancelled']).optional(),
-        startDate: z.date().optional(),
-        endDate: z.date().optional(),
-        budget: z.number().optional(),
-        targetAudience: z.string().optional(),
-        goals: z.string().optional(),
         metrics: z.string().optional(),
       })
     )

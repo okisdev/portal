@@ -77,6 +77,7 @@ export default function ContentPage() {
         content: data.content || currentContent.content,
         description: data.description === undefined ? currentContent.description || undefined : data.description || undefined,
         visibility: data.visibility || currentContent.visibility,
+        tags: data.tags || (currentContent.tags ? JSON.parse(currentContent.tags) : []),
       };
 
       updateContent.mutate({

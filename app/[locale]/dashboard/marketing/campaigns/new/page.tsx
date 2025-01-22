@@ -15,14 +15,11 @@ import { z } from 'zod';
 
 const campaignFormSchema = z.object({
   name: z.string().min(1, 'Name is required'),
+  campaignCode: z.string().optional(),
   description: z.string().optional(),
   type: z.enum(['email', 'social', 'event', 'referral', 'other']),
   status: z.enum(['draft', 'scheduled', 'active', 'paused', 'completed', 'cancelled']).default('draft'),
-  startDate: z.string().optional(),
-  endDate: z.string().optional(),
-  budget: z.string().default(''),
-  targetAudience: z.string().optional(),
-  goals: z.string().optional(),
+  metrics: z.string().optional(),
 });
 
 type CampaignFormValues = z.infer<typeof campaignFormSchema>;
@@ -30,7 +27,6 @@ type CampaignFormValues = z.infer<typeof campaignFormSchema>;
 const defaultValues: Partial<CampaignFormValues> = {
   status: 'draft',
   type: 'email',
-  budget: '',
 };
 
 export default function NewCampaignPage() {
@@ -50,27 +46,7 @@ export default function NewCampaignPage() {
   });
 
   const onSubmit = (data: CampaignFormValues) => {
-    // Format JSON fields
-    const formattedData = {
-      ...data,
-      startDate: data.startDate ? new Date(data.startDate) : undefined,
-      endDate: data.endDate ? new Date(data.endDate) : undefined,
-      budget: data.budget ? Number(data.budget) * 100 : undefined, // Convert to cents
-      targetAudience: data.targetAudience
-        ? JSON.stringify({
-            summary: data.targetAudience,
-            criteria: {},
-          })
-        : undefined,
-      goals: data.goals
-        ? JSON.stringify({
-            main: data.goals,
-            metrics: {},
-          })
-        : undefined,
-    };
-
-    createCampaign(formattedData);
+    createCampaign(data);
   };
 
   return (
@@ -111,6 +87,20 @@ export default function NewCampaignPage() {
 
                 <FormField
                   control={form.control}
+                  name='campaignCode'
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Campaign Code</FormLabel>
+                      <FormControl>
+                        <Input placeholder='Enter campaign code (optional)' {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
                   name='type'
                   render={({ field }) => (
                     <FormItem>
@@ -129,48 +119,6 @@ export default function NewCampaignPage() {
                           <SelectItem value='other'>Other</SelectItem>
                         </SelectContent>
                       </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name='startDate'
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Start Date</FormLabel>
-                      <FormControl>
-                        <Input type='date' {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name='endDate'
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>End Date</FormLabel>
-                      <FormControl>
-                        <Input type='date' {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name='budget'
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Budget (USD)</FormLabel>
-                      <FormControl>
-                        <Input type='number' placeholder='Enter budget' {...field} value={field.value === undefined ? '' : field.value} />
-                      </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -220,26 +168,12 @@ export default function NewCampaignPage() {
 
                 <FormField
                   control={form.control}
-                  name='targetAudience'
+                  name='metrics'
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Target Audience</FormLabel>
+                      <FormLabel>Metrics</FormLabel>
                       <FormControl>
-                        <Textarea placeholder='Describe your target audience' className='h-24' {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name='goals'
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Campaign Goals</FormLabel>
-                      <FormControl>
-                        <Textarea placeholder='Describe your campaign goals' className='h-24' {...field} />
+                        <Textarea placeholder='Enter campaign metrics (optional)' className='h-24' {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>

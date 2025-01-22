@@ -1,12 +1,12 @@
 import { TipTapEditor } from '@/components/shared/tiptap-editor';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import type { ResourceContent } from '@/lib/schema';
-import { Eye, EyeOff, Trash } from 'lucide-react';
+import { Eye, EyeOff, Tags, Trash, X } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 
-// Debounce hook
 function useDebounce<T extends (...args: any[]) => any>(callback: T, delay: number) {
   const [timeoutId, setTimeoutId] = useState<NodeJS.Timeout | null>(null);
 
@@ -37,8 +37,11 @@ export function ContentEditor({ content, onUpdate, onDelete, isLoading }: Conten
   const [isViewMode, setIsViewMode] = useState(false);
   const [editingTitle, setEditingTitle] = useState(false);
   const [editingDescription, setEditingDescription] = useState(false);
+  const [editingTags, setEditingTags] = useState(false);
   const [tempTitle, setTempTitle] = useState(content?.title || '');
   const [tempDescription, setTempDescription] = useState(content?.description || '');
+  const [tempTags, setTempTags] = useState<string[]>([]);
+  const [tagInput, setTagInput] = useState('');
   const [editorContent, setEditorContent] = useState(content?.content || '');
 
   // Debounced update handlers
@@ -52,9 +55,11 @@ export function ContentEditor({ content, onUpdate, onDelete, isLoading }: Conten
     if (content) {
       setTempTitle(content.title);
       setTempDescription(content.description || '');
+      setTempTags(content.tags ? JSON.parse(content.tags) : []);
       setEditorContent(content.content);
       setEditingTitle(false);
       setEditingDescription(false);
+      setEditingTags(false);
       setIsViewMode(false);
     }
   }, [content]);
@@ -75,6 +80,37 @@ export function ContentEditor({ content, onUpdate, onDelete, isLoading }: Conten
       });
     }
     setEditingDescription(false);
+  };
+
+  const handleTagsEdit = () => {
+    if (!isViewMode && content) {
+      onUpdate({
+        tags: tempTags.length > 0 ? JSON.stringify(tempTags) : null,
+      });
+    }
+    setEditingTags(false);
+  };
+
+  const handleAddTag = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && tagInput.trim()) {
+      e.preventDefault();
+      if (!tempTags.includes(tagInput.trim().toLowerCase())) {
+        const newTags = [...tempTags, tagInput.trim().toLowerCase()];
+        setTempTags(newTags);
+        onUpdate({
+          tags: newTags.length > 0 ? JSON.stringify(newTags) : undefined,
+        });
+      }
+      setTagInput('');
+    }
+  };
+
+  const handleRemoveTag = (tagToRemove: string) => {
+    const newTags = tempTags.filter((tag) => tag !== tagToRemove);
+    setTempTags(newTags);
+    onUpdate({
+      tags: newTags.length > 0 ? JSON.stringify(newTags) : undefined,
+    });
   };
 
   const handleContentChange = (value: string) => {
@@ -115,6 +151,37 @@ export function ContentEditor({ content, onUpdate, onDelete, isLoading }: Conten
               {content.description || 'Add a description...'}
             </button>
           )}
+          <div className='flex items-center gap-2 px-2 py-1'>
+            <Tags className='size-3 text-muted-foreground' />
+            {editingTags && !isViewMode ? (
+              <div className='flex-1'>
+                <Input value={tagInput} onChange={(e) => setTagInput(e.target.value)} onKeyDown={handleAddTag} onBlur={handleTagsEdit} placeholder='Add tags (press Enter)' className='h-6 text-sm' />
+              </div>
+            ) : (
+              <button type='button' onClick={() => !isViewMode && setEditingTags(true)} disabled={isViewMode} className='flex flex-wrap items-center gap-1 text-left hover:bg-accent/50'>
+                {tempTags.length > 0 ? (
+                  tempTags.map((tag) => (
+                    <Badge key={tag} variant='secondary' className='gap-1'>
+                      {tag}
+                      {!isViewMode && (
+                        <div
+                          onMouseDown={(e) => {
+                            e.stopPropagation();
+                            handleRemoveTag(tag);
+                          }}
+                          className='ml-1 cursor-pointer rounded-full outline-none hover:text-destructive'
+                        >
+                          <X className='size-3' />
+                        </div>
+                      )}
+                    </Badge>
+                  ))
+                ) : (
+                  <span className='text-muted-foreground text-sm'>Add tags...</span>
+                )}
+              </button>
+            )}
+          </div>
         </div>
         <div className='space-x-2'>
           <Button variant='outline' size='icon' onClick={() => setIsViewMode(!isViewMode)}>
