@@ -39,7 +39,7 @@ export function NameTag({ id, type, className }: NameTagProps) {
         return;
       }
       if (user) {
-        setDisplayName(user.name || `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'Unknown User');
+        setDisplayName(user.name || `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email || 'Unknown User');
         return;
       }
       setDisplayName('Unknown User');

@@ -18,12 +18,12 @@ import {
   SidebarMenuItem,
 } from '@/components/ui/sidebar';
 import { Skeleton } from '@/components/ui/skeleton';
-import { crmItems, languageItems, marketingItems, personalItems, resourcesItems, teamItems } from '@/config/dashboard';
+import { crmItems, languageItems, marketingItems, resourcesItems, teamItems, toolsItems, workspaceItems } from '@/config/dashboard';
 import { usePathname, useRouter } from '@/i18n/routing';
 import { api } from '@/utils/trpc/client';
 import { Bell, ChevronDown, ChevronRight, ChevronUp, Globe, Laptop, LogOut, Moon, Plus, Settings, Sparkle, Sun, User2 } from 'lucide-react';
 import { signOut } from 'next-auth/react';
-import { useLocale } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { useTheme } from 'next-themes';
 import Link from 'next/link';
 import type React from 'react';
@@ -43,6 +43,8 @@ type SidebarGroupSectionProps = {
 export function DashboardSidebar() {
   const router = useRouter();
   const pathname = usePathname();
+
+  const t = useTranslations();
 
   const { data: me, isLoading } = api.account.getMeFromDatabase.useQuery();
 
@@ -73,11 +75,12 @@ export function DashboardSidebar() {
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
-        <SidebarGroupSection title='Personal' items={personalItems} />
-        <SidebarGroupSection title='CRM' items={crmItems} onItemAction={() => router.push('/dashboard/crm/contacts/new')} />
-        <SidebarGroupSection title='Marketing' items={marketingItems} />
-        <SidebarGroupSection title='Resources' items={resourcesItems} />
-        {me?.role === 'ADMIN' && <SidebarGroupSection title='Team' items={teamItems} />}
+        <SidebarGroupSection title={t('workspace')} items={workspaceItems} />
+        <SidebarGroupSection title={t('crm')} items={crmItems} onItemAction={() => router.push('/dashboard/crm/contacts/new')} />
+        <SidebarGroupSection title={t('marketing')} items={marketingItems} />
+        <SidebarGroupSection title={t('resources')} items={resourcesItems} />
+        <SidebarGroupSection title={t('tools')} items={toolsItems} />
+        {me?.role === 'ADMIN' && <SidebarGroupSection title={t('team')} items={teamItems} />}
       </SidebarContent>
       <SidebarFooter>
         <SidebarMenu>
@@ -85,7 +88,7 @@ export function DashboardSidebar() {
             <SidebarMenuButton asChild>
               <Link href='/dashboard/account/settings'>
                 <Settings />
-                <span>Settings</span>
+                <span>{t('settings')}</span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
@@ -102,7 +105,7 @@ export function DashboardSidebar() {
                 <DropdownMenuItem asChild>
                   <Link href='/dashboard/account/settings' className='cursor-pointer'>
                     <Settings className='mr-2 h-4 w-4' />
-                    <span>Account</span>
+                    <span>{t('account')}</span>
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
@@ -110,7 +113,7 @@ export function DashboardSidebar() {
                   <DropdownMenuTrigger asChild>
                     <DropdownMenuItem className='cursor-pointer'>
                       {theme === 'system' ? <Laptop className='mr-2 h-4 w-4' /> : theme === 'dark' ? <Moon className='mr-2 h-4 w-4' /> : <Sun className='mr-2 h-4 w-4' />}
-                      <span>Theme</span>
+                      <span>{t('theme')}</span>
                       <ChevronRight className='ml-auto h-4 w-4' />
                     </DropdownMenuItem>
                   </DropdownMenuTrigger>
@@ -118,15 +121,15 @@ export function DashboardSidebar() {
                     <DropdownMenuRadioGroup value={theme} onValueChange={setTheme}>
                       <DropdownMenuRadioItem value='system' className='flex cursor-pointer items-center gap-2' onClick={() => setTheme('system')}>
                         <Laptop className='mr-2 h-4 w-4' />
-                        <span>System</span>
+                        <span>{t('system')}</span>
                       </DropdownMenuRadioItem>
                       <DropdownMenuRadioItem value='light' className='flex cursor-pointer items-center gap-2' onClick={() => setTheme('light')}>
                         <Sun className='mr-2 h-4 w-4' />
-                        <span>Light</span>
+                        <span>{t('light')}</span>
                       </DropdownMenuRadioItem>
                       <DropdownMenuRadioItem value='dark' className='flex cursor-pointer items-center gap-2' onClick={() => setTheme('dark')}>
                         <Moon className='mr-2 h-4 w-4' />
-                        <span>Dark</span>
+                        <span>{t('dark')}</span>
                       </DropdownMenuRadioItem>
                     </DropdownMenuRadioGroup>
                   </DropdownMenuContent>
@@ -135,7 +138,7 @@ export function DashboardSidebar() {
                   <DropdownMenuTrigger asChild>
                     <DropdownMenuItem className='cursor-pointer'>
                       <Globe className='mr-2 h-4 w-4' />
-                      <span>Language</span>
+                      <span>{t('language')}</span>
                       <ChevronRight className='ml-auto h-4 w-4' />
                     </DropdownMenuItem>
                   </DropdownMenuTrigger>
@@ -153,7 +156,7 @@ export function DashboardSidebar() {
                 <DropdownMenuSeparator />
                 <DropdownMenuItem className='cursor-pointer text-red-500 dark:text-red-400' onClick={() => setShowSignOutDialog(true)}>
                   <LogOut className='mr-2 h-4 w-4' />
-                  <span>Sign out</span>
+                  <span>{t('sign_out')}</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -169,10 +172,10 @@ export function DashboardSidebar() {
         open={showSignOutDialog}
         onOpenChange={setShowSignOutDialog}
         onConfirm={() => signOut()}
-        title='Sign Out'
-        description='Are you sure you want to sign out of your account?'
-        cancelText='Cancel'
-        confirmText='Sign Out'
+        title={t('sign_out')}
+        description={t('sign_out_description')}
+        cancelText={t('cancel')}
+        confirmText={t('sign_out')}
       />
     </Sidebar>
   );

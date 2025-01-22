@@ -306,12 +306,39 @@ export default function ContactUpload() {
     link.click();
   };
 
+  const downloadTemplate = () => {
+    // Create template data with example row
+    const templateData = [
+      {
+        firstName: '',
+        lastName: '',
+        email: '',
+        phone: '',
+        company: '',
+        status: 'lead',
+        source: '',
+        remark: '',
+      },
+    ];
+
+    const csv = Papa.unparse(templateData);
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = 'contact_import_template.csv';
+    link.click();
+  };
+
   return (
     <div className='space-y-4'>
       <div className='mb-6 flex gap-4'>
         <Button variant='outline' className='h-8 gap-2' onClick={() => document.getElementById('csvUpload')?.click()}>
           <Upload className='h-4 w-4' />
           Upload CSV
+        </Button>
+        <Button variant='outline' className='h-8 gap-2' onClick={downloadTemplate}>
+          <Download className='h-4 w-4' />
+          Download Template
         </Button>
         <input id='csvUpload' type='file' accept='.csv' className='hidden' onChange={handleCsvUpload} />
       </div>

@@ -1,14 +1,14 @@
-import { Calendar, Coins, Contact, File, Gift, Image, Link, Mail, Settings, Tornado, Users } from 'lucide-react';
+import { Calendar, Contact, File, Gift, QrCode, Settings, Tornado, Users } from 'lucide-react';
 
-export const personalItems = [
+export const workspaceItems = [
   {
     title: 'Calendar',
-    url: '/dashboard/personal/calendar',
+    url: '/dashboard/workspace/calendar',
     icon: Calendar,
   },
   {
     title: 'Tasks',
-    url: '/dashboard/personal/tasks',
+    url: '/dashboard/workspace/tasks',
     icon: Tornado,
   },
 ];
@@ -24,11 +24,11 @@ export const crmItems = [
     url: '/dashboard/crm/team',
     icon: Users,
   },
-  {
-    title: 'Payments',
-    url: '/dashboard/crm/payments',
-    icon: Coins,
-  },
+  // {
+  //   title: 'Payments',
+  //   url: '/dashboard/crm/payments',
+  //   icon: Coins,
+  // },
 ];
 
 export const marketingItems = [
@@ -37,16 +37,16 @@ export const marketingItems = [
     url: '/dashboard/marketing/campaigns',
     icon: Gift,
   },
-  {
-    title: 'Payment Links',
-    url: '/dashboard/marketing/payment-links',
-    icon: Link,
-  },
-  {
-    title: 'Subscription Management',
-    url: '/dashboard/marketing/subscription-management',
-    icon: Link,
-  },
+  // {
+  //   title: 'Payment Links',
+  //   url: '/dashboard/marketing/payment-links',
+  //   icon: Link,
+  // },
+  // {
+  //   title: 'Subscription Management',
+  //   url: '/dashboard/marketing/subscription-management',
+  //   icon: Link,
+  // },
 ];
 
 export const resourcesItems = [
@@ -55,15 +55,23 @@ export const resourcesItems = [
     url: '/dashboard/resource/content',
     icon: File,
   },
+  // {
+  //   title: 'Emails',
+  //   url: '/dashboard/resource/emails',
+  //   icon: Mail,
+  // },
+  // {
+  //   title: 'Media',
+  //   url: '/dashboard/resource/media',
+  //   icon: Image,
+  // },
+];
+
+export const toolsItems = [
   {
-    title: 'Emails',
-    url: '/dashboard/resource/emails',
-    icon: Mail,
-  },
-  {
-    title: 'Media',
-    url: '/dashboard/resource/media',
-    icon: Image,
+    title: 'QR Code',
+    url: '/dashboard/tools/qrcode',
+    icon: QrCode,
   },
 ];
 

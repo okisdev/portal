@@ -3,16 +3,18 @@
 import { ActionAlertDialog } from '@/components/shared/action-alert-dialog';
 import { PageHeader } from '@/components/shared/page-header';
 import { PageLoading } from '@/components/shared/page-loading';
+import { PaginationTable } from '@/components/shared/pagination-table';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import type { User, UserRole } from '@/lib/schema';
 import { api } from '@/utils/trpc/client';
+import { type ColumnDef, getCoreRowModel, getPaginationRowModel, useReactTable } from '@tanstack/react-table';
 import { MoreHorizontal, Pencil, Trash } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
@@ -68,6 +70,74 @@ export default function TeamPage() {
     setEditingUser(null);
   };
 
+  const columns: ColumnDef<User>[] = [
+    {
+      id: 'select',
+      header: ({ table }) => (
+        <Checkbox
+          checked={table.getIsAllPageRowsSelected() || (table.getIsSomePageRowsSelected() && 'indeterminate')}
+          onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+          aria-label='Select all'
+        />
+      ),
+      cell: ({ row }) => <Checkbox checked={row.getIsSelected()} onCheckedChange={(value) => row.toggleSelected(!!value)} aria-label='Select row' />,
+      enableSorting: false,
+      enableHiding: false,
+    },
+    {
+      accessorKey: 'name',
+      header: 'Name',
+    },
+    {
+      accessorKey: 'username',
+      header: 'Username',
+    },
+    {
+      accessorKey: 'email',
+      header: 'Email',
+    },
+    {
+      accessorKey: 'role',
+      header: 'Role',
+    },
+    {
+      id: 'actions',
+      cell: ({ row }) => (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant='ghost' className='h-8 w-8 p-0'>
+              <MoreHorizontal className='h-4 w-4' />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align='end'>
+            <DropdownMenuItem className='cursor-pointer' onClick={() => handleEditUser(row.original)}>
+              <Pencil className='mr-2 h-4 w-4' />
+              Edit
+            </DropdownMenuItem>
+            {row.original.role !== 'ADMIN' && (
+              <DropdownMenuItem className='cursor-pointer text-destructive' onClick={() => setUserToDelete(row.original)}>
+                <Trash className='mr-2 h-4 w-4' />
+                Delete
+              </DropdownMenuItem>
+            )}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      ),
+    },
+  ];
+
+  const table = useReactTable({
+    data: users ?? [],
+    columns,
+    getCoreRowModel: getCoreRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    initialState: {
+      pagination: {
+        pageSize: 10,
+      },
+    },
+  });
+
   if (isLoading) {
     return <PageLoading />;
   }
@@ -104,54 +174,7 @@ export default function TeamPage() {
           <CardDescription>Manage user roles and permissions</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className='relative'>
-            <Table>
-              <TableHeader className='sticky top-0 bg-background'>
-                <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Username</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Role</TableHead>
-                  <TableHead className='text-right'>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-            </Table>
-            <div className='max-h-[600px] overflow-auto'>
-              <Table>
-                <TableBody>
-                  {users?.map((user) => (
-                    <TableRow key={user.id}>
-                      <TableCell>{user.name ?? 'N/A'}</TableCell>
-                      <TableCell>{user.username ?? 'N/A'}</TableCell>
-                      <TableCell>{user.email}</TableCell>
-                      <TableCell>{user.role}</TableCell>
-                      <TableCell className='text-right'>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant='ghost' className='h-8 w-8 p-0'>
-                              <MoreHorizontal className='h-4 w-4' />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align='end'>
-                            <DropdownMenuItem className='cursor-pointer' onClick={() => handleEditUser(user)}>
-                              <Pencil className='mr-2 h-4 w-4' />
-                              Edit
-                            </DropdownMenuItem>
-                            {user.role !== 'ADMIN' && (
-                              <DropdownMenuItem className='cursor-pointer text-destructive' onClick={() => setUserToDelete(user)}>
-                                <Trash className='mr-2 h-4 w-4' />
-                                Delete
-                              </DropdownMenuItem>
-                            )}
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          </div>
+          <PaginationTable table={table} columns={columns} loading={isLoading} />
         </CardContent>
       </Card>
 

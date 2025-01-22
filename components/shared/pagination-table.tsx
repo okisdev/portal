@@ -4,6 +4,7 @@ import { TableLoading } from '@/components/shared/table-loading';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { type ColumnDef, type Table as TableType, flexRender } from '@tanstack/react-table';
+import { useTranslations } from 'next-intl';
 
 interface PaginationTableProps<TData> {
   table: TableType<TData>;
@@ -14,6 +15,8 @@ interface PaginationTableProps<TData> {
 }
 
 export function PaginationTable<TData>({ table, columns, loading, onRowClick, rowClassName }: PaginationTableProps<TData>) {
+  const t = useTranslations();
+
   const handleRowClick = (e: React.MouseEvent, row: TData) => {
     const target = e.target as HTMLElement;
     if (target.closest('[data-checkbox-cell]')) {
@@ -54,7 +57,7 @@ export function PaginationTable<TData>({ table, columns, loading, onRowClick, ro
                   ) : (
                     <TableRow>
                       <TableCell colSpan={columns.length} className='h-24 text-center'>
-                        No results.
+                        {t('no_results')}
                       </TableCell>
                     </TableRow>
                   )}
@@ -67,15 +70,18 @@ export function PaginationTable<TData>({ table, columns, loading, onRowClick, ro
 
       <div className='flex items-center justify-between'>
         <div className='flex-1 text-muted-foreground text-sm'>
-          {table.getFilteredSelectedRowModel().rows.length} of {table.getFilteredRowModel().rows.length} row(s) selected.
+          {t('number_of_rows_selected', { number: table.getFilteredSelectedRowModel().rows.length, total: table.getFilteredRowModel().rows.length })}
         </div>
-        <div className='space-x-2'>
-          <Button variant='outline' size='sm' onClick={() => table.previousPage()} disabled={!table.getCanPreviousPage()}>
-            Previous
-          </Button>
-          <Button variant='outline' size='sm' onClick={() => table.nextPage()} disabled={!table.getCanNextPage()}>
-            Next
-          </Button>
+        <div className='flex items-center space-x-6'>
+          <span className='text-muted-foreground text-sm'>{t('page_of_number', { page: table.getState().pagination.pageIndex + 1, total: table.getPageCount() })}</span>
+          <div className='space-x-2'>
+            <Button variant='outline' size='sm' onClick={() => table.previousPage()} disabled={!table.getCanPreviousPage()}>
+              {t('previous')}
+            </Button>
+            <Button variant='outline' size='sm' onClick={() => table.nextPage()} disabled={!table.getCanNextPage()}>
+              {t('next')}
+            </Button>
+          </div>
         </div>
       </div>
     </div>

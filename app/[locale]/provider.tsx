@@ -1,6 +1,6 @@
 import { SessionProvider } from 'next-auth/react';
 
-export default function DashboardProvider({
+export default function LocaleProvider({
   children,
 }: Readonly<{
   children: React.ReactNode;

@@ -14,7 +14,7 @@ export default async function AuthLayout({
 
   return (
     <div className='flex min-h-screen items-center justify-center bg-background'>
-      <Link href='/' className='absolute top-5 left-5 flex items-center text-neutral-600 hover:text-neutral-800 md:top-10 md:left-10'>
+      <Link href='/' className='absolute top-5 left-5 flex items-center text-muted-foreground hover:text-foreground md:top-10 md:left-10'>
         <ArrowLeft className='mr-1 h-5 w-5' />
         Back
       </Link>

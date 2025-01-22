@@ -110,12 +110,12 @@ export default function LoginPage() {
             <div className='space-y-1'>
               <Label className='mb-1 flex justify-between font-medium text-foreground text-sm'>
                 <span>Email</span>
-                <button type='button' onClick={() => setIsPasswordLogin(!isPasswordLogin)} className='text-neutral-600 hover:text-neutral-800 hover:underline'>
+                <button type='button' onClick={() => setIsPasswordLogin(!isPasswordLogin)} className='text-muted-foreground text-sm hover:text-foreground'>
                   {isPasswordLogin ? 'use magic link' : 'use password'}
                 </button>
               </Label>
-              <input type='email' {...register('email')} className='w-full rounded-lg border bg-background p-2 focus:outline-none focus:ring-2 focus:ring-neutral-400' placeholder='Enter your email' />
-              {errors.email && <p className='mt-1 text-red-500 text-sm'>{errors.email.message}</p>}
+              <input type='email' {...register('email')} className='w-full rounded-lg border bg-background p-2 focus:outline-none focus:ring-2 focus:ring-ring' placeholder='Enter your email' />
+              {errors.email && <p className='mt-1 text-destructive text-sm'>{errors.email.message}</p>}
             </div>
 
             {isPasswordLogin && (
@@ -124,20 +124,20 @@ export default function LoginPage() {
                 <input
                   type='password'
                   {...register('password')}
-                  className='w-full rounded-lg border bg-background p-2 focus:outline-none focus:ring-2 focus:ring-neutral-400'
+                  className='w-full rounded-lg border bg-background p-2 focus:outline-none focus:ring-2 focus:ring-ring'
                   placeholder='Enter your password'
                 />
-                {errors.password && <p className='mt-1 text-red-500 text-sm'>{errors.password.message}</p>}
+                {errors.password && <p className='mt-1 text-destructive text-sm'>{errors.password.message}</p>}
               </div>
             )}
 
             <div className='flex items-center justify-between'>
               <label className='flex items-center'>
-                <input type='checkbox' className='h-3 w-3 rounded border-neutral-300 text-neutral-500 accent-neutral-500 focus:ring-neutral-400 focus:ring-offset-0' />
+                <input type='checkbox' className='h-3 w-3 rounded border-input text-primary accent-primary focus:ring-ring focus:ring-offset-0' />
                 <span className='ml-2 text-muted-foreground text-sm'>Remember for 30 days</span>
               </label>
               {isPasswordLogin && (
-                <a href='/forgot-password' className='text-neutral-600 text-sm hover:text-neutral-800 hover:underline'>
+                <a href='/forgot-password' className='text-muted-foreground text-sm hover:text-foreground hover:underline'>
                   Forgot password?
                 </a>
               )}
@@ -147,7 +147,7 @@ export default function LoginPage() {
               <button
                 type='submit'
                 disabled={loading || !email || (isPasswordLogin && !password)}
-                className='flex w-full items-center justify-center rounded-lg bg-neutral-700 px-4 py-2 font-medium text-white transition-colors disabled:cursor-not-allowed disabled:opacity-50'
+                className='flex w-full items-center justify-center rounded-lg bg-primary px-4 py-2 font-medium text-primary-foreground transition-colors hover:bg-primary/80 disabled:cursor-not-allowed disabled:opacity-50'
               >
                 {loading ? (
                   <>
@@ -162,7 +162,7 @@ export default function LoginPage() {
               </button>
               <p className='text-center text-muted-foreground text-sm'>
                 Don't have an account?{' '}
-                <a href='/register' className='text-neutral-600 hover:text-neutral-800 hover:underline'>
+                <a href='/register' className='text-muted-foreground underline hover:text-foreground'>
                   Sign up
                 </a>
               </p>
@@ -186,7 +186,7 @@ export default function LoginPage() {
               setEmailSent(false);
               setSentEmail('');
             }}
-            className='text-neutral-500 text-sm hover:text-neutral-600'
+            className='text-muted-foreground text-sm hover:text-foreground'
           >
             Use a different email
           </button>

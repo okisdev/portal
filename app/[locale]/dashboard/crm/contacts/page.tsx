@@ -12,7 +12,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Input } from '@/components/ui/input';
 import { useDebounce } from '@/hooks/use-debounce';
 import { type Contact, sourceSchema, statusSchema } from '@/lib/schema';
-import { cn, formatDate } from '@/lib/utils';
+import { formatDate } from '@/lib/utils';
 import { api } from '@/utils/trpc/client';
 import {
   type ColumnDef,
@@ -25,7 +25,8 @@ import {
   getSortedRowModel,
   useReactTable,
 } from '@tanstack/react-table';
-import { Check, Filter, Import, MoreHorizontal, Pencil, Trash2, X } from 'lucide-react';
+import { Check, Eye, Filter, Import, MoreHorizontal, Trash2, X } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { usePathname } from 'next/navigation';
@@ -54,6 +55,7 @@ export default function CRMContactsPage() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const t = useTranslations();
 
   const { data: contacts, isLoading } = api.contact.getAllContacts.useQuery();
 
@@ -81,20 +83,20 @@ export default function CRMContactsPage() {
   });
 
   const filterFields = [
-    { label: 'Name', value: 'name' },
-    { label: 'Email', value: 'email' },
-    { label: 'Company', value: 'company' },
-    { label: 'Status', value: 'status' },
-    { label: 'Priority', value: 'priority' },
-    { label: 'Source', value: 'source' },
+    { label: t('name'), value: 'name' },
+    { label: t('email'), value: 'email' },
+    { label: t('company'), value: 'company' },
+    { label: t('status'), value: 'status' },
+    { label: t('priority'), value: 'priority' },
+    { label: t('source'), value: 'source' },
   ];
 
   const filterOperators: { label: string; value: FilterOperator }[] = [
-    { label: 'Equals', value: '=' },
-    { label: 'Not equals', value: '!=' },
-    { label: 'Contains', value: 'contains' },
-    { label: 'Starts with', value: 'startsWith' },
-    { label: 'Ends with', value: 'endsWith' },
+    { label: t('equals'), value: '=' },
+    { label: t('not_equals'), value: '!=' },
+    { label: t('contains'), value: 'contains' },
+    { label: t('starts_with'), value: 'startsWith' },
+    { label: t('ends_with'), value: 'endsWith' },
   ];
 
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -252,13 +254,16 @@ export default function CRMContactsPage() {
 
         if (filters.conditions.length === 0) return true;
 
-        const groupedConditions = filters.conditions.reduce((acc, condition) => {
-          if (!acc[condition.field]) {
-            acc[condition.field] = [];
-          }
-          acc[condition.field].push(condition);
-          return acc;
-        }, {} as Record<string, FilterCondition[]>);
+        const groupedConditions = filters.conditions.reduce(
+          (acc, condition) => {
+            if (!acc[condition.field]) {
+              acc[condition.field] = [];
+            }
+            acc[condition.field].push(condition);
+            return acc;
+          },
+          {} as Record<string, FilterCondition[]>
+        );
 
         return Object.entries(groupedConditions).every(([field, conditions]) => {
           return conditions.some((condition) => {
@@ -327,9 +332,9 @@ export default function CRMContactsPage() {
     }
   };
 
-  const handleEdit = (id: string, e: React.MouseEvent) => {
+  const handleView = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    router.push(`/dashboard/crm/contacts/${id}?mode=edit`);
+    router.push(`/dashboard/crm/contacts/${id}`);
   };
 
   const tableColumns: ColumnDef<Contact>[] = [
@@ -348,7 +353,7 @@ export default function CRMContactsPage() {
     },
     {
       accessorKey: 'name',
-      header: 'Name',
+      header: t('name'),
       cell: ({ row }) => (
         <div className='flex items-center gap-2'>
           <Avatar className='size-8'>
@@ -363,34 +368,35 @@ export default function CRMContactsPage() {
     },
     {
       accessorKey: 'phone',
-      header: 'Phone',
+      header: t('phone'),
     },
     {
       accessorKey: 'company',
-      header: 'Company',
+      header: t('company'),
+      cell: ({ row }) => <span className='capitalize'>{row.original.company || '—'}</span>,
     },
     {
       accessorKey: 'status',
-      header: 'Status',
+      header: t('status'),
       cell: ({ row }) => <ColorBadge type='contactStatus' value={row.original.status} />,
     },
     {
       accessorKey: 'source',
-      header: 'Source',
+      header: t('source'),
       cell: ({ row }) => <span className='capitalize'>{row.original.source?.replace('_', ' ') || '—'}</span>,
     },
     {
       accessorKey: 'priority',
-      header: 'Priority',
+      header: t('priority'),
       cell: ({ row }) => <ColorBadge type='priority' value={row.original.priority ?? 'medium'} />,
     },
     {
       accessorKey: 'remark',
-      header: 'Remark',
+      header: t('remark'),
     },
     {
       accessorKey: 'createdAt',
-      header: 'Created',
+      header: t('created'),
       cell: ({ row }) => formatDate(new Date(row.original.createdAt)),
     },
     {
@@ -403,13 +409,13 @@ export default function CRMContactsPage() {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align='end'>
-            <DropdownMenuItem className='cursor-pointer' onClick={(e) => handleEdit(row.original.id, e)}>
-              <Pencil className='mr-2 h-4 w-4' />
-              Edit
+            <DropdownMenuItem className='cursor-pointer' onClick={(e) => handleView(row.original.id, e)}>
+              <Eye className='mr-2 h-4 w-4' />
+              {t('view')}
             </DropdownMenuItem>
             <DropdownMenuItem className='cursor-pointer text-destructive' onClick={(e) => handleDeleteClick(row.original.id, e)}>
               <Trash2 className='mr-2 h-4 w-4' />
-              Delete
+              {t('delete')}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -443,7 +449,7 @@ export default function CRMContactsPage() {
 
   return (
     <div className='space-y-4 p-4'>
-      <PageHeader title='Contacts' description='Manage contacts' />
+      <PageHeader title={t('contacts')} description={t('contacts_description')} />
 
       <div className='flex flex-col gap-4'>
         <div className='flex items-center justify-between gap-4'>
@@ -546,7 +552,7 @@ export default function CRMContactsPage() {
             {filters.conditions.length > 0 && (
               <Button variant='outline' size='sm' onClick={() => setFilters({ conditions: [], matchAll: true })}>
                 <X className='h-4 w-4' />
-                Clear
+                {t('clear')}
               </Button>
             )}
           </div>
@@ -556,7 +562,7 @@ export default function CRMContactsPage() {
               <DropdownMenuTrigger asChild>
                 <Button variant='outline' size='sm' className='flex h-8 items-center gap-2' disabled={isLoading}>
                   <Import className='mr-2 h-4 w-4' />
-                  Import
+                  {t('import')}
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent>
@@ -572,7 +578,7 @@ export default function CRMContactsPage() {
             </DropdownMenu>
 
             <Button variant='outline' size='sm' asChild className='h-8' disabled={isLoading}>
-              <Link href='/dashboard/crm/contacts/new'>Add Contact</Link>
+              <Link href='/dashboard/crm/contacts/new'>{t('add_contact')}</Link>
             </Button>
           </div>
         </div>
@@ -580,23 +586,23 @@ export default function CRMContactsPage() {
 
       <div className='flex flex-col gap-2'>
         <div className='flex flex-wrap items-center gap-2'>
-          <p className='text-muted-foreground text-sm'>Status</p>
+          <p className='text-muted-foreground text-sm'>{t('status')}</p>
           {statusSchema.options.map((status) => {
             const isActive = filters.conditions.some((c) => c.field === 'status' && c.value === status);
             return (
               <button type='button' key={status} onClick={() => handleStatusFilter(status)}>
-                <ColorBadge type='contactStatus' value={status} className={cn('capitalize', isActive && 'ring-1 ring-offset-1 ring-offset-background')} />
+                <ColorBadge type='contactStatus' value={status} className='capitalize' isActive={isActive} />
               </button>
             );
           })}
         </div>
         <div className='flex flex-wrap items-center gap-2'>
-          <p className='text-muted-foreground text-sm'>Source</p>
+          <p className='text-muted-foreground text-sm'>{t('source')}</p>
           {sourceSchema.options.map((source) => {
             const isActive = filters.conditions.some((c) => c.field === 'source' && c.value === source);
             return (
               <button type='button' key={source} onClick={() => handleSourceFilter(source)}>
-                <ColorBadge type='contactStatus' value={source} className={cn('capitalize', isActive && 'ring-1 ring-offset-1 ring-offset-background')} />
+                <ColorBadge type='source' value={source} className='capitalize' isActive={isActive} />
               </button>
             );
           })}

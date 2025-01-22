@@ -1,4 +1,3 @@
-import DashboardProvider from '@/app/[locale]/dashboard/provider';
 import { auth } from '@/auth';
 import { DashboardHeader } from '@/components/dashboard/header';
 import { DashboardSidebar } from '@/components/dashboard/sidebar';
@@ -15,14 +14,12 @@ export default async function DashboardLayout({
   if (!session) return redirect('/login');
 
   return (
-    <DashboardProvider>
-      <SidebarProvider>
-        <DashboardSidebar />
-        <SidebarInset className='max-h-screen'>
-          <DashboardHeader />
-          <div className='flex-1 overflow-y-auto'>{children}</div>
-        </SidebarInset>
-      </SidebarProvider>
-    </DashboardProvider>
+    <SidebarProvider>
+      <DashboardSidebar />
+      <SidebarInset className='max-h-screen'>
+        <DashboardHeader />
+        <div className='flex-1 overflow-y-auto'>{children}</div>
+      </SidebarInset>
+    </SidebarProvider>
   );
 }

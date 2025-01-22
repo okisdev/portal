@@ -1,7 +1,7 @@
 'use client';
 
-import KanbanBoard from '@/components/dashboard/personal/tasks/kanban';
-import TaskList from '@/components/dashboard/personal/tasks/list';
+import KanbanBoard from '@/components/dashboard/workspace/tasks/kanban';
+import TaskList from '@/components/dashboard/workspace/tasks/list';
 import { DateTimePicker } from '@/components/shared/date-time-picker';
 import { PageHeader } from '@/components/shared/page-header';
 import { Button } from '@/components/ui/button';

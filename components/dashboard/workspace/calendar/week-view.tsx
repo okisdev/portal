@@ -1,5 +1,6 @@
 import type { CalendarEventWithParticipants, CalendarFolder } from '@/lib/schema';
 import { cn } from '@/lib/utils';
+import { useTranslations } from 'next-intl';
 import { WEEKDAYS } from './constants';
 import { TimeColumn } from './time-column';
 import { TimeGrid } from './time-grid';
@@ -19,6 +20,8 @@ interface WeekViewProps {
 }
 
 export function WeekView({ currentDate, selectedDate, events, folders, hiddenCalendars, onTimeSelect, isSelecting, isTimeSlotSelected, onSelectionEnd, onEventEdit, onEventDelete }: WeekViewProps) {
+  const t = useTranslations();
+
   const getWeekDays = (date: Date) => {
     const start = new Date(date);
     start.setDate(start.getDate() - start.getDay());
@@ -44,7 +47,7 @@ export function WeekView({ currentDate, selectedDate, events, folders, hiddenCal
               date.getDate() === selectedDate.getDate() && date.getMonth() === selectedDate.getMonth() && date.getFullYear() === selectedDate.getFullYear() && 'bg-primary/10'
             )}
           >
-            <div className='font-medium'>{WEEKDAYS[date.getDay()]}</div>
+            <div className='font-medium'>{t(WEEKDAYS[date.getDay()])}</div>
             <div className='text-muted-foreground'>{date.getDate()}</div>
           </div>
         ))}

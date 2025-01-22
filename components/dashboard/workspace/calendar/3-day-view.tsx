@@ -3,6 +3,7 @@ import { cn } from '@/lib/utils';
 import { WEEKDAYS } from './constants';
 import { TimeColumn } from './time-column';
 import { TimeGrid } from './time-grid';
+import { useTranslations } from 'next-intl';
 
 interface ThreeDayViewProps {
   currentDate: Date;
@@ -31,6 +32,8 @@ export function ThreeDayView({
   onEventEdit,
   onEventDelete,
 }: ThreeDayViewProps) {
+  const t = useTranslations();
+
   const get3Days = (date: Date) => {
     const days = [];
     for (let i = 0; i < 3; i++) {
@@ -54,7 +57,7 @@ export function ThreeDayView({
               date.getDate() === selectedDate.getDate() && date.getMonth() === selectedDate.getMonth() && date.getFullYear() === selectedDate.getFullYear() && 'bg-primary/10'
             )}
           >
-            <div className='font-medium'>{WEEKDAYS[date.getDay()]}</div>
+            <div className='font-medium'>{t(WEEKDAYS[date.getDay()])}</div>
             <div className='text-muted-foreground'>{date.getDate()}</div>
           </div>
         ))}

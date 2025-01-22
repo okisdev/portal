@@ -2,12 +2,19 @@ import { calendarEvent, calendarEventParticipant, calendarFolder, contact, user 
 import { appointmentSchema } from '@/lib/schema';
 import { createContactActivityHelper } from '@/server/helper/contact';
 import { createTRPCRouter, protectedProcedure } from '@/server/trpc';
-import { and, desc, eq, gte, inArray, lte } from 'drizzle-orm';
+import { and, desc, eq, gte, inArray, lte, or } from 'drizzle-orm';
 import { z } from 'zod';
 
 export const calendarRouter = createTRPCRouter({
-  getFolders: protectedProcedure.query(({ ctx }) => {
+  getMyFolders: protectedProcedure.query(({ ctx }) => {
     return ctx.db.select().from(calendarFolder).where(eq(calendarFolder.userId, ctx.session.user.id));
+  }),
+
+  getAllFolders: protectedProcedure.query(({ ctx }) => {
+    return ctx.db
+      .select()
+      .from(calendarFolder)
+      .where(or(eq(calendarFolder.visibility, 'PUBLIC'), eq(calendarFolder.userId, ctx.session.user.id), eq(calendarFolder.visibility, 'SHARED')));
   }),
 
   createFolder: protectedProcedure
@@ -19,6 +26,7 @@ export const calendarRouter = createTRPCRouter({
           .regex(/^#[0-9A-F]{6}$/i, 'Must be a valid hex color')
           .default('#4f46e5'),
         isDefault: z.boolean().optional(),
+        visibility: z.enum(['PUBLIC', 'SHARED', 'PRIVATE']).default('PRIVATE'),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -40,6 +48,7 @@ export const calendarRouter = createTRPCRouter({
           name: input.name,
           color: input.color,
           isDefault: input.isDefault,
+          visibility: input.visibility,
         })
         .returning();
 
@@ -55,9 +64,20 @@ export const calendarRouter = createTRPCRouter({
     )
     .query(async ({ ctx, input }) => {
       const events = await ctx.db
-        .select()
+        .select({
+          event: calendarEvent,
+          folder: calendarFolder,
+        })
         .from(calendarEvent)
-        .where(and(eq(calendarEvent.userId, ctx.session.user.id), gte(calendarEvent.startAt, input.startDate), lte(calendarEvent.endAt, input.endDate)));
+        .leftJoin(calendarFolder, eq(calendarEvent.folderId, calendarFolder.id))
+        .where(
+          and(
+            or(eq(calendarEvent.userId, ctx.session.user.id), eq(calendarFolder.visibility, 'SHARED'), eq(calendarFolder.visibility, 'PUBLIC')),
+            gte(calendarEvent.startAt, input.startDate),
+            lte(calendarEvent.endAt, input.endDate)
+          )
+        )
+        .orderBy(desc(calendarEvent.startAt));
 
       const participants = await ctx.db
         .select()
@@ -65,13 +85,13 @@ export const calendarRouter = createTRPCRouter({
         .where(
           inArray(
             calendarEventParticipant.eventId,
-            events.map((e) => e.id)
+            events.map((e) => e.event.id)
           )
         );
 
-      return events.map((event) => ({
-        ...event,
-        participants: participants.filter((p) => p.eventId === event.id),
+      return events.map((row) => ({
+        ...row.event,
+        participants: participants.filter((p) => p.eventId === row.event.id),
       }));
     }),
 
@@ -227,6 +247,7 @@ export const calendarRouter = createTRPCRouter({
         id: z.string(),
         name: z.string(),
         color: z.string(),
+        visibility: z.enum(['PUBLIC', 'SHARED', 'PRIVATE']),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -235,6 +256,7 @@ export const calendarRouter = createTRPCRouter({
         .set({
           name: input.name,
           color: input.color,
+          visibility: input.visibility,
         })
         .where(and(eq(calendarFolder.id, input.id), eq(calendarFolder.userId, ctx.session.user.id)));
     }),

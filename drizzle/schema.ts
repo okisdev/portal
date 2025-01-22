@@ -284,6 +284,9 @@ export const calendarFolder = pgTable('calendarFolder', {
   name: text().notNull(),
   color: text().default('#4f46e5'),
   isDefault: boolean().default(false),
+  visibility: text('visibility', { enum: ['PUBLIC', 'SHARED', 'PRIVATE'] })
+    .notNull()
+    .default('PRIVATE'),
   createdAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
   updatedAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
 });

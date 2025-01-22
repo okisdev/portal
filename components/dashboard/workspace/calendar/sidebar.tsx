@@ -6,6 +6,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import type { CalendarFolder } from '@/lib/schema';
 import { cn } from '@/lib/utils';
 import { ChevronsUpDown, MoreHorizontal, Pencil, Plus, Trash } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { MONTHS, WEEKDAYS } from './constants';
 import { YearMonthPicker } from './year-month-picker';
@@ -23,6 +24,8 @@ interface CalendarSidebarProps {
 }
 
 export function CalendarSidebar({ currentDate, selectedDate, onDateSelect, folders, hiddenCalendars, onToggleCalendar, onAddCalendar, onEditCalendar, onDeleteCalendar }: CalendarSidebarProps) {
+  const t = useTranslations();
+
   const [folderToDelete, setFolderToDelete] = useState<string | null>(null);
 
   const getDaysInMonth = (date: Date) => {
@@ -82,7 +85,7 @@ export function CalendarSidebar({ currentDate, selectedDate, onDateSelect, folde
       <div className='grid grid-cols-7 gap-1 text-sm'>
         {WEEKDAYS.map((day) => (
           <div key={day} className='text-center text-muted-foreground'>
-            {day.slice(0, 1)}
+            {t(day.slice(0, 1))}
           </div>
         ))}
         {getDaysInMonth(currentDate)
@@ -112,12 +115,15 @@ export function CalendarSidebar({ currentDate, selectedDate, onDateSelect, folde
         </div>
         <div className='flex w-full flex-col gap-2'>
           <div className='flex flex-col space-y-1'>
+            {folders?.length === 0 && <div className='text-muted-foreground text-sm'>No calendars found</div>}
             {folders?.map((folder) => (
               <div key={folder.id} className='flex items-center gap-2'>
                 <Checkbox checked={!hiddenCalendars.has(folder.id)} onCheckedChange={(checked) => onToggleCalendar(folder.id)} />
-                <Button variant='ghost' className='h-8 flex-1 justify-start px-2' onClick={() => onToggleCalendar(folder.id)}>
-                  <div className='mr-1 h-4 w-4 rounded-full' style={{ backgroundColor: folder.color ?? 'transparent' }} />
-                  {folder.name}
+                <Button variant='ghost' className='h-8 min-w-0 flex-1 justify-start px-2' onClick={() => onToggleCalendar(folder.id)}>
+                  <div className='flex min-w-0 flex-1 items-center'>
+                    <div className='mr-1 h-4 w-4 flex-shrink-0 rounded-full' style={{ backgroundColor: folder.color ?? 'transparent' }} />
+                    <span className='truncate'>{folder.name}</span>
+                  </div>
                 </Button>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>

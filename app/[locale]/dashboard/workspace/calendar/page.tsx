@@ -1,16 +1,17 @@
 'use client';
 
-import { ThreeDayView } from '@/components/dashboard/personal/calendar/3-day-view';
-import { DayView } from '@/components/dashboard/personal/calendar/day-view';
-import { CalendarHeader } from '@/components/dashboard/personal/calendar/header';
-import { MonthView } from '@/components/dashboard/personal/calendar/month-view';
-import { CalendarSidebar } from '@/components/dashboard/personal/calendar/sidebar';
-import { WeekView } from '@/components/dashboard/personal/calendar/week-view';
+import { ThreeDayView } from '@/components/dashboard/workspace/calendar/3-day-view';
+import { DayView } from '@/components/dashboard/workspace/calendar/day-view';
+import { CalendarHeader } from '@/components/dashboard/workspace/calendar/header';
+import { MonthView } from '@/components/dashboard/workspace/calendar/month-view';
+import { CalendarSidebar } from '@/components/dashboard/workspace/calendar/sidebar';
+import { WeekView } from '@/components/dashboard/workspace/calendar/week-view';
 import { EventDialog } from '@/components/shared/event-dialog';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Form, FormControl, FormField, FormItem, FormLabel } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import type { CalendarEventWithParticipants, CalendarFolder } from '@/lib/schema';
 import { api } from '@/utils/trpc/client';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -66,7 +67,7 @@ export default function DashboardPersonalCalendar() {
   const startOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
   const endOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
 
-  const { data: folders } = api.calendar.getFolders.useQuery();
+  const { data: folders } = api.calendar.getAllFolders.useQuery();
   const { data: events } = api.calendar.getEvents.useQuery({
     startDate: startOfMonth,
     endDate: endOfMonth,
@@ -88,17 +89,19 @@ export default function DashboardPersonalCalendar() {
     },
   });
 
-  const calendarForm = useForm<{ name: string; color: string }>({
+  const calendarForm = useForm<{ name: string; color: string; visibility: 'PUBLIC' | 'SHARED' | 'PRIVATE' }>({
     defaultValues: {
       name: '',
       color: '#000000',
+      visibility: 'PRIVATE',
     },
   });
 
-  const addCalendarForm = useForm<{ name: string; color: string }>({
+  const addCalendarForm = useForm<{ name: string; color: string; visibility: 'PUBLIC' | 'SHARED' | 'PRIVATE' }>({
     defaultValues: {
       name: '',
       color: '#4f46e5',
+      visibility: 'PRIVATE',
     },
   });
 
@@ -158,7 +161,7 @@ export default function DashboardPersonalCalendar() {
 
   const createFolder = api.calendar.createFolder.useMutation({
     onSuccess: () => {
-      utils.calendar.getFolders.invalidate();
+      utils.calendar.getMyFolders.invalidate();
     },
   });
 
@@ -184,13 +187,13 @@ export default function DashboardPersonalCalendar() {
 
   const updateFolder = api.calendar.updateFolder.useMutation({
     onSuccess: () => {
-      utils.calendar.getFolders.invalidate();
+      utils.calendar.getMyFolders.invalidate();
     },
   });
 
   const deleteFolder = api.calendar.deleteFolder.useMutation({
     onSuccess: () => {
-      utils.calendar.getFolders.invalidate();
+      utils.calendar.getMyFolders.invalidate();
     },
   });
 
@@ -200,12 +203,13 @@ export default function DashboardPersonalCalendar() {
     setIsEventDialogOpen(true);
   };
 
-  const handleCalendarSubmit = (data: { name: string; color: string }) => {
+  const handleCalendarSubmit = (data: { name: string; color: string; visibility: 'PUBLIC' | 'SHARED' | 'PRIVATE' }) => {
     if (selectedCalendar) {
       updateFolder.mutate({
         id: selectedCalendar.id,
         name: data.name,
         color: data.color,
+        visibility: data.visibility,
       });
       setIsEditCalendarOpen(false);
       setSelectedCalendar(null);
@@ -213,10 +217,11 @@ export default function DashboardPersonalCalendar() {
     }
   };
 
-  const handleAddCalendarSubmit = (data: { name: string; color: string }) => {
+  const handleAddCalendarSubmit = (data: { name: string; color: string; visibility: 'PUBLIC' | 'SHARED' | 'PRIVATE' }) => {
     createFolder.mutate({
       name: data.name,
       color: data.color,
+      visibility: data.visibility,
     });
     setIsAddCalendarOpen(false);
     addCalendarForm.reset();
@@ -373,6 +378,7 @@ export default function DashboardPersonalCalendar() {
             calendarForm.reset({
               name: folder.name,
               color: folder.color ?? '#000000',
+              visibility: folder.visibility ?? 'PRIVATE',
             });
             setIsEditCalendarOpen(true);
           }}
@@ -582,6 +588,28 @@ export default function DashboardPersonalCalendar() {
                 )}
               />
 
+              <FormField
+                control={calendarForm.control}
+                name='visibility'
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Visibility</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder='Select visibility' />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value='PRIVATE'>Private</SelectItem>
+                        <SelectItem value='SHARED'>Shared</SelectItem>
+                        <SelectItem value='PUBLIC'>Public</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </FormItem>
+                )}
+              />
+
               <div className='flex justify-end gap-2'>
                 <Button
                   type='button'
@@ -641,6 +669,28 @@ export default function DashboardPersonalCalendar() {
                         <Input {...field} className='flex-1' placeholder='#4f46e5' />
                       </div>
                     </FormControl>
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={addCalendarForm.control}
+                name='visibility'
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Visibility</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder='Select visibility' />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value='PRIVATE'>Private</SelectItem>
+                        <SelectItem value='SHARED'>Shared</SelectItem>
+                        <SelectItem value='PUBLIC'>Public</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </FormItem>
                 )}
               />
