@@ -75,7 +75,7 @@ export default function TeamIdPage() {
     teamId: teamId[0],
   });
   const { data: contacts } = api.contact.getAllContacts.useQuery();
-  const { data: folders } = api.calendar.getFolders.useQuery();
+  const { data: folders } = api.calendar.getMyFolders.useQuery();
   const { data: participantOptions } = api.calendar.getParticipantOptions.useQuery();
   const { data: teamActivities } = api.team.getTeamActivities.useQuery({
     teamId: teamId[0],
@@ -126,7 +126,7 @@ export default function TeamIdPage() {
 
   const createFolder = api.calendar.createFolder.useMutation({
     onSuccess: () => {
-      utils.calendar.getFolders.invalidate();
+      utils.calendar.getMyFolders.invalidate();
       toast.success('Folder created successfully');
     },
     onError: (error) => {

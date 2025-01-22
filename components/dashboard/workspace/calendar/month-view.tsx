@@ -1,6 +1,6 @@
-import { NameTag } from '@/components/shared/name-tag';
+import { EventPopover } from '@/components/shared/event-popover';
 import { Button } from '@/components/ui/button';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Popover, PopoverTrigger } from '@/components/ui/popover';
 import type { CalendarEventWithParticipants, CalendarFolder } from '@/lib/schema';
 import { cn } from '@/lib/utils';
 import { WEEKDAYS } from './constants';
@@ -115,84 +115,7 @@ export function MonthView({ currentDate, selectedDate, setSelectedDate, events, 
                         {event.title}
                       </Button>
                     </PopoverTrigger>
-                    <PopoverContent id='popover-content' className='w-80'>
-                      <div className='grid gap-2'>
-                        <div className='space-y-2'>
-                          <div className='flex items-center gap-2'>
-                            <div className='h-3 w-3 rounded-full' style={{ backgroundColor: folder?.color ?? 'transparent' }} />
-                            <h4 className='font-medium leading-none'>{event.title}</h4>
-                          </div>
-                          <p className='text-muted-foreground text-sm'>
-                            {event.isAllDay ? (
-                              'All day'
-                            ) : (
-                              <>
-                                {new Date(event.startAt).toLocaleTimeString([], {
-                                  hour: '2-digit',
-                                  minute: '2-digit',
-                                  hour12: false,
-                                })}
-                                {' - '}
-                                {new Date(event.endAt).toLocaleTimeString([], {
-                                  hour: '2-digit',
-                                  minute: '2-digit',
-                                  hour12: false,
-                                })}
-                              </>
-                            )}
-                          </p>
-                        </div>
-                        <div className='space-y-2'>
-                          {event.description && (
-                            <div className='grid gap-2'>
-                              <div className='grid grid-cols-3 items-center gap-4'>
-                                <p className='text-sm'>Description:</p>
-                                <p className='col-span-2 text-sm'>{event.description}</p>
-                              </div>
-                            </div>
-                          )}
-                          {event.location && (
-                            <div className='grid gap-2'>
-                              <div className='grid grid-cols-3 items-center gap-4'>
-                                <p className='text-sm'>Location:</p>
-                                <p className='col-span-2 text-sm'>{event.location}</p>
-                              </div>
-                            </div>
-                          )}
-                          {event.participants && event.participants.length > 0 && (
-                            <div className='grid gap-2'>
-                              <div className='grid grid-cols-3 items-center gap-4'>
-                                <p className='text-sm'>Participants:</p>
-                                <div className='col-span-2 space-y-1'>
-                                  {event.participants.map((participant) => (
-                                    <div key={participant.id} className='flex items-center justify-between text-sm'>
-                                      <span>
-                                        {participant.participantType === 'contact' && participant.participantId && <NameTag id={participant.participantId} type='contact' />}
-                                        {participant.participantType === 'user' && participant.participantId && <NameTag id={participant.participantId} type='user' />}
-                                        {participant.participantType === 'external' && (
-                                          <span className='text-orange-600'>
-                                            External: {participant.name} ({participant.email})
-                                          </span>
-                                        )}
-                                      </span>
-                                      <span className='text-muted-foreground text-xs capitalize'>{participant.status}</span>
-                                    </div>
-                                  ))}
-                                </div>
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                        <div className='flex justify-end gap-2'>
-                          <Button size='sm' variant='destructive' onClick={() => onEventDelete(event.id)}>
-                            Delete
-                          </Button>
-                          <Button variant='outline' size='sm' onClick={() => onEventEdit(event)}>
-                            Edit
-                          </Button>
-                        </div>
-                      </div>
-                    </PopoverContent>
+                    <EventPopover event={event} folder={folder} onEventEdit={onEventEdit} onEventDelete={onEventDelete} />
                   </Popover>
                 );
               })}

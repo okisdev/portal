@@ -116,9 +116,11 @@ export function CalendarSidebar({ currentDate, selectedDate, onDateSelect, folde
             {folders?.map((folder) => (
               <div key={folder.id} className='flex items-center gap-2'>
                 <Checkbox checked={!hiddenCalendars.has(folder.id)} onCheckedChange={(checked) => onToggleCalendar(folder.id)} />
-                <Button variant='ghost' className='h-8 flex-1 justify-start px-2' onClick={() => onToggleCalendar(folder.id)}>
-                  <div className='mr-1 h-4 w-4 rounded-full' style={{ backgroundColor: folder.color ?? 'transparent' }} />
-                  {folder.name}
+                <Button variant='ghost' className='h-8 min-w-0 flex-1 justify-start px-2' onClick={() => onToggleCalendar(folder.id)}>
+                  <div className='flex min-w-0 flex-1 items-center'>
+                    <div className='mr-1 h-4 w-4 flex-shrink-0 rounded-full' style={{ backgroundColor: folder.color ?? 'transparent' }} />
+                    <span className='truncate'>{folder.name}</span>
+                  </div>
                 </Button>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>

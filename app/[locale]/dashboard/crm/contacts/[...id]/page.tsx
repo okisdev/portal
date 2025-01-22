@@ -64,7 +64,7 @@ export default function ContactIdPage() {
     contactId: contactId[0],
   });
   const { data: allTeams } = api.team.getAllTeams.useQuery();
-  const { data: calendarFolders } = api.calendar.getFolders.useQuery();
+  const { data: calendarFolders } = api.calendar.getMyFolders.useQuery();
 
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editForm, setEditForm] = useState({
