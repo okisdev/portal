@@ -1,11 +1,11 @@
 'use client';
 
-import { ThreeDayView } from '@/components/dashboard/personal/calendar/3-day-view';
-import { DayView } from '@/components/dashboard/personal/calendar/day-view';
-import { CalendarHeader } from '@/components/dashboard/personal/calendar/header';
-import { MonthView } from '@/components/dashboard/personal/calendar/month-view';
-import { CalendarSidebar } from '@/components/dashboard/personal/calendar/sidebar';
-import { WeekView } from '@/components/dashboard/personal/calendar/week-view';
+import { ThreeDayView } from '@/components/dashboard/workspace/calendar/3-day-view';
+import { DayView } from '@/components/dashboard/workspace/calendar/day-view';
+import { CalendarHeader } from '@/components/dashboard/workspace/calendar/header';
+import { MonthView } from '@/components/dashboard/workspace/calendar/month-view';
+import { CalendarSidebar } from '@/components/dashboard/workspace/calendar/sidebar';
+import { WeekView } from '@/components/dashboard/workspace/calendar/week-view';
 import { EventDialog } from '@/components/shared/event-dialog';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';

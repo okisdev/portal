@@ -18,7 +18,7 @@ import {
   SidebarMenuItem,
 } from '@/components/ui/sidebar';
 import { Skeleton } from '@/components/ui/skeleton';
-import { crmItems, languageItems, marketingItems, personalItems, resourcesItems, teamItems } from '@/config/dashboard';
+import { crmItems, languageItems, marketingItems, resourcesItems, teamItems, toolsItems, workspaceItems } from '@/config/dashboard';
 import { usePathname, useRouter } from '@/i18n/routing';
 import { api } from '@/utils/trpc/client';
 import { Bell, ChevronDown, ChevronRight, ChevronUp, Globe, Laptop, LogOut, Moon, Plus, Settings, Sparkle, Sun, User2 } from 'lucide-react';
@@ -73,10 +73,11 @@ export function DashboardSidebar() {
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
-        <SidebarGroupSection title='Personal' items={personalItems} />
+        <SidebarGroupSection title='Workspace' items={workspaceItems} />
         <SidebarGroupSection title='CRM' items={crmItems} onItemAction={() => router.push('/dashboard/crm/contacts/new')} />
         <SidebarGroupSection title='Marketing' items={marketingItems} />
         <SidebarGroupSection title='Resources' items={resourcesItems} />
+        <SidebarGroupSection title='Tools' items={toolsItems} />
         {me?.role === 'ADMIN' && <SidebarGroupSection title='Team' items={teamItems} />}
       </SidebarContent>
       <SidebarFooter>

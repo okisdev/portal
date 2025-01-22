@@ -27,8 +27,8 @@ const nextConfig: NextConfig = {
         permanent: false,
       },
       {
-        source: '/dashboard/personal',
-        destination: '/dashboard/personal/calendar',
+        source: '/dashboard/workspace',
+        destination: '/dashboard/workspace/calendar',
         permanent: false,
       },
       {

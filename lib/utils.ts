@@ -20,6 +20,10 @@ export function generateUUID() {
   });
 }
 
+export function generateShortUUID(number = 10): string {
+  return Math.random().toString(36).substring(2, number);
+}
+
 export function isDev() {
   return process.env.NODE_ENV === 'development';
 }
