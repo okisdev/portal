@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { sources } from '@/data/data';
+import { insuranceCompanies, sources } from '@/data/data';
 import { type Status, statusSchema } from '@/lib/schema';
 import { generateUUID } from '@/lib/utils';
 import { api } from '@/utils/trpc/client';
@@ -405,7 +405,14 @@ export default function ContactUpload() {
                         <Input value={row.phone} onChange={(e) => handleCsvEdit(index, 'phone', e.target.value)} />
                       </TableCell>
                       <TableCell>
-                        <Input value={row.company} onChange={(e) => handleCsvEdit(index, 'company', e.target.value)} />
+                        <Combobox
+                          value={row.company ?? ''}
+                          onChange={(value) => handleCsvEdit(index, 'company', value)}
+                          items={insuranceCompanies}
+                          placeholder='Select company...'
+                          searchPlaceholder='Search company...'
+                          groupHeading='Companies'
+                        />
                       </TableCell>
                       <TableCell>
                         <Select value={row.status} onValueChange={(value) => handleCsvEdit(index, 'status', value)}>

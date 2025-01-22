@@ -7,8 +7,10 @@ import { ComboboxCommand } from '@/components/shared/combobox';
 import { EventDialog } from '@/components/shared/event-dialog';
 import { PageHeader } from '@/components/shared/page-header';
 import { PageLoading } from '@/components/shared/page-loading';
+import { PaginationTable } from '@/components/shared/pagination-table';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -16,6 +18,18 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Textarea } from '@/components/ui/textarea';
 import { formatDate } from '@/lib/utils';
 import { api } from '@/utils/trpc/client';
+import { CaretSortIcon } from '@radix-ui/react-icons';
+import {
+  type ColumnDef,
+  type ColumnFiltersState,
+  type SortingState,
+  type VisibilityState,
+  getCoreRowModel,
+  getFilteredRowModel,
+  getPaginationRowModel,
+  getSortedRowModel,
+  useReactTable,
+} from '@tanstack/react-table';
 import { Calendar, Edit2, Plus, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import { notFound, useParams, useRouter, useSearchParams } from 'next/navigation';
@@ -30,23 +44,10 @@ export default function TeamIdPage() {
 
   const utils = api.useUtils();
 
-  const { data: team, isLoading } = api.team.getTeamById.useQuery({
-    id: teamId[0],
-  });
-  const { data: teamContacts } = api.team.getTeamContacts.useQuery({
-    teamId: teamId[0],
-  });
-  const { data: teamMeetings } = api.team.getTeamMeetings.useQuery({
-    teamId: teamId[0],
-  });
-
-  const { data: contacts } = api.contact.getAllContacts.useQuery();
-  const { data: folders } = api.calendar.getFolders.useQuery();
-  const { data: participantOptions } = api.calendar.getParticipantOptions.useQuery();
-  const { data: teamActivities } = api.team.getTeamActivities.useQuery({
-    teamId: teamId[0],
-  });
-
+  const [sorting, setSorting] = useState<SortingState>([]);
+  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
+  const [rowSelection, setRowSelection] = useState({});
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [newRemark, setNewRemark] = useState('');
   const [isNewMeetingModalOpen, setIsNewMeetingModalOpen] = useState(false);
@@ -64,26 +65,26 @@ export default function TeamIdPage() {
   const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
   const [searchValue, setSearchValue] = useState('');
 
-  useEffect(() => {
-    if (mode === 'edit' && team) {
-      setEditForm({
-        name: team.name,
-        description: team.description || '',
-        leaderId: team.leaderId || '',
-        subLeaderId: team.subLeaderId || '',
-        referralId: team.referralId || '',
-        campaignCode: team.campaignCode || '',
-        remarks: team.remarks || '',
-      });
-      setIsEditModalOpen(true);
-    } else {
-      setIsEditModalOpen(false);
-    }
-  }, [mode, team]);
+  const { data: team, isLoading } = api.team.getTeamById.useQuery({
+    id: teamId[0],
+  });
+  const { data: teamContacts } = api.team.getTeamContacts.useQuery({
+    teamId: teamId[0],
+  });
+  const { data: teamMeetings } = api.team.getTeamMeetings.useQuery({
+    teamId: teamId[0],
+  });
+  const { data: contacts } = api.contact.getAllContacts.useQuery();
+  const { data: folders } = api.calendar.getFolders.useQuery();
+  const { data: participantOptions } = api.calendar.getParticipantOptions.useQuery();
+  const { data: teamActivities } = api.team.getTeamActivities.useQuery({
+    teamId: teamId[0],
+  });
+  const { data: campaigns } = api.marketing.getAllCampaigns.useQuery();
 
   const updateTeam = api.team.updateTeam.useMutation({
     onSuccess: () => {
-      router.push(`/dashboard/crm/team/${teamId[0]}`); // Remove mode param by navigating
+      router.push(`/dashboard/crm/team/${teamId[0]}`);
       utils.team.getTeamById.invalidate({ id: teamId[0] });
       toast.success('Team updated successfully');
     },
@@ -96,17 +97,6 @@ export default function TeamIdPage() {
     onSuccess: () => {
       utils.team.getTeamActivities.invalidate({ teamId: teamId[0] });
       toast.success('Activity created successfully');
-    },
-    onError: (error) => {
-      toast.error(error.message);
-    },
-  });
-
-  const updateTeamRemarks = api.team.updateTeamRemarks.useMutation({
-    onSuccess: () => {
-      setNewRemark('');
-      utils.team.getTeamById.invalidate({ id: teamId[0] });
-      toast.success('Remark created successfully');
     },
     onError: (error) => {
       toast.error(error.message);
@@ -165,16 +155,134 @@ export default function TeamIdPage() {
     },
   });
 
+  useEffect(() => {
+    if (mode === 'edit' && team) {
+      setEditForm({
+        name: team.name,
+        description: team.description || '',
+        leaderId: team.leaderId || '',
+        subLeaderId: team.subLeaderId || '',
+        referralId: team.referralId || '',
+        campaignCode: team.campaignCode || '',
+        remarks: team.remarks || '',
+      });
+      setIsEditModalOpen(true);
+    } else {
+      setIsEditModalOpen(false);
+    }
+  }, [mode, team]);
+
+  const columns: ColumnDef<any>[] = [
+    {
+      id: 'select',
+      header: ({ table }) => (
+        <Checkbox
+          checked={table.getIsAllPageRowsSelected() || (table.getIsSomePageRowsSelected() && 'indeterminate')}
+          onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+          aria-label='Select all'
+        />
+      ),
+      cell: ({ row }) => <Checkbox checked={row.getIsSelected()} onCheckedChange={(value) => row.toggleSelected(!!value)} aria-label='Select row' />,
+      enableSorting: false,
+      enableHiding: false,
+    },
+    {
+      accessorKey: 'name',
+      header: ({ column }) => (
+        <Button variant='ghost' onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
+          Name {column.getIsSorted() && <CaretSortIcon className='ml-2 inline' />}
+        </Button>
+      ),
+      cell: ({ row }) => (
+        <div className='flex items-center gap-2'>
+          <Avatar className='size-8'>
+            <AvatarFallback>{row.original.contact.firstName.charAt(0)}</AvatarFallback>
+          </Avatar>
+          <div>
+            <p className='font-medium'>
+              {row.original.contact.firstName} {row.original.contact.lastName}
+            </p>
+            <p className='text-muted-foreground text-sm'>{row.original.contact.email}</p>
+          </div>
+        </div>
+      ),
+    },
+    {
+      accessorKey: 'role',
+      header: ({ column }) => (
+        <Button variant='ghost' onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
+          Role {column.getIsSorted() && <CaretSortIcon className='ml-2 inline' />}
+        </Button>
+      ),
+      cell: ({ row }) => {
+        const isLeader = team?.leaderId === row.original.contact.id;
+        const isSubLeader = team?.subLeaderId === row.original.contact.id;
+        return <div>{isLeader ? <ColorBadge type='status' value='leader' /> : isSubLeader ? <ColorBadge type='status' value='sub-leader' /> : <ColorBadge type='status' value='member' />}</div>;
+      },
+    },
+    {
+      accessorKey: 'phone',
+      header: ({ column }) => (
+        <Button variant='ghost' onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
+          Phone {column.getIsSorted() && <CaretSortIcon className='ml-2 inline' />}
+        </Button>
+      ),
+      cell: ({ row }) => row.original.contact.phone || '-',
+    },
+    {
+      accessorKey: 'company',
+      header: ({ column }) => (
+        <Button variant='ghost' onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
+          Company {column.getIsSorted() && <CaretSortIcon className='ml-2 inline' />}
+        </Button>
+      ),
+      cell: ({ row }) => row.original.contact.company || '-',
+    },
+    {
+      accessorKey: 'status',
+      header: ({ column }) => (
+        <Button variant='ghost' onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
+          Status {column.getIsSorted() && <CaretSortIcon className='ml-2 inline' />}
+        </Button>
+      ),
+      cell: ({ row }) => <ColorBadge type='contactStatus' value={row.original.contact.status} />,
+    },
+  ];
+
+  const table = useReactTable({
+    data: teamContacts || [],
+    columns,
+    onSortingChange: setSorting,
+    onColumnFiltersChange: setColumnFilters,
+    getCoreRowModel: getCoreRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    onColumnVisibilityChange: setColumnVisibility,
+    onRowSelectionChange: setRowSelection,
+    initialState: {
+      pagination: {
+        pageSize: 13,
+      },
+    },
+    state: {
+      sorting,
+      columnFilters,
+      columnVisibility,
+      rowSelection,
+    },
+  });
+
+  if (isLoading) return <PageLoading />;
+
+  if (!team) return notFound();
+
   const handleAddMember = (contactId: string) => {
     addTeamMember.mutate({
       teamId: teamId[0],
       contactId,
     });
   };
-
-  if (isLoading) return <PageLoading />;
-
-  if (!team) return notFound();
 
   const handleEditClick = () => {
     router.push(`/dashboard/crm/team/${teamId[0]}?mode=edit`);
@@ -293,23 +401,13 @@ export default function TeamIdPage() {
               </Popover>
             </div>
             {teamContacts && teamContacts?.length > 0 && (
-              <div className='space-y-3'>
-                {teamContacts?.map((member) => (
-                  <Link key={member.id} href={`/dashboard/crm/contacts/${member.contact.id}`} className='flex items-center justify-between rounded-lg border p-2 transition-colors hover:bg-muted'>
-                    <div className='flex items-center gap-2'>
-                      <Avatar className='size-8'>
-                        <AvatarFallback>{member.contact.firstName.charAt(0)}</AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <p className='font-medium'>
-                          {member.contact.firstName} {member.contact.lastName}
-                        </p>
-                        <p className='text-muted-foreground text-sm'>{member.contact.email}</p>
-                      </div>
-                    </div>
-                  </Link>
-                ))}
-              </div>
+              <PaginationTable
+                table={table}
+                columns={columns}
+                loading={isLoading}
+                onRowClick={(row) => router.push(`/dashboard/crm/contacts/${row.contact.id}`)}
+                rowClassName='cursor-pointer hover:bg-muted/50'
+              />
             )}
           </div>
 
@@ -490,7 +588,19 @@ export default function TeamIdPage() {
             </div>
             <div className='space-y-2'>
               <Label>Campaign Code</Label>
-              <Input value={editForm.campaignCode} onChange={(e) => setEditForm({ ...editForm, campaignCode: e.target.value })} placeholder='Enter campaign code' />
+              <Combobox
+                value={editForm.campaignCode}
+                onChange={(value) => setEditForm({ ...editForm, campaignCode: value })}
+                items={campaigns?.map((campaign) => campaign.id || '') || []}
+                placeholder='Select campaign code'
+                searchPlaceholder='Search campaign code...'
+                allowCustom={false}
+                groupHeading='Campaigns'
+                renderItem={(campaignId) => {
+                  const campaign = campaigns?.find((c) => c.id === campaignId);
+                  return campaign ? `${campaign.name} (${campaign.campaignCode})` : null;
+                }}
+              />
             </div>
             <div className='space-y-2'>
               <Label>Remarks</Label>

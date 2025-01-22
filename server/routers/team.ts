@@ -1,4 +1,4 @@
-import { calendarEvent, calendarEventParticipant, calendarFolder, contact, team, teamActivity, teamContact, teamMeeting } from '@/drizzle/schema';
+import { calendarEvent, calendarEventParticipant, calendarFolder, contact, marketingCampaign, team, teamActivity, teamContact, teamMeeting } from '@/drizzle/schema';
 import { createContactActivityHelper } from '@/server/helper/contact';
 import { createTRPCRouter, protectedProcedure } from '@/server/trpc';
 import { and, eq, exists, sql } from 'drizzle-orm';
@@ -183,15 +183,24 @@ export const teamRouter = createTRPCRouter({
         leaderId: z.string().optional(),
         subLeaderId: z.string().optional(),
         referralId: z.string().optional(),
-        campaignCode: z
-          .string()
-          .optional()
-          .transform((val) => val?.toUpperCase()),
+        campaignId: z.string().optional(),
         remarks: z.string().optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
-      const [updated] = await ctx.db
+      let campaignCode = '';
+
+      if (input.campaignId) {
+        const campaign = await ctx.db
+          .select()
+          .from(marketingCampaign)
+          .where(eq(marketingCampaign.id, input.campaignId ?? ''))
+          .then((rows) => rows[0]);
+
+        campaignCode = campaign?.campaignCode ?? '';
+      }
+
+      await ctx.db
         .update(team)
         .set({
           name: input.name,
@@ -199,14 +208,11 @@ export const teamRouter = createTRPCRouter({
           leaderId: input.leaderId,
           subLeaderId: input.subLeaderId,
           referralId: input.referralId,
-          campaignCode: input.campaignCode,
+          campaignCode: campaignCode,
           remarks: input.remarks,
           updatedAt: new Date(),
         })
-        .where(eq(team.id, input.id))
-        .returning();
-
-      return updated;
+        .where(eq(team.id, input.id));
     }),
 
   updateTeamRemarks: protectedProcedure.input(z.object({ id: z.string(), remarks: z.string() })).mutation(async ({ ctx, input }) => {

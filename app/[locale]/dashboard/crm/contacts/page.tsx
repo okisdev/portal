@@ -4,17 +4,27 @@ import { ActionAlertDialog } from '@/components/shared/action-alert-dialog';
 import { ColorBadge } from '@/components/shared/color-badge';
 import { Combobox } from '@/components/shared/combobox';
 import { PageHeader } from '@/components/shared/page-header';
-import { TableLoading } from '@/components/shared/table-loading';
+import { PaginationTable } from '@/components/shared/pagination-table';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
-import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useDebounce } from '@/hooks/use-debounce';
-import { sourceSchema, statusSchema } from '@/lib/schema';
+import { type Contact, sourceSchema, statusSchema } from '@/lib/schema';
 import { cn, formatDate } from '@/lib/utils';
 import { api } from '@/utils/trpc/client';
-import { CaretSortIcon } from '@radix-ui/react-icons';
+import {
+  type ColumnDef,
+  type ColumnFiltersState,
+  type SortingState,
+  type VisibilityState,
+  getCoreRowModel,
+  getFilteredRowModel,
+  getPaginationRowModel,
+  getSortedRowModel,
+  useReactTable,
+} from '@tanstack/react-table';
 import { Check, Filter, Import, MoreHorizontal, Pencil, Trash2, X } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -40,12 +50,6 @@ type FilterConfig = {
   matchAll: boolean;
 };
 
-type ColumnConfig = {
-  id: string;
-  label: string;
-  visible: boolean;
-};
-
 export default function CRMContactsPage() {
   const router = useRouter();
   const pathname = usePathname();
@@ -61,6 +65,11 @@ export default function CRMContactsPage() {
     },
   });
 
+  const [sorting, setSorting] = useState<SortingState>([]);
+  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
+  const [rowSelection, setRowSelection] = useState({});
+
   const [search, setSearch] = useState('');
   const debouncedSearch = useDebounce(search, 300);
 
@@ -70,18 +79,6 @@ export default function CRMContactsPage() {
     conditions: [],
     matchAll: true,
   });
-
-  const [columns, setColumns] = useState<ColumnConfig[]>([
-    { id: 'name', label: 'Name', visible: true },
-    { id: 'phone', label: 'Phone', visible: true },
-    { id: 'company', label: 'Company', visible: true },
-    { id: 'status', label: 'Status', visible: true },
-    { id: 'source', label: 'Source', visible: true },
-    { id: 'priority', label: 'Priority', visible: true },
-    { id: 'remark', label: 'Remark', visible: true },
-    { id: 'createdAt', label: 'Created', visible: false },
-    { id: 'actions', label: 'Actions', visible: true },
-  ]);
 
   const filterFields = [
     { label: 'Name', value: 'name' },
@@ -107,7 +104,6 @@ export default function CRMContactsPage() {
 
   const handleStatusFilter = (status: string | null) => {
     if (status === null) {
-      // Clear all status filters
       setFilters({
         ...filters,
         conditions: filters.conditions.filter((c) => c.field !== 'status'),
@@ -115,10 +111,8 @@ export default function CRMContactsPage() {
       return;
     }
 
-    // Check if the status is already active
     const isActive = filters.conditions.some((c) => c.field === 'status' && c.value === status);
     if (isActive) {
-      // If active, remove it
       setFilters({
         ...filters,
         conditions: filters.conditions.filter((c) => !(c.field === 'status' && c.value === status)),
@@ -126,7 +120,6 @@ export default function CRMContactsPage() {
       return;
     }
 
-    // Add the new status filter without removing existing ones
     setFilters({
       ...filters,
       conditions: [...filters.conditions, { field: 'status', operator: '=', value: status }],
@@ -135,7 +128,6 @@ export default function CRMContactsPage() {
 
   const handleSourceFilter = (source: string | null) => {
     if (source === null) {
-      // Clear all source filters
       setFilters({
         ...filters,
         conditions: filters.conditions.filter((c) => c.field !== 'source'),
@@ -143,10 +135,8 @@ export default function CRMContactsPage() {
       return;
     }
 
-    // Check if the source is already active
     const isActive = filters.conditions.some((c) => c.field === 'source' && c.value === source);
     if (isActive) {
-      // If active, remove it
       setFilters({
         ...filters,
         conditions: filters.conditions.filter((c) => !(c.field === 'source' && c.value === source)),
@@ -154,18 +144,15 @@ export default function CRMContactsPage() {
       return;
     }
 
-    // Add the new source filter without removing existing ones
     setFilters({
       ...filters,
       conditions: [...filters.conditions, { field: 'source', operator: '=', value: source }],
     });
   };
 
-  // Initialize filters from URL on mount
   useEffect(() => {
     const newConditions: FilterCondition[] = [];
 
-    // Check for individual filter parameters
     for (const field of filterFields) {
       const values = searchParams.getAll(field.value);
       for (const value of values) {
@@ -202,26 +189,21 @@ export default function CRMContactsPage() {
     }
   }, [searchParams]);
 
-  // Update URL when filters change
   useEffect(() => {
     const params = new URLSearchParams();
 
-    // Add filter parameters
     for (const condition of filters.conditions) {
       params.append(condition.field, condition.value);
     }
 
-    // Update search in URL
     if (search) {
       params.set('search', search);
     }
 
-    // Update sort in URL
     if (sortConfig.column) {
       params.set('sort', `${sortConfig.column}:${sortConfig.direction}`);
     }
 
-    // Update URL without causing a page reload
     const newUrl = params.toString() ? `${pathname}?${params.toString()}` : pathname;
     router.replace(newUrl, { scroll: false });
   }, [filters, search, sortConfig, pathname]);
@@ -229,7 +211,6 @@ export default function CRMContactsPage() {
   const handleFilterChange = (index: number, field: string, operator: FilterOperator, value: string) => {
     const newConditions = [...filters.conditions];
 
-    // Remove any existing filter for this field
     const existingIndex = newConditions.findIndex((c) => c.field === field);
     if (existingIndex !== -1 && existingIndex !== index) {
       newConditions.splice(existingIndex, 1);
@@ -271,7 +252,6 @@ export default function CRMContactsPage() {
 
         if (filters.conditions.length === 0) return true;
 
-        // Group conditions by field
         const groupedConditions = filters.conditions.reduce((acc, condition) => {
           if (!acc[condition.field]) {
             acc[condition.field] = [];
@@ -280,9 +260,7 @@ export default function CRMContactsPage() {
           return acc;
         }, {} as Record<string, FilterCondition[]>);
 
-        // Check each field group separately
         return Object.entries(groupedConditions).every(([field, conditions]) => {
-          // OR operation within the same field
           return conditions.some((condition) => {
             let fieldValue = '';
 
@@ -335,22 +313,15 @@ export default function CRMContactsPage() {
       });
   }, [contacts, filters, sortConfig, debouncedSearch]);
 
-  const handleSort = (column: string) => {
-    setSortConfig((current) => ({
-      column,
-      direction: current.column === column && current.direction === 'asc' ? 'desc' : 'asc',
-    }));
-  };
-
   const handleDeleteClick = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
     setContactToDelete(id);
     setDeleteDialogOpen(true);
   };
 
-  const handleDeleteConfirm = async () => {
+  const handleDeleteConfirm = () => {
     if (contactToDelete) {
-      await deleteContact.mutate({ id: contactToDelete });
+      deleteContact.mutate({ id: contactToDelete });
       setDeleteDialogOpen(false);
       setContactToDelete(null);
     }
@@ -360,6 +331,115 @@ export default function CRMContactsPage() {
     e.stopPropagation();
     router.push(`/dashboard/crm/contacts/${id}?mode=edit`);
   };
+
+  const tableColumns: ColumnDef<Contact>[] = [
+    {
+      id: 'select',
+      header: ({ table }) => (
+        <Checkbox
+          checked={table.getIsAllPageRowsSelected() || (table.getIsSomePageRowsSelected() && 'indeterminate')}
+          onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+          aria-label='Select all'
+        />
+      ),
+      cell: ({ row }) => <Checkbox checked={row.getIsSelected()} onCheckedChange={(value) => row.toggleSelected(!!value)} aria-label='Select row' />,
+      enableSorting: false,
+      enableHiding: false,
+    },
+    {
+      accessorKey: 'name',
+      header: 'Name',
+      cell: ({ row }) => (
+        <div className='flex items-center gap-2'>
+          <Avatar className='size-8'>
+            <AvatarFallback>{row.original.firstName?.[0] ?? row.original.name?.[0] ?? row.original.email?.[0] ?? ''}</AvatarFallback>
+          </Avatar>
+          <div>
+            <div className='font-medium'>{row.original.name}</div>
+            <div className='text-neutral-500 text-xs'>{row.original.email}</div>
+          </div>
+        </div>
+      ),
+    },
+    {
+      accessorKey: 'phone',
+      header: 'Phone',
+    },
+    {
+      accessorKey: 'company',
+      header: 'Company',
+    },
+    {
+      accessorKey: 'status',
+      header: 'Status',
+      cell: ({ row }) => <ColorBadge type='contactStatus' value={row.original.status} />,
+    },
+    {
+      accessorKey: 'source',
+      header: 'Source',
+      cell: ({ row }) => <span className='capitalize'>{row.original.source?.replace('_', ' ') || '—'}</span>,
+    },
+    {
+      accessorKey: 'priority',
+      header: 'Priority',
+      cell: ({ row }) => <ColorBadge type='priority' value={row.original.priority ?? 'medium'} />,
+    },
+    {
+      accessorKey: 'remark',
+      header: 'Remark',
+    },
+    {
+      accessorKey: 'createdAt',
+      header: 'Created',
+      cell: ({ row }) => formatDate(new Date(row.original.createdAt)),
+    },
+    {
+      id: 'actions',
+      cell: ({ row }) => (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+            <Button variant='ghost' className='h-8 w-8 p-0'>
+              <MoreHorizontal className='h-4 w-4' />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align='end'>
+            <DropdownMenuItem className='cursor-pointer' onClick={(e) => handleEdit(row.original.id, e)}>
+              <Pencil className='mr-2 h-4 w-4' />
+              Edit
+            </DropdownMenuItem>
+            <DropdownMenuItem className='cursor-pointer text-destructive' onClick={(e) => handleDeleteClick(row.original.id, e)}>
+              <Trash2 className='mr-2 h-4 w-4' />
+              Delete
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      ),
+    },
+  ];
+
+  const table = useReactTable({
+    data: filteredContacts,
+    columns: tableColumns,
+    onSortingChange: setSorting,
+    onColumnFiltersChange: setColumnFilters,
+    getCoreRowModel: getCoreRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    onColumnVisibilityChange: setColumnVisibility,
+    onRowSelectionChange: setRowSelection,
+    initialState: {
+      pagination: {
+        pageSize: 13,
+      },
+    },
+    state: {
+      sorting,
+      columnFilters,
+      columnVisibility,
+      rowSelection,
+    },
+  });
 
   return (
     <div className='space-y-4 p-4'>
@@ -436,29 +516,33 @@ export default function CRMContactsPage() {
               value={selectedColumn}
               onChange={(value) => {
                 setSelectedColumn(value);
-                const column = columns.find((col) => col.label === value);
+                const column = table.getAllColumns().find((col) => col.id === value);
                 if (column) {
-                  setColumns((prev) => prev.map((col) => (col.id === column.id ? { ...col, visible: !col.visible } : col)));
+                  column.toggleVisibility(!column.getIsVisible());
                 }
               }}
-              items={columns.map((col) => col.label)}
+              items={table
+                .getAllColumns()
+                .filter((column) => column.getCanHide())
+                .map((column) => column.id)}
               placeholder='Columns'
               searchPlaceholder='Search columns...'
               emptyText='No columns found'
               groupHeading='Available Columns'
               allowCustom={false}
               renderItem={(item) => {
-                const column = columns.find((col) => col.label === item);
+                const column = table.getAllColumns().find((col) => col.id === item);
                 return (
                   <div className='flex w-full items-center justify-between'>
-                    <span>{item}</span>
-                    {column?.visible && <Check className='h-4 w-4' />}
+                    <span className='capitalize'>{item}</span>
+                    {column?.getIsVisible() && <Check className='h-4 w-4' />}
                   </div>
                 );
               }}
-              className='h-8'
+              className='w-48'
+              size='sm'
+              alwaysPlaceHolder={true}
             />
-
             {filters.conditions.length > 0 && (
               <Button variant='outline' size='sm' onClick={() => setFilters({ conditions: [], matchAll: true })}>
                 <X className='h-4 w-4' />
@@ -466,6 +550,7 @@ export default function CRMContactsPage() {
               </Button>
             )}
           </div>
+
           <div className='flex flex-row gap-2'>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -518,85 +603,7 @@ export default function CRMContactsPage() {
         </div>
       </div>
 
-      <div className='rounded-md border'>
-        {isLoading ? (
-          <TableLoading columnCount={columns.filter((col) => col.visible).length - 1} rowCount={8} />
-        ) : (
-          <div className='relative'>
-            <div className='max-h-[800px] overflow-auto'>
-              <Table>
-                <TableHeader className='sticky'>
-                  <TableRow>
-                    {columns.map((column) =>
-                      column.visible ? (
-                        <TableHead key={column.id} onClick={() => handleSort(column.id)} className={cn('cursor-pointer', column.label === 'Actions' && 'text-right')}>
-                          {column.label} {sortConfig.column === column.id && <CaretSortIcon className='ml-2 inline' />}
-                        </TableHead>
-                      ) : null
-                    )}
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredContacts.map((contact) => (
-                    <TableRow key={contact.id} className='cursor-pointer hover:bg-muted/50' onClick={() => router.push(`/dashboard/crm/contacts/${contact.id}`)}>
-                      {columns.map((column) =>
-                        column.visible ? (
-                          <TableCell key={column.id}>
-                            {column.id === 'name' && (
-                              <div className='flex items-center gap-2'>
-                                <Avatar className='size-8'>
-                                  <AvatarFallback>{contact.firstName?.[0] ?? contact.name?.[0] ?? contact.email?.[0] ?? ''}</AvatarFallback>
-                                </Avatar>
-                                <div>
-                                  <div className='font-medium'>{contact.name}</div>
-                                  <div className='text-neutral-500 text-xs'>{contact.email}</div>
-                                </div>
-                              </div>
-                            )}
-                            {column.id === 'phone' && contact.phone}
-                            {column.id === 'company' && contact.company}
-                            {column.id === 'status' && <ColorBadge type='contactStatus' value={contact.status} />}
-                            {column.id === 'source' && <span className='capitalize'>{contact.source?.replace('_', ' ') || '—'}</span>}
-                            {column.id === 'priority' && <ColorBadge type='priority' value={contact.priority ?? 'medium'} />}
-                            {column.id === 'remark' && contact.remark}
-                            {column.id === 'createdAt' && formatDate(new Date(contact.createdAt))}
-                          </TableCell>
-                        ) : null
-                      )}
-                      <TableCell className='w-[50px]'>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                            <Button variant='ghost' className='h-8 w-8 p-0'>
-                              <MoreHorizontal className='h-4 w-4' />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align='end'>
-                            <DropdownMenuItem className='cursor-pointer' onClick={(e) => handleEdit(contact.id, e)}>
-                              <Pencil className='mr-2 h-4 w-4' />
-                              Edit
-                            </DropdownMenuItem>
-                            <DropdownMenuItem className='cursor-pointer text-destructive' onClick={(e) => handleDeleteClick(contact.id, e)}>
-                              <Trash2 className='mr-2 h-4 w-4' />
-                              Delete
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-                <TableFooter>
-                  <TableRow>
-                    <TableCell colSpan={4}>
-                      Showing {filteredContacts.length} of {contacts?.length} contacts
-                    </TableCell>
-                  </TableRow>
-                </TableFooter>
-              </Table>
-            </div>
-          </div>
-        )}
-      </div>
+      <PaginationTable table={table} columns={tableColumns} loading={isLoading} onRowClick={(row) => router.push(`/dashboard/crm/contacts/${row.id}`)} rowClassName='cursor-pointer' />
 
       <ActionAlertDialog
         open={deleteDialogOpen}

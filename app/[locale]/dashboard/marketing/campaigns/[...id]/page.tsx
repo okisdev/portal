@@ -3,26 +3,33 @@
 import { ActionAlertDialog } from '@/components/shared/action-alert-dialog';
 import { ColorBadge } from '@/components/shared/color-badge';
 import { PageHeader } from '@/components/shared/page-header';
-import { TableLoading } from '@/components/shared/table-loading';
+import { PageLoading } from '@/components/shared/page-loading';
+import { PaginationTable } from '@/components/shared/pagination-table';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
-import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useDebounce } from '@/hooks/use-debounce';
-import { cn, formatDate } from '@/lib/utils';
+import { formatDate } from '@/lib/utils';
 import { api } from '@/utils/trpc/client';
 import { CaretSortIcon } from '@radix-ui/react-icons';
-import { Filter, MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
+import {
+  type ColumnDef,
+  type ColumnFiltersState,
+  type SortingState,
+  type VisibilityState,
+  getCoreRowModel,
+  getFilteredRowModel,
+  getPaginationRowModel,
+  getSortedRowModel,
+  useReactTable,
+} from '@tanstack/react-table';
+import { Eye, Filter, MoreHorizontal, Trash2 } from 'lucide-react';
 import Link from 'next/link';
-import { useParams, useRouter, useSearchParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { useMemo, useState } from 'react';
-
-type SortConfig = {
-  column: string;
-  direction: 'asc' | 'desc';
-};
 
 type FilterOperator = '=' | '!=' | 'contains' | 'startsWith' | 'endsWith';
 
@@ -37,16 +44,9 @@ type FilterConfig = {
   matchAll: boolean;
 };
 
-type ColumnConfig = {
-  id: string;
-  label: string;
-  visible: boolean;
-};
-
 export default function CampaignDetailsPage() {
   const router = useRouter();
   const { id: campaignId } = useParams<{ id: string }>();
-  const searchParams = useSearchParams();
 
   const { data: campaign, isLoading: campaignLoading } = api.marketing.getCampaignById.useQuery({
     id: campaignId[0],
@@ -58,26 +58,18 @@ export default function CampaignDetailsPage() {
 
   const utils = api.useUtils();
 
+  const [sorting, setSorting] = useState<SortingState>([]);
+  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
+  const [rowSelection, setRowSelection] = useState({});
+
   const [search, setSearch] = useState('');
   const debouncedSearch = useDebounce(search, 300);
-
-  const [sortConfig, setSortConfig] = useState<SortConfig>({ column: '', direction: 'asc' });
 
   const [filters, setFilters] = useState<FilterConfig>({
     conditions: [],
     matchAll: true,
   });
-
-  const [columns, setColumns] = useState<ColumnConfig[]>([
-    { id: 'name', label: 'Name', visible: true },
-    { id: 'email', label: 'Email', visible: true },
-    { id: 'company', label: 'Company', visible: true },
-    { id: 'status', label: 'Status', visible: true },
-    { id: 'signupDate', label: 'Signup Date', visible: true },
-    { id: 'conversionDate', label: 'Conversion Date', visible: true },
-    { id: 'source', label: 'Source', visible: true },
-    { id: 'actions', label: 'Actions', visible: true },
-  ]);
 
   const filterFields = [
     { label: 'Name', value: 'name' },
@@ -132,70 +124,191 @@ export default function CampaignDetailsPage() {
     }));
   };
 
+  const columns: ColumnDef<any>[] = [
+    {
+      id: 'select',
+      header: ({ table }) => (
+        <Checkbox
+          checked={table.getIsAllPageRowsSelected() || (table.getIsSomePageRowsSelected() && 'indeterminate')}
+          onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+          aria-label='Select all'
+        />
+      ),
+      cell: ({ row }) => <Checkbox checked={row.getIsSelected()} onCheckedChange={(value) => row.toggleSelected(!!value)} aria-label='Select row' />,
+      enableSorting: false,
+      enableHiding: false,
+    },
+    {
+      accessorKey: 'name',
+      header: ({ column }) => (
+        <Button variant='ghost' onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
+          Name {column.getIsSorted() && <CaretSortIcon className='ml-2 inline' />}
+        </Button>
+      ),
+      cell: ({ row }) => (
+        <div className='flex items-center gap-2'>
+          <Avatar className='h-8 w-8'>
+            <AvatarFallback>{row.original.name?.[0]}</AvatarFallback>
+          </Avatar>
+          <div className='font-medium'>{row.original.name}</div>
+        </div>
+      ),
+    },
+    {
+      accessorKey: 'email',
+      header: ({ column }) => (
+        <Button variant='ghost' onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
+          Email {column.getIsSorted() && <CaretSortIcon className='ml-2 inline' />}
+        </Button>
+      ),
+    },
+    {
+      accessorKey: 'company',
+      header: ({ column }) => (
+        <Button variant='ghost' onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
+          Company {column.getIsSorted() && <CaretSortIcon className='ml-2 inline' />}
+        </Button>
+      ),
+    },
+    {
+      accessorKey: 'status',
+      header: ({ column }) => (
+        <Button variant='ghost' onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
+          Status {column.getIsSorted() && <CaretSortIcon className='ml-2 inline' />}
+        </Button>
+      ),
+      cell: ({ row }) => (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+            <Button variant='ghost' className='p-0'>
+              <ColorBadge type='status' value={row.original.status} />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent>
+            <DropdownMenuItem onClick={() => handleStatusChange(row.original.id, 'pending')}>Pending</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => handleStatusChange(row.original.id, 'engaged')}>Engaged</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => handleStatusChange(row.original.id, 'converted')}>Converted</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => handleStatusChange(row.original.id, 'bounced')}>Bounced</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => handleStatusChange(row.original.id, 'unsubscribed')}>Unsubscribed</DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      ),
+    },
+    {
+      accessorKey: 'signupDate',
+      header: ({ column }) => (
+        <Button variant='ghost' onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
+          Signup Date {column.getIsSorted() && <CaretSortIcon className='ml-2 inline' />}
+        </Button>
+      ),
+      cell: ({ row }) => formatDate(new Date(row.original.signupDate)),
+    },
+    {
+      accessorKey: 'conversionDate',
+      header: ({ column }) => (
+        <Button variant='ghost' onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
+          Conversion Date {column.getIsSorted() && <CaretSortIcon className='ml-2 inline' />}
+        </Button>
+      ),
+      cell: ({ row }) => (row.original.conversionDate ? formatDate(new Date(row.original.conversionDate)) : '—'),
+    },
+    {
+      accessorKey: 'source',
+      header: ({ column }) => (
+        <Button variant='ghost' onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
+          Source {column.getIsSorted() && <CaretSortIcon className='ml-2 inline' />}
+        </Button>
+      ),
+      cell: ({ row }) => <span className='capitalize'>{row.original.source || '—'}</span>,
+    },
+    {
+      id: 'actions',
+      cell: ({ row }) => (
+        <div className='flex justify-end'>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+              <Button variant='ghost' className='h-8 w-8 p-0'>
+                <MoreHorizontal className='h-4 w-4' />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align='end'>
+              <DropdownMenuItem onClick={(e) => router.push(`/dashboard/crm/contacts/${row.original.id}?mode=edit`)}>
+                <Eye className='mr-2 h-4 w-4' />
+                View
+              </DropdownMenuItem>
+              <DropdownMenuItem className='text-destructive' onClick={(e) => handleDeleteClick(row.original.id, e)}>
+                <Trash2 className='mr-2 h-4 w-4' />
+                Remove
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      ),
+    },
+  ];
+
   const filteredContacts = useMemo(() => {
     if (!contacts) return [];
 
-    return contacts
-      .filter((contact) => {
-        if (debouncedSearch) {
-          const searchTerm = debouncedSearch.toLowerCase();
-          const name = contact.name?.toLowerCase();
-          const email = contact.email.toLowerCase();
-          const company = (contact.company || '').toLowerCase();
-          const status = contact.status.toLowerCase();
-          const source = (contact.source || '').toLowerCase();
+    return contacts.filter((contact) => {
+      if (debouncedSearch) {
+        const searchTerm = debouncedSearch.toLowerCase();
+        const name = contact.name?.toLowerCase();
+        const email = contact.email.toLowerCase();
+        const company = (contact.company || '').toLowerCase();
+        const status = contact.status.toLowerCase();
+        const source = (contact.source || '').toLowerCase();
 
-          return name?.includes(searchTerm) || email.includes(searchTerm) || company.includes(searchTerm) || status.includes(searchTerm) || source.includes(searchTerm);
+        return name?.includes(searchTerm) || email.includes(searchTerm) || company.includes(searchTerm) || status.includes(searchTerm) || source.includes(searchTerm);
+      }
+
+      if (filters.conditions.length === 0) return true;
+
+      return filters.conditions.every((condition) => {
+        const fieldValue = String(contact[condition.field as keyof typeof contact] || '').toLowerCase();
+        const compareValue = condition.value.toLowerCase();
+
+        switch (condition.operator) {
+          case '=':
+            return fieldValue === compareValue;
+          case '!=':
+            return fieldValue !== compareValue;
+          case 'contains':
+            return fieldValue.includes(compareValue);
+          case 'startsWith':
+            return fieldValue.startsWith(compareValue);
+          case 'endsWith':
+            return fieldValue.endsWith(compareValue);
+          default:
+            return false;
         }
-
-        if (filters.conditions.length === 0) return true;
-
-        return filters.conditions.every((condition) => {
-          const fieldValue = String(contact[condition.field as keyof typeof contact] || '').toLowerCase();
-          const compareValue = condition.value.toLowerCase();
-
-          switch (condition.operator) {
-            case '=':
-              return fieldValue === compareValue;
-            case '!=':
-              return fieldValue !== compareValue;
-            case 'contains':
-              return fieldValue.includes(compareValue);
-            case 'startsWith':
-              return fieldValue.startsWith(compareValue);
-            case 'endsWith':
-              return fieldValue.endsWith(compareValue);
-            default:
-              return false;
-          }
-        });
-      })
-      .sort((a, b) => {
-        if (!sortConfig.column) return 0;
-
-        let aValue: string | Date;
-        let bValue: string | Date;
-
-        if (sortConfig.column === 'signupDate' || sortConfig.column === 'conversionDate') {
-          aValue = new Date(a[sortConfig.column as keyof typeof a] || '');
-          bValue = new Date(b[sortConfig.column as keyof typeof b] || '');
-        } else {
-          aValue = String(a[sortConfig.column as keyof typeof a] || '');
-          bValue = String(b[sortConfig.column as keyof typeof b] || '');
-        }
-
-        if (aValue < bValue) return sortConfig.direction === 'asc' ? -1 : 1;
-        if (aValue > bValue) return sortConfig.direction === 'asc' ? 1 : -1;
-        return 0;
       });
-  }, [contacts, filters, sortConfig, debouncedSearch]);
+    });
+  }, [contacts, filters, debouncedSearch]);
 
-  const handleSort = (column: string) => {
-    setSortConfig((current) => ({
-      column,
-      direction: current.column === column && current.direction === 'asc' ? 'desc' : 'asc',
-    }));
-  };
+  const table = useReactTable({
+    data: filteredContacts,
+    columns,
+    onSortingChange: setSorting,
+    onColumnFiltersChange: setColumnFilters,
+    getCoreRowModel: getCoreRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    onColumnVisibilityChange: setColumnVisibility,
+    onRowSelectionChange: setRowSelection,
+    initialState: {
+      pagination: {
+        pageSize: 13,
+      },
+    },
+    state: {
+      sorting,
+      columnFilters,
+      columnVisibility,
+      rowSelection,
+    },
+  });
 
   const handleDeleteClick = (contactId: string, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -223,7 +336,7 @@ export default function CampaignDetailsPage() {
   };
 
   if (campaignLoading) {
-    return <div>Loading...</div>;
+    return <PageLoading />;
   }
 
   if (!campaign) {
@@ -352,100 +465,13 @@ export default function CampaignDetailsPage() {
         </div>
       </div>
 
-      <div className='rounded-md border'>
-        {contactsLoading ? (
-          <TableLoading columnCount={columns.filter((col) => col.visible).length} rowCount={8} />
-        ) : (
-          <div className='relative'>
-            <div className='max-h-[800px] overflow-auto'>
-              <Table>
-                <TableHeader className='sticky'>
-                  <TableRow>
-                    {columns.map(
-                      (column) =>
-                        column.visible && (
-                          <TableHead key={column.id} onClick={() => handleSort(column.id)} className={cn('cursor-pointer', column.label === 'Actions' && 'text-right')}>
-                            {column.label} {sortConfig.column === column.id && <CaretSortIcon className='ml-2 inline' />}
-                          </TableHead>
-                        )
-                    )}
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredContacts.map((contact) => (
-                    <TableRow key={contact.id} className='cursor-pointer hover:bg-muted/50' onClick={() => router.push(`/dashboard/crm/contacts/${contact.id}`)}>
-                      {columns.map(
-                        (column) =>
-                          column.visible && (
-                            <TableCell key={column.id}>
-                              {column.id === 'name' && (
-                                <div className='flex items-center gap-2'>
-                                  <Avatar className='h-8 w-8'>
-                                    <AvatarFallback>{contact.name?.[0]}</AvatarFallback>
-                                  </Avatar>
-                                  <div className='font-medium'>{contact.name}</div>
-                                </div>
-                              )}
-                              {column.id === 'email' && contact.email}
-                              {column.id === 'company' && contact.company}
-                              {column.id === 'status' && (
-                                <DropdownMenu>
-                                  <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                                    <Button variant='ghost' className='p-0'>
-                                      <ColorBadge type='status' value={contact.status} />
-                                    </Button>
-                                  </DropdownMenuTrigger>
-                                  <DropdownMenuContent>
-                                    <DropdownMenuItem onClick={() => handleStatusChange(contact.id, 'pending')}>Pending</DropdownMenuItem>
-                                    <DropdownMenuItem onClick={() => handleStatusChange(contact.id, 'engaged')}>Engaged</DropdownMenuItem>
-                                    <DropdownMenuItem onClick={() => handleStatusChange(contact.id, 'converted')}>Converted</DropdownMenuItem>
-                                    <DropdownMenuItem onClick={() => handleStatusChange(contact.id, 'bounced')}>Bounced</DropdownMenuItem>
-                                    <DropdownMenuItem onClick={() => handleStatusChange(contact.id, 'unsubscribed')}>Unsubscribed</DropdownMenuItem>
-                                  </DropdownMenuContent>
-                                </DropdownMenu>
-                              )}
-                              {column.id === 'signupDate' && formatDate(new Date(contact.signupDate))}
-                              {column.id === 'conversionDate' && (contact.conversionDate ? formatDate(new Date(contact.conversionDate)) : '—')}
-                              {column.id === 'source' && <span className='capitalize'>{contact.source || '—'}</span>}
-                              {column.id === 'actions' && (
-                                <div className='flex justify-end'>
-                                  <DropdownMenu>
-                                    <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                                      <Button variant='ghost' className='h-8 w-8 p-0'>
-                                        <MoreHorizontal className='h-4 w-4' />
-                                      </Button>
-                                    </DropdownMenuTrigger>
-                                    <DropdownMenuContent align='end'>
-                                      <DropdownMenuItem onClick={(e) => router.push(`/dashboard/crm/contacts/${contact.id}?mode=edit`)}>
-                                        <Pencil className='mr-2 h-4 w-4' />
-                                        Edit
-                                      </DropdownMenuItem>
-                                      <DropdownMenuItem className='text-destructive' onClick={(e) => handleDeleteClick(contact.id, e)}>
-                                        <Trash2 className='mr-2 h-4 w-4' />
-                                        Remove
-                                      </DropdownMenuItem>
-                                    </DropdownMenuContent>
-                                  </DropdownMenu>
-                                </div>
-                              )}
-                            </TableCell>
-                          )
-                      )}
-                    </TableRow>
-                  ))}
-                </TableBody>
-                <TableFooter>
-                  <TableRow>
-                    <TableCell colSpan={columns.filter((col) => col.visible).length}>
-                      Showing {filteredContacts.length} of {contacts?.length} contacts
-                    </TableCell>
-                  </TableRow>
-                </TableFooter>
-              </Table>
-            </div>
-          </div>
-        )}
-      </div>
+      <PaginationTable
+        table={table}
+        columns={columns}
+        loading={contactsLoading}
+        onRowClick={(row) => router.push(`/dashboard/crm/contacts/${row.id}`)}
+        rowClassName='cursor-pointer hover:bg-muted/50'
+      />
 
       <ActionAlertDialog
         open={deleteDialogOpen}

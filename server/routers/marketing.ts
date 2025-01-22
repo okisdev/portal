@@ -1,5 +1,4 @@
 import { contact, contactCampaign, marketingCampaign } from '@/drizzle/schema';
-import {} from '@/lib/schema';
 import { createTRPCRouter, protectedProcedure } from '@/server/trpc';
 import { type SQL, and, desc, eq, gte, lte, sql } from 'drizzle-orm';
 import { z } from 'zod';
