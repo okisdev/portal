@@ -184,6 +184,10 @@ export const contactActivity = pgTable('contactActivity', {
       'DEAL_UPDATED',
       'DEAL_CLOSED',
 
+      // Email
+      'EMAIL_SENT',
+      'EMAIL_SCHEDULED',
+
       // Payment
       'PAYMENT_LINK_CLICKED',
       'PAYMENT_COMPLETED',

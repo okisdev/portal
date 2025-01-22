@@ -1,5 +1,6 @@
 'use client';
 
+import { SendEmail } from '@/components/dashboard/contact/send-email';
 import { ColorBadge } from '@/components/shared/color-badge';
 import { Combobox } from '@/components/shared/combobox';
 import { EventDialog } from '@/components/shared/event-dialog';
@@ -91,6 +92,7 @@ export default function ContactIdPage() {
   } | null>(null);
   const [isNotesEditing, setIsNotesEditing] = useState(false);
   const [editableRemark, setEditableRemark] = useState('');
+  const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
 
   const assignToTeam = api.team.assignContactToTeam.useMutation({
     onSuccess: () => {
@@ -419,7 +421,7 @@ export default function ContactIdPage() {
                       </DropdownMenuSubTrigger>
                       <DropdownMenuPortal>
                         <DropdownMenuSubContent>
-                          <DropdownMenuItem className='cursor-pointer'>
+                          <DropdownMenuItem onClick={() => setIsEmailModalOpen(true)} className='cursor-pointer'>
                             <Mail className='mr-2 size-4' />
                             Email
                           </DropdownMenuItem>
@@ -683,6 +685,10 @@ export default function ContactIdPage() {
                                       ? 'rgb(239 68 68)'
                                       : activity.type.includes('PAYMENT')
                                       ? 'rgb(16 185 129)'
+                                      : activity.type.includes('CAMPAIGN')
+                                      ? 'rgb(250 204 21)'
+                                      : activity.type.includes('EMAIL')
+                                      ? 'rgb(250 204 21)'
                                       : 'rgb(156 163 175)',
                                 }}
                               >
@@ -933,6 +939,8 @@ export default function ContactIdPage() {
           </div>
         </DialogContent>
       </Dialog>
+
+      <SendEmail open={isEmailModalOpen} onOpenChange={setIsEmailModalOpen} recipient={contact as any} />
     </div>
   );
 }

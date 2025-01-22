@@ -1,6 +1,7 @@
 import { contact, contactActivity, contactCampaign, marketingCampaign, team, teamContact } from '@/drizzle/schema';
 import { prioritySchema, statusSchema } from '@/lib/schema';
 import { createTRPCRouter, protectedProcedure, publicProcedure } from '@/server/trpc';
+import { sendEmail } from '@/utils/email';
 import { asc, desc, eq, inArray, sql } from 'drizzle-orm';
 import { z } from 'zod';
 
@@ -30,6 +31,10 @@ const activityTypeEnum = z.enum([
   'CAMPAIGN_ASSIGNED',
   'CAMPAIGN_UPDATED',
   'CAMPAIGN_REMOVED',
+
+  // Email
+  'EMAIL_SENT',
+  'EMAIL_SCHEDULED',
 
   // Deal Management
   'DEAL_CREATED',
@@ -397,4 +402,58 @@ export const contactRouter = createTRPCRouter({
   getContactsByCampaignId: protectedProcedure.input(z.object({ campaignId: z.string() })).query(async ({ ctx, input }) => {
     return ctx.db.select().from(contact).where(eq(contact.campaignId, input.campaignId));
   }),
+
+  sendEmail: protectedProcedure
+    .input(
+      z.object({
+        to: z.string().email(),
+        subject: z.string(),
+        content: z.string(),
+        cc: z.array(z.string().email()),
+        bcc: z.array(z.string().email()),
+        attachments: z.array(z.any()),
+        contactId: z.string(),
+      })
+    )
+    .mutation(async ({ input, ctx }) => {
+      try {
+        if (!ctx.session.user.email) {
+          throw new Error('User email is not set');
+        }
+
+        await sendEmail({
+          from: ctx.session.user.email,
+          to: input.to,
+          subject: input.subject,
+          content: input.content,
+          cc: input.cc,
+          bcc: input.bcc,
+          attachments: input.attachments,
+        });
+
+        // Log the email activity
+        await ctx.db.insert(contactActivity).values({
+          type: 'EMAIL_SENT',
+          title: 'Email Sent',
+          description: `Email sent to ${input.to} with subject: ${input.subject}`,
+          initiatorType: 'user',
+          userId: ctx.session.user.id,
+          contactId: input.contactId,
+          metadata: JSON.stringify({
+            to: input.to,
+            subject: input.subject,
+            content: input.content,
+            cc: input.cc,
+            bcc: input.bcc,
+            attachments: input.attachments,
+          }),
+        });
+
+        return {
+          success: true,
+        };
+      } catch (error) {
+        throw new Error('Failed to send email');
+      }
+    }),
 });
