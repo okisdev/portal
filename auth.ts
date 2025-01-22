@@ -47,7 +47,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       },
     }),
     Resend({
-      from: 'portal-no-reply@resend.okisdev.com',
+      from: 'portal@mail.vifu.org',
       name: 'Portal',
     }),
   ],
