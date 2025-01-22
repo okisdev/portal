@@ -7,6 +7,7 @@ import { PageHeader } from '@/components/shared/page-header';
 import { TableLoading } from '@/components/shared/table-loading';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -335,6 +336,19 @@ export default function CRMContactsPage() {
 
   const tableColumns: ColumnDef<Contact>[] = [
     {
+      id: 'select',
+      header: ({ table }) => (
+        <Checkbox
+          checked={table.getIsAllPageRowsSelected() || (table.getIsSomePageRowsSelected() && 'indeterminate')}
+          onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+          aria-label='Select all'
+        />
+      ),
+      cell: ({ row }) => <Checkbox checked={row.getIsSelected()} onCheckedChange={(value) => row.toggleSelected(!!value)} aria-label='Select row' />,
+      enableSorting: false,
+      enableHiding: false,
+    },
+    {
       accessorKey: 'name',
       header: 'Name',
       cell: ({ row }) => (
@@ -610,7 +624,7 @@ export default function CRMContactsPage() {
                 <TableBody>
                   {table.getRowModel().rows?.length ? (
                     table.getRowModel().rows.map((row) => (
-                      <TableRow key={row.id} data-state={row.getIsSelected() && 'selected'} onClick={() => router.push(`/dashboard/crm/contacts/${row.original.id}`)}>
+                      <TableRow key={row.id} data-state={row.getIsSelected() && 'selected'} className='cursor-pointer' onClick={() => router.push(`/dashboard/crm/contacts/${row.original.id}`)}>
                         {row.getVisibleCells().map((cell) => (
                           <TableCell key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</TableCell>
                         ))}
