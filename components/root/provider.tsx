@@ -1,6 +1,7 @@
 'use client';
 
 import { Toaster } from '@/components/ui/sonner';
+import { SpeedInsights } from '@vercel/speed-insights/next';
 import { AppProgressBar as ProgressBar } from 'next-nprogress-bar';
 import { ThemeProvider } from 'next-themes';
 import { Monitoring } from 'react-scan/monitoring/next';
@@ -24,6 +25,8 @@ export default function BodyProvider({
         commit={process.env.NEXT_PUBLIC_VERCEL_GIT_COMMIT_SHA}
         branch={process.env.NEXT_PUBLIC_VERCEL_GIT_COMMIT_REF}
       />
+
+      <SpeedInsights />
     </ThemeProvider>
   );
 }
