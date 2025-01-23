@@ -20,8 +20,9 @@ import {
 import { Skeleton } from '@/components/ui/skeleton';
 import { crmItems, languageItems, marketingItems, resourcesItems, teamItems, toolsItems, workspaceItems } from '@/config/dashboard';
 import { usePathname, useRouter } from '@/i18n/routing';
+import packageInfo from '@/package.json';
 import { api } from '@/utils/trpc/client';
-import { Bell, ChevronDown, ChevronRight, ChevronUp, Globe, Laptop, LogOut, Moon, Plus, Settings, Sparkle, Sun, User2 } from 'lucide-react';
+import { Bell, ChevronDown, ChevronRight, ChevronUp, Globe, Laptop, LogOut, Moon, Plus, Settings, Sparkle, Sun, User2, Verified } from 'lucide-react';
 import { signOut } from 'next-auth/react';
 import { useLocale, useTranslations } from 'next-intl';
 import { useTheme } from 'next-themes';
@@ -46,6 +47,8 @@ export function DashboardSidebar() {
   const pathname = usePathname();
 
   const t = useTranslations();
+
+  const HASH = process.env.NEXT_PUBLIC_VERCEL_GIT_COMMIT_SHA;
 
   const { data: me, isLoading } = api.account.getMeFromDatabase.useQuery();
 
@@ -108,6 +111,12 @@ export function DashboardSidebar() {
                     <Settings className='mr-2 h-4 w-4' />
                     <span>{t('account')}</span>
                   </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem>
+                  <Verified className='mr-2 h-4 w-4' />
+                  <span>
+                    {packageInfo.version} {HASH && `(${HASH.slice(0, 7)})`}
+                  </span>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenu>
