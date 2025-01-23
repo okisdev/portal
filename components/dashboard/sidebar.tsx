@@ -101,7 +101,7 @@ export function DashboardSidebar() {
                   <ChevronUp className='ml-auto' />
                 </SidebarMenuButton>
               </DropdownMenuTrigger>
-              <DropdownMenuContent side='top' className='w-[--radix-popper-anchor-width]'>
+              <DropdownMenuContent side='top' className='w-(--radix-popper-anchor-width)'>
                 <DropdownMenuItem asChild>
                   <Link href='/dashboard/account/settings' className='cursor-pointer'>
                     <Settings className='mr-2 h-4 w-4' />
