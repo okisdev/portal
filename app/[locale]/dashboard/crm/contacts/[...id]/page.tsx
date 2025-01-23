@@ -359,7 +359,7 @@ export default function ContactIdPage() {
     <div className='container mx-auto min-h-[calc(100vh-4rem)] space-y-6 p-6'>
       <div className='grid h-[calc(100vh-6rem)] grid-cols-1 gap-6 lg:grid-cols-3'>
         <div className='overflow-y-auto lg:col-span-1'>
-          <div className='rounded-lg border bg-card text-card-foreground shadow-xs'>
+          <div className='rounded-lg border bg-card text-card-foreground shadow-sm'>
             <div className='border-b p-6'>
               <div className='flex items-start gap-4'>
                 <Avatar className='size-16'>
@@ -407,7 +407,7 @@ export default function ContactIdPage() {
                 </div>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <button type='button' className='my-1 text-muted-foreground outline-hidden hover:text-foreground'>
+                    <button type='button' className='my-1 text-muted-foreground outline-none hover:text-foreground'>
                       <MoreHorizontal className='size-4' />
                     </button>
                   </DropdownMenuTrigger>
@@ -637,7 +637,7 @@ export default function ContactIdPage() {
         </div>
 
         <div className='h-full lg:col-span-2'>
-          <div className='h-full rounded-lg border bg-card text-card-foreground shadow-xs'>
+          <div className='h-full rounded-lg border bg-card text-card-foreground shadow-sm'>
             <div className='h-full p-6'>
               <Tabs defaultValue='activity' className='flex h-full flex-col'>
                 <TabsList className='grid w-full grid-cols-3'>
@@ -659,7 +659,7 @@ export default function ContactIdPage() {
                           return (
                             <div key={activity.id} id={`note-${activity.id}`}>
                               {showDateDivider && (
-                                <div className='sticky top-0 bg-background/95 py-2 backdrop-blur-sm supports-backdrop-filter:bg-background/60'>
+                                <div className='sticky top-0 bg-background/95 py-2 backdrop-blur supports-[backdrop-filter]:bg-background/60'>
                                   <p className='font-medium text-muted-foreground text-sm'>{currentDate}</p>
                                 </div>
                               )}

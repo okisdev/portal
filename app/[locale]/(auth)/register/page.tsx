@@ -76,13 +76,13 @@ export default function RegisterPage() {
 
         <div className='space-y-1'>
           <Label className='mb-1 block font-medium text-foreground text-sm'>Email</Label>
-          <input type='email' {...register('email')} className='w-full rounded-lg border bg-background p-2 focus:outline-hidden focus:ring-2 focus:ring-ring' placeholder='Enter your email' />
+          <input type='email' {...register('email')} className='w-full rounded-lg border bg-background p-2 focus:outline-none focus:ring-2 focus:ring-ring' placeholder='Enter your email' />
           {errors.email && <p className='mt-1 text-destructive text-sm'>{errors.email.message}</p>}
         </div>
 
         <div className='space-y-1'>
           <Label className='mb-1 block font-medium text-foreground text-sm'>Password</Label>
-          <input type='password' {...register('password')} className='w-full rounded-lg border bg-background p-2 focus:outline-hidden focus:ring-2 focus:ring-ring' placeholder='Create a password' />
+          <input type='password' {...register('password')} className='w-full rounded-lg border bg-background p-2 focus:outline-none focus:ring-2 focus:ring-ring' placeholder='Create a password' />
           {errors.password && <p className='mt-1 text-destructive text-sm'>{errors.password.message}</p>}
         </div>
 
