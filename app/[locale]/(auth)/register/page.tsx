@@ -6,6 +6,7 @@ import { api } from '@/utils/trpc/client';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { motion } from 'framer-motion';
 import { Loader2 } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
@@ -21,6 +22,8 @@ type RegisterFormValues = z.infer<typeof registerSchema>;
 
 export default function RegisterPage() {
   const router = useRouter();
+  const t = useTranslations();
+
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -75,14 +78,19 @@ export default function RegisterPage() {
         {error && <div className='rounded-lg bg-destructive/10 p-3 text-destructive text-sm'>{error}</div>}
 
         <div className='space-y-1'>
-          <Label className='mb-1 block font-medium text-foreground text-sm'>Email</Label>
+          <Label className='mb-1 block font-medium text-foreground text-sm'>{t('email')}</Label>
           <input type='email' {...register('email')} className='w-full rounded-lg border bg-background p-2 focus:outline-none focus:ring-2 focus:ring-ring' placeholder='Enter your email' />
           {errors.email && <p className='mt-1 text-destructive text-sm'>{errors.email.message}</p>}
         </div>
 
         <div className='space-y-1'>
-          <Label className='mb-1 block font-medium text-foreground text-sm'>Password</Label>
-          <input type='password' {...register('password')} className='w-full rounded-lg border bg-background p-2 focus:outline-none focus:ring-2 focus:ring-ring' placeholder='Create a password' />
+          <Label className='mb-1 block font-medium text-foreground text-sm'>{t('password')}</Label>
+          <input
+            type='password'
+            {...register('password')}
+            className='w-full rounded-lg border bg-background p-2 focus:outline-none focus:ring-2 focus:ring-ring'
+            placeholder={t('create_a_password')}
+          />
           {errors.password && <p className='mt-1 text-destructive text-sm'>{errors.password.message}</p>}
         </div>
 
@@ -95,17 +103,17 @@ export default function RegisterPage() {
             {loading ? (
               <>
                 <Loader2 className='mr-2 h-5 w-5 animate-spin' />
-                Creating account...
+                {t('creating_account')}
               </>
             ) : (
-              'Create account'
+              t('create_account')
             )}
           </button>
 
           <p className='text-center text-muted-foreground text-sm'>
             Already have an account?{' '}
             <a href='/login' className='text-muted-foreground underline hover:text-foreground'>
-              Sign in
+              {t('sign_in')}
             </a>
           </p>
         </div>

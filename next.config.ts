@@ -12,10 +12,11 @@ const nextConfig: NextConfig = {
   redirects: async () => {
     return [
       {
-        source: '/dashboard/account',
-        destination: '/dashboard/account/settings',
+        source: '/dashboard/workspace',
+        destination: '/dashboard/workspace/calendar',
         permanent: false,
       },
+
       {
         source: '/dashboard/crm',
         destination: '/dashboard/crm/contacts',
@@ -27,13 +28,18 @@ const nextConfig: NextConfig = {
         permanent: false,
       },
       {
-        source: '/dashboard/workspace',
-        destination: '/dashboard/workspace/calendar',
+        source: '/dashboard/resource',
+        destination: '/dashboard/resource/content',
         permanent: false,
       },
       {
-        source: '/dashboard/resource',
-        destination: '/dashboard/resource/content',
+        source: '/dashboard/tools',
+        destination: '/dashboard/tools/qrcode',
+        permanent: false,
+      },
+      {
+        source: '/dashboard/account',
+        destination: '/dashboard/account/settings',
         permanent: false,
       },
     ];

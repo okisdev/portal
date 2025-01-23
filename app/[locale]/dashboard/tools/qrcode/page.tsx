@@ -326,11 +326,11 @@ export default function QRCodePage() {
           </div>
           <div className='w-1/3'>
             <Label className='mb-1 block font-medium text-sm'>QR Code Color</Label>
-            <Input type='color' value={qrSettings.fgColor} onChange={(e) => setQRSettings({ ...qrSettings, fgColor: e.target.value })} className='h-10 w-full' />
+            <Input type='color' value={qrSettings.fgColor} onChange={(e) => setQRSettings({ ...qrSettings, fgColor: e.target.value })} className='h-9 w-full' />
           </div>
           <div className='w-1/3'>
             <Label className='mb-1 block font-medium text-sm'>Background Color</Label>
-            <Input type='color' value={qrSettings.bgColor} onChange={(e) => setQRSettings({ ...qrSettings, bgColor: e.target.value })} className='h-10 w-full' />
+            <Input type='color' value={qrSettings.bgColor} onChange={(e) => setQRSettings({ ...qrSettings, bgColor: e.target.value })} className='h-9 w-full' />
           </div>
         </div>
 
