@@ -23,8 +23,9 @@ export default async function RootLayout(props: Props) {
         <meta name='apple-mobile-web-app-title' content='Portal' />
         <meta name='theme-color' media='(prefers-color-scheme: light)' content='white' />
         <meta name='theme-color' media='(prefers-color-scheme: dark)' content='black' />
-        {/* <Script src='https://unpkg.com/react-scan/dist/auto.global.js' async /> */}
+        <Script src='https://unpkg.com/react-scan/dist/auto.global.js' async />
         <Script src='https://unpkg.com/react-scan/dist/install-hook.global.js' strategy='beforeInteractive' />
+        <Script defer src='https://umami.harisfox.com/script.js' data-website-id={process.env.NEXT_PUBLIC_UMAMI_WEBSITE_ID} />
       </head>
       <body className={cn(geistSans.className, 'antialiased')}>
         <NextIntlClientProvider messages={messages}>
