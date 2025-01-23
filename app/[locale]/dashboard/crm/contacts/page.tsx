@@ -254,16 +254,13 @@ export default function CRMContactsPage() {
 
         if (filters.conditions.length === 0) return true;
 
-        const groupedConditions = filters.conditions.reduce(
-          (acc, condition) => {
-            if (!acc[condition.field]) {
-              acc[condition.field] = [];
-            }
-            acc[condition.field].push(condition);
-            return acc;
-          },
-          {} as Record<string, FilterCondition[]>
-        );
+        const groupedConditions = filters.conditions.reduce((acc, condition) => {
+          if (!acc[condition.field]) {
+            acc[condition.field] = [];
+          }
+          acc[condition.field].push(condition);
+          return acc;
+        }, {} as Record<string, FilterCondition[]>);
 
         return Object.entries(groupedConditions).every(([field, conditions]) => {
           return conditions.some((condition) => {
@@ -393,6 +390,7 @@ export default function CRMContactsPage() {
     {
       accessorKey: 'remark',
       header: t('remark'),
+      cell: ({ row }) => <span className='capitalize'>{row.original.remark || '—'}</span>,
     },
     {
       accessorKey: 'createdAt',
@@ -454,12 +452,12 @@ export default function CRMContactsPage() {
       <div className='flex flex-col gap-4'>
         <div className='flex items-center justify-between gap-4'>
           <div className='flex flex-row gap-2'>
-            <Input placeholder='Search contacts...' value={search} onChange={(e) => setSearch(e.target.value)} className='h-8 w-72 max-w-sm' disabled={isLoading} />
+            <Input placeholder={t('search_contacts')} value={search} onChange={(e) => setSearch(e.target.value)} className='h-8 w-72 max-w-sm' disabled={isLoading} />
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant='outline' size='sm' disabled={isLoading}>
                   <Filter className='mr-2 h-4 w-4' />
-                  Filters ({filters.conditions.length})
+                  {t('filters')} ({filters.conditions.length})
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent className='w-[350px] p-4'>
@@ -531,10 +529,10 @@ export default function CRMContactsPage() {
                 .getAllColumns()
                 .filter((column) => column.getCanHide())
                 .map((column) => column.id)}
-              placeholder='Columns'
-              searchPlaceholder='Search columns...'
-              emptyText='No columns found'
-              groupHeading='Available Columns'
+              placeholder={t('columns')}
+              searchPlaceholder={t('search_columns')}
+              emptyText={t('no_columns_found')}
+              groupHeading={t('available_columns')}
               allowCustom={false}
               renderItem={(item) => {
                 const column = table.getAllColumns().find((col) => col.id === item);
@@ -617,8 +615,8 @@ export default function CRMContactsPage() {
         onConfirm={handleDeleteConfirm}
         title='Delete Contact'
         description='This action cannot be undone. This will permanently delete the contact and remove their data from our servers.'
-        confirmText='Delete'
-        cancelText='Cancel'
+        confirmText={t('delete')}
+        cancelText={t('cancel')}
       />
     </div>
   );

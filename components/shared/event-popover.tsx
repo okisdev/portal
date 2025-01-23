@@ -2,6 +2,7 @@ import { NameTag } from '@/components/shared/name-tag';
 import { Button } from '@/components/ui/button';
 import { PopoverContent } from '@/components/ui/popover';
 import type { CalendarEventWithParticipants, CalendarFolder } from '@/lib/schema';
+import { useTranslations } from 'next-intl';
 
 interface EventPopoverProps {
   event: CalendarEventWithParticipants;
@@ -11,6 +12,8 @@ interface EventPopoverProps {
 }
 
 export function EventPopover({ event, folder, onEventEdit, onEventDelete }: EventPopoverProps) {
+  const t = useTranslations();
+
   return (
     <PopoverContent className='w-80'>
       <div className='grid gap-2'>
@@ -92,12 +95,12 @@ export function EventPopover({ event, folder, onEventEdit, onEventDelete }: Even
           <div className='flex justify-end gap-2'>
             {onEventDelete && (
               <Button size='sm' variant='destructive' onClick={() => onEventDelete(event.id)}>
-                Delete
+                {t('delete')}
               </Button>
             )}
             {onEventEdit && (
               <Button variant='outline' size='sm' onClick={() => onEventEdit(event)}>
-                Edit
+                {t('edit')}
               </Button>
             )}
           </div>

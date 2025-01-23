@@ -341,7 +341,7 @@ export function EventDialog({ open, onOpenChange, onSubmit, isEditMode = false, 
                               }}
                               items={participantOptions.contacts?.map((contact) => contact.name) || []}
                               placeholder='Select contact'
-                              searchPlaceholder='Search contacts...'
+                              searchPlaceholder={t('search_contacts')}
                               emptyText='No contacts found'
                               groupHeading='Contacts'
                               allowCustom={false}

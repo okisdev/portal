@@ -568,7 +568,7 @@ export default function ContactIdPage() {
                         </DropdownMenuItem>
                         <DropdownMenuItem className='text-destructive' onClick={() => deleteAppointment.mutate(apt.id)}>
                           <Trash2 className='mr-2 size-4' />
-                          Delete
+                          {t('delete')}
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
@@ -601,25 +601,25 @@ export default function ContactIdPage() {
             </div>
 
             <div className='p-6'>
-              <h2 className='mb-4 font-medium'>Team Roles</h2>
+              <h2 className='mb-4 font-medium'>{t('team_roles')}</h2>
               <div className='space-y-3'>
                 {contact?.leadingTeams?.length === 0 && contact?.subLeadingTeams?.length === 0 && contact?.referralTeams?.length === 0 && (
-                  <p className='text-muted-foreground text-sm'>No team roles found.</p>
+                  <p className='text-muted-foreground text-sm'>{t('no_team_roles_found')}</p>
                 )}
                 {contact?.leadingTeams?.map((team) => (
                   <div key={team.id} className='flex items-center justify-between'>
-                    <Link href={`/dashboard/crm/team/${team.id}`} className='text-sm hover:text-primary'>
+                    <Link href={`/dashboard/crm/team/${team.id}`} className='text-sm transition-colors duration-200 hover:text-primary hover:underline'>
                       {team.name}
                     </Link>
-                    <span className='text-muted-foreground text-xs'>Team Leader</span>
+                    <span className='text-muted-foreground text-xs'>{t('team_leader')}</span>
                   </div>
                 ))}
                 {contact?.subLeadingTeams?.map((team) => (
                   <div key={team.id} className='flex items-center justify-between'>
-                    <Link href={`/dashboard/crm/team/${team.id}`} className='text-sm hover:text-primary'>
+                    <Link href={`/dashboard/crm/team/${team.id}`} className='text-sm transition-colors duration-200 hover:text-primary hover:underline'>
                       {team.name}
                     </Link>
-                    <span className='text-muted-foreground text-xs'>Sub Leader</span>
+                    <span className='text-muted-foreground text-xs'>{t('sub_leader')}</span>
                   </div>
                 ))}
                 {contact?.referralTeams?.map((team) => (
@@ -699,10 +699,12 @@ export default function ContactIdPage() {
                                       <span className='font-medium'>{activity.title}</span>
                                       <span className='text-muted-foreground text-xs'>•</span>
                                       {activity.initiatorType === 'system' ? (
-                                        <span className='text-muted-foreground text-xs'>by System</span>
+                                        <span className='text-muted-foreground text-xs'>{t('by_system')}</span>
                                       ) : (
-                                        <span className='text-muted-foreground text-xs'>
-                                          by <NameTag id={activity.userId} type='user' />
+                                        <span className='flex items-center gap-1 text-muted-foreground text-xs'>
+                                          {t.rich('by', {
+                                            name: () => <NameTag id={activity.userId} type='user' />,
+                                          })}
                                         </span>
                                       )}
                                       <span className='text-muted-foreground text-xs'>•</span>
@@ -794,7 +796,7 @@ export default function ContactIdPage() {
       <Dialog open={isEditModalOpen} onOpenChange={handleCloseEditModal}>
         <DialogContent className='max-h-[90vh] max-w-xl overflow-y-auto'>
           <DialogHeader>
-            <DialogTitle>Edit Contact Information</DialogTitle>
+            <DialogTitle>{t('edit_contact_information')}</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSubmitEdit} className='space-y-4'>
             <div className='grid grid-cols-2 gap-4'>
@@ -848,9 +850,9 @@ export default function ContactIdPage() {
                 value={editForm.source}
                 onChange={(value) => setEditForm({ ...editForm, source: value })}
                 items={sources}
-                placeholder='Select source...'
-                searchPlaceholder='Search source...'
-                groupHeading='Sources'
+                placeholder={t('select_source')}
+                searchPlaceholder={t('search_source')}
+                groupHeading={t('sources')}
               />
             </div>
             <div className='space-y-2'>
@@ -913,15 +915,15 @@ export default function ContactIdPage() {
       <Dialog open={isTeamModalOpen} onOpenChange={setIsTeamModalOpen}>
         <DialogContent className='max-h-[90vh] max-w-xl overflow-y-auto'>
           <DialogHeader>
-            <DialogTitle>Assign to Team</DialogTitle>
+            <DialogTitle>{t('assign_to_team')}</DialogTitle>
           </DialogHeader>
 
           <div className='space-y-4'>
             <div className='space-y-2'>
-              <Label>Select Team</Label>
+              <Label>{t('select_team')}</Label>
               <Select value={selectedTeam} onValueChange={setSelectedTeam}>
                 <SelectTrigger>
-                  <SelectValue placeholder='Select a team' />
+                  <SelectValue placeholder={t('select_a_team')} />
                 </SelectTrigger>
                 <SelectContent>
                   {allTeams?.map((team) => (
@@ -934,7 +936,7 @@ export default function ContactIdPage() {
             </div>
             <div className='flex justify-end gap-2'>
               <Button onClick={handleAssignTeam} disabled={assignToTeam.isPending || !selectedTeam}>
-                Assign
+                {t('assign')}
               </Button>
             </div>
           </div>

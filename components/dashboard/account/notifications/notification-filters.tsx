@@ -26,7 +26,7 @@ export function NotificationFilters() {
       <div className='flex items-center gap-4'>
         <Select defaultValue='all'>
           <SelectTrigger className='w-[180px]'>
-            <SelectValue placeholder='Filter by type' />
+            <SelectValue placeholder={t('filter_type')} />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value='all'>{t('all_notifications')}</SelectItem>
