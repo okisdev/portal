@@ -110,7 +110,7 @@ export const contact = pgTable('contact', {
   source: text(),
   assignedTo: text().references(() => user.id), // sales rep or account manager
   stripeCustomerId: text(), // for payment integration
-  joinedAt: timestamp({ mode: 'date' }),
+  joinedAt: timestamp({ mode: 'date' }), // when the contact is joined/signed
   createdAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
   updatedAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
   lastContactedAt: timestamp({ mode: 'date' }),
