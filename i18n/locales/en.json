@@ -33,6 +33,7 @@
   "cancel": "Cancel",
   "cancel_schedule": "Cancel Schedule",
   "cancelled": "Cancelled",
+  "cancels": "Cancels",
   "clear": "Clear",
   "code": "Code",
   "color": "Color",
@@ -201,6 +202,7 @@
   "sign_out": "Sign Out",
   "sign_out_description": "Are you sure you want to sign out of your account?",
   "social": "Social",
+  "some_cancelling": "Some cancelling",
   "source": "Source",
   "sources": "Sources",
   "starts_with": "Starts with",
@@ -225,6 +227,7 @@
   "tools": "Tools",
   "total_amount": "Total Amount",
   "total_contacts": "Total Contacts",
+  "total_paid": "Total Paid",
   "total_payments": "Total Payments",
   "tuesday": "Tuesday",
   "type": "Type",
@@ -240,5 +243,6 @@
   "week": "Week",
   "welcome_back": "Welcome Back, {name}.",
   "welcome_description": "Welcome to your dashboard",
-  "workspace": "Workspace"
+  "workspace": "Workspace",
+  "ends": "Ends"
 }

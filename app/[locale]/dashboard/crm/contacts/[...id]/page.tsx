@@ -613,28 +613,30 @@ export default function ContactIdPage() {
 
               {stripeCustomerInfo?.stats && (
                 <div className='space-y-4'>
-                  <div className='rounded-lg border bg-muted/50 p-4'>
-                    <h3 className='mb-3 font-medium text-sm'>{t('one_time_payments')}</h3>
-                    <div className='grid grid-cols-2 gap-4'>
-                      <div>
-                        <p className='text-muted-foreground text-xs'>{t('total_payments')}</p>
-                        <p className='font-medium text-foreground'>{stripeCustomerInfo.stats.totalStats.oneTimeCount}</p>
-                      </div>
-                      {Object.entries(stripeCustomerInfo.stats.oneTime).map(([currency, data]) => (
-                        <div key={currency}>
-                          <p className='text-muted-foreground text-xs'>
-                            {t('total_amount')} ({currency.toUpperCase()})
-                          </p>
-                          <p className='font-medium text-foreground'>
-                            {new Intl.NumberFormat('en-US', {
-                              style: 'currency',
-                              currency: currency,
-                            }).format(data.total)}
-                          </p>
+                  {stripeCustomerInfo.stats.totalStats.oneTimeCount > 0 && (
+                    <div className='rounded-lg border bg-muted/50 p-4'>
+                      <h3 className='mb-3 font-medium text-sm'>{t('one_time_payments')}</h3>
+                      <div className='grid grid-cols-2 gap-4'>
+                        <div>
+                          <p className='text-muted-foreground text-xs'>{t('total_payments')}</p>
+                          <p className='font-medium text-foreground'>{stripeCustomerInfo.stats.totalStats.oneTimeCount}</p>
                         </div>
-                      ))}
+                        {Object.entries(stripeCustomerInfo.stats.oneTime).map(([currency, data]) => (
+                          <div key={currency}>
+                            <p className='text-muted-foreground text-xs'>
+                              {t('total_amount')} ({currency.toUpperCase()})
+                            </p>
+                            <p className='font-medium text-foreground'>
+                              {new Intl.NumberFormat('en-US', {
+                                style: 'currency',
+                                currency: currency,
+                              }).format(data.total)}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
                     </div>
-                  </div>
+                  )}
 
                   {stripeCustomerInfo.activeSubscriptions.length > 0 && (
                     <div className='rounded-lg border bg-muted/50 p-4'>
@@ -642,19 +644,37 @@ export default function ContactIdPage() {
                       <div className='grid grid-cols-2 gap-4'>
                         <div>
                           <p className='text-muted-foreground text-xs'>{t('active_subscriptions')}</p>
-                          <p className='font-medium text-foreground'>{stripeCustomerInfo.stats.totalStats.subscriptionCount}</p>
+                          <p className='font-medium text-foreground'>
+                            {stripeCustomerInfo.stats.totalStats.subscriptionCount}
+                            {stripeCustomerInfo.activeSubscriptions.some((sub) => sub.cancelAtPeriodEnd) && (
+                              <span className='ml-2 rounded-full bg-yellow-100 px-2 py-0.5 text-xs text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'>{t('some_cancelling')}</span>
+                            )}
+                          </p>
                         </div>
                         {Object.entries(stripeCustomerInfo.stats.subscription).map(([currency, data]) => (
-                          <div key={currency}>
-                            <p className='text-muted-foreground text-xs'>
-                              {t('monthly_recurring')} ({currency.toUpperCase()})
-                            </p>
-                            <p className='font-medium text-foreground'>
-                              {new Intl.NumberFormat('en-US', {
-                                style: 'currency',
-                                currency: currency,
-                              }).format(data.recurring)}
-                            </p>
+                          <div key={currency} className='space-y-2'>
+                            <div>
+                              <p className='text-muted-foreground text-xs'>
+                                {t('monthly_recurring')} ({currency.toUpperCase()})
+                              </p>
+                              <p className='font-medium text-foreground'>
+                                {new Intl.NumberFormat('en-US', {
+                                  style: 'currency',
+                                  currency: currency,
+                                }).format(data.recurring)}
+                              </p>
+                            </div>
+                            <div>
+                              <p className='text-muted-foreground text-xs'>
+                                {t('total_paid')} ({currency.toUpperCase()})
+                              </p>
+                              <p className='font-medium text-foreground'>
+                                {new Intl.NumberFormat('en-US', {
+                                  style: 'currency',
+                                  currency: currency,
+                                }).format(data.total)}
+                              </p>
+                            </div>
                           </div>
                         ))}
                       </div>
@@ -671,7 +691,7 @@ export default function ContactIdPage() {
 
                 {stripeCustomerInfo?.recentPayments?.map((payment) => (
                   <div key={payment.id} className='flex items-center justify-between rounded-md bg-muted/30 p-2'>
-                    <div className='flex flex-col gap-1'>
+                    <div className='flex flex-col justify-between gap-1'>
                       <span className='text-muted-foreground text-sm'>{formatDate(new Date(payment.created * 1000))}</span>
                       <div className='flex items-center gap-2'>
                         <span
@@ -680,9 +700,8 @@ export default function ContactIdPage() {
                             payment.type === 'subscription' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300' : 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300'
                           )}
                         >
-                          {payment.type === 'subscription' ? t('subscription') : t('one_time')}
+                          {payment.description}
                         </span>
-                        {payment.description && <span className='text-muted-foreground text-xs'>{payment.description}</span>}
                       </div>
                     </div>
                     <div className='flex flex-col items-end gap-1'>
@@ -693,10 +712,20 @@ export default function ContactIdPage() {
                         }).format(payment.amount)}
                         {payment.type === 'subscription' && 'interval' in payment && `/${payment.interval}`}
                       </span>
-                      <span className='text-muted-foreground text-xs capitalize'>{payment.status}</span>
+                      <span className='text-muted-foreground text-xs capitalize'>
+                        {payment.status} {payment.type === 'subscription' && payment.status === 'active' && 'currentPeriodEnd' in payment && payment.cancelAtPeriodEnd && `(${t('cancelled')})`}
+                      </span>
                       {payment.type === 'subscription' && 'currentPeriodEnd' in payment && (
                         <span className='text-muted-foreground text-xs'>
-                          {t('renews')}: {formatDate(new Date(payment.currentPeriodEnd * 1000))}
+                          {payment.cancelAtPeriodEnd ? (
+                            <>
+                              {t('cancels')}: {formatDate(new Date(payment.currentPeriodEnd * 1000))}
+                            </>
+                          ) : (
+                            <>
+                              {t('renews')}: {formatDate(new Date(payment.currentPeriodEnd * 1000))}
+                            </>
+                          )}
                         </span>
                       )}
                     </div>

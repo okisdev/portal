@@ -59,8 +59,26 @@ export const payRouter = createTRPCRouter({
       }),
     ]);
 
-    const successfulPayments = payments.data.filter((payment) => payment.status === 'succeeded');
     const activeSubscriptions = subscriptions.data.filter((sub) => sub.status === 'active' || sub.status === 'trialing');
+
+    // Get subscription payment intents to exclude them from one-time payments
+    const subscriptionPaymentIntents = new Set(
+      (
+        await Promise.all(
+          activeSubscriptions.map((sub) =>
+            stripe.paymentIntents
+              .list({
+                customer: customer.id,
+                limit: 100,
+              })
+              .then((result) => result.data.filter((payment) => typeof payment.invoice === 'string' && payment.invoice.startsWith('in_')).map((payment) => payment.id))
+          )
+        )
+      ).flat()
+    );
+
+    // Filter successful payments and separate one-time from subscription payments
+    const successfulPayments = payments.data.filter((payment) => payment.status === 'succeeded' && !subscriptionPaymentIntents.has(payment.id));
 
     // Calculate payment statistics by type and currency
     const paymentStats = {
@@ -85,6 +103,9 @@ export const payRouter = createTRPCRouter({
         }
         acc[currency].count += 1;
         acc[currency].recurring += (sub.items.data[0]?.price.unit_amount || 0) / 100;
+        // Calculate total based on how many times this subscription has been paid
+        const monthsPaid = Math.floor((Date.now() / 1000 - sub.created) / (30 * 24 * 60 * 60));
+        acc[currency].total += (monthsPaid * (sub.items.data[0]?.price.unit_amount || 0)) / 100;
         return acc;
       }, {} as Record<string, { total: number; count: number; recurring: number }>),
 
@@ -119,6 +140,9 @@ export const payRouter = createTRPCRouter({
       type: 'subscription' as const,
       interval: sub.items.data[0]?.price.recurring?.interval,
       currentPeriodEnd: sub.current_period_end,
+      totalPaid: (Math.floor((Date.now() / 1000 - sub.created) / (30 * 24 * 60 * 60)) * (sub.items.data[0]?.price.unit_amount || 0)) / 100,
+      cancelAtPeriodEnd: sub.cancel_at_period_end,
+      cancelAt: sub.cancel_at,
     }));
 
     // Combine and sort all payments by date
