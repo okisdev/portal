@@ -169,7 +169,7 @@ export function ContentEditor({ content, onUpdate, onDelete, isLoading }: Conten
                             e.stopPropagation();
                             handleRemoveTag(tag);
                           }}
-                          className='ml-1 cursor-pointer rounded-full outline-none hover:text-destructive'
+                          className='ml-1 cursor-pointer rounded-full outline-hidden hover:text-destructive'
                         >
                           <X className='size-3' />
                         </div>
