@@ -526,7 +526,7 @@ export default function ContactIdPage() {
               {isNotesEditing ? (
                 <Textarea value={editableRemark} onChange={(e) => setEditableRemark(e.target.value)} className='min-h-[100px] bg-background' placeholder='Add remark about this contact...' />
               ) : (
-                <p className='whitespace-pre-wrap text-muted-foreground text-sm'>{contact?.remark || 'No remark added yet. Click edit to add remark about this contact.'}</p>
+                <p className='whitespace-pre-wrap text-muted-foreground text-sm'>{contact?.remark || t('no_remark_added')}</p>
               )}
             </div>
 
@@ -902,7 +902,7 @@ export default function ContactIdPage() {
         onOpenChange={setIsBookingModalOpen}
         onSubmit={handleBookAppointment}
         defaultValues={{
-          title: `Meeting with ${contact?.name}`,
+          title: t('meeting_with', { name: contact?.name }),
           startAt: new Date(),
           endAt: new Date(Date.now() + 30 * 60000),
           folderId: 'default',
