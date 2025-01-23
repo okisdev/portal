@@ -183,21 +183,24 @@ export const teamRouter = createTRPCRouter({
         leaderId: z.string().optional(),
         subLeaderId: z.string().optional(),
         referralId: z.string().optional(),
-        campaignId: z.string().optional(),
+        campaignCode: z.string().optional(),
         remarks: z.string().optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
-      let campaignCode = '';
+      let campaignCode = input.campaignCode;
 
-      if (input.campaignId) {
+      if (campaignCode) {
+        // Verify campaign exists
         const campaign = await ctx.db
           .select()
           .from(marketingCampaign)
-          .where(eq(marketingCampaign.id, input.campaignId ?? ''))
+          .where(eq(marketingCampaign.campaignCode, campaignCode))
           .then((rows) => rows[0]);
 
-        campaignCode = campaign?.campaignCode ?? '';
+        if (!campaign) {
+          campaignCode = undefined;
+        }
       }
 
       await ctx.db
@@ -208,7 +211,7 @@ export const teamRouter = createTRPCRouter({
           leaderId: input.leaderId,
           subLeaderId: input.subLeaderId,
           referralId: input.referralId,
-          campaignCode: campaignCode,
+          campaignCode,
           remarks: input.remarks,
           updatedAt: new Date(),
         })

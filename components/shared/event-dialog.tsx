@@ -330,18 +330,19 @@ export function EventDialog({ open, onOpenChange, onSubmit, isEditMode = false, 
                         name={`participants.${index}.id`}
                         render={({ field }) => (
                           <FormItem className='flex-1'>
-                            <Select value={field.value} onValueChange={field.onChange}>
-                              <SelectTrigger>
-                                <SelectValue placeholder='Select contact' />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {participantOptions.contacts?.map((contact) => (
-                                  <SelectItem key={contact.id} value={contact.id}>
-                                    {contact.name}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
+                            <Combobox
+                              value={participantOptions.contacts?.find((contact) => contact.id === field.value)?.name || ''}
+                              onChange={(value) => {
+                                const contact = participantOptions.contacts?.find((c) => c.name === value);
+                                field.onChange(contact?.id || '');
+                              }}
+                              items={participantOptions.contacts?.map((contact) => contact.name) || []}
+                              placeholder='Select contact'
+                              searchPlaceholder='Search contacts...'
+                              emptyText='No contacts found'
+                              groupHeading='Contacts'
+                              allowCustom={false}
+                            />
                           </FormItem>
                         )}
                       />

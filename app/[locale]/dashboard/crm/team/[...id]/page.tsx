@@ -322,10 +322,10 @@ export default function TeamIdPage() {
   };
 
   const initialParticipants =
-    teamContacts?.map((member) => ({
+    teamContacts?.map((c) => ({
       type: 'contact' as const,
-      id: member.contact.id,
-      name: `${member.contact.firstName} ${member.contact.lastName}`,
+      id: c.contact.id,
+      name: `${c.contact.firstName} ${c.contact.lastName}`,
       role: 'required' as const,
     })) || [];
 
@@ -354,7 +354,7 @@ export default function TeamIdPage() {
               <Popover open={isAddMemberOpen} onOpenChange={setIsAddMemberOpen}>
                 <PopoverTrigger asChild>
                   <Button variant='outline' size='sm' className='h-8'>
-                    <Plus className='mr-1 size-4' /> Add Member
+                    <Plus className='mr-1 size-4' /> Add Contact
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className='w-[300px] p-0' align='end'>
@@ -368,7 +368,7 @@ export default function TeamIdPage() {
                       contacts
                         ?.filter(
                           (contact) =>
-                            !teamContacts?.some((member) => member.contact.id === contact.id) &&
+                            !teamContacts?.some((c) => c.contact.id === contact.id) &&
                             (contact.firstName.toLowerCase().includes(searchValue.toLowerCase()) ||
                               contact.lastName.toLowerCase().includes(searchValue.toLowerCase()) ||
                               contact.email.toLowerCase().includes(searchValue.toLowerCase()))
@@ -536,10 +536,10 @@ export default function TeamIdPage() {
                     : ''
                 }
                 onChange={(value) => {
-                  const member = teamContacts?.find((m) => `${m.contact.firstName} ${m.contact.lastName}` === value);
-                  setEditForm({ ...editForm, leaderId: member?.contact.id || '' });
+                  const contact = teamContacts?.find((c) => `${c.contact.firstName} ${c.contact.lastName}` === value);
+                  setEditForm({ ...editForm, leaderId: contact?.contact.id || '' });
                 }}
-                items={teamContacts?.map((member) => `${member.contact.firstName} ${member.contact.lastName}`) || []}
+                items={teamContacts?.map((c) => `${c.contact.firstName} ${c.contact.lastName}`) || []}
                 placeholder='Select team leader'
                 searchPlaceholder='Search team leader...'
                 allowCustom={false}
@@ -555,10 +555,10 @@ export default function TeamIdPage() {
                     : ''
                 }
                 onChange={(value) => {
-                  const member = teamContacts?.find((m) => `${m.contact.firstName} ${m.contact.lastName}` === value);
-                  setEditForm({ ...editForm, subLeaderId: member?.contact.id || '' });
+                  const contact = teamContacts?.find((c) => `${c.contact.firstName} ${c.contact.lastName}` === value);
+                  setEditForm({ ...editForm, subLeaderId: contact?.contact.id || '' });
                 }}
-                items={teamContacts?.map((member) => `${member.contact.firstName} ${member.contact.lastName}`) || []}
+                items={teamContacts?.map((c) => `${c.contact.firstName} ${c.contact.lastName}`) || []}
                 placeholder='Select sub leader'
                 searchPlaceholder='Search sub leader...'
                 allowCustom={false}
@@ -591,13 +591,13 @@ export default function TeamIdPage() {
               <Combobox
                 value={editForm.campaignCode}
                 onChange={(value) => setEditForm({ ...editForm, campaignCode: value })}
-                items={campaigns?.map((campaign) => campaign.id || '') || []}
+                items={campaigns?.map((campaign) => campaign.campaignCode || '') || []}
                 placeholder='Select campaign code'
                 searchPlaceholder='Search campaign code...'
                 allowCustom={false}
                 groupHeading='Campaigns'
-                renderItem={(campaignId) => {
-                  const campaign = campaigns?.find((c) => c.id === campaignId);
+                renderItem={(campaignCode) => {
+                  const campaign = campaigns?.find((c) => c.campaignCode === campaignCode);
                   return campaign ? `${campaign.name} (${campaign.campaignCode})` : null;
                 }}
               />

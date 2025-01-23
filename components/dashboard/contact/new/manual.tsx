@@ -24,7 +24,7 @@ const formSchema = z.object({
   source: z.string().optional(),
   remark: z.string().optional(),
   status: statusSchema.optional(),
-  campaignId: z.string().optional(),
+  campaignCode: z.string().optional(),
 });
 
 export default function ManualContactForm() {
@@ -44,7 +44,7 @@ export default function ManualContactForm() {
       source: '',
       remark: '',
       status: 'lead',
-      campaignId: '',
+      campaignCode: '',
     },
   });
 
@@ -207,7 +207,7 @@ export default function ManualContactForm() {
           />
           <FormField
             control={form.control}
-            name='campaignId'
+            name='campaignCode'
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Campaign</FormLabel>
@@ -215,14 +215,14 @@ export default function ManualContactForm() {
                   <Combobox
                     value={field.value ?? ''}
                     onChange={field.onChange}
-                    items={campaigns?.map((c) => c.id) ?? []}
+                    items={campaigns?.map((c) => c.campaignCode) ?? []}
                     placeholder='Select a campaign'
                     searchPlaceholder='Search campaigns...'
                     groupHeading='Campaigns'
                     allowCustom={false}
-                    renderItem={(id) => {
-                      const campaign = campaigns?.find((c) => c.id === id);
-                      return campaign?.name ?? id;
+                    renderItem={(code) => {
+                      const campaign = campaigns?.find((c) => c.campaignCode === code);
+                      return campaign?.name ?? code;
                     }}
                   />
                 </FormControl>

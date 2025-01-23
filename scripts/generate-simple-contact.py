@@ -2,7 +2,7 @@ import csv
 import random
 import sys
 import argparse
-from typing import List, Dict, Tuple
+from typing import List, Dict, Tuple, Union
 
 # Global name data
 WESTERN_FIRST_NAMES = ['James', 'Mary', 'John', 'Patricia', 'Robert', 'Jennifer', 'Michael', 'Linda', 
@@ -63,7 +63,7 @@ HK_GIVEN_NAMES = [
     ('浩然', 'Ho Yin', 'Henry')
 ]
 
-def generate_contacts(num_records: int, allow_duplicates: bool | int = False, output_file: str = "contacts.csv") -> List[Dict]:
+def generate_contacts(num_records: int, allow_duplicates: Union[bool, int] = False, output_file: str = "contacts.csv") -> List[Dict]:
     """
     Generate a CSV file with random contact information including names, emails, and phone numbers.
     

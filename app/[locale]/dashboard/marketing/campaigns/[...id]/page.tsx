@@ -2,6 +2,7 @@
 
 import { ActionAlertDialog } from '@/components/shared/action-alert-dialog';
 import { ColorBadge } from '@/components/shared/color-badge';
+import { ComboboxCommand } from '@/components/shared/combobox';
 import { PageHeader } from '@/components/shared/page-header';
 import { PageLoading } from '@/components/shared/page-loading';
 import { PaginationTable } from '@/components/shared/pagination-table';
@@ -11,6 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useDebounce } from '@/hooks/use-debounce';
 import { formatDate } from '@/lib/utils';
 import { api } from '@/utils/trpc/client';
@@ -26,10 +28,11 @@ import {
   getSortedRowModel,
   useReactTable,
 } from '@tanstack/react-table';
-import { Eye, Filter, MoreHorizontal, Trash2 } from 'lucide-react';
+import { Eye, Filter, MoreHorizontal, Plus, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { useMemo, useState } from 'react';
+import { toast } from 'sonner';
 
 type FilterOperator = '=' | '!=' | 'contains' | 'startsWith' | 'endsWith';
 
@@ -46,15 +49,18 @@ type FilterConfig = {
 
 export default function CampaignDetailsPage() {
   const router = useRouter();
-  const { id: campaignId } = useParams<{ id: string }>();
+  const { id: campaignCode } = useParams<{ id: string }>();
 
-  const { data: campaign, isLoading: campaignLoading } = api.marketing.getCampaignById.useQuery({
-    id: campaignId[0],
+  const { data: campaign, isLoading: campaignLoading } = api.marketing.getCampaignByCode.useQuery({
+    code: campaignCode[0],
   });
 
-  const { data: contacts = [], isLoading: contactsLoading } = api.marketing.getCampaignContacts.useQuery({
-    campaignId: campaignId[0],
+  const { data: campaignContacts = [], isLoading: contactsLoading } = api.marketing.getCampaignContacts.useQuery({
+    code: campaignCode[0],
   });
+
+  const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
+  const [searchValue, setSearchValue] = useState('');
 
   const utils = api.useUtils();
 
@@ -70,6 +76,8 @@ export default function CampaignDetailsPage() {
     conditions: [],
     matchAll: true,
   });
+
+  const { data: contacts } = api.contact.getAllContacts.useQuery();
 
   const filterFields = [
     { label: 'Name', value: 'name' },
@@ -90,19 +98,29 @@ export default function CampaignDetailsPage() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [contactToDelete, setContactToDelete] = useState<string | null>(null);
 
-  const removeContactFromCampaign = api.marketing.removeContactFromCampaign.useMutation({
+  const { mutate: removeContact } = api.contact.removeContactFromCampaign.useMutation({
     onSuccess: () => {
-      utils.marketing.getCampaignContacts.invalidate();
-      utils.marketing.getCampaignById.invalidate();
+      toast.success('Contact removed from campaign');
+      utils.marketing.getCampaignContacts.invalidate({ code: campaignCode[0] });
+      utils.marketing.getCampaignByCode.invalidate({ code: campaignCode[0] });
+      setDeleteDialogOpen(false);
+      setContactToDelete(null);
     },
   });
 
-  const updateContactStatus = api.marketing.updateContactCampaignStatus.useMutation({
+  const addContactToCampaign = api.contact.addContactToCampaign.useMutation({
     onSuccess: () => {
-      utils.marketing.getCampaignContacts.invalidate();
-      utils.marketing.getCampaignById.invalidate();
+      toast.success('Contact added to campaign');
+      utils.marketing.getCampaignContacts.invalidate({ code: campaignCode[0] });
     },
   });
+
+  const handleAddMember = (contactId: string) => {
+    addContactToCampaign.mutate({
+      campaignCode: campaignCode[0],
+      contactId,
+    });
+  };
 
   const handleFilterChange = (index: number, field: string, operator: FilterOperator, value: string) => {
     const newConditions = [...filters.conditions];
@@ -177,49 +195,16 @@ export default function CampaignDetailsPage() {
           Status {column.getIsSorted() && <CaretSortIcon className='ml-2 inline' />}
         </Button>
       ),
-      cell: ({ row }) => (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-            <Button variant='ghost' className='p-0'>
-              <ColorBadge type='status' value={row.original.status} />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent>
-            <DropdownMenuItem onClick={() => handleStatusChange(row.original.id, 'pending')}>Pending</DropdownMenuItem>
-            <DropdownMenuItem onClick={() => handleStatusChange(row.original.id, 'engaged')}>Engaged</DropdownMenuItem>
-            <DropdownMenuItem onClick={() => handleStatusChange(row.original.id, 'converted')}>Converted</DropdownMenuItem>
-            <DropdownMenuItem onClick={() => handleStatusChange(row.original.id, 'bounced')}>Bounced</DropdownMenuItem>
-            <DropdownMenuItem onClick={() => handleStatusChange(row.original.id, 'unsubscribed')}>Unsubscribed</DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      ),
+      cell: ({ row }) => <ColorBadge type='contactStatus' value={row.original.status} />,
     },
     {
-      accessorKey: 'signupDate',
+      accessorKey: 'joinedAt',
       header: ({ column }) => (
         <Button variant='ghost' onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
-          Signup Date {column.getIsSorted() && <CaretSortIcon className='ml-2 inline' />}
+          Joined Date {column.getIsSorted() && <CaretSortIcon className='ml-2 inline' />}
         </Button>
       ),
-      cell: ({ row }) => formatDate(new Date(row.original.signupDate)),
-    },
-    {
-      accessorKey: 'conversionDate',
-      header: ({ column }) => (
-        <Button variant='ghost' onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
-          Conversion Date {column.getIsSorted() && <CaretSortIcon className='ml-2 inline' />}
-        </Button>
-      ),
-      cell: ({ row }) => (row.original.conversionDate ? formatDate(new Date(row.original.conversionDate)) : '—'),
-    },
-    {
-      accessorKey: 'source',
-      header: ({ column }) => (
-        <Button variant='ghost' onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
-          Source {column.getIsSorted() && <CaretSortIcon className='ml-2 inline' />}
-        </Button>
-      ),
-      cell: ({ row }) => <span className='capitalize'>{row.original.source || '—'}</span>,
+      cell: ({ row }) => formatDate(new Date(row.original.joinedAt)),
     },
     {
       id: 'actions',
@@ -248,18 +233,17 @@ export default function CampaignDetailsPage() {
   ];
 
   const filteredContacts = useMemo(() => {
-    if (!contacts) return [];
+    if (!campaignContacts) return [];
 
-    return contacts.filter((contact) => {
+    return campaignContacts.filter((contact) => {
       if (debouncedSearch) {
         const searchTerm = debouncedSearch.toLowerCase();
         const name = contact.name?.toLowerCase();
         const email = contact.email.toLowerCase();
         const company = (contact.company || '').toLowerCase();
         const status = contact.status.toLowerCase();
-        const source = (contact.source || '').toLowerCase();
 
-        return name?.includes(searchTerm) || email.includes(searchTerm) || company.includes(searchTerm) || status.includes(searchTerm) || source.includes(searchTerm);
+        return name?.includes(searchTerm) || email.includes(searchTerm) || company.includes(searchTerm) || status.includes(searchTerm);
       }
 
       if (filters.conditions.length === 0) return true;
@@ -284,7 +268,7 @@ export default function CampaignDetailsPage() {
         }
       });
     });
-  }, [contacts, filters, debouncedSearch]);
+  }, [campaignContacts, filters, debouncedSearch]);
 
   const table = useReactTable({
     data: filteredContacts,
@@ -318,21 +302,11 @@ export default function CampaignDetailsPage() {
 
   const handleDeleteConfirm = async () => {
     if (contactToDelete) {
-      await removeContactFromCampaign.mutate({
-        campaignId: campaignId[0],
+      removeContact({
         contactId: contactToDelete,
+        campaignCode: campaignCode[0],
       });
-      setDeleteDialogOpen(false);
-      setContactToDelete(null);
     }
-  };
-
-  const handleStatusChange = async (contactId: string, status: 'pending' | 'engaged' | 'converted' | 'bounced' | 'unsubscribed') => {
-    await updateContactStatus.mutate({
-      campaignId: campaignId[0],
-      contactId,
-      status,
-    });
   };
 
   if (campaignLoading) {
@@ -350,7 +324,7 @@ export default function CampaignDetailsPage() {
         description={campaign.description || 'No description'}
         right={
           <Button variant='outline' size='sm' asChild>
-            <Link href={`/dashboard/marketing/campaigns/${campaignId}/edit`}>Edit Campaign</Link>
+            <Link href={`/dashboard/marketing/campaigns/${campaignCode}/edit`}>Edit Campaign</Link>
           </Button>
         }
       />
@@ -361,17 +335,7 @@ export default function CampaignDetailsPage() {
             <CardTitle className='text-sm'>Total Contacts</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className='text-2xl font-bold'>{campaign.contactCount}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle className='text-sm'>Converted</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className='text-2xl font-bold'>
-              {campaign.convertedCount} ({campaign.contactCount > 0 ? Math.round((campaign.convertedCount / campaign.contactCount) * 100) : 0}%)
-            </div>
+            <div className='font-bold text-2xl'>{campaign.contactCount}</div>
           </CardContent>
         </Card>
         <Card>
@@ -459,9 +423,55 @@ export default function CampaignDetailsPage() {
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
-          <Button variant='outline' size='sm' asChild>
-            <Link href={`/dashboard/marketing/campaigns/${campaignId}/contacts/add`}>Add Contact</Link>
-          </Button>
+
+          <Popover open={isAddMemberOpen} onOpenChange={setIsAddMemberOpen}>
+            <PopoverTrigger asChild>
+              <Button variant='outline' size='sm' className='h-8'>
+                <Plus className='mr-1 size-4' /> Add Contact
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className='w-[300px] p-0' align='end'>
+              <ComboboxCommand
+                query={searchValue}
+                setQuery={setSearchValue}
+                value=''
+                onChange={handleAddMember}
+                setOpen={setIsAddMemberOpen}
+                items={
+                  contacts
+                    ?.filter(
+                      (contact) =>
+                        !campaignContacts?.some((c) => c.id === contact.id) &&
+                        (contact.firstName.toLowerCase().includes(searchValue.toLowerCase()) ||
+                          contact.lastName.toLowerCase().includes(searchValue.toLowerCase()) ||
+                          contact.email.toLowerCase().includes(searchValue.toLowerCase()))
+                    )
+                    .map((contact) => contact.id) ?? []
+                }
+                searchPlaceholder='Search contacts...'
+                emptyText='No contacts found.'
+                groupHeading='Contacts'
+                allowCustom={false}
+                renderItem={(contactId) => {
+                  const contact = contacts?.find((c) => c.id === contactId);
+                  if (!contact) return null;
+                  return (
+                    <>
+                      <Avatar className='size-6'>
+                        <AvatarFallback>{contact.firstName.charAt(0)}</AvatarFallback>
+                      </Avatar>
+                      <div className='flex-1'>
+                        <p className='text-sm'>
+                          {contact.firstName} {contact.lastName}
+                        </p>
+                        <p className='text-muted-foreground text-xs'>{contact.email}</p>
+                      </div>
+                    </>
+                  );
+                }}
+              />
+            </PopoverContent>
+          </Popover>
         </div>
       </div>
 

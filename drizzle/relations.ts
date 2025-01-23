@@ -64,15 +64,11 @@ export const contactRelations = relations(contact, ({ many, one }) => ({
   deals: many(contactDeal),
   activities: many(contactActivity),
   payments: many(paymentTrack),
-  campaigns: many(contactCampaign),
   assignedUser: one(user, {
     fields: [contact.assignedTo],
     references: [user.id],
   }),
-  campaign: one(marketingCampaign, {
-    fields: [contact.campaignId],
-    references: [marketingCampaign.id],
-  }),
+  campaigns: many(contactCampaign),
   eventParticipations: many(calendarEventParticipant),
   teams: many(teamContact),
   leadingTeams: many(team, { relationName: 'teamLeader' }),
@@ -213,7 +209,7 @@ export const marketingCampaignRelations = relations(marketingCampaign, ({ one, m
     fields: [marketingCampaign.updatedBy],
     references: [user.id],
   }),
-  contactCampaigns: many(contactCampaign),
+  contacts: many(contactCampaign),
 }));
 
 export const contactCampaignRelations = relations(contactCampaign, ({ one }) => ({
@@ -222,8 +218,8 @@ export const contactCampaignRelations = relations(contactCampaign, ({ one }) => 
     references: [contact.id],
   }),
   campaign: one(marketingCampaign, {
-    fields: [contactCampaign.campaignId],
-    references: [marketingCampaign.id],
+    fields: [contactCampaign.campaignCode],
+    references: [marketingCampaign.campaignCode],
   }),
 }));
 

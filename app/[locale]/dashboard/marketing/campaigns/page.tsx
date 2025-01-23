@@ -36,13 +36,28 @@ import { z } from 'zod';
 
 const campaignFormSchema = z.object({
   name: z.string().min(1, 'Name is required'),
-  campaignCode: z.string().optional(),
+  campaignCode: z.string().min(1, 'Campaign code is required'),
   description: z.string().optional(),
   type: z.enum(['email', 'social', 'event', 'referral', 'other']),
   status: z.enum(['draft', 'scheduled', 'active', 'paused', 'completed', 'cancelled']),
 });
 
 type CampaignFormValues = z.infer<typeof campaignFormSchema>;
+
+type Campaign = {
+  id: string;
+  name: string;
+  campaignCode: string;
+  description: string | null;
+  type: 'email' | 'social' | 'event' | 'referral' | 'other';
+  status: 'draft' | 'scheduled' | 'active' | 'paused' | 'completed' | 'cancelled';
+  contactCount: number;
+  metrics: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+  createdBy: string;
+  updatedBy: string | null;
+};
 
 export default function MarketingCampaignsPage() {
   const router = useRouter();
@@ -55,7 +70,7 @@ export default function MarketingCampaignsPage() {
 
   const [searchQuery, setSearchQuery] = useState('');
   const [editingCampaign, setEditingCampaign] = useState<{
-    id: string;
+    code: string;
     data: CampaignFormValues;
   } | null>(null);
 
@@ -84,9 +99,16 @@ export default function MarketingCampaignsPage() {
   }, [campaigns, searchQuery]);
 
   const activeCampaigns = campaigns.filter((c) => c.status === 'active');
-  const totalContacts = campaigns.reduce((acc, c) => acc + (typeof c.contactCount === 'number' ? c.contactCount : 0), 0);
-  const totalConversions = campaigns.reduce((acc, c) => acc + (typeof c.convertedCount === 'number' ? c.convertedCount : 0), 0);
-  const avgConversionRate = totalContacts > 0 ? Math.round((totalConversions / totalContacts) * 100) : 0;
+  const totalContacts = campaigns.reduce((acc, c) => acc + (c.contactCount || 0), 0);
+
+  const onSubmit = async (data: CampaignFormValues) => {
+    if (!editingCampaign) return;
+
+    await updateCampaign.mutateAsync({
+      code: editingCampaign.code,
+      ...data,
+    });
+  };
 
   const handleEditCampaign = (e: React.MouseEvent, campaign: MarketingCampaign) => {
     e.stopPropagation();
@@ -98,13 +120,13 @@ export default function MarketingCampaignsPage() {
       status: campaign.status,
     };
     setEditingCampaign({
-      id: campaign.id,
+      code: campaign.campaignCode || '',
       data: formData,
     });
     form.reset(formData);
   };
 
-  const columns: ColumnDef<MarketingCampaign>[] = [
+  const columns: ColumnDef<Campaign>[] = [
     {
       id: 'select',
       header: ({ table }) => (
@@ -126,7 +148,7 @@ export default function MarketingCampaignsPage() {
         </Button>
       ),
       cell: ({ row }) => (
-        <Link href={`/dashboard/marketing/campaigns/${row.original.id}`} className='hover:underline font-medium'>
+        <Link href={`/dashboard/marketing/campaigns/${row.original.campaignCode}`} className='hover:underline font-medium'>
           {row.original.name}
         </Link>
       ),
@@ -165,19 +187,7 @@ export default function MarketingCampaignsPage() {
           Contacts {column.getIsSorted() && <CaretSortIcon className='ml-2 inline' />}
         </Button>
       ),
-    },
-    {
-      id: 'conversions',
-      header: ({ column }) => (
-        <Button variant='ghost' onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
-          Conversions {column.getIsSorted() && <CaretSortIcon className='ml-2 inline' />}
-        </Button>
-      ),
-      cell: ({ row }) => (
-        <span>
-          {row.original.convertedCount} ({row.original.contactCount ? Math.round((row.original.convertedCount ?? 0 / row.original.contactCount) * 100) : 0}%)
-        </span>
-      ),
+      cell: ({ row }) => row.original.contactCount || 0,
     },
     {
       accessorKey: 'createdAt',
@@ -225,19 +235,6 @@ export default function MarketingCampaignsPage() {
     },
   });
 
-  const onSubmit = async (data: CampaignFormValues) => {
-    if (!editingCampaign) return;
-
-    try {
-      await updateCampaign.mutateAsync({
-        id: editingCampaign.id,
-        ...data,
-      });
-    } catch (error) {
-      toast.error('Failed to update campaign');
-    }
-  };
-
   return (
     <div className='space-y-4 p-4'>
       <PageHeader
@@ -252,7 +249,7 @@ export default function MarketingCampaignsPage() {
         }
       />
 
-      <div className='grid grid-cols-1 gap-4 md:grid-cols-3'>
+      <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
         <Card>
           <CardHeader>
             <CardTitle className='font-medium text-sm'>Active Campaigns</CardTitle>
@@ -269,14 +266,6 @@ export default function MarketingCampaignsPage() {
             <div className='font-bold text-2xl'>{totalContacts}</div>
           </CardContent>
         </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle className='font-medium text-sm'>Avg. Conversion Rate</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className='font-bold text-2xl'>{avgConversionRate}%</div>
-          </CardContent>
-        </Card>
       </div>
 
       <div className='relative'>
@@ -288,7 +277,7 @@ export default function MarketingCampaignsPage() {
         table={table}
         columns={columns}
         loading={isLoading}
-        onRowClick={(row) => router.push(`/dashboard/marketing/campaigns/${row.id}`)}
+        onRowClick={(row) => router.push(`/dashboard/marketing/campaigns/${row.campaignCode}`)}
         rowClassName='cursor-pointer hover:bg-muted/50'
       />
 
