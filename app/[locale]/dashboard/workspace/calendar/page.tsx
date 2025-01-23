@@ -15,6 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import type { CalendarEventWithParticipants, CalendarFolder } from '@/lib/schema';
 import { api } from '@/utils/trpc/client';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useTranslations } from 'next-intl';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
@@ -46,6 +47,7 @@ const eventFormSchema = z.object({
 type CalendarView = 'month' | 'week' | '3days' | 'day';
 
 export default function DashboardPersonalCalendar() {
+  const t = useTranslations();
   const router = useRouter();
   const searchParams = useSearchParams();
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -67,7 +69,7 @@ export default function DashboardPersonalCalendar() {
   const startOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
   const endOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
 
-  const { data: folders } = api.calendar.getAllFolders.useQuery();
+  const { data: folders, isLoading: isLoadingFolders } = api.calendar.getAllFolders.useQuery();
   const { data: events } = api.calendar.getEvents.useQuery({
     startDate: startOfMonth,
     endDate: endOfMonth,
@@ -350,6 +352,7 @@ export default function DashboardPersonalCalendar() {
         <CalendarSidebar
           currentDate={currentDate}
           selectedDate={selectedDate}
+          isLoading={isLoadingFolders}
           onDateSelect={(date) => {
             setSelectedDate(date);
             if (date.getMonth() !== currentDate.getMonth() || date.getFullYear() !== currentDate.getFullYear()) {
@@ -622,7 +625,9 @@ export default function DashboardPersonalCalendar() {
                 >
                   Cancel
                 </Button>
-                <Button type='submit'>Save Changes</Button>
+                <Button type='submit' disabled={updateFolder.isPending}>
+                  {updateFolder.isPending ? t('saving_loading') : t('save_changes')}
+                </Button>
               </div>
             </form>
           </Form>
@@ -640,7 +645,7 @@ export default function DashboardPersonalCalendar() {
       >
         <DialogContent className='max-h-[90vh] max-w-xl overflow-y-auto'>
           <DialogHeader>
-            <DialogTitle>Add Calendar</DialogTitle>
+            <DialogTitle>{t('add_calendar_folder')}</DialogTitle>
           </DialogHeader>
           <Form {...addCalendarForm}>
             <form onSubmit={addCalendarForm.handleSubmit(handleAddCalendarSubmit)} className='space-y-4'>
@@ -649,9 +654,9 @@ export default function DashboardPersonalCalendar() {
                 name='name'
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Name</FormLabel>
+                    <FormLabel>{t('name')}</FormLabel>
                     <FormControl>
-                      <Input {...field} placeholder='My Calendar' />
+                      <Input {...field} placeholder={t('my_calendar')} />
                     </FormControl>
                   </FormItem>
                 )}
@@ -678,17 +683,17 @@ export default function DashboardPersonalCalendar() {
                 name='visibility'
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Visibility</FormLabel>
+                    <FormLabel>{t('visibility')}</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder='Select visibility' />
+                          <SelectValue placeholder={t('select_visibility')} />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value='PRIVATE'>Private</SelectItem>
-                        <SelectItem value='SHARED'>Shared</SelectItem>
-                        <SelectItem value='PUBLIC'>Public</SelectItem>
+                        <SelectItem value='PRIVATE'>{t('private')}</SelectItem>
+                        <SelectItem value='SHARED'>{t('shared')}</SelectItem>
+                        <SelectItem value='PUBLIC'>{t('public')}</SelectItem>
                       </SelectContent>
                     </Select>
                   </FormItem>
@@ -704,9 +709,9 @@ export default function DashboardPersonalCalendar() {
                     addCalendarForm.reset();
                   }}
                 >
-                  Cancel
+                  {t('cancel')}
                 </Button>
-                <Button type='submit'>Create Calendar</Button>
+                <Button type='submit'>{t('create_calendar_folder')}</Button>
               </div>
             </form>
           </Form>

@@ -32,6 +32,7 @@ import { startTransition, useState } from 'react';
 type SidebarGroupSectionProps = {
   title: string;
   items: Array<{
+    id: string;
     title: string;
     url: string;
     icon: React.ComponentType;
@@ -182,6 +183,8 @@ export function DashboardSidebar() {
 }
 
 function SidebarGroupSection({ title, items, defaultOpen = true, onItemAction }: SidebarGroupSectionProps) {
+  const t = useTranslations();
+
   return (
     <Collapsible defaultOpen={defaultOpen} className='group/collapsible'>
       <SidebarGroup>
@@ -199,12 +202,12 @@ function SidebarGroupSection({ title, items, defaultOpen = true, onItemAction }:
                   <SidebarMenuButton asChild>
                     <Link href={item.url}>
                       <item.icon />
-                      <span>{item.title}</span>
+                      <span>{t(item.id)}</span>
                     </Link>
                   </SidebarMenuButton>
-                  {onItemAction && item.title === 'Contacts' && (
+                  {onItemAction && item.id === 'contacts' && (
                     <SidebarMenuAction onClick={() => onItemAction(item.title)}>
-                      <Plus /> <span className='sr-only'>Add Contact</span>
+                      <Plus /> <span className='sr-only'>{t('add_contact')}</span>
                     </SidebarMenuAction>
                   )}
                 </SidebarMenuItem>

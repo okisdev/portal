@@ -28,7 +28,8 @@ interface ContactFormData {
   status: Status;
   source?: string;
   remark?: string;
-  campaignId?: string;
+  campaignCode?: string;
+  campaignCodes?: string[];
 }
 
 interface DuplicateContact {
@@ -48,10 +49,10 @@ export default function ContactUpload() {
   const [hasDuplicates, setHasDuplicates] = useState(false);
   const [isCancelling, setIsCancelling] = useState(false);
   const cancelUploadRef = useRef(false);
-  const [selectedCampaignId, setSelectedCampaignId] = useState<string | undefined>(undefined);
+  const [selectedCampaignCode, setSelectedCampaignCode] = useState<string | undefined>(undefined);
 
   const checkExistingContacts = api.contact.checkExistingContacts.useQuery({ emails: csvData.map((contact) => contact.email) }, { enabled: false });
-  const { data: campaigns } = api.marketing.getAllCampaigns.useQuery();
+  const { data: campaigns } = api.marketing.getActiveCampaigns.useQuery();
 
   const createContact = api.contact.createContact.useMutation({
     onError: (error) => {
@@ -99,8 +100,7 @@ export default function ContactUpload() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Create a promise that wraps the Papa.parse operation
-    const parsePromise = new Promise<ContactFormData[]>((resolve, reject) => {
+    try {
       Papa.parse(file, {
         header: true,
         complete: async (results) => {
@@ -108,6 +108,16 @@ export default function ContactUpload() {
             const parsedData = (results.data as any[])
               .filter((row) => row.name || row.firstName || row.email)
               .map((row) => {
+                const campaignCodes: string[] = [];
+                if (row.campaignCode) {
+                  const codes = row.campaignCode.split(',').map((code: string) => code.trim());
+                  for (const code of codes) {
+                    if (campaigns?.some((c) => c.campaignCode === code) && !campaignCodes.includes(code)) {
+                      campaignCodes.push(code);
+                    }
+                  }
+                }
+
                 if (row.firstName || row.lastName) {
                   return {
                     firstName: row.firstName || '',
@@ -118,7 +128,8 @@ export default function ContactUpload() {
                     status: row.status || 'lead',
                     source: row.source || '',
                     remark: row.remark || '',
-                    campaignId: row.campaignId || '',
+                    campaignCodes,
+                    campaignCode: campaignCodes.join(',') || '', // Store all campaign codes
                   };
                 }
 
@@ -132,10 +143,17 @@ export default function ContactUpload() {
                   status: row.status || 'lead',
                   source: row.source || '',
                   remark: row.remark || '',
-                  campaignId: row.campaignId || '',
+                  campaignCodes,
+                  campaignCode: campaignCodes.join(',') || '', // Store all campaign codes
                 };
               })
               .filter((row) => !isRowEmpty(row));
+
+            // Set the global campaign code if any row has a campaign code
+            const firstCampaignCode = parsedData.find((row) => row.campaignCodes?.length)?.campaignCodes?.[0];
+            if (firstCampaignCode) {
+              setSelectedCampaignCode(firstCampaignCode);
+            }
 
             setCsvData(parsedData);
 
@@ -182,22 +200,21 @@ export default function ContactUpload() {
             }
 
             setShowPreview(true);
-            resolve(parsedData);
+            toast.success(`Successfully processed ${parsedData.length} contacts`);
           } catch (error) {
-            reject(error);
+            console.error('Error processing CSV:', error);
+            toast.error('Failed to process CSV file');
           }
         },
         error: (error) => {
-          reject(error);
+          console.error('Error parsing CSV:', error);
+          toast.error('Failed to parse CSV file');
         },
       });
-    });
-
-    await toast.promise(parsePromise, {
-      loading: 'Processing CSV file...',
-      success: (data: ContactFormData[]) => `Successfully processed ${data.length} contacts`,
-      error: 'Failed to process CSV file',
-    });
+    } catch (error) {
+      console.error('Error handling CSV upload:', error);
+      toast.error('Failed to handle CSV upload');
+    }
   };
 
   const handleCsvEdit = (index: number, field: keyof ContactFormData, value: string) => {
@@ -218,33 +235,6 @@ export default function ContactUpload() {
     setIsLoading(true);
     cancelUploadRef.current = false;
 
-    const processBatch = async (contacts: typeof csvData, startIdx: number, batchSize: number, totalContacts: number) => {
-      if (cancelUploadRef.current) {
-        throw new Error('Upload cancelled');
-      }
-
-      const endIdx = Math.min(startIdx + batchSize, contacts.length);
-      const batch = contacts.slice(startIdx, endIdx);
-
-      await Promise.all(
-        batch.map((contact) =>
-          createContact.mutateAsync({
-            firstName: contact.firstName,
-            lastName: contact.lastName,
-            name: formatName(contact.firstName, contact.lastName),
-            email: contact.email,
-            phone: contact.phone || '',
-            company: contact.company || '',
-            source: contact.source || '',
-            remark: contact.remark || '',
-            campaignId: selectedCampaignId,
-          })
-        )
-      );
-
-      return endIdx;
-    };
-
     try {
       const nonDuplicateContacts = csvData.filter((contact) => !isRowEmpty(contact) && !duplicates.some((d) => d.email === contact.email));
 
@@ -255,7 +245,26 @@ export default function ContactUpload() {
       const toastId = toast.loading(`Processing contacts... (0/${totalContacts})`);
 
       while (processedCount < totalContacts && !cancelUploadRef.current) {
-        processedCount = await processBatch(nonDuplicateContacts, processedCount, batchSize, totalContacts);
+        const endIdx = Math.min(processedCount + batchSize, totalContacts);
+        const batch = nonDuplicateContacts.slice(processedCount, endIdx);
+
+        await Promise.all(
+          batch.map((contact) =>
+            createContact.mutateAsync({
+              firstName: contact.firstName,
+              lastName: contact.lastName,
+              name: formatName(contact.firstName, contact.lastName),
+              email: contact.email,
+              phone: contact.phone || '',
+              company: contact.company || '',
+              source: contact.source || '',
+              remark: contact.remark || '',
+              campaignCode: contact.campaignCodes?.length ? contact.campaignCodes.join(',') : selectedCampaignCode,
+            })
+          )
+        );
+
+        processedCount = endIdx;
         toast.loading(`Processing contacts... (${processedCount}/${totalContacts})`, { id: toastId });
       }
 
@@ -318,6 +327,7 @@ export default function ContactUpload() {
         status: 'lead',
         source: '',
         remark: '',
+        campaignCode: 'CAMP1,CAMP2,CAMP3', // Example of multiple campaign codes
       },
     ];
 
@@ -368,16 +378,16 @@ export default function ContactUpload() {
                 <div className='flex flex-1 items-center gap-4'>
                   <div className='w-64'>
                     <Combobox
-                      value={selectedCampaignId ?? ''}
-                      onChange={(value) => setSelectedCampaignId(value)}
-                      items={campaigns?.map((c) => c.id) ?? []}
+                      value={selectedCampaignCode ?? ''}
+                      onChange={(value) => setSelectedCampaignCode(value)}
+                      items={campaigns?.map((c) => c.campaignCode) ?? []}
                       placeholder='Select a campaign (optional)'
                       searchPlaceholder='Search campaigns...'
                       groupHeading='Campaigns'
                       allowCustom={false}
-                      renderItem={(id) => {
-                        const campaign = campaigns?.find((c) => c.id === id);
-                        return campaign?.name ?? id;
+                      renderItem={(code) => {
+                        const campaign = campaigns?.find((c) => c.campaignCode === code);
+                        return campaign?.name ?? code;
                       }}
                     />
                   </div>

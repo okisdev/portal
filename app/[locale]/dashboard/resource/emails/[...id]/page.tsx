@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { api } from '@/utils/trpc/client';
+import { useTranslations } from 'next-intl';
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
@@ -13,6 +14,7 @@ import { toast } from 'sonner';
 export default function EmailDetailPage() {
   const params = useParams();
   const router = useRouter();
+  const t = useTranslations();
   const id = Array.isArray(params.id) ? params.id[0] : params.id;
 
   const [title, setTitle] = useState('');
@@ -127,16 +129,16 @@ export default function EmailDetailPage() {
           <PageHeader title='Edit Email Template' description='Make changes to your email template' />
           <div className='flex gap-2'>
             <Button onClick={() => router.push('/dashboard/resource/emails')} variant='outline'>
-              Back
+              {t('back')}
             </Button>
             <Button onClick={handleCopyHtml} variant='outline' className='text-neutral-600 hover:bg-neutral-50'>
-              Copy HTML
+              {t('copy_html')}
             </Button>
             <Button onClick={handleDeleteTemplate} variant='outline' className='text-red-600 hover:bg-red-50'>
-              Delete
+              {t('delete')}
             </Button>
             <Button onClick={handleSaveTemplate} className='bg-neutral-900 text-white hover:bg-neutral-800'>
-              Save Changes
+              {t('save_changes')}
             </Button>
           </div>
         </div>

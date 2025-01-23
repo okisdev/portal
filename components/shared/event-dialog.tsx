@@ -12,6 +12,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { generateUUID } from '@/lib/utils';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { PlusIcon, X } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -62,6 +63,8 @@ interface EventDialogProps {
 }
 
 export function EventDialog({ open, onOpenChange, onSubmit, isEditMode = false, defaultValues, folders = [], participantOptions, initialParticipants = [], onCreateFolder }: EventDialogProps) {
+  const t = useTranslations();
+
   const form = useForm<EventFormData>({
     resolver: zodResolver(eventFormSchema),
     defaultValues: {
@@ -226,16 +229,16 @@ export function EventDialog({ open, onOpenChange, onSubmit, isEditMode = false, 
               name='folderId'
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Calendar</FormLabel>
+                  <FormLabel>{t('calendar')}</FormLabel>
                   <FormControl>
                     <Combobox
                       value={folders?.find((f) => f.id === field.value)?.name || ''}
                       onChange={handleCalendarSelect}
                       items={folders?.map((f) => f.name) || []}
-                      placeholder='Select or create calendar'
-                      searchPlaceholder='Search calendars...'
-                      emptyText='No calendars found'
-                      groupHeading='Calendars'
+                      placeholder={t('select_or_create_calendar')}
+                      searchPlaceholder={t('search_calendars')}
+                      emptyText={t('no_calendars_found')}
+                      groupHeading={t('calendars')}
                       allowCustom={true}
                     />
                   </FormControl>
@@ -251,7 +254,7 @@ export function EventDialog({ open, onOpenChange, onSubmit, isEditMode = false, 
                   <FormControl>
                     <Checkbox checked={field.value} onCheckedChange={field.onChange} />
                   </FormControl>
-                  <FormLabel className='text-sm'>Public</FormLabel>
+                  <FormLabel className='text-sm'>{t('public')}</FormLabel>
                 </FormItem>
               )}
             />
@@ -259,7 +262,7 @@ export function EventDialog({ open, onOpenChange, onSubmit, isEditMode = false, 
             {participantOptions && (
               <div className='space-y-4'>
                 <div className='flex items-center space-x-2'>
-                  <p className='font-medium text-sm'>Participants</p>
+                  <p className='font-medium text-sm'>{t('participants')}</p>
                   <button
                     type='button'
                     onClick={() => {
@@ -330,18 +333,19 @@ export function EventDialog({ open, onOpenChange, onSubmit, isEditMode = false, 
                         name={`participants.${index}.id`}
                         render={({ field }) => (
                           <FormItem className='flex-1'>
-                            <Select value={field.value} onValueChange={field.onChange}>
-                              <SelectTrigger>
-                                <SelectValue placeholder='Select contact' />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {participantOptions.contacts?.map((contact) => (
-                                  <SelectItem key={contact.id} value={contact.id}>
-                                    {contact.name}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
+                            <Combobox
+                              value={participantOptions.contacts?.find((contact) => contact.id === field.value)?.name || ''}
+                              onChange={(value) => {
+                                const contact = participantOptions.contacts?.find((c) => c.name === value);
+                                field.onChange(contact?.id || '');
+                              }}
+                              items={participantOptions.contacts?.map((contact) => contact.name) || []}
+                              placeholder='Select contact'
+                              searchPlaceholder='Search contacts...'
+                              emptyText='No contacts found'
+                              groupHeading='Contacts'
+                              allowCustom={false}
+                            />
                           </FormItem>
                         )}
                       />
@@ -409,7 +413,9 @@ export function EventDialog({ open, onOpenChange, onSubmit, isEditMode = false, 
             )}
 
             <div className='flex justify-end gap-2'>
-              <Button type='submit'>{isEditMode ? 'Update' : 'Create'} Event</Button>
+              <Button type='submit'>
+                {isEditMode ? t('update') : t('create')} {t('event')}
+              </Button>
             </div>
           </form>
         </Form>

@@ -3,9 +3,12 @@
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { api } from '@/utils/trpc/client';
+import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 
 export function NotificationFilters() {
+  const t = useTranslations();
+
   const utils = api.useUtils();
 
   const markAllAsRead = api.account.markAllNotificationsAsRead.useMutation({
@@ -26,16 +29,16 @@ export function NotificationFilters() {
             <SelectValue placeholder='Filter by type' />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value='all'>All notifications</SelectItem>
-            <SelectItem value='unread'>Unread</SelectItem>
-            <SelectItem value='message'>Messages</SelectItem>
-            <SelectItem value='email'>Emails</SelectItem>
-            <SelectItem value='system'>System</SelectItem>
+            <SelectItem value='all'>{t('all_notifications')}</SelectItem>
+            <SelectItem value='unread'>{t('unread')}</SelectItem>
+            <SelectItem value='message'>{t('messages')}</SelectItem>
+            <SelectItem value='email'>{t('emails')}</SelectItem>
+            <SelectItem value='system'>{t('system')}</SelectItem>
           </SelectContent>
         </Select>
       </div>
       <Button variant='outline' size='sm' onClick={() => markAllAsRead.mutate()}>
-        Mark all as read
+        {markAllAsRead.isPending ? t('marking_all_as_read') : t('mark_all_as_read')}
       </Button>
     </div>
   );

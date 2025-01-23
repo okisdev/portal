@@ -12,6 +12,7 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -30,7 +31,8 @@ import {
   getSortedRowModel,
   useReactTable,
 } from '@tanstack/react-table';
-import { Calendar, Edit2, Plus, Trash2 } from 'lucide-react';
+import { Calendar, Edit2, Eye, MoreHorizontal, Plus, Trash2 } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { notFound, useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -41,6 +43,7 @@ export default function TeamIdPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const mode = searchParams.get('mode');
+  const t = useTranslations();
 
   const utils = api.useUtils();
 
@@ -64,6 +67,7 @@ export default function TeamIdPage() {
   });
   const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
   const [searchValue, setSearchValue] = useState('');
+  const [contactToDelete, setContactToDelete] = useState<string | null>(null);
 
   const { data: team, isLoading } = api.team.getTeamById.useQuery({
     id: teamId[0],
@@ -80,7 +84,7 @@ export default function TeamIdPage() {
   const { data: teamActivities } = api.team.getTeamActivities.useQuery({
     teamId: teamId[0],
   });
-  const { data: campaigns } = api.marketing.getAllCampaigns.useQuery();
+  const { data: campaigns } = api.marketing.getActiveCampaigns.useQuery();
 
   const updateTeam = api.team.updateTeam.useMutation({
     onSuccess: () => {
@@ -134,11 +138,22 @@ export default function TeamIdPage() {
     },
   });
 
-  const addTeamMember = api.team.addTeamMember.useMutation({
+  const addTeamContact = api.team.addTeamContact.useMutation({
     onSuccess: () => {
       setIsAddMemberOpen(false);
       utils.team.getTeamContacts.invalidate({ teamId: teamId[0] });
       toast.success('Member added successfully');
+    },
+    onError: (error) => {
+      toast.error(error.message);
+    },
+  });
+
+  const removeContactFromTeam = api.team.removeContactFromTeam.useMutation({
+    onSuccess: () => {
+      setContactToDelete(null);
+      utils.team.getTeamContacts.invalidate({ teamId: teamId[0] });
+      toast.success('Member removed successfully');
     },
     onError: (error) => {
       toast.error(error.message);
@@ -247,6 +262,43 @@ export default function TeamIdPage() {
       ),
       cell: ({ row }) => <ColorBadge type='contactStatus' value={row.original.contact.status} />,
     },
+    {
+      id: 'actions',
+      cell: ({ row }) => (
+        <div className='flex justify-end'>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+              <Button variant='ghost' className='h-8 w-8 p-0'>
+                <span className='sr-only'>Open menu</span>
+                <MoreHorizontal className='size-4' />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align='end'>
+              <DropdownMenuItem
+                className='cursor-pointer'
+                onClick={(e) => {
+                  e.stopPropagation();
+                  router.push(`/dashboard/crm/contacts/${row.original.contact.id}`);
+                }}
+              >
+                <Eye className='mr-2 size-4' />
+                View
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                className='cursor-pointer text-destructive'
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setContactToDelete(row.original.contact.id);
+                }}
+              >
+                <Trash2 className='mr-2 size-4' />
+                Delete
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      ),
+    },
   ];
 
   const table = useReactTable({
@@ -278,7 +330,7 @@ export default function TeamIdPage() {
   if (!team) return notFound();
 
   const handleAddMember = (contactId: string) => {
-    addTeamMember.mutate({
+    addTeamContact.mutate({
       teamId: teamId[0],
       contactId,
     });
@@ -322,12 +374,21 @@ export default function TeamIdPage() {
   };
 
   const initialParticipants =
-    teamContacts?.map((member) => ({
+    teamContacts?.map((c) => ({
       type: 'contact' as const,
-      id: member.contact.id,
-      name: `${member.contact.firstName} ${member.contact.lastName}`,
+      id: c.contact.id,
+      name: `${c.contact.firstName} ${c.contact.lastName}`,
       role: 'required' as const,
     })) || [];
+
+  const handleDeleteContact = () => {
+    if (contactToDelete) {
+      removeContactFromTeam.mutate({
+        teamId: teamId[0],
+        contactId: contactToDelete,
+      });
+    }
+  };
 
   return (
     <div className='space-y-4 p-4'>
@@ -354,7 +415,7 @@ export default function TeamIdPage() {
               <Popover open={isAddMemberOpen} onOpenChange={setIsAddMemberOpen}>
                 <PopoverTrigger asChild>
                   <Button variant='outline' size='sm' className='h-8'>
-                    <Plus className='mr-1 size-4' /> Add Member
+                    <Plus className='mr-1 size-4' /> {t('add_contact')}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className='w-[300px] p-0' align='end'>
@@ -368,7 +429,7 @@ export default function TeamIdPage() {
                       contacts
                         ?.filter(
                           (contact) =>
-                            !teamContacts?.some((member) => member.contact.id === contact.id) &&
+                            !teamContacts?.some((c) => c.contact.id === contact.id) &&
                             (contact.firstName.toLowerCase().includes(searchValue.toLowerCase()) ||
                               contact.lastName.toLowerCase().includes(searchValue.toLowerCase()) ||
                               contact.email.toLowerCase().includes(searchValue.toLowerCase()))
@@ -536,10 +597,10 @@ export default function TeamIdPage() {
                     : ''
                 }
                 onChange={(value) => {
-                  const member = teamContacts?.find((m) => `${m.contact.firstName} ${m.contact.lastName}` === value);
-                  setEditForm({ ...editForm, leaderId: member?.contact.id || '' });
+                  const contact = teamContacts?.find((c) => `${c.contact.firstName} ${c.contact.lastName}` === value);
+                  setEditForm({ ...editForm, leaderId: contact?.contact.id || '' });
                 }}
-                items={teamContacts?.map((member) => `${member.contact.firstName} ${member.contact.lastName}`) || []}
+                items={teamContacts?.map((c) => `${c.contact.firstName} ${c.contact.lastName}`) || []}
                 placeholder='Select team leader'
                 searchPlaceholder='Search team leader...'
                 allowCustom={false}
@@ -555,10 +616,10 @@ export default function TeamIdPage() {
                     : ''
                 }
                 onChange={(value) => {
-                  const member = teamContacts?.find((m) => `${m.contact.firstName} ${m.contact.lastName}` === value);
-                  setEditForm({ ...editForm, subLeaderId: member?.contact.id || '' });
+                  const contact = teamContacts?.find((c) => `${c.contact.firstName} ${c.contact.lastName}` === value);
+                  setEditForm({ ...editForm, subLeaderId: contact?.contact.id || '' });
                 }}
-                items={teamContacts?.map((member) => `${member.contact.firstName} ${member.contact.lastName}`) || []}
+                items={teamContacts?.map((c) => `${c.contact.firstName} ${c.contact.lastName}`) || []}
                 placeholder='Select sub leader'
                 searchPlaceholder='Search sub leader...'
                 allowCustom={false}
@@ -591,13 +652,13 @@ export default function TeamIdPage() {
               <Combobox
                 value={editForm.campaignCode}
                 onChange={(value) => setEditForm({ ...editForm, campaignCode: value })}
-                items={campaigns?.map((campaign) => campaign.id || '') || []}
+                items={campaigns?.map((campaign) => campaign.campaignCode || '') || []}
                 placeholder='Select campaign code'
                 searchPlaceholder='Search campaign code...'
                 allowCustom={false}
                 groupHeading='Campaigns'
-                renderItem={(campaignId) => {
-                  const campaign = campaigns?.find((c) => c.id === campaignId);
+                renderItem={(campaignCode) => {
+                  const campaign = campaigns?.find((c) => c.campaignCode === campaignCode);
                   return campaign ? `${campaign.name} (${campaign.campaignCode})` : null;
                 }}
               />
@@ -608,10 +669,10 @@ export default function TeamIdPage() {
             </div>
             <div className='flex justify-end space-x-2'>
               <Button type='button' variant='outline' onClick={() => setIsEditModalOpen(false)}>
-                Cancel
+                {t('cancel')}
               </Button>
               <Button type='submit' disabled={updateTeam.isPending}>
-                Save Changes
+                {updateTeam.isPending ? t('saving_loading') : t('save_changes')}
               </Button>
             </div>
           </form>
@@ -668,6 +729,14 @@ export default function TeamIdPage() {
         }}
         title='Delete Meeting'
         description='Are you sure you want to delete this meeting? This action cannot be undone.'
+      />
+
+      <ActionAlertDialog
+        open={!!contactToDelete}
+        onOpenChange={(open) => !open && setContactToDelete(null)}
+        onConfirm={handleDeleteContact}
+        title='Remove Member'
+        description='Are you sure you want to remove this member from the team? This action cannot be undone.'
       />
     </div>
   );

@@ -15,7 +15,7 @@ import { z } from 'zod';
 
 const campaignFormSchema = z.object({
   name: z.string().min(1, 'Name is required'),
-  campaignCode: z.string().optional(),
+  campaignCode: z.string().min(1, 'Campaign code is required'),
   description: z.string().optional(),
   type: z.enum(['email', 'social', 'event', 'referral', 'other']),
   status: z.enum(['draft', 'scheduled', 'active', 'paused', 'completed', 'cancelled']).default('draft'),
@@ -27,6 +27,7 @@ type CampaignFormValues = z.infer<typeof campaignFormSchema>;
 const defaultValues: Partial<CampaignFormValues> = {
   status: 'draft',
   type: 'email',
+  campaignCode: '',
 };
 
 export default function NewCampaignPage() {
@@ -92,7 +93,7 @@ export default function NewCampaignPage() {
                     <FormItem>
                       <FormLabel>Campaign Code</FormLabel>
                       <FormControl>
-                        <Input placeholder='Enter campaign code (optional)' {...field} />
+                        <Input placeholder='Enter unique campaign code' {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>

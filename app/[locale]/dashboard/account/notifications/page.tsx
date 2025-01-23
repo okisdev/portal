@@ -1,6 +1,7 @@
 import { NotificationFilters } from '@/components/dashboard/account/notifications/notification-filters';
 import { NotificationList } from '@/components/dashboard/account/notifications/notification-list';
 import { PageHeader } from '@/components/shared/page-header';
+import { useTranslations } from 'next-intl';
 import { Suspense } from 'react';
 
 export const metadata = {
@@ -8,10 +9,12 @@ export const metadata = {
   description: 'Manage your notification preferences and view your notifications',
 };
 
-export default async function NotificationsPage() {
+export default function NotificationsPage() {
+  const t = useTranslations();
+
   return (
     <div className='space-y-4 p-4'>
-      <PageHeader title='Notifications' description='View and manage your notifications' />
+      <PageHeader title={t('notifications')} description={t('view_and_manage_your_notifications')} />
 
       <div className='flex flex-col gap-8'>
         <NotificationFilters />

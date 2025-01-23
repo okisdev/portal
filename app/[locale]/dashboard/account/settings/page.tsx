@@ -7,10 +7,13 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { api } from '@/utils/trpc/client';
+import { useTranslations } from 'next-intl';
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
 export default function AccountSettingsPage() {
+  const t = useTranslations();
+
   const { data: me } = api.account.getMeFromDatabase.useQuery();
 
   const updateAccount = api.account.updateMe.useMutation();
@@ -155,7 +158,7 @@ export default function AccountSettingsPage() {
 
               <div className='flex justify-end'>
                 <Button type='submit' disabled={updateAccount.isPending}>
-                  {updateAccount.isPending ? 'Saving...' : 'Save Changes'}
+                  {updateAccount.isPending ? t('saving_loading') : t('save_changes')}
                 </Button>
               </div>
             </form>

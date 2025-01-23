@@ -2,6 +2,7 @@
 
 import { ActionAlertDialog } from '@/components/shared/action-alert-dialog';
 import { ColorBadge } from '@/components/shared/color-badge';
+import { ComboboxCommand } from '@/components/shared/combobox';
 import { PageHeader } from '@/components/shared/page-header';
 import { PageLoading } from '@/components/shared/page-loading';
 import { PaginationTable } from '@/components/shared/pagination-table';
@@ -9,11 +10,17 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Form, FormControl, FormField, FormItem, FormLabel } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
 import { useDebounce } from '@/hooks/use-debounce';
 import { formatDate } from '@/lib/utils';
 import { api } from '@/utils/trpc/client';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { CaretSortIcon } from '@radix-ui/react-icons';
 import {
   type ColumnDef,
@@ -26,10 +33,13 @@ import {
   getSortedRowModel,
   useReactTable,
 } from '@tanstack/react-table';
-import { Eye, Filter, MoreHorizontal, Trash2 } from 'lucide-react';
-import Link from 'next/link';
+import { Eye, Filter, MoreHorizontal, Plus, Trash2 } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { useParams, useRouter } from 'next/navigation';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
+import { z } from 'zod';
 
 type FilterOperator = '=' | '!=' | 'contains' | 'startsWith' | 'endsWith';
 
@@ -44,17 +54,31 @@ type FilterConfig = {
   matchAll: boolean;
 };
 
+const campaignFormSchema = z.object({
+  name: z.string().min(1, 'Name is required'),
+  campaignCode: z.string().min(1, 'Campaign code is required'),
+  description: z.string().optional(),
+  type: z.enum(['email', 'social', 'event', 'referral', 'other']),
+  status: z.enum(['draft', 'scheduled', 'active', 'paused', 'completed', 'cancelled']),
+});
+
+type CampaignFormValues = z.infer<typeof campaignFormSchema>;
+
 export default function CampaignDetailsPage() {
   const router = useRouter();
-  const { id: campaignId } = useParams<{ id: string }>();
+  const { id: campaignCode } = useParams<{ id: string }>();
+  const t = useTranslations();
 
-  const { data: campaign, isLoading: campaignLoading } = api.marketing.getCampaignById.useQuery({
-    id: campaignId[0],
+  const { data: campaign, isLoading: campaignLoading } = api.marketing.getCampaignByCode.useQuery({
+    code: campaignCode[0],
   });
 
-  const { data: contacts = [], isLoading: contactsLoading } = api.marketing.getCampaignContacts.useQuery({
-    campaignId: campaignId[0],
+  const { data: campaignContacts = [], isLoading: contactsLoading } = api.marketing.getCampaignContacts.useQuery({
+    code: campaignCode[0],
   });
+
+  const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
+  const [searchValue, setSearchValue] = useState('');
 
   const utils = api.useUtils();
 
@@ -70,6 +94,8 @@ export default function CampaignDetailsPage() {
     conditions: [],
     matchAll: true,
   });
+
+  const { data: contacts } = api.contact.getAllContacts.useQuery();
 
   const filterFields = [
     { label: 'Name', value: 'name' },
@@ -90,19 +116,29 @@ export default function CampaignDetailsPage() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [contactToDelete, setContactToDelete] = useState<string | null>(null);
 
-  const removeContactFromCampaign = api.marketing.removeContactFromCampaign.useMutation({
+  const { mutate: removeContact } = api.contact.removeContactFromCampaign.useMutation({
     onSuccess: () => {
-      utils.marketing.getCampaignContacts.invalidate();
-      utils.marketing.getCampaignById.invalidate();
+      toast.success('Contact removed from campaign');
+      utils.marketing.getCampaignContacts.invalidate({ code: campaignCode[0] });
+      utils.marketing.getCampaignByCode.invalidate({ code: campaignCode[0] });
+      setDeleteDialogOpen(false);
+      setContactToDelete(null);
     },
   });
 
-  const updateContactStatus = api.marketing.updateContactCampaignStatus.useMutation({
+  const addContactToCampaign = api.contact.addContactToCampaign.useMutation({
     onSuccess: () => {
-      utils.marketing.getCampaignContacts.invalidate();
-      utils.marketing.getCampaignById.invalidate();
+      toast.success('Contact added to campaign');
+      utils.marketing.getCampaignContacts.invalidate({ code: campaignCode[0] });
     },
   });
+
+  const handleAddMember = (contactId: string) => {
+    addContactToCampaign.mutate({
+      campaignCode: campaignCode[0],
+      contactId,
+    });
+  };
 
   const handleFilterChange = (index: number, field: string, operator: FilterOperator, value: string) => {
     const newConditions = [...filters.conditions];
@@ -177,49 +213,16 @@ export default function CampaignDetailsPage() {
           Status {column.getIsSorted() && <CaretSortIcon className='ml-2 inline' />}
         </Button>
       ),
-      cell: ({ row }) => (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-            <Button variant='ghost' className='p-0'>
-              <ColorBadge type='status' value={row.original.status} />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent>
-            <DropdownMenuItem onClick={() => handleStatusChange(row.original.id, 'pending')}>Pending</DropdownMenuItem>
-            <DropdownMenuItem onClick={() => handleStatusChange(row.original.id, 'engaged')}>Engaged</DropdownMenuItem>
-            <DropdownMenuItem onClick={() => handleStatusChange(row.original.id, 'converted')}>Converted</DropdownMenuItem>
-            <DropdownMenuItem onClick={() => handleStatusChange(row.original.id, 'bounced')}>Bounced</DropdownMenuItem>
-            <DropdownMenuItem onClick={() => handleStatusChange(row.original.id, 'unsubscribed')}>Unsubscribed</DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      ),
+      cell: ({ row }) => <ColorBadge type='contactStatus' value={row.original.status} />,
     },
     {
-      accessorKey: 'signupDate',
+      accessorKey: 'joinedAt',
       header: ({ column }) => (
         <Button variant='ghost' onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
-          Signup Date {column.getIsSorted() && <CaretSortIcon className='ml-2 inline' />}
+          Joined Date {column.getIsSorted() && <CaretSortIcon className='ml-2 inline' />}
         </Button>
       ),
-      cell: ({ row }) => formatDate(new Date(row.original.signupDate)),
-    },
-    {
-      accessorKey: 'conversionDate',
-      header: ({ column }) => (
-        <Button variant='ghost' onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
-          Conversion Date {column.getIsSorted() && <CaretSortIcon className='ml-2 inline' />}
-        </Button>
-      ),
-      cell: ({ row }) => (row.original.conversionDate ? formatDate(new Date(row.original.conversionDate)) : '—'),
-    },
-    {
-      accessorKey: 'source',
-      header: ({ column }) => (
-        <Button variant='ghost' onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
-          Source {column.getIsSorted() && <CaretSortIcon className='ml-2 inline' />}
-        </Button>
-      ),
-      cell: ({ row }) => <span className='capitalize'>{row.original.source || '—'}</span>,
+      cell: ({ row }) => formatDate(new Date(row.original.joinedAt)),
     },
     {
       id: 'actions',
@@ -248,18 +251,17 @@ export default function CampaignDetailsPage() {
   ];
 
   const filteredContacts = useMemo(() => {
-    if (!contacts) return [];
+    if (!campaignContacts) return [];
 
-    return contacts.filter((contact) => {
+    return campaignContacts.filter((contact) => {
       if (debouncedSearch) {
         const searchTerm = debouncedSearch.toLowerCase();
         const name = contact.name?.toLowerCase();
         const email = contact.email.toLowerCase();
         const company = (contact.company || '').toLowerCase();
         const status = contact.status.toLowerCase();
-        const source = (contact.source || '').toLowerCase();
 
-        return name?.includes(searchTerm) || email.includes(searchTerm) || company.includes(searchTerm) || status.includes(searchTerm) || source.includes(searchTerm);
+        return name?.includes(searchTerm) || email.includes(searchTerm) || company.includes(searchTerm) || status.includes(searchTerm);
       }
 
       if (filters.conditions.length === 0) return true;
@@ -284,7 +286,7 @@ export default function CampaignDetailsPage() {
         }
       });
     });
-  }, [contacts, filters, debouncedSearch]);
+  }, [campaignContacts, filters, debouncedSearch]);
 
   const table = useReactTable({
     data: filteredContacts,
@@ -318,20 +320,50 @@ export default function CampaignDetailsPage() {
 
   const handleDeleteConfirm = async () => {
     if (contactToDelete) {
-      await removeContactFromCampaign.mutate({
-        campaignId: campaignId[0],
+      removeContact({
         contactId: contactToDelete,
+        campaignCode: campaignCode[0],
       });
-      setDeleteDialogOpen(false);
-      setContactToDelete(null);
     }
   };
 
-  const handleStatusChange = async (contactId: string, status: 'pending' | 'engaged' | 'converted' | 'bounced' | 'unsubscribed') => {
-    await updateContactStatus.mutate({
-      campaignId: campaignId[0],
-      contactId,
-      status,
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+
+  const updateCampaign = api.marketing.updateCampaign.useMutation({
+    onSuccess: () => {
+      toast.success('Campaign updated successfully');
+      setIsEditDialogOpen(false);
+      utils.marketing.getCampaignByCode.invalidate({ code: campaignCode[0] });
+    },
+  });
+
+  const form = useForm<CampaignFormValues>({
+    resolver: zodResolver(campaignFormSchema),
+    defaultValues: {
+      name: campaign?.name || '',
+      campaignCode: campaign?.campaignCode || '',
+      description: campaign?.description || '',
+      type: campaign?.type || 'email',
+      status: campaign?.status || 'draft',
+    },
+  });
+
+  useEffect(() => {
+    if (campaign) {
+      form.reset({
+        name: campaign.name,
+        campaignCode: campaign.campaignCode || '',
+        description: campaign.description || '',
+        type: campaign.type,
+        status: campaign.status,
+      });
+    }
+  }, [campaign, form]);
+
+  const onSubmit = async (data: CampaignFormValues) => {
+    await updateCampaign.mutateAsync({
+      code: campaignCode[0],
+      ...data,
     });
   };
 
@@ -349,8 +381,8 @@ export default function CampaignDetailsPage() {
         title={campaign.name}
         description={campaign.description || 'No description'}
         right={
-          <Button variant='outline' size='sm' asChild>
-            <Link href={`/dashboard/marketing/campaigns/${campaignId}/edit`}>Edit Campaign</Link>
+          <Button variant='outline' size='sm' onClick={() => setIsEditDialogOpen(true)}>
+            Edit Campaign
           </Button>
         }
       />
@@ -361,17 +393,7 @@ export default function CampaignDetailsPage() {
             <CardTitle className='text-sm'>Total Contacts</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className='text-2xl font-bold'>{campaign.contactCount}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle className='text-sm'>Converted</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className='text-2xl font-bold'>
-              {campaign.convertedCount} ({campaign.contactCount > 0 ? Math.round((campaign.convertedCount / campaign.contactCount) * 100) : 0}%)
-            </div>
+            <div className='font-bold text-2xl'>{campaign.contactCount}</div>
           </CardContent>
         </Card>
         <Card>
@@ -406,7 +428,7 @@ export default function CampaignDetailsPage() {
               <DropdownMenuContent className='w-[350px] p-4'>
                 <div className='space-y-4'>
                   <div className='flex items-center gap-2'>
-                    <span className='text-sm font-medium'>Match:</span>
+                    <span className='font-medium text-sm'>Match:</span>
                     <Button variant='ghost' size='sm' onClick={() => setFilters((f) => ({ ...f, matchAll: !f.matchAll }))}>
                       {filters.matchAll ? 'ALL conditions' : 'ANY condition'}
                     </Button>
@@ -459,9 +481,55 @@ export default function CampaignDetailsPage() {
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
-          <Button variant='outline' size='sm' asChild>
-            <Link href={`/dashboard/marketing/campaigns/${campaignId}/contacts/add`}>Add Contact</Link>
-          </Button>
+
+          <Popover open={isAddMemberOpen} onOpenChange={setIsAddMemberOpen}>
+            <PopoverTrigger asChild>
+              <Button variant='outline' size='sm' className='h-8'>
+                <Plus className='mr-1 size-4' /> {t('add_contact')}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className='w-[300px] p-0' align='end'>
+              <ComboboxCommand
+                query={searchValue}
+                setQuery={setSearchValue}
+                value=''
+                onChange={handleAddMember}
+                setOpen={setIsAddMemberOpen}
+                items={
+                  contacts
+                    ?.filter(
+                      (contact) =>
+                        !campaignContacts?.some((c) => c.id === contact.id) &&
+                        (contact.firstName.toLowerCase().includes(searchValue.toLowerCase()) ||
+                          contact.lastName.toLowerCase().includes(searchValue.toLowerCase()) ||
+                          contact.email.toLowerCase().includes(searchValue.toLowerCase()))
+                    )
+                    .map((contact) => contact.id) ?? []
+                }
+                searchPlaceholder='Search contacts...'
+                emptyText='No contacts found.'
+                groupHeading='Contacts'
+                allowCustom={false}
+                renderItem={(contactId) => {
+                  const contact = contacts?.find((c) => c.id === contactId);
+                  if (!contact) return null;
+                  return (
+                    <>
+                      <Avatar className='size-6'>
+                        <AvatarFallback>{contact.firstName.charAt(0)}</AvatarFallback>
+                      </Avatar>
+                      <div className='flex-1'>
+                        <p className='text-sm'>
+                          {contact.firstName} {contact.lastName}
+                        </p>
+                        <p className='text-muted-foreground text-xs'>{contact.email}</p>
+                      </div>
+                    </>
+                  );
+                }}
+              />
+            </PopoverContent>
+          </Popover>
         </div>
       </div>
 
@@ -482,6 +550,114 @@ export default function CampaignDetailsPage() {
         confirmText='Remove'
         cancelText='Cancel'
       />
+
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className='max-h-[90vh] max-w-xl overflow-y-auto'>
+          <DialogHeader>
+            <DialogTitle>Edit Campaign</DialogTitle>
+          </DialogHeader>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-4'>
+              <FormField
+                control={form.control}
+                name='name'
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Name</FormLabel>
+                    <FormControl>
+                      <Input {...field} />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name='campaignCode'
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Campaign Code</FormLabel>
+                    <FormControl>
+                      <Input {...field} />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name='description'
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Description</FormLabel>
+                    <FormControl>
+                      <Textarea {...field} />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name='type'
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Type</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder='Select type' />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value='email'>Email</SelectItem>
+                        <SelectItem value='social'>Social</SelectItem>
+                        <SelectItem value='event'>Event</SelectItem>
+                        <SelectItem value='referral'>Referral</SelectItem>
+                        <SelectItem value='other'>Other</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name='status'
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Status</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder='Select status' />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value='draft'>{t('draft')}</SelectItem>
+                        <SelectItem value='scheduled'>{t('scheduled')}</SelectItem>
+                        <SelectItem value='active'>{t('active')}</SelectItem>
+                        <SelectItem value='paused'>{t('paused')}</SelectItem>
+                        <SelectItem value='completed'>{t('completed')}</SelectItem>
+                        <SelectItem value='cancelled'>{t('cancelled')}</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </FormItem>
+                )}
+              />
+
+              <div className='flex justify-end gap-2'>
+                <Button type='button' variant='outline' onClick={() => setIsEditDialogOpen(false)}>
+                  {t('cancel')}
+                </Button>
+                <Button type='submit' disabled={updateCampaign.isPending}>
+                  {updateCampaign.isPending ? t('saving_loading') : t('save_changes')}
+                </Button>
+              </div>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

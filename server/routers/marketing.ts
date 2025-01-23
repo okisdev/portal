@@ -1,10 +1,9 @@
 import { contact, contactCampaign, marketingCampaign } from '@/drizzle/schema';
 import { createTRPCRouter, protectedProcedure } from '@/server/trpc';
-import { type SQL, and, desc, eq, gte, lte, sql } from 'drizzle-orm';
+import { desc, eq, sql } from 'drizzle-orm';
 import { z } from 'zod';
 
 export const marketingRouter = createTRPCRouter({
-  // Campaign Management
   getAllCampaigns: protectedProcedure.query(({ ctx }) => {
     return ctx.db
       .select({
@@ -15,20 +14,17 @@ export const marketingRouter = createTRPCRouter({
         type: marketingCampaign.type,
         status: marketingCampaign.status,
         metrics: marketingCampaign.metrics,
-        contactCount: sql<number>`COUNT(DISTINCT ${contactCampaign.contactId})`,
-        convertedCount: sql<number>`COUNT(DISTINCT CASE WHEN ${contactCampaign.status} = 'converted' THEN ${contactCampaign.contactId} END)`,
+        contactCount: sql<number>`(SELECT COUNT(*) FROM ${contactCampaign} WHERE ${contactCampaign.campaignCode} = ${marketingCampaign.campaignCode})`,
         createdAt: marketingCampaign.createdAt,
         updatedAt: marketingCampaign.updatedAt,
         createdBy: marketingCampaign.createdBy,
         updatedBy: marketingCampaign.updatedBy,
       })
       .from(marketingCampaign)
-      .leftJoin(contactCampaign, eq(contactCampaign.campaignId, marketingCampaign.id))
-      .groupBy(marketingCampaign.id)
       .orderBy(desc(marketingCampaign.createdAt));
   }),
 
-  getCampaignById: protectedProcedure.input(z.object({ id: z.string() })).query(({ ctx, input }) => {
+  getActiveCampaigns: protectedProcedure.query(({ ctx }) => {
     return ctx.db
       .select({
         id: marketingCampaign.id,
@@ -38,23 +34,59 @@ export const marketingRouter = createTRPCRouter({
         type: marketingCampaign.type,
         status: marketingCampaign.status,
         metrics: marketingCampaign.metrics,
-        contactCount: sql<number>`COUNT(DISTINCT ${contactCampaign.contactId})`,
-        convertedCount: sql<number>`COUNT(DISTINCT CASE WHEN ${contactCampaign.status} = 'converted' THEN ${contactCampaign.contactId} END)`,
+        contactCount: sql<number>`(SELECT COUNT(*) FROM ${contactCampaign} WHERE ${contactCampaign.campaignCode} = ${marketingCampaign.campaignCode})`,
+        createdAt: marketingCampaign.createdAt,
+        updatedAt: marketingCampaign.updatedAt,
+        createdBy: marketingCampaign.createdBy,
+        updatedBy: marketingCampaign.updatedBy,
+      })
+      .from(marketingCampaign)
+      .where(eq(marketingCampaign.status, 'active'))
+      .orderBy(desc(marketingCampaign.createdAt));
+  }),
+
+  getCampaignByCode: protectedProcedure.input(z.object({ code: z.string() })).query(({ ctx, input }) => {
+    return ctx.db
+      .select({
+        id: marketingCampaign.id,
+        name: marketingCampaign.name,
+        campaignCode: marketingCampaign.campaignCode,
+        description: marketingCampaign.description,
+        type: marketingCampaign.type,
+        status: marketingCampaign.status,
+        metrics: marketingCampaign.metrics,
+        contactCount: sql<number>`(SELECT COUNT(*) FROM ${contactCampaign} WHERE ${contactCampaign.campaignCode} = ${input.code})`,
         createdAt: marketingCampaign.createdAt,
         updatedAt: marketingCampaign.updatedAt,
       })
       .from(marketingCampaign)
-      .leftJoin(contactCampaign, eq(contactCampaign.campaignId, marketingCampaign.id))
-      .where(eq(marketingCampaign.id, input.id))
-      .groupBy(marketingCampaign.id)
+      .where(eq(marketingCampaign.campaignCode, input.code))
       .then((rows) => rows[0]);
+  }),
+
+  getCampaignContacts: protectedProcedure.input(z.object({ code: z.string() })).query(({ ctx, input }) => {
+    return ctx.db
+      .select({
+        id: contact.id,
+        name: contact.name,
+        firstName: contact.firstName,
+        lastName: contact.lastName,
+        email: contact.email,
+        phone: contact.phone,
+        company: contact.company,
+        status: contact.status,
+        joinedAt: contactCampaign.joinedAt,
+      })
+      .from(contactCampaign)
+      .innerJoin(contact, eq(contactCampaign.contactId, contact.id))
+      .where(eq(contactCampaign.campaignCode, input.code));
   }),
 
   createCampaign: protectedProcedure
     .input(
       z.object({
         name: z.string(),
-        campaignCode: z.string().optional(),
+        campaignCode: z.string(),
         description: z.string().optional(),
         type: z.enum(['email', 'social', 'event', 'referral', 'other']),
         status: z.enum(['draft', 'scheduled', 'active', 'paused', 'completed', 'cancelled']).optional(),
@@ -74,9 +106,8 @@ export const marketingRouter = createTRPCRouter({
   updateCampaign: protectedProcedure
     .input(
       z.object({
-        id: z.string(),
+        code: z.string(),
         name: z.string().optional(),
-        campaignCode: z.string().optional(),
         description: z.string().optional(),
         type: z.enum(['email', 'social', 'event', 'referral', 'other']).optional(),
         status: z.enum(['draft', 'scheduled', 'active', 'paused', 'completed', 'cancelled']).optional(),
@@ -84,145 +115,17 @@ export const marketingRouter = createTRPCRouter({
       })
     )
     .mutation(({ ctx, input }) => {
-      const { id, ...updateData } = input;
+      const { code, ...updateData } = input;
       return ctx.db
         .update(marketingCampaign)
         .set({
           ...updateData,
           updatedBy: ctx.session.user.id,
         })
-        .where(eq(marketingCampaign.id, id));
+        .where(eq(marketingCampaign.campaignCode, code));
     }),
 
-  deleteCampaign: protectedProcedure.input(z.object({ id: z.string() })).mutation(({ ctx, input }) => {
-    return ctx.db.delete(marketingCampaign).where(eq(marketingCampaign.id, input.id));
+  deleteCampaign: protectedProcedure.input(z.object({ code: z.string() })).mutation(({ ctx, input }) => {
+    return ctx.db.delete(marketingCampaign).where(eq(marketingCampaign.campaignCode, input.code));
   }),
-
-  // Campaign Contact Management
-  getCampaignContacts: protectedProcedure
-    .input(
-      z.object({
-        campaignId: z.string(),
-        status: z.enum(['pending', 'engaged', 'converted', 'bounced', 'unsubscribed']).optional(),
-      })
-    )
-    .query(({ ctx, input }) => {
-      const baseCondition = eq(contactCampaign.campaignId, input.campaignId);
-      const conditions = input.status ? and(baseCondition, eq(contactCampaign.status, input.status)) : baseCondition;
-
-      return ctx.db
-        .select({
-          id: contact.id,
-          name: contact.name,
-          email: contact.email,
-          company: contact.company,
-          status: contactCampaign.status,
-          signupDate: contactCampaign.signupDate,
-          conversionDate: contactCampaign.conversionDate,
-          source: contactCampaign.source,
-        })
-        .from(contactCampaign)
-        .innerJoin(contact, eq(contact.id, contactCampaign.contactId))
-        .where(conditions)
-        .orderBy(desc(contactCampaign.signupDate));
-    }),
-
-  addContactToCampaign: protectedProcedure
-    .input(
-      z.object({
-        campaignId: z.string(),
-        contactId: z.string(),
-        status: z.enum(['pending', 'engaged', 'converted', 'bounced', 'unsubscribed']).optional(),
-        source: z.string().optional(),
-        metadata: z.string().optional(), // JSON string
-      })
-    )
-    .mutation(async ({ ctx, input }) => {
-      // Check if contact is already in campaign
-      const existing = await ctx.db
-        .select()
-        .from(contactCampaign)
-        .where(and(eq(contactCampaign.campaignId, input.campaignId), eq(contactCampaign.contactId, input.contactId)))
-        .then((rows) => rows[0]);
-
-      if (existing) return existing;
-
-      return ctx.db
-        .insert(contactCampaign)
-        .values({
-          campaignId: input.campaignId,
-          contactId: input.contactId,
-          status: input.status ?? 'pending',
-          source: input.source,
-          metadata: input.metadata,
-        })
-        .returning();
-    }),
-
-  updateContactCampaignStatus: protectedProcedure
-    .input(
-      z.object({
-        campaignId: z.string(),
-        contactId: z.string(),
-        status: z.enum(['pending', 'engaged', 'converted', 'bounced', 'unsubscribed']),
-        conversionDate: z.date().optional(),
-      })
-    )
-    .mutation(({ ctx, input }) => {
-      const updateData: any = {
-        status: input.status,
-      };
-
-      if (input.status === 'converted') {
-        updateData.conversionDate = input.conversionDate ?? new Date();
-      }
-
-      return ctx.db
-        .update(contactCampaign)
-        .set(updateData)
-        .where(and(eq(contactCampaign.campaignId, input.campaignId), eq(contactCampaign.contactId, input.contactId)));
-    }),
-
-  removeContactFromCampaign: protectedProcedure
-    .input(
-      z.object({
-        campaignId: z.string(),
-        contactId: z.string(),
-      })
-    )
-    .mutation(({ ctx, input }) => {
-      return ctx.db.delete(contactCampaign).where(and(eq(contactCampaign.campaignId, input.campaignId), eq(contactCampaign.contactId, input.contactId)));
-    }),
-
-  // Campaign Analytics
-  getCampaignMetrics: protectedProcedure
-    .input(
-      z.object({
-        campaignId: z.string(),
-        startDate: z.date().optional(),
-        endDate: z.date().optional(),
-      })
-    )
-    .query(({ ctx, input }) => {
-      const baseCondition = eq(contactCampaign.campaignId, input.campaignId);
-      const dateConditions = [input.startDate && gte(contactCampaign.signupDate, input.startDate), input.endDate && lte(contactCampaign.signupDate, input.endDate)].filter(Boolean) as SQL[];
-
-      const conditions = dateConditions.length > 0 ? and(baseCondition, ...dateConditions) : baseCondition;
-
-      return ctx.db
-        .select({
-          totalContacts: sql<number>`COUNT(DISTINCT ${contactCampaign.contactId})`,
-          engagedContacts: sql<number>`COUNT(DISTINCT CASE WHEN ${contactCampaign.status} = 'engaged' THEN ${contactCampaign.contactId} END)`,
-          convertedContacts: sql<number>`COUNT(DISTINCT CASE WHEN ${contactCampaign.status} = 'converted' THEN ${contactCampaign.contactId} END)`,
-          bouncedContacts: sql<number>`COUNT(DISTINCT CASE WHEN ${contactCampaign.status} = 'bounced' THEN ${contactCampaign.contactId} END)`,
-          unsubscribedContacts: sql<number>`COUNT(DISTINCT CASE WHEN ${contactCampaign.status} = 'unsubscribed' THEN ${contactCampaign.contactId} END)`,
-          averageConversionTime: sql<number>`
-            AVG(EXTRACT(EPOCH FROM (${contactCampaign.conversionDate} - ${contactCampaign.signupDate})) / 86400)
-            FILTER (WHERE ${contactCampaign.status} = 'converted')
-          `,
-        })
-        .from(contactCampaign)
-        .where(conditions)
-        .then((rows) => rows[0]);
-    }),
 });

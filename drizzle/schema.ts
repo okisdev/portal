@@ -118,7 +118,6 @@ export const contact = pgTable('contact', {
   currentRole: text(), // current job role
   industry: text(), // industry they work in
   skills: text(), // comma-separated list of skills
-  campaignId: text().references(() => marketingCampaign.id),
   externalId: text(), // external ID from other systems
 });
 
@@ -412,7 +411,7 @@ export const marketingCampaign = pgTable('marketingCampaign', {
     .notNull()
     .$defaultFn(() => crypto.randomUUID()),
   name: text().notNull(),
-  campaignCode: text().unique(),
+  campaignCode: text().notNull().unique(),
   description: text(),
   type: text('type', { enum: ['email', 'social', 'event', 'referral', 'other'] }).notNull(),
   status: text('status', { enum: ['draft', 'scheduled', 'active', 'paused', 'completed', 'cancelled'] })
@@ -423,28 +422,6 @@ export const marketingCampaign = pgTable('marketingCampaign', {
     .notNull()
     .references(() => user.id),
   updatedBy: text().references(() => user.id),
-  createdAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
-  updatedAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
-});
-
-export const contactCampaign = pgTable('contactCampaign', {
-  id: text()
-    .primaryKey()
-    .notNull()
-    .$defaultFn(() => crypto.randomUUID()),
-  contactId: text()
-    .notNull()
-    .references(() => contact.id, { onDelete: 'cascade' }),
-  campaignId: text()
-    .notNull()
-    .references(() => marketingCampaign.id, { onDelete: 'cascade' }),
-  status: text('status', { enum: ['pending', 'engaged', 'converted', 'bounced', 'unsubscribed'] })
-    .notNull()
-    .default('pending'),
-  signupDate: timestamp({ mode: 'date' }).notNull().defaultNow(),
-  conversionDate: timestamp({ mode: 'date' }),
-  source: text(),
-  metadata: text(),
   createdAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
   updatedAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
 });
@@ -546,6 +523,22 @@ export const teamMeeting = pgTable('teamMeeting', {
   createdBy: text()
     .notNull()
     .references(() => user.id),
+  createdAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
+  updatedAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
+});
+
+export const contactCampaign = pgTable('contactCampaign', {
+  id: text()
+    .primaryKey()
+    .notNull()
+    .$defaultFn(() => crypto.randomUUID()),
+  contactId: text()
+    .notNull()
+    .references(() => contact.id, { onDelete: 'cascade' }),
+  campaignCode: text()
+    .notNull()
+    .references(() => marketingCampaign.campaignCode, { onDelete: 'cascade' }),
+  joinedAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
   createdAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
   updatedAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
 });

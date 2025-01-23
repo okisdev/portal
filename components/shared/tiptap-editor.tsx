@@ -104,6 +104,7 @@ export function TipTapEditor({ content, onChange, placeholder = 'Start writing..
         class: 'prose prose-sm sm:prose-base lg:prose-lg xl:prose-2xl dark:prose-invert mx-auto h-full w-full flex-1 overflow-auto outline-none',
       },
     },
+    immediatelyRender: false,
   });
 
   useEffect(() => {

@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Skeleton } from '@/components/ui/skeleton';
 import type { CalendarFolder } from '@/lib/schema';
 import { cn } from '@/lib/utils';
 import { ChevronsUpDown, MoreHorizontal, Pencil, Plus, Trash } from 'lucide-react';
@@ -14,6 +15,7 @@ import { YearMonthPicker } from './year-month-picker';
 interface CalendarSidebarProps {
   currentDate: Date;
   selectedDate: Date;
+  isLoading: boolean;
   onDateSelect: (date: Date) => void;
   folders: CalendarFolder[];
   hiddenCalendars: Set<string>;
@@ -23,7 +25,18 @@ interface CalendarSidebarProps {
   onDeleteCalendar: (folderId: string) => void;
 }
 
-export function CalendarSidebar({ currentDate, selectedDate, onDateSelect, folders, hiddenCalendars, onToggleCalendar, onAddCalendar, onEditCalendar, onDeleteCalendar }: CalendarSidebarProps) {
+export function CalendarSidebar({
+  currentDate,
+  selectedDate,
+  isLoading,
+  onDateSelect,
+  folders,
+  hiddenCalendars,
+  onToggleCalendar,
+  onAddCalendar,
+  onEditCalendar,
+  onDeleteCalendar,
+}: CalendarSidebarProps) {
   const t = useTranslations();
 
   const [folderToDelete, setFolderToDelete] = useState<string | null>(null);
@@ -108,14 +121,22 @@ export function CalendarSidebar({ currentDate, selectedDate, onDateSelect, folde
 
       <div className='flex flex-col gap-2'>
         <div className='flex cursor-pointer items-center gap-2'>
-          <div className='flex-1 text-sm'>Calendars</div>
+          <div className='flex-1 text-sm'>{t('calendars')}</div>
           <Button variant='ghost' size='icon' className='h-6 w-6' onClick={onAddCalendar}>
             <Plus className='h-4 w-4' />
           </Button>
         </div>
         <div className='flex w-full flex-col gap-2'>
           <div className='flex flex-col space-y-1'>
-            {folders?.length === 0 && <div className='text-muted-foreground text-sm'>No calendars found</div>}
+            {isLoading && (
+              <>
+                <Skeleton className='h-8 w-full' />
+                <Skeleton className='h-8 w-full' />
+                <Skeleton className='h-8 w-full' />
+                <Skeleton className='h-8 w-full' />
+              </>
+            )}
+            {folders?.length === 0 && !isLoading && <div className='text-muted-foreground text-sm'>{t('no_calendars_found')}</div>}
             {folders?.map((folder) => (
               <div key={folder.id} className='flex items-center gap-2'>
                 <Checkbox checked={!hiddenCalendars.has(folder.id)} onCheckedChange={(checked) => onToggleCalendar(folder.id)} />

@@ -6,6 +6,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { ResourceContent } from '@/lib/schema';
 import { PlusCircle, Search } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
@@ -18,21 +19,23 @@ interface ContentListProps {
 
 export function ContentSideList({ contents, currentContent, isLoading, onNewContent }: ContentListProps) {
   const router = useRouter();
+  const t = useTranslations();
+
   const [searchQuery, setSearchQuery] = useState('');
 
   return (
     <div className='w-1/3 border-r p-4'>
       <div className='mb-4 flex items-center justify-between'>
-        <PageHeader title='Contents' />
+        <PageHeader title={t('contents')} />
         <Button variant='outline' className='h-8' onClick={onNewContent}>
           <PlusCircle className='h-4 w-4' />
-          New
+          {t('new')}
         </Button>
       </div>
 
       <div className='relative mb-4'>
         <Search className='absolute top-3 left-3 h-4 w-4 text-muted-foreground' />
-        <Input placeholder='Search contents...' className='pl-10' value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
+        <Input placeholder={t('search_contents')} className='pl-10' value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
       </div>
 
       <ScrollArea className='h-[calc(100vh-200px)]'>
