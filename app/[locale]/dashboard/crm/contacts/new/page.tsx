@@ -4,10 +4,13 @@ import ManualContactForm from '@/components/dashboard/contact/new/manual';
 import ContactUpload from '@/components/dashboard/contact/new/upload';
 import { PageHeader } from '@/components/shared/page-header';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 
 export default function ImportContacts() {
-  const [activeTab, setActiveTab] = useState('simple');
+  const t = useTranslations();
+
+  const [activeTab, setActiveTab] = useState('manual');
 
   return (
     <div className='space-y-4 p-4'>
@@ -17,17 +20,17 @@ export default function ImportContacts() {
           description='Create a new contact'
           right={
             <TabsList>
-              <TabsTrigger value='simple'>Simple Create</TabsTrigger>
-              <TabsTrigger value='existing'>Import Existing Contacts</TabsTrigger>
+              <TabsTrigger value='manual'>{t('manual_create')}</TabsTrigger>
+              <TabsTrigger value='upload'>{t('upload_existing_contacts')}</TabsTrigger>
             </TabsList>
           }
         />
 
-        <TabsContent value='simple'>
+        <TabsContent value='manual'>
           <ManualContactForm />
         </TabsContent>
 
-        <TabsContent value='existing'>
+        <TabsContent value='upload'>
           <ContactUpload />
         </TabsContent>
       </Tabs>

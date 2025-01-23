@@ -1,10 +1,10 @@
 'use client';
 
+import { Payment } from '@/components/dashboard/contact/payment';
 import { SendEmail } from '@/components/dashboard/contact/send-email';
 import { SendMessage } from '@/components/dashboard/contact/send-message';
 import { ColorBadge } from '@/components/shared/color-badge';
 import { Combobox } from '@/components/shared/combobox';
-import { ContentWithCopy } from '@/components/shared/content-with-copy';
 import { EventDialog } from '@/components/shared/event-dialog';
 import type { EventFormData } from '@/components/shared/event-dialog';
 import { MetadataPopover } from '@/components/shared/metadata-popover';
@@ -27,7 +27,6 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import { insuranceCompanies, sources } from '@/data/data';
@@ -59,8 +58,7 @@ export default function ContactIdPage() {
   const { data: activities } = api.contact.getContactActivities.useQuery({
     id: contactId[0],
   });
-  const { data: payments, isLoading: isLoadingPayments } = api.pay.getPaymentByContactEmail.useQuery({ email: contact?.email || '' }, { enabled: !!contact?.email });
-  const { data: stripeCustomerInfo } = api.pay.getContactStripeCustomerInfo.useQuery({ email: contact?.email || '', phone: contact?.phone || '' }, { enabled: !!contact?.email || !!contact?.phone });
+
   const { data: appointments } = api.calendar.getAppointmentsByContactId.useQuery({
     contactId: contactId[0],
   });
@@ -78,8 +76,6 @@ export default function ContactIdPage() {
     source: '',
     priority: 'medium' as Priority,
   });
-
-  console.log(payments, stripeCustomerInfo);
 
   const [newActivity, setNewActivity] = useState('');
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
@@ -581,158 +577,7 @@ export default function ContactIdPage() {
               </div>
             </div>
 
-            <div className='space-y-2 border-b p-6'>
-              <div className='flex items-center justify-between'>
-                <div className='flex items-center gap-2'>
-                  <h2 className='font-medium text-foreground'>{t('payments')}</h2>
-                  {stripeCustomerInfo && (
-                    <MetadataPopover title={t('customer_info')} align='end'>
-                      <div className='space-y-2'>
-                        <div className='flex items-center justify-between'>
-                          <span className='text-muted-foreground text-xs'>{t('customer_id')}</span>
-                          <ContentWithCopy content={stripeCustomerInfo.customer.id} className='font-mono text-xs' />
-                        </div>
-                        {stripeCustomerInfo.customer.default_source && (
-                          <div className='flex items-center justify-between'>
-                            <span className='text-muted-foreground text-sm'>{t('payment_method')}</span>
-                            <span className='font-mono text-sm'>
-                              {typeof stripeCustomerInfo.customer.default_source === 'string' ? stripeCustomerInfo.customer.default_source : stripeCustomerInfo.customer.default_source.id}
-                            </span>
-                          </div>
-                        )}
-                      </div>
-                    </MetadataPopover>
-                  )}
-                </div>
-                <button type='button' className='text-muted-foreground hover:text-foreground'>
-                  <Plus className='size-4' />
-                </button>
-              </div>
-
-              {isLoadingPayments && <Skeleton className='h-24' />}
-
-              {stripeCustomerInfo?.stats && (
-                <div className='space-y-4'>
-                  {stripeCustomerInfo.stats.totalStats.oneTimeCount > 0 && (
-                    <div className='rounded-lg border bg-muted/50 p-4'>
-                      <h3 className='mb-3 font-medium text-sm'>{t('one_time_payments')}</h3>
-                      <div className='grid grid-cols-2 gap-4'>
-                        <div>
-                          <p className='text-muted-foreground text-xs'>{t('total_payments')}</p>
-                          <p className='font-medium text-foreground'>{stripeCustomerInfo.stats.totalStats.oneTimeCount}</p>
-                        </div>
-                        {Object.entries(stripeCustomerInfo.stats.oneTime).map(([currency, data]) => (
-                          <div key={currency}>
-                            <p className='text-muted-foreground text-xs'>
-                              {t('total_amount')} ({currency.toUpperCase()})
-                            </p>
-                            <p className='font-medium text-foreground'>
-                              {new Intl.NumberFormat('en-US', {
-                                style: 'currency',
-                                currency: currency,
-                              }).format(data.total)}
-                            </p>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {stripeCustomerInfo.activeSubscriptions.length > 0 && (
-                    <div className='rounded-lg border bg-muted/50 p-4'>
-                      <h3 className='mb-3 font-medium text-sm'>{t('active_subscriptions')}</h3>
-                      <div className='grid grid-cols-2 gap-4'>
-                        <div>
-                          <p className='text-muted-foreground text-xs'>{t('active_subscriptions')}</p>
-                          <p className='font-medium text-foreground'>
-                            {stripeCustomerInfo.stats.totalStats.subscriptionCount}
-                            {stripeCustomerInfo.activeSubscriptions.some((sub) => sub.cancelAtPeriodEnd) && (
-                              <span className='ml-2 rounded-full bg-yellow-100 px-2 py-0.5 text-xs text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'>{t('some_cancelling')}</span>
-                            )}
-                          </p>
-                        </div>
-                        {Object.entries(stripeCustomerInfo.stats.subscription).map(([currency, data]) => (
-                          <div key={currency} className='space-y-2'>
-                            <div>
-                              <p className='text-muted-foreground text-xs'>
-                                {t('monthly_recurring')} ({currency.toUpperCase()})
-                              </p>
-                              <p className='font-medium text-foreground'>
-                                {new Intl.NumberFormat('en-US', {
-                                  style: 'currency',
-                                  currency: currency,
-                                }).format(data.recurring)}
-                              </p>
-                            </div>
-                            <div>
-                              <p className='text-muted-foreground text-xs'>
-                                {t('total_paid')} ({currency.toUpperCase()})
-                              </p>
-                              <p className='font-medium text-foreground'>
-                                {new Intl.NumberFormat('en-US', {
-                                  style: 'currency',
-                                  currency: currency,
-                                }).format(data.total)}
-                              </p>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              <div className='mt-4 space-y-3'>
-                <h3 className='font-medium text-sm'>{t('recent_transactions')}</h3>
-                {(!stripeCustomerInfo?.recentPayments || stripeCustomerInfo.recentPayments.length === 0) && !isLoadingPayments && (
-                  <p className='text-muted-foreground text-sm'>{t('no_payments_found')}</p>
-                )}
-
-                {stripeCustomerInfo?.recentPayments?.map((payment) => (
-                  <div key={payment.id} className='flex items-center justify-between rounded-md bg-muted/30 p-2'>
-                    <div className='flex flex-col justify-between gap-1'>
-                      <span className='text-muted-foreground text-sm'>{formatDate(new Date(payment.created * 1000))}</span>
-                      <div className='flex items-center gap-2'>
-                        <span
-                          className={cn(
-                            'rounded px-1.5 py-0.5 text-xs',
-                            payment.type === 'subscription' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300' : 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300'
-                          )}
-                        >
-                          {payment.description}
-                        </span>
-                      </div>
-                    </div>
-                    <div className='flex flex-col items-end gap-1'>
-                      <span className={cn('font-medium', payment.status === 'succeeded' || payment.status === 'active' ? 'text-green-600 dark:text-green-400' : 'text-destructive')}>
-                        {new Intl.NumberFormat('en-US', {
-                          style: 'currency',
-                          currency: payment.currency,
-                        }).format(payment.amount)}
-                        {payment.type === 'subscription' && 'interval' in payment && `/${payment.interval}`}
-                      </span>
-                      <span className='text-muted-foreground text-xs capitalize'>
-                        {payment.status} {payment.type === 'subscription' && payment.status === 'active' && 'currentPeriodEnd' in payment && payment.cancelAtPeriodEnd && `(${t('cancelled')})`}
-                      </span>
-                      {payment.type === 'subscription' && 'currentPeriodEnd' in payment && (
-                        <span className='text-muted-foreground text-xs'>
-                          {payment.cancelAtPeriodEnd ? (
-                            <>
-                              {t('cancels')}: {formatDate(new Date(payment.currentPeriodEnd * 1000))}
-                            </>
-                          ) : (
-                            <>
-                              {t('renews')}: {formatDate(new Date(payment.currentPeriodEnd * 1000))}
-                            </>
-                          )}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
+            <Payment contact={contact || {}} />
 
             <div className='p-6'>
               <h2 className='mb-4 font-medium'>{t('team_roles')}</h2>
@@ -876,7 +721,7 @@ export default function ContactIdPage() {
                                             setReplyText('');
                                           }}
                                         >
-                                          Cancel
+                                          {t('cancel')}
                                         </Button>
                                       </div>
                                     </form>
