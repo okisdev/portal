@@ -7,10 +7,12 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Form, FormControl, FormField, FormItem, FormLabel } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { campaignTypes } from '@/data/data';
 import type { MarketingCampaign } from '@/lib/schema';
 import { api } from '@/utils/trpc/client';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -26,7 +28,7 @@ import {
   getSortedRowModel,
   useReactTable,
 } from '@tanstack/react-table';
-import { SearchIcon } from 'lucide-react';
+import { MoreHorizontal, SearchIcon } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -114,6 +116,7 @@ export default function MarketingCampaignsPage() {
 
   const handleEditCampaign = (e: React.MouseEvent, campaign: MarketingCampaign) => {
     e.stopPropagation();
+
     const formData = {
       name: campaign.name,
       campaignCode: campaign.campaignCode || '',
@@ -145,12 +148,12 @@ export default function MarketingCampaignsPage() {
     {
       accessorKey: 'name',
       header: ({ column }) => (
-        <Button variant='ghost' onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
-          Campaign Name {column.getIsSorted() && <CaretSortIcon className='ml-2 inline' />}
-        </Button>
+        <button type='button' onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
+          {t('campaign_name')} {column.getIsSorted() && <CaretSortIcon className='ml-2 inline' />}
+        </button>
       ),
       cell: ({ row }) => (
-        <Link href={`/dashboard/marketing/campaigns/${row.original.campaignCode}`} className='hover:underline font-medium'>
+        <Link href={`/dashboard/marketing/campaigns/${row.original.campaignCode}`} className='font-medium hover:underline'>
           {row.original.name}
         </Link>
       ),
@@ -158,56 +161,64 @@ export default function MarketingCampaignsPage() {
     {
       accessorKey: 'campaignCode',
       header: ({ column }) => (
-        <Button variant='ghost' onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
-          Code {column.getIsSorted() && <CaretSortIcon className='ml-2 inline' />}
-        </Button>
+        <button type='button' onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
+          {t('code')} {column.getIsSorted() && <CaretSortIcon className='ml-2 inline' />}
+        </button>
       ),
       cell: ({ row }) => row.original.campaignCode || '-',
     },
     {
       accessorKey: 'status',
       header: ({ column }) => (
-        <Button variant='ghost' onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
-          Status {column.getIsSorted() && <CaretSortIcon className='ml-2 inline' />}
-        </Button>
+        <button type='button' onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
+          {t('status')} {column.getIsSorted() && <CaretSortIcon className='ml-2 inline' />}
+        </button>
       ),
       cell: ({ row }) => <ColorBadge type='campaignStatus' value={row.original.status} />,
     },
     {
       accessorKey: 'type',
       header: ({ column }) => (
-        <Button variant='ghost' onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
-          Type {column.getIsSorted() && <CaretSortIcon className='ml-2 inline' />}
-        </Button>
+        <button type='button' onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
+          {t('type')} {column.getIsSorted() && <CaretSortIcon className='ml-2 inline' />}
+        </button>
       ),
       cell: ({ row }) => <span className='capitalize'>{row.original.type}</span>,
     },
     {
       accessorKey: 'contactCount',
       header: ({ column }) => (
-        <Button variant='ghost' onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
-          Contacts {column.getIsSorted() && <CaretSortIcon className='ml-2 inline' />}
-        </Button>
+        <button type='button' onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
+          {t('contacts')} {column.getIsSorted() && <CaretSortIcon className='ml-2 inline' />}
+        </button>
       ),
       cell: ({ row }) => row.original.contactCount || 0,
     },
     {
       accessorKey: 'createdAt',
       header: ({ column }) => (
-        <Button variant='ghost' onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
-          Created {column.getIsSorted() && <CaretSortIcon className='ml-2 inline' />}
-        </Button>
+        <button type='button' onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
+          {t('created')} {column.getIsSorted() && <CaretSortIcon className='ml-2 inline' />}
+        </button>
       ),
       cell: ({ row }) => new Date(row.original.createdAt).toLocaleDateString(),
     },
     {
       id: 'actions',
-      header: 'Actions',
       cell: ({ row }) => (
         <div className='flex justify-end gap-2'>
-          <Button variant='outline' size='sm' onClick={(e) => handleEditCampaign(e, row.original)}>
-            Edit
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <MoreHorizontal className='size-4' />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              <DropdownMenuItem>
+                <button type='button' className='cursor-pointer' onClick={(e) => handleEditCampaign(e, row.original)}>
+                  {t('edit')}
+                </button>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       ),
     },
@@ -257,7 +268,9 @@ export default function MarketingCampaignsPage() {
             <CardTitle className='font-medium text-sm'>{t('active_campaigns')}</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className='font-bold text-2xl'>{activeCampaigns.length}</div>
+            <div>
+              <span className='font-bold text-2xl'>{activeCampaigns.length}</span> / <span>{campaigns.length}</span>
+            </div>
           </CardContent>
         </Card>
         <Card>
@@ -286,7 +299,7 @@ export default function MarketingCampaignsPage() {
       <Dialog open={!!editingCampaign} onOpenChange={(open) => !open && setEditingCampaign(null)}>
         <DialogContent className='max-h-[90vh] max-w-xl overflow-y-auto'>
           <DialogHeader>
-            <DialogTitle>Edit Campaign</DialogTitle>
+            <DialogTitle>{t('edit_campaign')}</DialogTitle>
           </DialogHeader>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-4'>
@@ -295,7 +308,7 @@ export default function MarketingCampaignsPage() {
                 name='name'
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Name</FormLabel>
+                    <FormLabel>{t('name')}</FormLabel>
                     <FormControl>
                       <Input {...field} />
                     </FormControl>
@@ -308,7 +321,7 @@ export default function MarketingCampaignsPage() {
                 name='campaignCode'
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Campaign Code</FormLabel>
+                    <FormLabel>{t('campaign_code')}</FormLabel>
                     <FormControl>
                       <Input {...field} />
                     </FormControl>
@@ -321,7 +334,7 @@ export default function MarketingCampaignsPage() {
                 name='description'
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Description</FormLabel>
+                    <FormLabel>{t('description')}</FormLabel>
                     <FormControl>
                       <Textarea {...field} />
                     </FormControl>
@@ -334,19 +347,19 @@ export default function MarketingCampaignsPage() {
                 name='type'
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Type</FormLabel>
+                    <FormLabel>{t('type')}</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder='Select type' />
+                          <SelectValue placeholder={t('select_type')} />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value='email'>Email</SelectItem>
-                        <SelectItem value='social'>Social</SelectItem>
-                        <SelectItem value='event'>Event</SelectItem>
-                        <SelectItem value='referral'>Referral</SelectItem>
-                        <SelectItem value='other'>Other</SelectItem>
+                        {campaignTypes.map((type) => (
+                          <SelectItem key={type} value={type}>
+                            {t(type)}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   </FormItem>
@@ -358,20 +371,20 @@ export default function MarketingCampaignsPage() {
                 name='status'
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Status</FormLabel>
+                    <FormLabel>{t('status')}</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder='Select status' />
+                          <SelectValue placeholder={t('select_status')} />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value='draft'>Draft</SelectItem>
-                        <SelectItem value='scheduled'>Scheduled</SelectItem>
-                        <SelectItem value='active'>Active</SelectItem>
-                        <SelectItem value='paused'>Paused</SelectItem>
-                        <SelectItem value='completed'>Completed</SelectItem>
-                        <SelectItem value='cancelled'>Cancelled</SelectItem>
+                        <SelectItem value='draft'>{t('draft')}</SelectItem>
+                        <SelectItem value='scheduled'>{t('scheduled')}</SelectItem>
+                        <SelectItem value='active'>{t('active')}</SelectItem>
+                        <SelectItem value='paused'>{t('paused')}</SelectItem>
+                        <SelectItem value='completed'>{t('completed')}</SelectItem>
+                        <SelectItem value='cancelled'>{t('cancelled')}</SelectItem>
                       </SelectContent>
                     </Select>
                   </FormItem>

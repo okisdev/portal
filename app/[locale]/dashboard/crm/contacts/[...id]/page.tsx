@@ -1,17 +1,18 @@
 'use client';
 
+import { Payment } from '@/components/dashboard/contact/payment';
 import { SendEmail } from '@/components/dashboard/contact/send-email';
 import { SendMessage } from '@/components/dashboard/contact/send-message';
 import { ColorBadge } from '@/components/shared/color-badge';
 import { Combobox } from '@/components/shared/combobox';
 import { EventDialog } from '@/components/shared/event-dialog';
 import type { EventFormData } from '@/components/shared/event-dialog';
+import { MetadataPopover } from '@/components/shared/metadata-popover';
 import { NameTag } from '@/components/shared/name-tag';
 import { PageLoading } from '@/components/shared/page-loading';
 import { PhoneInput } from '@/components/shared/phone-input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import {} from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import {
   DropdownMenu,
@@ -25,7 +26,6 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
@@ -34,7 +34,6 @@ import { type Priority, type Status, statusSchema } from '@/lib/schema';
 import { cn, formatDate } from '@/lib/utils';
 import { api } from '@/utils/trpc/client';
 import { ArrowUpRight, Building2, Calendar, Edit2, Mail, MessageSquare, MoreHorizontal, Phone, Plus, Save, Send, Trash2, Users, X } from 'lucide-react';
-import { Info } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
@@ -59,7 +58,7 @@ export default function ContactIdPage() {
   const { data: activities } = api.contact.getContactActivities.useQuery({
     id: contactId[0],
   });
-  const { data: payments } = api.pay.getPaymentByContactEmail.useQuery({ email: contact?.email || '' }, { enabled: !!contact?.email });
+
   const { data: appointments } = api.calendar.getAppointmentsByContactId.useQuery({
     contactId: contactId[0],
   });
@@ -527,7 +526,7 @@ export default function ContactIdPage() {
               {isNotesEditing ? (
                 <Textarea value={editableRemark} onChange={(e) => setEditableRemark(e.target.value)} className='min-h-[100px] bg-background' placeholder='Add remark about this contact...' />
               ) : (
-                <p className='whitespace-pre-wrap text-muted-foreground text-sm'>{contact?.remark || 'No remark added yet. Click edit to add remark about this contact.'}</p>
+                <p className='whitespace-pre-wrap text-muted-foreground text-sm'>{contact?.remark || t('no_remark_added')}</p>
               )}
             </div>
 
@@ -569,7 +568,7 @@ export default function ContactIdPage() {
                         </DropdownMenuItem>
                         <DropdownMenuItem className='text-destructive' onClick={() => deleteAppointment.mutate(apt.id)}>
                           <Trash2 className='mr-2 size-4' />
-                          Delete
+                          {t('delete')}
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
@@ -578,49 +577,28 @@ export default function ContactIdPage() {
               </div>
             </div>
 
-            <div className='space-y-2 border-b p-6'>
-              <div className='flex items-center justify-between'>
-                <h2 className='font-medium text-foreground'>{t('payments')}</h2>
-                <button type='button' className='text-muted-foreground hover:text-foreground'>
-                  <Plus className='size-4' />
-                </button>
-              </div>
-              <div className='space-y-3'>
-                {payments?.length === 0 && <p className='text-muted-foreground text-sm'>{t('no_payments_found')}</p>}
-                {payments?.slice(0, 3).map((payment) => (
-                  <div key={payment.id} className='flex items-center justify-between'>
-                    <span className='text-muted-foreground text-sm'>{formatDate(new Date(payment.created * 1000))}</span>
-                    <span className={cn('font-medium', payment.status === 'succeeded' ? 'text-green-600 dark:text-green-400' : 'text-destructive')}>
-                      {new Intl.NumberFormat('en-US', {
-                        style: 'currency',
-                        currency: payment.currency,
-                      }).format(payment.amount)}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
+            <Payment contact={contact || {}} />
 
             <div className='p-6'>
-              <h2 className='mb-4 font-medium'>Team Roles</h2>
+              <h2 className='mb-4 font-medium'>{t('team_roles')}</h2>
               <div className='space-y-3'>
                 {contact?.leadingTeams?.length === 0 && contact?.subLeadingTeams?.length === 0 && contact?.referralTeams?.length === 0 && (
-                  <p className='text-muted-foreground text-sm'>No team roles found.</p>
+                  <p className='text-muted-foreground text-sm'>{t('no_team_roles_found')}</p>
                 )}
                 {contact?.leadingTeams?.map((team) => (
                   <div key={team.id} className='flex items-center justify-between'>
-                    <Link href={`/dashboard/crm/team/${team.id}`} className='text-sm hover:text-primary'>
+                    <Link href={`/dashboard/crm/team/${team.id}`} className='text-sm transition-colors duration-200 hover:text-primary hover:underline'>
                       {team.name}
                     </Link>
-                    <span className='text-muted-foreground text-xs'>Team Leader</span>
+                    <span className='text-muted-foreground text-xs'>{t('team_leader')}</span>
                   </div>
                 ))}
                 {contact?.subLeadingTeams?.map((team) => (
                   <div key={team.id} className='flex items-center justify-between'>
-                    <Link href={`/dashboard/crm/team/${team.id}`} className='text-sm hover:text-primary'>
+                    <Link href={`/dashboard/crm/team/${team.id}`} className='text-sm transition-colors duration-200 hover:text-primary hover:underline'>
                       {team.name}
                     </Link>
-                    <span className='text-muted-foreground text-xs'>Sub Leader</span>
+                    <span className='text-muted-foreground text-xs'>{t('sub_leader')}</span>
                   </div>
                 ))}
                 {contact?.referralTeams?.map((team) => (
@@ -674,24 +652,24 @@ export default function ContactIdPage() {
                                     activity.type === 'NOTE_ADDED'
                                       ? 'rgb(59 130 246)'
                                       : activity.type.startsWith('CONTACT_')
-                                        ? 'rgb(34 197 94)'
-                                        : activity.type.startsWith('MEETING_')
-                                          ? 'rgb(168 85 247)'
-                                          : activity.type.startsWith('TEAM_')
-                                            ? 'rgb(234 179 8)'
-                                            : activity.type.startsWith('DEAL_')
-                                              ? 'rgb(236 72 153)'
-                                              : activity.type.includes('STATUS')
-                                                ? 'rgb(249 115 22)'
-                                                : activity.type.includes('PRIORITY')
-                                                  ? 'rgb(239 68 68)'
-                                                  : activity.type.includes('PAYMENT')
-                                                    ? 'rgb(16 185 129)'
-                                                    : activity.type.includes('CAMPAIGN')
-                                                      ? 'rgb(250 204 21)'
-                                                      : activity.type.includes('EMAIL')
-                                                        ? 'rgb(250 204 21)'
-                                                        : 'rgb(156 163 175)',
+                                      ? 'rgb(34 197 94)'
+                                      : activity.type.startsWith('MEETING_')
+                                      ? 'rgb(168 85 247)'
+                                      : activity.type.startsWith('TEAM_')
+                                      ? 'rgb(234 179 8)'
+                                      : activity.type.startsWith('DEAL_')
+                                      ? 'rgb(236 72 153)'
+                                      : activity.type.includes('STATUS')
+                                      ? 'rgb(249 115 22)'
+                                      : activity.type.includes('PRIORITY')
+                                      ? 'rgb(239 68 68)'
+                                      : activity.type.includes('PAYMENT')
+                                      ? 'rgb(16 185 129)'
+                                      : activity.type.includes('CAMPAIGN')
+                                      ? 'rgb(250 204 21)'
+                                      : activity.type.includes('EMAIL')
+                                      ? 'rgb(250 204 21)'
+                                      : 'rgb(156 163 175)',
                                 }}
                               >
                                 <div className='flex-1 space-y-1'>
@@ -700,10 +678,12 @@ export default function ContactIdPage() {
                                       <span className='font-medium'>{activity.title}</span>
                                       <span className='text-muted-foreground text-xs'>•</span>
                                       {activity.initiatorType === 'system' ? (
-                                        <span className='text-muted-foreground text-xs'>by System</span>
+                                        <span className='text-muted-foreground text-xs'>{t('by_system')}</span>
                                       ) : (
-                                        <span className='text-muted-foreground text-xs'>
-                                          by <NameTag id={activity.userId} type='user' />
+                                        <span className='flex items-center gap-1 text-muted-foreground text-xs'>
+                                          {t.rich('by', {
+                                            name: () => <NameTag id={activity.userId} type='user' />,
+                                          })}
                                         </span>
                                       )}
                                       <span className='text-muted-foreground text-xs'>•</span>
@@ -711,17 +691,9 @@ export default function ContactIdPage() {
                                     </div>
                                     <div className='flex items-center gap-2'>
                                       {activity.metadata && (
-                                        <Popover>
-                                          <PopoverTrigger asChild>
-                                            <button type='button' className='rounded-md bg-muted/50 px-1 py-0.5 text-muted-foreground text-xs hover:bg-muted'>
-                                              <Info className='mr-1 inline-block size-3' />
-                                              {t('view_details')}
-                                            </button>
-                                          </PopoverTrigger>
-                                          <PopoverContent className='w-80'>
-                                            <pre className='whitespace-pre-wrap font-mono text-xs'>{JSON.stringify(JSON.parse(activity.metadata), null, 2)}</pre>
-                                          </PopoverContent>
-                                        </Popover>
+                                        <MetadataPopover title={t('view_details')}>
+                                          <pre className='whitespace-pre-wrap font-mono text-xs'>{JSON.stringify(JSON.parse(activity.metadata), null, 2)}</pre>
+                                        </MetadataPopover>
                                       )}
                                       {activity.type === 'NOTE_ADDED' && (
                                         <button type='button' onClick={() => setReplyingTo(activity.id)} className='rounded-md bg-muted/50 px-1 py-0.5 text-muted-foreground text-xs hover:bg-muted'>
@@ -749,7 +721,7 @@ export default function ContactIdPage() {
                                             setReplyText('');
                                           }}
                                         >
-                                          Cancel
+                                          {t('cancel')}
                                         </Button>
                                       </div>
                                     </form>
@@ -795,7 +767,7 @@ export default function ContactIdPage() {
       <Dialog open={isEditModalOpen} onOpenChange={handleCloseEditModal}>
         <DialogContent className='max-h-[90vh] max-w-xl overflow-y-auto'>
           <DialogHeader>
-            <DialogTitle>Edit Contact Information</DialogTitle>
+            <DialogTitle>{t('edit_contact_information')}</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSubmitEdit} className='space-y-4'>
             <div className='grid grid-cols-2 gap-4'>
@@ -849,9 +821,9 @@ export default function ContactIdPage() {
                 value={editForm.source}
                 onChange={(value) => setEditForm({ ...editForm, source: value })}
                 items={sources}
-                placeholder='Select source...'
-                searchPlaceholder='Search source...'
-                groupHeading='Sources'
+                placeholder={t('select_source')}
+                searchPlaceholder={t('search_source')}
+                groupHeading={t('sources')}
               />
             </div>
             <div className='space-y-2'>
@@ -903,7 +875,7 @@ export default function ContactIdPage() {
         onOpenChange={setIsBookingModalOpen}
         onSubmit={handleBookAppointment}
         defaultValues={{
-          title: `Meeting with ${contact?.name}`,
+          title: t('meeting_with', { name: contact?.name }),
           startAt: new Date(),
           endAt: new Date(Date.now() + 30 * 60000),
           folderId: 'default',
@@ -914,15 +886,15 @@ export default function ContactIdPage() {
       <Dialog open={isTeamModalOpen} onOpenChange={setIsTeamModalOpen}>
         <DialogContent className='max-h-[90vh] max-w-xl overflow-y-auto'>
           <DialogHeader>
-            <DialogTitle>Assign to Team</DialogTitle>
+            <DialogTitle>{t('assign_to_team')}</DialogTitle>
           </DialogHeader>
 
           <div className='space-y-4'>
             <div className='space-y-2'>
-              <Label>Select Team</Label>
+              <Label>{t('select_team')}</Label>
               <Select value={selectedTeam} onValueChange={setSelectedTeam}>
                 <SelectTrigger>
-                  <SelectValue placeholder='Select a team' />
+                  <SelectValue placeholder={t('select_a_team')} />
                 </SelectTrigger>
                 <SelectContent>
                   {allTeams?.map((team) => (
@@ -935,7 +907,7 @@ export default function ContactIdPage() {
             </div>
             <div className='flex justify-end gap-2'>
               <Button onClick={handleAssignTeam} disabled={assignToTeam.isPending || !selectedTeam}>
-                Assign
+                {t('assign')}
               </Button>
             </div>
           </div>

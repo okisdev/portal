@@ -17,6 +17,7 @@ import { Input } from '@/components/ui/input';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { campaignTypes } from '@/data/data';
 import { useDebounce } from '@/hooks/use-debounce';
 import { formatDate } from '@/lib/utils';
 import { api } from '@/utils/trpc/client';
@@ -177,9 +178,9 @@ export default function CampaignDetailsPage() {
     {
       accessorKey: 'name',
       header: ({ column }) => (
-        <Button variant='ghost' onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
-          Name {column.getIsSorted() && <CaretSortIcon className='ml-2 inline' />}
-        </Button>
+        <button type='button' onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
+          {t('name')} {column.getIsSorted() && <CaretSortIcon className='ml-2 inline' />}
+        </button>
       ),
       cell: ({ row }) => (
         <div className='flex items-center gap-2'>
@@ -193,34 +194,34 @@ export default function CampaignDetailsPage() {
     {
       accessorKey: 'email',
       header: ({ column }) => (
-        <Button variant='ghost' onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
-          Email {column.getIsSorted() && <CaretSortIcon className='ml-2 inline' />}
-        </Button>
+        <button type='button' onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
+          {t('email')} {column.getIsSorted() && <CaretSortIcon className='ml-2 inline' />}
+        </button>
       ),
     },
     {
       accessorKey: 'company',
       header: ({ column }) => (
-        <Button variant='ghost' onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
-          Company {column.getIsSorted() && <CaretSortIcon className='ml-2 inline' />}
-        </Button>
+        <button type='button' onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
+          {t('company')} {column.getIsSorted() && <CaretSortIcon className='ml-2 inline' />}
+        </button>
       ),
     },
     {
       accessorKey: 'status',
       header: ({ column }) => (
-        <Button variant='ghost' onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
-          Status {column.getIsSorted() && <CaretSortIcon className='ml-2 inline' />}
-        </Button>
+        <button type='button' onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
+          {t('status')} {column.getIsSorted() && <CaretSortIcon className='ml-2 inline' />}
+        </button>
       ),
       cell: ({ row }) => <ColorBadge type='contactStatus' value={row.original.status} />,
     },
     {
       accessorKey: 'joinedAt',
       header: ({ column }) => (
-        <Button variant='ghost' onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
-          Joined Date {column.getIsSorted() && <CaretSortIcon className='ml-2 inline' />}
-        </Button>
+        <button type='button' onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
+          {t('joined_date')} {column.getIsSorted() && <CaretSortIcon className='ml-2 inline' />}
+        </button>
       ),
       cell: ({ row }) => formatDate(new Date(row.original.joinedAt)),
     },
@@ -382,7 +383,7 @@ export default function CampaignDetailsPage() {
         description={campaign.description || 'No description'}
         right={
           <Button variant='outline' size='sm' onClick={() => setIsEditDialogOpen(true)}>
-            Edit Campaign
+            {t('edit_campaign')}
           </Button>
         }
       />
@@ -390,7 +391,7 @@ export default function CampaignDetailsPage() {
       <div className='grid grid-cols-1 gap-4 md:grid-cols-4'>
         <Card>
           <CardHeader>
-            <CardTitle className='text-sm'>Total Contacts</CardTitle>
+            <CardTitle className='text-sm'>{t('total_contacts')}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className='font-bold text-2xl'>{campaign.contactCount}</div>
@@ -398,7 +399,7 @@ export default function CampaignDetailsPage() {
         </Card>
         <Card>
           <CardHeader>
-            <CardTitle className='text-sm'>Status</CardTitle>
+            <CardTitle className='text-sm'>{t('status')}</CardTitle>
           </CardHeader>
           <CardContent>
             <ColorBadge type='campaignStatus' value={campaign.status} />
@@ -406,7 +407,7 @@ export default function CampaignDetailsPage() {
         </Card>
         <Card>
           <CardHeader>
-            <CardTitle className='text-sm'>Type</CardTitle>
+            <CardTitle className='text-sm'>{t('type')}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className='capitalize'>{campaign.type}</div>
@@ -417,20 +418,20 @@ export default function CampaignDetailsPage() {
       <div className='flex flex-col gap-4'>
         <div className='flex items-center justify-between gap-4'>
           <div className='flex flex-row gap-2'>
-            <Input placeholder='Search contacts...' value={search} onChange={(e) => setSearch(e.target.value)} className='h-8 w-72 max-w-sm' disabled={contactsLoading} />
+            <Input placeholder={t('search_contacts')} value={search} onChange={(e) => setSearch(e.target.value)} className='h-8 w-72 max-w-sm' disabled={contactsLoading} />
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant='outline' size='sm' disabled={contactsLoading}>
                   <Filter className='mr-2 h-4 w-4' />
-                  Filters ({filters.conditions.length})
+                  {t('filters')} ({filters.conditions.length})
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent className='w-[350px] p-4'>
                 <div className='space-y-4'>
                   <div className='flex items-center gap-2'>
-                    <span className='font-medium text-sm'>Match:</span>
+                    <span className='font-medium text-sm'>{t('match')}:</span>
                     <Button variant='ghost' size='sm' onClick={() => setFilters((f) => ({ ...f, matchAll: !f.matchAll }))}>
-                      {filters.matchAll ? 'ALL conditions' : 'ANY condition'}
+                      {filters.matchAll ? t('all_conditions') : t('any_condition')}
                     </Button>
                   </div>
 
@@ -506,7 +507,7 @@ export default function CampaignDetailsPage() {
                     )
                     .map((contact) => contact.id) ?? []
                 }
-                searchPlaceholder='Search contacts...'
+                searchPlaceholder={t('search_contacts')}
                 emptyText='No contacts found.'
                 groupHeading='Contacts'
                 allowCustom={false}
@@ -554,7 +555,7 @@ export default function CampaignDetailsPage() {
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent className='max-h-[90vh] max-w-xl overflow-y-auto'>
           <DialogHeader>
-            <DialogTitle>Edit Campaign</DialogTitle>
+            <DialogTitle>{t('edit_campaign')}</DialogTitle>
           </DialogHeader>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-4'>
@@ -563,7 +564,7 @@ export default function CampaignDetailsPage() {
                 name='name'
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Name</FormLabel>
+                    <FormLabel>{t('name')}</FormLabel>
                     <FormControl>
                       <Input {...field} />
                     </FormControl>
@@ -576,7 +577,7 @@ export default function CampaignDetailsPage() {
                 name='campaignCode'
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Campaign Code</FormLabel>
+                    <FormLabel>{t('campaign_code')}</FormLabel>
                     <FormControl>
                       <Input {...field} />
                     </FormControl>
@@ -589,7 +590,7 @@ export default function CampaignDetailsPage() {
                 name='description'
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Description</FormLabel>
+                    <FormLabel>{t('description')}</FormLabel>
                     <FormControl>
                       <Textarea {...field} />
                     </FormControl>
@@ -602,19 +603,19 @@ export default function CampaignDetailsPage() {
                 name='type'
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Type</FormLabel>
+                    <FormLabel>{t('type')}</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder='Select type' />
+                          <SelectValue placeholder={t('select_type')} />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value='email'>Email</SelectItem>
-                        <SelectItem value='social'>Social</SelectItem>
-                        <SelectItem value='event'>Event</SelectItem>
-                        <SelectItem value='referral'>Referral</SelectItem>
-                        <SelectItem value='other'>Other</SelectItem>
+                        {campaignTypes.map((type) => (
+                          <SelectItem key={type} value={type}>
+                            {t(type)}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   </FormItem>
@@ -626,20 +627,32 @@ export default function CampaignDetailsPage() {
                 name='status'
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Status</FormLabel>
+                    <FormLabel>{t('status')}</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder='Select status' />
+                          <SelectValue placeholder={t('select_status')} />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value='draft'>{t('draft')}</SelectItem>
-                        <SelectItem value='scheduled'>{t('scheduled')}</SelectItem>
-                        <SelectItem value='active'>{t('active')}</SelectItem>
-                        <SelectItem value='paused'>{t('paused')}</SelectItem>
-                        <SelectItem value='completed'>{t('completed')}</SelectItem>
-                        <SelectItem value='cancelled'>{t('cancelled')}</SelectItem>
+                        <SelectItem value='draft'>
+                          <ColorBadge type='campaignStatus' value='draft' />
+                        </SelectItem>
+                        <SelectItem value='scheduled'>
+                          <ColorBadge type='campaignStatus' value='scheduled' />
+                        </SelectItem>
+                        <SelectItem value='active'>
+                          <ColorBadge type='campaignStatus' value='active' />
+                        </SelectItem>
+                        <SelectItem value='paused'>
+                          <ColorBadge type='campaignStatus' value='paused' />
+                        </SelectItem>
+                        <SelectItem value='completed'>
+                          <ColorBadge type='campaignStatus' value='completed' />
+                        </SelectItem>
+                        <SelectItem value='cancelled'>
+                          <ColorBadge type='campaignStatus' value='cancelled' />
+                        </SelectItem>
                       </SelectContent>
                     </Select>
                   </FormItem>

@@ -6,6 +6,7 @@ import { ContentSideList } from '@/components/dashboard/resource/content/side-li
 import { ActionAlertDialog } from '@/components/shared/action-alert-dialog';
 import type { ResourceContent } from '@/lib/schema';
 import { api } from '@/utils/trpc/client';
+import { useTranslations } from 'next-intl';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
@@ -15,6 +16,8 @@ export default function ContentPage() {
   const id = searchParams.get('id');
   const router = useRouter();
   const utils = api.useUtils();
+
+  const t = useTranslations();
 
   const [currentContent, setCurrentContent] = useState<ResourceContent | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -116,8 +119,8 @@ export default function ContentPage() {
         onConfirm={handleDelete}
         title='Delete Content'
         description='Are you sure you want to delete this content? This action cannot be undone.'
-        confirmText='Delete'
-        cancelText='Cancel'
+        confirmText={t('delete')}
+        cancelText={t('cancel')}
       />
     </div>
   );

@@ -39,6 +39,164 @@ export const payRouter = createTRPCRouter({
       }
     }),
 
+  getContactStripeCustomerInfo: protectedProcedure.input(z.object({ email: z.string().optional(), phone: z.string().optional() })).query(async ({ input }) => {
+    const allCustomers = await stripe.customers.list();
+    const customer = allCustomers.data.find((customer) => customer.email === input.email || customer.phone === input.phone);
+
+    if (!customer) {
+      return null;
+    }
+
+    // Get all payments and subscriptions for this customer
+    const [payments, subscriptions] = await Promise.all([
+      stripe.paymentIntents.list({
+        customer: customer.id,
+        limit: 100,
+      }),
+      stripe.subscriptions.list({
+        customer: customer.id,
+        limit: 100,
+      }),
+    ]);
+
+    const activeSubscriptions = subscriptions.data.filter((sub) => sub.status === 'active' || sub.status === 'trialing');
+
+    // Get subscription payment intents to exclude them from one-time payments
+    const subscriptionPaymentIntents = new Set(
+      (
+        await Promise.all(
+          subscriptions.data.map((sub) =>
+            stripe.paymentIntents
+              .list({
+                customer: customer.id,
+                limit: 100,
+              })
+              .then((result) => result.data.filter((payment) => typeof payment.invoice === 'string' && payment.invoice.startsWith('in_')).map((payment) => payment.id))
+          )
+        )
+      ).flat()
+    );
+
+    // Filter successful payments and separate one-time from subscription payments
+    const successfulPayments = payments.data.filter((payment) => payment.status === 'succeeded' && !subscriptionPaymentIntents.has(payment.id));
+
+    // Calculate payment statistics by type and currency
+    const paymentStats = {
+      oneTime: successfulPayments.reduce((acc, payment) => {
+        const { currency } = payment;
+        if (!acc[currency]) {
+          acc[currency] = { total: 0, count: 0 };
+        }
+        acc[currency].total += payment.amount / 100;
+        acc[currency].count += 1;
+        return acc;
+      }, {} as Record<string, { total: number; count: number }>),
+
+      subscription: subscriptions.data.reduce((acc, sub) => {
+        const currency = sub.currency;
+        if (!acc[currency]) {
+          acc[currency] = {
+            total: 0,
+            count: 0,
+            recurring: 0,
+            activeCount: 0,
+          };
+        }
+        acc[currency].count += 1;
+        if (sub.status === 'active' || sub.status === 'trialing') {
+          acc[currency].activeCount += 1;
+          acc[currency].recurring += (sub.items.data[0]?.price.unit_amount || 0) / 100;
+        }
+        // Calculate total based on all successful payments for this subscription
+        const totalPaid = sub.items.data[0]?.price.unit_amount
+          ? ((sub.items.data[0].price.unit_amount || 0) *
+              Math.floor(
+                (Date.now() / 1000 - sub.created) /
+                  (sub.items.data[0].price.recurring?.interval_count || 1) /
+                  (sub.items.data[0].price.recurring?.interval === 'month' ? 30 * 24 * 60 * 60 : sub.items.data[0].price.recurring?.interval === 'year' ? 365 * 24 * 60 * 60 : 30 * 24 * 60 * 60)
+              )) /
+            100
+          : 0;
+        acc[currency].total += totalPaid;
+        return acc;
+      }, {} as Record<string, { total: number; count: number; recurring: number; activeCount: number }>),
+
+      totalStats: {
+        oneTimeCount: successfulPayments.length,
+        subscriptionCount: subscriptions.data.length,
+        activeSubscriptionCount: activeSubscriptions.length,
+        lastPaymentDate: successfulPayments.length > 0 ? successfulPayments[0].created : null,
+        lastSubscriptionDate: activeSubscriptions.length > 0 ? activeSubscriptions[0].created : null,
+      },
+    };
+
+    // Get recent payments (including both one-time and subscription payments)
+    const recentPayments = successfulPayments.slice(0, 10).map((payment) => ({
+      id: payment.id,
+      amount: payment.amount / 100,
+      status: payment.status,
+      created: payment.created,
+      currency: payment.currency,
+      description: payment.description,
+      receipt_email: payment.receipt_email,
+      type: 'one-time',
+    }));
+
+    // Add subscription payments to the list
+    const subscriptionPayments = activeSubscriptions.map((sub) => ({
+      id: sub.id,
+      amount: (sub.items.data[0]?.price.unit_amount || 0) / 100,
+      status: sub.status,
+      created: sub.created,
+      currency: sub.currency,
+      description: `${sub.items.data[0]?.price.nickname || 'Subscription'} (${sub.items.data[0]?.price.recurring?.interval || 'monthly'})`,
+      type: 'subscription' as const,
+      interval: sub.items.data[0]?.price.recurring?.interval,
+      currentPeriodEnd: sub.current_period_end,
+      totalPaid: (Math.floor((Date.now() / 1000 - sub.created) / (30 * 24 * 60 * 60)) * (sub.items.data[0]?.price.unit_amount || 0)) / 100,
+      cancelAtPeriodEnd: sub.cancel_at_period_end,
+      cancelAt: sub.cancel_at,
+    }));
+
+    // Combine and sort all payments by date
+    const allRecentPayments = [...recentPayments, ...subscriptionPayments].sort((a, b) => b.created - a.created).slice(0, 10);
+
+    // Map all subscriptions, including cancelled and expired ones
+    const allSubscriptionPayments = subscriptions.data.map((sub) => ({
+      id: sub.id,
+      amount: (sub.items.data[0]?.price.unit_amount || 0) / 100,
+      status: sub.status,
+      created: sub.created,
+      currency: sub.currency,
+      description: `${sub.items.data[0]?.price.nickname || 'Subscription'} (${sub.items.data[0]?.price.recurring?.interval || 'monthly'})`,
+      type: 'subscription' as const,
+      interval: sub.items.data[0]?.price.recurring?.interval,
+      currentPeriodEnd: sub.current_period_end,
+      totalPaid: (Math.floor((Date.now() / 1000 - sub.created) / (30 * 24 * 60 * 60)) * (sub.items.data[0]?.price.unit_amount || 0)) / 100,
+      cancelAtPeriodEnd: sub.cancel_at_period_end,
+      cancelAt: sub.cancel_at,
+      endedAt: sub.ended_at,
+      canceledAt: sub.canceled_at,
+    }));
+
+    return {
+      customer,
+      stats: paymentStats,
+      recentPayments: allRecentPayments,
+      subscriptions,
+      activeSubscriptions: subscriptionPayments,
+      allSubscriptions: allSubscriptionPayments,
+      allPayments: payments.data.map((payment) => ({
+        id: payment.id,
+        amount: payment.amount / 100,
+        status: payment.status,
+        created: payment.created,
+        currency: payment.currency,
+        type: 'one-time' as const,
+      })),
+    };
+  }),
+
   fetchStripeSubscriptionPlans: protectedProcedure.query(async ({ ctx }) => {
     const products = await stripe.products.list({ active: true });
     const prices = await stripe.prices.list({ active: true });

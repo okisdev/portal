@@ -221,7 +221,7 @@ export default function CRMTeamsPage() {
 
       <div className='flex items-center py-4'>
         <Input
-          placeholder='Filter teams...'
+          placeholder={t('filter_teams')}
           value={(table.getColumn('name')?.getFilterValue() as string) ?? ''}
           onChange={(event) => table.getColumn('name')?.setFilterValue(event.target.value)}
           className='h-8 max-w-sm'
@@ -242,7 +242,7 @@ export default function CRMTeamsPage() {
           placeholder={t('columns')}
           searchPlaceholder='Search columns...'
           emptyText='No columns found'
-          groupHeading='Available Columns'
+          groupHeading={t('available_columns')}
           allowCustom={false}
           renderItem={(item) => {
             const column = table.getAllColumns().find((col) => col.id === item);

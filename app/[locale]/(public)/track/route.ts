@@ -5,7 +5,7 @@ import { stripe } from '@/lib/payment';
 import { eq } from 'drizzle-orm';
 import { type NextRequest, NextResponse } from 'next/server';
 
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+const APP_URL = process.env.NODE_ENV === 'production' ? process.env.NEXT_PUBLIC_APP_URL : 'http://localhost:3000';
 
 export async function GET(request: NextRequest) {
   const { searchParams } = request.nextUrl;

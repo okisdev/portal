@@ -1,9 +1,11 @@
 'use client';
 
+import { Combobox } from '@/components/shared/combobox';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { api } from '@/utils/trpc/client';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { toast } from 'sonner';
@@ -12,24 +14,42 @@ export function CreatePaymentLink() {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const [selectedContact, setSelectedContact] = useState('');
+  const [formData, setFormData] = useState({
+    email: '',
+    firstName: '',
+    lastName: '',
+  });
+
+  const { data: contacts } = api.contact.getAllContacts.useQuery();
+  const contactOptions = contacts?.map((contact) => `${contact.firstName} ${contact.lastName} (${contact.email})`) || [];
+
+  const handleContactSelect = (value: string) => {
+    setSelectedContact(value);
+    const contact = contacts?.find((c) => `${c.firstName} ${c.lastName} (${c.email})` === value);
+    if (contact) {
+      setFormData({
+        email: contact.email,
+        firstName: contact.firstName,
+        lastName: contact.lastName,
+      });
+    }
+  };
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setLoading(true);
 
-    const formData = new FormData(e.currentTarget);
-    const email = formData.get('email') as string;
-    const firstName = formData.get('firstName') as string;
-    const lastName = formData.get('lastName') as string;
-    const amount = formData.get('amount') as string;
+    const formDataObj = new FormData(e.currentTarget);
+    const amount = formDataObj.get('amount') as string;
 
     try {
       const res = await fetch('/api/payment-links', {
         method: 'POST',
         body: JSON.stringify({
-          email,
-          firstName,
-          lastName,
+          email: formData.email,
+          firstName: formData.firstName,
+          lastName: formData.lastName,
           amount: Math.round(Number.parseFloat(amount) * 100), // Convert to cents
         }),
       });
@@ -57,17 +77,37 @@ export function CreatePaymentLink() {
         </DialogHeader>
         <form onSubmit={onSubmit} className='space-y-4'>
           <div className='space-y-2'>
+            <Label>Select Contact</Label>
+            <Combobox
+              value={selectedContact}
+              onChange={handleContactSelect}
+              items={contactOptions}
+              placeholder='Select a contact'
+              searchPlaceholder='Search contacts...'
+              emptyText='No contacts found'
+              allowCustom={false}
+            />
+          </div>
+          <div className='space-y-2'>
             <Label htmlFor='email'>Email</Label>
-            <Input id='email' name='email' type='email' placeholder='contact@example.com' required />
+            <Input
+              id='email'
+              name='email'
+              type='email'
+              value={formData.email}
+              onChange={(e) => setFormData((prev) => ({ ...prev, email: e.target.value }))}
+              placeholder='contact@example.com'
+              required
+            />
           </div>
           <div className='grid grid-cols-2 gap-4'>
             <div className='space-y-2'>
               <Label htmlFor='firstName'>First Name</Label>
-              <Input id='firstName' name='firstName' placeholder='John' required />
+              <Input id='firstName' name='firstName' value={formData.firstName} onChange={(e) => setFormData((prev) => ({ ...prev, firstName: e.target.value }))} placeholder='John' required />
             </div>
             <div className='space-y-2'>
               <Label htmlFor='lastName'>Last Name</Label>
-              <Input id='lastName' name='lastName' placeholder='Doe' required />
+              <Input id='lastName' name='lastName' value={formData.lastName} onChange={(e) => setFormData((prev) => ({ ...prev, lastName: e.target.value }))} placeholder='Doe' required />
             </div>
           </div>
           <div className='space-y-2'>

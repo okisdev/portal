@@ -2,6 +2,8 @@ export const insuranceCompanies = ['AIA', 'AXA', 'BoC Life', 'China Life', 'Chub
 
 export const sources = ['Pitching', 'Referral', 'Website', 'Email', 'Instagram', 'LinkedIn', 'Facebook', 'Other'];
 
+export const campaignTypes = ['Email', 'Social Media', 'Event', 'Referral', 'Other'];
+
 export const phoneCountries = [
   { value: 'af', label: '🇦🇫 Afghanistan', code: '+93' },
   { value: 'al', label: '🇦🇱 Albania', code: '+355' },

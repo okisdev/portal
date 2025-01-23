@@ -436,7 +436,7 @@ export default function TeamIdPage() {
                         )
                         .map((contact) => contact.id) ?? []
                     }
-                    searchPlaceholder='Search contacts...'
+                    searchPlaceholder={t('search_contacts')}
                     emptyText='No contacts found.'
                     groupHeading='Contacts'
                     allowCustom={false}
@@ -536,7 +536,7 @@ export default function TeamIdPage() {
               </div>
               <div>
                 <Label className='text-muted-foreground text-xs'>Remarks</Label>
-                <p className='text-sm'>{team.remarks || 'No remarks available'}</p>
+                <p className='text-sm'>{team.remarks || t('no_remark_added')}</p>
               </div>
               <div className='items-cen flex justify-end'>
                 <p className='text-muted-foreground text-xs'>Created on {formatDate(new Date(team.createdAt))}</p>
@@ -577,19 +577,19 @@ export default function TeamIdPage() {
       <Dialog open={isEditModalOpen} onOpenChange={(open) => !open && handleCloseEdit()}>
         <DialogContent className='max-h-[90vh] max-w-xl overflow-y-auto'>
           <DialogHeader>
-            <DialogTitle>Edit Team Information</DialogTitle>
+            <DialogTitle>{t('edit_team_information')}</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSubmitEdit} className='space-y-4'>
             <div className='space-y-2'>
-              <Label>Team Name</Label>
+              <Label>{t('team_name')}</Label>
               <Input value={editForm.name} onChange={(e) => setEditForm({ ...editForm, name: e.target.value })} />
             </div>
             <div className='space-y-2'>
-              <Label>Description</Label>
+              <Label>{t('description')}</Label>
               <Textarea value={editForm.description} onChange={(e) => setEditForm({ ...editForm, description: e.target.value })} />
             </div>
             <div className='space-y-2'>
-              <Label>Team Leader</Label>
+              <Label>{t('team_leader')}</Label>
               <Combobox
                 value={
                   editForm.leaderId
@@ -601,14 +601,14 @@ export default function TeamIdPage() {
                   setEditForm({ ...editForm, leaderId: contact?.contact.id || '' });
                 }}
                 items={teamContacts?.map((c) => `${c.contact.firstName} ${c.contact.lastName}`) || []}
-                placeholder='Select team leader'
-                searchPlaceholder='Search team leader...'
+                placeholder={t('select_team_leader')}
+                searchPlaceholder={t('search_team_leader')}
                 allowCustom={false}
-                groupHeading='Contacts'
+                groupHeading={t('contacts')}
               />
             </div>
             <div className='space-y-2'>
-              <Label>Sub Leader</Label>
+              <Label>{t('sub_leader')}</Label>
               <Combobox
                 value={
                   editForm.subLeaderId
@@ -620,14 +620,14 @@ export default function TeamIdPage() {
                   setEditForm({ ...editForm, subLeaderId: contact?.contact.id || '' });
                 }}
                 items={teamContacts?.map((c) => `${c.contact.firstName} ${c.contact.lastName}`) || []}
-                placeholder='Select sub leader'
-                searchPlaceholder='Search sub leader...'
+                placeholder={t('select_sub_leader')}
+                searchPlaceholder={t('search_sub_leader')}
                 allowCustom={false}
-                groupHeading='Contacts'
+                groupHeading={t('contacts')}
               />
             </div>
             <div className='space-y-2'>
-              <Label>Referral</Label>
+              <Label>{t('referral')}</Label>
               <Combobox
                 value={
                   editForm.referralId
@@ -641,22 +641,22 @@ export default function TeamIdPage() {
                   setEditForm({ ...editForm, referralId: contact?.id || '' });
                 }}
                 items={contacts?.map((contact) => `${contact.firstName} ${contact.lastName} (${contact.email})`) || []}
-                placeholder='Select referral'
-                searchPlaceholder='Search referral...'
+                placeholder={t('select_referral')}
+                searchPlaceholder={t('search_referral')}
                 allowCustom={false}
-                groupHeading='Contacts'
+                groupHeading={t('contacts')}
               />
             </div>
             <div className='space-y-2'>
-              <Label>Campaign Code</Label>
+              <Label>{t('campaign_code')}</Label>
               <Combobox
                 value={editForm.campaignCode}
                 onChange={(value) => setEditForm({ ...editForm, campaignCode: value })}
                 items={campaigns?.map((campaign) => campaign.campaignCode || '') || []}
-                placeholder='Select campaign code'
-                searchPlaceholder='Search campaign code...'
+                placeholder={t('select_campaign_code')}
+                searchPlaceholder={t('search_campaign_code')}
                 allowCustom={false}
-                groupHeading='Campaigns'
+                groupHeading={t('campaigns')}
                 renderItem={(campaignCode) => {
                   const campaign = campaigns?.find((c) => c.campaignCode === campaignCode);
                   return campaign ? `${campaign.name} (${campaign.campaignCode})` : null;
@@ -664,8 +664,8 @@ export default function TeamIdPage() {
               />
             </div>
             <div className='space-y-2'>
-              <Label>Remarks</Label>
-              <Textarea value={editForm.remarks} onChange={(e) => setEditForm({ ...editForm, remarks: e.target.value })} placeholder='Enter team remarks' />
+              <Label>{t('remarks')}</Label>
+              <Textarea value={editForm.remarks} onChange={(e) => setEditForm({ ...editForm, remarks: e.target.value })} placeholder={t('enter_remarks')} />
             </div>
             <div className='flex justify-end space-x-2'>
               <Button type='button' variant='outline' onClick={() => setIsEditModalOpen(false)}>
