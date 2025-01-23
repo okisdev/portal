@@ -14,7 +14,7 @@ export default function NotificationsPage() {
 
   return (
     <div className='space-y-4 p-4'>
-      <PageHeader title={t('notifications')} description={t('view_and_manage_your_notifications')} />
+      <PageHeader title={t('notifications')} description={t('notifications_description')} />
 
       <div className='flex flex-col gap-8'>
         <NotificationFilters />
