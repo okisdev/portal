@@ -590,20 +590,14 @@ export default function ContactIdPage() {
                       <div className='space-y-2'>
                         <div className='flex items-center justify-between'>
                           <span className='text-muted-foreground text-xs'>{t('customer_id')}</span>
-                          <ContentWithCopy content={stripeCustomerInfo.id} className='font-mono text-xs' />
+                          <ContentWithCopy content={stripeCustomerInfo.customer.id} className='font-mono text-xs' />
                         </div>
-                        {stripeCustomerInfo.default_source && (
+                        {stripeCustomerInfo.customer.default_source && (
                           <div className='flex items-center justify-between'>
                             <span className='text-muted-foreground text-sm'>{t('payment_method')}</span>
                             <span className='font-mono text-sm'>
-                              {typeof stripeCustomerInfo.default_source === 'string' ? stripeCustomerInfo.default_source : stripeCustomerInfo.default_source.id}
+                              {typeof stripeCustomerInfo.customer.default_source === 'string' ? stripeCustomerInfo.customer.default_source : stripeCustomerInfo.customer.default_source.id}
                             </span>
-                          </div>
-                        )}
-                        {stripeCustomerInfo.currency && (
-                          <div className='flex items-center justify-between'>
-                            <span className='text-muted-foreground text-sm'>{t('currency')}</span>
-                            <span className='font-mono text-sm'>{stripeCustomerInfo.currency.toUpperCase()}</span>
                           </div>
                         )}
                       </div>
@@ -614,20 +608,98 @@ export default function ContactIdPage() {
                   <Plus className='size-4' />
                 </button>
               </div>
-              <div className='space-y-3'>
-                {isLoadingPayments && <Skeleton className='h-4' />}
-                {payments?.length === 0 && <p className='text-muted-foreground text-sm'>{t('no_payments_found')}</p>}
-                {payments?.slice(0, 3).map((payment) => (
-                  <div key={payment.id} className='flex items-center justify-between'>
-                    <div className='flex items-center gap-2'>
-                      <span className='text-muted-foreground text-sm'>{formatDate(new Date(payment.created * 1000))}</span>
+
+              {isLoadingPayments && <Skeleton className='h-24' />}
+
+              {stripeCustomerInfo?.stats && (
+                <div className='space-y-4'>
+                  <div className='rounded-lg border bg-muted/50 p-4'>
+                    <h3 className='mb-3 font-medium text-sm'>{t('one_time_payments')}</h3>
+                    <div className='grid grid-cols-2 gap-4'>
+                      <div>
+                        <p className='text-muted-foreground text-xs'>{t('total_payments')}</p>
+                        <p className='font-medium text-foreground'>{stripeCustomerInfo.stats.totalStats.oneTimeCount}</p>
+                      </div>
+                      {Object.entries(stripeCustomerInfo.stats.oneTime).map(([currency, data]) => (
+                        <div key={currency}>
+                          <p className='text-muted-foreground text-xs'>
+                            {t('total_amount')} ({currency.toUpperCase()})
+                          </p>
+                          <p className='font-medium text-foreground'>
+                            {new Intl.NumberFormat('en-US', {
+                              style: 'currency',
+                              currency: currency,
+                            }).format(data.total)}
+                          </p>
+                        </div>
+                      ))}
                     </div>
-                    <span className={cn('font-medium', payment.status === 'succeeded' ? 'text-green-600 dark:text-green-400' : 'text-destructive')}>
-                      {new Intl.NumberFormat('en-US', {
-                        style: 'currency',
-                        currency: payment.currency,
-                      }).format(payment.amount)}
-                    </span>
+                  </div>
+
+                  {stripeCustomerInfo.activeSubscriptions.length > 0 && (
+                    <div className='rounded-lg border bg-muted/50 p-4'>
+                      <h3 className='mb-3 font-medium text-sm'>{t('active_subscriptions')}</h3>
+                      <div className='grid grid-cols-2 gap-4'>
+                        <div>
+                          <p className='text-muted-foreground text-xs'>{t('active_subscriptions')}</p>
+                          <p className='font-medium text-foreground'>{stripeCustomerInfo.stats.totalStats.subscriptionCount}</p>
+                        </div>
+                        {Object.entries(stripeCustomerInfo.stats.subscription).map(([currency, data]) => (
+                          <div key={currency}>
+                            <p className='text-muted-foreground text-xs'>
+                              {t('monthly_recurring')} ({currency.toUpperCase()})
+                            </p>
+                            <p className='font-medium text-foreground'>
+                              {new Intl.NumberFormat('en-US', {
+                                style: 'currency',
+                                currency: currency,
+                              }).format(data.recurring)}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              <div className='mt-4 space-y-3'>
+                <h3 className='font-medium text-sm'>{t('recent_transactions')}</h3>
+                {(!stripeCustomerInfo?.recentPayments || stripeCustomerInfo.recentPayments.length === 0) && !isLoadingPayments && (
+                  <p className='text-muted-foreground text-sm'>{t('no_payments_found')}</p>
+                )}
+
+                {stripeCustomerInfo?.recentPayments?.map((payment) => (
+                  <div key={payment.id} className='flex items-center justify-between rounded-md bg-muted/30 p-2'>
+                    <div className='flex flex-col gap-1'>
+                      <span className='text-muted-foreground text-sm'>{formatDate(new Date(payment.created * 1000))}</span>
+                      <div className='flex items-center gap-2'>
+                        <span
+                          className={cn(
+                            'rounded px-1.5 py-0.5 text-xs',
+                            payment.type === 'subscription' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300' : 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300'
+                          )}
+                        >
+                          {payment.type === 'subscription' ? t('subscription') : t('one_time')}
+                        </span>
+                        {payment.description && <span className='text-muted-foreground text-xs'>{payment.description}</span>}
+                      </div>
+                    </div>
+                    <div className='flex flex-col items-end gap-1'>
+                      <span className={cn('font-medium', payment.status === 'succeeded' || payment.status === 'active' ? 'text-green-600 dark:text-green-400' : 'text-destructive')}>
+                        {new Intl.NumberFormat('en-US', {
+                          style: 'currency',
+                          currency: payment.currency,
+                        }).format(payment.amount)}
+                        {payment.type === 'subscription' && 'interval' in payment && `/${payment.interval}`}
+                      </span>
+                      <span className='text-muted-foreground text-xs capitalize'>{payment.status}</span>
+                      {payment.type === 'subscription' && 'currentPeriodEnd' in payment && (
+                        <span className='text-muted-foreground text-xs'>
+                          {t('renews')}: {formatDate(new Date(payment.currentPeriodEnd * 1000))}
+                        </span>
+                      )}
+                    </div>
                   </div>
                 ))}
               </div>

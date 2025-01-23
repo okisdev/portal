@@ -41,8 +41,103 @@ export const payRouter = createTRPCRouter({
 
   getContactStripeCustomerInfo: protectedProcedure.input(z.object({ email: z.string().optional(), phone: z.string().optional() })).query(async ({ input }) => {
     const allCustomers = await stripe.customers.list();
+    const customer = allCustomers.data.find((customer) => customer.email === input.email || customer.phone === input.phone);
 
-    return allCustomers.data.find((customer) => customer.email === input.email || customer.phone === input.phone);
+    if (!customer) {
+      return null;
+    }
+
+    // Get all payments and subscriptions for this customer
+    const [payments, subscriptions] = await Promise.all([
+      stripe.paymentIntents.list({
+        customer: customer.id,
+        limit: 100,
+      }),
+      stripe.subscriptions.list({
+        customer: customer.id,
+        limit: 100,
+      }),
+    ]);
+
+    const successfulPayments = payments.data.filter((payment) => payment.status === 'succeeded');
+    const activeSubscriptions = subscriptions.data.filter((sub) => sub.status === 'active' || sub.status === 'trialing');
+
+    // Calculate payment statistics by type and currency
+    const paymentStats = {
+      oneTime: successfulPayments.reduce((acc, payment) => {
+        const { currency } = payment;
+        if (!acc[currency]) {
+          acc[currency] = { total: 0, count: 0 };
+        }
+        acc[currency].total += payment.amount / 100;
+        acc[currency].count += 1;
+        return acc;
+      }, {} as Record<string, { total: number; count: number }>),
+
+      subscription: activeSubscriptions.reduce((acc, sub) => {
+        const currency = sub.currency;
+        if (!acc[currency]) {
+          acc[currency] = {
+            total: 0,
+            count: 0,
+            recurring: 0,
+          };
+        }
+        acc[currency].count += 1;
+        acc[currency].recurring += (sub.items.data[0]?.price.unit_amount || 0) / 100;
+        return acc;
+      }, {} as Record<string, { total: number; count: number; recurring: number }>),
+
+      totalStats: {
+        oneTimeCount: successfulPayments.length,
+        subscriptionCount: activeSubscriptions.length,
+        lastPaymentDate: successfulPayments.length > 0 ? successfulPayments[0].created : null,
+        lastSubscriptionDate: activeSubscriptions.length > 0 ? activeSubscriptions[0].created : null,
+      },
+    };
+
+    // Get recent payments (including both one-time and subscription payments)
+    const recentPayments = successfulPayments.slice(0, 10).map((payment) => ({
+      id: payment.id,
+      amount: payment.amount / 100,
+      status: payment.status,
+      created: payment.created,
+      currency: payment.currency,
+      description: payment.description,
+      receipt_email: payment.receipt_email,
+      type: 'one-time',
+    }));
+
+    // Add subscription payments to the list
+    const subscriptionPayments = activeSubscriptions.map((sub) => ({
+      id: sub.id,
+      amount: (sub.items.data[0]?.price.unit_amount || 0) / 100,
+      status: sub.status,
+      created: sub.created,
+      currency: sub.currency,
+      description: `${sub.items.data[0]?.price.nickname || 'Subscription'} (${sub.items.data[0]?.price.recurring?.interval || 'monthly'})`,
+      type: 'subscription' as const,
+      interval: sub.items.data[0]?.price.recurring?.interval,
+      currentPeriodEnd: sub.current_period_end,
+    }));
+
+    // Combine and sort all payments by date
+    const allRecentPayments = [...recentPayments, ...subscriptionPayments].sort((a, b) => b.created - a.created).slice(0, 10);
+
+    return {
+      customer,
+      stats: paymentStats,
+      recentPayments: allRecentPayments,
+      activeSubscriptions: subscriptionPayments,
+      allPayments: payments.data.map((payment) => ({
+        id: payment.id,
+        amount: payment.amount / 100,
+        status: payment.status,
+        created: payment.created,
+        currency: payment.currency,
+        type: 'one-time' as const,
+      })),
+    };
   }),
 
   fetchStripeSubscriptionPlans: protectedProcedure.query(async ({ ctx }) => {
