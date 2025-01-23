@@ -56,6 +56,8 @@
   "creating": "Creating...",
   "creating_account": "Creating account...",
   "crm": "CRM",
+  "currency": "Currency",
+  "customer_id": "Customer ID",
   "dark": "Dark",
   "day": "Day",
   "december": "December",
@@ -138,6 +140,7 @@
   "participants": "Participants",
   "password": "Password",
   "paused": "Paused",
+  "payment_method": "Payment Method",
   "payments": "Payments",
   "phone": "Phone",
   "previous": "Previous",
@@ -225,5 +228,6 @@
   "week": "Week",
   "welcome_back": "Welcome Back, {name}.",
   "welcome_description": "Welcome to your dashboard",
-  "workspace": "Workspace"
+  "workspace": "Workspace",
+  "customer_info": "Customer Info"
 }

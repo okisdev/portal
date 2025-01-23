@@ -56,6 +56,8 @@
   "creating": "创造...",
   "creating_account": "正在创建帐户...",
   "crm": "客户关系管理",
+  "currency": "货币",
+  "customer_id": "客户编号",
   "dark": "黑暗的",
   "day": "天",
   "december": "十二月",
@@ -138,7 +140,8 @@
   "participants": "参加者",
   "password": "密码",
   "paused": "已暂停",
-  "payments": "付款方式",
+  "payment_method": "付款方式",
+  "payments": "付款",
   "phone": "电话",
   "previous": "以前的",
   "priority": "优先事项",
@@ -225,5 +228,6 @@
   "week": "星期",
   "welcome_back": "欢迎回来，{name}。",
   "welcome_description": "欢迎来到您的仪表板",
-  "workspace": "工作空间"
+  "workspace": "工作空间",
+  "customer_info": "客户信息"
 }

@@ -4,8 +4,10 @@ import { SendEmail } from '@/components/dashboard/contact/send-email';
 import { SendMessage } from '@/components/dashboard/contact/send-message';
 import { ColorBadge } from '@/components/shared/color-badge';
 import { Combobox } from '@/components/shared/combobox';
+import { ContentWithCopy } from '@/components/shared/content-with-copy';
 import { EventDialog } from '@/components/shared/event-dialog';
 import type { EventFormData } from '@/components/shared/event-dialog';
+import { MetadataPopover } from '@/components/shared/metadata-popover';
 import { NameTag } from '@/components/shared/name-tag';
 import { PageLoading } from '@/components/shared/page-loading';
 import { PhoneInput } from '@/components/shared/phone-input';
@@ -24,8 +26,8 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import { insuranceCompanies, sources } from '@/data/data';
@@ -33,7 +35,6 @@ import { type Priority, type Status, statusSchema } from '@/lib/schema';
 import { cn, formatDate } from '@/lib/utils';
 import { api } from '@/utils/trpc/client';
 import { ArrowUpRight, Building2, Calendar, Edit2, Mail, MessageSquare, MoreHorizontal, Phone, Plus, Save, Send, Trash2, Users, X } from 'lucide-react';
-import { Info } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
@@ -58,7 +59,8 @@ export default function ContactIdPage() {
   const { data: activities } = api.contact.getContactActivities.useQuery({
     id: contactId[0],
   });
-  const { data: payments } = api.pay.getPaymentByContactEmail.useQuery({ email: contact?.email || '' }, { enabled: !!contact?.email });
+  const { data: payments, isLoading: isLoadingPayments } = api.pay.getPaymentByContactEmail.useQuery({ email: contact?.email || '' }, { enabled: !!contact?.email });
+  const { data: stripeCustomerInfo } = api.pay.getContactStripeCustomerInfo.useQuery({ email: contact?.email || '', phone: contact?.phone || '' }, { enabled: !!contact?.email || !!contact?.phone });
   const { data: appointments } = api.calendar.getAppointmentsByContactId.useQuery({
     contactId: contactId[0],
   });
@@ -76,6 +78,8 @@ export default function ContactIdPage() {
     source: '',
     priority: 'medium' as Priority,
   });
+
+  console.log(payments, stripeCustomerInfo);
 
   const [newActivity, setNewActivity] = useState('');
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
@@ -579,16 +583,45 @@ export default function ContactIdPage() {
 
             <div className='space-y-2 border-b p-6'>
               <div className='flex items-center justify-between'>
-                <h2 className='font-medium text-foreground'>{t('payments')}</h2>
+                <div className='flex items-center gap-2'>
+                  <h2 className='font-medium text-foreground'>{t('payments')}</h2>
+                  {stripeCustomerInfo && (
+                    <MetadataPopover title={t('customer_info')} align='end'>
+                      <div className='space-y-2'>
+                        <div className='flex items-center justify-between'>
+                          <span className='text-muted-foreground text-xs'>{t('customer_id')}</span>
+                          <ContentWithCopy content={stripeCustomerInfo.id} className='font-mono text-xs' />
+                        </div>
+                        {stripeCustomerInfo.default_source && (
+                          <div className='flex items-center justify-between'>
+                            <span className='text-muted-foreground text-sm'>{t('payment_method')}</span>
+                            <span className='font-mono text-sm'>
+                              {typeof stripeCustomerInfo.default_source === 'string' ? stripeCustomerInfo.default_source : stripeCustomerInfo.default_source.id}
+                            </span>
+                          </div>
+                        )}
+                        {stripeCustomerInfo.currency && (
+                          <div className='flex items-center justify-between'>
+                            <span className='text-muted-foreground text-sm'>{t('currency')}</span>
+                            <span className='font-mono text-sm'>{stripeCustomerInfo.currency.toUpperCase()}</span>
+                          </div>
+                        )}
+                      </div>
+                    </MetadataPopover>
+                  )}
+                </div>
                 <button type='button' className='text-muted-foreground hover:text-foreground'>
                   <Plus className='size-4' />
                 </button>
               </div>
               <div className='space-y-3'>
+                {isLoadingPayments && <Skeleton className='h-4' />}
                 {payments?.length === 0 && <p className='text-muted-foreground text-sm'>{t('no_payments_found')}</p>}
                 {payments?.slice(0, 3).map((payment) => (
                   <div key={payment.id} className='flex items-center justify-between'>
-                    <span className='text-muted-foreground text-sm'>{formatDate(new Date(payment.created * 1000))}</span>
+                    <div className='flex items-center gap-2'>
+                      <span className='text-muted-foreground text-sm'>{formatDate(new Date(payment.created * 1000))}</span>
+                    </div>
                     <span className={cn('font-medium', payment.status === 'succeeded' ? 'text-green-600 dark:text-green-400' : 'text-destructive')}>
                       {new Intl.NumberFormat('en-US', {
                         style: 'currency',
@@ -712,17 +745,9 @@ export default function ContactIdPage() {
                                     </div>
                                     <div className='flex items-center gap-2'>
                                       {activity.metadata && (
-                                        <Popover>
-                                          <PopoverTrigger asChild>
-                                            <button type='button' className='rounded-md bg-muted/50 px-1 py-0.5 text-muted-foreground text-xs hover:bg-muted'>
-                                              <Info className='mr-1 inline-block size-3' />
-                                              {t('view_details')}
-                                            </button>
-                                          </PopoverTrigger>
-                                          <PopoverContent className='w-80'>
-                                            <pre className='whitespace-pre-wrap font-mono text-xs'>{JSON.stringify(JSON.parse(activity.metadata), null, 2)}</pre>
-                                          </PopoverContent>
-                                        </Popover>
+                                        <MetadataPopover title={t('view_details')}>
+                                          <pre className='whitespace-pre-wrap font-mono text-xs'>{JSON.stringify(JSON.parse(activity.metadata), null, 2)}</pre>
+                                        </MetadataPopover>
                                       )}
                                       {activity.type === 'NOTE_ADDED' && (
                                         <button type='button' onClick={() => setReplyingTo(activity.id)} className='rounded-md bg-muted/50 px-1 py-0.5 text-muted-foreground text-xs hover:bg-muted'>

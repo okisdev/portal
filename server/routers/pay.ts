@@ -39,6 +39,12 @@ export const payRouter = createTRPCRouter({
       }
     }),
 
+  getContactStripeCustomerInfo: protectedProcedure.input(z.object({ email: z.string().optional(), phone: z.string().optional() })).query(async ({ input }) => {
+    const allCustomers = await stripe.customers.list();
+
+    return allCustomers.data.find((customer) => customer.email === input.email || customer.phone === input.phone);
+  }),
+
   fetchStripeSubscriptionPlans: protectedProcedure.query(async ({ ctx }) => {
     const products = await stripe.products.list({ active: true });
     const prices = await stripe.prices.list({ active: true });
