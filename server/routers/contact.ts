@@ -212,7 +212,7 @@ export const contactRouter = createTRPCRouter({
         contactId: input.contactId,
         type: 'CAMPAIGN_ASSIGNED',
         title: 'Campaign Assigned',
-        description: `Contact ${input.contactId} was assigned to campaign with code: ${input.campaignCode}`,
+        description: `Contact was assigned to campaign with code: ${input.campaignCode}`,
         initiatorType: 'user',
         initiatorId: ctx.session?.user.id,
       });

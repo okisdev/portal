@@ -103,5 +103,11 @@
   "week": "Week",
   "welcome_back": "Welcome Back, {name}.",
   "welcome_description": "Welcome to your dashboard",
-  "workspace": "Workspace"
+  "workspace": "Workspace",
+  "from": "From",
+  "to": "To",
+  "add_attachment": "Add attachment",
+  "attachments": "Attachments",
+  "schedule": "Schedule",
+  "cancel_schedule": "Cancel Schedule"
 }

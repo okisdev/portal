@@ -10,6 +10,7 @@ import { generateUUID } from '@/lib/utils';
 import { api } from '@/utils/trpc/client';
 import { Calendar, File, Send, Trash2, X } from 'lucide-react';
 import { useSession } from 'next-auth/react';
+import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
@@ -29,6 +30,8 @@ interface EmailFormData {
 
 export function SendEmail({ open, onOpenChange, recipient }: SendEmailProps) {
   if (!recipient) return null;
+
+  const t = useTranslations();
 
   const utils = api.useUtils();
 
@@ -138,7 +141,7 @@ export function SendEmail({ open, onOpenChange, recipient }: SendEmailProps) {
         </DialogHeader>
         <div className='space-y-4 py-4'>
           <div className='flex items-center gap-4 border-b pb-4'>
-            <div className='w-16 text-muted-foreground text-sm'>From</div>
+            <div className='w-16 text-muted-foreground text-sm'>{t('from')}</div>
             <div className='flex items-center gap-2'>
               <Avatar className='size-6'>
                 <AvatarImage src={session?.user?.image || ''} />
@@ -149,7 +152,7 @@ export function SendEmail({ open, onOpenChange, recipient }: SendEmailProps) {
           </div>
 
           <div className='flex items-center gap-4 border-b pb-4'>
-            <div className='w-16 text-muted-foreground text-sm'>To</div>
+            <div className='w-16 text-muted-foreground text-sm'>{t('to')}</div>
             <div className='flex flex-1 flex-wrap items-center gap-2'>
               <div className='flex items-center gap-2 rounded-full border bg-muted px-2 py-1'>
                 <Avatar className='size-6'>
@@ -192,10 +195,10 @@ export function SendEmail({ open, onOpenChange, recipient }: SendEmailProps) {
 
           <div className='space-y-4 border-t pt-4'>
             <div className='flex items-center justify-between'>
-              <h3 className='font-medium text-sm'>Attachments</h3>
+              <h3 className='font-medium text-sm'>{t('attachments')}</h3>
               <input type='file' multiple onChange={handleFileChange} className='hidden' id='file-upload' />
               <label htmlFor='file-upload' className='cursor-pointer text-muted-foreground text-xs hover:text-foreground'>
-                Add attachment
+                {t('add_attachment')}
               </label>
             </div>
             <div className='grid grid-cols-3 gap-4'>
@@ -229,11 +232,11 @@ export function SendEmail({ open, onOpenChange, recipient }: SendEmailProps) {
             ) : null}
             <Button variant='outline' className='gap-2' onClick={() => setIsScheduleMode(!isScheduleMode)}>
               <Calendar className='size-4' />
-              {isScheduleMode ? 'Cancel Schedule' : 'Schedule'}
+              {isScheduleMode ? t('cancel_schedule') : t('schedule')}
             </Button>
             <Button className='gap-2' onClick={handleSend} disabled={sendEmail.isPending}>
               <Send className='size-4' />
-              {isScheduleMode ? 'Schedule' : 'Send'}
+              {isScheduleMode ? t('schedule') : t('send')}
             </Button>
           </div>
         </div>

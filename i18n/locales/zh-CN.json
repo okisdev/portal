@@ -103,5 +103,11 @@
   "week": "星期",
   "welcome_back": "欢迎回来，{name}。",
   "welcome_description": "欢迎来到您的仪表板",
-  "workspace": "工作空间"
+  "workspace": "工作空间",
+  "add_attachment": "添加附件",
+  "from": "从",
+  "to": "到",
+  "attachments": "附件",
+  "cancel_schedule": "取消日程",
+  "schedule": "日程"
 }

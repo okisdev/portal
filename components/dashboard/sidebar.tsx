@@ -182,6 +182,7 @@ export function DashboardSidebar() {
 }
 
 function SidebarGroupSection({ title, items, defaultOpen = true, onItemAction }: SidebarGroupSectionProps) {
+  const t = useTranslations();
   return (
     <Collapsible defaultOpen={defaultOpen} className='group/collapsible'>
       <SidebarGroup>
@@ -204,7 +205,7 @@ function SidebarGroupSection({ title, items, defaultOpen = true, onItemAction }:
                   </SidebarMenuButton>
                   {onItemAction && item.title === 'Contacts' && (
                     <SidebarMenuAction onClick={() => onItemAction(item.title)}>
-                      <Plus /> <span className='sr-only'>Add Contact</span>
+                      <Plus /> <span className='sr-only'>{t('add_contact')}</span>
                     </SidebarMenuAction>
                   )}
                 </SidebarMenuItem>

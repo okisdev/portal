@@ -31,6 +31,7 @@ import {
   useReactTable,
 } from '@tanstack/react-table';
 import { Calendar, Edit2, Plus, Trash2 } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { notFound, useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -41,6 +42,7 @@ export default function TeamIdPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const mode = searchParams.get('mode');
+  const t = useTranslations();
 
   const utils = api.useUtils();
 
@@ -354,7 +356,7 @@ export default function TeamIdPage() {
               <Popover open={isAddMemberOpen} onOpenChange={setIsAddMemberOpen}>
                 <PopoverTrigger asChild>
                   <Button variant='outline' size='sm' className='h-8'>
-                    <Plus className='mr-1 size-4' /> Add Contact
+                    <Plus className='mr-1 size-4' /> {t('add_contact')}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className='w-[300px] p-0' align='end'>

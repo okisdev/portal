@@ -29,6 +29,7 @@ import {
   useReactTable,
 } from '@tanstack/react-table';
 import { Eye, Filter, MoreHorizontal, Plus, Trash2 } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { useMemo, useState } from 'react';
@@ -50,6 +51,7 @@ type FilterConfig = {
 export default function CampaignDetailsPage() {
   const router = useRouter();
   const { id: campaignCode } = useParams<{ id: string }>();
+  const t = useTranslations();
 
   const { data: campaign, isLoading: campaignLoading } = api.marketing.getCampaignByCode.useQuery({
     code: campaignCode[0],
@@ -370,7 +372,7 @@ export default function CampaignDetailsPage() {
               <DropdownMenuContent className='w-[350px] p-4'>
                 <div className='space-y-4'>
                   <div className='flex items-center gap-2'>
-                    <span className='text-sm font-medium'>Match:</span>
+                    <span className='font-medium text-sm'>Match:</span>
                     <Button variant='ghost' size='sm' onClick={() => setFilters((f) => ({ ...f, matchAll: !f.matchAll }))}>
                       {filters.matchAll ? 'ALL conditions' : 'ANY condition'}
                     </Button>
@@ -427,7 +429,7 @@ export default function CampaignDetailsPage() {
           <Popover open={isAddMemberOpen} onOpenChange={setIsAddMemberOpen}>
             <PopoverTrigger asChild>
               <Button variant='outline' size='sm' className='h-8'>
-                <Plus className='mr-1 size-4' /> Add Contact
+                <Plus className='mr-1 size-4' /> {t('add_contact')}
               </Button>
             </PopoverTrigger>
             <PopoverContent className='w-[300px] p-0' align='end'>
