@@ -11,7 +11,6 @@ import { PageLoading } from '@/components/shared/page-loading';
 import { PhoneInput } from '@/components/shared/phone-input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import {} from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import {
   DropdownMenu,
@@ -674,24 +673,24 @@ export default function ContactIdPage() {
                                     activity.type === 'NOTE_ADDED'
                                       ? 'rgb(59 130 246)'
                                       : activity.type.startsWith('CONTACT_')
-                                        ? 'rgb(34 197 94)'
-                                        : activity.type.startsWith('MEETING_')
-                                          ? 'rgb(168 85 247)'
-                                          : activity.type.startsWith('TEAM_')
-                                            ? 'rgb(234 179 8)'
-                                            : activity.type.startsWith('DEAL_')
-                                              ? 'rgb(236 72 153)'
-                                              : activity.type.includes('STATUS')
-                                                ? 'rgb(249 115 22)'
-                                                : activity.type.includes('PRIORITY')
-                                                  ? 'rgb(239 68 68)'
-                                                  : activity.type.includes('PAYMENT')
-                                                    ? 'rgb(16 185 129)'
-                                                    : activity.type.includes('CAMPAIGN')
-                                                      ? 'rgb(250 204 21)'
-                                                      : activity.type.includes('EMAIL')
-                                                        ? 'rgb(250 204 21)'
-                                                        : 'rgb(156 163 175)',
+                                      ? 'rgb(34 197 94)'
+                                      : activity.type.startsWith('MEETING_')
+                                      ? 'rgb(168 85 247)'
+                                      : activity.type.startsWith('TEAM_')
+                                      ? 'rgb(234 179 8)'
+                                      : activity.type.startsWith('DEAL_')
+                                      ? 'rgb(236 72 153)'
+                                      : activity.type.includes('STATUS')
+                                      ? 'rgb(249 115 22)'
+                                      : activity.type.includes('PRIORITY')
+                                      ? 'rgb(239 68 68)'
+                                      : activity.type.includes('PAYMENT')
+                                      ? 'rgb(16 185 129)'
+                                      : activity.type.includes('CAMPAIGN')
+                                      ? 'rgb(250 204 21)'
+                                      : activity.type.includes('EMAIL')
+                                      ? 'rgb(250 204 21)'
+                                      : 'rgb(156 163 175)',
                                 }}
                               >
                                 <div className='flex-1 space-y-1'>

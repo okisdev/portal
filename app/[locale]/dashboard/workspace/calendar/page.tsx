@@ -558,7 +558,7 @@ export default function DashboardPersonalCalendar() {
       >
         <DialogContent className='max-h-[90vh] max-w-xl overflow-y-auto'>
           <DialogHeader>
-            <DialogTitle>Edit Calendar</DialogTitle>
+            <DialogTitle>{t('edit_calendar')}</DialogTitle>
           </DialogHeader>
           <Form {...calendarForm}>
             <form onSubmit={calendarForm.handleSubmit(handleCalendarSubmit)} className='space-y-4'>
@@ -567,7 +567,7 @@ export default function DashboardPersonalCalendar() {
                 name='name'
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Name</FormLabel>
+                    <FormLabel>{t('name')}</FormLabel>
                     <FormControl>
                       <Input {...field} />
                     </FormControl>
@@ -580,7 +580,7 @@ export default function DashboardPersonalCalendar() {
                 name='color'
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Color</FormLabel>
+                    <FormLabel>{t('color')}</FormLabel>
                     <FormControl>
                       <div className='flex items-center gap-2'>
                         <Input type='color' {...field} className='h-10 w-20 p-1' />
@@ -596,17 +596,17 @@ export default function DashboardPersonalCalendar() {
                 name='visibility'
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Visibility</FormLabel>
+                    <FormLabel>{t('visibility')}</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder='Select visibility' />
+                          <SelectValue placeholder={t('select_visibility')} />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value='PRIVATE'>Private</SelectItem>
-                        <SelectItem value='SHARED'>Shared</SelectItem>
-                        <SelectItem value='PUBLIC'>Public</SelectItem>
+                        <SelectItem value='PRIVATE'>{t('private')}</SelectItem>
+                        <SelectItem value='SHARED'>{t('shared')}</SelectItem>
+                        <SelectItem value='PUBLIC'>{t('public')}</SelectItem>
                       </SelectContent>
                     </Select>
                   </FormItem>
@@ -623,7 +623,7 @@ export default function DashboardPersonalCalendar() {
                     calendarForm.reset();
                   }}
                 >
-                  Cancel
+                  {t('cancel')}
                 </Button>
                 <Button type='submit' disabled={updateFolder.isPending}>
                   {updateFolder.isPending ? t('saving_loading') : t('save_changes')}
@@ -667,7 +667,7 @@ export default function DashboardPersonalCalendar() {
                 name='color'
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Color</FormLabel>
+                    <FormLabel>{t('color')}</FormLabel>
                     <FormControl>
                       <div className='flex items-center gap-2'>
                         <Input type='color' {...field} className='h-10 w-20 p-1' />
