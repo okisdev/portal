@@ -150,7 +150,7 @@ export const contactRouter = createTRPCRouter({
 
       for (const campaignCode of campaignCodes) {
         const campaign = await ctx.db
-          .select({ id: marketingCampaign.id })
+          .select()
           .from(marketingCampaign)
           .where(eq(marketingCampaign.campaignCode, campaignCode))
           .then((rows) => rows[0]);
@@ -167,8 +167,8 @@ export const contactRouter = createTRPCRouter({
           contactId: result[0].id,
           type: 'CAMPAIGN_ASSIGNED',
           title: 'Campaign Assigned',
-          description: `Contact ${result[0].name} (${result[0].email}) was assigned to campaign with code: ${campaignCode}`,
-          metadata: { campaignCode },
+          description: `Contact ${result[0].name} (${result[0].email}) was assigned to campaign: ${campaign.name} (${campaign.campaignCode}).`,
+          metadata: { campaign },
           initiatorType: 'user',
           initiatorId: ctx.session?.user.id,
         });
@@ -208,13 +208,20 @@ export const contactRouter = createTRPCRouter({
 
       if (existing) return existing;
 
+      const campaign = await ctx.db
+        .select()
+        .from(marketingCampaign)
+        .where(eq(marketingCampaign.campaignCode, input.campaignCode))
+        .then((rows) => rows[0]);
+
       await createContactActivityHelper(ctx, {
         contactId: input.contactId,
         type: 'CAMPAIGN_ASSIGNED',
         title: 'Campaign Assigned',
-        description: `Contact was assigned to campaign with code: ${input.campaignCode}`,
+        description: `Contact was assigned to campaign: ${campaign.name} (${campaign.campaignCode}).`,
         initiatorType: 'user',
         initiatorId: ctx.session?.user.id,
+        metadata: { campaign },
       });
 
       return ctx.db
@@ -234,15 +241,22 @@ export const contactRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ ctx, input }) => {
+      const campaign = await ctx.db
+        .select()
+        .from(marketingCampaign)
+        .where(eq(marketingCampaign.campaignCode, input.campaignCode))
+        .then((rows) => rows[0]);
+
       const result = await ctx.db.delete(contactCampaign).where(and(eq(contactCampaign.contactId, input.contactId), eq(contactCampaign.campaignCode, input.campaignCode)));
 
       await createContactActivityHelper(ctx, {
         contactId: input.contactId,
         type: 'CAMPAIGN_REMOVED',
         title: 'Campaign Removed',
-        description: `Contact was removed from campaign with code: ${input.campaignCode}`,
+        description: `Contact was removed from campaign: ${campaign.name} (${campaign.campaignCode}).`,
         initiatorType: 'user',
         initiatorId: ctx.session?.user.id,
+        metadata: { campaign },
       });
 
       return result;

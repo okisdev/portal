@@ -188,18 +188,16 @@ export const teamRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      let campaignCode = input.campaignCode;
-
-      if (campaignCode) {
+      if (input.campaignCode) {
         // Verify campaign exists
         const campaign = await ctx.db
           .select()
           .from(marketingCampaign)
-          .where(eq(marketingCampaign.campaignCode, campaignCode))
+          .where(eq(marketingCampaign.campaignCode, input.campaignCode))
           .then((rows) => rows[0]);
 
         if (!campaign) {
-          campaignCode = undefined;
+          input.campaignCode = undefined;
         }
       }
 
@@ -211,7 +209,7 @@ export const teamRouter = createTRPCRouter({
           leaderId: input.leaderId,
           subLeaderId: input.subLeaderId,
           referralId: input.referralId,
-          campaignCode,
+          campaignCode: input.campaignCode,
           remarks: input.remarks,
           updatedAt: new Date(),
         })
@@ -421,7 +419,7 @@ export const teamRouter = createTRPCRouter({
       return await ctx.db.delete(teamActivity).where(eq(teamActivity.id, input.id));
     }),
 
-  addTeamMember: protectedProcedure
+  addTeamContact: protectedProcedure
     .input(
       z.object({
         teamId: z.string(),
@@ -438,6 +436,16 @@ export const teamRouter = createTRPCRouter({
       if (existingMember) {
         throw new Error('Contact is already a member of this team');
       }
+
+      await createContactActivityHelper(ctx, {
+        contactId: input.contactId,
+        type: 'TEAM_ASSIGNED',
+        title: 'Added to Team',
+        description: `Contact was added to team: ${team.name}`,
+        initiatorType: 'user',
+        initiatorId: ctx.session?.user.id,
+        metadata: { team },
+      });
 
       const [newMember] = await ctx.db
         .insert(teamContact)

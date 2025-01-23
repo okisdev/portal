@@ -136,7 +136,7 @@ export default function TeamIdPage() {
     },
   });
 
-  const addTeamMember = api.team.addTeamMember.useMutation({
+  const addTeamContact = api.team.addTeamContact.useMutation({
     onSuccess: () => {
       setIsAddMemberOpen(false);
       utils.team.getTeamContacts.invalidate({ teamId: teamId[0] });
@@ -280,7 +280,7 @@ export default function TeamIdPage() {
   if (!team) return notFound();
 
   const handleAddMember = (contactId: string) => {
-    addTeamMember.mutate({
+    addTeamContact.mutate({
       teamId: teamId[0],
       contactId,
     });
