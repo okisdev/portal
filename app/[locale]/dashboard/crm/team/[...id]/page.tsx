@@ -12,6 +12,7 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -30,7 +31,7 @@ import {
   getSortedRowModel,
   useReactTable,
 } from '@tanstack/react-table';
-import { Calendar, Edit2, Plus, Trash2 } from 'lucide-react';
+import { Calendar, Edit2, Eye, MoreHorizontal, Plus, Trash2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { notFound, useParams, useRouter, useSearchParams } from 'next/navigation';
@@ -66,6 +67,7 @@ export default function TeamIdPage() {
   });
   const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
   const [searchValue, setSearchValue] = useState('');
+  const [contactToDelete, setContactToDelete] = useState<string | null>(null);
 
   const { data: team, isLoading } = api.team.getTeamById.useQuery({
     id: teamId[0],
@@ -141,6 +143,17 @@ export default function TeamIdPage() {
       setIsAddMemberOpen(false);
       utils.team.getTeamContacts.invalidate({ teamId: teamId[0] });
       toast.success('Member added successfully');
+    },
+    onError: (error) => {
+      toast.error(error.message);
+    },
+  });
+
+  const removeContactFromTeam = api.team.removeContactFromTeam.useMutation({
+    onSuccess: () => {
+      setContactToDelete(null);
+      utils.team.getTeamContacts.invalidate({ teamId: teamId[0] });
+      toast.success('Member removed successfully');
     },
     onError: (error) => {
       toast.error(error.message);
@@ -249,6 +262,43 @@ export default function TeamIdPage() {
       ),
       cell: ({ row }) => <ColorBadge type='contactStatus' value={row.original.contact.status} />,
     },
+    {
+      id: 'actions',
+      cell: ({ row }) => (
+        <div className='flex justify-end'>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+              <Button variant='ghost' className='h-8 w-8 p-0'>
+                <span className='sr-only'>Open menu</span>
+                <MoreHorizontal className='size-4' />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align='end'>
+              <DropdownMenuItem
+                className='cursor-pointer'
+                onClick={(e) => {
+                  e.stopPropagation();
+                  router.push(`/dashboard/crm/contacts/${row.original.contact.id}`);
+                }}
+              >
+                <Eye className='mr-2 size-4' />
+                View
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                className='cursor-pointer text-destructive'
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setContactToDelete(row.original.contact.id);
+                }}
+              >
+                <Trash2 className='mr-2 size-4' />
+                Delete
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      ),
+    },
   ];
 
   const table = useReactTable({
@@ -330,6 +380,15 @@ export default function TeamIdPage() {
       name: `${c.contact.firstName} ${c.contact.lastName}`,
       role: 'required' as const,
     })) || [];
+
+  const handleDeleteContact = () => {
+    if (contactToDelete) {
+      removeContactFromTeam.mutate({
+        teamId: teamId[0],
+        contactId: contactToDelete,
+      });
+    }
+  };
 
   return (
     <div className='space-y-4 p-4'>
@@ -670,6 +729,14 @@ export default function TeamIdPage() {
         }}
         title='Delete Meeting'
         description='Are you sure you want to delete this meeting? This action cannot be undone.'
+      />
+
+      <ActionAlertDialog
+        open={!!contactToDelete}
+        onOpenChange={(open) => !open && setContactToDelete(null)}
+        onConfirm={handleDeleteContact}
+        title='Remove Member'
+        description='Are you sure you want to remove this member from the team? This action cannot be undone.'
       />
     </div>
   );
