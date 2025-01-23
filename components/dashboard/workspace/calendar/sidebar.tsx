@@ -85,7 +85,7 @@ export function CalendarSidebar({ currentDate, selectedDate, onDateSelect, folde
       <div className='grid grid-cols-7 gap-1 text-sm'>
         {WEEKDAYS.map((day) => (
           <div key={day} className='text-center text-muted-foreground'>
-            {t(day.slice(0, 1))}
+            {day.slice(0, 1)}
           </div>
         ))}
         {getDaysInMonth(currentDate)
