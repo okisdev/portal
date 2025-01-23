@@ -24,6 +24,27 @@ export const marketingRouter = createTRPCRouter({
       .orderBy(desc(marketingCampaign.createdAt));
   }),
 
+  getActiveCampaigns: protectedProcedure.query(({ ctx }) => {
+    return ctx.db
+      .select({
+        id: marketingCampaign.id,
+        name: marketingCampaign.name,
+        campaignCode: marketingCampaign.campaignCode,
+        description: marketingCampaign.description,
+        type: marketingCampaign.type,
+        status: marketingCampaign.status,
+        metrics: marketingCampaign.metrics,
+        contactCount: sql<number>`(SELECT COUNT(*) FROM ${contactCampaign} WHERE ${contactCampaign.campaignCode} = ${marketingCampaign.campaignCode})`,
+        createdAt: marketingCampaign.createdAt,
+        updatedAt: marketingCampaign.updatedAt,
+        createdBy: marketingCampaign.createdBy,
+        updatedBy: marketingCampaign.updatedBy,
+      })
+      .from(marketingCampaign)
+      .where(eq(marketingCampaign.status, 'active'))
+      .orderBy(desc(marketingCampaign.createdAt));
+  }),
+
   getCampaignByCode: protectedProcedure.input(z.object({ code: z.string() })).query(({ ctx, input }) => {
     return ctx.db
       .select({

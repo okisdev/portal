@@ -27,6 +27,7 @@ import {
   useReactTable,
 } from '@tanstack/react-table';
 import { SearchIcon } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useMemo, useState } from 'react';
@@ -62,6 +63,7 @@ type Campaign = {
 export default function MarketingCampaignsPage() {
   const router = useRouter();
   const utils = api.useUtils();
+  const t = useTranslations();
 
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
@@ -238,12 +240,12 @@ export default function MarketingCampaignsPage() {
   return (
     <div className='space-y-4 p-4'>
       <PageHeader
-        title='Marketing Campaigns'
-        description='Create and manage marketing campaigns'
+        title={t('marketing_campaigns')}
+        description={t('marketing_campaigns_description')}
         right={
           <Link href='/dashboard/marketing/campaigns/new'>
             <Button variant='outline' size='sm' className='h-8'>
-              New Campaign
+              {t('new_campaign')}
             </Button>
           </Link>
         }
@@ -252,7 +254,7 @@ export default function MarketingCampaignsPage() {
       <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
         <Card>
           <CardHeader>
-            <CardTitle className='font-medium text-sm'>Active Campaigns</CardTitle>
+            <CardTitle className='font-medium text-sm'>{t('active_campaigns')}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className='font-bold text-2xl'>{activeCampaigns.length}</div>
@@ -260,7 +262,7 @@ export default function MarketingCampaignsPage() {
         </Card>
         <Card>
           <CardHeader>
-            <CardTitle className='font-medium text-sm'>Total Contacts</CardTitle>
+            <CardTitle className='font-medium text-sm'>{t('total_contacts')}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className='font-bold text-2xl'>{totalContacts}</div>
@@ -270,7 +272,7 @@ export default function MarketingCampaignsPage() {
 
       <div className='relative'>
         <SearchIcon className='absolute top-2.5 left-3 h-4 w-4 text-neutral-400' />
-        <Input placeholder='Search campaigns...' className='pl-10' value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
+        <Input placeholder={t('search_campaigns')} className='pl-10' value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
       </div>
 
       <PaginationTable
@@ -378,10 +380,10 @@ export default function MarketingCampaignsPage() {
 
               <div className='flex justify-end gap-2'>
                 <Button type='button' variant='outline' onClick={() => setEditingCampaign(null)}>
-                  Cancel
+                  {t('cancel')}
                 </Button>
                 <Button type='submit' disabled={updateCampaign.isPending}>
-                  {updateCampaign.isPending ? 'Saving...' : 'Save Changes'}
+                  {updateCampaign.isPending ? t('saving_loading') : t('save_changes')}
                 </Button>
               </div>
             </form>

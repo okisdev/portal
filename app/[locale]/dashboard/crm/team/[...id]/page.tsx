@@ -82,7 +82,7 @@ export default function TeamIdPage() {
   const { data: teamActivities } = api.team.getTeamActivities.useQuery({
     teamId: teamId[0],
   });
-  const { data: campaigns } = api.marketing.getAllCampaigns.useQuery();
+  const { data: campaigns } = api.marketing.getActiveCampaigns.useQuery();
 
   const updateTeam = api.team.updateTeam.useMutation({
     onSuccess: () => {
@@ -610,10 +610,10 @@ export default function TeamIdPage() {
             </div>
             <div className='flex justify-end space-x-2'>
               <Button type='button' variant='outline' onClick={() => setIsEditModalOpen(false)}>
-                Cancel
+                {t('cancel')}
               </Button>
               <Button type='submit' disabled={updateTeam.isPending}>
-                Save Changes
+                {updateTeam.isPending ? t('saving_loading') : t('save_changes')}
               </Button>
             </div>
           </form>

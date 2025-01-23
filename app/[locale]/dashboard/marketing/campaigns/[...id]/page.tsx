@@ -10,12 +10,17 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Form, FormControl, FormField, FormItem, FormLabel } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
 import { useDebounce } from '@/hooks/use-debounce';
 import { formatDate } from '@/lib/utils';
 import { api } from '@/utils/trpc/client';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { CaretSortIcon } from '@radix-ui/react-icons';
 import {
   type ColumnDef,
@@ -30,10 +35,11 @@ import {
 } from '@tanstack/react-table';
 import { Eye, Filter, MoreHorizontal, Plus, Trash2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
+import { z } from 'zod';
 
 type FilterOperator = '=' | '!=' | 'contains' | 'startsWith' | 'endsWith';
 
@@ -47,6 +53,16 @@ type FilterConfig = {
   conditions: FilterCondition[];
   matchAll: boolean;
 };
+
+const campaignFormSchema = z.object({
+  name: z.string().min(1, 'Name is required'),
+  campaignCode: z.string().min(1, 'Campaign code is required'),
+  description: z.string().optional(),
+  type: z.enum(['email', 'social', 'event', 'referral', 'other']),
+  status: z.enum(['draft', 'scheduled', 'active', 'paused', 'completed', 'cancelled']),
+});
+
+type CampaignFormValues = z.infer<typeof campaignFormSchema>;
 
 export default function CampaignDetailsPage() {
   const router = useRouter();
@@ -311,6 +327,46 @@ export default function CampaignDetailsPage() {
     }
   };
 
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+
+  const updateCampaign = api.marketing.updateCampaign.useMutation({
+    onSuccess: () => {
+      toast.success('Campaign updated successfully');
+      setIsEditDialogOpen(false);
+      utils.marketing.getCampaignByCode.invalidate({ code: campaignCode[0] });
+    },
+  });
+
+  const form = useForm<CampaignFormValues>({
+    resolver: zodResolver(campaignFormSchema),
+    defaultValues: {
+      name: campaign?.name || '',
+      campaignCode: campaign?.campaignCode || '',
+      description: campaign?.description || '',
+      type: campaign?.type || 'email',
+      status: campaign?.status || 'draft',
+    },
+  });
+
+  useEffect(() => {
+    if (campaign) {
+      form.reset({
+        name: campaign.name,
+        campaignCode: campaign.campaignCode || '',
+        description: campaign.description || '',
+        type: campaign.type,
+        status: campaign.status,
+      });
+    }
+  }, [campaign, form]);
+
+  const onSubmit = async (data: CampaignFormValues) => {
+    await updateCampaign.mutateAsync({
+      code: campaignCode[0],
+      ...data,
+    });
+  };
+
   if (campaignLoading) {
     return <PageLoading />;
   }
@@ -325,8 +381,8 @@ export default function CampaignDetailsPage() {
         title={campaign.name}
         description={campaign.description || 'No description'}
         right={
-          <Button variant='outline' size='sm' asChild>
-            <Link href={`/dashboard/marketing/campaigns/${campaignCode}/edit`}>Edit Campaign</Link>
+          <Button variant='outline' size='sm' onClick={() => setIsEditDialogOpen(true)}>
+            Edit Campaign
           </Button>
         }
       />
@@ -494,6 +550,114 @@ export default function CampaignDetailsPage() {
         confirmText='Remove'
         cancelText='Cancel'
       />
+
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className='max-h-[90vh] max-w-xl overflow-y-auto'>
+          <DialogHeader>
+            <DialogTitle>Edit Campaign</DialogTitle>
+          </DialogHeader>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-4'>
+              <FormField
+                control={form.control}
+                name='name'
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Name</FormLabel>
+                    <FormControl>
+                      <Input {...field} />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name='campaignCode'
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Campaign Code</FormLabel>
+                    <FormControl>
+                      <Input {...field} />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name='description'
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Description</FormLabel>
+                    <FormControl>
+                      <Textarea {...field} />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name='type'
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Type</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder='Select type' />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value='email'>Email</SelectItem>
+                        <SelectItem value='social'>Social</SelectItem>
+                        <SelectItem value='event'>Event</SelectItem>
+                        <SelectItem value='referral'>Referral</SelectItem>
+                        <SelectItem value='other'>Other</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name='status'
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Status</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder='Select status' />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value='draft'>{t('draft')}</SelectItem>
+                        <SelectItem value='scheduled'>{t('scheduled')}</SelectItem>
+                        <SelectItem value='active'>{t('active')}</SelectItem>
+                        <SelectItem value='paused'>{t('paused')}</SelectItem>
+                        <SelectItem value='completed'>{t('completed')}</SelectItem>
+                        <SelectItem value='cancelled'>{t('cancelled')}</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </FormItem>
+                )}
+              />
+
+              <div className='flex justify-end gap-2'>
+                <Button type='button' variant='outline' onClick={() => setIsEditDialogOpen(false)}>
+                  {t('cancel')}
+                </Button>
+                <Button type='submit' disabled={updateCampaign.isPending}>
+                  {updateCampaign.isPending ? t('saving_loading') : t('save_changes')}
+                </Button>
+              </div>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

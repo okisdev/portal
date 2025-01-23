@@ -16,17 +16,20 @@ import type { User, UserRole } from '@/lib/schema';
 import { api } from '@/utils/trpc/client';
 import { type ColumnDef, getCoreRowModel, getPaginationRowModel, useReactTable } from '@tanstack/react-table';
 import { MoreHorizontal, Pencil, Trash } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
 export default function TeamPage() {
+  const t = useTranslations();
+
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [userToDelete, setUserToDelete] = useState<User | null>(null);
 
   const utils = api.useUtils();
 
   const { data: users, isLoading } = api.admin.getUsers.useQuery();
-  const { mutate: updateUser } = api.admin.updateUser.useMutation({
+  const { mutate: updateUser, isPending: updateUserPending } = api.admin.updateUser.useMutation({
     onSuccess: () => {
       utils.admin.getUsers.invalidate();
       toast.success('User updated successfully');
@@ -222,9 +225,11 @@ export default function TeamPage() {
           </div>
           <DialogFooter>
             <Button variant='outline' onClick={() => setEditingUser(null)}>
-              Cancel
+              {t('cancel')}
             </Button>
-            <Button onClick={handleUpdateUser}>Save Changes</Button>
+            <Button onClick={handleUpdateUser} disabled={updateUserPending}>
+              {updateUserPending ? t('saving_loading') : t('save_changes')}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

@@ -31,7 +31,7 @@ export default function ManualContactForm() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
 
-  const { data: campaigns } = api.marketing.getAllCampaigns.useQuery();
+  const { data: campaigns } = api.marketing.getActiveCampaigns.useQuery();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),

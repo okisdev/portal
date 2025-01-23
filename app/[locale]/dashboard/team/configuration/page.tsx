@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 
 interface TeamMember {
@@ -18,6 +19,8 @@ interface TeamMember {
 }
 
 export default function TeamConfiguration() {
+  const t = useTranslations();
+
   const [teamName, setTeamName] = useState('My Team');
   const [teamMembers] = useState<TeamMember[]>([
     {
@@ -55,7 +58,7 @@ export default function TeamConfiguration() {
             </CardHeader>
             <CardContent className='space-y-4'>
               <div className='space-y-2'>
-                <Label htmlFor='teamName'>Team Name</Label>
+                <Label htmlFor='teamName'>{t('team_name')}</Label>
                 <Input id='teamName' value={teamName} onChange={(e) => setTeamName(e.target.value)} />
               </div>
               <Button>Save Changes</Button>

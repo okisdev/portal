@@ -52,7 +52,7 @@ export default function ContactUpload() {
   const [selectedCampaignCode, setSelectedCampaignCode] = useState<string | undefined>(undefined);
 
   const checkExistingContacts = api.contact.checkExistingContacts.useQuery({ emails: csvData.map((contact) => contact.email) }, { enabled: false });
-  const { data: campaigns } = api.marketing.getAllCampaigns.useQuery();
+  const { data: campaigns } = api.marketing.getActiveCampaigns.useQuery();
 
   const createContact = api.contact.createContact.useMutation({
     onError: (error) => {

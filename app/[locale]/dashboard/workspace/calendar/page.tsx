@@ -15,6 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import type { CalendarEventWithParticipants, CalendarFolder } from '@/lib/schema';
 import { api } from '@/utils/trpc/client';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useTranslations } from 'next-intl';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
@@ -46,6 +47,7 @@ const eventFormSchema = z.object({
 type CalendarView = 'month' | 'week' | '3days' | 'day';
 
 export default function DashboardPersonalCalendar() {
+  const t = useTranslations();
   const router = useRouter();
   const searchParams = useSearchParams();
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -622,7 +624,9 @@ export default function DashboardPersonalCalendar() {
                 >
                   Cancel
                 </Button>
-                <Button type='submit'>Save Changes</Button>
+                <Button type='submit' disabled={updateFolder.isPending}>
+                  {updateFolder.isPending ? t('saving_loading') : t('save_changes')}
+                </Button>
               </div>
             </form>
           </Form>
