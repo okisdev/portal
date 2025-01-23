@@ -129,7 +129,7 @@ export function EventDialog({ open, onOpenChange, onSubmit, isEditMode = false, 
     >
       <DialogContent className='max-h-[90vh] max-w-xl overflow-y-auto'>
         <DialogHeader>
-          <DialogTitle>{isEditMode ? 'Edit Event' : 'Create New Event'}</DialogTitle>
+          <DialogTitle>{isEditMode ? t('edit_event') : t('create_new_event')}</DialogTitle>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-4'>

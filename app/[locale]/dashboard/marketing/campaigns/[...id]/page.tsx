@@ -17,6 +17,7 @@ import { Input } from '@/components/ui/input';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { campaignTypes } from '@/data/data';
 import { useDebounce } from '@/hooks/use-debounce';
 import { formatDate } from '@/lib/utils';
 import { api } from '@/utils/trpc/client';
@@ -177,9 +178,9 @@ export default function CampaignDetailsPage() {
     {
       accessorKey: 'name',
       header: ({ column }) => (
-        <Button variant='ghost' onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
-          Name {column.getIsSorted() && <CaretSortIcon className='ml-2 inline' />}
-        </Button>
+        <button type='button' onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
+          {t('name')} {column.getIsSorted() && <CaretSortIcon className='ml-2 inline' />}
+        </button>
       ),
       cell: ({ row }) => (
         <div className='flex items-center gap-2'>
@@ -193,34 +194,34 @@ export default function CampaignDetailsPage() {
     {
       accessorKey: 'email',
       header: ({ column }) => (
-        <Button variant='ghost' onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
-          Email {column.getIsSorted() && <CaretSortIcon className='ml-2 inline' />}
-        </Button>
+        <button type='button' onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
+          {t('email')} {column.getIsSorted() && <CaretSortIcon className='ml-2 inline' />}
+        </button>
       ),
     },
     {
       accessorKey: 'company',
       header: ({ column }) => (
-        <Button variant='ghost' onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
-          Company {column.getIsSorted() && <CaretSortIcon className='ml-2 inline' />}
-        </Button>
+        <button type='button' onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
+          {t('company')} {column.getIsSorted() && <CaretSortIcon className='ml-2 inline' />}
+        </button>
       ),
     },
     {
       accessorKey: 'status',
       header: ({ column }) => (
-        <Button variant='ghost' onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
-          Status {column.getIsSorted() && <CaretSortIcon className='ml-2 inline' />}
-        </Button>
+        <button type='button' onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
+          {t('status')} {column.getIsSorted() && <CaretSortIcon className='ml-2 inline' />}
+        </button>
       ),
       cell: ({ row }) => <ColorBadge type='contactStatus' value={row.original.status} />,
     },
     {
       accessorKey: 'joinedAt',
       header: ({ column }) => (
-        <Button variant='ghost' onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
-          Joined Date {column.getIsSorted() && <CaretSortIcon className='ml-2 inline' />}
-        </Button>
+        <button type='button' onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
+          {t('joined_date')} {column.getIsSorted() && <CaretSortIcon className='ml-2 inline' />}
+        </button>
       ),
       cell: ({ row }) => formatDate(new Date(row.original.joinedAt)),
     },
@@ -428,7 +429,7 @@ export default function CampaignDetailsPage() {
               <DropdownMenuContent className='w-[350px] p-4'>
                 <div className='space-y-4'>
                   <div className='flex items-center gap-2'>
-                    <span className='font-medium text-sm'>Match:</span>
+                    <span className='font-medium text-sm'>{t('match')}:</span>
                     <Button variant='ghost' size='sm' onClick={() => setFilters((f) => ({ ...f, matchAll: !f.matchAll }))}>
                       {filters.matchAll ? t('all_conditions') : t('any_condition')}
                     </Button>
@@ -610,11 +611,11 @@ export default function CampaignDetailsPage() {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value='email'>{t('email')}</SelectItem>
-                        <SelectItem value='social'>{t('social')}</SelectItem>
-                        <SelectItem value='event'>{t('event')}</SelectItem>
-                        <SelectItem value='referral'>{t('referral')}</SelectItem>
-                        <SelectItem value='other'>{t('other')}</SelectItem>
+                        {campaignTypes.map((type) => (
+                          <SelectItem key={type} value={type}>
+                            {t(type)}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   </FormItem>

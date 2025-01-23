@@ -6,6 +6,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { campaignTypes } from '@/data/data';
 import { api } from '@/utils/trpc/client';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useTranslations } from 'next-intl';
@@ -113,11 +114,11 @@ export default function NewCampaignPage() {
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value='email'>Email</SelectItem>
-                      <SelectItem value='social'>Social Media</SelectItem>
-                      <SelectItem value='event'>Event</SelectItem>
-                      <SelectItem value='referral'>Referral</SelectItem>
-                      <SelectItem value='other'>Other</SelectItem>
+                      {campaignTypes.map((type) => (
+                        <SelectItem key={type} value={type}>
+                          {t(type)}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                   <FormMessage />

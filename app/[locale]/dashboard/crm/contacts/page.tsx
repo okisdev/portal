@@ -463,9 +463,9 @@ export default function CRMContactsPage() {
               <DropdownMenuContent className='w-[350px] p-4'>
                 <div className='space-y-4'>
                   <div className='flex items-center gap-2'>
-                    <span className='font-medium text-sm'>Match:</span>
+                    <span className='font-medium text-sm'>{t('match')}:</span>
                     <Button variant='ghost' size='sm' onClick={() => setFilters((f) => ({ ...f, matchAll: !f.matchAll }))}>
-                      {filters.matchAll ? 'ALL conditions' : 'ANY condition'}
+                      {filters.matchAll ? t('all_conditions') : t('any_condition')}
                     </Button>
                   </div>
 

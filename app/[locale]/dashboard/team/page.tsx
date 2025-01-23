@@ -115,12 +115,12 @@ export default function TeamPage() {
           <DropdownMenuContent align='end'>
             <DropdownMenuItem className='cursor-pointer' onClick={() => handleEditUser(row.original)}>
               <Pencil className='mr-2 h-4 w-4' />
-              Edit
+              {t('edit')}
             </DropdownMenuItem>
             {row.original.role !== 'ADMIN' && (
               <DropdownMenuItem className='cursor-pointer text-destructive' onClick={() => setUserToDelete(row.original)}>
                 <Trash className='mr-2 h-4 w-4' />
-                Delete
+                {t('delete')}
               </DropdownMenuItem>
             )}
           </DropdownMenuContent>
@@ -147,7 +147,7 @@ export default function TeamPage() {
 
   return (
     <div className='space-y-4 p-4'>
-      <PageHeader title='Team' description='Manage your team members and settings' />
+      <PageHeader title={t('team')} description={t('team_description')} />
 
       <div className='grid gap-4 md:grid-cols-2'>
         <Card>
@@ -189,36 +189,36 @@ export default function TeamPage() {
           <div className='space-y-4 py-4'>
             <div className='grid grid-cols-2 gap-4'>
               <div className='space-y-2'>
-                <Label>First Name</Label>
+                <Label>{t('first_name')}</Label>
                 <Input value={editingUser?.firstName ?? ''} onChange={(e) => setEditingUser((prev) => (prev ? { ...prev, firstName: e.target.value } : null))} />
               </div>
               <div className='space-y-2'>
-                <Label>Last Name</Label>
+                <Label>{t('last_name')}</Label>
                 <Input value={editingUser?.lastName ?? ''} onChange={(e) => setEditingUser((prev) => (prev ? { ...prev, lastName: e.target.value } : null))} />
               </div>
             </div>
 
             <div className='space-y-2'>
-              <Label>Email</Label>
+              <Label>{t('email')}</Label>
               <Input type='email' value={editingUser?.email ?? ''} onChange={(e) => setEditingUser((prev) => (prev ? { ...prev, email: e.target.value } : null))} />
             </div>
 
             <div className='space-y-2'>
-              <Label>Username</Label>
+              <Label>{t('username')}</Label>
               <Input value={editingUser?.username ?? ''} onChange={(e) => setEditingUser((prev) => (prev ? { ...prev, username: e.target.value } : null))} />
             </div>
 
             <div className='space-y-2'>
-              <Label>Role</Label>
+              <Label>{t('role')}</Label>
               <Select value={editingUser?.role ?? undefined} onValueChange={(value: UserRole) => setEditingUser((prev) => (prev ? { ...prev, role: value } : null))}>
                 <SelectTrigger>
-                  <SelectValue placeholder='Select role' />
+                  <SelectValue placeholder={t('select_role')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value='USER'>User</SelectItem>
-                  <SelectItem value='ADMIN'>Admin</SelectItem>
-                  <SelectItem value='SALES'>Sales</SelectItem>
-                  <SelectItem value='MANAGER'>Manager</SelectItem>
+                  <SelectItem value='USER'>{t('user')}</SelectItem>
+                  <SelectItem value='ADMIN'>{t('admin')}</SelectItem>
+                  <SelectItem value='SALES'>{t('sales')}</SelectItem>
+                  <SelectItem value='MANAGER'>{t('manager')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>

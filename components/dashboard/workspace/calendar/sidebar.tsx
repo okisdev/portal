@@ -156,11 +156,11 @@ export function CalendarSidebar({
                   <DropdownMenuContent align='end'>
                     <DropdownMenuItem className='cursor-pointer' onClick={() => onEditCalendar(folder)}>
                       <Pencil className='mr-2 h-4 w-4' />
-                      Edit
+                      {t('edit')}
                     </DropdownMenuItem>
                     <DropdownMenuItem className='cursor-pointer text-destructive' onClick={() => setFolderToDelete(folder.id)}>
                       <Trash className='mr-2 h-4 w-4' />
-                      Delete
+                      {t('delete')}
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>

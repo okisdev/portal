@@ -604,7 +604,7 @@ export default function TeamIdPage() {
                 placeholder={t('select_team_leader')}
                 searchPlaceholder={t('search_team_leader')}
                 allowCustom={false}
-                groupHeading='Contacts'
+                groupHeading={t('contacts')}
               />
             </div>
             <div className='space-y-2'>
@@ -623,7 +623,7 @@ export default function TeamIdPage() {
                 placeholder={t('select_sub_leader')}
                 searchPlaceholder={t('search_sub_leader')}
                 allowCustom={false}
-                groupHeading='Contacts'
+                groupHeading={t('contacts')}
               />
             </div>
             <div className='space-y-2'>
