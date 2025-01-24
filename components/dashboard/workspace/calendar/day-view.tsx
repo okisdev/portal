@@ -24,7 +24,7 @@ export function DayView({ currentDate, selectedDate, events, folders, hiddenCale
 
   return (
     <div className='flex min-h-0 flex-1 flex-col'>
-      <div className='grid grid-cols-[80px_1fr] md:grid-cols-[100px_1fr] divide-x border-b bg-background'>
+      <div className='grid grid-cols-[50px_1fr] divide-x border-b bg-background md:grid-cols-[100px_1fr]'>
         <div className='p-2 text-muted-foreground text-sm'>
           <span className='hidden md:inline'>{t('time')}</span>
           <span className='md:hidden'>{t('time').charAt(0)}</span>
@@ -44,7 +44,7 @@ export function DayView({ currentDate, selectedDate, events, folders, hiddenCale
         </div>
       </div>
       <div className='flex-1 overflow-y-auto'>
-        <div className='-mr-[1px] grid grid-cols-[80px_1fr] md:grid-cols-[100px_1fr] divide-x' style={{ height: 'calc(60px * 24)' }}>
+        <div className='-mr-[1px] grid grid-cols-[50px_1fr] divide-x md:grid-cols-[100px_1fr]' style={{ height: 'calc(60px * 24)' }}>
           <TimeColumn />
           <TimeGrid
             date={currentDate}

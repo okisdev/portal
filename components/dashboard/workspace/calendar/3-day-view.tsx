@@ -71,7 +71,7 @@ export function ThreeDayView({
         ))}
       </div>
       <div className='flex-1 overflow-y-auto'>
-        <div className='grid grid-cols-[50px_repeat(3,1fr)] md:grid-cols-[100px_repeat(3,1fr)] divide-x' style={{ height: 'calc(60px * 24)' }}>
+        <div className='grid grid-cols-[50px_repeat(3,1fr)] divide-x md:grid-cols-[100px_repeat(3,1fr)]' style={{ height: 'calc(60px * 24)' }}>
           <TimeColumn />
           {threeDays.map((date) => (
             <TimeGrid

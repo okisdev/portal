@@ -49,15 +49,15 @@ export function CalendarHeader({ currentDate, view, onViewChange, onTodayClick, 
       </div>
       <div className='flex items-center gap-2'>
         <div className='flex rounded-md border'>
-          <Button variant={view === 'month' ? 'secondary' : 'ghost'} className='h-8 rounded-r-none px-2 md:px-3' onClick={() => onViewChange('month')}>
+          <Button variant={view === 'month' ? 'secondary' : 'ghost'} className='h-8 rounded-r-none border-r px-2 md:px-3' onClick={() => onViewChange('month')}>
             <span className='hidden md:inline'>{t('month')}</span>
             <span className='md:hidden'>M</span>
           </Button>
-          <Button variant={view === 'week' ? 'secondary' : 'ghost'} className='h-8 rounded-none border-r border-l px-2 md:px-3' onClick={() => onViewChange('week')}>
+          <Button variant={view === 'week' ? 'secondary' : 'ghost'} className='hidden h-8 rounded-none border-r-none border-l-none px-2 md:flex md:px-3' onClick={() => onViewChange('week')}>
             <span className='hidden md:inline'>{t('week')}</span>
             <span className='md:hidden'>W</span>
           </Button>
-          <Button variant={view === '3days' ? 'secondary' : 'ghost'} className='h-8 rounded-none border-r px-2 md:px-3' onClick={() => onViewChange('3days')}>
+          <Button variant={view === '3days' ? 'secondary' : 'ghost'} className='h-8 rounded-none border-r px-2 md:border-l md:px-3' onClick={() => onViewChange('3days')}>
             <span className='hidden md:inline'>{t('3days')}</span>
             <span className='md:hidden'>3D</span>
           </Button>

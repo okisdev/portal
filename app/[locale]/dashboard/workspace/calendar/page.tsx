@@ -66,6 +66,22 @@ export default function DashboardPersonalCalendar() {
 
   const utils = api.useUtils();
 
+  // Add effect to handle mobile view changes
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth < 768 && view === 'week') {
+        const params = new URLSearchParams(searchParams.toString());
+        params.set('view', '3days');
+        router.push(`?${params.toString()}`);
+        setView('3days');
+      }
+    };
+
+    handleResize(); // Check on initial render
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [view, router, searchParams]);
+
   const startOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
   const endOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
 
