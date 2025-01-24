@@ -114,6 +114,7 @@ export const contact = pgTable('contact', {
   createdAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
   updatedAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
   lastContactedAt: timestamp({ mode: 'date' }),
+  nextFollowUpAt: timestamp({ mode: 'date' }),
   priority: text('priority', { enum: ['urgent', 'high', 'medium', 'low'] }).default('medium'),
   workExperience: text(), // years of experience
   currentRole: text(), // current job role

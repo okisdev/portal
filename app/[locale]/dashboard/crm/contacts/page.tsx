@@ -54,7 +54,12 @@ type FilterConfig = {
 
 function WhatsAppButton({ contact, onClick }: { contact: Contact; onClick: (contact: Contact, e: React.MouseEvent) => void }) {
   return (
-    <Button variant='ghost' className='flex h-auto items-center gap-2 px-2 py-1 font-normal hover:bg-neutral-200 dark:hover:bg-neutral-700' onClick={(e) => onClick(contact, e)}>
+    <Button
+      variant='ghost'
+      className='flex h-auto items-center gap-2 px-2 py-1 font-normal hover:bg-neutral-200 dark:hover:bg-neutral-700'
+      disabled={!contact.phone}
+      onClick={(e) => onClick(contact, e)}
+    >
       <MessageSquare className='h-4 w-4 text-muted-foreground' />
       {contact.phone || '—'}
     </Button>
@@ -397,11 +402,6 @@ export default function CRMContactsPage() {
       cell: ({ row }) => <ColorBadge type='contactStatus' value={row.original.status} />,
     },
     {
-      accessorKey: 'source',
-      header: t('source'),
-      cell: ({ row }) => <span className='capitalize'>{row.original.source?.replace('_', ' ') || '—'}</span>,
-    },
-    {
       accessorKey: 'priority',
       header: t('priority'),
       cell: ({ row }) => <ColorBadge type='priority' value={row.original.priority ?? 'medium'} />,
@@ -410,6 +410,21 @@ export default function CRMContactsPage() {
       accessorKey: 'remark',
       header: t('remark'),
       cell: ({ row }) => <span className='capitalize'>{row.original.remark || '—'}</span>,
+    },
+    {
+      accessorKey: 'source',
+      header: t('source'),
+      cell: ({ row }) => <span className='capitalize'>{row.original.source?.replace('_', ' ') || '—'}</span>,
+    },
+    {
+      accessorKey: 'lastContactedAt',
+      header: t('last_contacted'),
+      cell: ({ row }) => <span className='capitalize'>{row.original.lastContactedAt ? formatDate(new Date(row.original.lastContactedAt)) : '—'}</span>,
+    },
+    {
+      accessorKey: 'nextFollowUpAt',
+      header: t('next_follow_up'),
+      cell: ({ row }) => <span className='capitalize'>{row.original.nextFollowUpAt ? formatDate(new Date(row.original.nextFollowUpAt)) : '—'}</span>,
     },
     {
       accessorKey: 'createdAt',

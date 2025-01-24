@@ -271,5 +271,7 @@
   "week": "Week",
   "welcome_back": "Welcome Back, {name}.",
   "welcome_description": "Welcome to your dashboard",
-  "workspace": "Workspace"
+  "workspace": "Workspace",
+  "next_follow_up": "Next Follow Up",
+  "last_contacted": "Last Contacted"
 }
