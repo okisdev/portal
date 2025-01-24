@@ -386,6 +386,27 @@ export const resourceContentShare = pgTable('resourceContentShare', {
   updatedAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
 });
 
+export const resourceContentSendTrack = pgTable('resourceContentSendTrack', {
+  id: text()
+    .primaryKey()
+    .notNull()
+    .$defaultFn(() => crypto.randomUUID()),
+  resourceId: text()
+    .notNull()
+    .references(() => resourceContent.id, { onDelete: 'cascade' }),
+  contactId: text()
+    .notNull()
+    .references(() => contact.id, { onDelete: 'cascade' }),
+  sentAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
+  sentBy: text()
+    .notNull()
+    .references(() => user.id),
+  status: text('status', { enum: ['sent', 'delivered', 'read', 'failed'] }).default('sent'),
+  metadata: text(), // JSON string for additional data like delivery channel, error messages, etc.
+  createdAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
+  updatedAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
+});
+
 export const resourceEmails = pgTable('resourceEmails', {
   id: text()
     .primaryKey()

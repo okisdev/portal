@@ -1,6 +1,6 @@
-import { resourceContent, resourceContentShare, resourceEmails } from '@/drizzle/schema';
+import { contact, resourceContent, resourceContentSendTrack, resourceContentShare, resourceEmails, user } from '@/drizzle/schema';
 import { createTRPCRouter, protectedProcedure } from '@/server/trpc';
-import { and, eq, inArray, like, or } from 'drizzle-orm';
+import { and, eq, inArray, like, or, sql } from 'drizzle-orm';
 import { z } from 'zod';
 
 const resourceContentSchema = z.object({
@@ -63,7 +63,22 @@ export const resourceRouter = createTRPCRouter({
         conditions = and(conditions, or(...tagConditions));
       }
 
-      return ctx.db.select().from(resourceContent).leftJoin(resourceContentShare, eq(resourceContent.id, resourceContentShare.resourceId)).where(conditions);
+      const result = await ctx.db
+        .select({
+          resourceContent: resourceContent,
+          resourceContentShare: resourceContentShare,
+          sendCount: sql<number>`count(distinct ${resourceContentSendTrack.id})`.mapWith(Number),
+          lastSentAt: sql<Date | null>`max(${resourceContentSendTrack.sentAt})`.mapWith((d) => d && new Date(d)),
+          lastRecipient: contact,
+        })
+        .from(resourceContent)
+        .leftJoin(resourceContentShare, eq(resourceContent.id, resourceContentShare.resourceId))
+        .leftJoin(resourceContentSendTrack, eq(resourceContent.id, resourceContentSendTrack.resourceId))
+        .leftJoin(contact, eq(resourceContentSendTrack.contactId, contact.id))
+        .where(conditions)
+        .groupBy(resourceContent.id, resourceContentShare.id, contact.id);
+
+      return result;
     }),
 
   getContent: protectedProcedure.input(z.string()).query(async ({ ctx, input }) => {
@@ -299,4 +314,65 @@ export const resourceRouter = createTRPCRouter({
 
     return ctx.db.delete(resourceEmails).where(eq(resourceEmails.id, input));
   }),
+
+  createContentSendTrack: protectedProcedure
+    .input(
+      z.object({
+        resourceId: z.string(),
+        contactId: z.string(),
+        status: z.enum(['sent', 'delivered', 'read', 'failed']),
+        metadata: z.record(z.any()).optional(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      return ctx.db.insert(resourceContentSendTrack).values({
+        resourceId: input.resourceId,
+        contactId: input.contactId,
+        sentBy: ctx.session.user.id,
+        status: input.status,
+        metadata: input.metadata ? JSON.stringify(input.metadata) : null,
+      });
+    }),
+
+  getContentSendHistory: protectedProcedure
+    .input(
+      z.object({
+        resourceId: z.string(),
+      })
+    )
+    .query(async ({ ctx, input }) => {
+      const userId = ctx.session.user.id;
+
+      // First check if user has access to this content
+      const content = await ctx.db
+        .select()
+        .from(resourceContent)
+        .leftJoin(resourceContentShare, eq(resourceContent.id, resourceContentShare.resourceId))
+        .where(
+          and(
+            eq(resourceContent.id, input.resourceId),
+            or(eq(resourceContent.createdBy, userId), eq(resourceContent.visibility, 'PUBLIC'), and(eq(resourceContent.visibility, 'SHARED'), eq(resourceContentShare.sharedWithUserId, userId)))
+          )
+        )
+        .limit(1);
+
+      if (!content[0]) {
+        throw new Error('Not authorized to view this content');
+      }
+
+      return ctx.db
+        .select({
+          id: resourceContentSendTrack.id,
+          sentAt: resourceContentSendTrack.sentAt,
+          status: resourceContentSendTrack.status,
+          metadata: resourceContentSendTrack.metadata,
+          contact: contact,
+          sentBy: user,
+        })
+        .from(resourceContentSendTrack)
+        .leftJoin(contact, eq(resourceContentSendTrack.contactId, contact.id))
+        .leftJoin(user, eq(resourceContentSendTrack.sentBy, user.id))
+        .where(eq(resourceContentSendTrack.resourceId, input.resourceId))
+        .orderBy(resourceContentSendTrack.sentAt);
+    }),
 });

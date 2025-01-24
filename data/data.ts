@@ -4,6 +4,8 @@ export const sources = ['Pitching', 'Referral', 'Website', 'Email', 'Instagram',
 
 export const campaignTypes = ['Email', 'Social Media', 'Event', 'Referral', 'Other'];
 
+export const contentTags = ['whatsapp', 'message', 'email', 'social media', 'event', 'referral', 'other'];
+
 export const phoneCountries = [
   { value: 'af', label: '🇦🇫 Afghanistan', code: '+93' },
   { value: 'al', label: '🇦🇱 Albania', code: '+355' },

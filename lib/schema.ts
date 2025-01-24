@@ -11,6 +11,7 @@ import {
   marketingCampaign,
   paymentTrack,
   resourceContent,
+  resourceContentSendTrack,
   session,
   subscriptionCoupon,
   subscriptionPlan,
@@ -172,6 +173,10 @@ export type MarketingCampaign = z.infer<typeof marketingCampaignSchema> & {
   contactCount?: number;
   convertedCount?: number;
 };
+
+export const resourceContentSendTrackSchema = createSelectSchema(resourceContentSendTrack);
+
+export type ResourceContentSendTrack = z.infer<typeof resourceContentSendTrackSchema>;
 
 export const appointmentSchema = z.object({
   title: z.string(),

@@ -4,21 +4,24 @@ import { TipTapEditor } from '@/components/shared/tiptap-editor';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import type { Contact } from '@/lib/schema';
+import type { Contact, ResourceContent } from '@/lib/schema';
 import { api } from '@/utils/trpc/client';
 import { MessageSquare, Send } from 'lucide-react';
 import { useSession } from 'next-auth/react';
+import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
-interface SendMessageProps {
+interface SendWhatsAppMessageProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   recipient?: Contact;
 }
 
-export function SendMessage({ open, onOpenChange, recipient }: SendMessageProps) {
+export function SendWhatsAppMessage({ open, onOpenChange, recipient }: SendWhatsAppMessageProps) {
   if (!recipient) return null;
+
+  const t = useTranslations();
 
   const utils = api.useUtils();
   const { data: session } = useSession();
@@ -35,6 +38,15 @@ export function SendMessage({ open, onOpenChange, recipient }: SendMessageProps)
       utils.contact.getContactById.invalidate({ id: recipient.id });
       utils.contact.getContactActivities.invalidate({ id: recipient.id });
       handleClose();
+    },
+    onError: (error) => {
+      toast.error(error.message);
+    },
+  });
+
+  const createContentSendTrack = api.resource.createContentSendTrack.useMutation({
+    onSuccess: () => {
+      utils.resource.getContents.invalidate();
     },
     onError: (error) => {
       toast.error(error.message);
@@ -76,20 +88,30 @@ export function SendMessage({ open, onOpenChange, recipient }: SendMessageProps)
     window.open(whatsappUrl, '_blank');
   };
 
-  const handleSelectTemplate = (template: any) => {
+  const handleSelectTemplate = (template: ResourceContent) => {
     setMessage(template.content);
     setIsSelectingTemplate(false);
+
+    // Track that this template was sent to the contact
+    createContentSendTrack.mutate({
+      resourceId: template.id,
+      contactId: recipient.id,
+      status: 'sent',
+      metadata: {
+        channel: 'whatsapp',
+      },
+    });
   };
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className='max-h-[90vh] max-w-2xl overflow-y-auto'>
         <DialogHeader>
-          <DialogTitle>Send WhatsApp Message</DialogTitle>
+          <DialogTitle>{t('send_whatsapp_message')}</DialogTitle>
         </DialogHeader>
         <div className='space-y-4 py-4'>
           <div className='flex items-center gap-4 border-b pb-4'>
-            <div className='w-16 text-muted-foreground text-sm'>From</div>
+            <div className='w-4 text-muted-foreground text-sm'>{t('from')}</div>
             <div className='flex items-center gap-2'>
               <Avatar className='size-6'>
                 <AvatarImage src={session?.user?.image || ''} />
@@ -100,7 +122,7 @@ export function SendMessage({ open, onOpenChange, recipient }: SendMessageProps)
           </div>
 
           <div className='flex items-center gap-4 border-b pb-4'>
-            <div className='w-16 text-muted-foreground text-sm'>To</div>
+            <div className='w-4 text-muted-foreground text-sm'>{t('to')}</div>
             <div className='flex flex-1 flex-wrap items-center gap-2'>
               <div className='flex items-center gap-2 rounded-full border bg-muted px-2 py-1'>
                 <Avatar className='size-6'>
@@ -117,7 +139,7 @@ export function SendMessage({ open, onOpenChange, recipient }: SendMessageProps)
               <div className='flex items-center justify-between'>
                 <h3 className='font-medium'>Select Template</h3>
                 <Button variant='outline' size='sm' onClick={() => setIsSelectingTemplate(false)}>
-                  Back to Editor
+                  {t('back_to_editor')}
                 </Button>
               </div>
               {templates && templates.length > 0 ? (
@@ -143,9 +165,9 @@ export function SendMessage({ open, onOpenChange, recipient }: SendMessageProps)
           ) : (
             <div className='space-y-4'>
               <div className='flex items-center justify-between'>
-                <h3 className='font-medium'>Message</h3>
+                <h3 className='font-medium'>{t('message')}</h3>
                 <Button variant='outline' size='sm' onClick={() => setIsSelectingTemplate(true)}>
-                  Use Template
+                  {t('use_template')}
                 </Button>
               </div>
               <TipTapEditor content={message} onChange={setMessage} placeholder='Write your message...' className='min-h-[200px]' defaultMode='markdown' />
@@ -156,11 +178,11 @@ export function SendMessage({ open, onOpenChange, recipient }: SendMessageProps)
         <div className='flex items-center justify-between border-t pt-4'>
           <div className='flex items-center gap-2'>
             <MessageSquare className='size-4 text-muted-foreground' />
-            <span className='text-muted-foreground text-sm'>Message will be sent via WhatsApp</span>
+            <span className='text-muted-foreground text-sm'>{t('message_will_be_sent_via_whatsapp')}</span>
           </div>
           <Button className='gap-2' onClick={handleSend} disabled={createContactActivity.isPending}>
             <Send className='size-4' />
-            Send
+            {t('send')}
           </Button>
         </div>
       </DialogContent>

@@ -6,10 +6,12 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Switch } from '@/components/ui/switch';
+import { contentTags } from '@/data/data';
 import type { ResourceContent } from '@/lib/schema';
 import { api } from '@/utils/trpc/client';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { X } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
@@ -33,6 +35,8 @@ interface ContentFormProps {
 }
 
 export function ContentForm({ content, onSuccess, onSubmit, isSubmitting }: ContentFormProps) {
+  const t = useTranslations();
+
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -98,14 +102,14 @@ export function ContentForm({ content, onSuccess, onSubmit, isSubmitting }: Cont
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmitForm)} className='h-full space-y-4'>
+      <form onSubmit={form.handleSubmit(onSubmitForm)} className='flex h-full flex-col space-y-4'>
         <div className='space-y-4'>
           <FormField
             control={form.control}
             name='title'
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Title</FormLabel>
+                <FormLabel>{t('title')}</FormLabel>
                 <FormControl>
                   <Input {...field} />
                 </FormControl>
@@ -118,7 +122,7 @@ export function ContentForm({ content, onSuccess, onSubmit, isSubmitting }: Cont
             name='description'
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Description</FormLabel>
+                <FormLabel>{t('description')}</FormLabel>
                 <FormControl>
                   <Input {...field} value={field.value || ''} />
                 </FormControl>
@@ -131,17 +135,17 @@ export function ContentForm({ content, onSuccess, onSubmit, isSubmitting }: Cont
             name='tags'
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Tags</FormLabel>
+                <FormLabel>{t('tags')}</FormLabel>
                 <FormControl>
                   <div className='space-y-2'>
                     <Combobox
                       value=''
                       onChange={handleAddTag}
-                      items={field.value}
-                      placeholder='Add tags...'
-                      searchPlaceholder='Search or add new tag...'
-                      emptyText='No matching tags'
-                      groupHeading='Existing Tags'
+                      items={contentTags}
+                      placeholder={t('add_tags')}
+                      searchPlaceholder={t('tags_search_placeholder')}
+                      emptyText={t('no_matching_tags')}
+                      groupHeading={t('existing_tags')}
                       allowCustom
                     />
                     <div className='flex flex-wrap gap-2'>
@@ -166,8 +170,8 @@ export function ContentForm({ content, onSuccess, onSubmit, isSubmitting }: Cont
             render={({ field }) => (
               <FormItem className='flex flex-row items-center justify-between rounded-lg border p-4'>
                 <div className='space-y-0.5'>
-                  <FormLabel className='text-base'>Public</FormLabel>
-                  <div className='text-muted-foreground text-sm'>Make this content public to everyone</div>
+                  <FormLabel className='text-base'>{t('public')}</FormLabel>
+                  <div className='text-muted-foreground text-sm'>{t('public_description')}</div>
                 </div>
                 <FormControl>
                   <Switch checked={field.value === 'PUBLIC'} onCheckedChange={(checked) => field.onChange(checked ? 'PUBLIC' : 'PRIVATE')} />
@@ -176,7 +180,7 @@ export function ContentForm({ content, onSuccess, onSubmit, isSubmitting }: Cont
             )}
           />
         </div>
-        <div className='h-[calc(100vh-450px)] rounded-lg border bg-background'>
+        <div className='flex-1 rounded-lg border bg-background'>
           <FormField
             control={form.control}
             name='content'
@@ -193,7 +197,7 @@ export function ContentForm({ content, onSuccess, onSubmit, isSubmitting }: Cont
           />
         </div>
         <Button type='submit' disabled={isCreating || isUpdating}>
-          {content ? 'Update' : 'Create'}
+          {content ? t('update') : t('create')}
         </Button>
       </form>
     </Form>
