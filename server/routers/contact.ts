@@ -1,5 +1,5 @@
 import { contact, contactActivity, contactCampaign, marketingCampaign, team, teamContact } from '@/drizzle/schema';
-import { activityTypeSchema, prioritySchema, statusSchema } from '@/lib/schema';
+import { activitySubTypeSchema, activityTypeSchema, prioritySchema, statusSchema } from '@/lib/schema';
 import { createContactActivityHelper } from '@/server/helper/contact';
 import { createTRPCRouter, protectedProcedure, publicProcedure } from '@/server/trpc';
 import { sendEmail } from '@/utils/email';
@@ -125,8 +125,8 @@ export const contactRouter = createTRPCRouter({
       // Log contact creation activity
       await createContactActivityHelper(ctx, {
         contactId: result[0].id,
-        type: 'CONTACT_CREATED',
-        title: 'Contact Created',
+        type: 'CONTACT',
+        subType: 'CONTACT_CREATED',
         description: `Contact ${result[0].name} (${result[0].email}) was created${input.source ? ` from ${input.source}` : ''}.`,
         metadata: { source: input.source, campaignCode: input.campaignCode },
         initiatorType: 'user',
@@ -137,8 +137,8 @@ export const contactRouter = createTRPCRouter({
       if (referralContact) {
         await createContactActivityHelper(ctx, {
           contactId: result[0].id,
-          type: 'CONTACT_CREATED',
-          title: 'Referral Added',
+          type: 'CONTACT',
+          subType: 'CONTACT_CREATED',
           description: `Contact was referred by ${referralContact.name} (${referralContact.email})`,
           metadata: { referralId: referralContact.id, referralEmail: referralContact.email },
           initiatorType: 'user',
@@ -166,8 +166,8 @@ export const contactRouter = createTRPCRouter({
         // Log campaign assignment activity
         await createContactActivityHelper(ctx, {
           contactId: result[0].id,
-          type: 'CAMPAIGN_ASSIGNED',
-          title: 'Campaign Assigned',
+          type: 'CAMPAIGN',
+          subType: 'CAMPAIGN_ASSIGNED',
           description: `Contact ${result[0].name} (${result[0].email}) was assigned to campaign: ${campaign.name} (${campaign.campaignCode}).`,
           metadata: { campaign },
           initiatorType: 'user',
@@ -184,8 +184,8 @@ export const contactRouter = createTRPCRouter({
     // Log remark update activity
     await createContactActivityHelper(ctx, {
       contactId: input.id,
-      type: 'NOTE_ADDED',
-      title: 'Remark Updated',
+      type: 'ENGAGEMENT',
+      subType: 'NOTE_ADDED',
       description: `Contact remark was updated to: ${input.remark}`,
       initiatorType: 'user',
       initiatorId: ctx.session?.user.id,
@@ -217,8 +217,8 @@ export const contactRouter = createTRPCRouter({
 
       await createContactActivityHelper(ctx, {
         contactId: input.contactId,
-        type: 'CAMPAIGN_ASSIGNED',
-        title: 'Campaign Assigned',
+        type: 'CAMPAIGN',
+        subType: 'CAMPAIGN_ASSIGNED',
         description: `Contact was assigned to campaign: ${campaign.name} (${campaign.campaignCode}).`,
         initiatorType: 'user',
         initiatorId: ctx.session?.user.id,
@@ -252,8 +252,8 @@ export const contactRouter = createTRPCRouter({
 
       await createContactActivityHelper(ctx, {
         contactId: input.contactId,
-        type: 'CAMPAIGN_REMOVED',
-        title: 'Campaign Removed',
+        type: 'CAMPAIGN',
+        subType: 'CAMPAIGN_REMOVED',
         description: `Contact was removed from campaign: ${campaign.name} (${campaign.campaignCode}).`,
         initiatorType: 'user',
         initiatorId: ctx.session?.user.id,
@@ -277,8 +277,8 @@ export const contactRouter = createTRPCRouter({
     // Log deletion activity before actually deleting
     await createContactActivityHelper(ctx, {
       contactId: input.id,
-      type: 'CONTACT_DELETED',
-      title: 'Contact Deleted',
+      type: 'CONTACT',
+      subType: 'CONTACT_DELETED',
       description: `Contact ${contactDetails.name} (${contactDetails.email}) was deleted.`,
       metadata: { name: contactDetails.name, email: contactDetails.email },
       initiatorType: 'user',
@@ -297,7 +297,7 @@ export const contactRouter = createTRPCRouter({
       z.object({
         contactId: z.string(),
         type: activityTypeSchema,
-        title: z.string(),
+        subType: activitySubTypeSchema,
         description: z.string(),
         initiatorType: z.enum(['user', 'contact', 'system']),
         initiatorId: z.string(),
@@ -309,9 +309,9 @@ export const contactRouter = createTRPCRouter({
         contactId: input.contactId,
         userId: ctx.session?.user.id,
         type: input.type,
+        subType: input.subType,
         initiatorType: input.initiatorType,
         initiatorId: input.initiatorId,
-        title: input.title,
         description: input.description,
         metadata: input.metadata ? JSON.stringify(input.metadata) : null,
       });
@@ -367,8 +367,8 @@ export const contactRouter = createTRPCRouter({
       if (input.status && input.status !== currentContact.status) {
         await createContactActivityHelper(ctx, {
           contactId: id,
-          type: 'STATUS_CHANGED',
-          title: 'Status Changed',
+          type: 'STATUS',
+          subType: 'STATUS_CHANGED',
           description: `Contact status changed from ${currentContact.status} to ${input.status}`,
           initiatorType: 'user',
           initiatorId: ctx.session?.user.id,
@@ -383,8 +383,8 @@ export const contactRouter = createTRPCRouter({
       if (input.priority && input.priority !== currentContact.priority) {
         await createContactActivityHelper(ctx, {
           contactId: id,
-          type: 'PRIORITY_CHANGED',
-          title: 'Priority Changed',
+          type: 'STATUS',
+          subType: 'PRIORITY_CHANGED',
           description: `Contact priority changed from ${currentContact.priority} to ${input.priority}`,
           initiatorType: 'user',
           initiatorId: ctx.session?.user.id,
@@ -398,8 +398,8 @@ export const contactRouter = createTRPCRouter({
       if (input.lastContactedAt) {
         await createContactActivityHelper(ctx, {
           contactId: id,
-          type: 'LAST_CONTACTED_UPDATED',
-          title: 'Last Contacted Updated',
+          type: 'DATE',
+          subType: 'LAST_CONTACTED',
           description: `Last contacted date updated to ${input.lastContactedAt}`,
           initiatorType: 'user',
           initiatorId: ctx.session?.user.id,
@@ -409,8 +409,8 @@ export const contactRouter = createTRPCRouter({
       if (input.nextFollowUpAt) {
         await createContactActivityHelper(ctx, {
           contactId: id,
-          type: 'DATE_NEXT_FOLLOW_UP_UPDATED',
-          title: 'Next Follow Up Updated',
+          type: 'DATE',
+          subType: 'NEXT_FOLLOW_UP',
           description: `Next follow up date updated to ${input.nextFollowUpAt}`,
           initiatorType: 'user',
           initiatorId: ctx.session?.user.id,
@@ -423,8 +423,8 @@ export const contactRouter = createTRPCRouter({
       if (changedFields.length > 0) {
         await createContactActivityHelper(ctx, {
           contactId: id,
-          type: 'CONTACT_UPDATED',
-          title: 'Contact Updated',
+          type: 'CONTACT',
+          subType: 'CONTACT_UPDATED',
           description: `Updated contact fields: ${changedFields.join(', ')}`,
           metadata: {
             changedFields,
@@ -512,8 +512,8 @@ export const contactRouter = createTRPCRouter({
 
         // Log the email activity
         await ctx.db.insert(contactActivity).values({
-          type: 'EMAIL_SENT',
-          title: 'Email Sent',
+          type: 'ENGAGEMENT',
+          subType: 'EMAIL_SENT',
           description: `Email sent to ${input.to} with subject: ${input.subject}`,
           initiatorType: 'user',
           userId: ctx.session.user.id,

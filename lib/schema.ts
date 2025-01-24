@@ -30,6 +30,17 @@ export const credentialSchema = z.object({
 });
 
 export const activityTypeSchema = z.enum([
+  'CONTACT', // Contact-related activities
+  'STATUS', // Status changes
+  'DATE', // Date-related activities
+  'TEAM', // Team-related activities
+  'CAMPAIGN', // Campaign-related activities
+  'DEAL', // Deal-related activities
+  'PAYMENT', // Payment-related activities
+  'ENGAGEMENT', // Engagement activities like calls, emails
+]);
+
+export const activitySubTypeSchema = z.enum([
   // Contact Management
   'CONTACT_CREATED',
   'CONTACT_UPDATED',
@@ -38,6 +49,10 @@ export const activityTypeSchema = z.enum([
   // Status Changes
   'STATUS_CHANGED',
   'PRIORITY_CHANGED',
+
+  // Date Related
+  'LAST_CONTACTED',
+  'NEXT_FOLLOW_UP',
 
   // Engagement
   'MEETING_SCHEDULED',
@@ -48,8 +63,6 @@ export const activityTypeSchema = z.enum([
   'EMAIL_SCHEDULED',
   'MESSAGE_SENT',
   'NOTE_ADDED',
-  'LAST_CONTACTED_UPDATED',
-  'DATE_NEXT_FOLLOW_UP_UPDATED',
 
   // Team Management
   'TEAM_ASSIGNED',
@@ -72,6 +85,7 @@ export const activityTypeSchema = z.enum([
 ]);
 
 export type ActivityType = z.infer<typeof activityTypeSchema>;
+export type ActivitySubType = z.infer<typeof activitySubTypeSchema>;
 
 export const statusSchema = z.enum(['lead', 'appointment', 'pitch', 'trial', 'final', 'closed', 'junk']);
 

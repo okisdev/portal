@@ -273,5 +273,6 @@
   "welcome_description": "Welcome to your dashboard",
   "workspace": "Workspace",
   "next_follow_up": "Next Follow Up",
-  "last_contacted": "Last Contacted"
+  "last_contacted": "Last Contacted",
+  "select_template": "Select Template"
 }
