@@ -56,6 +56,7 @@
   "create_new_team": "创建新团队",
   "create_team": "创建团队",
   "created": "已创建",
+  "created_at_via": "在{date}通过{source}创建",
   "creating": "创建中...",
   "creating_account": "创建账户中...",
   "crm": "客户关系管理",
@@ -188,6 +189,7 @@
   "search_team_leader": "搜索组长...",
   "select_a_team": "选择团队",
   "select_campaign_code": "选择活动代码",
+  "select_date": "选择日期",
   "select_or_create_calendar": "选择或创建日历",
   "select_referral": "选择推荐人",
   "select_role": "选择角色",
@@ -248,6 +250,5 @@
   "week": "周",
   "welcome_back": "欢迎回来，{name}。",
   "welcome_description": "欢迎来到您的仪表板",
-  "workspace": "工作区",
-  "select_date": "选择日期"
+  "workspace": "工作区"
 }

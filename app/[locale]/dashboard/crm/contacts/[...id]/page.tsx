@@ -412,6 +412,16 @@ export default function ContactIdPage() {
                         <span>{contact.phone}</span>
                       </Link>
                     )}
+                    {contact?.createdAt && (
+                      <div className='flex items-center gap-2 pt-3'>
+                        <span className='text-muted-foreground text-xs'>
+                          {t('created_at_via', {
+                            date: formatDate(new Date(contact.createdAt)),
+                            source: contact.source,
+                          })}
+                        </span>
+                      </div>
+                    )}
                   </div>
                 </div>
                 <DropdownMenu>
@@ -451,32 +461,24 @@ export default function ContactIdPage() {
             <div className='border-b p-6'>
               <div className='grid grid-cols-1 gap-4'>
                 <div className='grid grid-cols-2 gap-4'>
-                  {[
-                    {
-                      label: t('last_contact'),
-                      value: (
-                        <DateTimePicker
-                          size='sm'
-                          value={lastContactDate}
-                          onChange={(date) => setLastContactDate(date)}
-                          onClose={() => {
-                            if (lastContactDate?.getTime() !== (contact?.lastContactedAt ? new Date(contact.lastContactedAt).getTime() : null)) {
-                              updateContact.mutate({
-                                id: contactId[0],
-                                lastContactedAt: lastContactDate || undefined,
-                              });
-                            }
-                          }}
-                        />
-                      ),
-                    },
-                    { label: t('source'), value: contact?.source || '—' },
-                  ].map((item) => (
-                    <div key={item.label} className='space-y-1.5'>
-                      <div className='text-muted-foreground text-xs'>{item.label}</div>
-                      <div className='text-foreground text-sm'>{typeof item.value === 'string' ? item.value : item.value}</div>
+                  <div className='space-y-1.5'>
+                    <div className='text-muted-foreground text-xs'>{t('last_contact')}</div>
+                    <div className='text-foreground text-sm'>
+                      <DateTimePicker
+                        size='sm'
+                        value={lastContactDate}
+                        onChange={(date) => setLastContactDate(date)}
+                        onClose={() => {
+                          if (lastContactDate?.getTime() !== (contact?.lastContactedAt ? new Date(contact.lastContactedAt).getTime() : null)) {
+                            updateContact.mutate({
+                              id: contactId[0],
+                              lastContactedAt: lastContactDate || undefined,
+                            });
+                          }
+                        }}
+                      />
                     </div>
-                  ))}
+                  </div>
                 </div>
                 <div className='grid grid-cols-2 gap-4'>
                   <div className='space-y-1.5'>
