@@ -182,8 +182,8 @@ export const calendarRouter = createTRPCRouter({
         // Log meeting update activity
         await createContactActivityHelper(ctx, {
           contactId: participant.participantId,
-          type: 'MEETING_UPDATED',
-          title: 'Meeting Updated',
+          type: 'ENGAGEMENT',
+          subType: 'MEETING_UPDATED',
           description: `Meeting "${input.title}" was updated to ${new Date(input.startAt).toLocaleString()}${input.description ? ` - ${input.description}` : ''}`,
           initiatorType: 'user',
           initiatorId: ctx.session?.user.id,
@@ -225,8 +225,8 @@ export const calendarRouter = createTRPCRouter({
       // Log meeting cancellation activity
       await createContactActivityHelper(ctx, {
         contactId: participant.participantId,
-        type: 'MEETING_CANCELLED',
-        title: 'Meeting Cancelled',
+        type: 'ENGAGEMENT',
+        subType: 'MEETING_CANCELLED',
         description: `Meeting "${event.title}" scheduled for ${new Date(event.startAt).toLocaleString()} was cancelled.`,
         initiatorType: 'user',
         initiatorId: ctx.session?.user.id,
@@ -330,8 +330,8 @@ export const calendarRouter = createTRPCRouter({
     // Log meeting creation activity
     await createContactActivityHelper(ctx, {
       contactId,
-      type: 'MEETING_SCHEDULED',
-      title: 'Meeting Scheduled',
+      type: 'ENGAGEMENT',
+      subType: 'MEETING_SCHEDULED',
       description: `Meeting "${title}" scheduled for ${new Date(startAt).toLocaleString()}${description ? ` - ${description}` : ''}`,
       initiatorType: 'user',
       initiatorId: ctx.session?.user.id,

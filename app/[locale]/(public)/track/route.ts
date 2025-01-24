@@ -36,8 +36,8 @@ export async function GET(request: NextRequest) {
     await database.insert(contactActivity).values({
       contactId: track.contactId,
       userId: track.userId,
-      type: 'PAYMENT_LINK_CLICKED',
-      title: 'Payment link clicked',
+      type: 'PAYMENT',
+      subType: 'PAYMENT_LINK_CLICKED',
       description: `Payment link for ${track.amount / 100} ${track.currency.toUpperCase()} was clicked`,
       metadata: JSON.stringify({
         trackId: track.id,

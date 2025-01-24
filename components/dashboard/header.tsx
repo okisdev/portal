@@ -11,6 +11,7 @@ import { useTranslations } from 'next-intl';
 import { useTheme } from 'next-themes';
 import { usePathname } from 'next/navigation';
 import React, { useCallback, useEffect, useState } from 'react';
+import { validate as uuidValidate } from 'uuid';
 
 export function DashboardHeader() {
   const pathname = usePathname();
@@ -45,10 +46,13 @@ export function DashboardHeader() {
     return () => document.removeEventListener('keydown', down);
   }, []);
 
-  const formatPathSegment = (segment: string) => {
-    const words = segment.split('-');
+  const i18nPath = (segment: string) => {
+    // if uuid, return uuid
+    if (uuidValidate(segment) || segment.trim() === '') {
+      return segment;
+    }
 
-    return words.map((word) => word.charAt(0) + word.slice(1)).join(' ');
+    return t(segment);
   };
 
   const runCommand = useCallback((command: () => unknown) => {
@@ -67,9 +71,9 @@ export function DashboardHeader() {
               <React.Fragment key={path}>
                 <BreadcrumbItem>
                   {index === paths.length - 1 ? (
-                    <BreadcrumbPage>{formatPathSegment(path)}</BreadcrumbPage>
+                    <BreadcrumbPage>{i18nPath(path)}</BreadcrumbPage>
                   ) : (
-                    <BreadcrumbLink href={`/dashboard/${paths.slice(0, index + 1).join('/')}`}>{formatPathSegment(path)}</BreadcrumbLink>
+                    <BreadcrumbLink href={`/dashboard/${paths.slice(0, index + 1).join('/')}`}>{i18nPath(path)}</BreadcrumbLink>
                   )}
                 </BreadcrumbItem>
                 {index < paths.length - 1 && !isDashboard && <BreadcrumbSeparator />}

@@ -251,8 +251,8 @@ export default function MarketingCampaignsPage() {
   return (
     <div className='space-y-4 p-4'>
       <PageHeader
-        title={t('marketing_campaigns')}
-        description={t('marketing_campaigns_description')}
+        title={t('campaigns')}
+        description={t('campaigns_description')}
         right={
           <Link href='/dashboard/marketing/campaigns/new'>
             <Button variant='outline' size='sm' className='h-8'>

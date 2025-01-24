@@ -89,8 +89,8 @@ export const teamRouter = createTRPCRouter({
       // Log team assignment activity
       await createContactActivityHelper(ctx, {
         contactId: input.contactId,
-        type: 'TEAM_ASSIGNED',
-        title: 'Assigned to Team',
+        type: 'TEAM',
+        subType: 'TEAM_ASSIGNED',
         description: `Contact was assigned to team "${teamDetails.name}"`,
         initiatorType: 'user',
         initiatorId: ctx.session?.user.id,
@@ -128,8 +128,8 @@ export const teamRouter = createTRPCRouter({
       // Log team removal activity
       await createContactActivityHelper(ctx, {
         contactId: input.contactId,
-        type: 'TEAM_REMOVED',
-        title: 'Removed from Team',
+        type: 'TEAM',
+        subType: 'TEAM_REMOVED',
         description: `Contact was removed from team "${teamDetails.name}"`,
         initiatorType: 'user',
         initiatorId: ctx.session?.user.id,
@@ -439,8 +439,8 @@ export const teamRouter = createTRPCRouter({
 
       await createContactActivityHelper(ctx, {
         contactId: input.contactId,
-        type: 'TEAM_ASSIGNED',
-        title: 'Added to Team',
+        type: 'TEAM',
+        subType: 'TEAM_ASSIGNED',
         description: `Contact was added to team: ${team.name}`,
         initiatorType: 'user',
         initiatorId: ctx.session?.user.id,

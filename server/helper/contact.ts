@@ -1,12 +1,12 @@
 import { contactActivity } from '@/drizzle/schema';
-import type { ActivityType } from '@/lib/schema';
+import type { ActivitySubType, ActivityType } from '@/lib/schema';
 
 export const createContactActivityHelper = async (
   ctx: any,
   input: {
     contactId: string;
     type: ActivityType;
-    title: string;
+    subType: ActivitySubType;
     description: string;
     initiatorType?: 'user' | 'contact' | 'system';
     initiatorId?: string;
@@ -17,9 +17,9 @@ export const createContactActivityHelper = async (
     contactId: input.contactId,
     userId: ctx.session?.user.id,
     type: input.type,
+    subType: input.subType,
     initiatorType: input.initiatorType || 'system',
     initiatorId: input.initiatorId || ctx.session?.user.id,
-    title: input.title,
     description: input.description,
     metadata: input.metadata ? JSON.stringify(input.metadata) : null,
   });

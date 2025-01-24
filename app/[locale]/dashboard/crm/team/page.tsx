@@ -240,8 +240,8 @@ export default function CRMTeamsPage() {
             .filter((column) => column.getCanHide())
             .map((column) => column.id)}
           placeholder={t('columns')}
-          searchPlaceholder='Search columns...'
-          emptyText='No columns found'
+          searchPlaceholder={t('search_columns')}
+          emptyText={t('no_columns_found')}
           groupHeading={t('available_columns')}
           allowCustom={false}
           renderItem={(item) => {

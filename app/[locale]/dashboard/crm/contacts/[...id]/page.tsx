@@ -96,6 +96,7 @@ export default function ContactIdPage() {
   const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
   const [isMessageModalOpen, setIsMessageModalOpen] = useState(false);
   const [lastContactDate, setLastContactDate] = useState<Date | null>(contact?.lastContactedAt ? new Date(contact.lastContactedAt) : null);
+  const [nextFollowUpDate, setNextFollowUpDate] = useState<Date | null>(contact?.nextFollowUpAt ? new Date(contact.nextFollowUpAt) : null);
 
   const assignToTeam = api.team.assignContactToTeam.useMutation({
     onSuccess: () => {
@@ -273,13 +274,6 @@ export default function ContactIdPage() {
     updateContact.mutate({
       id: contactId[0],
       status: value,
-      firstName: contact?.firstName || '',
-      lastName: contact?.lastName || '',
-      email: contact?.email || '',
-      phone: contact?.phone || '',
-      company: contact?.company || '',
-      source: contact?.source || '',
-      priority: contact?.priority || 'medium',
     });
   };
 
@@ -287,13 +281,6 @@ export default function ContactIdPage() {
     updateContact.mutate({
       id: contactId[0],
       priority: value,
-      firstName: contact?.firstName || '',
-      lastName: contact?.lastName || '',
-      email: contact?.email || '',
-      phone: contact?.phone || '',
-      company: contact?.company || '',
-      source: contact?.source || '',
-      status: contact?.status || 'lead',
     });
   };
 
@@ -325,10 +312,10 @@ export default function ContactIdPage() {
 
     createContactActivity.mutate({
       contactId: contactId[0],
-      type: 'NOTE_ADDED',
+      type: 'ENGAGEMENT',
+      subType: 'NOTE_ADDED',
       initiatorType: 'user',
       initiatorId: session?.user.id || '',
-      title: 'Note Added',
       description: newActivity,
     });
   };
@@ -343,10 +330,10 @@ export default function ContactIdPage() {
 
     createContactActivity.mutate({
       contactId: contactId[0],
-      type: 'NOTE_ADDED',
+      type: 'ENGAGEMENT',
+      subType: 'NOTE_ADDED',
       initiatorType: 'user',
       initiatorId: session?.user.id || '',
-      title: 'Note Reply',
       description: replyText,
       metadata: { replyTo: replyingTo },
     });
@@ -365,9 +352,9 @@ export default function ContactIdPage() {
   };
 
   return (
-    <div className='container mx-auto min-h-[calc(100vh-4rem)] space-y-6 p-6'>
-      <div className='grid h-[calc(100vh-6rem)] grid-cols-1 gap-6 lg:grid-cols-3'>
-        <div className='overflow-y-auto lg:col-span-1'>
+    <div className='container mx-auto min-h-[calc(100vh-4rem)] space-y-6 p-4 sm:p-6'>
+      <div className='grid min-h-[calc(100vh-6rem)] grid-cols-1 gap-4 lg:grid-cols-3 lg:gap-6'>
+        <div className='h-auto overflow-y-auto lg:col-span-1'>
           <div className='rounded-lg border bg-card text-card-foreground shadow-sm'>
             <div className='border-b p-6'>
               <div className='flex items-start gap-4'>
@@ -459,65 +446,79 @@ export default function ContactIdPage() {
             </div>
 
             <div className='border-b p-6'>
-              <div className='grid grid-cols-1 gap-4'>
-                <div className='grid grid-cols-2 gap-4'>
-                  <div className='space-y-1.5'>
-                    <div className='text-muted-foreground text-xs'>{t('last_contact')}</div>
-                    <div className='text-foreground text-sm'>
-                      <DateTimePicker
-                        size='sm'
-                        value={lastContactDate}
-                        onChange={(date) => setLastContactDate(date)}
-                        onClose={() => {
-                          if (lastContactDate?.getTime() !== (contact?.lastContactedAt ? new Date(contact.lastContactedAt).getTime() : null)) {
-                            updateContact.mutate({
-                              id: contactId[0],
-                              lastContactedAt: lastContactDate || undefined,
-                            });
-                          }
-                        }}
-                      />
-                    </div>
+              <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
+                <div className='space-y-1.5'>
+                  <div className='text-muted-foreground text-xs'>{t('last_contact')}</div>
+                  <div className='text-foreground text-sm'>
+                    <DateTimePicker
+                      size='sm'
+                      value={lastContactDate}
+                      onChange={(date) => setLastContactDate(date)}
+                      onClose={() => {
+                        if (lastContactDate?.getTime() !== (contact?.lastContactedAt ? new Date(contact.lastContactedAt).getTime() : null)) {
+                          updateContact.mutate({
+                            id: contactId[0],
+                            lastContactedAt: lastContactDate || undefined,
+                          });
+                        }
+                      }}
+                    />
                   </div>
                 </div>
-                <div className='grid grid-cols-2 gap-4'>
-                  <div className='space-y-1.5'>
-                    <div className='text-muted-foreground text-xs'>{t('priority')}</div>
-                    <div className='text-foreground'>
-                      <Select value={contact?.priority || 'medium'} onValueChange={handlePriorityChange}>
-                        <SelectTrigger className='h-8'>
-                          <SelectValue>
-                            <ColorBadge type='priority' value={contact?.priority || 'medium'} />
-                          </SelectValue>
-                        </SelectTrigger>
-                        <SelectContent className='bg-popover text-popover-foreground'>
-                          {['high', 'medium', 'low'].map((priority) => (
-                            <SelectItem key={priority} value={priority}>
-                              <ColorBadge type='priority' value={priority} />
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
+                <div className='space-y-1.5'>
+                  <div className='text-muted-foreground text-xs'>{t('next_follow_up')}</div>
+                  <div className='text-foreground text-sm'>
+                    <DateTimePicker
+                      size='sm'
+                      value={nextFollowUpDate}
+                      onChange={(date) => setNextFollowUpDate(date)}
+                      onClose={() => {
+                        if (nextFollowUpDate?.getTime() !== (contact?.nextFollowUpAt ? new Date(contact.nextFollowUpAt).getTime() : null)) {
+                          updateContact.mutate({
+                            id: contactId[0],
+                            nextFollowUpAt: nextFollowUpDate || undefined,
+                          });
+                        }
+                      }}
+                    />
                   </div>
-                  <div className='space-y-1.5'>
-                    <div className='text-muted-foreground text-xs'>{t('status')}</div>
-                    <div className='text-foreground'>
-                      <Select value={contact?.status || 'lead'} onValueChange={handleStatusChange}>
-                        <SelectTrigger className='h-8'>
-                          <SelectValue>
-                            <ColorBadge type='contactStatus' value={contact?.status || 'lead'} />
-                          </SelectValue>
-                        </SelectTrigger>
-                        <SelectContent className='bg-popover text-popover-foreground'>
-                          {statusSchema.options.map((status) => (
-                            <SelectItem key={status} value={status}>
-                              <ColorBadge type='contactStatus' value={status} />
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
+                </div>
+                <div className='space-y-1.5'>
+                  <div className='text-muted-foreground text-xs'>{t('priority')}</div>
+                  <div className='text-foreground'>
+                    <Select value={contact?.priority || 'medium'} onValueChange={handlePriorityChange}>
+                      <SelectTrigger className='h-8'>
+                        <SelectValue>
+                          <ColorBadge type='priority' value={contact?.priority || 'medium'} />
+                        </SelectValue>
+                      </SelectTrigger>
+                      <SelectContent className='bg-popover text-popover-foreground'>
+                        {['high', 'medium', 'low'].map((priority) => (
+                          <SelectItem key={priority} value={priority}>
+                            <ColorBadge type='priority' value={priority} />
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <div className='space-y-1.5'>
+                  <div className='text-muted-foreground text-xs'>{t('status')}</div>
+                  <div className='text-foreground'>
+                    <Select value={contact?.status || 'lead'} onValueChange={handleStatusChange}>
+                      <SelectTrigger className='h-8'>
+                        <SelectValue>
+                          <ColorBadge type='contactStatus' value={contact?.status || 'lead'} />
+                        </SelectValue>
+                      </SelectTrigger>
+                      <SelectContent className='bg-popover text-popover-foreground'>
+                        {statusSchema.options.map((status) => (
+                          <SelectItem key={status} value={status}>
+                            <ColorBadge type='contactStatus' value={status} />
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
               </div>
@@ -653,11 +654,11 @@ export default function ContactIdPage() {
                   <TabsTrigger value='management'>{t('management')}</TabsTrigger>
                 </TabsList>
                 <TabsContent value='activity' className='relative flex flex-1 flex-col'>
-                  <div className='absolute inset-0 overflow-y-auto pb-[4.5rem]'>
+                  <div className='absolute inset-0 overflow-y-auto pb-[5.5rem] sm:pb-[4.5rem]'>
                     <div className='space-y-1'>
                       {activities?.length === 0 && <p className='text-muted-foreground text-sm'>{t('no_activities_found')}</p>}
                       {activities
-                        ?.filter((activity) => activity.type !== 'CONTACT_UPDATED')
+                        ?.filter((activity) => activity.type !== 'CONTACT' && activity.subType !== 'CONTACT_UPDATED')
                         .map((activity, index) => {
                           const currentDate = new Date(activity.createdAt).toDateString();
                           const prevDate = index > 0 ? new Date(activities[index - 1].createdAt).toDateString() : null;
@@ -678,27 +679,21 @@ export default function ContactIdPage() {
                                 )}
                                 style={{
                                   borderLeftColor:
-                                    activity.type === 'NOTE_ADDED'
+                                    activity.type === 'ENGAGEMENT'
                                       ? 'rgb(59 130 246)'
-                                      : activity.type === 'LAST_CONTACTED_UPDATED'
+                                      : activity.type === 'DATE'
                                       ? 'rgb(249 115 22)'
-                                      : activity.type.startsWith('CONTACT_')
+                                      : activity.type === 'STATUS'
                                       ? 'rgb(34 197 94)'
-                                      : activity.type.startsWith('MEETING_')
-                                      ? 'rgb(168 85 247)'
-                                      : activity.type.startsWith('TEAM_')
+                                      : activity.type === 'TEAM'
                                       ? 'rgb(234 179 8)'
-                                      : activity.type.startsWith('DEAL_')
+                                      : activity.type === 'DEAL'
                                       ? 'rgb(236 72 153)'
-                                      : activity.type.includes('STATUS')
-                                      ? 'rgb(249 115 22)'
-                                      : activity.type.includes('PRIORITY')
-                                      ? 'rgb(239 68 68)'
-                                      : activity.type.includes('PAYMENT')
+                                      : activity.type === 'PAYMENT'
                                       ? 'rgb(16 185 129)'
-                                      : activity.type.includes('CAMPAIGN')
-                                      ? 'rgb(250 204 21)'
-                                      : activity.type.includes('EMAIL')
+                                      : activity.type === 'CAMPAIGN'
+                                      ? 'rgb(239 68 68)'
+                                      : activity.type === 'CONTACT'
                                       ? 'rgb(250 204 21)'
                                       : 'rgb(156 163 175)',
                                 }}
@@ -706,7 +701,7 @@ export default function ContactIdPage() {
                                 <div className='flex-1 space-y-1'>
                                   <div className='flex w-full items-center justify-between'>
                                     <div className='flex items-center gap-2 text-sm'>
-                                      <span className='font-medium'>{activity.title}</span>
+                                      <span className='font-medium'>{activity.subType && t(activity.subType)}</span>
                                       <span className='text-muted-foreground text-xs'>•</span>
                                       {activity.initiatorType === 'system' ? (
                                         <span className='text-muted-foreground text-xs'>{t('by_system')}</span>
@@ -726,14 +721,16 @@ export default function ContactIdPage() {
                                           <pre className='whitespace-pre-wrap font-mono text-xs'>{JSON.stringify(JSON.parse(activity.metadata), null, 2)}</pre>
                                         </MetadataPopover>
                                       )}
-                                      {activity.type === 'NOTE_ADDED' && (
+                                      {activity.type === 'ENGAGEMENT' && activity.subType === 'NOTE_ADDED' && (
                                         <button type='button' onClick={() => setReplyingTo(activity.id)} className='rounded-md bg-muted/50 px-1 py-0.5 text-muted-foreground text-xs hover:bg-muted'>
                                           {t('reply')}
                                         </button>
                                       )}
                                     </div>
                                   </div>
-                                  <div className={cn('text-sm', activity.type === 'NOTE_ADDED' ? 'rounded-md bg-blue-50 p-3 dark:bg-blue-950/50' : '')}>{activity.description}</div>
+                                  <div className={cn('text-sm', activity.type === 'ENGAGEMENT' && activity.subType === 'NOTE_ADDED' ? 'rounded-md bg-blue-50 p-3 dark:bg-blue-950/50' : '')}>
+                                    {activity.description}
+                                  </div>
                                   {replyingTo === activity.id && (
                                     <form onSubmit={handleReplySubmit} className='mt-2 flex items-start gap-2'>
                                       <div className='flex-1'>
@@ -774,10 +771,10 @@ export default function ContactIdPage() {
                         })}
                     </div>
                   </div>
-                  <div className='absolute right-0 bottom-0 left-0 bg-background pt-4'>
-                    <form onSubmit={handleSubmitActivity} className='flex max-w-full gap-2'>
-                      <Input value={newActivity} onChange={(e) => setNewActivity(e.target.value)} placeholder='Add a note...' className='h-8' />
-                      <Button type='submit' size='sm' disabled={createContactActivity.isPending}>
+                  <div className='absolute right-0 bottom-0 left-0 bg-background p-4 sm:pt-4'>
+                    <form onSubmit={handleSubmitActivity} className='flex max-w-full flex-col gap-2 sm:flex-row'>
+                      <Input value={newActivity} onChange={(e) => setNewActivity(e.target.value)} placeholder='Add a note...' className='h-8 flex-1' />
+                      <Button type='submit' size='sm' disabled={createContactActivity.isPending} className='w-full sm:w-auto'>
                         {t('add_note')}
                       </Button>
                     </form>
@@ -825,9 +822,9 @@ export default function ContactIdPage() {
                 value={editForm.company}
                 onChange={(value) => setEditForm({ ...editForm, company: value })}
                 items={insuranceCompanies}
-                placeholder='Select company...'
-                searchPlaceholder='Search company...'
-                groupHeading='Companies'
+                placeholder={t('select_company')}
+                searchPlaceholder={t('search_company')}
+                groupHeading={t('companies')}
               />
             </div>
             <div className='space-y-2'>

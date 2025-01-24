@@ -135,13 +135,13 @@ export function SendEmail({ open, onOpenChange, recipient }: SendEmailProps) {
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className='max-h-[90vh] max-w-2xl overflow-y-auto'>
+      <DialogContent className='max-h-[90vh] max-w-2xl overflow-y-auto p-4 sm:p-6'>
         <DialogHeader>
           <DialogTitle>Compose email</DialogTitle>
         </DialogHeader>
-        <div className='space-y-4 py-4'>
-          <div className='flex items-center gap-4 border-b pb-4'>
-            <div className='w-16 text-muted-foreground text-sm'>{t('from')}</div>
+        <div className='space-y-4 py-2 sm:py-4'>
+          <div className='flex flex-col gap-2 border-b pb-4 sm:flex-row sm:items-center sm:gap-4'>
+            <div className='w-full text-muted-foreground text-sm sm:w-16'>{t('from')}</div>
             <div className='flex items-center gap-2'>
               <Avatar className='size-6'>
                 <AvatarImage src={session?.user?.image || ''} />
@@ -151,8 +151,8 @@ export function SendEmail({ open, onOpenChange, recipient }: SendEmailProps) {
             </div>
           </div>
 
-          <div className='flex items-center gap-4 border-b pb-4'>
-            <div className='w-16 text-muted-foreground text-sm'>{t('to')}</div>
+          <div className='flex flex-col gap-2 border-b pb-4 sm:flex-row sm:items-center sm:gap-4'>
+            <div className='w-full text-muted-foreground text-sm sm:w-16'>{t('to')}</div>
             <div className='flex flex-1 flex-wrap items-center gap-2'>
               <div className='flex items-center gap-2 rounded-full border bg-muted px-2 py-1'>
                 <Avatar className='size-6'>
@@ -169,16 +169,16 @@ export function SendEmail({ open, onOpenChange, recipient }: SendEmailProps) {
 
           {showCcBcc && (
             <>
-              <div className='flex items-center gap-4'>
-                <div className='w-16 text-muted-foreground text-sm'>CC</div>
+              <div className='flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4'>
+                <div className='w-full text-muted-foreground text-sm sm:w-16'>CC</div>
                 <Input
                   placeholder='Enter CC email addresses (comma separated)'
                   value={formData.cc.join(', ')}
                   onChange={(e) => setFormData((prev) => ({ ...prev, cc: e.target.value.split(',').map((email) => email.trim()) }))}
                 />
               </div>
-              <div className='flex items-center gap-4'>
-                <div className='w-16 text-muted-foreground text-sm'>BCC</div>
+              <div className='flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4'>
+                <div className='w-full text-muted-foreground text-sm sm:w-16'>BCC</div>
                 <Input
                   placeholder='Enter BCC email addresses (comma separated)'
                   value={formData.bcc.join(', ')}
@@ -201,7 +201,7 @@ export function SendEmail({ open, onOpenChange, recipient }: SendEmailProps) {
                 {t('add_attachment')}
               </label>
             </div>
-            <div className='grid grid-cols-3 gap-4'>
+            <div className='grid grid-cols-1 gap-4 sm:grid-cols-3'>
               {formData.attachments.map((file, index) => (
                 <div key={file.name + generateUUID()} className='flex items-center gap-3 rounded-lg border p-3'>
                   <div className='flex size-10 items-center justify-center rounded-lg bg-muted'>
@@ -220,21 +220,21 @@ export function SendEmail({ open, onOpenChange, recipient }: SendEmailProps) {
           </div>
         </div>
 
-        <div className='flex items-center justify-between border-t pt-4'>
-          <div className='flex items-center gap-2'>
+        <div className='flex flex-col items-center justify-between gap-4 border-t pt-4 sm:flex-row'>
+          <div className='flex w-full items-center gap-2 sm:w-auto'>
             <Button variant='outline' size='icon' onClick={() => setFormData((prev) => ({ ...prev, attachments: [] }))}>
               <Trash2 className='size-4' />
             </Button>
           </div>
-          <div className='flex items-center gap-2'>
+          <div className='flex w-full flex-col items-center gap-2 sm:w-auto sm:flex-row'>
             {isScheduleMode ? (
-              <Input type='datetime-local' value={scheduledDate?.toISOString().slice(0, 16) || ''} onChange={(e) => setScheduledDate(new Date(e.target.value))} className='w-auto' />
+              <Input type='datetime-local' value={scheduledDate?.toISOString().slice(0, 16) || ''} onChange={(e) => setScheduledDate(new Date(e.target.value))} className='w-full sm:w-auto' />
             ) : null}
-            <Button variant='outline' className='gap-2' onClick={() => setIsScheduleMode(!isScheduleMode)}>
+            <Button variant='outline' className='w-full gap-2 sm:w-auto' onClick={() => setIsScheduleMode(!isScheduleMode)}>
               <Calendar className='size-4' />
               {isScheduleMode ? t('cancel_schedule') : t('schedule')}
             </Button>
-            <Button className='gap-2' onClick={handleSend} disabled={sendEmail.isPending}>
+            <Button className='w-full gap-2 sm:w-auto' onClick={handleSend} disabled={sendEmail.isPending}>
               <Send className='size-4' />
               {isScheduleMode ? t('schedule') : t('send')}
             </Button>

@@ -66,6 +66,22 @@ export default function DashboardPersonalCalendar() {
 
   const utils = api.useUtils();
 
+  // Add effect to handle mobile view changes
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth < 768 && view === 'week') {
+        const params = new URLSearchParams(searchParams.toString());
+        params.set('view', '3days');
+        router.push(`?${params.toString()}`);
+        setView('3days');
+      }
+    };
+
+    handleResize(); // Check on initial render
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [view, router, searchParams]);
+
   const startOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
   const endOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
 
@@ -348,51 +364,53 @@ export default function DashboardPersonalCalendar() {
 
   return (
     <>
-      <div className='flex h-full'>
-        <CalendarSidebar
-          currentDate={currentDate}
-          selectedDate={selectedDate}
-          isLoading={isLoadingFolders}
-          onDateSelect={(date) => {
-            setSelectedDate(date);
-            if (date.getMonth() !== currentDate.getMonth() || date.getFullYear() !== currentDate.getFullYear()) {
-              setCurrentDate(date);
-            }
-          }}
-          folders={folders ?? []}
-          hiddenCalendars={hiddenCalendars}
-          onToggleCalendar={(folderId) => {
-            setHiddenCalendars((prev) => {
-              const next = new Set(prev);
-              if (next.has(folderId)) {
-                next.delete(folderId);
-              } else {
-                next.add(folderId);
+      <div className='flex h-full flex-col md:flex-row'>
+        <div className='hidden md:block'>
+          <CalendarSidebar
+            currentDate={currentDate}
+            selectedDate={selectedDate}
+            isLoading={isLoadingFolders}
+            onDateSelect={(date) => {
+              setSelectedDate(date);
+              if (date.getMonth() !== currentDate.getMonth() || date.getFullYear() !== currentDate.getFullYear()) {
+                setCurrentDate(date);
               }
-              return next;
-            });
-          }}
-          onAddCalendar={() => {
-            addCalendarForm.reset();
-            setIsAddCalendarOpen(true);
-          }}
-          onEditCalendar={(folder) => {
-            setSelectedCalendar(folder);
-            calendarForm.reset({
-              name: folder.name,
-              color: folder.color ?? '#000000',
-              visibility: folder.visibility ?? 'PRIVATE',
-            });
-            setIsEditCalendarOpen(true);
-          }}
-          onDeleteCalendar={(folderId) => {
-            toast.promise(deleteFolder.mutateAsync(folderId), {
-              loading: 'Deleting calendar...',
-              success: 'Calendar deleted successfully',
-              error: 'Failed to delete calendar',
-            });
-          }}
-        />
+            }}
+            folders={folders ?? []}
+            hiddenCalendars={hiddenCalendars}
+            onToggleCalendar={(folderId) => {
+              setHiddenCalendars((prev) => {
+                const next = new Set(prev);
+                if (next.has(folderId)) {
+                  next.delete(folderId);
+                } else {
+                  next.add(folderId);
+                }
+                return next;
+              });
+            }}
+            onAddCalendar={() => {
+              addCalendarForm.reset();
+              setIsAddCalendarOpen(true);
+            }}
+            onEditCalendar={(folder) => {
+              setSelectedCalendar(folder);
+              calendarForm.reset({
+                name: folder.name,
+                color: folder.color ?? '#000000',
+                visibility: folder.visibility ?? 'PRIVATE',
+              });
+              setIsEditCalendarOpen(true);
+            }}
+            onDeleteCalendar={(folderId) => {
+              toast.promise(deleteFolder.mutateAsync(folderId), {
+                loading: 'Deleting calendar...',
+                success: 'Calendar deleted successfully',
+                error: 'Failed to delete calendar',
+              });
+            }}
+          />
+        </div>
 
         <div className='flex flex-1 flex-col'>
           <CalendarHeader

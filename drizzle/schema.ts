@@ -114,6 +114,7 @@ export const contact = pgTable('contact', {
   createdAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
   updatedAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
   lastContactedAt: timestamp({ mode: 'date' }),
+  nextFollowUpAt: timestamp({ mode: 'date' }),
   priority: text('priority', { enum: ['urgent', 'high', 'medium', 'low'] }).default('medium'),
   workExperience: text(), // years of experience
   currentRole: text(), // current job role
@@ -152,6 +153,18 @@ export const contactActivity = pgTable('contactActivity', {
     .references(() => user.id),
   type: text('type', {
     enum: [
+      'CONTACT', // Contact-related activities
+      'STATUS', // Status changes
+      'DATE', // Date-related activities
+      'TEAM', // Team-related activities
+      'CAMPAIGN', // Campaign-related activities
+      'DEAL', // Deal-related activities
+      'PAYMENT', // Payment-related activities
+      'ENGAGEMENT', // Engagement activities like calls, emails
+    ],
+  }).notNull(),
+  subType: text('subType', {
+    enum: [
       // Contact Management
       'CONTACT_CREATED',
       'CONTACT_UPDATED',
@@ -160,6 +173,10 @@ export const contactActivity = pgTable('contactActivity', {
       // Status Changes
       'STATUS_CHANGED',
       'PRIORITY_CHANGED',
+
+      // Date Related
+      'LAST_CONTACTED',
+      'NEXT_FOLLOW_UP',
 
       // Engagement
       'MEETING_SCHEDULED',
@@ -170,7 +187,6 @@ export const contactActivity = pgTable('contactActivity', {
       'EMAIL_SCHEDULED',
       'MESSAGE_SENT',
       'NOTE_ADDED',
-      'LAST_CONTACTED_UPDATED',
 
       // Team Management
       'TEAM_ASSIGNED',
@@ -191,12 +207,11 @@ export const contactActivity = pgTable('contactActivity', {
       'PAYMENT_LINK_CLICKED',
       'PAYMENT_COMPLETED',
     ],
-  }).notNull(),
+  }),
   initiatorType: text('initiatorType', { enum: ['user', 'contact', 'system'] })
     .notNull()
     .default('system'),
   initiatorId: text('initiatorId'),
-  title: text().notNull(),
   description: text(),
   metadata: text(), // JSON string for additional data
   createdAt: timestamp({ mode: 'date' }).notNull().defaultNow(),

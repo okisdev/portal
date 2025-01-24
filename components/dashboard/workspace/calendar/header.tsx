@@ -32,7 +32,7 @@ export function CalendarHeader({ currentDate, view, onViewChange, onTodayClick, 
   };
 
   return (
-    <header className='flex items-center justify-between border-b px-4 py-2'>
+    <header className='flex flex-col gap-2 border-b px-4 py-2 md:flex-row md:items-center md:justify-between'>
       <div className='flex items-center gap-4'>
         <Button variant='outline' onClick={onTodayClick} className='h-8'>
           {t('today')}
@@ -49,22 +49,26 @@ export function CalendarHeader({ currentDate, view, onViewChange, onTodayClick, 
       </div>
       <div className='flex items-center gap-2'>
         <div className='flex rounded-md border'>
-          <Button variant={view === 'month' ? 'secondary' : 'ghost'} className='h-8 rounded-r-none' onClick={() => onViewChange('month')}>
-            {t('month')}
+          <Button variant={view === 'month' ? 'secondary' : 'ghost'} className='h-8 rounded-r-none border-r px-2 md:px-3' onClick={() => onViewChange('month')}>
+            <span className='hidden md:inline'>{t('month')}</span>
+            <span className='md:hidden'>M</span>
           </Button>
-          <Button variant={view === 'week' ? 'secondary' : 'ghost'} className='h-8 rounded-none border-r border-l' onClick={() => onViewChange('week')}>
-            {t('week')}
+          <Button variant={view === 'week' ? 'secondary' : 'ghost'} className='hidden h-8 rounded-none border-r-none border-l-none px-2 md:flex md:px-3' onClick={() => onViewChange('week')}>
+            <span className='hidden md:inline'>{t('week')}</span>
+            <span className='md:hidden'>W</span>
           </Button>
-          <Button variant={view === '3days' ? 'secondary' : 'ghost'} className='h-8 rounded-none border-r' onClick={() => onViewChange('3days')}>
-            {t('3days')}
+          <Button variant={view === '3days' ? 'secondary' : 'ghost'} className='h-8 rounded-none border-r px-2 md:border-l md:px-3' onClick={() => onViewChange('3days')}>
+            <span className='hidden md:inline'>{t('3days')}</span>
+            <span className='md:hidden'>3D</span>
           </Button>
-          <Button variant={view === 'day' ? 'secondary' : 'ghost'} className='h-8 rounded-l-none' onClick={() => onViewChange('day')}>
-            {t('day')}
+          <Button variant={view === 'day' ? 'secondary' : 'ghost'} className='h-8 rounded-l-none px-2 md:px-3' onClick={() => onViewChange('day')}>
+            <span className='hidden md:inline'>{t('day')}</span>
+            <span className='md:hidden'>D</span>
           </Button>
         </div>
-        <Button variant='outline' className='h-8 w-auto' onClick={onAddEvent}>
+        <Button variant='outline' className='h-8 w-8 p-0 md:w-auto md:px-3' onClick={onAddEvent}>
           <Plus className='h-4 w-4' />
-          {t('add_event')}
+          <span className='hidden md:ml-2 md:inline'>{t('add_event')}</span>
         </Button>
       </div>
     </header>

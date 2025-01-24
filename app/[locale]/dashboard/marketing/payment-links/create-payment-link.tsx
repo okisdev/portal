@@ -6,11 +6,14 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { api } from '@/utils/trpc/client';
+import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
 export function CreatePaymentLink() {
+  const t = useTranslations();
+
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
@@ -83,8 +86,8 @@ export function CreatePaymentLink() {
               onChange={handleContactSelect}
               items={contactOptions}
               placeholder='Select a contact'
-              searchPlaceholder='Search contacts...'
-              emptyText='No contacts found'
+              searchPlaceholder={t('search_contacts')}
+              emptyText={t('no_contacts_found')}
               allowCustom={false}
             />
           </div>
