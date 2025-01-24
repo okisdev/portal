@@ -572,7 +572,7 @@ export default function CRMContactsPage() {
                 const column = table.getAllColumns().find((col) => col.id === item);
                 return (
                   <div className='flex w-full items-center justify-between'>
-                    <span className='capitalize'>{item}</span>
+                    <span className='capitalize'>{t(item)}</span>
                     {column?.getIsVisible() && <Check className='h-4 w-4' />}
                   </div>
                 );

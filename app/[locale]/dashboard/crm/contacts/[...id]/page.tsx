@@ -822,9 +822,9 @@ export default function ContactIdPage() {
                 value={editForm.company}
                 onChange={(value) => setEditForm({ ...editForm, company: value })}
                 items={insuranceCompanies}
-                placeholder='Select company...'
-                searchPlaceholder='Search company...'
-                groupHeading='Companies'
+                placeholder={t('select_company')}
+                searchPlaceholder={t('search_company')}
+                groupHeading={t('companies')}
               />
             </div>
             <div className='space-y-2'>

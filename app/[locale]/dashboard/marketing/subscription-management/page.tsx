@@ -16,10 +16,13 @@ import { insuranceCompanies, sources } from '@/data/data';
 import { copyToClipboard } from '@/utils/clipboard';
 import { api } from '@/utils/trpc/client';
 import { MoreHorizontal } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
 export default function SubscriptionManagement() {
+  const t = useTranslations();
+
   const [activeTab, setActiveTab] = useState('coupons');
   const [couponData, setCouponData] = useState({
     discountPercent: '',
@@ -215,9 +218,9 @@ export default function SubscriptionManagement() {
                           value={couponData.company}
                           onChange={(value) => setCouponData({ ...couponData, company: value })}
                           items={insuranceCompanies}
-                          placeholder='Select company...'
-                          searchPlaceholder='Search company...'
-                          groupHeading='Companies'
+                          placeholder={t('select_company')}
+                          searchPlaceholder={t('search_company')}
+                          groupHeading={t('companies')}
                         />
                       </div>
 
@@ -227,9 +230,9 @@ export default function SubscriptionManagement() {
                           value={couponData.source}
                           onChange={(value) => setCouponData({ ...couponData, source: value })}
                           items={sources}
-                          placeholder='Select source...'
-                          searchPlaceholder='Search source...'
-                          groupHeading='Sources'
+                          placeholder={t('select_source')}
+                          searchPlaceholder={t('search_source')}
+                          groupHeading={t('sources')}
                         />
                       </div>
 

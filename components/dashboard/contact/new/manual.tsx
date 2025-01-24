@@ -9,6 +9,7 @@ import { insuranceCompanies, sources } from '@/data/data';
 import { statusSchema } from '@/lib/schema';
 import { api } from '@/utils/trpc/client';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
@@ -28,6 +29,8 @@ const formSchema = z.object({
 });
 
 export default function ManualContactForm() {
+  const t = useTranslations();
+
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
 
@@ -132,7 +135,7 @@ export default function ManualContactForm() {
             name='phone'
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Phone</FormLabel>
+                <FormLabel>{t('phone')}</FormLabel>
                 <FormControl>
                   <Input type='tel' placeholder='+852 12345678' {...field} />
                 </FormControl>
@@ -148,15 +151,15 @@ export default function ManualContactForm() {
             name='company'
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Company</FormLabel>
+                <FormLabel>{t('company')}</FormLabel>
                 <FormControl>
                   <Combobox
                     value={field.value ?? ''}
                     onChange={field.onChange}
                     items={insuranceCompanies}
-                    placeholder='Select a company'
-                    searchPlaceholder='Search companies...'
-                    groupHeading='Companies'
+                    placeholder={t('select_company')}
+                    searchPlaceholder={t('search_company')}
+                    groupHeading={t('companies')}
                   />
                 </FormControl>
                 <FormMessage />

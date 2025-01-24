@@ -41,13 +41,13 @@ export default function TeamConfiguration() {
 
   return (
     <div className='space-y-4 p-4'>
-      <PageHeader title='Team Configuration' description='Manage your team configuration' />
+      <PageHeader title={t('team_configuration')} description={t('team_configuration_description')} />
 
       <Tabs defaultValue='general' className='space-y-4'>
         <TabsList>
-          <TabsTrigger value='general'>General</TabsTrigger>
-          <TabsTrigger value='members'>Members</TabsTrigger>
-          <TabsTrigger value='settings'>Settings</TabsTrigger>
+          <TabsTrigger value='general'>{t('general')}</TabsTrigger>
+          <TabsTrigger value='members'>{t('members')}</TabsTrigger>
+          <TabsTrigger value='settings'>{t('settings')}</TabsTrigger>
         </TabsList>
 
         <TabsContent value='general'>
@@ -61,7 +61,7 @@ export default function TeamConfiguration() {
                 <Label htmlFor='teamName'>{t('team_name')}</Label>
                 <Input id='teamName' value={teamName} onChange={(e) => setTeamName(e.target.value)} />
               </div>
-              <Button>Save Changes</Button>
+              <Button>{t('save_changes')}</Button>
             </CardContent>
           </Card>
         </TabsContent>

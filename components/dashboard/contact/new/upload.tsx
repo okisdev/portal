@@ -12,6 +12,7 @@ import { type Status, statusSchema } from '@/lib/schema';
 import { generateUUID } from '@/lib/utils';
 import { api } from '@/utils/trpc/client';
 import { Download, Upload } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import Papa from 'papaparse';
 import { useRef, useState } from 'react';
@@ -42,6 +43,7 @@ interface DuplicateContact {
 
 export default function ContactUpload() {
   const router = useRouter();
+  const t = useTranslations();
   const [isLoading, setIsLoading] = useState(false);
   const [csvData, setCsvData] = useState<ContactFormData[]>([]);
   const [showPreview, setShowPreview] = useState(false);
@@ -446,9 +448,9 @@ export default function ContactUpload() {
                           value={row.company ?? ''}
                           onChange={(value) => handleCsvEdit(index, 'company', value)}
                           items={insuranceCompanies}
-                          placeholder='Select company...'
-                          searchPlaceholder='Search company...'
-                          groupHeading='Companies'
+                          placeholder={t('select_company')}
+                          searchPlaceholder={t('search_company')}
+                          groupHeading={t('companies')}
                         />
                       </TableCell>
                       <TableCell>
