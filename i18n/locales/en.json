@@ -248,5 +248,6 @@
   "week": "Week",
   "welcome_back": "Welcome Back, {name}.",
   "welcome_description": "Welcome to your dashboard",
-  "workspace": "Workspace"
+  "workspace": "Workspace",
+  "select_date": "Select Date"
 }

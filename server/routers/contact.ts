@@ -343,7 +343,6 @@ export const contactRouter = createTRPCRouter({
     )
     .mutation(async ({ ctx, input }) => {
       const { id, ...updateData } = input;
-      const name = `${input.firstName} ${input.lastName}`;
 
       // Get current contact data for comparison
       const currentContact = await ctx.db
@@ -351,6 +350,11 @@ export const contactRouter = createTRPCRouter({
         .from(contact)
         .where(eq(contact.id, id))
         .then((rows) => rows[0]);
+
+      // Only update name if firstName or lastName is provided
+      const firstName = input.firstName ?? currentContact.firstName;
+      const lastName = input.lastName ?? currentContact.lastName;
+      const name = `${firstName} ${lastName}`.trim();
 
       const result = await ctx.db
         .update(contact)
@@ -386,6 +390,17 @@ export const contactRouter = createTRPCRouter({
             oldPriority: currentContact.priority,
             newPriority: input.priority,
           },
+        });
+      }
+
+      if (input.lastContactedAt) {
+        await createContactActivityHelper(ctx, {
+          contactId: id,
+          type: 'LAST_CONTACTED_UPDATED',
+          title: 'Last Contacted Updated',
+          description: `Last contacted date updated to ${input.lastContactedAt}`,
+          initiatorType: 'user',
+          initiatorId: ctx.session?.user.id,
         });
       }
 

@@ -7,14 +7,31 @@ import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 import { CalendarIcon } from '@radix-ui/react-icons';
 import { format } from 'date-fns';
+import { useTranslations } from 'next-intl';
 
-export function DateTimePicker({ value, onChange, showTimePicker = true }: { value: Date; onChange: (date: Date) => void; showTimePicker?: boolean }) {
+export function DateTimePicker({
+  value,
+  onChange,
+  showTimePicker = true,
+  size = 'default',
+  onClose,
+}: {
+  value: Date | null;
+  onChange: (date: Date | null) => void;
+  showTimePicker?: boolean;
+  size?: 'sm' | 'default' | 'icon' | 'lg' | null | undefined;
+  onClose?: () => void;
+}) {
+  const t = useTranslations();
+
   function handleDateSelect(date: Date | undefined) {
     if (date) {
       const newDate = new Date(date);
       if (showTimePicker) {
-        newDate.setHours(value.getHours());
-        newDate.setMinutes(value.getMinutes());
+        // If we had a previous value, use its time, otherwise use current time
+        const prevDate = value || new Date();
+        newDate.setHours(prevDate.getHours());
+        newDate.setMinutes(prevDate.getMinutes());
       } else {
         // For all-day events, set time to start of day
         newDate.setHours(0);
@@ -27,7 +44,7 @@ export function DateTimePicker({ value, onChange, showTimePicker = true }: { val
   }
 
   function handleTimeChange(type: 'hour' | 'minute', timeValue: string) {
-    const newDate = new Date(value);
+    const newDate = new Date(value || new Date());
 
     if (type === 'hour') {
       const hour = Number.parseInt(timeValue, 10);
@@ -41,19 +58,19 @@ export function DateTimePicker({ value, onChange, showTimePicker = true }: { val
   }
 
   return (
-    <Popover>
+    <Popover onOpenChange={(open) => !open && onClose?.()}>
       <PopoverTrigger asChild>
         <div>
-          <Button type='button' variant={'outline'} className={cn('w-full pl-3 text-left font-normal', !value && 'text-muted-foreground')}>
-            {value ? showTimePicker ? format(value, 'MM/dd/yyyy HH:mm') : format(value, 'MM/dd/yyyy') : <span>{showTimePicker ? 'MM/DD/YYYY HH:mm' : 'MM/DD/YYYY'}</span>}
+          <Button size={size} type='button' variant={'outline'} className={cn('w-full pl-3 text-left font-normal', !value && 'w-full text-muted-foreground')}>
+            {value ? showTimePicker ? format(value, 'MM/dd/yyyy HH:mm') : format(value, 'MM/dd/yyyy') : <span>{t('select_date')}</span>}
             <CalendarIcon className='ml-auto h-4 w-4 opacity-50' />
           </Button>
         </div>
       </PopoverTrigger>
       <PopoverContent className='w-auto p-0'>
         <div className='sm:flex'>
-          <Calendar mode='single' selected={value} onSelect={handleDateSelect} initialFocus />
-          {showTimePicker && (
+          <Calendar mode='single' selected={value === null ? undefined : value} onSelect={handleDateSelect} initialFocus />
+          {showTimePicker && value && (
             <div className='flex flex-col divide-y sm:h-[300px] sm:flex-row sm:divide-x sm:divide-y-0'>
               <ScrollArea className='w-64 sm:w-auto'>
                 <div className='flex p-2 sm:flex-col'>
@@ -64,7 +81,7 @@ export function DateTimePicker({ value, onChange, showTimePicker = true }: { val
                         key={hour}
                         type='button'
                         size='icon'
-                        variant={value && value.getHours() === hour ? 'default' : 'ghost'}
+                        variant={value.getHours() === hour ? 'default' : 'ghost'}
                         className='aspect-square shrink-0 sm:w-full'
                         onClick={() => handleTimeChange('hour', hour.toString())}
                       >
@@ -81,7 +98,7 @@ export function DateTimePicker({ value, onChange, showTimePicker = true }: { val
                       key={minute}
                       type='button'
                       size='icon'
-                      variant={value && value.getMinutes() === minute ? 'default' : 'ghost'}
+                      variant={value.getMinutes() === minute ? 'default' : 'ghost'}
                       className='aspect-square shrink-0 sm:w-full'
                       onClick={() => handleTimeChange('minute', minute.toString())}
                     >
