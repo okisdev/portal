@@ -1,6 +1,6 @@
 import { resourceContent, resourceContentSendTrack, resourceContentShare, resourceEmails } from '@/drizzle/schema';
 import { createTRPCRouter, protectedProcedure } from '@/server/trpc';
-import { and, eq, inArray, like, or } from 'drizzle-orm';
+import { and, eq, inArray, like, or, sql } from 'drizzle-orm';
 import { z } from 'zod';
 
 const resourceContentSchema = z.object({
@@ -63,7 +63,20 @@ export const resourceRouter = createTRPCRouter({
         conditions = and(conditions, or(...tagConditions));
       }
 
-      return ctx.db.select().from(resourceContent).leftJoin(resourceContentShare, eq(resourceContent.id, resourceContentShare.resourceId)).where(conditions);
+      const result = await ctx.db
+        .select({
+          resourceContent: resourceContent,
+          resourceContentShare: resourceContentShare,
+          sendCount: sql<number>`count(distinct ${resourceContentSendTrack.id})`.mapWith(Number),
+          lastSentAt: sql<Date | null>`max(${resourceContentSendTrack.sentAt})`.mapWith((d) => d && new Date(d)),
+        })
+        .from(resourceContent)
+        .leftJoin(resourceContentShare, eq(resourceContent.id, resourceContentShare.resourceId))
+        .leftJoin(resourceContentSendTrack, eq(resourceContent.id, resourceContentSendTrack.resourceId))
+        .where(conditions)
+        .groupBy(resourceContent.id, resourceContentShare.id);
+
+      return result;
     }),
 
   getContent: protectedProcedure.input(z.string()).query(async ({ ctx, input }) => {

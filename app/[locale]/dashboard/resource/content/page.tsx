@@ -2,10 +2,15 @@
 
 import { ContentEditor } from '@/components/dashboard/resource/content/content-editor';
 import { ContentForm } from '@/components/dashboard/resource/content/content-form';
-import { ContentSideList } from '@/components/dashboard/resource/content/side-list';
 import { ActionAlertDialog } from '@/components/shared/action-alert-dialog';
+import { PageHeader } from '@/components/shared/page-header';
+import { Badge } from '@/components/ui/badge';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Skeleton } from '@/components/ui/skeleton';
 import type { ResourceContent } from '@/lib/schema';
 import { api } from '@/utils/trpc/client';
+import { formatDistanceToNow } from 'date-fns';
+import { Clock, Eye, Send, Tag } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -103,7 +108,83 @@ export default function ContentPage() {
 
   return (
     <div className='flex h-full'>
-      <ContentSideList contents={contents} currentContent={currentContent} isLoading={contentsLoading} onNewContent={handleNewContent} />
+      <div className='w-80 space-y-4 p-4'>
+        <PageHeader
+          title={t('content')}
+          right={
+            <button
+              type='button'
+              onClick={handleNewContent}
+              className='inline-flex h-9 items-center justify-center rounded-md bg-primary px-3 font-medium text-primary-foreground text-sm ring-offset-background transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50'
+            >
+              {t('new')}
+            </button>
+          }
+        />
+
+        <ScrollArea className='h-[calc(100vh-3.5rem)]'>
+          <div className='space-y-1'>
+            {contentsLoading && (
+              <>
+                <Skeleton className='h-10' />
+                <Skeleton className='h-10' />
+                <Skeleton className='h-10' />
+                <Skeleton className='h-10' />
+                <Skeleton className='h-10' />
+              </>
+            )}
+            {contents && contents.length === 0 && <div className='p-4 text-center text-muted-foreground text-sm'>No content found</div>}
+            {contents?.map((item) => {
+              const tags = item.resourceContent.tags ? JSON.parse(item.resourceContent.tags) : [];
+              return (
+                <button
+                  key={item.resourceContent.id}
+                  type='button'
+                  onClick={() => router.push(`/dashboard/resource/content?id=${item.resourceContent.id}`)}
+                  className={`w-full space-y-2 rounded-lg border p-3 text-left transition-colors hover:bg-accent ${currentContent?.id === item.resourceContent.id ? 'bg-accent' : ''}`}
+                >
+                  <div>
+                    <h3 className='line-clamp-1 font-medium'>{item.resourceContent.title}</h3>
+                    {item.resourceContent.description && <p className='line-clamp-2 text-muted-foreground text-sm'>{item.resourceContent.description}</p>}
+                  </div>
+
+                  <div className='flex flex-wrap gap-1.5'>
+                    {tags.length > 0 && (
+                      <div className='flex items-center gap-1 text-muted-foreground text-xs'>
+                        <Tag className='size-3' />
+                        {tags.map((tag: string) => (
+                          <Badge key={tag} variant='secondary' className='text-xs'>
+                            {tag}
+                          </Badge>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className='flex items-center gap-3 text-muted-foreground text-xs'>
+                    <div className='flex items-center gap-1'>
+                      <Clock className='size-3' />
+                      {formatDistanceToNow(new Date(item.resourceContent.createdAt), { addSuffix: true })}
+                    </div>
+
+                    <div className='flex items-center gap-1'>
+                      <Eye className='size-3' />
+                      {item.resourceContent.visibility.toLowerCase()}
+                    </div>
+
+                    <div className='flex items-center gap-1'>
+                      <Send className='size-3' />
+                      {item.sendCount || 0}
+                    </div>
+                  </div>
+
+                  {item.lastSentAt && <div className='text-muted-foreground text-xs'>Last sent: {formatDistanceToNow(item.lastSentAt, { addSuffix: true })}</div>}
+                </button>
+              );
+            })}
+          </div>
+        </ScrollArea>
+      </div>
 
       <div className='flex-1 p-4'>
         {id ? (

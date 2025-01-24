@@ -197,7 +197,7 @@ export function ContentEditor({ content, onUpdate, onDelete, isLoading }: Conten
       <div className='h-[calc(100vh-150px)] rounded-lg border bg-background'>
         <div className='flex-1'>
           <ScrollArea className='h-full'>
-            <TipTapEditor key={content.id} content={editorContent} onChange={handleContentChange} editable={!isViewMode} className='border-none' />
+            <TipTapEditor key={content.id} content={editorContent} onChange={handleContentChange} disabled={isViewMode} editable={!isViewMode} className='border-none' />
           </ScrollArea>
         </div>
       </div>
