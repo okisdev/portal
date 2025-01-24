@@ -1,8 +1,8 @@
-import { EventPopover } from '@/components/shared/event-popover';
 import { Button } from '@/components/ui/button';
-import { Popover, PopoverTrigger } from '@/components/ui/popover';
+import {} from '@/components/ui/popover';
 import type { CalendarEventWithParticipants, CalendarFolder } from '@/lib/schema';
 import { cn } from '@/lib/utils';
+import { X } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { WEEKDAYS } from './constants';
 
@@ -52,18 +52,19 @@ export function MonthView({ currentDate, selectedDate, setSelectedDate, events, 
     <div className='grid flex-1 grid-cols-7'>
       {WEEKDAYS.map((day) => (
         <div key={day} className='border-r border-b p-2 text-muted-foreground text-sm'>
-          {t(day)}
+          <span className='hidden md:inline'>{t(day)}</span>
+          <span className='md:hidden'>{t(day).charAt(0)}</span>
         </div>
       ))}
       {getDaysInMonth(currentDate).map((date) => {
         const events = getEventsForDate(date);
 
         return (
-          // biome-ignore lint/a11y/useKeyWithClickEvents: <explanation>
-          <div
+          <button
             key={date.toISOString()}
+            type='button'
             className={cn(
-              'relative min-h-[120px] border-r border-b p-2',
+              'relative min-h-[80px] border-r border-b p-1 text-left md:min-h-[120px] md:p-2',
               date.getMonth() !== currentDate.getMonth() && 'bg-muted/50',
               date.getDate() === selectedDate.getDate() && date.getMonth() === selectedDate.getMonth() && date.getFullYear() === selectedDate.getFullYear() && 'ring-2 ring-primary ring-inset'
             )}
@@ -80,49 +81,41 @@ export function MonthView({ currentDate, selectedDate, setSelectedDate, events, 
             >
               {date.getDate()}
             </span>
-            {events
-              .filter((event) => !hiddenCalendars.has(event.folderId))
-              .map((event) => {
-                const folder = folders?.find((f) => f.id === event.folderId);
-
-                return (
-                  <Popover key={event.id}>
-                    <PopoverTrigger asChild>
+            <div className='mt-1 space-y-1 overflow-y-auto'>
+              {events
+                .filter((event) => !hiddenCalendars.has(event.folderId))
+                .map((event) => {
+                  const folder = folders.find((f) => f.id === event.folderId);
+                  const bgColor = folder?.color ? `${folder.color}20` : undefined;
+                  return (
+                    <button
+                      key={event.id}
+                      type='button'
+                      className='group relative flex w-full cursor-pointer items-center gap-1 rounded bg-primary/10 px-1 py-0.5 text-left text-xs'
+                      style={{ backgroundColor: bgColor }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onEventEdit?.(event);
+                      }}
+                    >
+                      <div className='h-1.5 w-1.5 flex-shrink-0 rounded-full' style={{ backgroundColor: folder?.color ?? undefined }} />
+                      <span className='truncate'>{event.title}</span>
                       <Button
                         variant='ghost'
-                        className='h-auto w-full justify-start truncate rounded border border-dashed p-1 text-xs'
-                        style={{
-                          backgroundColor: `${folder?.color}20`,
-                          borderColor: folder?.color ?? 'transparent',
-                          color: folder?.color ?? 'inherit',
+                        size='icon'
+                        className='absolute right-0 top-1/2 hidden h-4 w-4 -translate-y-1/2 p-0 opacity-0 group-hover:opacity-100 md:inline-flex'
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onEventDelete?.(event.id);
                         }}
-                        onClick={(e) => e.stopPropagation()}
                       >
-                        {event.isAllDay ? (
-                          'All day'
-                        ) : (
-                          <>
-                            {new Date(event.startAt).toLocaleTimeString([], {
-                              hour: '2-digit',
-                              minute: '2-digit',
-                              hour12: false,
-                            })}
-                            {' - '}
-                            {new Date(event.endAt).toLocaleTimeString([], {
-                              hour: '2-digit',
-                              minute: '2-digit',
-                              hour12: false,
-                            })}
-                          </>
-                        )}{' '}
-                        {event.title}
+                        <X className='h-3 w-3' />
                       </Button>
-                    </PopoverTrigger>
-                    <EventPopover event={event} folder={folder} onEventEdit={onEventEdit} onEventDelete={onEventDelete} />
-                  </Popover>
-                );
-              })}
-          </div>
+                    </button>
+                  );
+                })}
+            </div>
+          </button>
         );
       })}
     </div>

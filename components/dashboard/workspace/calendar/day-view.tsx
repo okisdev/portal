@@ -24,8 +24,11 @@ export function DayView({ currentDate, selectedDate, events, folders, hiddenCale
 
   return (
     <div className='flex min-h-0 flex-1 flex-col'>
-      <div className='grid grid-cols-[100px_1fr] divide-x border-b bg-background'>
-        <div className='p-2 text-muted-foreground text-sm'>{t('time')}</div>
+      <div className='grid grid-cols-[80px_1fr] md:grid-cols-[100px_1fr] divide-x border-b bg-background'>
+        <div className='p-2 text-muted-foreground text-sm'>
+          <span className='hidden md:inline'>{t('time')}</span>
+          <span className='md:hidden'>{t('time').charAt(0)}</span>
+        </div>
         <div
           className={cn(
             'p-2 text-sm',
@@ -33,12 +36,15 @@ export function DayView({ currentDate, selectedDate, events, folders, hiddenCale
             currentDate.getDate() === selectedDate.getDate() && currentDate.getMonth() === selectedDate.getMonth() && currentDate.getFullYear() === selectedDate.getFullYear() && 'bg-primary/10'
           )}
         >
-          <div className='font-medium'>{t(WEEKDAYS[currentDate.getDay()])}</div>
+          <div className='font-medium'>
+            <span className='hidden md:inline'>{t(WEEKDAYS[currentDate.getDay()])}</span>
+            <span className='md:hidden'>{t(WEEKDAYS[currentDate.getDay()]).charAt(0)}</span>
+          </div>
           <div className='text-muted-foreground'>{currentDate.getDate()}</div>
         </div>
       </div>
       <div className='flex-1 overflow-y-auto'>
-        <div className='-mr-[1px] grid grid-cols-[100px_1fr] divide-x' style={{ height: 'calc(60px * 24)' }}>
+        <div className='-mr-[1px] grid grid-cols-[80px_1fr] md:grid-cols-[100px_1fr] divide-x' style={{ height: 'calc(60px * 24)' }}>
           <TimeColumn />
           <TimeGrid
             date={currentDate}
