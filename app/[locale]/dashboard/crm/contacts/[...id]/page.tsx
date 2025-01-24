@@ -701,7 +701,7 @@ export default function ContactIdPage() {
                                 <div className='flex-1 space-y-1'>
                                   <div className='flex w-full items-center justify-between'>
                                     <div className='flex items-center gap-2 text-sm'>
-                                      <span className='font-medium'>{activity.subType}</span>
+                                      <span className='font-medium'>{activity.subType && t(activity.subType)}</span>
                                       <span className='text-muted-foreground text-xs'>•</span>
                                       {activity.initiatorType === 'system' ? (
                                         <span className='text-muted-foreground text-xs'>{t('by_system')}</span>
