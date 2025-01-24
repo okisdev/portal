@@ -11,13 +11,13 @@ import { useSession } from 'next-auth/react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
-interface SendMessageProps {
+interface SendWhatsAppMessageProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   recipient?: Contact;
 }
 
-export function SendMessage({ open, onOpenChange, recipient }: SendMessageProps) {
+export function SendWhatsAppMessage({ open, onOpenChange, recipient }: SendWhatsAppMessageProps) {
   if (!recipient) return null;
 
   const utils = api.useUtils();
