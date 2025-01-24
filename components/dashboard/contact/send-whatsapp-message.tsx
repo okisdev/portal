@@ -105,13 +105,13 @@ export function SendWhatsAppMessage({ open, onOpenChange, recipient }: SendWhats
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className='max-h-[90vh] max-w-2xl overflow-y-auto'>
+      <DialogContent className='max-h-[90vh] max-w-2xl overflow-y-auto p-4 sm:p-6'>
         <DialogHeader>
           <DialogTitle>{t('send_whatsapp_message')}</DialogTitle>
         </DialogHeader>
-        <div className='space-y-4 py-4'>
-          <div className='flex items-center gap-4 border-b pb-4'>
-            <div className='w-4 text-muted-foreground text-sm'>{t('from')}</div>
+        <div className='space-y-4 py-2 sm:py-4'>
+          <div className='flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 border-b pb-4'>
+            <div className='w-full sm:w-4 text-muted-foreground text-sm'>{t('from')}</div>
             <div className='flex items-center gap-2'>
               <Avatar className='size-6'>
                 <AvatarImage src={session?.user?.image || ''} />
@@ -121,8 +121,8 @@ export function SendWhatsAppMessage({ open, onOpenChange, recipient }: SendWhats
             </div>
           </div>
 
-          <div className='flex items-center gap-4 border-b pb-4'>
-            <div className='w-4 text-muted-foreground text-sm'>{t('to')}</div>
+          <div className='flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 border-b pb-4'>
+            <div className='w-full sm:w-4 text-muted-foreground text-sm'>{t('to')}</div>
             <div className='flex flex-1 flex-wrap items-center gap-2'>
               <div className='flex items-center gap-2 rounded-full border bg-muted px-2 py-1'>
                 <Avatar className='size-6'>
@@ -136,9 +136,9 @@ export function SendWhatsAppMessage({ open, onOpenChange, recipient }: SendWhats
 
           {isSelectingTemplate ? (
             <div className='space-y-4'>
-              <div className='flex items-center justify-between'>
+              <div className='flex flex-col sm:flex-row items-center justify-between gap-2'>
                 <h3 className='font-medium'>Select Template</h3>
-                <Button variant='outline' size='sm' onClick={() => setIsSelectingTemplate(false)}>
+                <Button variant='outline' size='sm' onClick={() => setIsSelectingTemplate(false)} className='w-full sm:w-auto'>
                   {t('back_to_editor')}
                 </Button>
               </div>
@@ -164,9 +164,9 @@ export function SendWhatsAppMessage({ open, onOpenChange, recipient }: SendWhats
             </div>
           ) : (
             <div className='space-y-4'>
-              <div className='flex items-center justify-between'>
+              <div className='flex flex-col sm:flex-row items-center justify-between gap-2'>
                 <h3 className='font-medium'>{t('message')}</h3>
-                <Button variant='outline' size='sm' onClick={() => setIsSelectingTemplate(true)}>
+                <Button variant='outline' size='sm' onClick={() => setIsSelectingTemplate(true)} className='w-full sm:w-auto'>
                   {t('use_template')}
                 </Button>
               </div>
@@ -175,12 +175,12 @@ export function SendWhatsAppMessage({ open, onOpenChange, recipient }: SendWhats
           )}
         </div>
 
-        <div className='flex items-center justify-between border-t pt-4'>
-          <div className='flex items-center gap-2'>
+        <div className='flex flex-col sm:flex-row items-center justify-between gap-4 border-t pt-4'>
+          <div className='flex items-center gap-2 w-full sm:w-auto'>
             <MessageSquare className='size-4 text-muted-foreground' />
             <span className='text-muted-foreground text-sm'>{t('message_will_be_sent_via_whatsapp')}</span>
           </div>
-          <Button className='gap-2' onClick={handleSend} disabled={createContactActivity.isPending}>
+          <Button className='gap-2 w-full sm:w-auto' onClick={handleSend} disabled={createContactActivity.isPending}>
             <Send className='size-4' />
             {t('send')}
           </Button>

@@ -365,9 +365,9 @@ export default function ContactIdPage() {
   };
 
   return (
-    <div className='container mx-auto min-h-[calc(100vh-4rem)] space-y-6 p-6'>
-      <div className='grid h-[calc(100vh-6rem)] grid-cols-1 gap-6 lg:grid-cols-3'>
-        <div className='overflow-y-auto lg:col-span-1'>
+    <div className='container mx-auto min-h-[calc(100vh-4rem)] space-y-6 p-4 sm:p-6'>
+      <div className='grid min-h-[calc(100vh-6rem)] grid-cols-1 gap-4 lg:grid-cols-3 lg:gap-6'>
+        <div className='h-auto overflow-y-auto lg:col-span-1'>
           <div className='rounded-lg border bg-card text-card-foreground shadow-sm'>
             <div className='border-b p-6'>
               <div className='flex items-start gap-4'>
@@ -459,46 +459,42 @@ export default function ContactIdPage() {
             </div>
 
             <div className='border-b p-6'>
-              <div className='grid grid-cols-1 gap-4'>
-                <div className='grid grid-cols-2 gap-4'>
-                  <div className='space-y-1.5'>
-                    <div className='text-muted-foreground text-xs'>{t('last_contact')}</div>
-                    <div className='text-foreground text-sm'>
-                      <DateTimePicker
-                        size='sm'
-                        value={lastContactDate}
-                        onChange={(date) => setLastContactDate(date)}
-                        onClose={() => {
-                          if (lastContactDate?.getTime() !== (contact?.lastContactedAt ? new Date(contact.lastContactedAt).getTime() : null)) {
-                            updateContact.mutate({
-                              id: contactId[0],
-                              lastContactedAt: lastContactDate || undefined,
-                            });
-                          }
-                        }}
-                      />
-                    </div>
+              <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
+                <div className='space-y-1.5'>
+                  <div className='text-muted-foreground text-xs'>{t('last_contact')}</div>
+                  <div className='text-foreground text-sm'>
+                    <DateTimePicker
+                      size='sm'
+                      value={lastContactDate}
+                      onChange={(date) => setLastContactDate(date)}
+                      onClose={() => {
+                        if (lastContactDate?.getTime() !== (contact?.lastContactedAt ? new Date(contact.lastContactedAt).getTime() : null)) {
+                          updateContact.mutate({
+                            id: contactId[0],
+                            lastContactedAt: lastContactDate || undefined,
+                          });
+                        }
+                      }}
+                    />
                   </div>
                 </div>
-                <div className='grid grid-cols-2 gap-4'>
-                  <div className='space-y-1.5'>
-                    <div className='text-muted-foreground text-xs'>{t('priority')}</div>
-                    <div className='text-foreground'>
-                      <Select value={contact?.priority || 'medium'} onValueChange={handlePriorityChange}>
-                        <SelectTrigger className='h-8'>
-                          <SelectValue>
-                            <ColorBadge type='priority' value={contact?.priority || 'medium'} />
-                          </SelectValue>
-                        </SelectTrigger>
-                        <SelectContent className='bg-popover text-popover-foreground'>
-                          {['high', 'medium', 'low'].map((priority) => (
-                            <SelectItem key={priority} value={priority}>
-                              <ColorBadge type='priority' value={priority} />
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
+                <div className='space-y-1.5'>
+                  <div className='text-muted-foreground text-xs'>{t('priority')}</div>
+                  <div className='text-foreground'>
+                    <Select value={contact?.priority || 'medium'} onValueChange={handlePriorityChange}>
+                      <SelectTrigger className='h-8'>
+                        <SelectValue>
+                          <ColorBadge type='priority' value={contact?.priority || 'medium'} />
+                        </SelectValue>
+                      </SelectTrigger>
+                      <SelectContent className='bg-popover text-popover-foreground'>
+                        {['high', 'medium', 'low'].map((priority) => (
+                          <SelectItem key={priority} value={priority}>
+                            <ColorBadge type='priority' value={priority} />
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                   <div className='space-y-1.5'>
                     <div className='text-muted-foreground text-xs'>{t('status')}</div>
@@ -653,7 +649,7 @@ export default function ContactIdPage() {
                   <TabsTrigger value='management'>{t('management')}</TabsTrigger>
                 </TabsList>
                 <TabsContent value='activity' className='relative flex flex-1 flex-col'>
-                  <div className='absolute inset-0 overflow-y-auto pb-[4.5rem]'>
+                  <div className='absolute inset-0 overflow-y-auto pb-[5.5rem] sm:pb-[4.5rem]'>
                     <div className='space-y-1'>
                       {activities?.length === 0 && <p className='text-muted-foreground text-sm'>{t('no_activities_found')}</p>}
                       {activities
@@ -774,10 +770,10 @@ export default function ContactIdPage() {
                         })}
                     </div>
                   </div>
-                  <div className='absolute right-0 bottom-0 left-0 bg-background pt-4'>
-                    <form onSubmit={handleSubmitActivity} className='flex max-w-full gap-2'>
-                      <Input value={newActivity} onChange={(e) => setNewActivity(e.target.value)} placeholder='Add a note...' className='h-8' />
-                      <Button type='submit' size='sm' disabled={createContactActivity.isPending}>
+                  <div className='absolute right-0 bottom-0 left-0 bg-background p-4 sm:pt-4'>
+                    <form onSubmit={handleSubmitActivity} className='flex max-w-full flex-col gap-2 sm:flex-row'>
+                      <Input value={newActivity} onChange={(e) => setNewActivity(e.target.value)} placeholder='Add a note...' className='h-8 flex-1' />
+                      <Button type='submit' size='sm' disabled={createContactActivity.isPending} className='w-full sm:w-auto'>
                         {t('add_note')}
                       </Button>
                     </form>
