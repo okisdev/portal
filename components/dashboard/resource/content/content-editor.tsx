@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import type { ResourceContent } from '@/lib/schema';
 import { Eye, EyeOff, Tags, Trash, X } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { useCallback, useEffect, useState } from 'react';
 
 function useDebounce<T extends (...args: any[]) => any>(callback: T, delay: number) {
@@ -34,6 +35,8 @@ interface ContentEditorProps {
 }
 
 export function ContentEditor({ content, onUpdate, onDelete, isLoading }: ContentEditorProps) {
+  const t = useTranslations();
+
   const [isViewMode, setIsViewMode] = useState(false);
   const [editingTitle, setEditingTitle] = useState(false);
   const [editingDescription, setEditingDescription] = useState(false);
@@ -148,7 +151,7 @@ export function ContentEditor({ content, onUpdate, onDelete, isLoading }: Conten
               onClick={() => !isViewMode && setEditingDescription(true)}
               disabled={isViewMode}
             >
-              {content.description || 'Add a description...'}
+              {content.description || t('add_a_description')}
             </button>
           )}
           <div className='flex items-center gap-2 px-2 py-1'>
@@ -177,7 +180,7 @@ export function ContentEditor({ content, onUpdate, onDelete, isLoading }: Conten
                     </Badge>
                   ))
                 ) : (
-                  <span className='text-muted-foreground text-sm'>Add tags...</span>
+                  <span className='text-muted-foreground text-sm'>{t('add_tags')}</span>
                 )}
               </button>
             )}
@@ -194,7 +197,7 @@ export function ContentEditor({ content, onUpdate, onDelete, isLoading }: Conten
           )}
         </div>
       </div>
-      <div className='h-[calc(100vh-150px)] rounded-lg border bg-background'>
+      <div className='flex-1 rounded-lg border bg-background'>
         <div className='flex-1'>
           <ScrollArea className='h-full'>
             <TipTapEditor key={content.id} content={editorContent} onChange={handleContentChange} disabled={isViewMode} editable={!isViewMode} className='border-none' />

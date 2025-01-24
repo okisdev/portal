@@ -27,6 +27,7 @@ import {
   Underline as UnderlineIcon,
   Undo,
 } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
 import TurndownService from 'turndown';
 
@@ -64,6 +65,8 @@ turndownService.addRule('strikethrough', {
 });
 
 export function TipTapEditor({ content, onChange, placeholder = 'Start writing...', editable = true, className, disabled = false, defaultMode = 'rich-text' }: TipTapEditorProps) {
+  const t = useTranslations();
+
   const [mode, setMode] = useState<EditorMode>(defaultMode);
   const [htmlContent, setHtmlContent] = useState(content);
   const [markdownContent, setMarkdownContent] = useState('');
@@ -173,15 +176,15 @@ export function TipTapEditor({ content, onChange, placeholder = 'Start writing..
           <div className='flex gap-1'>
             <Button type='button' variant='ghost' size='sm' className={cn('gap-2', mode === 'rich-text' && 'bg-muted')} onClick={() => setMode('rich-text')}>
               <FileText className='h-4 w-4' />
-              Rich Text
+              {t('rich_text')}
             </Button>
             <Button type='button' variant='ghost' size='sm' className={cn('gap-2', mode === 'markdown' && 'bg-muted')} onClick={() => setMode('markdown')}>
               <FileText className='h-4 w-4' />
-              Markdown
+              {t('markdown')}
             </Button>
             <Button type='button' variant='ghost' size='sm' className={cn('gap-2', mode === 'html' && 'bg-muted')} onClick={() => setMode('html')}>
               <Code className='h-4 w-4' />
-              HTML
+              {t('html')}
             </Button>
           </div>
 
@@ -241,7 +244,7 @@ export function TipTapEditor({ content, onChange, placeholder = 'Start writing..
           value={htmlContent}
           onChange={handleHtmlChange}
           className='min-h-[200px] w-full resize-none rounded-lg p-4 font-mono text-sm'
-          placeholder='Enter HTML content...'
+          placeholder={t('html_placeholder')}
           disabled={disabled}
         />
       ) : mode === 'markdown' ? (
@@ -249,7 +252,7 @@ export function TipTapEditor({ content, onChange, placeholder = 'Start writing..
           value={markdownContent}
           onChange={handleMarkdownChange}
           className='min-h-[200px] w-full resize-none rounded-lg p-4 font-mono text-sm'
-          placeholder='Enter Markdown content...'
+          placeholder={t('markdown_placeholder')}
           disabled={disabled}
         />
       ) : (

@@ -108,7 +108,7 @@ export default function ContentPage() {
 
   return (
     <div className='flex h-full'>
-      <div className='w-80 space-y-4 p-4'>
+      <div className='w-80 flex flex-col p-4 border-r'>
         <PageHeader
           title={t('content')}
           right={
@@ -122,8 +122,8 @@ export default function ContentPage() {
           }
         />
 
-        <ScrollArea className='h-[calc(100vh-3.5rem)]'>
-          <div className='space-y-1'>
+        <ScrollArea className='flex-1 -mx-4 px-4'>
+          <div className='space-y-1 py-4'>
             {contentsLoading && (
               <>
                 <Skeleton className='h-10' />
