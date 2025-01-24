@@ -1,5 +1,6 @@
 'use client';
 
+import { SendWhatsAppMessage } from '@/components/dashboard/contact/send-whatsapp-message';
 import { ActionAlertDialog } from '@/components/shared/action-alert-dialog';
 import { ColorBadge } from '@/components/shared/color-badge';
 import { Combobox } from '@/components/shared/combobox';
@@ -25,7 +26,7 @@ import {
   getSortedRowModel,
   useReactTable,
 } from '@tanstack/react-table';
-import { Check, Eye, Filter, Import, MoreHorizontal, Trash2, X } from 'lucide-react';
+import { Check, Eye, Filter, Import, MessageSquare, MoreHorizontal, Trash2, X } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -50,6 +51,15 @@ type FilterConfig = {
   conditions: FilterCondition[];
   matchAll: boolean;
 };
+
+function WhatsAppButton({ contact, onClick }: { contact: Contact; onClick: (contact: Contact, e: React.MouseEvent) => void }) {
+  return (
+    <Button variant='ghost' className='flex h-auto items-center gap-2 px-2 py-1 font-normal hover:bg-neutral-200 dark:hover:bg-neutral-700' onClick={(e) => onClick(contact, e)}>
+      <MessageSquare className='h-4 w-4 text-muted-foreground' />
+      {contact.phone || '—'}
+    </Button>
+  );
+}
 
 export default function CRMContactsPage() {
   const router = useRouter();
@@ -103,6 +113,8 @@ export default function CRMContactsPage() {
   const [contactToDelete, setContactToDelete] = useState<string | null>(null);
 
   const [selectedColumn, setSelectedColumn] = useState<string>('');
+  const [selectedContact, setSelectedContact] = useState<Contact | undefined>(undefined);
+  const [whatsappDialogOpen, setWhatsappDialogOpen] = useState(false);
 
   const handleStatusFilter = (status: string | null) => {
     if (status === null) {
@@ -334,6 +346,12 @@ export default function CRMContactsPage() {
     router.push(`/dashboard/crm/contacts/${id}`);
   };
 
+  const handleWhatsAppClick = (contact: Contact, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setSelectedContact(contact);
+    setWhatsappDialogOpen(true);
+  };
+
   const tableColumns: ColumnDef<Contact>[] = [
     {
       id: 'select',
@@ -366,6 +384,7 @@ export default function CRMContactsPage() {
     {
       accessorKey: 'phone',
       header: t('phone'),
+      cell: ({ row }) => <WhatsAppButton contact={row.original} onClick={handleWhatsAppClick} />,
     },
     {
       accessorKey: 'company',
@@ -618,6 +637,8 @@ export default function CRMContactsPage() {
         confirmText={t('delete')}
         cancelText={t('cancel')}
       />
+
+      <SendWhatsAppMessage open={whatsappDialogOpen} onOpenChange={setWhatsappDialogOpen} recipient={selectedContact} />
     </div>
   );
 }

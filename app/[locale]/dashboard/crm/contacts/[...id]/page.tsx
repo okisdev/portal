@@ -2,7 +2,7 @@
 
 import { Payment } from '@/components/dashboard/contact/payment';
 import { SendEmail } from '@/components/dashboard/contact/send-email';
-import { SendMessage } from '@/components/dashboard/contact/send-message';
+import { SendWhatsAppMessage } from '@/components/dashboard/contact/send-whatsapp-message';
 import { ColorBadge } from '@/components/shared/color-badge';
 import { Combobox } from '@/components/shared/combobox';
 import { DateTimePicker } from '@/components/shared/date-time-picker';
@@ -946,7 +946,7 @@ export default function ContactIdPage() {
       </Dialog>
 
       <SendEmail open={isEmailModalOpen} onOpenChange={setIsEmailModalOpen} recipient={contact as any} />
-      <SendMessage open={isMessageModalOpen} onOpenChange={setIsMessageModalOpen} recipient={contact as any} />
+      <SendWhatsAppMessage open={isMessageModalOpen} onOpenChange={setIsMessageModalOpen} recipient={contact as any} />
     </div>
   );
 }

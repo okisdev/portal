@@ -250,5 +250,9 @@
   "week": "Week",
   "welcome_back": "Welcome Back, {name}.",
   "welcome_description": "Welcome to your dashboard",
-  "workspace": "Workspace"
+  "workspace": "Workspace",
+  "send_whatsapp_message": "Send WhatsApp Message",
+  "back_to_editor": "Back to Editor",
+  "use_template": "Use Template",
+  "message_will_be_sent_via_whatsapp": "Message will be sent via WhatsAp"
 }

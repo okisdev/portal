@@ -250,5 +250,9 @@
   "week": "週",
   "welcome_back": "歡迎回來，{name}。",
   "welcome_description": "歡迎來到您的儀表板",
-  "workspace": "工作區"
+  "workspace": "工作區",
+  "back_to_editor": "返回編輯",
+  "message_will_be_sent_via_whatsapp": "消息將通過 WhatsApp 發送",
+  "send_whatsapp_message": "傳送 WhatsApp 訊息",
+  "use_template": "使用模板"
 }
