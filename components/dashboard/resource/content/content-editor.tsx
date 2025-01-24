@@ -1,12 +1,15 @@
+import { Combobox } from '@/components/shared/combobox';
 import { TipTapEditor } from '@/components/shared/tiptap-editor';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { contentTags } from '@/data/data';
 import type { ResourceContent } from '@/lib/schema';
-import { Eye, EyeOff, Tags, Trash, X } from 'lucide-react';
+import { Database, Eye, EyeOff, Tags, Trash, X } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useCallback, useEffect, useState } from 'react';
+import { SendHistoryDialog } from './send-history-dialog';
 
 function useDebounce<T extends (...args: any[]) => any>(callback: T, delay: number) {
   const [timeoutId, setTimeoutId] = useState<NodeJS.Timeout | null>(null);
@@ -44,7 +47,7 @@ export function ContentEditor({ content, onUpdate, onDelete, isLoading }: Conten
   const [tempTitle, setTempTitle] = useState(content?.title || '');
   const [tempDescription, setTempDescription] = useState(content?.description || '');
   const [tempTags, setTempTags] = useState<string[]>([]);
-  const [tagInput, setTagInput] = useState('');
+  const [showSendHistory, setShowSendHistory] = useState(false);
   const [editorContent, setEditorContent] = useState(content?.content || '');
 
   // Debounced update handlers
@@ -85,26 +88,13 @@ export function ContentEditor({ content, onUpdate, onDelete, isLoading }: Conten
     setEditingDescription(false);
   };
 
-  const handleTagsEdit = () => {
-    if (!isViewMode && content) {
+  const handleAddTag = (value: string) => {
+    if (value && !tempTags.includes(value)) {
+      const newTags = [...tempTags, value];
+      setTempTags(newTags);
       onUpdate({
-        tags: tempTags.length > 0 ? JSON.stringify(tempTags) : null,
+        tags: newTags.length > 0 ? JSON.stringify(newTags) : null,
       });
-    }
-    setEditingTags(false);
-  };
-
-  const handleAddTag = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter' && tagInput.trim()) {
-      e.preventDefault();
-      if (!tempTags.includes(tagInput.trim().toLowerCase())) {
-        const newTags = [...tempTags, tagInput.trim().toLowerCase()];
-        setTempTags(newTags);
-        onUpdate({
-          tags: newTags.length > 0 ? JSON.stringify(newTags) : undefined,
-        });
-      }
-      setTagInput('');
     }
   };
 
@@ -112,7 +102,7 @@ export function ContentEditor({ content, onUpdate, onDelete, isLoading }: Conten
     const newTags = tempTags.filter((tag) => tag !== tagToRemove);
     setTempTags(newTags);
     onUpdate({
-      tags: newTags.length > 0 ? JSON.stringify(newTags) : undefined,
+      tags: newTags.length > 0 ? JSON.stringify(newTags) : null,
     });
   };
 
@@ -158,7 +148,17 @@ export function ContentEditor({ content, onUpdate, onDelete, isLoading }: Conten
             <Tags className='size-3 text-muted-foreground' />
             {editingTags && !isViewMode ? (
               <div className='flex-1'>
-                <Input value={tagInput} onChange={(e) => setTagInput(e.target.value)} onKeyDown={handleAddTag} onBlur={handleTagsEdit} placeholder='Add tags (press Enter)' className='h-6 text-sm' />
+                <Combobox
+                  value=''
+                  onChange={handleAddTag}
+                  items={contentTags}
+                  placeholder={t('add_tags')}
+                  searchPlaceholder={t('tags_search_placeholder')}
+                  emptyText={t('no_matching_tags')}
+                  groupHeading={t('existing_tags')}
+                  allowCustom
+                  size='sm'
+                />
               </div>
             ) : (
               <button type='button' onClick={() => !isViewMode && setEditingTags(true)} disabled={isViewMode} className='flex flex-wrap items-center gap-1 text-left hover:bg-accent/50'>
@@ -187,6 +187,9 @@ export function ContentEditor({ content, onUpdate, onDelete, isLoading }: Conten
           </div>
         </div>
         <div className='space-x-2'>
+          <Button variant='outline' size='icon' onClick={() => setShowSendHistory(true)}>
+            <Database className='h-4 w-4' />
+          </Button>
           <Button variant='outline' size='icon' onClick={() => setIsViewMode(!isViewMode)}>
             {isViewMode ? <Eye className='h-4 w-4' /> : <EyeOff className='h-4 w-4' />}
           </Button>
@@ -204,6 +207,8 @@ export function ContentEditor({ content, onUpdate, onDelete, isLoading }: Conten
           </ScrollArea>
         </div>
       </div>
+
+      {content && <SendHistoryDialog open={showSendHistory} onOpenChange={setShowSendHistory} content={content} />}
     </div>
   );
 }

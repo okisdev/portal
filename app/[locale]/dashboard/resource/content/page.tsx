@@ -85,7 +85,7 @@ export default function ContentPage() {
         content: data.content || currentContent.content,
         description: data.description === undefined ? currentContent.description || undefined : data.description || undefined,
         visibility: data.visibility || currentContent.visibility,
-        tags: data.tags || (currentContent.tags ? JSON.parse(currentContent.tags) : []),
+        tags: Array.isArray(data.tags) ? data.tags : [],
       };
 
       updateContent.mutate({
@@ -108,7 +108,7 @@ export default function ContentPage() {
 
   return (
     <div className='flex h-full'>
-      <div className='w-80 flex flex-col p-4 border-r'>
+      <div className='flex w-80 flex-col border-r p-4'>
         <PageHeader
           title={t('content')}
           right={
@@ -161,24 +161,24 @@ export default function ContentPage() {
                     )}
                   </div>
 
-                  <div className='flex items-center gap-3 text-muted-foreground text-xs'>
-                    <div className='flex items-center gap-1'>
-                      <Clock className='size-3' />
-                      {formatDistanceToNow(new Date(item.resourceContent.createdAt), { addSuffix: true })}
-                    </div>
+                  <div className='flex flex-col gap-2'>
+                    <div className='flex items-center gap-3 text-muted-foreground text-xs'>
+                      <div className='flex items-center gap-1'>
+                        <Clock className='size-3' />
+                        {formatDistanceToNow(new Date(item.resourceContent.createdAt), { addSuffix: true })}
+                      </div>
 
-                    <div className='flex items-center gap-1'>
-                      <Eye className='size-3' />
-                      {item.resourceContent.visibility.toLowerCase()}
-                    </div>
+                      <div className='flex items-center gap-1'>
+                        <Eye className='size-3' />
+                        {item.resourceContent.visibility.toLowerCase()}
+                      </div>
 
-                    <div className='flex items-center gap-1'>
-                      <Send className='size-3' />
-                      {item.sendCount || 0}
+                      <div className='flex items-center gap-1'>
+                        <Send className='size-3' />
+                        {item.sendCount || 0} {item.sendCount === 1 ? 'send' : 'sends'}
+                      </div>
                     </div>
                   </div>
-
-                  {item.lastSentAt && <div className='text-muted-foreground text-xs'>Last sent: {formatDistanceToNow(item.lastSentAt, { addSuffix: true })}</div>}
                 </button>
               );
             })}

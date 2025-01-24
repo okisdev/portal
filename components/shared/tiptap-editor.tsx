@@ -170,7 +170,21 @@ export function TipTapEditor({ content, onChange, placeholder = 'Start writing..
   };
 
   return (
-    <div className={cn('rounded-lg border', className)}>
+    <div
+      className={cn('rounded-lg border', className)}
+      onClick={() => {
+        if (mode === 'rich-text' && editor && editable && !disabled) {
+          editor.chain().focus().run();
+        }
+      }}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          if (mode === 'rich-text' && editor && editable && !disabled) {
+            editor.chain().focus().run();
+          }
+        }
+      }}
+    >
       {editable && (
         <div className='flex flex-col items-start gap-1 border-b bg-muted/50 p-1'>
           <div className='flex gap-1'>
@@ -243,7 +257,7 @@ export function TipTapEditor({ content, onChange, placeholder = 'Start writing..
         <textarea
           value={htmlContent}
           onChange={handleHtmlChange}
-          className='min-h-[200px] w-full resize-none rounded-lg p-4 font-mono text-sm'
+          className='min-h-[200px] w-full resize-none rounded-lg p-4 font-mono text-sm focus:outline-none'
           placeholder={t('html_placeholder')}
           disabled={disabled}
         />
@@ -251,7 +265,7 @@ export function TipTapEditor({ content, onChange, placeholder = 'Start writing..
         <textarea
           value={markdownContent}
           onChange={handleMarkdownChange}
-          className='min-h-[200px] w-full resize-none rounded-lg p-4 font-mono text-sm'
+          className='min-h-[200px] w-full resize-none rounded-lg p-4 font-mono text-sm focus:outline-none'
           placeholder={t('markdown_placeholder')}
           disabled={disabled}
         />
