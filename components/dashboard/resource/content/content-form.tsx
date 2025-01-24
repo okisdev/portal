@@ -6,10 +6,12 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Switch } from '@/components/ui/switch';
+import { contentTags } from '@/data/data';
 import type { ResourceContent } from '@/lib/schema';
 import { api } from '@/utils/trpc/client';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { X } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
@@ -33,6 +35,8 @@ interface ContentFormProps {
 }
 
 export function ContentForm({ content, onSuccess, onSubmit, isSubmitting }: ContentFormProps) {
+  const t = useTranslations();
+
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -137,10 +141,10 @@ export function ContentForm({ content, onSuccess, onSubmit, isSubmitting }: Cont
                     <Combobox
                       value=''
                       onChange={handleAddTag}
-                      items={field.value}
+                      items={contentTags}
                       placeholder='Add tags...'
                       searchPlaceholder='Search or add new tag...'
-                      emptyText='No matching tags'
+                      emptyText={t('no_matching_tags')}
                       groupHeading='Existing Tags'
                       allowCustom
                     />
