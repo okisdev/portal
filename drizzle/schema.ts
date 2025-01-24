@@ -172,6 +172,7 @@ export const contactActivity = pgTable('contactActivity', {
       'MESSAGE_SENT',
       'NOTE_ADDED',
       'LAST_CONTACTED_UPDATED',
+      'DATE_NEXT_FOLLOW_UP_UPDATED',
 
       // Team Management
       'TEAM_ASSIGNED',

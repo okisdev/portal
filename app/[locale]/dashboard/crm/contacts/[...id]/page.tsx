@@ -96,6 +96,7 @@ export default function ContactIdPage() {
   const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
   const [isMessageModalOpen, setIsMessageModalOpen] = useState(false);
   const [lastContactDate, setLastContactDate] = useState<Date | null>(contact?.lastContactedAt ? new Date(contact.lastContactedAt) : null);
+  const [nextFollowUpDate, setNextFollowUpDate] = useState<Date | null>(contact?.nextFollowUpAt ? new Date(contact.nextFollowUpAt) : null);
 
   const assignToTeam = api.team.assignContactToTeam.useMutation({
     onSuccess: () => {
@@ -273,13 +274,6 @@ export default function ContactIdPage() {
     updateContact.mutate({
       id: contactId[0],
       status: value,
-      firstName: contact?.firstName || '',
-      lastName: contact?.lastName || '',
-      email: contact?.email || '',
-      phone: contact?.phone || '',
-      company: contact?.company || '',
-      source: contact?.source || '',
-      priority: contact?.priority || 'medium',
     });
   };
 
@@ -287,13 +281,6 @@ export default function ContactIdPage() {
     updateContact.mutate({
       id: contactId[0],
       priority: value,
-      firstName: contact?.firstName || '',
-      lastName: contact?.lastName || '',
-      email: contact?.email || '',
-      phone: contact?.phone || '',
-      company: contact?.company || '',
-      source: contact?.source || '',
-      status: contact?.status || 'lead',
     });
   };
 
@@ -479,6 +466,24 @@ export default function ContactIdPage() {
                   </div>
                 </div>
                 <div className='space-y-1.5'>
+                  <div className='text-muted-foreground text-xs'>{t('next_follow_up')}</div>
+                  <div className='text-foreground text-sm'>
+                    <DateTimePicker
+                      size='sm'
+                      value={nextFollowUpDate}
+                      onChange={(date) => setNextFollowUpDate(date)}
+                      onClose={() => {
+                        if (nextFollowUpDate?.getTime() !== (contact?.nextFollowUpAt ? new Date(contact.nextFollowUpAt).getTime() : null)) {
+                          updateContact.mutate({
+                            id: contactId[0],
+                            nextFollowUpAt: nextFollowUpDate || undefined,
+                          });
+                        }
+                      }}
+                    />
+                  </div>
+                </div>
+                <div className='space-y-1.5'>
                   <div className='text-muted-foreground text-xs'>{t('priority')}</div>
                   <div className='text-foreground'>
                     <Select value={contact?.priority || 'medium'} onValueChange={handlePriorityChange}>
@@ -496,24 +501,24 @@ export default function ContactIdPage() {
                       </SelectContent>
                     </Select>
                   </div>
-                  <div className='space-y-1.5'>
-                    <div className='text-muted-foreground text-xs'>{t('status')}</div>
-                    <div className='text-foreground'>
-                      <Select value={contact?.status || 'lead'} onValueChange={handleStatusChange}>
-                        <SelectTrigger className='h-8'>
-                          <SelectValue>
-                            <ColorBadge type='contactStatus' value={contact?.status || 'lead'} />
-                          </SelectValue>
-                        </SelectTrigger>
-                        <SelectContent className='bg-popover text-popover-foreground'>
-                          {statusSchema.options.map((status) => (
-                            <SelectItem key={status} value={status}>
-                              <ColorBadge type='contactStatus' value={status} />
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
+                </div>
+                <div className='space-y-1.5'>
+                  <div className='text-muted-foreground text-xs'>{t('status')}</div>
+                  <div className='text-foreground'>
+                    <Select value={contact?.status || 'lead'} onValueChange={handleStatusChange}>
+                      <SelectTrigger className='h-8'>
+                        <SelectValue>
+                          <ColorBadge type='contactStatus' value={contact?.status || 'lead'} />
+                        </SelectValue>
+                      </SelectTrigger>
+                      <SelectContent className='bg-popover text-popover-foreground'>
+                        {statusSchema.options.map((status) => (
+                          <SelectItem key={status} value={status}>
+                            <ColorBadge type='contactStatus' value={status} />
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
               </div>

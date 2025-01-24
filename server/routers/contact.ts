@@ -41,6 +41,7 @@ export const contactRouter = createTRPCRouter({
         skills: contact.skills,
         status: contact.status,
         lastContactedAt: contact.lastContactedAt,
+        nextFollowUpAt: contact.nextFollowUpAt,
         remark: contact.remark,
         campaigns: sql<Array<{ code: string; name: string }>>`
           (SELECT json_agg(json_build_object('code', mc."campaignCode", 'name', mc.name))
@@ -338,6 +339,7 @@ export const contactRouter = createTRPCRouter({
         status: statusSchema.optional(),
         source: z.string().optional(),
         lastContactedAt: z.date().optional(),
+        nextFollowUpAt: z.date().optional(),
         remark: z.string().optional(),
       })
     )
@@ -399,6 +401,17 @@ export const contactRouter = createTRPCRouter({
           type: 'LAST_CONTACTED_UPDATED',
           title: 'Last Contacted Updated',
           description: `Last contacted date updated to ${input.lastContactedAt}`,
+          initiatorType: 'user',
+          initiatorId: ctx.session?.user.id,
+        });
+      }
+
+      if (input.nextFollowUpAt) {
+        await createContactActivityHelper(ctx, {
+          contactId: id,
+          type: 'DATE_NEXT_FOLLOW_UP_UPDATED',
+          title: 'Next Follow Up Updated',
+          description: `Next follow up date updated to ${input.nextFollowUpAt}`,
           initiatorType: 'user',
           initiatorId: ctx.session?.user.id,
         });
