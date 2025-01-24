@@ -47,7 +47,7 @@ export const activityTypeSchema = z.enum([
   'EMAIL_SCHEDULED',
   'MESSAGE_SENT',
   'NOTE_ADDED',
-
+  'LAST_CONTACTED_UPDATED',
   // Team Management
   'TEAM_ASSIGNED',
   'TEAM_REMOVED',

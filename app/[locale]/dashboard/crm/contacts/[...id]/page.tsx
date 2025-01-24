@@ -5,6 +5,7 @@ import { SendEmail } from '@/components/dashboard/contact/send-email';
 import { SendMessage } from '@/components/dashboard/contact/send-message';
 import { ColorBadge } from '@/components/shared/color-badge';
 import { Combobox } from '@/components/shared/combobox';
+import { DateTimePicker } from '@/components/shared/date-time-picker';
 import { EventDialog } from '@/components/shared/event-dialog';
 import type { EventFormData } from '@/components/shared/event-dialog';
 import { MetadataPopover } from '@/components/shared/metadata-popover';
@@ -94,6 +95,7 @@ export default function ContactIdPage() {
   const [editableRemark, setEditableRemark] = useState('');
   const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
   const [isMessageModalOpen, setIsMessageModalOpen] = useState(false);
+  const [lastContactDate, setLastContactDate] = useState<Date | null>(contact?.lastContactedAt ? new Date(contact.lastContactedAt) : null);
 
   const assignToTeam = api.team.assignContactToTeam.useMutation({
     onSuccess: () => {
@@ -208,6 +210,14 @@ export default function ContactIdPage() {
       setEditableRemark(contact.remark);
     }
   }, [contact?.remark]);
+
+  useEffect(() => {
+    if (contact?.lastContactedAt) {
+      setLastContactDate(new Date(contact.lastContactedAt));
+    } else {
+      setLastContactDate(null);
+    }
+  }, [contact?.lastContactedAt]);
 
   if (isLoading) {
     return <PageLoading />;
@@ -402,6 +412,16 @@ export default function ContactIdPage() {
                         <span>{contact.phone}</span>
                       </Link>
                     )}
+                    {contact?.createdAt && (
+                      <div className='flex items-center gap-2 pt-3'>
+                        <span className='text-muted-foreground text-xs'>
+                          {t('created_at_via', {
+                            date: formatDate(new Date(contact.createdAt)),
+                            source: contact.source,
+                          })}
+                        </span>
+                      </div>
+                    )}
                   </div>
                 </div>
                 <DropdownMenu>
@@ -441,15 +461,24 @@ export default function ContactIdPage() {
             <div className='border-b p-6'>
               <div className='grid grid-cols-1 gap-4'>
                 <div className='grid grid-cols-2 gap-4'>
-                  {[
-                    { label: t('last_contact'), value: contact?.lastContactedAt ? formatDate(new Date(contact.lastContactedAt)) : '—' },
-                    { label: t('source'), value: contact?.source || '—' },
-                  ].map((item) => (
-                    <div key={item.label} className='space-y-1.5'>
-                      <div className='text-muted-foreground text-xs'>{item.label}</div>
-                      <div className='text-foreground text-sm'>{item.value}</div>
+                  <div className='space-y-1.5'>
+                    <div className='text-muted-foreground text-xs'>{t('last_contact')}</div>
+                    <div className='text-foreground text-sm'>
+                      <DateTimePicker
+                        size='sm'
+                        value={lastContactDate}
+                        onChange={(date) => setLastContactDate(date)}
+                        onClose={() => {
+                          if (lastContactDate?.getTime() !== (contact?.lastContactedAt ? new Date(contact.lastContactedAt).getTime() : null)) {
+                            updateContact.mutate({
+                              id: contactId[0],
+                              lastContactedAt: lastContactDate || undefined,
+                            });
+                          }
+                        }}
+                      />
                     </div>
-                  ))}
+                  </div>
                 </div>
                 <div className='grid grid-cols-2 gap-4'>
                   <div className='space-y-1.5'>
@@ -651,6 +680,8 @@ export default function ContactIdPage() {
                                   borderLeftColor:
                                     activity.type === 'NOTE_ADDED'
                                       ? 'rgb(59 130 246)'
+                                      : activity.type === 'LAST_CONTACTED_UPDATED'
+                                      ? 'rgb(249 115 22)'
                                       : activity.type.startsWith('CONTACT_')
                                       ? 'rgb(34 197 94)'
                                       : activity.type.startsWith('MEETING_')
