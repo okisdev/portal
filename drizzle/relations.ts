@@ -13,6 +13,7 @@ import {
   marketingCampaign,
   paymentTrack,
   resourceContent,
+  resourceContentSendTrack,
   resourceContentShare,
   resourceEmails,
   session,
@@ -74,6 +75,7 @@ export const contactRelations = relations(contact, ({ many, one }) => ({
   leadingTeams: many(team, { relationName: 'teamLeader' }),
   subLeadingTeams: many(team, { relationName: 'teamSubLeader' }),
   referralTeams: many(team, { relationName: 'teamReferral' }),
+  receivedContent: many(resourceContentSendTrack),
 }));
 
 export const contactDealRelations = relations(contactDeal, ({ one }) => ({
@@ -176,6 +178,7 @@ export const resourceContentRelations = relations(resourceContent, ({ one, many 
     references: [user.id],
   }),
   shares: many(resourceContentShare),
+  sendTracks: many(resourceContentSendTrack),
 }));
 
 export const resourceContentShareRelations = relations(resourceContentShare, ({ one }) => ({
@@ -295,4 +298,19 @@ export const userTaskRelations = relations(userTask, ({ one, many }) => ({
     references: [userTask.id],
   }),
   subtasks: many(userTask, { relationName: 'subtasks' }),
+}));
+
+export const resourceContentSendTrackRelations = relations(resourceContentSendTrack, ({ one }) => ({
+  resource: one(resourceContent, {
+    fields: [resourceContentSendTrack.resourceId],
+    references: [resourceContent.id],
+  }),
+  contact: one(contact, {
+    fields: [resourceContentSendTrack.contactId],
+    references: [contact.id],
+  }),
+  sender: one(user, {
+    fields: [resourceContentSendTrack.sentBy],
+    references: [user.id],
+  }),
 }));

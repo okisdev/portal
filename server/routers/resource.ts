@@ -1,4 +1,4 @@
-import { resourceContent, resourceContentShare, resourceEmails } from '@/drizzle/schema';
+import { resourceContent, resourceContentSendTrack, resourceContentShare, resourceEmails } from '@/drizzle/schema';
 import { createTRPCRouter, protectedProcedure } from '@/server/trpc';
 import { and, eq, inArray, like, or } from 'drizzle-orm';
 import { z } from 'zod';
@@ -299,4 +299,23 @@ export const resourceRouter = createTRPCRouter({
 
     return ctx.db.delete(resourceEmails).where(eq(resourceEmails.id, input));
   }),
+
+  createContentSendTrack: protectedProcedure
+    .input(
+      z.object({
+        resourceId: z.string(),
+        contactId: z.string(),
+        status: z.enum(['sent', 'delivered', 'read', 'failed']),
+        metadata: z.record(z.any()).optional(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      return ctx.db.insert(resourceContentSendTrack).values({
+        resourceId: input.resourceId,
+        contactId: input.contactId,
+        sentBy: ctx.session.user.id,
+        status: input.status,
+        metadata: input.metadata ? JSON.stringify(input.metadata) : null,
+      });
+    }),
 });

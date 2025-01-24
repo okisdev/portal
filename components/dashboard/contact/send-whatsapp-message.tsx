@@ -4,7 +4,7 @@ import { TipTapEditor } from '@/components/shared/tiptap-editor';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import type { Contact } from '@/lib/schema';
+import type { Contact, ResourceContent } from '@/lib/schema';
 import { api } from '@/utils/trpc/client';
 import { MessageSquare, Send } from 'lucide-react';
 import { useSession } from 'next-auth/react';
@@ -38,6 +38,15 @@ export function SendWhatsAppMessage({ open, onOpenChange, recipient }: SendWhats
       utils.contact.getContactById.invalidate({ id: recipient.id });
       utils.contact.getContactActivities.invalidate({ id: recipient.id });
       handleClose();
+    },
+    onError: (error) => {
+      toast.error(error.message);
+    },
+  });
+
+  const createContentSendTrack = api.resource.createContentSendTrack.useMutation({
+    onSuccess: () => {
+      utils.resource.getContents.invalidate();
     },
     onError: (error) => {
       toast.error(error.message);
@@ -79,9 +88,19 @@ export function SendWhatsAppMessage({ open, onOpenChange, recipient }: SendWhats
     window.open(whatsappUrl, '_blank');
   };
 
-  const handleSelectTemplate = (template: any) => {
+  const handleSelectTemplate = (template: ResourceContent) => {
     setMessage(template.content);
     setIsSelectingTemplate(false);
+
+    // Track that this template was sent to the contact
+    createContentSendTrack.mutate({
+      resourceId: template.id,
+      contactId: recipient.id,
+      status: 'sent',
+      metadata: {
+        channel: 'whatsapp',
+      },
+    });
   };
 
   return (
