@@ -11,9 +11,9 @@ export function NotificationFilters() {
 
   const utils = api.useUtils();
 
-  const markAllAsRead = api.account.markAllNotificationsAsRead.useMutation({
+  const markAllAsRead = api.user.markAllNotificationsAsRead.useMutation({
     onSuccess: () => {
-      utils.account.getNotifications.invalidate();
+      utils.user.getNotifications.invalidate();
       toast.success('All notifications marked as read');
     },
     onError: () => {
