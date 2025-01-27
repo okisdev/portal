@@ -84,7 +84,9 @@
   "contains": "Contains",
   "content": "Content",
   "contents": "Contents",
+  "copied_to_clipboard": "Copied to clipboard",
   "copy_html": "Copy HTML",
+  "copy_to_clipboard_failed": "Failed to copy to clipboard",
   "country": "Country",
   "create": "Create",
   "create_a_password": "Create a password",
@@ -346,6 +348,7 @@
   "use_template": "Use Template",
   "user": "User",
   "username": "Username",
+  "version_copied_to_clipboard": "Version copied to clipboard",
   "view": "View",
   "view_details": "View details",
   "visibility": "Visibility",
@@ -355,8 +358,5 @@
   "welcome_back": "Welcome Back, {name}.",
   "welcome_description": "Welcome to your dashboard",
   "whatsapp": "WhatsApp",
-  "workspace": "Workspace",
-  "copied_to_clipboard": "Copied to clipboard",
-  "copy_to_clipboard_failed": "Failed to copy to clipboard",
-  "version_copied_to_clipboard": "Version copied to clipboard"
+  "workspace": "Workspace"
 }

@@ -382,14 +382,34 @@ export default function ContactIdPage() {
             <div className='border-b p-6'>
               <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
                 <div className='space-y-1.5'>
-                  <div className='text-muted-foreground text-xs'>{t('last_contact')}</div>
+                  <div className='flex items-center justify-between text-muted-foreground text-xs'>
+                    {t('last_contact')}
+                    {lastContactDate && (
+                      <button
+                        type='button'
+                        onClick={() => {
+                          setLastContactDate(null);
+                          updateContact.mutate({
+                            id: contactId[0],
+                            lastContactedAt: undefined,
+                          });
+                        }}
+                        className='text-muted-foreground hover:text-foreground'
+                      >
+                        <X className='size-3' />
+                      </button>
+                    )}
+                  </div>
                   <div className='text-foreground text-sm'>
                     <DateTimePicker
                       size='sm'
                       value={lastContactDate}
                       onChange={(date) => setLastContactDate(date)}
                       onClose={() => {
-                        if (lastContactDate?.getTime() !== (contact?.lastContactedAt ? new Date(contact.lastContactedAt).getTime() : null)) {
+                        const lastContactedAt = contact?.lastContactedAt ? new Date(contact.lastContactedAt).getTime() : null;
+                        const newTime = lastContactDate?.getTime() || null;
+
+                        if (lastContactedAt !== newTime) {
                           updateContact.mutate({
                             id: contactId[0],
                             lastContactedAt: lastContactDate || undefined,
@@ -400,7 +420,24 @@ export default function ContactIdPage() {
                   </div>
                 </div>
                 <div className='space-y-1.5'>
-                  <div className='text-muted-foreground text-xs'>{t('next_follow_up')}</div>
+                  <div className='flex items-center justify-between text-muted-foreground text-xs'>
+                    {t('next_follow_up')}
+                    {nextFollowUpDate && (
+                      <button
+                        type='button'
+                        onClick={() => {
+                          setNextFollowUpDate(null);
+                          updateContact.mutate({
+                            id: contactId[0],
+                            nextFollowUpAt: undefined,
+                          });
+                        }}
+                        className='text-muted-foreground hover:text-foreground'
+                      >
+                        <X className='size-3' />
+                      </button>
+                    )}
+                  </div>
                   <div className='text-foreground text-sm'>
                     <DateTimePicker
                       size='sm'
