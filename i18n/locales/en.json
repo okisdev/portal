@@ -352,5 +352,6 @@
   "organizer": "Organzier",
   "required": "Required",
   "optional": "Optional",
-  "jump_to_original_note": "Jump to original note"
+  "jump_to_original_note": "Jump to original note",
+  "mark_as_read": "Mark as read"
 }

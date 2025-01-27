@@ -1,4 +1,4 @@
-import { contact, contactActivity, contactCampaign, marketingCampaign, team, teamContact } from '@/drizzle/schema';
+import { contact, contactActivity, contactCampaign, marketingCampaign, team, teamContact, user, userNotifications } from '@/drizzle/schema';
 import { activitySubTypeSchema, activityTypeSchema, prioritySchema, statusSchema } from '@/lib/schema';
 import { createContactActivityHelper } from '@/server/helper/contact';
 import { createTRPCRouter, protectedProcedure, publicProcedure } from '@/server/trpc';
@@ -307,8 +307,9 @@ export const contactRouter = createTRPCRouter({
         metadata: z.record(z.any()).optional(),
       })
     )
-    .mutation(({ ctx, input }) => {
-      return ctx.db.insert(contactActivity).values({
+    .mutation(async ({ ctx, input }) => {
+      // Create the activity
+      await ctx.db.insert(contactActivity).values({
         contactId: input.contactId,
         userId: ctx.session?.user.id,
         type: input.type,
@@ -318,6 +319,30 @@ export const contactRouter = createTRPCRouter({
         description: input.description,
         metadata: input.metadata ? JSON.stringify(input.metadata) : null,
       });
+
+      // Handle @mentions
+      const mentionRegex = /@(\w+)/g;
+      const mentions = input.description.match(mentionRegex)?.map((m) => m.slice(1)) || [];
+
+      if (mentions.length > 0) {
+        // Get all mentioned users
+        const mentionedUsers = await ctx.db
+          .select()
+          .from(user)
+          .where(sql`${user.username} = ANY(${mentions})`);
+
+        // Create notifications for mentioned users
+        for (const mentionedUser of mentionedUsers) {
+          await ctx.db.insert(userNotifications).values({
+            userId: mentionedUser.id,
+            type: 'message',
+            title: `${ctx.session?.user.name || 'Someone'} mentioned you in a note`,
+            message: input.description,
+          });
+        }
+      }
+
+      return true;
     }),
 
   deleteContactActivity: protectedProcedure.input(z.object({ id: z.string() })).mutation(({ ctx, input }) => {

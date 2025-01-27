@@ -30,4 +30,22 @@ export const userRouter = createTRPCRouter({
   markAllNotificationsAsRead: protectedProcedure.mutation(({ ctx }) => {
     return ctx.db.update(userNotifications).set({ read: true }).where(eq(userNotifications.userId, ctx.session.user.id));
   }),
+
+  createNotification: protectedProcedure
+    .input(
+      z.object({
+        userId: z.string(),
+        type: z.string(),
+        title: z.string(),
+        message: z.string(),
+      })
+    )
+    .mutation(({ ctx, input }) => {
+      return ctx.db.insert(userNotifications).values({
+        userId: input.userId,
+        type: input.type,
+        title: input.title,
+        message: input.message,
+      });
+    }),
 });

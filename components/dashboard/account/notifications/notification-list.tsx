@@ -4,16 +4,19 @@ import { Button } from '@/components/ui/button';
 import { api } from '@/utils/trpc/client';
 import { formatDistanceToNow } from 'date-fns';
 import { Bell, Mail, MessageSquare } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 
 export function NotificationList() {
+  const t = useTranslations();
+
   const utils = api.useUtils();
 
-  const { data: notifications } = api.account.getNotifications.useQuery();
+  const { data: notifications } = api.user.getNotifications.useQuery();
 
-  const markAsRead = api.account.markNotificationAsRead.useMutation({
+  const markAsRead = api.user.markNotificationAsRead.useMutation({
     onSuccess: () => {
-      utils.account.getNotifications.invalidate();
+      utils.user.getNotifications.invalidate();
       toast.success('Notification marked as read');
     },
     onError: () => {
@@ -40,7 +43,7 @@ export function NotificationList() {
           </div>
           {!notification.read && (
             <Button variant='ghost' size='sm' className='shrink-0' onClick={() => markAsRead.mutate(notification.id)}>
-              Mark as read
+              {t('mark_as_read')}
             </Button>
           )}
         </div>

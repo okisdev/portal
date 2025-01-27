@@ -9,8 +9,15 @@ import { api } from '@/utils/trpc/client';
 import { ArrowUpRight } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import { useTranslations } from 'next-intl';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
+
+// Helper function to extract @mentions from text
+function extractMentions(text: string): string[] {
+  const mentionRegex = /@(\w+)/g;
+  const matches = text.match(mentionRegex);
+  return matches ? matches.map((match) => match.slice(1)) : [];
+}
 
 interface ContactActivityProps {
   contactId: string;
@@ -30,6 +37,13 @@ export function ContactActivity({ contactId }: ContactActivityProps) {
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
   const [replyText, setReplyText] = useState('');
   const [highlightedNote, setHighlightedNote] = useState<string | null>(null);
+  const [showMentions, setShowMentions] = useState(false);
+  const [mentionFilter, setMentionFilter] = useState('');
+  const [cursorPosition, setCursorPosition] = useState(0);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  // Query to get all users for @mention suggestions
+  const { data: users } = api.user.getAllUsers.useQuery();
 
   const createContactActivity = api.contact.createContactActivity.useMutation({
     onSuccess: () => {
@@ -41,6 +55,48 @@ export function ContactActivity({ contactId }: ContactActivityProps) {
       toast.error(error.message);
     },
   });
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setNewActivity(value);
+
+    // Handle @mention suggestions
+    const cursorPos = e.target.selectionStart || 0;
+    setCursorPosition(cursorPos);
+
+    const textBeforeCursor = value.slice(0, cursorPos);
+    const atSignIndex = textBeforeCursor.lastIndexOf('@');
+
+    if (atSignIndex !== -1) {
+      // Check if there's a space between @ and cursor
+      const textBetweenAtAndCursor = textBeforeCursor.slice(atSignIndex + 1);
+      if (!textBetweenAtAndCursor.includes(' ')) {
+        const filter = textBetweenAtAndCursor;
+        setMentionFilter(filter);
+        setShowMentions(true);
+        return;
+      }
+    }
+    setShowMentions(false);
+  };
+
+  const handleMentionSelect = (username: string) => {
+    if (!inputRef.current) return;
+
+    const textBeforeCursor = newActivity.slice(0, cursorPosition);
+    const atSignIndex = textBeforeCursor.lastIndexOf('@');
+    const textBeforeAt = newActivity.slice(0, atSignIndex);
+    const textAfterCursor = newActivity.slice(cursorPosition);
+
+    const newText = `${textBeforeAt}@${username} `; // Add a space after the mention
+    setNewActivity(newText + textAfterCursor);
+    setShowMentions(false);
+
+    // Focus back on input and set cursor position after the mention and space
+    inputRef.current.focus();
+    const newCursorPos = atSignIndex + username.length + 2; // +2 for @ and space
+    inputRef.current.setSelectionRange(newCursorPos, newCursorPos);
+  };
 
   const handleSubmitActivity = (e: React.FormEvent) => {
     e.preventDefault();
@@ -90,6 +146,18 @@ export function ContactActivity({ contactId }: ContactActivityProps) {
       setTimeout(() => setHighlightedNote(null), 2000);
     }
   };
+
+  // Close mentions dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (inputRef.current && !inputRef.current.contains(event.target as Node)) {
+        setShowMentions(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   return (
     <div className='relative flex flex-1 flex-col'>
@@ -211,8 +279,29 @@ export function ContactActivity({ contactId }: ContactActivityProps) {
         </div>
       </div>
       <div className='absolute right-0 bottom-0 left-0 bg-background p-4 sm:pt-4'>
-        <form onSubmit={handleSubmitActivity} className='flex max-w-full flex-col gap-2 sm:flex-row'>
-          <Input value={newActivity} onChange={(e) => setNewActivity(e.target.value)} placeholder='Add a note...' className='h-8 flex-1' />
+        <form onSubmit={handleSubmitActivity} className='relative flex max-w-full flex-col gap-2 sm:flex-row'>
+          <div className='relative flex-1'>
+            <Input ref={inputRef} value={newActivity} onChange={handleInputChange} placeholder='Add a note... Use @ to mention someone' className='h-8 flex-1' />
+            {showMentions && users && users.length > 0 && (
+              <div className='absolute top-full right-0 left-0 z-10 mt-1 max-h-48 overflow-y-auto rounded-md border bg-background shadow-lg'>
+                {users
+                  .filter((user) => {
+                    if (!user?.username) return false;
+                    return mentionFilter === '' || user.username.toLowerCase().includes(mentionFilter.toLowerCase());
+                  })
+                  .map((user) => (
+                    <button key={user.id} type='button' onClick={() => handleMentionSelect(user.username || '')} className='flex w-full items-center gap-2 px-3 py-2 hover:bg-muted'>
+                      <span className='font-medium'>{user.username}</span>
+                      <span className='text-muted-foreground text-sm'>{user.name}</span>
+                    </button>
+                  ))}
+                {users.filter((user) => {
+                  if (!user?.username) return false;
+                  return mentionFilter === '' || user.username.toLowerCase().includes(mentionFilter.toLowerCase());
+                }).length === 0 && <div className='px-3 py-2 text-muted-foreground text-sm'>No users found</div>}
+              </div>
+            )}
+          </div>
           <Button type='submit' size='sm' disabled={createContactActivity.isPending} className='w-full sm:w-auto'>
             {t('add_note')}
           </Button>
