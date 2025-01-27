@@ -2,14 +2,17 @@
 
 import { MetadataPopover } from '@/components/shared/metadata-popover';
 import { NameTag } from '@/components/shared/name-tag';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 import { api } from '@/utils/trpc/client';
 import { ArrowUpRight } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import { useTranslations } from 'next-intl';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
 // Helper function to extract @mentions from text
@@ -26,6 +29,7 @@ interface ContactActivityProps {
 export function ContactActivity({ contactId }: ContactActivityProps) {
   const t = useTranslations();
   const { data: session } = useSession();
+  const inputRef = useRef<HTMLTextAreaElement>(null);
 
   const utils = api.useUtils();
 
@@ -38,9 +42,8 @@ export function ContactActivity({ contactId }: ContactActivityProps) {
   const [replyText, setReplyText] = useState('');
   const [highlightedNote, setHighlightedNote] = useState<string | null>(null);
   const [showMentions, setShowMentions] = useState(false);
-  const [mentionFilter, setMentionFilter] = useState('');
+  const [mentionSearch, setMentionSearch] = useState('');
   const [cursorPosition, setCursorPosition] = useState(0);
-  const inputRef = useRef<HTMLInputElement>(null);
 
   // Query to get all users for @mention suggestions
   const { data: users } = api.user.getAllUsers.useQuery();
@@ -56,47 +59,76 @@ export function ContactActivity({ contactId }: ContactActivityProps) {
     },
   });
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>, isReply = false) => {
     const value = e.target.value;
-    setNewActivity(value);
+    isReply ? setReplyText(value) : setNewActivity(value);
 
-    // Handle @mention suggestions
     const cursorPos = e.target.selectionStart || 0;
     setCursorPosition(cursorPos);
 
     const textBeforeCursor = value.slice(0, cursorPos);
-    const atSignIndex = textBeforeCursor.lastIndexOf('@');
+    const lastAtSymbol = textBeforeCursor.lastIndexOf('@');
 
-    if (atSignIndex !== -1) {
-      // Check if there's a space between @ and cursor
-      const textBetweenAtAndCursor = textBeforeCursor.slice(atSignIndex + 1);
-      if (!textBetweenAtAndCursor.includes(' ')) {
-        const filter = textBetweenAtAndCursor;
-        setMentionFilter(filter);
-        setShowMentions(true);
-        return;
-      }
+    // If there's no @ symbol or cursor is at the start, don't show mentions
+    if (lastAtSymbol === -1) {
+      setShowMentions(false);
+      return;
     }
-    setShowMentions(false);
+
+    // Check if we're in the middle of an existing mention
+    const textFromAt = value.slice(lastAtSymbol);
+    const mentionMatch = textFromAt.match(/^@\w+\s/);
+    if (mentionMatch) {
+      setShowMentions(false);
+      return;
+    }
+
+    // Check if there's a space after @ or if we're too far from @
+    const hasSpaceAfterAt = textBeforeCursor.slice(lastAtSymbol).includes(' ');
+    if (!hasSpaceAfterAt && cursorPos - lastAtSymbol <= 15) {
+      const searchText = textBeforeCursor.slice(lastAtSymbol + 1);
+      setMentionSearch(searchText);
+      setShowMentions(true);
+    } else {
+      setShowMentions(false);
+    }
   };
 
-  const handleMentionSelect = (username: string) => {
-    if (!inputRef.current) return;
+  const userMentionData =
+    users?.map((user) => ({
+      id: user.id,
+      username: user.username ?? user.id,
+      display: user.name ?? user.username ?? user.id,
+    })) ?? [];
 
-    const textBeforeCursor = newActivity.slice(0, cursorPosition);
-    const atSignIndex = textBeforeCursor.lastIndexOf('@');
-    const textBeforeAt = newActivity.slice(0, atSignIndex);
-    const textAfterCursor = newActivity.slice(cursorPosition);
+  const handleMention = useCallback(
+    (username: string, isReply = false) => {
+      const currentValue = isReply ? replyText : newActivity;
+      const beforeMention = currentValue.slice(0, currentValue.lastIndexOf('@'));
+      const afterMention = currentValue.slice(cursorPosition);
+      const newValue = `${beforeMention}@${username} ${afterMention}`;
 
-    const newText = `${textBeforeAt}@${username} `; // Add a space after the mention
-    setNewActivity(newText + textAfterCursor);
-    setShowMentions(false);
+      if (isReply) {
+        setReplyText(newValue);
+        const replyInput = document.getElementById('replyInput') as HTMLInputElement;
+        if (replyInput) {
+          replyInput.focus();
+          const newCursorPos = beforeMention.length + username.length + 2;
+          replyInput.setSelectionRange(newCursorPos, newCursorPos);
+        }
+      } else {
+        setNewActivity(newValue);
+        if (inputRef.current) {
+          inputRef.current.focus();
+          const newCursorPos = beforeMention.length + username.length + 2;
+          inputRef.current.setSelectionRange(newCursorPos, newCursorPos);
+        }
+      }
 
-    // Focus back on input and set cursor position after the mention and space
-    inputRef.current.focus();
-    const newCursorPos = atSignIndex + username.length + 2; // +2 for @ and space
-    inputRef.current.setSelectionRange(newCursorPos, newCursorPos);
-  };
+      setShowMentions(false);
+    },
+    [newActivity, replyText, cursorPosition]
+  );
 
   const handleSubmitActivity = (e: React.FormEvent) => {
     e.preventDefault();
@@ -161,7 +193,7 @@ export function ContactActivity({ contactId }: ContactActivityProps) {
 
   return (
     <div className='relative flex flex-1 flex-col'>
-      <div className='absolute inset-0 overflow-y-auto pb-[5.5rem] sm:pb-[4.5rem]'>
+      <div className='absolute inset-0 overflow-y-auto pb-[6.5rem] sm:pb-[5.5rem]'>
         <div className='space-y-1'>
           {activities?.length === 0 && <p className='text-muted-foreground text-sm'>{t('no_activities_found')}</p>}
           {activities
@@ -220,7 +252,12 @@ export function ContactActivity({ contactId }: ContactActivityProps) {
                             </span>
                           )}
                           <span className='text-muted-foreground text-xs'>•</span>
-                          <span className='text-muted-foreground text-xs'>{new Date(activity.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                          <span className='text-muted-foreground text-xs'>
+                            {new Date(activity.createdAt).toLocaleTimeString([], {
+                              hour: '2-digit',
+                              minute: '2-digit',
+                            })}
+                          </span>
                         </div>
                         <div className='flex items-center gap-2'>
                           {activity.metadata && (
@@ -240,8 +277,39 @@ export function ContactActivity({ contactId }: ContactActivityProps) {
                       </div>
                       {replyingTo === activity.id && (
                         <form onSubmit={handleReplySubmit} className='mt-2 flex items-start gap-2'>
-                          <div className='flex-1'>
-                            <Input value={replyText} onChange={(e) => setReplyText(e.target.value)} placeholder='Write a reply...' className='h-8' />
+                          <div className='relative flex-1'>
+                            <Popover open={showMentions} onOpenChange={setShowMentions}>
+                              <PopoverTrigger asChild>
+                                <Textarea
+                                  id='replyInput'
+                                  value={replyText}
+                                  onChange={(e) => handleInputChange(e, true)}
+                                  placeholder='Write a reply... Use @ to mention someone'
+                                  className='min-h-[60px] resize-none'
+                                />
+                              </PopoverTrigger>
+                              <PopoverContent className='w-64 p-0' align='start'>
+                                <Command>
+                                  <CommandInput placeholder='Search users...' />
+                                  <CommandList>
+                                    <CommandEmpty>{t('no_users_found')}</CommandEmpty>
+                                    <CommandGroup>
+                                      {userMentionData
+                                        .filter((user) => user.display.toLowerCase().includes(mentionSearch.toLowerCase()))
+                                        .map((user) => (
+                                          <CommandItem key={user.id} onSelect={() => handleMention(user.username)} className='flex items-start gap-2 p-2'>
+                                            <Avatar className='h-6 w-6'>
+                                              <AvatarImage src={`https://avatar.vercel.sh/${user.id}`} />
+                                              <AvatarFallback>{user.display[0]}</AvatarFallback>
+                                            </Avatar>
+                                            <span className='text-left'>{user.display}</span>
+                                          </CommandItem>
+                                        ))}
+                                    </CommandGroup>
+                                  </CommandList>
+                                </Command>
+                              </PopoverContent>
+                            </Popover>
                           </div>
                           <div className='flex gap-1'>
                             <Button type='submit' size='sm' disabled={createContactActivity.isPending}>
@@ -281,26 +349,32 @@ export function ContactActivity({ contactId }: ContactActivityProps) {
       <div className='absolute right-0 bottom-0 left-0 bg-background p-4 sm:pt-4'>
         <form onSubmit={handleSubmitActivity} className='relative flex max-w-full flex-col gap-2 sm:flex-row'>
           <div className='relative flex-1'>
-            <Input ref={inputRef} value={newActivity} onChange={handleInputChange} placeholder='Add a note... Use @ to mention someone' className='h-8 flex-1' />
-            {showMentions && users && users.length > 0 && (
-              <div className='absolute top-full right-0 left-0 z-10 mt-1 max-h-48 overflow-y-auto rounded-md border bg-background shadow-lg'>
-                {users
-                  .filter((user) => {
-                    if (!user?.username) return false;
-                    return mentionFilter === '' || user.username.toLowerCase().includes(mentionFilter.toLowerCase());
-                  })
-                  .map((user) => (
-                    <button key={user.id} type='button' onClick={() => handleMentionSelect(user.username || '')} className='flex w-full items-center gap-2 px-3 py-2 hover:bg-muted'>
-                      <span className='font-medium'>{user.username}</span>
-                      <span className='text-muted-foreground text-sm'>{user.name}</span>
-                    </button>
-                  ))}
-                {users.filter((user) => {
-                  if (!user?.username) return false;
-                  return mentionFilter === '' || user.username.toLowerCase().includes(mentionFilter.toLowerCase());
-                }).length === 0 && <div className='px-3 py-2 text-muted-foreground text-sm'>No users found</div>}
-              </div>
-            )}
+            <Popover open={showMentions} onOpenChange={setShowMentions}>
+              <PopoverTrigger asChild>
+                <Textarea ref={inputRef} value={newActivity} onChange={(e) => handleInputChange(e)} placeholder='Add a note... Use @ to mention someone' className='min-h-[60px] resize-none' />
+              </PopoverTrigger>
+              <PopoverContent className='w-64 p-0' align='start'>
+                <Command>
+                  <CommandInput placeholder='Search users...' />
+                  <CommandList>
+                    <CommandEmpty>No users found.</CommandEmpty>
+                    <CommandGroup>
+                      {userMentionData
+                        .filter((user) => user.display.toLowerCase().includes(mentionSearch.toLowerCase()))
+                        .map((user) => (
+                          <CommandItem key={user.id} onSelect={() => handleMention(user.username)} className='flex items-start gap-2 p-2'>
+                            <Avatar className='h-6 w-6'>
+                              <AvatarImage src={user.display} />
+                              <AvatarFallback>{user.display[0]}</AvatarFallback>
+                            </Avatar>
+                            <span className='text-left'>{user.display}</span>
+                          </CommandItem>
+                        ))}
+                    </CommandGroup>
+                  </CommandList>
+                </Command>
+              </PopoverContent>
+            </Popover>
           </div>
           <Button type='submit' size='sm' disabled={createContactActivity.isPending} className='w-full sm:w-auto'>
             {t('add_note')}

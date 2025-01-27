@@ -353,5 +353,6 @@
   "required": "Required",
   "optional": "Optional",
   "jump_to_original_note": "Jump to original note",
-  "mark_as_read": "Mark as read"
+  "mark_as_read": "Mark as read",
+  "no_users_found": "No users found"
 }

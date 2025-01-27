@@ -352,5 +352,7 @@
   "select_user": "选择用户",
   "start": "开始",
   "suggested_locations": "建议的位置",
-  "jump_to_original_note": "跳到原始音符"
+  "jump_to_original_note": "跳到原始音符",
+  "mark_as_read": "标记为已读",
+  "no_users_found": "找不到用户"
 }

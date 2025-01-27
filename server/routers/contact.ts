@@ -326,10 +326,7 @@ export const contactRouter = createTRPCRouter({
 
       if (mentions.length > 0) {
         // Get all mentioned users
-        const mentionedUsers = await ctx.db
-          .select()
-          .from(user)
-          .where(sql`${user.username} = ANY(${mentions})`);
+        const mentionedUsers = await ctx.db.select().from(user).where(inArray(user.username, mentions));
 
         // Create notifications for mentioned users
         for (const mentionedUser of mentionedUsers) {
