@@ -368,5 +368,9 @@
   "whatsapp": "WhatsApp",
   "will_cancel_at": "将在 {date} 取消",
   "will_renew_at": "将在 {date} 续订",
-  "workspace": "工作区"
+  "workspace": "工作区",
+  "no_past_meetings": "没有过去的会议",
+  "no_upcoming_meetings": "没有即将召开的会议",
+  "past_meetings": "过去的会议",
+  "upcoming_meetings": "即将举行的会议"
 }

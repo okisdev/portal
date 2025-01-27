@@ -544,42 +544,102 @@ export default function ContactIdPage() {
                 </button>
               </div>
               <div className='space-y-4'>
-                {appointments?.length === 0 && <p className='text-muted-foreground text-sm'>{t('no_meetings_found')}</p>}
-                {appointments?.map((apt) => (
-                  <div key={apt.id} className='flex items-center gap-3'>
-                    <Calendar className='size-4 shrink-0 text-muted-foreground' />
-                    <div className='min-w-0 flex-1'>
-                      <p className='truncate font-medium text-foreground text-sm'>{apt.title}</p>
-                      <p className='text-muted-foreground text-xs'>{formatDate(new Date(apt.startAt))}</p>
+                {!appointments || (appointments.length === 0 && <p className='text-muted-foreground text-sm'>{t('no_meetings_found')}</p>)}
+                {appointments && appointments.length > 0 && (
+                  <div className='space-y-4'>
+                    <div className='space-y-2'>
+                      <h3 className='font-medium text-muted-foreground text-sm'>{t('upcoming_meetings')}</h3>
+                      {appointments.filter((apt) => new Date(apt.startAt) > new Date()).length === 0 ? (
+                        <p className='text-muted-foreground text-xs'>{t('no_upcoming_meetings')}</p>
+                      ) : (
+                        appointments
+                          .filter((apt) => new Date(apt.startAt) > new Date())
+                          .sort((a, b) => new Date(a.startAt).getTime() - new Date(b.startAt).getTime())
+                          .map((apt) => (
+                            <div key={apt.id} className='flex items-center gap-3 rounded-md border bg-card p-2'>
+                              <Calendar className='size-4 shrink-0 text-primary' />
+                              <div className='min-w-0 flex-1'>
+                                <p className='truncate font-medium text-foreground text-sm'>{apt.title}</p>
+                                <p className='text-muted-foreground text-xs'>{formatDate(new Date(apt.startAt))}</p>
+                              </div>
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <button type='button' className='shrink-0 text-muted-foreground hover:text-foreground'>
+                                    <MoreHorizontal className='size-4' />
+                                  </button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align='end' className='bg-popover text-popover-foreground'>
+                                  <DropdownMenuItem
+                                    onClick={() =>
+                                      setEditingAppointment({
+                                        id: apt.id,
+                                        title: apt.title,
+                                        description: apt.description || '',
+                                        startAt: new Date(apt.startAt),
+                                      })
+                                    }
+                                  >
+                                    <Edit2 className='mr-2 size-4' />
+                                    {t('edit')}
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem className='text-destructive' onClick={() => deleteAppointment.mutate(apt.id)}>
+                                    <Trash2 className='mr-2 size-4' />
+                                    {t('delete')}
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </div>
+                          ))
+                      )}
                     </div>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <button type='button' className='shrink-0 text-muted-foreground hover:text-foreground'>
-                          <MoreHorizontal className='size-4' />
-                        </button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align='end' className='bg-popover text-popover-foreground'>
-                        <DropdownMenuItem
-                          onClick={() =>
-                            setEditingAppointment({
-                              id: apt.id,
-                              title: apt.title,
-                              description: apt.description || '',
-                              startAt: new Date(apt.startAt),
-                            })
-                          }
-                        >
-                          <Edit2 className='mr-2 size-4' />
-                          {t('edit')}
-                        </DropdownMenuItem>
-                        <DropdownMenuItem className='text-destructive' onClick={() => deleteAppointment.mutate(apt.id)}>
-                          <Trash2 className='mr-2 size-4' />
-                          {t('delete')}
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+
+                    <div className='space-y-2'>
+                      <h3 className='font-medium text-muted-foreground text-sm'>{t('past_meetings')}</h3>
+                      {appointments.filter((apt) => new Date(apt.startAt) <= new Date()).length === 0 ? (
+                        <p className='text-muted-foreground text-xs'>{t('no_past_meetings')}</p>
+                      ) : (
+                        appointments
+                          .filter((apt) => new Date(apt.startAt) <= new Date())
+                          .sort((a, b) => new Date(b.startAt).getTime() - new Date(a.startAt).getTime())
+                          .map((apt) => (
+                            <div key={apt.id} className='flex items-center gap-3 rounded-md border bg-muted/40 p-2'>
+                              <Calendar className='size-4 shrink-0 text-muted-foreground' />
+                              <div className='min-w-0 flex-1'>
+                                <p className='truncate font-medium text-muted-foreground text-sm'>{apt.title}</p>
+                                <p className='text-muted-foreground text-xs'>{formatDate(new Date(apt.startAt))}</p>
+                              </div>
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <button type='button' className='shrink-0 text-muted-foreground hover:text-foreground'>
+                                    <MoreHorizontal className='size-4' />
+                                  </button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align='end' className='bg-popover text-popover-foreground'>
+                                  <DropdownMenuItem
+                                    onClick={() =>
+                                      setEditingAppointment({
+                                        id: apt.id,
+                                        title: apt.title,
+                                        description: apt.description || '',
+                                        startAt: new Date(apt.startAt),
+                                      })
+                                    }
+                                  >
+                                    <Edit2 className='mr-2 size-4' />
+                                    {t('edit')}
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem className='text-destructive' onClick={() => deleteAppointment.mutate(apt.id)}>
+                                    <Trash2 className='mr-2 size-4' />
+                                    {t('delete')}
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </div>
+                          ))
+                      )}
+                    </div>
                   </div>
-                ))}
+                )}
               </div>
             </div>
 

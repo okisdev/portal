@@ -368,5 +368,9 @@
   "whatsapp": "WhatsApp",
   "will_cancel_at": "將在 {date} 取消",
   "will_renew_at": "將在 {date} 續訂",
-  "workspace": "工作區"
+  "workspace": "工作區",
+  "no_past_meetings": "沒有過去的會議",
+  "no_upcoming_meetings": "沒有即將召開的會議",
+  "past_meetings": "過去的會議",
+  "upcoming_meetings": "即將召開的會議"
 }

@@ -368,5 +368,9 @@
   "whatsapp": "WhatsApp",
   "will_cancel_at": "Will cancel at {date}",
   "will_renew_at": "Will renew at {date}",
-  "workspace": "Workspace"
+  "workspace": "Workspace",
+  "upcoming_meetings": "Upcoming Meetings",
+  "no_upcoming_meetings": "No upcoming meetings",
+  "past_meetings": "Past Meetings",
+  "no_past_meetings": "No past meetings"
 }
