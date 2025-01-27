@@ -1,8 +1,10 @@
 import { contact, contactActivity, contactCampaign, marketingCampaign, team, teamContact, user, userNotifications } from '@/drizzle/schema';
+import { sendLarkMessage } from '@/lib/lark';
 import { activitySubTypeSchema, activityTypeSchema, prioritySchema, statusSchema } from '@/lib/schema';
 import { createContactActivityHelper } from '@/server/helper/contact';
 import { createTRPCRouter, protectedProcedure, publicProcedure } from '@/server/trpc';
 import { sendEmail } from '@/utils/email';
+import { TRPCError } from '@trpc/server';
 import { and, asc, desc, eq, inArray, sql } from 'drizzle-orm';
 import { z } from 'zod';
 
@@ -339,6 +341,26 @@ export const contactRouter = createTRPCRouter({
               contactId: input.contactId,
             }),
           });
+
+          if (!mentionedUser.email) {
+            throw new TRPCError({
+              code: 'BAD_REQUEST',
+              message: 'User email is not set',
+            });
+          }
+
+          try {
+            await sendLarkMessage({
+              userEmail: mentionedUser.email,
+              title: `${ctx.session?.user.name || 'Someone'} mentioned you in a note`,
+              content: input.description,
+              metadata: {
+                contactId: input.contactId,
+              },
+            });
+          } catch (error) {
+            console.error('Failed to send Lark notification:', error);
+          }
         }
       }
 

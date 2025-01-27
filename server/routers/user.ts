@@ -1,4 +1,5 @@
 import { user, userNotifications } from '@/drizzle/schema';
+import { sendLarkMessage } from '@/lib/lark';
 import { createTRPCRouter, protectedProcedure } from '@/server/trpc';
 import { and, count, desc, eq } from 'drizzle-orm';
 import { z } from 'zod';
@@ -49,13 +50,30 @@ export const userRouter = createTRPCRouter({
         metadata: z.record(z.string(), z.string()).optional(),
       })
     )
-    .mutation(({ ctx, input }) => {
-      return ctx.db.insert(userNotifications).values({
+    .mutation(async ({ ctx, input }) => {
+      // Create notification in database
+      const result = await ctx.db.insert(userNotifications).values({
         userId: input.userId,
         type: input.type,
         title: input.title,
         message: input.message,
         metadata: input.metadata ? JSON.stringify(input.metadata) : null,
       });
+
+      // Send notification to Lark
+      try {
+        await sendLarkMessage({
+          userEmail: input.userId,
+          title: input.title,
+          content: input.message,
+          metadata: input.metadata,
+        });
+      } catch (error) {
+        console.error('Failed to send Lark notification:', error);
+        // Don't throw error here to prevent notification creation failure
+        // Just log the error and continue
+      }
+
+      return result;
     }),
 });
