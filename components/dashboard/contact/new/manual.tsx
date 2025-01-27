@@ -1,6 +1,7 @@
 'use client';
 
 import { Combobox } from '@/components/shared/combobox';
+import { PhoneInput } from '@/components/shared/phone-input';
 import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
@@ -140,7 +141,7 @@ export default function ManualContactForm() {
               <FormItem>
                 <FormLabel>{t('phone')}</FormLabel>
                 <FormControl>
-                  <Input type='tel' placeholder='+852 12345678' {...field} />
+                  <PhoneInput value={field.value || ''} onChange={field.onChange} />
                 </FormControl>
                 <FormMessage />
               </FormItem>

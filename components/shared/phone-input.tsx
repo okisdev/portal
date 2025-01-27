@@ -4,7 +4,8 @@ import { Combobox } from '@/components/shared/combobox';
 import { Input } from '@/components/ui/input';
 import { phoneCountries } from '@/data/data';
 import { cn } from '@/lib/utils';
-import { useState } from 'react';
+import { useTranslations } from 'next-intl';
+import { useEffect, useState } from 'react';
 
 interface PhoneInputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'onChange'> {
   value: string;
@@ -12,22 +13,55 @@ interface PhoneInputProps extends Omit<React.InputHTMLAttributes<HTMLInputElemen
 }
 
 export function PhoneInput({ className, value, onChange, ...props }: PhoneInputProps) {
-  const [selectedCountry, setSelectedCountry] = useState(phoneCountries.find((c) => c.code === '+852'));
+  const t = useTranslations();
 
-  // Extract the phone number without country code
-  const phoneWithoutCode = value.replace(/^\+\d+\s*/, '');
+  const [selectedCountry, setSelectedCountry] = useState<(typeof phoneCountries)[0] | null>(null);
+  const [phoneNumber, setPhoneNumber] = useState('');
+
+  useEffect(() => {
+    // Try to detect country code from the value
+    if (value) {
+      // Check if value starts with a plus and numbers
+      const countryCodeMatch = value.match(/^\+(\d+)/);
+      if (countryCodeMatch) {
+        const detectedCode = `+${countryCodeMatch[1]}`;
+        const country = phoneCountries.find((c) => c.code === detectedCode);
+        if (country) {
+          setSelectedCountry(country);
+          setPhoneNumber(value.slice(detectedCode.length).trim());
+          return;
+        }
+      }
+
+      // If no country code detected or not matched, just set the number
+      setSelectedCountry(null);
+      setPhoneNumber(value);
+    } else {
+      setSelectedCountry(null);
+      setPhoneNumber('');
+    }
+  }, [value]);
 
   const handleCountryChange = (countryLabel: string) => {
     const country = phoneCountries.find((c) => c.label === countryLabel);
+    setSelectedCountry(country || null);
+
     if (country) {
-      setSelectedCountry(country);
-      onChange(`${country.code} ${phoneWithoutCode}`);
+      onChange(`${country.code} ${phoneNumber}`.trim());
+    } else {
+      onChange(phoneNumber);
     }
   };
 
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newPhone = e.target.value;
-    onChange(`${selectedCountry?.code} ${newPhone}`);
+    setPhoneNumber(newPhone);
+
+    if (selectedCountry) {
+      onChange(`${selectedCountry.code} ${newPhone}`.trim());
+    } else {
+      onChange(newPhone);
+    }
   };
 
   return (
@@ -39,10 +73,10 @@ export function PhoneInput({ className, value, onChange, ...props }: PhoneInputP
         placeholder='Select'
         searchPlaceholder='Search'
         groupHeading='Countries'
-        className='w-[140px]'
+        className='w-[180px]'
         allowCustom={false}
       />
-      <Input type='tel' value={phoneWithoutCode} onChange={handlePhoneChange} className='flex-1' {...props} />
+      <Input type='tel' value={phoneNumber} onChange={handlePhoneChange} className='flex-1' placeholder={selectedCountry ? undefined : t('enter_phone_number')} {...props} />
     </div>
   );
 }

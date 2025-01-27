@@ -49,6 +49,8 @@ export default function ContactIdPage() {
 
   const utils = api.useUtils();
 
+  const { data: user } = api.account.getMe.useQuery();
+
   const { data: contact, isLoading } = api.contact.getContactById.useQuery({
     id: contactId[0],
   });
@@ -102,7 +104,7 @@ export default function ContactIdPage() {
       handleCloseEditModal();
       utils.contact.getContactById.invalidate({ id: contactId[0] });
       utils.contact.getContactActivities.invalidate({ id: contactId[0] });
-      toast.success('Contact updated successfully');
+      toast.success(t('contact_updated_successfully'));
     },
   });
 
@@ -110,7 +112,7 @@ export default function ContactIdPage() {
     onSuccess: () => {
       utils.contact.getContactById.invalidate({ id: contactId[0] });
       utils.contact.getContactActivities.invalidate({ id: contactId[0] });
-      toast.success('Contact remark updated successfully');
+      toast.success(t('remark_updated_successfully'));
     },
   });
 
@@ -120,7 +122,7 @@ export default function ContactIdPage() {
       utils.calendar.getAppointmentsByContactId.invalidate({ contactId: contactId[0] });
       utils.contact.getContactById.invalidate({ id: contactId[0] });
       utils.contact.getContactActivities.invalidate({ id: contactId[0] });
-      toast.success('Appointment created successfully');
+      toast.success(t('appointment_created_successfully'));
     },
     onError: (error) => {
       toast.error(error.message);
@@ -131,7 +133,7 @@ export default function ContactIdPage() {
     onSuccess: () => {
       utils.calendar.getAppointmentsByContactId.invalidate({ contactId: contactId[0] });
       utils.contact.getContactActivities.invalidate({ id: contactId[0] });
-      toast.success('Appointment deleted successfully');
+      toast.success(t('appointment_deleted_successfully'));
     },
     onError: (error) => {
       toast.error(error.message);
@@ -143,7 +145,7 @@ export default function ContactIdPage() {
       setEditingAppointment(null);
       utils.calendar.getAppointmentsByContactId.invalidate({ contactId: contactId[0] });
       utils.contact.getContactActivities.invalidate({ id: contactId[0] });
-      toast.success('Appointment updated successfully');
+      toast.success(t('appointment_updated_successfully'));
     },
     onError: (error) => {
       toast.error(error.message);
@@ -761,7 +763,7 @@ export default function ContactIdPage() {
         onOpenChange={setIsBookingModalOpen}
         onSubmit={handleBookAppointment}
         defaultValues={{
-          title: t('meeting_with', { name: contact?.name }),
+          title: t('meeting_with', { who: user?.name, name: contact?.name }),
           startAt: new Date(),
           endAt: new Date(Date.now() + 30 * 60000),
           folderId: 'default',
