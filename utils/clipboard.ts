@@ -1,11 +1,13 @@
+import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 
-export const copyToClipboard = async (text: string) => {
+export const copyToClipboard = async (text: string, successMessage?: string) => {
+  const t = useTranslations();
   try {
     await navigator.clipboard.writeText(text);
-    toast.success('Copied to clipboard');
+    toast.success(successMessage || t('copied_to_clipboard'));
   } catch (err) {
     console.error(err);
-    toast.error('Failed to copy to clipboard');
+    toast.error(t('copy_to_clipboard_failed'));
   }
 };

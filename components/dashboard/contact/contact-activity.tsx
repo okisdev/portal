@@ -15,18 +15,7 @@ import { useTranslations } from 'next-intl';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
-// Helper function to extract @mentions from text
-function extractMentions(text: string): string[] {
-  const mentionRegex = /@(\w+)/g;
-  const matches = text.match(mentionRegex);
-  return matches ? matches.map((match) => match.slice(1)) : [];
-}
-
-interface ContactActivityProps {
-  contactId: string;
-}
-
-export function ContactActivity({ contactId }: ContactActivityProps) {
+export function ContactActivity({ contactId }: { contactId: string }) {
   const t = useTranslations();
   const { data: session } = useSession();
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -45,13 +34,13 @@ export function ContactActivity({ contactId }: ContactActivityProps) {
   const [mentionSearch, setMentionSearch] = useState('');
   const [cursorPosition, setCursorPosition] = useState(0);
 
-  // Query to get all users for @mention suggestions
   const { data: users } = api.user.getAllUsers.useQuery();
 
   const createContactActivity = api.contact.createContactActivity.useMutation({
     onSuccess: () => {
       setNewActivity('');
       utils.contact.getContactActivities.invalidate({ id: contactId });
+      utils.user.getUnreadNotificationsCount.invalidate();
       toast.success('Activity created successfully');
     },
     onError: (error) => {
@@ -69,29 +58,24 @@ export function ContactActivity({ contactId }: ContactActivityProps) {
     const textBeforeCursor = value.slice(0, cursorPos);
     const lastAtSymbol = textBeforeCursor.lastIndexOf('@');
 
-    // If there's no @ symbol or cursor is at the start, don't show mentions
+    // If there's no @ symbol, don't show mentions
     if (lastAtSymbol === -1) {
       setShowMentions(false);
       return;
     }
 
-    // Check if we're in the middle of an existing mention
-    const textFromAt = value.slice(lastAtSymbol);
-    const mentionMatch = textFromAt.match(/^@\w+\s/);
-    if (mentionMatch) {
+    // Get the text from the last @ symbol to the cursor
+    const textFromLastAt = textBeforeCursor.slice(lastAtSymbol + 1);
+
+    // If there's a space after the @, close the mentions
+    if (textFromLastAt.includes(' ')) {
       setShowMentions(false);
       return;
     }
 
-    // Check if there's a space after @ or if we're too far from @
-    const hasSpaceAfterAt = textBeforeCursor.slice(lastAtSymbol).includes(' ');
-    if (!hasSpaceAfterAt && cursorPos - lastAtSymbol <= 15) {
-      const searchText = textBeforeCursor.slice(lastAtSymbol + 1);
-      setMentionSearch(searchText);
-      setShowMentions(true);
-    } else {
-      setShowMentions(false);
-    }
+    // Show mentions and update search
+    setMentionSearch(textFromLastAt);
+    setShowMentions(true);
   };
 
   const userMentionData =
@@ -163,7 +147,9 @@ export function ContactActivity({ contactId }: ContactActivityProps) {
       initiatorType: 'user',
       initiatorId: session?.user.id || '',
       description: replyText,
-      metadata: { replyTo: replyingTo },
+      metadata: {
+        replyTo: replyingTo,
+      },
     });
 
     setReplyText('');
@@ -179,17 +165,40 @@ export function ContactActivity({ contactId }: ContactActivityProps) {
     }
   };
 
-  // Close mentions dropdown when clicking outside
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>, isReply = false) => {
+    if (e.key === 'Enter' && e.shiftKey) {
+      e.preventDefault();
+      if (isReply) {
+        if (replyText.trim() && replyingTo) {
+          handleReplySubmit(e);
+        }
+      } else {
+        if (newActivity.trim()) {
+          handleSubmitActivity(e);
+        }
+      }
+    }
+  };
+
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (inputRef.current && !inputRef.current.contains(event.target as Node)) {
+      const target = event.target as Node;
+      const popover = document.querySelector('[data-radix-popper-content-wrapper]');
+
+      // Don't close if clicking inside the popover
+      if (popover?.contains(target)) {
+        return;
+      }
+
+      // Only close mentions if they're currently shown
+      if (showMentions) {
         setShowMentions(false);
       }
     };
 
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+  }, [showMentions]);
 
   useEffect(() => {
     const container = document.getElementById('activities-container');
@@ -286,13 +295,14 @@ export function ContactActivity({ contactId }: ContactActivityProps) {
                       {replyingTo === activity.id && (
                         <form onSubmit={handleReplySubmit} className='mt-2 flex items-start gap-2'>
                           <div className='relative flex-1'>
-                            <Popover open={showMentions} onOpenChange={setShowMentions}>
+                            <Popover open={showMentions}>
                               <PopoverTrigger asChild>
                                 <div className='relative w-full'>
                                   <Textarea
                                     id='replyInput'
                                     value={replyText}
                                     onChange={(e) => handleInputChange(e, true)}
+                                    onKeyDown={(e) => handleKeyDown(e, true)}
                                     placeholder='Write a reply... Use @ to mention someone'
                                     className='min-h-[60px] resize-none'
                                   />
@@ -359,10 +369,17 @@ export function ContactActivity({ contactId }: ContactActivityProps) {
       <div className='absolute right-0 bottom-0 left-0 bg-background p-4 sm:pt-4'>
         <form onSubmit={handleSubmitActivity} className='relative flex max-w-full flex-col gap-2 sm:flex-row'>
           <div className='relative flex-1'>
-            <Popover open={showMentions} onOpenChange={setShowMentions}>
+            <Popover open={showMentions}>
               <PopoverTrigger asChild>
                 <div className='relative w-full'>
-                  <Textarea ref={inputRef} value={newActivity} onChange={(e) => handleInputChange(e)} placeholder='Add a note... Use @ to mention someone' className='min-h-[60px] resize-none' />
+                  <Textarea
+                    ref={inputRef}
+                    value={newActivity}
+                    onChange={(e) => handleInputChange(e)}
+                    onKeyDown={(e) => handleKeyDown(e)}
+                    placeholder='Add a note... Use @ to mention someone'
+                    className='min-h-[60px] resize-none'
+                  />
                 </div>
               </PopoverTrigger>
               <PopoverContent className='w-64 p-0' align='start'>

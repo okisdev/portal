@@ -355,5 +355,8 @@
   "welcome_back": "歡迎回來，{name}。",
   "welcome_description": "歡迎來到您的儀表板",
   "whatsapp": "WhatsApp",
-  "workspace": "工作區"
+  "workspace": "工作區",
+  "copied_to_clipboard": "已複製到剪貼簿",
+  "copy_to_clipboard_failed": "未能複製到剪貼板",
+  "version_copied_to_clipboard": "複製到剪貼板的版本"
 }

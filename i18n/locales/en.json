@@ -355,5 +355,8 @@
   "welcome_back": "Welcome Back, {name}.",
   "welcome_description": "Welcome to your dashboard",
   "whatsapp": "WhatsApp",
-  "workspace": "Workspace"
+  "workspace": "Workspace",
+  "copied_to_clipboard": "Copied to clipboard",
+  "copy_to_clipboard_failed": "Failed to copy to clipboard",
+  "version_copied_to_clipboard": "Version copied to clipboard"
 }

@@ -25,6 +25,7 @@ export default function NotificationsPage() {
   const markAsRead = api.user.markNotificationAsRead.useMutation({
     onSuccess: () => {
       utils.user.getNotifications.invalidate();
+      utils.user.getUnreadNotificationsCount.invalidate();
       toast.success('Notification marked as read');
     },
     onError: () => {
@@ -35,6 +36,7 @@ export default function NotificationsPage() {
   const markAllAsRead = api.user.markAllNotificationsAsRead.useMutation({
     onSuccess: () => {
       utils.user.getNotifications.invalidate();
+      utils.user.getUnreadNotificationsCount.invalidate();
       toast.success('All notifications marked as read');
     },
     onError: () => {

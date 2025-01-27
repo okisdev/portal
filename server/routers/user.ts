@@ -1,6 +1,6 @@
 import { user, userNotifications } from '@/drizzle/schema';
 import { createTRPCRouter, protectedProcedure } from '@/server/trpc';
-import { and, desc, eq } from 'drizzle-orm';
+import { and, count, desc, eq } from 'drizzle-orm';
 import { z } from 'zod';
 
 export const userRouter = createTRPCRouter({
@@ -18,6 +18,14 @@ export const userRouter = createTRPCRouter({
 
   getNotifications: protectedProcedure.query(({ ctx }) => {
     return ctx.db.select().from(userNotifications).where(eq(userNotifications.userId, ctx.session.user.id)).orderBy(desc(userNotifications.createdAt));
+  }),
+
+  getUnreadNotificationsCount: protectedProcedure.query(({ ctx }) => {
+    return ctx.db
+      .select({ count: count() })
+      .from(userNotifications)
+      .where(and(eq(userNotifications.userId, ctx.session.user.id), eq(userNotifications.read, false)))
+      .then((rows) => rows[0]);
   }),
 
   markNotificationAsRead: protectedProcedure.input(z.number()).mutation(({ ctx, input }) => {
