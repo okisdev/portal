@@ -55,6 +55,7 @@
     "@trpc/server": "^11.0.0-rc.714",
     "@types/papaparse": "^5.3.15",
     "@types/turndown": "^5.0.5",
+    "@vercel/analytics": "^1.4.1",
     "@vercel/speed-insights": "^1.1.0",
     "bcrypt-edge": "^0.1.0",
     "class-variance-authority": "^0.7.1",
