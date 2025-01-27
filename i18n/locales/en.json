@@ -326,5 +326,9 @@
   "week": "Week",
   "welcome_back": "Welcome Back, {name}.",
   "welcome_description": "Welcome to your dashboard",
-  "workspace": "Workspace"
+  "workspace": "Workspace",
+  "save": "Save",
+  "edit_company": "Edit Company",
+  "edit_company_description": "Edit this company",
+  "select_sub_leader": "Select Sub Leader"
 }

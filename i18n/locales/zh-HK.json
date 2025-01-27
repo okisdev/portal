@@ -326,5 +326,9 @@
   "week": "週",
   "welcome_back": "歡迎回來，{name}。",
   "welcome_description": "歡迎來到您的儀表板",
-  "workspace": "工作區"
+  "workspace": "工作區",
+  "edit_company": "編輯公司",
+  "edit_company_description": "編輯這家公司",
+  "save": "節省",
+  "select_sub_leader": "選擇子領導者"
 }

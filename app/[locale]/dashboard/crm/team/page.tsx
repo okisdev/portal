@@ -125,6 +125,11 @@ export default function CRMTeamsPage() {
       header: t('contacts'),
     },
     {
+      accessorKey: 'company',
+      header: t('company'),
+      cell: ({ row }) => row.getValue('company'),
+    },
+    {
       accessorKey: 'createdAt',
       header: t('created'),
       cell: ({ row }) => formatDate(new Date(row.getValue('createdAt'))),

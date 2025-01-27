@@ -1,4 +1,4 @@
-import { calendarEvent, calendarEventParticipant, calendarFolder, contact, marketingCampaign, team, teamActivity, teamContact, teamMeeting } from '@/drizzle/schema';
+import { calendarEvent, calendarEventParticipant, calendarFolder, company, contact, marketingCampaign, team, teamActivity, teamContact, teamMeeting } from '@/drizzle/schema';
 import { createContactActivityHelper } from '@/server/helper/contact';
 import { createTRPCRouter, protectedProcedure } from '@/server/trpc';
 import { and, eq, exists, sql } from 'drizzle-orm';
@@ -14,6 +14,10 @@ export const teamRouter = createTRPCRouter({
         createdAt: team.createdAt,
         createdBy: team.createdBy,
         contacts: sql<number>`(SELECT COUNT(*) FROM ${teamContact} WHERE ${teamContact.teamId} = ${team.id})`,
+        company: sql<{ id: string; name: string } | null>`
+          (SELECT row_to_json(c) 
+           FROM ${company} c 
+           WHERE c.id = ${team.companyId})`,
       })
       .from(team);
   }),
@@ -158,6 +162,11 @@ export const teamRouter = createTRPCRouter({
         referralId: team.referralId,
         campaignCode: team.campaignCode,
         remarks: team.remarks,
+        companyId: team.companyId,
+        company: sql<{ id: string; name: string } | null>`
+          (SELECT row_to_json(c) 
+           FROM ${company} c 
+           WHERE c.id = ${team.companyId})`,
         leader: sql<{ id: string; firstName: string; lastName: string } | null>`
           (SELECT row_to_json(c) 
            FROM ${contact} c 
@@ -187,9 +196,13 @@ export const teamRouter = createTRPCRouter({
         referralId: z.string().optional(),
         campaignCode: z.string().optional(),
         remarks: z.string().optional(),
+        companyId: z.string().optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
+      let campaignCodeToSet: string | undefined = input.campaignCode;
+      let companyIdToSet: string | undefined = input.companyId;
+
       if (input.campaignCode) {
         // Verify campaign exists
         const campaign = await ctx.db
@@ -199,21 +212,34 @@ export const teamRouter = createTRPCRouter({
           .then((rows) => rows[0]);
 
         if (!campaign) {
-          input.campaignCode = undefined;
+          campaignCodeToSet = undefined;
+        }
+      }
+
+      if (input.companyId) {
+        // Verify company exists
+        const companyRecord = await ctx.db
+          .select()
+          .from(company)
+          .where(eq(company.id, input.companyId))
+          .then((rows) => rows[0]);
+
+        if (!companyRecord) {
+          companyIdToSet = undefined;
         }
       }
 
       await ctx.db
         .update(team)
         .set({
-          name: input.name,
-          description: input.description,
-          leaderId: input.leaderId,
-          subLeaderId: input.subLeaderId,
-          referralId: input.referralId,
-          campaignCode: input.campaignCode,
-          remarks: input.remarks,
-          updatedAt: new Date(),
+          ...(input.name && { name: input.name }),
+          ...(input.description && { description: input.description }),
+          ...(input.leaderId && { leaderId: input.leaderId }),
+          ...(input.subLeaderId && { subLeaderId: input.subLeaderId }),
+          ...(input.referralId && { referralId: input.referralId }),
+          ...(campaignCodeToSet && { campaignCode: campaignCodeToSet }),
+          ...(companyIdToSet && { companyId: companyIdToSet }),
+          ...(input.remarks && { remarks: input.remarks }),
         })
         .where(eq(team.id, input.id));
     }),

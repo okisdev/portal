@@ -26,7 +26,7 @@ import {
   getSortedRowModel,
   useReactTable,
 } from '@tanstack/react-table';
-import { Check, Eye, Filter, MoreHorizontal, Trash2, X } from 'lucide-react';
+import { Check, Filter, MoreHorizontal, Pencil, Trash2, X } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { usePathname } from 'next/navigation';
@@ -151,6 +151,37 @@ export default function CompanyPage() {
   const [companyToDelete, setCompanyToDelete] = useState<string | null>(null);
 
   const [selectedColumn, setSelectedColumn] = useState<string>('');
+
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [selectedCompany, setSelectedCompany] = useState<any>(null);
+
+  const editCompanyForm = useForm<CreateCompanySchema>({
+    resolver: zodResolver(createCompanySchema),
+    defaultValues: {
+      name: '',
+      description: '',
+      industry: '',
+      size: '',
+      website: '',
+      address: '',
+      city: '',
+      state: '',
+      country: '',
+      postalCode: '',
+      phone: '',
+      email: '',
+      status: 'active',
+    },
+  });
+
+  const editCompany = api.company.updateCompany.useMutation({
+    onSuccess: () => {
+      utils.company.getAllCompanies.invalidate();
+      setEditDialogOpen(false);
+      setSelectedCompany(null);
+      editCompanyForm.reset();
+    },
+  });
 
   const handleStatusFilter = (status: string | null) => {
     if (status === null) {
@@ -339,9 +370,33 @@ export default function CompanyPage() {
     }
   };
 
-  const handleView = (id: string, e: React.MouseEvent) => {
+  const handleEdit = (company: any, e: React.MouseEvent) => {
     e.stopPropagation();
-    router.push(`/dashboard/crm/company/${id}`);
+    setSelectedCompany(company);
+    editCompanyForm.reset({
+      name: company.name,
+      description: company.description || '',
+      industry: company.industry || '',
+      size: company.size || '',
+      website: company.website || '',
+      address: company.address || '',
+      city: company.city || '',
+      state: company.state || '',
+      country: company.country || '',
+      postalCode: company.postalCode || '',
+      phone: company.phone || '',
+      email: company.email || '',
+      status: company.status,
+    });
+    setEditDialogOpen(true);
+  };
+
+  const onEditSubmit = (data: CreateCompanySchema) => {
+    if (!selectedCompany) return;
+    editCompany.mutate({
+      id: selectedCompany.id,
+      ...data,
+    });
   };
 
   const onSubmit = (data: CreateCompanySchema) => {
@@ -423,9 +478,9 @@ export default function CompanyPage() {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align='end'>
-            <DropdownMenuItem className='cursor-pointer' onClick={(e) => handleView(row.original.id, e)}>
-              <Eye className='mr-2 h-4 w-4' />
-              {t('view')}
+            <DropdownMenuItem className='cursor-pointer' onClick={(e) => handleEdit(row.original, e)}>
+              <Pencil className='mr-2 h-4 w-4' />
+              {t('edit')}
             </DropdownMenuItem>
             <DropdownMenuItem className='cursor-pointer text-destructive' onClick={(e) => handleDeleteClick(row.original.id, e)}>
               <Trash2 className='mr-2 h-4 w-4' />
@@ -814,6 +869,222 @@ export default function CompanyPage() {
                 </Button>
                 <Button type='submit' disabled={createCompany.isPending}>
                   {t('create')}
+                </Button>
+              </DialogFooter>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+        <DialogContent className='sm:max-w-[600px]'>
+          <DialogHeader>
+            <DialogTitle>{t('edit_company')}</DialogTitle>
+            <DialogDescription>{t('edit_company_description')}</DialogDescription>
+          </DialogHeader>
+
+          <Form {...editCompanyForm}>
+            <form onSubmit={editCompanyForm.handleSubmit(onEditSubmit)} className='space-y-4'>
+              <div className='grid grid-cols-2 gap-4'>
+                <FormField
+                  control={editCompanyForm.control}
+                  name='name'
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t('name')}</FormLabel>
+                      <FormControl>
+                        <Input {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={editCompanyForm.control}
+                  name='industry'
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t('industry')}</FormLabel>
+                      <FormControl>
+                        <Input {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={editCompanyForm.control}
+                  name='size'
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t('size')}</FormLabel>
+                      <FormControl>
+                        <Input {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={editCompanyForm.control}
+                  name='website'
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t('website')}</FormLabel>
+                      <FormControl>
+                        <Input {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={editCompanyForm.control}
+                  name='email'
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t('email')}</FormLabel>
+                      <FormControl>
+                        <Input {...field} type='email' />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={editCompanyForm.control}
+                  name='phone'
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t('phone')}</FormLabel>
+                      <FormControl>
+                        <Input {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={editCompanyForm.control}
+                  name='status'
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t('status')}</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder={t('select_status')} />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value='active'>{t('active')}</SelectItem>
+                          <SelectItem value='inactive'>{t('inactive')}</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <FormField
+                control={editCompanyForm.control}
+                name='description'
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t('description')}</FormLabel>
+                    <FormControl>
+                      <Input {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <div className='grid grid-cols-2 gap-4'>
+                <FormField
+                  control={editCompanyForm.control}
+                  name='address'
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t('address')}</FormLabel>
+                      <FormControl>
+                        <Input {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={editCompanyForm.control}
+                  name='city'
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t('city')}</FormLabel>
+                      <FormControl>
+                        <Input {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={editCompanyForm.control}
+                  name='state'
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t('state')}</FormLabel>
+                      <FormControl>
+                        <Input {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={editCompanyForm.control}
+                  name='country'
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t('country')}</FormLabel>
+                      <FormControl>
+                        <Input {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={editCompanyForm.control}
+                  name='postalCode'
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t('postal_code')}</FormLabel>
+                      <FormControl>
+                        <Input {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <DialogFooter>
+                <Button variant='outline' type='button' onClick={() => setEditDialogOpen(false)}>
+                  {t('cancel')}
+                </Button>
+                <Button type='submit' disabled={editCompany.isPending}>
+                  {t('save')}
                 </Button>
               </DialogFooter>
             </form>
