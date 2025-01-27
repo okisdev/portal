@@ -351,5 +351,6 @@
   "select_contact": "Select Contact",
   "organizer": "Organzier",
   "required": "Required",
-  "optional": "Optional"
+  "optional": "Optional",
+  "jump_to_original_note": "Jump to original note"
 }

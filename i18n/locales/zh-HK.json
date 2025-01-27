@@ -351,5 +351,6 @@
   "select_contact": "選擇聯絡人",
   "select_user": "選擇用戶",
   "start": "開始",
-  "suggested_locations": "建議地點"
+  "suggested_locations": "建議地點",
+  "jump_to_original_note": "跳轉至原始註釋"
 }
