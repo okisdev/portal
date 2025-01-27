@@ -74,8 +74,8 @@ export default function CampaignDetailsPage() {
     id: id[0],
   });
 
-  const { data: campaignContacts = [], isLoading: contactsLoading } = api.marketing.getCampaignContacts.useQuery({
-    code: id[0],
+  const { data: campaignContacts, isLoading: contactsLoading } = api.marketing.getCampaignContacts.useQuery({
+    id: id[0],
   });
 
   const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
@@ -240,11 +240,11 @@ export default function CampaignDetailsPage() {
             <DropdownMenuContent align='end'>
               <DropdownMenuItem onClick={(e) => router.push(`/dashboard/crm/contacts/${row.original.id}?mode=edit`)}>
                 <Eye className='mr-2 h-4 w-4' />
-                View
+                {t('view')}
               </DropdownMenuItem>
               <DropdownMenuItem className='text-destructive' onClick={(e) => handleDeleteClick(row.original.id, e)}>
                 <Trash2 className='mr-2 h-4 w-4' />
-                Remove
+                {t('remove')}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -379,7 +379,7 @@ export default function CampaignDetailsPage() {
   }
 
   if (!campaign) {
-    return <div>Campaign not found</div>;
+    return <div>{t('campaign_not_found')}</div>;
   }
 
   return (

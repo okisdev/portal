@@ -99,9 +99,10 @@ export const marketingRouter = createTRPCRouter({
           status: contact.status,
           joinedAt: contactCampaign.joinedAt,
         })
-        .from(contactCampaign)
+        .from(marketingCampaign)
+        .innerJoin(contactCampaign, eq(contactCampaign.campaignCode, marketingCampaign.campaignCode))
         .innerJoin(contact, eq(contactCampaign.contactId, contact.id))
-        .where(eq(contactCampaign.id, input.id));
+        .where(eq(marketingCampaign.id, input.id));
     }
     if (input.code) {
       return ctx.db
