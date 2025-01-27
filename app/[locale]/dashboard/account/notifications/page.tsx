@@ -68,7 +68,7 @@ export default function NotificationsPage() {
               </SelectContent>
             </Select>
           </div>
-          <Button variant='outline' size='sm' onClick={() => markAllAsRead.mutate()} className='transition-colors hover:bg-neutral-100'>
+          <Button variant='outline' size='sm' disabled={markAllAsRead.isPending} onClick={() => markAllAsRead.mutate()} className='transition-colors hover:bg-neutral-100'>
             {markAllAsRead.isPending ? t('marking_all_as_read') : t('mark_all_as_read')}
           </Button>
         </div>
@@ -109,24 +109,24 @@ export default function NotificationsPage() {
               </div>
               <div className='min-w-0 flex-1'>
                 <div className='flex items-start justify-between gap-4'>
-                  <p className={`font-medium ${notification.read ? 'text-neutral-700' : 'text-neutral-900'}`}>{notification.title}</p>
-                  <time className='whitespace-nowrap text-neutral-500 text-sm'>
+                  <p className={cn('font-medium text-sm', notification.read ? 'text-neutral-700' : 'text-neutral-900')}>{notification.title}</p>
+                  <time className='whitespace-nowrap text-neutral-500 text-xs'>
                     {notification.createdAt &&
                       formatDistanceToNow(new Date(notification.createdAt), {
                         addSuffix: true,
                       })}
                   </time>
                 </div>
-                <p className={`mt-1 text-sm ${notification.read ? 'text-neutral-500' : 'text-neutral-600'}`}>{notification.message}</p>
+                <p className={`mt-1 text-xs ${notification.read ? 'text-neutral-500' : 'text-neutral-600'}`}>{notification.message}</p>
               </div>
               <div className='flex flex-row items-center gap-2'>
                 {notification.metadata && (
                   <Button variant='ghost' size='sm'>
-                    <Link href={`/dashboard/contacts/${JSON.parse(notification.metadata)?.contactId}`}>{t('view')}</Link>
+                    <Link href={`/dashboard/crm/contacts/${JSON.parse(notification.metadata)?.contactId}`}>{t('view')}</Link>
                   </Button>
                 )}
                 {!notification.read && (
-                  <Button variant='ghost' size='sm' className='shrink-0 opacity-0 transition-opacity hover:bg-blue-100 group-hover:opacity-100' onClick={() => markAsRead.mutate(notification.id)}>
+                  <Button variant='ghost' size='sm' className='hover:bg-blue-300' onClick={() => markAsRead.mutate(notification.id)}>
                     {t('mark_as_read')}
                   </Button>
                 )}

@@ -191,9 +191,17 @@ export function ContactActivity({ contactId }: ContactActivityProps) {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  useEffect(() => {
+    const container = document.getElementById('activities-container');
+    if (container) {
+      container.scrollTop = container.scrollHeight;
+    }
+  }, [activities]);
+
   return (
     <div className='relative flex flex-1 flex-col'>
-      <div className='absolute inset-0 overflow-y-auto pb-[6.5rem] sm:pb-[5.5rem]'>
+      <div id='activities-container' className='absolute inset-0 overflow-y-auto pb-[6.5rem] sm:pb-[5.5rem]'>
+        <div className='pointer-events-none sticky top-0 z-10 h-8 bg-gradient-to-b from-background to-transparent' />
         <div className='space-y-1'>
           {activities?.length === 0 && <p className='text-muted-foreground text-sm'>{t('no_activities_found')}</p>}
           {activities
@@ -361,7 +369,7 @@ export function ContactActivity({ contactId }: ContactActivityProps) {
                 <Command>
                   <CommandInput placeholder='Search users...' />
                   <CommandList>
-                    <CommandEmpty>No users found.</CommandEmpty>
+                    <CommandEmpty>{t('no_users_found')}</CommandEmpty>
                     <CommandGroup>
                       {userMentionData
                         .filter((user) => user.display.toLowerCase().includes(mentionSearch.toLowerCase()))
