@@ -1,5 +1,6 @@
 'use client';
 
+import { ContactActivity } from '@/components/dashboard/contact/contact-activity';
 import { Payment } from '@/components/dashboard/contact/payment';
 import { SendEmail } from '@/components/dashboard/contact/send-email';
 import { SendWhatsAppMessage } from '@/components/dashboard/contact/send-whatsapp-message';
@@ -8,8 +9,6 @@ import { Combobox } from '@/components/shared/combobox';
 import { DateTimePicker } from '@/components/shared/date-time-picker';
 import { EventDialog } from '@/components/shared/event-dialog';
 import type { EventFormData } from '@/components/shared/event-dialog';
-import { MetadataPopover } from '@/components/shared/metadata-popover';
-import { NameTag } from '@/components/shared/name-tag';
 import { PageLoading } from '@/components/shared/page-loading';
 import { PhoneInput } from '@/components/shared/phone-input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -30,12 +29,11 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
-import { insuranceCompanies, sources } from '@/data/data';
+import { sources } from '@/data/data';
 import { type Priority, type Status, statusSchema } from '@/lib/schema';
-import { cn, formatDate } from '@/lib/utils';
+import { formatDate } from '@/lib/utils';
 import { api } from '@/utils/trpc/client';
-import { ArrowUpRight, Building2, Calendar, Edit2, Mail, MessageSquare, MoreHorizontal, Phone, Plus, Save, Send, Trash2, Users, X } from 'lucide-react';
-import { useSession } from 'next-auth/react';
+import { Building2, Calendar, Edit2, Mail, MessageSquare, MoreHorizontal, Phone, Plus, Save, Send, Trash2, Users, X } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { notFound, useParams, useRouter, useSearchParams } from 'next/navigation';
@@ -49,14 +47,9 @@ export default function ContactIdPage() {
   const mode = searchParams.get('mode');
   const t = useTranslations();
 
-  const { data: session } = useSession();
-
   const utils = api.useUtils();
 
   const { data: contact, isLoading } = api.contact.getContactById.useQuery({
-    id: contactId[0],
-  });
-  const { data: activities } = api.contact.getContactActivities.useQuery({
     id: contactId[0],
   });
 
@@ -65,6 +58,7 @@ export default function ContactIdPage() {
   });
   const { data: allTeams } = api.team.getAllTeams.useQuery();
   const { data: calendarFolders } = api.calendar.getMyFolders.useQuery();
+  const { data: companies } = api.company.getAllCompanies.useQuery();
 
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editForm, setEditForm] = useState({
@@ -73,18 +67,15 @@ export default function ContactIdPage() {
     email: '',
     phone: '',
     company: '',
+    companyId: null as string | null,
     status: 'lead' as Status,
     source: '',
     priority: 'medium' as Priority,
   });
 
-  const [newActivity, setNewActivity] = useState('');
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
   const [isTeamModalOpen, setIsTeamModalOpen] = useState(false);
   const [selectedTeam, setSelectedTeam] = useState<string>('');
-  const [replyingTo, setReplyingTo] = useState<string | null>(null);
-  const [replyText, setReplyText] = useState('');
-  const [highlightedNote, setHighlightedNote] = useState<string | null>(null);
   const [editingAppointment, setEditingAppointment] = useState<{
     id: string;
     title: string;
@@ -159,17 +150,6 @@ export default function ContactIdPage() {
     },
   });
 
-  const createContactActivity = api.contact.createContactActivity.useMutation({
-    onSuccess: () => {
-      setNewActivity('');
-      utils.contact.getContactActivities.invalidate({ id: contactId[0] });
-      toast.success('Activity created successfully');
-    },
-    onError: (error) => {
-      toast.error(error.message);
-    },
-  });
-
   const handleEditAppointment = (data: any) => {
     if (!editingAppointment) return;
 
@@ -198,6 +178,7 @@ export default function ContactIdPage() {
         email: contact.email || '',
         phone: contact.phone || '',
         company: contact.company || '',
+        companyId: contact.companyId || null,
         status: contact.status || 'lead',
         source: contact.source || '',
         priority: contact.priority || 'low',
@@ -235,6 +216,7 @@ export default function ContactIdPage() {
       email: contact?.email || '',
       phone: contact?.phone || '',
       company: contact?.company || '',
+      companyId: contact?.companyId || null,
       status: contact?.status || 'lead',
       source: contact?.source || '',
       priority: contact?.priority || 'low',
@@ -264,6 +246,7 @@ export default function ContactIdPage() {
       email: editForm.email,
       phone: editForm.phone,
       company: editForm.company,
+      companyId: editForm.companyId,
       status: editForm.status,
       source: editForm.source,
       priority: editForm.priority,
@@ -300,55 +283,6 @@ export default function ContactIdPage() {
     searchParams.delete('mode');
     const newUrl = `${window.location.pathname}${searchParams.toString() ? `?${searchParams.toString()}` : ''}`;
     router.replace(newUrl);
-  };
-
-  const handleSubmitActivity = (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!newActivity.trim()) {
-      toast.error('Activity cannot be empty');
-      return;
-    }
-
-    createContactActivity.mutate({
-      contactId: contactId[0],
-      type: 'ENGAGEMENT',
-      subType: 'NOTE_ADDED',
-      initiatorType: 'user',
-      initiatorId: session?.user.id || '',
-      description: newActivity,
-    });
-  };
-
-  const handleReplySubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!replyText.trim() || !replyingTo) {
-      toast.error('Reply cannot be empty');
-      return;
-    }
-
-    createContactActivity.mutate({
-      contactId: contactId[0],
-      type: 'ENGAGEMENT',
-      subType: 'NOTE_ADDED',
-      initiatorType: 'user',
-      initiatorId: session?.user.id || '',
-      description: replyText,
-      metadata: { replyTo: replyingTo },
-    });
-
-    setReplyText('');
-    setReplyingTo(null);
-  };
-
-  const scrollToNote = (noteId: string) => {
-    const element = document.getElementById(`note-${noteId}`);
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      setHighlightedNote(noteId);
-      setTimeout(() => setHighlightedNote(null), 2000);
-    }
   };
 
   return (
@@ -435,7 +369,7 @@ export default function ContactIdPage() {
                           </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => setIsMessageModalOpen(true)} className='cursor-pointer'>
                             <MessageSquare className='mr-2 size-4' />
-                            {t('message')}
+                            {t('whatsapp')}
                           </DropdownMenuItem>
                         </DropdownMenuSubContent>
                       </DropdownMenuPortal>
@@ -448,14 +382,34 @@ export default function ContactIdPage() {
             <div className='border-b p-6'>
               <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
                 <div className='space-y-1.5'>
-                  <div className='text-muted-foreground text-xs'>{t('last_contact')}</div>
+                  <div className='flex items-center justify-between text-muted-foreground text-xs'>
+                    {t('last_contact')}
+                    {lastContactDate && (
+                      <button
+                        type='button'
+                        onClick={() => {
+                          setLastContactDate(null);
+                          updateContact.mutate({
+                            id: contactId[0],
+                            lastContactedAt: null,
+                          });
+                        }}
+                        className='text-muted-foreground hover:text-foreground'
+                      >
+                        <X className='size-3' />
+                      </button>
+                    )}
+                  </div>
                   <div className='text-foreground text-sm'>
                     <DateTimePicker
                       size='sm'
                       value={lastContactDate}
                       onChange={(date) => setLastContactDate(date)}
                       onClose={() => {
-                        if (lastContactDate?.getTime() !== (contact?.lastContactedAt ? new Date(contact.lastContactedAt).getTime() : null)) {
+                        const lastContactedAt = contact?.lastContactedAt ? new Date(contact.lastContactedAt).getTime() : null;
+                        const newTime = lastContactDate?.getTime() || null;
+
+                        if (lastContactedAt !== newTime) {
                           updateContact.mutate({
                             id: contactId[0],
                             lastContactedAt: lastContactDate || undefined,
@@ -466,14 +420,34 @@ export default function ContactIdPage() {
                   </div>
                 </div>
                 <div className='space-y-1.5'>
-                  <div className='text-muted-foreground text-xs'>{t('next_follow_up')}</div>
+                  <div className='flex items-center justify-between text-muted-foreground text-xs'>
+                    {t('next_follow_up')}
+                    {nextFollowUpDate && (
+                      <button
+                        type='button'
+                        onClick={() => {
+                          setNextFollowUpDate(null);
+                          updateContact.mutate({
+                            id: contactId[0],
+                            nextFollowUpAt: null,
+                          });
+                        }}
+                        className='text-muted-foreground hover:text-foreground'
+                      >
+                        <X className='size-3' />
+                      </button>
+                    )}
+                  </div>
                   <div className='text-foreground text-sm'>
                     <DateTimePicker
                       size='sm'
                       value={nextFollowUpDate}
                       onChange={(date) => setNextFollowUpDate(date)}
                       onClose={() => {
-                        if (nextFollowUpDate?.getTime() !== (contact?.nextFollowUpAt ? new Date(contact.nextFollowUpAt).getTime() : null)) {
+                        const currentTime = contact?.nextFollowUpAt ? new Date(contact.nextFollowUpAt).getTime() : null;
+                        const newTime = nextFollowUpDate?.getTime() || null;
+
+                        if (currentTime !== newTime) {
                           updateContact.mutate({
                             id: contactId[0],
                             nextFollowUpAt: nextFollowUpDate || undefined,
@@ -654,131 +628,7 @@ export default function ContactIdPage() {
                   <TabsTrigger value='management'>{t('management')}</TabsTrigger>
                 </TabsList>
                 <TabsContent value='activity' className='relative flex flex-1 flex-col'>
-                  <div className='absolute inset-0 overflow-y-auto pb-[5.5rem] sm:pb-[4.5rem]'>
-                    <div className='space-y-1'>
-                      {activities?.length === 0 && <p className='text-muted-foreground text-sm'>{t('no_activities_found')}</p>}
-                      {activities
-                        ?.filter((activity) => activity.type !== 'CONTACT' && activity.subType !== 'CONTACT_UPDATED')
-                        .map((activity, index) => {
-                          const currentDate = new Date(activity.createdAt).toDateString();
-                          const prevDate = index > 0 ? new Date(activities[index - 1].createdAt).toDateString() : null;
-                          const showDateDivider = currentDate !== prevDate;
-
-                          return (
-                            <div key={activity.id} id={`note-${activity.id}`}>
-                              {showDateDivider && (
-                                <div className='sticky top-0 bg-background/95 py-2 backdrop-blur supports-[backdrop-filter]:bg-background/60'>
-                                  <p className='font-medium text-muted-foreground text-sm'>{currentDate}</p>
-                                </div>
-                              )}
-                              <div
-                                className={cn(
-                                  'flex items-start gap-3 border-l-2 py-3 pr-2 pl-4 hover:bg-muted/30',
-                                  highlightedNote === activity.id && 'bg-neutral-500/20 dark:bg-neutral-500/50',
-                                  activity.metadata && JSON.parse(activity.metadata).replyTo && 'ml-4'
-                                )}
-                                style={{
-                                  borderLeftColor:
-                                    activity.type === 'ENGAGEMENT'
-                                      ? 'rgb(59 130 246)'
-                                      : activity.type === 'DATE'
-                                      ? 'rgb(249 115 22)'
-                                      : activity.type === 'STATUS'
-                                      ? 'rgb(34 197 94)'
-                                      : activity.type === 'TEAM'
-                                      ? 'rgb(234 179 8)'
-                                      : activity.type === 'DEAL'
-                                      ? 'rgb(236 72 153)'
-                                      : activity.type === 'PAYMENT'
-                                      ? 'rgb(16 185 129)'
-                                      : activity.type === 'CAMPAIGN'
-                                      ? 'rgb(239 68 68)'
-                                      : activity.type === 'CONTACT'
-                                      ? 'rgb(250 204 21)'
-                                      : 'rgb(156 163 175)',
-                                }}
-                              >
-                                <div className='flex-1 space-y-1'>
-                                  <div className='flex w-full items-center justify-between'>
-                                    <div className='flex items-center gap-2 text-sm'>
-                                      <span className='font-medium'>{activity.subType && t(activity.subType)}</span>
-                                      <span className='text-muted-foreground text-xs'>•</span>
-                                      {activity.initiatorType === 'system' ? (
-                                        <span className='text-muted-foreground text-xs'>{t('by_system')}</span>
-                                      ) : (
-                                        <span className='flex items-center gap-1 text-muted-foreground text-xs'>
-                                          {t.rich('by', {
-                                            name: () => <NameTag id={activity.userId} type='user' />,
-                                          })}
-                                        </span>
-                                      )}
-                                      <span className='text-muted-foreground text-xs'>•</span>
-                                      <span className='text-muted-foreground text-xs'>{new Date(activity.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                                    </div>
-                                    <div className='flex items-center gap-2'>
-                                      {activity.metadata && (
-                                        <MetadataPopover title={t('view_details')}>
-                                          <pre className='whitespace-pre-wrap font-mono text-xs'>{JSON.stringify(JSON.parse(activity.metadata), null, 2)}</pre>
-                                        </MetadataPopover>
-                                      )}
-                                      {activity.type === 'ENGAGEMENT' && activity.subType === 'NOTE_ADDED' && (
-                                        <button type='button' onClick={() => setReplyingTo(activity.id)} className='rounded-md bg-muted/50 px-1 py-0.5 text-muted-foreground text-xs hover:bg-muted'>
-                                          {t('reply')}
-                                        </button>
-                                      )}
-                                    </div>
-                                  </div>
-                                  <div className={cn('text-sm', activity.type === 'ENGAGEMENT' && activity.subType === 'NOTE_ADDED' ? 'rounded-md bg-blue-50 p-3 dark:bg-blue-950/50' : '')}>
-                                    {activity.description}
-                                  </div>
-                                  {replyingTo === activity.id && (
-                                    <form onSubmit={handleReplySubmit} className='mt-2 flex items-start gap-2'>
-                                      <div className='flex-1'>
-                                        <Input value={replyText} onChange={(e) => setReplyText(e.target.value)} placeholder='Write a reply...' className='h-8' />
-                                      </div>
-                                      <div className='flex gap-1'>
-                                        <Button type='submit' size='sm' disabled={createContactActivity.isPending}>
-                                          {t('reply')}
-                                        </Button>
-                                        <Button
-                                          type='button'
-                                          size='sm'
-                                          variant='outline'
-                                          onClick={() => {
-                                            setReplyingTo(null);
-                                            setReplyText('');
-                                          }}
-                                        >
-                                          {t('cancel')}
-                                        </Button>
-                                      </div>
-                                    </form>
-                                  )}
-                                  {activity.metadata && JSON.parse(activity.metadata).replyTo && (
-                                    <button
-                                      type='button'
-                                      onClick={() => scrollToNote(JSON.parse(activity.metadata as string).replyTo)}
-                                      className='mt-1 flex items-center gap-1 text-muted-foreground text-xs hover:text-foreground'
-                                    >
-                                      <ArrowUpRight className='size-3' />
-                                      Jump to original note
-                                    </button>
-                                  )}
-                                </div>
-                              </div>
-                            </div>
-                          );
-                        })}
-                    </div>
-                  </div>
-                  <div className='absolute right-0 bottom-0 left-0 bg-background p-4 sm:pt-4'>
-                    <form onSubmit={handleSubmitActivity} className='flex max-w-full flex-col gap-2 sm:flex-row'>
-                      <Input value={newActivity} onChange={(e) => setNewActivity(e.target.value)} placeholder='Add a note...' className='h-8 flex-1' />
-                      <Button type='submit' size='sm' disabled={createContactActivity.isPending} className='w-full sm:w-auto'>
-                        {t('add_note')}
-                      </Button>
-                    </form>
-                  </div>
+                  <ContactActivity contactId={contactId[0]} />
                 </TabsContent>
                 <TabsContent value='subscription' className='flex w-full flex-col gap-4'>
                   <p>{t('subscription')}</p>
@@ -820,11 +670,19 @@ export default function ContactIdPage() {
               <Label htmlFor='company'>{t('company')}</Label>
               <Combobox
                 value={editForm.company}
-                onChange={(value) => setEditForm({ ...editForm, company: value })}
-                items={insuranceCompanies}
+                onChange={(value) => {
+                  const selectedCompany = companies?.find((c) => c.name === value);
+                  setEditForm({
+                    ...editForm,
+                    company: selectedCompany ? selectedCompany.name : value,
+                    companyId: selectedCompany?.id || null,
+                  });
+                }}
+                items={companies?.map((c) => c.name) || []}
                 placeholder={t('select_company')}
                 searchPlaceholder={t('search_company')}
                 groupHeading={t('companies')}
+                allowCustom={true}
               />
             </div>
             <div className='space-y-2'>

@@ -365,7 +365,7 @@ export default function DashboardPersonalCalendar() {
   return (
     <>
       <div className='flex h-full flex-col md:flex-row'>
-        <div className='hidden md:block'>
+        <div className='hidden border-r md:block'>
           <CalendarSidebar
             currentDate={currentDate}
             selectedDate={selectedDate}

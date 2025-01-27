@@ -38,6 +38,7 @@ type TeamWithCount = {
   createdAt: Date;
   createdBy: string;
   contacts: number;
+  company: { id: string; name: string } | null;
 };
 
 export default function CRMTeamsPage() {
@@ -123,6 +124,14 @@ export default function CRMTeamsPage() {
     {
       accessorKey: 'contacts',
       header: t('contacts'),
+    },
+    {
+      accessorKey: 'company',
+      header: t('company'),
+      cell: ({ row }) => {
+        const company = row.original.company;
+        return company ? company.name : '-';
+      },
     },
     {
       accessorKey: 'createdAt',

@@ -138,7 +138,7 @@ export function EventDialog({ open, onOpenChange, onSubmit, isEditMode = false, 
               name='title'
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Title</FormLabel>
+                  <FormLabel>{t('title')}</FormLabel>
                   <FormControl>
                     <Input {...field} />
                   </FormControl>
@@ -151,7 +151,7 @@ export function EventDialog({ open, onOpenChange, onSubmit, isEditMode = false, 
               name='description'
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Description</FormLabel>
+                  <FormLabel>{t('description')}</FormLabel>
                   <FormControl>
                     <Textarea {...field} />
                   </FormControl>
@@ -164,16 +164,16 @@ export function EventDialog({ open, onOpenChange, onSubmit, isEditMode = false, 
               name='location'
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Location</FormLabel>
+                  <FormLabel>{t('location')}</FormLabel>
                   <FormControl>
                     <Combobox
                       value={field.value || ''}
                       onChange={field.onChange}
                       items={['Meeting Room 1', 'Meeting Room 2', 'Conference Room A', 'Conference Room B', 'Office', 'Virtual Meeting', 'Zoom', 'Google Meet', 'Microsoft Teams']}
-                      placeholder='Enter or select location'
-                      searchPlaceholder='Search locations...'
-                      emptyText='No locations found'
-                      groupHeading='Suggested Locations'
+                      placeholder={t('enter_or_select_location')}
+                      searchPlaceholder={t('search_locations')}
+                      emptyText={t('no_locations_found')}
+                      groupHeading={t('suggested_locations')}
                       allowCustom={true}
                     />
                   </FormControl>
@@ -190,7 +190,19 @@ export function EventDialog({ open, onOpenChange, onSubmit, isEditMode = false, 
                     <FormControl>
                       <Checkbox checked={field.value} onCheckedChange={field.onChange} />
                     </FormControl>
-                    <FormLabel className='text-sm'>All Day</FormLabel>
+                    <FormLabel className='text-sm'>{t('all_day')}</FormLabel>
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name='isPublic'
+                render={({ field }) => (
+                  <FormItem className='flex flex-row items-center gap-2'>
+                    <FormControl>
+                      <Checkbox checked={field.value} onCheckedChange={field.onChange} />
+                    </FormControl>
+                    <FormLabel className='text-sm'>{t('public')}</FormLabel>
                   </FormItem>
                 )}
               />
@@ -202,7 +214,7 @@ export function EventDialog({ open, onOpenChange, onSubmit, isEditMode = false, 
                 name='startAt'
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Start</FormLabel>
+                    <FormLabel>{t('start')}</FormLabel>
                     <FormControl>
                       <DateTimePicker value={field.value} onChange={(date) => field.onChange(date)} showTimePicker={!form.watch('isAllDay')} />
                     </FormControl>
@@ -215,7 +227,7 @@ export function EventDialog({ open, onOpenChange, onSubmit, isEditMode = false, 
                 name='endAt'
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>End</FormLabel>
+                    <FormLabel>{t('end')}</FormLabel>
                     <FormControl>
                       <DateTimePicker value={field.value} onChange={(date) => field.onChange(date)} showTimePicker={!form.watch('isAllDay')} />
                     </FormControl>
@@ -239,22 +251,9 @@ export function EventDialog({ open, onOpenChange, onSubmit, isEditMode = false, 
                       searchPlaceholder={t('search_calendars')}
                       emptyText={t('no_calendars_found')}
                       groupHeading={t('calendars')}
-                      allowCustom={true}
+                      allowCustom={false}
                     />
                   </FormControl>
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name='isPublic'
-              render={({ field }) => (
-                <FormItem className='flex flex-row items-center gap-2'>
-                  <FormControl>
-                    <Checkbox checked={field.value} onCheckedChange={field.onChange} />
-                  </FormControl>
-                  <FormLabel className='text-sm'>{t('public')}</FormLabel>
                 </FormItem>
               )}
             />
@@ -295,9 +294,9 @@ export function EventDialog({ open, onOpenChange, onSubmit, isEditMode = false, 
                               <SelectValue placeholder='Type' />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value='user'>User</SelectItem>
-                              <SelectItem value='contact'>Contact</SelectItem>
-                              <SelectItem value='external'>External</SelectItem>
+                              <SelectItem value='user'>{t('user')}</SelectItem>
+                              <SelectItem value='contact'>{t('contact')}</SelectItem>
+                              <SelectItem value='external'>{t('external')}</SelectItem>
                             </SelectContent>
                           </Select>
                         </FormItem>
@@ -312,7 +311,7 @@ export function EventDialog({ open, onOpenChange, onSubmit, isEditMode = false, 
                           <FormItem className='flex-1'>
                             <Select value={field.value} onValueChange={field.onChange}>
                               <SelectTrigger>
-                                <SelectValue placeholder='Select user' />
+                                <SelectValue placeholder={t('select_user')} />
                               </SelectTrigger>
                               <SelectContent>
                                 {participantOptions.users?.map((user) => (
@@ -340,10 +339,10 @@ export function EventDialog({ open, onOpenChange, onSubmit, isEditMode = false, 
                                 field.onChange(contact?.id || '');
                               }}
                               items={participantOptions.contacts?.map((contact) => contact.name) || []}
-                              placeholder='Select contact'
+                              placeholder={t('select_contact')}
                               searchPlaceholder={t('search_contacts')}
-                              emptyText='No contacts found'
-                              groupHeading='Contacts'
+                              emptyText={t('no_contacts_found')}
+                              groupHeading={t('contacts')}
                               allowCustom={false}
                             />
                           </FormItem>
@@ -367,7 +366,7 @@ export function EventDialog({ open, onOpenChange, onSubmit, isEditMode = false, 
                           name={`participants.${index}.name`}
                           render={({ field }) => (
                             <FormItem className='flex-1'>
-                              <Input {...field} placeholder='Name' />
+                              <Input {...field} placeholder={t('name')} />
                             </FormItem>
                           )}
                         />
@@ -381,12 +380,12 @@ export function EventDialog({ open, onOpenChange, onSubmit, isEditMode = false, 
                         <FormItem>
                           <Select value={field.value} onValueChange={field.onChange}>
                             <SelectTrigger>
-                              <SelectValue placeholder='Role' />
+                              <SelectValue placeholder={t('role')} />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value='organizer'>Organizer</SelectItem>
-                              <SelectItem value='required'>Required</SelectItem>
-                              <SelectItem value='optional'>Optional</SelectItem>
+                              <SelectItem value='organizer'>{t('organizer')}</SelectItem>
+                              <SelectItem value='required'>{t('required')}</SelectItem>
+                              <SelectItem value='optional'>{t('optional')}</SelectItem>
                             </SelectContent>
                           </Select>
                         </FormItem>

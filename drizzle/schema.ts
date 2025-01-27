@@ -97,6 +97,7 @@ export const contact = pgTable('contact', {
   phone: text(),
   gender: text(),
   company: text(),
+  companyId: text().references(() => company.id),
   jobTitle: text(),
   address: text(),
   city: text(),
@@ -108,19 +109,39 @@ export const contact = pgTable('contact', {
     .notNull()
     .default('lead'),
   source: text(),
-  assignedTo: text().references(() => user.id), // sales rep or account manager
-  stripeCustomerId: text(), // for payment integration
-  joinedAt: timestamp({ mode: 'date' }), // when the contact is joined/signed
+  assignedTo: text().references(() => user.id),
+  stripeCustomerId: text(),
+  joinedAt: timestamp({ mode: 'date' }),
   createdAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
   updatedAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
   lastContactedAt: timestamp({ mode: 'date' }),
   nextFollowUpAt: timestamp({ mode: 'date' }),
   priority: text('priority', { enum: ['urgent', 'high', 'medium', 'low'] }).default('medium'),
-  workExperience: text(), // years of experience
-  currentRole: text(), // current job role
-  industry: text(), // industry they work in
-  skills: text(), // comma-separated list of skills
-  externalId: text(), // external ID from other systems
+  workExperience: text(),
+  currentRole: text(),
+  industry: text(),
+  skills: text(),
+  externalId: text(),
+});
+
+export const companyContact = pgTable('companyContact', {
+  id: text()
+    .primaryKey()
+    .notNull()
+    .$defaultFn(() => crypto.randomUUID()),
+  companyId: text()
+    .notNull()
+    .references(() => company.id, { onDelete: 'cascade' }),
+  contactId: text()
+    .notNull()
+    .references(() => contact.id, { onDelete: 'cascade' }),
+  role: text('role', { enum: ['employee', 'manager', 'executive', 'other'] }).default('employee'),
+  department: text(),
+  startDate: timestamp({ mode: 'date' }),
+  endDate: timestamp({ mode: 'date' }),
+  isActive: boolean().default(true),
+  createdAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
+  updatedAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
 });
 
 export const contactDeal = pgTable('contactDeal', {
@@ -287,6 +308,7 @@ export const userNotifications = pgTable('userNotifications', {
   read: boolean('read').default(false),
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow(),
+  metadata: text('metadata'),
 });
 
 export const calendarFolder = pgTable('calendarFolder', {
@@ -464,6 +486,29 @@ export const marketingCampaign = pgTable('marketingCampaign', {
   updatedAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
 });
 
+export const company = pgTable('company', {
+  id: text()
+    .primaryKey()
+    .notNull()
+    .$defaultFn(() => crypto.randomUUID()),
+  name: text().notNull(),
+  description: text(),
+  industry: text(),
+  size: text(), // company size/employee count
+  website: text(),
+  address: text(),
+  city: text(),
+  state: text(),
+  country: text(),
+  postalCode: text(),
+  phone: text(),
+  email: text(),
+  status: text('status', { enum: ['active', 'inactive'] }).default('active'),
+  metadata: text(), // JSON string for additional data
+  createdAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
+  updatedAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
+});
+
 export const team = pgTable('team', {
   id: text()
     .primaryKey()
@@ -471,6 +516,7 @@ export const team = pgTable('team', {
     .$defaultFn(() => crypto.randomUUID()),
   name: text().notNull(),
   description: text(),
+  companyId: text().references(() => company.id, { onDelete: 'cascade' }),
   leaderId: text().references(() => contact.id),
   subLeaderId: text().references(() => contact.id),
   referralId: text().references(() => contact.id),

@@ -2,6 +2,7 @@ import { accountRouter } from '@/server/routers/account';
 import { adminRouter } from '@/server/routers/admin';
 import { authRouter } from '@/server/routers/auth';
 import { calendarRouter } from '@/server/routers/calendar';
+import { companyRouter } from '@/server/routers/company';
 import { contactRouter } from '@/server/routers/contact';
 import { marketingRouter } from '@/server/routers/marketing';
 import { payRouter } from '@/server/routers/pay';
@@ -23,6 +24,7 @@ export const appRouter = createTRPCRouter({
   auth: authRouter,
   calendar: calendarRouter,
   contact: contactRouter,
+  company: companyRouter,
   pay: payRouter,
   team: teamRouter,
   user: userRouter,

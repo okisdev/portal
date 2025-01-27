@@ -407,14 +407,14 @@ export default function CRMContactsPage() {
       cell: ({ row }) => <ColorBadge type='priority' value={row.original.priority ?? 'medium'} />,
     },
     {
-      accessorKey: 'remark',
-      header: t('remark'),
-      cell: ({ row }) => <span className='capitalize'>{row.original.remark || '—'}</span>,
-    },
-    {
       accessorKey: 'source',
       header: t('source'),
       cell: ({ row }) => <span className='capitalize'>{row.original.source?.replace('_', ' ') || '—'}</span>,
+    },
+    {
+      accessorKey: 'remark',
+      header: t('remark'),
+      cell: ({ row }) => <span className='capitalize'>{row.original.remark || '—'}</span>,
     },
     {
       accessorKey: 'lastContactedAt',

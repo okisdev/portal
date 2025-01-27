@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { insuranceCompanies, sources } from '@/data/data';
+import { sources } from '@/data/data';
 import { statusSchema } from '@/lib/schema';
 import { api } from '@/utils/trpc/client';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -22,6 +22,7 @@ const formSchema = z.object({
   email: z.string().email('Invalid email address'),
   phone: z.string().optional(),
   company: z.string().optional(),
+  companyId: z.string().nullable().optional(),
   source: z.string().optional(),
   remark: z.string().optional(),
   status: statusSchema.optional(),
@@ -35,6 +36,7 @@ export default function ManualContactForm() {
   const [isLoading, setIsLoading] = useState(false);
 
   const { data: campaigns } = api.marketing.getActiveCampaigns.useQuery();
+  const { data: companies } = api.company.getAllCompanies.useQuery();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -44,6 +46,7 @@ export default function ManualContactForm() {
       email: '',
       phone: '',
       company: '',
+      companyId: null,
       source: '',
       remark: '',
       status: 'lead',
@@ -155,11 +158,16 @@ export default function ManualContactForm() {
                 <FormControl>
                   <Combobox
                     value={field.value ?? ''}
-                    onChange={field.onChange}
-                    items={insuranceCompanies}
+                    onChange={(value) => {
+                      const selectedCompany = companies?.find((c) => c.name === value);
+                      form.setValue('company', selectedCompany ? selectedCompany.name : value);
+                      form.setValue('companyId', selectedCompany?.id || null);
+                    }}
+                    items={companies?.map((c) => c.name) || []}
                     placeholder={t('select_company')}
                     searchPlaceholder={t('search_company')}
                     groupHeading={t('companies')}
+                    allowCustom={true}
                   />
                 </FormControl>
                 <FormMessage />

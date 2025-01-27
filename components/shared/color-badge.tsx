@@ -1,7 +1,7 @@
 import { cn } from '@/lib/utils';
 
 type ColorBadgeProps = {
-  type: 'status' | 'contactStatus' | 'priority' | 'campaignStatus' | 'source' | 'default';
+  type: 'status' | 'contactStatus' | 'priority' | 'campaignStatus' | 'source' | 'default' | 'companyStatus';
   value: string;
   className?: string;
   isActive?: boolean;

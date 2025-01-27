@@ -37,7 +37,7 @@ export function WeekView({ currentDate, selectedDate, events, folders, hiddenCal
   return (
     <div className='flex min-h-0 flex-1 flex-col'>
       <div className='grid grid-cols-8 divide-x border-b bg-background'>
-        <div className='p-2 text-muted-foreground text-sm'>Time</div>
+        <div className='p-2 text-muted-foreground text-sm'>{t('time')}</div>
         {getWeekDays(currentDate).map((date) => (
           <div
             key={date.toISOString()}

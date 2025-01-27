@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { insuranceCompanies, sources } from '@/data/data';
+import { sources } from '@/data/data';
 import { type Status, statusSchema } from '@/lib/schema';
 import { generateUUID } from '@/lib/utils';
 import { api } from '@/utils/trpc/client';
@@ -25,6 +25,7 @@ interface ContactFormData {
   phone?: string;
   gender?: string;
   company?: string;
+  companyId?: string | null;
   jobTitle?: string;
   status: Status;
   source?: string;
@@ -55,6 +56,7 @@ export default function ContactUpload() {
 
   const checkExistingContacts = api.contact.checkExistingContacts.useQuery({ emails: csvData.map((contact) => contact.email) }, { enabled: false });
   const { data: campaigns } = api.marketing.getActiveCampaigns.useQuery();
+  const { data: companies } = api.company.getAllCompanies.useQuery();
 
   const createContact = api.contact.createContact.useMutation({
     onError: (error) => {
@@ -222,7 +224,16 @@ export default function ContactUpload() {
   const handleCsvEdit = (index: number, field: keyof ContactFormData, value: string) => {
     setCsvData((prev) => {
       const newData = [...prev];
-      newData[index] = { ...newData[index], [field]: value };
+      if (field === 'company') {
+        const selectedCompany = companies?.find((c) => c.name === value);
+        newData[index] = {
+          ...newData[index],
+          company: selectedCompany ? selectedCompany.name : value,
+          companyId: selectedCompany?.id || null,
+        };
+      } else {
+        newData[index] = { ...newData[index], [field]: value };
+      }
       return newData;
     });
   };
@@ -259,6 +270,7 @@ export default function ContactUpload() {
               email: contact.email,
               phone: contact.phone || '',
               company: contact.company || '',
+              companyId: contact.companyId || null,
               source: contact.source || '',
               remark: contact.remark || '',
               campaignCode: contact.campaignCodes?.length ? contact.campaignCodes.join(',') : selectedCampaignCode,
@@ -446,11 +458,15 @@ export default function ContactUpload() {
                       <TableCell>
                         <Combobox
                           value={row.company ?? ''}
-                          onChange={(value) => handleCsvEdit(index, 'company', value)}
-                          items={insuranceCompanies}
+                          onChange={(value) => {
+                            const selectedCompany = companies?.find((c) => c.name === value);
+                            handleCsvEdit(index, 'company', selectedCompany ? selectedCompany.name : value);
+                          }}
+                          items={companies?.map((c) => c.name) || []}
                           placeholder={t('select_company')}
                           searchPlaceholder={t('search_company')}
                           groupHeading={t('companies')}
+                          allowCustom={true}
                         />
                       </TableCell>
                       <TableCell>

@@ -64,6 +64,7 @@ export default function TeamIdPage() {
     referralId: '',
     campaignCode: '',
     remarks: '',
+    companyId: '',
   });
   const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
   const [searchValue, setSearchValue] = useState('');
@@ -85,6 +86,7 @@ export default function TeamIdPage() {
     teamId: teamId[0],
   });
   const { data: campaigns } = api.marketing.getActiveCampaigns.useQuery();
+  const { data: companies } = api.company.getAllCompanies.useQuery();
 
   const updateTeam = api.team.updateTeam.useMutation({
     onSuccess: () => {
@@ -180,6 +182,7 @@ export default function TeamIdPage() {
         referralId: team.referralId || '',
         campaignCode: team.campaignCode || '',
         remarks: team.remarks || '',
+        companyId: team.companyId || '',
       });
       setIsEditModalOpen(true);
     } else {
@@ -512,6 +515,14 @@ export default function TeamIdPage() {
           <div className='rounded-lg border bg-card p-4'>
             <h2 className='mb-3 font-medium'>Team Information</h2>
             <div className='space-y-1'>
+              {team.companyId && (
+                <div>
+                  <Label className='text-muted-foreground text-xs'>Company</Label>
+                  <p className='text-sm'>
+                    <Link href={`/dashboard/crm/company/${team.companyId}`}>{team.company?.name || 'N/A'}</Link>
+                  </p>
+                </div>
+              )}
               <div>
                 <Label className='text-muted-foreground text-xs'>Team Leader</Label>
                 <p className='text-sm'>
@@ -661,6 +672,21 @@ export default function TeamIdPage() {
                   const campaign = campaigns?.find((c) => c.campaignCode === campaignCode);
                   return campaign ? `${campaign.name} (${campaign.campaignCode})` : null;
                 }}
+              />
+            </div>
+            <div className='space-y-2'>
+              <Label>{t('company')}</Label>
+              <Combobox
+                value={editForm.companyId ? companies?.find((c) => c.id === editForm.companyId)?.name || '' : ''}
+                onChange={(value) => {
+                  const company = companies?.find((c) => c.name === value);
+                  setEditForm({ ...editForm, companyId: company?.id || '' });
+                }}
+                items={companies?.map((company) => company.name) || []}
+                placeholder={t('select_company')}
+                searchPlaceholder={t('search_company')}
+                allowCustom={false}
+                groupHeading={t('companies')}
               />
             </div>
             <div className='space-y-2'>

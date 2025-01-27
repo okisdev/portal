@@ -6,6 +6,8 @@ import {
   calendarEventParticipant,
   calendarEventShare,
   calendarFolder,
+  company,
+  companyContact,
   contact,
   contactActivity,
   contactCampaign,
@@ -69,6 +71,11 @@ export const contactRelations = relations(contact, ({ many, one }) => ({
     fields: [contact.assignedTo],
     references: [user.id],
   }),
+  company: one(company, {
+    fields: [contact.companyId],
+    references: [company.id],
+  }),
+  companies: many(companyContact),
   campaigns: many(contactCampaign),
   eventParticipations: many(calendarEventParticipant),
   teams: many(teamContact),
@@ -226,7 +233,16 @@ export const contactCampaignRelations = relations(contactCampaign, ({ one }) => 
   }),
 }));
 
+export const companyRelations = relations(company, ({ many }) => ({
+  teams: many(team),
+  contacts: many(companyContact),
+}));
+
 export const teamRelations = relations(team, ({ many, one }) => ({
+  company: one(company, {
+    fields: [team.companyId],
+    references: [company.id],
+  }),
   creator: one(user, {
     fields: [team.createdBy],
     references: [user.id],
@@ -312,5 +328,16 @@ export const resourceContentSendTrackRelations = relations(resourceContentSendTr
   sender: one(user, {
     fields: [resourceContentSendTrack.sentBy],
     references: [user.id],
+  }),
+}));
+
+export const companyContactRelations = relations(companyContact, ({ one }) => ({
+  company: one(company, {
+    fields: [companyContact.companyId],
+    references: [company.id],
+  }),
+  contact: one(contact, {
+    fields: [companyContact.contactId],
+    references: [contact.id],
   }),
 }));

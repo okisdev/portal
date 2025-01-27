@@ -21,6 +21,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { crmItems, languageItems, marketingItems, resourcesItems, teamItems, toolsItems, workspaceItems } from '@/config/dashboard';
 import { usePathname, useRouter } from '@/i18n/routing';
 import packageInfo from '@/package.json';
+import { copyToClipboard } from '@/utils/clipboard';
 import { api } from '@/utils/trpc/client';
 import { Bell, ChevronDown, ChevronRight, ChevronUp, Globe, Laptop, LogOut, Moon, Plus, Settings, Sparkle, Sun, User2, Verified } from 'lucide-react';
 import { signOut } from 'next-auth/react';
@@ -51,6 +52,7 @@ export function DashboardSidebar() {
   const HASH = process.env.NEXT_PUBLIC_VERCEL_GIT_COMMIT_SHA;
 
   const { data: me, isLoading } = api.account.getMeFromDatabase.useQuery();
+  const { data: unreadNotificationsCount } = api.user.getUnreadNotificationsCount.useQuery();
 
   const [showSignOutDialog, setShowSignOutDialog] = useState(false);
 
@@ -112,7 +114,12 @@ export function DashboardSidebar() {
                     <span>{t('account')}</span>
                   </Link>
                 </DropdownMenuItem>
-                <DropdownMenuItem>
+                <DropdownMenuItem
+                  className='cursor-pointer text-green-500'
+                  onClick={() => {
+                    copyToClipboard(packageInfo.version, t('version_copied_to_clipboard'));
+                  }}
+                >
                   <Verified className='mr-2 h-4 w-4' />
                   <span>
                     {packageInfo.version} {HASH && `(${HASH.slice(0, 7)})`}
@@ -170,9 +177,10 @@ export function DashboardSidebar() {
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-            <Button type='button' variant='ghost' className='h-8 px-2' asChild>
+            <Button type='button' variant='ghost' className='relative h-8 px-2' asChild>
               <Link href='/dashboard/account/notifications'>
                 <Bell className='h-4 w-4' />
+                {unreadNotificationsCount && unreadNotificationsCount.count > 0 && <span className='-top-0.5 -right-0.5 absolute h-1.5 w-1.5 rounded-full bg-red-500' />}
               </Link>
             </Button>
           </SidebarMenuItem>

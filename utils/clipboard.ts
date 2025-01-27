@@ -1,11 +1,10 @@
 import { toast } from 'sonner';
 
-export const copyToClipboard = async (text: string) => {
+export const copyToClipboard = async (text: string, successMessage?: string) => {
   try {
     await navigator.clipboard.writeText(text);
-    toast.success('Copied to clipboard');
+    toast.success(successMessage);
   } catch (err) {
     console.error(err);
-    toast.error('Failed to copy to clipboard');
   }
 };

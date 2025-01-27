@@ -48,7 +48,7 @@ export function ThreeDayView({
 
   return (
     <div className='flex min-h-0 flex-1 flex-col'>
-      <div className='grid grid-cols-[50px_repeat(3,1fr)] md:grid-cols-[100px_repeat(3,1fr)] divide-x border-b bg-background'>
+      <div className='grid grid-cols-[50px_repeat(3,1fr)] divide-x border-b bg-background md:grid-cols-[100px_repeat(3,1fr)]'>
         <div className='p-2 text-muted-foreground text-sm'>
           <span className='hidden md:inline'>{t('time')}</span>
           <span className='md:hidden'>{t('time').charAt(0)}</span>

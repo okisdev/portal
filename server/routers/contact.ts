@@ -1,4 +1,4 @@
-import { contact, contactActivity, contactCampaign, marketingCampaign, team, teamContact } from '@/drizzle/schema';
+import { contact, contactActivity, contactCampaign, marketingCampaign, team, teamContact, user, userNotifications } from '@/drizzle/schema';
 import { activitySubTypeSchema, activityTypeSchema, prioritySchema, statusSchema } from '@/lib/schema';
 import { createContactActivityHelper } from '@/server/helper/contact';
 import { createTRPCRouter, protectedProcedure, publicProcedure } from '@/server/trpc';
@@ -33,6 +33,7 @@ export const contactRouter = createTRPCRouter({
         email: contact.email,
         phone: contact.phone,
         company: contact.company,
+        companyId: contact.companyId,
         source: contact.source,
         priority: contact.priority,
         workExperience: contact.workExperience,
@@ -82,6 +83,7 @@ export const contactRouter = createTRPCRouter({
         email: z.string(),
         phone: z.string().optional(),
         company: z.string().optional(),
+        companyId: z.string().nullable().optional(),
         source: z.string().optional(),
         remark: z.string().optional(),
         status: statusSchema.optional(),
@@ -116,6 +118,7 @@ export const contactRouter = createTRPCRouter({
           email: input.email,
           phone: input.phone ?? '',
           company: input.company ?? '',
+          companyId: input.companyId ?? null,
           source: input.source ?? (referralContact ? 'referral' : ''),
           status: input.status ?? 'lead',
           remark: input.remark ?? '',
@@ -304,8 +307,9 @@ export const contactRouter = createTRPCRouter({
         metadata: z.record(z.any()).optional(),
       })
     )
-    .mutation(({ ctx, input }) => {
-      return ctx.db.insert(contactActivity).values({
+    .mutation(async ({ ctx, input }) => {
+      // Create the activity
+      await ctx.db.insert(contactActivity).values({
         contactId: input.contactId,
         userId: ctx.session?.user.id,
         type: input.type,
@@ -315,6 +319,30 @@ export const contactRouter = createTRPCRouter({
         description: input.description,
         metadata: input.metadata ? JSON.stringify(input.metadata) : null,
       });
+
+      // Handle @mentions
+      const mentionRegex = /@(\w+)/g;
+      const mentions = input.description.match(mentionRegex)?.map((m) => m.slice(1)) || [];
+
+      if (mentions.length > 0) {
+        // Get all mentioned users
+        const mentionedUsers = await ctx.db.select().from(user).where(inArray(user.username, mentions));
+
+        // Create notifications for mentioned users
+        for (const mentionedUser of mentionedUsers) {
+          await ctx.db.insert(userNotifications).values({
+            userId: mentionedUser.id,
+            type: 'message',
+            title: `${ctx.session?.user.name || 'Someone'} mentioned you in a note`,
+            message: input.description,
+            metadata: JSON.stringify({
+              contactId: input.contactId,
+            }),
+          });
+        }
+      }
+
+      return true;
     }),
 
   deleteContactActivity: protectedProcedure.input(z.object({ id: z.string() })).mutation(({ ctx, input }) => {
@@ -331,6 +359,7 @@ export const contactRouter = createTRPCRouter({
         email: z.string().email().optional(),
         phone: z.string().optional(),
         company: z.string().optional(),
+        companyId: z.string().nullable().optional(),
         priority: prioritySchema.optional(),
         workExperience: z.string().optional(),
         currentRole: z.string().optional(),
@@ -338,8 +367,8 @@ export const contactRouter = createTRPCRouter({
         skills: z.string().optional(),
         status: statusSchema.optional(),
         source: z.string().optional(),
-        lastContactedAt: z.date().optional(),
-        nextFollowUpAt: z.date().optional(),
+        lastContactedAt: z.date().optional().nullable(),
+        nextFollowUpAt: z.date().optional().nullable(),
         remark: z.string().optional(),
       })
     )
@@ -392,6 +421,28 @@ export const contactRouter = createTRPCRouter({
             oldPriority: currentContact.priority,
             newPriority: input.priority,
           },
+        });
+      }
+
+      if (input.lastContactedAt === null) {
+        await createContactActivityHelper(ctx, {
+          contactId: id,
+          type: 'DATE',
+          subType: 'LAST_CONTACTED',
+          description: 'Last contacted date removed',
+          initiatorType: 'user',
+          initiatorId: ctx.session?.user.id,
+        });
+      }
+
+      if (input.nextFollowUpAt === null) {
+        await createContactActivityHelper(ctx, {
+          contactId: id,
+          type: 'DATE',
+          subType: 'NEXT_FOLLOW_UP',
+          description: 'Next follow up date removed',
+          initiatorType: 'user',
+          initiatorId: ctx.session?.user.id,
         });
       }
 
