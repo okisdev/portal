@@ -280,13 +280,15 @@ export function ContactActivity({ contactId }: ContactActivityProps) {
                           <div className='relative flex-1'>
                             <Popover open={showMentions} onOpenChange={setShowMentions}>
                               <PopoverTrigger asChild>
-                                <Textarea
-                                  id='replyInput'
-                                  value={replyText}
-                                  onChange={(e) => handleInputChange(e, true)}
-                                  placeholder='Write a reply... Use @ to mention someone'
-                                  className='min-h-[60px] resize-none'
-                                />
+                                <div className='relative w-full'>
+                                  <Textarea
+                                    id='replyInput'
+                                    value={replyText}
+                                    onChange={(e) => handleInputChange(e, true)}
+                                    placeholder='Write a reply... Use @ to mention someone'
+                                    className='min-h-[60px] resize-none'
+                                  />
+                                </div>
                               </PopoverTrigger>
                               <PopoverContent className='w-64 p-0' align='start'>
                                 <Command>
@@ -297,7 +299,7 @@ export function ContactActivity({ contactId }: ContactActivityProps) {
                                       {userMentionData
                                         .filter((user) => user.display.toLowerCase().includes(mentionSearch.toLowerCase()))
                                         .map((user) => (
-                                          <CommandItem key={user.id} onSelect={() => handleMention(user.username)} className='flex items-start gap-2 p-2'>
+                                          <CommandItem key={user.id} onSelect={() => handleMention(user.username, true)} className='flex items-start gap-2 p-2'>
                                             <Avatar className='h-6 w-6'>
                                               <AvatarImage src={`https://avatar.vercel.sh/${user.id}`} />
                                               <AvatarFallback>{user.display[0]}</AvatarFallback>
@@ -351,7 +353,9 @@ export function ContactActivity({ contactId }: ContactActivityProps) {
           <div className='relative flex-1'>
             <Popover open={showMentions} onOpenChange={setShowMentions}>
               <PopoverTrigger asChild>
-                <Textarea ref={inputRef} value={newActivity} onChange={(e) => handleInputChange(e)} placeholder='Add a note... Use @ to mention someone' className='min-h-[60px] resize-none' />
+                <div className='relative w-full'>
+                  <Textarea ref={inputRef} value={newActivity} onChange={(e) => handleInputChange(e)} placeholder='Add a note... Use @ to mention someone' className='min-h-[60px] resize-none' />
+                </div>
               </PopoverTrigger>
               <PopoverContent className='w-64 p-0' align='start'>
                 <Command>

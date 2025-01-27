@@ -38,6 +38,7 @@ export const userRouter = createTRPCRouter({
         type: z.string(),
         title: z.string(),
         message: z.string(),
+        metadata: z.record(z.string(), z.string()).optional(),
       })
     )
     .mutation(({ ctx, input }) => {
@@ -46,6 +47,7 @@ export const userRouter = createTRPCRouter({
         type: input.type,
         title: input.title,
         message: input.message,
+        metadata: input.metadata ? JSON.stringify(input.metadata) : null,
       });
     }),
 });

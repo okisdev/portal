@@ -335,6 +335,9 @@ export const contactRouter = createTRPCRouter({
             type: 'message',
             title: `${ctx.session?.user.name || 'Someone'} mentioned you in a note`,
             message: input.description,
+            metadata: JSON.stringify({
+              contactId: input.contactId,
+            }),
           });
         }
       }

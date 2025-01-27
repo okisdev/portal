@@ -308,6 +308,7 @@ export const userNotifications = pgTable('userNotifications', {
   read: boolean('read').default(false),
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow(),
+  metadata: text('metadata'),
 });
 
 export const calendarFolder = pgTable('calendarFolder', {
