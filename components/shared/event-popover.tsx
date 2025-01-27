@@ -20,12 +20,8 @@ export function EventPopover({ event, folder, onEventEdit, onEventDelete, onEven
       <PopoverTrigger asChild>
         <Button
           variant='ghost'
-          className='h-auto w-full justify-start truncate rounded border border-dashed p-1 text-xs'
-          style={{
-            backgroundColor: `${folder?.color}20`,
-            borderColor: folder?.color ?? 'transparent',
-            color: folder?.color ?? 'inherit',
-          }}
+          className='h-auto w-full justify-start truncate rounded p-1 text-foreground text-xs'
+          style={{ backgroundColor: `${folder?.color}20` }}
           onClick={(e) => {
             e.stopPropagation();
             onEventClick?.(e);
@@ -119,7 +115,7 @@ export function EventPopover({ event, folder, onEventEdit, onEventDelete, onEven
                             </span>
                           )}
                         </span>
-                        <span className='text-muted-foreground text-xs capitalize'>{participant.status}</span>
+                        <span className='text-muted-foreground text-xs capitalize'>{t(participant.status)}</span>
                       </div>
                     ))}
                   </div>
