@@ -440,7 +440,7 @@ export default function ContactIdPage() {
                           </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => setIsMessageModalOpen(true)} className='cursor-pointer'>
                             <MessageSquare className='mr-2 size-4' />
-                            {t('message')}
+                            {t('whatsapp')}
                           </DropdownMenuItem>
                         </DropdownMenuSubContent>
                       </DropdownMenuPortal>

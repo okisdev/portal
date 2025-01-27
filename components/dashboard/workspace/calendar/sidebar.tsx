@@ -66,7 +66,7 @@ export function CalendarSidebar({
   };
 
   return (
-    <div className='flex w-64 flex-col gap-4 border-r p-4'>
+    <div className='flex w-64 flex-col gap-4 p-4'>
       <div className='flex items-center justify-between'>
         <Popover>
           <PopoverTrigger asChild>

@@ -1,6 +1,5 @@
 import { EventPopover } from '@/components/shared/event-popover';
-import { Button } from '@/components/ui/button';
-import { Popover, PopoverTrigger } from '@/components/ui/popover';
+import {} from '@/components/ui/popover';
 import type { CalendarEventWithParticipants, CalendarFolder } from '@/lib/schema';
 import { cn } from '@/lib/utils';
 
@@ -53,25 +52,7 @@ export function TimeGrid({ date, events, folders, hiddenCalendars, onTimeSelect,
             <div className='relative z-10 p-1'>
               {hourEvents.map((event) => {
                 const folder = folders?.find((f) => f.id === event.folderId);
-                return (
-                  <Popover key={event.id}>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant='ghost'
-                        className='h-auto w-full justify-start truncate rounded border border-dashed p-1 text-xs'
-                        style={{
-                          backgroundColor: `${folder?.color}20`,
-                          borderColor: folder?.color ?? 'transparent',
-                          color: folder?.color ?? 'inherit',
-                        }}
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        {event.title}
-                      </Button>
-                    </PopoverTrigger>
-                    <EventPopover event={event} folder={folder} onEventEdit={onEventEdit} onEventDelete={onEventDelete} />
-                  </Popover>
-                );
+                return <EventPopover key={event.id} event={event} folder={folder} onEventEdit={onEventEdit} onEventDelete={onEventDelete} onEventClick={(e) => e.stopPropagation()} />;
               })}
             </div>
             <div

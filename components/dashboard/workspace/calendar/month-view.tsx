@@ -1,6 +1,5 @@
 import { EventPopover } from '@/components/shared/event-popover';
-import { Button } from '@/components/ui/button';
-import { Popover, PopoverTrigger } from '@/components/ui/popover';
+import {} from '@/components/ui/popover';
 import type { CalendarEventWithParticipants, CalendarFolder } from '@/lib/schema';
 import { cn } from '@/lib/utils';
 import { useTranslations } from 'next-intl';
@@ -85,42 +84,7 @@ export function MonthView({ currentDate, selectedDate, setSelectedDate, events, 
               .map((event) => {
                 const folder = folders?.find((f) => f.id === event.folderId);
 
-                return (
-                  <Popover key={event.id}>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant='ghost'
-                        className='h-auto w-full justify-start truncate rounded border border-dashed p-1 text-xs'
-                        style={{
-                          backgroundColor: `${folder?.color}20`,
-                          borderColor: folder?.color ?? 'transparent',
-                          color: folder?.color ?? 'inherit',
-                        }}
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        {event.isAllDay ? (
-                          'All day'
-                        ) : (
-                          <>
-                            {new Date(event.startAt).toLocaleTimeString([], {
-                              hour: '2-digit',
-                              minute: '2-digit',
-                              hour12: false,
-                            })}
-                            {' - '}
-                            {new Date(event.endAt).toLocaleTimeString([], {
-                              hour: '2-digit',
-                              minute: '2-digit',
-                              hour12: false,
-                            })}
-                          </>
-                        )}{' '}
-                        {event.title}
-                      </Button>
-                    </PopoverTrigger>
-                    <EventPopover event={event} folder={folder} onEventEdit={onEventEdit} onEventDelete={onEventDelete} />
-                  </Popover>
-                );
+                return <EventPopover key={event.id} event={event} folder={folder} onEventEdit={onEventEdit} onEventDelete={onEventDelete} />;
               })}
           </div>
         );
