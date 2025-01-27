@@ -89,19 +89,19 @@ export default function TeamPage() {
     },
     {
       accessorKey: 'name',
-      header: 'Name',
+      header: t('name'),
     },
     {
       accessorKey: 'username',
-      header: 'Username',
+      header: t('username'),
     },
     {
       accessorKey: 'email',
-      header: 'Email',
+      header: t('email'),
     },
     {
       accessorKey: 'role',
-      header: 'Role',
+      header: t('role'),
     },
     {
       id: 'actions',
@@ -173,8 +173,8 @@ export default function TeamPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>User Management</CardTitle>
-          <CardDescription>Manage user roles and permissions</CardDescription>
+          <CardTitle>{t('user_management')}</CardTitle>
+          <CardDescription>{t('user_management_description')}</CardDescription>
         </CardHeader>
         <CardContent>
           <PaginationTable table={table} columns={columns} loading={isLoading} />
@@ -184,7 +184,7 @@ export default function TeamPage() {
       <Dialog open={editingUser !== null} onOpenChange={(open) => !open && setEditingUser(null)}>
         <DialogContent className='max-h-[90vh] max-w-xl overflow-y-auto'>
           <DialogHeader>
-            <DialogTitle>Edit User</DialogTitle>
+            <DialogTitle>{t('edit_user')}</DialogTitle>
           </DialogHeader>
           <div className='space-y-4 py-4'>
             <div className='grid grid-cols-2 gap-4'>
@@ -238,8 +238,8 @@ export default function TeamPage() {
         open={userToDelete !== null}
         onOpenChange={(open) => !open && setUserToDelete(null)}
         onConfirm={() => userToDelete && deleteUser(userToDelete.id)}
-        title='Delete User'
-        description='Are you sure you want to delete this user? This action cannot be undone and will remove all associated data.'
+        title={t('delete_user')}
+        description={t('delete_user_description')}
       />
     </div>
   );
