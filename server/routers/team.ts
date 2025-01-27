@@ -37,6 +37,7 @@ export const teamRouter = createTRPCRouter({
       z.object({
         name: z.string(),
         description: z.string().optional(),
+        companyId: z.string().optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -46,6 +47,7 @@ export const teamRouter = createTRPCRouter({
           name: input.name,
           description: input.description,
           createdBy: ctx.session.user.id,
+          companyId: input.companyId,
         })
         .returning();
 

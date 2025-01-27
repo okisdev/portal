@@ -1,4 +1,4 @@
-import { Calendar, Contact, File, Gift, QrCode, Settings, Tornado, Users } from 'lucide-react';
+import { Building, Calendar, Contact, File, Gift, QrCode, Settings, Tornado, Users } from 'lucide-react';
 
 export const workspaceItems = [
   {
@@ -27,6 +27,12 @@ export const crmItems = [
     title: 'Teams',
     url: '/dashboard/crm/team',
     icon: Users,
+  },
+  {
+    id: 'company',
+    title: 'Company',
+    url: '/dashboard/crm/company',
+    icon: Building,
   },
   // {
   //   title: 'Payments',
