@@ -9,10 +9,12 @@ import { Combobox } from '@/components/shared/combobox';
 import { DateTimePicker } from '@/components/shared/date-time-picker';
 import { EventDialog } from '@/components/shared/event-dialog';
 import type { EventFormData } from '@/components/shared/event-dialog';
+import { EventSection } from '@/components/shared/event-section';
 import { PageLoading } from '@/components/shared/page-loading';
 import { PhoneInput } from '@/components/shared/phone-input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
+import {} from '@/components/ui/collapsible';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import {
   DropdownMenu,
@@ -33,7 +35,8 @@ import { sources } from '@/data/data';
 import { type Priority, type Status, statusSchema } from '@/lib/schema';
 import { formatDate } from '@/lib/utils';
 import { api } from '@/utils/trpc/client';
-import { Building2, Calendar, Edit2, Mail, MessageSquare, MoreHorizontal, Phone, Plus, Save, Send, Trash2, Users, X } from 'lucide-react';
+import {} from 'framer-motion';
+import { Building2, Edit2, Mail, MessageSquare, MoreHorizontal, Phone, Save, Send, Users, X } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { notFound, useParams, useRouter, useSearchParams } from 'next/navigation';
@@ -48,6 +51,8 @@ export default function ContactIdPage() {
   const t = useTranslations();
 
   const utils = api.useUtils();
+
+  const { data: user } = api.account.getMe.useQuery();
 
   const { data: contact, isLoading } = api.contact.getContactById.useQuery({
     id: contactId[0],
@@ -88,6 +93,8 @@ export default function ContactIdPage() {
   const [isMessageModalOpen, setIsMessageModalOpen] = useState(false);
   const [lastContactDate, setLastContactDate] = useState<Date | null>(contact?.lastContactedAt ? new Date(contact.lastContactedAt) : null);
   const [nextFollowUpDate, setNextFollowUpDate] = useState<Date | null>(contact?.nextFollowUpAt ? new Date(contact.nextFollowUpAt) : null);
+  const [isPastMeetingsOpen, setIsPastMeetingsOpen] = useState(false);
+  const [isUpcomingMeetingsOpen, setIsUpcomingMeetingsOpen] = useState(true);
 
   const assignToTeam = api.team.assignContactToTeam.useMutation({
     onSuccess: () => {
@@ -102,7 +109,7 @@ export default function ContactIdPage() {
       handleCloseEditModal();
       utils.contact.getContactById.invalidate({ id: contactId[0] });
       utils.contact.getContactActivities.invalidate({ id: contactId[0] });
-      toast.success('Contact updated successfully');
+      toast.success(t('contact_updated_successfully'));
     },
   });
 
@@ -110,7 +117,7 @@ export default function ContactIdPage() {
     onSuccess: () => {
       utils.contact.getContactById.invalidate({ id: contactId[0] });
       utils.contact.getContactActivities.invalidate({ id: contactId[0] });
-      toast.success('Contact remark updated successfully');
+      toast.success(t('remark_updated_successfully'));
     },
   });
 
@@ -120,7 +127,7 @@ export default function ContactIdPage() {
       utils.calendar.getAppointmentsByContactId.invalidate({ contactId: contactId[0] });
       utils.contact.getContactById.invalidate({ id: contactId[0] });
       utils.contact.getContactActivities.invalidate({ id: contactId[0] });
-      toast.success('Appointment created successfully');
+      toast.success(t('appointment_created_successfully'));
     },
     onError: (error) => {
       toast.error(error.message);
@@ -131,7 +138,7 @@ export default function ContactIdPage() {
     onSuccess: () => {
       utils.calendar.getAppointmentsByContactId.invalidate({ contactId: contactId[0] });
       utils.contact.getContactActivities.invalidate({ id: contactId[0] });
-      toast.success('Appointment deleted successfully');
+      toast.success(t('appointment_deleted_successfully'));
     },
     onError: (error) => {
       toast.error(error.message);
@@ -143,7 +150,7 @@ export default function ContactIdPage() {
       setEditingAppointment(null);
       utils.calendar.getAppointmentsByContactId.invalidate({ contactId: contactId[0] });
       utils.contact.getContactActivities.invalidate({ id: contactId[0] });
-      toast.success('Appointment updated successfully');
+      toast.success(t('appointment_updated_successfully'));
     },
     onError: (error) => {
       toast.error(error.message);
@@ -535,50 +542,14 @@ export default function ContactIdPage() {
             </div>
 
             <div className='space-y-2 border-b p-6'>
-              <div className='flex items-center justify-between'>
-                <h2 className='font-medium text-foreground'>{t('meetings')}</h2>
-                <button type='button' className='text-muted-foreground hover:text-foreground' onClick={handleOpenBookingModal}>
-                  <Plus className='size-4' />
-                </button>
-              </div>
-              <div className='space-y-4'>
-                {appointments?.length === 0 && <p className='text-muted-foreground text-sm'>{t('no_meetings_found')}</p>}
-                {appointments?.map((apt) => (
-                  <div key={apt.id} className='flex items-center gap-3'>
-                    <Calendar className='size-4 shrink-0 text-muted-foreground' />
-                    <div className='min-w-0 flex-1'>
-                      <p className='truncate font-medium text-foreground text-sm'>{apt.title}</p>
-                      <p className='text-muted-foreground text-xs'>{formatDate(new Date(apt.startAt))}</p>
-                    </div>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <button type='button' className='shrink-0 text-muted-foreground hover:text-foreground'>
-                          <MoreHorizontal className='size-4' />
-                        </button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align='end' className='bg-popover text-popover-foreground'>
-                        <DropdownMenuItem
-                          onClick={() =>
-                            setEditingAppointment({
-                              id: apt.id,
-                              title: apt.title,
-                              description: apt.description || '',
-                              startAt: new Date(apt.startAt),
-                            })
-                          }
-                        >
-                          <Edit2 className='mr-2 size-4' />
-                          {t('edit')}
-                        </DropdownMenuItem>
-                        <DropdownMenuItem className='text-destructive' onClick={() => deleteAppointment.mutate(apt.id)}>
-                          <Trash2 className='mr-2 size-4' />
-                          {t('delete')}
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </div>
-                ))}
-              </div>
+              <EventSection
+                appointments={appointments || []}
+                calendarFolders={calendarFolders}
+                onCreateAppointment={handleBookAppointment}
+                onUpdateAppointment={(data) => updateAppointment.mutate(data)}
+                onDeleteAppointment={(id) => deleteAppointment.mutate(id)}
+                defaultTitle={t('meeting_with', { who: user?.name, name: contact?.name })}
+              />
             </div>
 
             <Payment contact={contact || {}} />
@@ -761,7 +732,7 @@ export default function ContactIdPage() {
         onOpenChange={setIsBookingModalOpen}
         onSubmit={handleBookAppointment}
         defaultValues={{
-          title: t('meeting_with', { name: contact?.name }),
+          title: t('meeting_with', { who: user?.name, name: contact?.name }),
           startAt: new Date(),
           endAt: new Date(Date.now() + 30 * 60000),
           folderId: 'default',

@@ -5,7 +5,9 @@ import { Button } from '@/components/ui/button';
 import { CommandDialog, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { Separator } from '@/components/ui/separator';
 import { SidebarTrigger } from '@/components/ui/sidebar';
+import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
+import { api } from '@/utils/trpc/client';
 import { Laptop, Moon, Sun } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useTheme } from 'next-themes';
@@ -19,6 +21,34 @@ export function DashboardHeader() {
   const t = useTranslations();
 
   const paths = pathname.replace('/dashboard/', '').split('/');
+  const [contactId, setContactId] = useState<string | null>(null);
+  const [companyId, setCompanyId] = useState<string | null>(null);
+  const [campaignId, setCampaignId] = useState<string | null>(null);
+  useEffect(() => {
+    if (paths.includes('contacts')) {
+      const id = paths[paths.length - 1];
+      if (uuidValidate(id)) {
+        setContactId(id);
+      }
+    }
+    if (paths.includes('company')) {
+      const id = paths[paths.length - 1];
+      if (uuidValidate(id)) {
+        setCompanyId(id);
+      }
+    }
+
+    if (paths.includes('marketing') && paths.includes('campaigns')) {
+      const id = paths[paths.length - 1];
+      if (uuidValidate(id)) {
+        setCampaignId(id);
+      }
+    }
+  }, [paths]);
+
+  const { data: contact, isLoading: isContactLoading } = api.contact.getContactById.useQuery({ id: contactId || '' }, { enabled: !!contactId });
+  const { data: company, isLoading: isCompanyLoading } = api.company.getCompanyById.useQuery({ id: companyId || '' }, { enabled: !!companyId });
+  const { data: campaign, isLoading: isCampaignLoading } = api.marketing.getCampaignById.useQuery({ id: campaignId || '' }, { enabled: !!campaignId });
 
   const isDashboard = paths.length === 2 && paths[1] === 'dashboard';
 
@@ -47,8 +77,32 @@ export function DashboardHeader() {
   }, []);
 
   const i18nPath = (segment: string) => {
-    // if uuid, return uuid
-    if (uuidValidate(segment) || segment.trim() === '') {
+    if (segment.trim() === '') {
+      return segment;
+    }
+
+    if (uuidValidate(segment)) {
+      if (paths.includes('contacts')) {
+        if (isContactLoading || !contact) {
+          return <Skeleton className='h-4 w-24' />;
+        }
+        return `${contact.firstName} ${contact.lastName}`;
+      }
+
+      if (paths.includes('company')) {
+        if (isCompanyLoading || !company) {
+          return <Skeleton className='h-4 w-24' />;
+        }
+        return company.name;
+      }
+
+      if (paths.includes('marketing') && paths.includes('campaigns')) {
+        if (isCampaignLoading || !campaign) {
+          return <Skeleton className='h-4 w-24' />;
+        }
+        return campaign.name;
+      }
+
       return segment;
     }
 

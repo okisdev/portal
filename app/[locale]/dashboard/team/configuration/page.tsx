@@ -69,8 +69,8 @@ export default function TeamConfiguration() {
         <TabsContent value='members'>
           <Card>
             <CardHeader>
-              <CardTitle>Team Members</CardTitle>
-              <CardDescription>Manage your team members and their roles</CardDescription>
+              <CardTitle>{t('team_members')}</CardTitle>
+              <CardDescription>{t('team_members_description')}</CardDescription>
             </CardHeader>
             <CardContent>
               <div className='space-y-4'>

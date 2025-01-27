@@ -5,6 +5,7 @@ import { ColorBadge } from '@/components/shared/color-badge';
 import { Combobox } from '@/components/shared/combobox';
 import { ComboboxCommand } from '@/components/shared/combobox';
 import { EventDialog } from '@/components/shared/event-dialog';
+import { EventSection } from '@/components/shared/event-section';
 import { PageHeader } from '@/components/shared/page-header';
 import { PageLoading } from '@/components/shared/page-loading';
 import { PaginationTable } from '@/components/shared/pagination-table';
@@ -401,10 +402,10 @@ export default function TeamIdPage() {
         right={
           <div className='flex items-center gap-2'>
             <Button variant='outline' size='sm' className='h-8' onClick={() => setIsNewMeetingModalOpen(true)}>
-              <Calendar className='mr-1 size-4' /> New Meeting
+              <Calendar className='mr-1 size-4' /> {t('add_meeting')}
             </Button>
             <Button variant='outline' size='sm' className='h-8' onClick={handleEditClick}>
-              <Edit2 className='mr-1 size-4' /> Edit Team
+              <Edit2 className='mr-1 size-4' /> {t('edit_team')}
             </Button>
           </div>
         }
@@ -414,7 +415,7 @@ export default function TeamIdPage() {
         <div className='col-span-2 space-y-4'>
           <div className='space-y-2 rounded-lg border bg-card p-4'>
             <div className='flex items-center justify-between'>
-              <p className='font-medium'>Team Members</p>
+              <p className='font-medium'>{t('team_members')}</p>
               <Popover open={isAddMemberOpen} onOpenChange={setIsAddMemberOpen}>
                 <PopoverTrigger asChild>
                   <Button variant='outline' size='sm' className='h-8'>
@@ -477,11 +478,11 @@ export default function TeamIdPage() {
 
           <div className='rounded-lg border bg-card p-4'>
             <div className='mb-4 flex items-center justify-between'>
-              <h2 className='font-medium'>Activities</h2>
+              <h2 className='font-medium'>{t('activities')}</h2>
               <form onSubmit={handleSubmitActivity} className='flex max-w-md flex-1 gap-2'>
-                <Input value={newRemark} onChange={(e) => setNewRemark(e.target.value)} placeholder='Add activity...' className='h-8' />
+                <Input value={newRemark} onChange={(e) => setNewRemark(e.target.value)} placeholder={t('add_activity')} className='h-8' />
                 <Button type='submit' size='sm' disabled={createTeamActivity.isPending}>
-                  Add
+                  {t('add')}
                 </Button>
               </form>
             </div>
@@ -513,74 +514,72 @@ export default function TeamIdPage() {
 
         <div className='space-y-4'>
           <div className='rounded-lg border bg-card p-4'>
-            <h2 className='mb-3 font-medium'>Team Information</h2>
+            <h2 className='mb-3 font-medium'>{t('team_information')}</h2>
             <div className='space-y-1'>
               {team.companyId && (
                 <div>
-                  <Label className='text-muted-foreground text-xs'>Company</Label>
+                  <Label className='text-muted-foreground text-xs'>{t('company')}</Label>
                   <p className='text-sm'>
                     <Link href={`/dashboard/crm/company/${team.companyId}`}>{team.company?.name || 'N/A'}</Link>
                   </p>
                 </div>
               )}
               <div>
-                <Label className='text-muted-foreground text-xs'>Team Leader</Label>
+                <Label className='text-muted-foreground text-xs'>{t('team_leader')}</Label>
                 <p className='text-sm'>
                   <Link href={`/dashboard/crm/contacts/${team.leaderId}`}>{team.leaderId ? `${team.leader?.firstName} ${team.leader?.lastName}` : 'N/A'}</Link>
                 </p>
               </div>
               <div>
-                <Label className='text-muted-foreground text-xs'>Sub Leader</Label>
+                <Label className='text-muted-foreground text-xs'>{t('sub_leader')}</Label>
                 <p className='text-sm'>
                   <Link href={`/dashboard/crm/contacts/${team.subLeaderId}`}>{team.subLeaderId ? `${team.subLeader?.firstName} ${team.subLeader?.lastName}` : 'N/A'}</Link>
                 </p>
               </div>
               <div>
-                <Label className='text-muted-foreground text-xs'>Referral</Label>
+                <Label className='text-muted-foreground text-xs'>{t('referral')}</Label>
                 <p className='text-sm'>
                   <Link href={`/dashboard/crm/contacts/${team.referralId}`}>{team.referralId ? `${team.referral?.firstName} ${team.referral?.lastName}` : 'N/A'}</Link>
                 </p>
               </div>
               <div>
-                <Label className='text-muted-foreground text-xs'>Campaign Code</Label>
+                <Label className='text-muted-foreground text-xs'>{t('campaign_code')}</Label>
                 <p className='text-sm'>{team.campaignCode || 'N/A'}</p>
               </div>
               <div>
-                <Label className='text-muted-foreground text-xs'>Remarks</Label>
+                <Label className='text-muted-foreground text-xs'>{t('remarks')}</Label>
                 <p className='text-sm'>{team.remarks || t('no_remark_added')}</p>
               </div>
               <div className='items-cen flex justify-end'>
-                <p className='text-muted-foreground text-xs'>Created on {formatDate(new Date(team.createdAt))}</p>
+                <p className='text-muted-foreground text-xs'>{t('created_on', { date: formatDate(new Date(team.createdAt)) })}</p>
               </div>
             </div>
           </div>
 
-          <div className='space-y-3 rounded-lg border bg-card p-4'>
-            <h2 className='font-medium'>Meetings</h2>
-            <div className='space-y-3'>
-              {teamMeetings?.map((meeting) => (
-                <div key={meeting.id} className='flex items-center gap-3 text-sm'>
-                  <Calendar className='size-4 text-muted-foreground' />
-                  <div className='flex-1'>
-                    <p className='font-medium'>{meeting.title}</p>
-                    <p className='text-muted-foreground text-xs'>
-                      {formatDate(new Date(meeting.meetingDate))}
-                      {meeting.status === 'completed' && ' (Past)'}
-                    </p>
-                  </div>
-                  <ColorBadge type='status' value={meeting.status || 'upcoming'} />
-                  <Button
-                    variant='ghost'
-                    size='sm'
-                    onClick={() => {
-                      setMeetingToDelete(meeting.id);
-                    }}
-                  >
-                    <Trash2 className='size-4 text-muted-foreground' />
-                  </Button>
-                </div>
-              ))}
-            </div>
+          <div className='rounded-lg border bg-card p-4'>
+            <EventSection
+              appointments={
+                teamMeetings?.map((meeting) => ({
+                  id: meeting.id,
+                  title: meeting.title,
+                  description: meeting.description,
+                  startAt: new Date(meeting.meetingDate),
+                })) || []
+              }
+              calendarFolders={folders}
+              onCreateAppointment={handleCreateMeeting}
+              onUpdateAppointment={(data) => {
+                // TODO: Add update meeting functionality
+                toast.error('Update meeting functionality not implemented yet');
+              }}
+              onDeleteAppointment={(id) => {
+                deleteTeamMeeting.mutate({
+                  id,
+                  teamId: teamId[0],
+                });
+              }}
+              defaultTitle={`Team Meeting - ${team.name}`}
+            />
           </div>
         </div>
       </div>

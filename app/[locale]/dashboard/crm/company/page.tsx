@@ -5,6 +5,7 @@ import { ColorBadge } from '@/components/shared/color-badge';
 import { Combobox } from '@/components/shared/combobox';
 import { PageHeader } from '@/components/shared/page-header';
 import { PaginationTable } from '@/components/shared/pagination-table';
+import { PhoneInput } from '@/components/shared/phone-input';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -747,7 +748,7 @@ export default function CompanyPage() {
                     <FormItem>
                       <FormLabel>{t('phone')}</FormLabel>
                       <FormControl>
-                        <Input {...field} />
+                        <PhoneInput value={field.value || ''} onChange={field.onChange} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -963,7 +964,7 @@ export default function CompanyPage() {
                     <FormItem>
                       <FormLabel>{t('phone')}</FormLabel>
                       <FormControl>
-                        <Input {...field} />
+                        <PhoneInput value={field.value || ''} onChange={field.onChange} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
