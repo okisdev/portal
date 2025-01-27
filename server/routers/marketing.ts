@@ -24,6 +24,27 @@ export const marketingRouter = createTRPCRouter({
       .orderBy(desc(marketingCampaign.createdAt));
   }),
 
+  getCampaignById: protectedProcedure.input(z.object({ id: z.string() })).query(({ ctx, input }) => {
+    return ctx.db
+      .select({
+        id: marketingCampaign.id,
+        name: marketingCampaign.name,
+        campaignCode: marketingCampaign.campaignCode,
+        description: marketingCampaign.description,
+        type: marketingCampaign.type,
+        status: marketingCampaign.status,
+        metrics: marketingCampaign.metrics,
+        contactCount: sql<number>`(SELECT COUNT(*) FROM ${contactCampaign} WHERE ${contactCampaign.campaignCode} = ${marketingCampaign.campaignCode})`,
+        createdAt: marketingCampaign.createdAt,
+        updatedAt: marketingCampaign.updatedAt,
+        createdBy: marketingCampaign.createdBy,
+        updatedBy: marketingCampaign.updatedBy,
+      })
+      .from(marketingCampaign)
+      .where(eq(marketingCampaign.id, input.id))
+      .then((rows) => rows[0]);
+  }),
+
   getActiveCampaigns: protectedProcedure.query(({ ctx }) => {
     return ctx.db
       .select({
@@ -64,22 +85,43 @@ export const marketingRouter = createTRPCRouter({
       .then((rows) => rows[0]);
   }),
 
-  getCampaignContacts: protectedProcedure.input(z.object({ code: z.string() })).query(({ ctx, input }) => {
-    return ctx.db
-      .select({
-        id: contact.id,
-        name: contact.name,
-        firstName: contact.firstName,
-        lastName: contact.lastName,
-        email: contact.email,
-        phone: contact.phone,
-        company: contact.company,
-        status: contact.status,
-        joinedAt: contactCampaign.joinedAt,
-      })
-      .from(contactCampaign)
-      .innerJoin(contact, eq(contactCampaign.contactId, contact.id))
-      .where(eq(contactCampaign.campaignCode, input.code));
+  getCampaignContacts: protectedProcedure.input(z.object({ code: z.string().optional(), id: z.string().optional() })).query(({ ctx, input }) => {
+    if (input.id) {
+      return ctx.db
+        .select({
+          id: contact.id,
+          name: contact.name,
+          firstName: contact.firstName,
+          lastName: contact.lastName,
+          email: contact.email,
+          phone: contact.phone,
+          company: contact.company,
+          status: contact.status,
+          joinedAt: contactCampaign.joinedAt,
+        })
+        .from(contactCampaign)
+        .innerJoin(contact, eq(contactCampaign.contactId, contact.id))
+        .where(eq(contactCampaign.id, input.id));
+    }
+    if (input.code) {
+      return ctx.db
+        .select({
+          id: contact.id,
+          name: contact.name,
+          firstName: contact.firstName,
+          lastName: contact.lastName,
+          email: contact.email,
+          phone: contact.phone,
+          company: contact.company,
+          status: contact.status,
+          joinedAt: contactCampaign.joinedAt,
+        })
+        .from(contactCampaign)
+        .innerJoin(contact, eq(contactCampaign.contactId, contact.id))
+        .where(eq(contactCampaign.campaignCode, input.code));
+    }
+
+    return null;
   }),
 
   createCampaign: protectedProcedure

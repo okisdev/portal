@@ -268,7 +268,7 @@
   "role": "角色",
   "sales": "銷售",
   "saturday": "星期六",
-  "save": "節省",
+  "save": "儲存",
   "save_changes": "儲存更改",
   "saving": "儲存中",
   "saving_loading": "儲存中...",
@@ -385,5 +385,6 @@
   "user_management_description": "管理使用者角色和權限",
   "edit_user": "編輯使用者",
   "delete_user": "刪除使用者",
-  "delete_user_description": "您確定要刪除此使用者嗎？此操作無法撤銷，並且將刪除所有相關資料。"
+  "delete_user_description": "您確定要刪除此使用者嗎？此操作無法撤銷，並且將刪除所有相關資料。",
+  "campaign_not_found": "沒有找到運動"
 }

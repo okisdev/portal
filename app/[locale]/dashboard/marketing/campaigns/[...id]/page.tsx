@@ -67,15 +67,15 @@ type CampaignFormValues = z.infer<typeof campaignFormSchema>;
 
 export default function CampaignDetailsPage() {
   const router = useRouter();
-  const { id: campaignCode } = useParams<{ id: string }>();
+  const { id } = useParams<{ id: string }>();
   const t = useTranslations();
 
-  const { data: campaign, isLoading: campaignLoading } = api.marketing.getCampaignByCode.useQuery({
-    code: campaignCode[0],
+  const { data: campaign, isLoading: campaignLoading } = api.marketing.getCampaignById.useQuery({
+    id: id[0],
   });
 
   const { data: campaignContacts = [], isLoading: contactsLoading } = api.marketing.getCampaignContacts.useQuery({
-    code: campaignCode[0],
+    code: id[0],
   });
 
   const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
@@ -120,8 +120,8 @@ export default function CampaignDetailsPage() {
   const { mutate: removeContact } = api.contact.removeContactFromCampaign.useMutation({
     onSuccess: () => {
       toast.success('Contact removed from campaign');
-      utils.marketing.getCampaignContacts.invalidate({ code: campaignCode[0] });
-      utils.marketing.getCampaignByCode.invalidate({ code: campaignCode[0] });
+      utils.marketing.getCampaignContacts.invalidate({ id: id[0] });
+      utils.marketing.getCampaignById.invalidate({ id: id[0] });
       setDeleteDialogOpen(false);
       setContactToDelete(null);
     },
@@ -130,13 +130,15 @@ export default function CampaignDetailsPage() {
   const addContactToCampaign = api.contact.addContactToCampaign.useMutation({
     onSuccess: () => {
       toast.success('Contact added to campaign');
-      utils.marketing.getCampaignContacts.invalidate({ code: campaignCode[0] });
+      utils.marketing.getCampaignContacts.invalidate({ id: id[0] });
     },
   });
 
   const handleAddMember = (contactId: string) => {
+    if (!campaign?.campaignCode) return;
+
     addContactToCampaign.mutate({
-      campaignCode: campaignCode[0],
+      campaignCode: campaign?.campaignCode,
       contactId,
     });
   };
@@ -320,10 +322,12 @@ export default function CampaignDetailsPage() {
   };
 
   const handleDeleteConfirm = async () => {
+    if (!campaign?.campaignCode) return;
+
     if (contactToDelete) {
       removeContact({
         contactId: contactToDelete,
-        campaignCode: campaignCode[0],
+        campaignCode: campaign?.campaignCode,
       });
     }
   };
@@ -334,7 +338,7 @@ export default function CampaignDetailsPage() {
     onSuccess: () => {
       toast.success('Campaign updated successfully');
       setIsEditDialogOpen(false);
-      utils.marketing.getCampaignByCode.invalidate({ code: campaignCode[0] });
+      utils.marketing.getCampaignById.invalidate({ id: id[0] });
     },
   });
 
@@ -362,8 +366,10 @@ export default function CampaignDetailsPage() {
   }, [campaign, form]);
 
   const onSubmit = async (data: CampaignFormValues) => {
+    if (!campaign?.campaignCode) return;
+
     await updateCampaign.mutateAsync({
-      code: campaignCode[0],
+      code: campaign?.campaignCode,
       ...data,
     });
   };

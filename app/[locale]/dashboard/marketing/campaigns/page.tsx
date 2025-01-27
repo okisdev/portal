@@ -152,11 +152,6 @@ export default function MarketingCampaignsPage() {
           {t('campaign_name')} {column.getIsSorted() && <CaretSortIcon className='ml-2 inline' />}
         </button>
       ),
-      cell: ({ row }) => (
-        <Link href={`/dashboard/marketing/campaigns/${row.original.campaignCode}`} className='font-medium hover:underline'>
-          {row.original.name}
-        </Link>
-      ),
     },
     {
       accessorKey: 'campaignCode',
@@ -292,7 +287,7 @@ export default function MarketingCampaignsPage() {
         table={table}
         columns={columns}
         loading={isLoading}
-        onRowClick={(row) => router.push(`/dashboard/marketing/campaigns/${row.campaignCode}`)}
+        onRowClick={(row) => router.push(`/dashboard/marketing/campaigns/${row.id}`)}
         rowClassName='cursor-pointer hover:bg-muted/50'
       />
 
