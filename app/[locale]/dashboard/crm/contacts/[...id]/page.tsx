@@ -30,7 +30,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
-import { insuranceCompanies, sources } from '@/data/data';
+import { sources } from '@/data/data';
 import { type Priority, type Status, statusSchema } from '@/lib/schema';
 import { cn, formatDate } from '@/lib/utils';
 import { api } from '@/utils/trpc/client';
@@ -65,6 +65,7 @@ export default function ContactIdPage() {
   });
   const { data: allTeams } = api.team.getAllTeams.useQuery();
   const { data: calendarFolders } = api.calendar.getMyFolders.useQuery();
+  const { data: companies } = api.company.getAllCompanies.useQuery();
 
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editForm, setEditForm] = useState({
@@ -73,6 +74,7 @@ export default function ContactIdPage() {
     email: '',
     phone: '',
     company: '',
+    companyId: null as string | null,
     status: 'lead' as Status,
     source: '',
     priority: 'medium' as Priority,
@@ -198,6 +200,7 @@ export default function ContactIdPage() {
         email: contact.email || '',
         phone: contact.phone || '',
         company: contact.company || '',
+        companyId: contact.companyId || null,
         status: contact.status || 'lead',
         source: contact.source || '',
         priority: contact.priority || 'low',
@@ -235,6 +238,7 @@ export default function ContactIdPage() {
       email: contact?.email || '',
       phone: contact?.phone || '',
       company: contact?.company || '',
+      companyId: contact?.companyId || null,
       status: contact?.status || 'lead',
       source: contact?.source || '',
       priority: contact?.priority || 'low',
@@ -264,6 +268,7 @@ export default function ContactIdPage() {
       email: editForm.email,
       phone: editForm.phone,
       company: editForm.company,
+      companyId: editForm.companyId,
       status: editForm.status,
       source: editForm.source,
       priority: editForm.priority,
@@ -473,7 +478,10 @@ export default function ContactIdPage() {
                       value={nextFollowUpDate}
                       onChange={(date) => setNextFollowUpDate(date)}
                       onClose={() => {
-                        if (nextFollowUpDate?.getTime() !== (contact?.nextFollowUpAt ? new Date(contact.nextFollowUpAt).getTime() : null)) {
+                        const currentTime = contact?.nextFollowUpAt ? new Date(contact.nextFollowUpAt).getTime() : null;
+                        const newTime = nextFollowUpDate?.getTime() || null;
+
+                        if (currentTime !== newTime) {
                           updateContact.mutate({
                             id: contactId[0],
                             nextFollowUpAt: nextFollowUpDate || undefined,
@@ -820,11 +828,19 @@ export default function ContactIdPage() {
               <Label htmlFor='company'>{t('company')}</Label>
               <Combobox
                 value={editForm.company}
-                onChange={(value) => setEditForm({ ...editForm, company: value })}
-                items={insuranceCompanies}
+                onChange={(value) => {
+                  const selectedCompany = companies?.find((c) => c.name === value);
+                  setEditForm({
+                    ...editForm,
+                    company: selectedCompany ? selectedCompany.name : value,
+                    companyId: selectedCompany?.id || null,
+                  });
+                }}
+                items={companies?.map((c) => c.name) || []}
                 placeholder={t('select_company')}
                 searchPlaceholder={t('search_company')}
                 groupHeading={t('companies')}
+                allowCustom={true}
               />
             </div>
             <div className='space-y-2'>
