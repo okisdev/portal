@@ -12,10 +12,12 @@
   "DEAL_UPDATED": "交易已更新",
   "EMAIL_SCHEDULED": "電子郵件安排",
   "EMAIL_SENT": "發送電子郵件",
+  "LAST_CONTACTED": "最後聯繫",
   "MEETING_CANCELLED": "會議取消",
   "MEETING_SCHEDULED": "開會計劃",
   "MEETING_UPDATED": "會議更新",
   "MESSAGE_SENT": "訊息已發送",
+  "NEXT_FOLLOW_UP": "下一步跟進",
   "NOTE_ADDED": "備註添加",
   "PAYMENT_COMPLETED": "付款完成",
   "PAYMENT_LINK_CLICKED": "已點擊付款連結",
@@ -358,5 +360,7 @@
   "welcome_back": "歡迎回來，{name}。",
   "welcome_description": "歡迎來到您的儀表板",
   "whatsapp": "WhatsApp",
+  "will_cancel_at": "將在 {date} 取消",
+  "will_renew_at": "將在 {date} 續訂",
   "workspace": "工作區"
 }

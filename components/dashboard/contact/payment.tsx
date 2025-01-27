@@ -20,8 +20,6 @@ export function Payment({ contact }: PaymentProps) {
     { enabled: !!contact?.email || !!contact?.phone }
   );
 
-  console.log('stripeCustomerInfo', stripeCustomerInfo);
-
   return (
     <div className='space-y-2 border-b p-6'>
       <div className='flex items-center justify-between'>
@@ -40,7 +38,7 @@ export function Payment({ contact }: PaymentProps) {
             <h2 className='font-medium text-foreground'>{t('payments')}</h2>
           )}
           {stripeCustomerInfo && (
-            <MetadataPopover title={t('customer_info')} align='end'>
+            <MetadataPopover title={t('customer_info')} align='start'>
               <div className='space-y-2'>
                 <div className='flex items-center justify-between'>
                   <span className='text-muted-foreground text-xs'>{t('customer_id')}</span>
@@ -147,7 +145,6 @@ export function Payment({ contact }: PaymentProps) {
         ) : (
           <p className='font-medium text-sm'>{t('recent_transactions')}</p>
         )}
-
         {stripeCustomerInfo?.recentPayments?.map((payment: any) => (
           <div key={payment.id} className='flex items-center justify-between rounded-md bg-muted/30 p-2'>
             <div className='flex flex-col justify-between gap-1'>
@@ -175,15 +172,9 @@ export function Payment({ contact }: PaymentProps) {
               </span>
               {payment.type === 'subscription' && 'currentPeriodEnd' in payment && (
                 <span className='text-muted-foreground text-xs'>
-                  {payment.cancelAtPeriodEnd ? (
-                    <>
-                      {t('cancels')}: {formatDate(new Date(payment.currentPeriodEnd * 1000))}
-                    </>
-                  ) : (
-                    <>
-                      {t('renews')}: {formatDate(new Date(payment.currentPeriodEnd * 1000))}
-                    </>
-                  )}
+                  {payment.cancelAtPeriodEnd
+                    ? t('will_cancel_at', { date: formatDate(new Date(payment.currentPeriodEnd * 1000)) })
+                    : t('will_renew_at', { date: formatDate(new Date(payment.currentPeriodEnd * 1000)) })}
                 </span>
               )}
             </div>

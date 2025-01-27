@@ -12,10 +12,12 @@
   "DEAL_UPDATED": "交易已更新",
   "EMAIL_SCHEDULED": "电子邮件安排",
   "EMAIL_SENT": "发送电子邮件",
+  "LAST_CONTACTED": "最后联系",
   "MEETING_CANCELLED": "会议取消",
   "MEETING_SCHEDULED": "开会计划",
   "MEETING_UPDATED": "会议更新",
   "MESSAGE_SENT": "发送的消息",
+  "NEXT_FOLLOW_UP": "下一步跟进",
   "NOTE_ADDED": "备注添加",
   "PAYMENT_COMPLETED": "付款完成",
   "PAYMENT_LINK_CLICKED": "已点击付款链接",
@@ -358,5 +360,7 @@
   "welcome_back": "欢迎回来，{name}。",
   "welcome_description": "欢迎来到您的仪表板",
   "whatsapp": "WhatsApp",
+  "will_cancel_at": "将在 {date} 取消",
+  "will_renew_at": "将在 {date} 续订",
   "workspace": "工作区"
 }

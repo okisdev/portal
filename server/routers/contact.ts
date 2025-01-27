@@ -367,8 +367,8 @@ export const contactRouter = createTRPCRouter({
         skills: z.string().optional(),
         status: statusSchema.optional(),
         source: z.string().optional(),
-        lastContactedAt: z.date().optional(),
-        nextFollowUpAt: z.date().optional(),
+        lastContactedAt: z.date().optional().nullable(),
+        nextFollowUpAt: z.date().optional().nullable(),
         remark: z.string().optional(),
       })
     )
@@ -421,6 +421,28 @@ export const contactRouter = createTRPCRouter({
             oldPriority: currentContact.priority,
             newPriority: input.priority,
           },
+        });
+      }
+
+      if (input.lastContactedAt === null) {
+        await createContactActivityHelper(ctx, {
+          contactId: id,
+          type: 'DATE',
+          subType: 'LAST_CONTACTED',
+          description: 'Last contacted date removed',
+          initiatorType: 'user',
+          initiatorId: ctx.session?.user.id,
+        });
+      }
+
+      if (input.nextFollowUpAt === null) {
+        await createContactActivityHelper(ctx, {
+          contactId: id,
+          type: 'DATE',
+          subType: 'NEXT_FOLLOW_UP',
+          description: 'Next follow up date removed',
+          initiatorType: 'user',
+          initiatorId: ctx.session?.user.id,
         });
       }
 

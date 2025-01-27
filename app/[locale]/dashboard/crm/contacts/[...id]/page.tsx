@@ -391,7 +391,7 @@ export default function ContactIdPage() {
                           setLastContactDate(null);
                           updateContact.mutate({
                             id: contactId[0],
-                            lastContactedAt: undefined,
+                            lastContactedAt: null,
                           });
                         }}
                         className='text-muted-foreground hover:text-foreground'
@@ -429,7 +429,7 @@ export default function ContactIdPage() {
                           setNextFollowUpDate(null);
                           updateContact.mutate({
                             id: contactId[0],
-                            nextFollowUpAt: undefined,
+                            nextFollowUpAt: null,
                           });
                         }}
                         className='text-muted-foreground hover:text-foreground'

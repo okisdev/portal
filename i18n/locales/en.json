@@ -12,10 +12,12 @@
   "DEAL_UPDATED": "Deal Updated",
   "EMAIL_SCHEDULED": "Email Scheduled",
   "EMAIL_SENT": "Email Sent",
+  "LAST_CONTACTED": "Last Contacted",
   "MEETING_CANCELLED": "Meeting Cancelled",
   "MEETING_SCHEDULED": "Meeting Scheduled",
   "MEETING_UPDATED": "Meeting Updated",
   "MESSAGE_SENT": "Message Sent",
+  "NEXT_FOLLOW_UP": "Next Follow Up",
   "NOTE_ADDED": "Note Added",
   "PAYMENT_COMPLETED": "Payment Completed",
   "PAYMENT_LINK_CLICKED": "Payment Link Clicked",
@@ -358,5 +360,7 @@
   "welcome_back": "Welcome Back, {name}.",
   "welcome_description": "Welcome to your dashboard",
   "whatsapp": "WhatsApp",
+  "will_cancel_at": "Will cancel at {date}",
+  "will_renew_at": "Will renew at {date}",
   "workspace": "Workspace"
 }
