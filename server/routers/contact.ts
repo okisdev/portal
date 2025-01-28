@@ -11,18 +11,29 @@ export const contactRouter = createTRPCRouter({
     return ctx.db.select().from(contact).orderBy(desc(contact.createdAt));
   }),
 
-  getContactByQuery: protectedProcedure.input(z.object({ query: z.string() })).query(async ({ ctx, input }) => {
-    return ctx.db
-      .select()
-      .from(contact)
-      .where(
-        sql`${contact.firstName} ILIKE ${`%${input.query}%`} OR 
+  getContactByQuery: protectedProcedure
+    .input(
+      z.object({
+        query: z.string(),
+        limit: z.number().optional().default(10),
+      })
+    )
+    .query(async ({ ctx, input }) => {
+      if (!input.query.trim()) {
+        return ctx.db.select().from(contact).orderBy(desc(contact.createdAt)).limit(input.limit);
+      }
+
+      return ctx.db
+        .select()
+        .from(contact)
+        .where(
+          sql`${contact.firstName} ILIKE ${`%${input.query}%`} OR 
             ${contact.lastName} ILIKE ${`%${input.query}%`} OR 
             ${contact.email} ILIKE ${`%${input.query}%`} OR
             ${contact.phone} ILIKE ${`%${input.query}%`}`
-      )
-      .limit(10);
-  }),
+        )
+        .limit(input.limit);
+    }),
 
   getContactById: protectedProcedure.input(z.object({ id: z.string() })).query(async ({ ctx, input }) => {
     return ctx.db
