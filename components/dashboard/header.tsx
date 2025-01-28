@@ -21,9 +21,12 @@ export function DashboardHeader() {
   const t = useTranslations();
 
   const paths = pathname.replace('/dashboard/', '').split('/');
+
   const [contactId, setContactId] = useState<string | null>(null);
   const [companyId, setCompanyId] = useState<string | null>(null);
+  const [teamId, setTeamId] = useState<string | null>(null);
   const [campaignId, setCampaignId] = useState<string | null>(null);
+
   useEffect(() => {
     if (paths.includes('contacts')) {
       const id = paths[paths.length - 1];
@@ -38,6 +41,13 @@ export function DashboardHeader() {
       }
     }
 
+    if (paths.includes('crm') && paths.includes('team')) {
+      const id = paths[paths.length - 1];
+      if (uuidValidate(id)) {
+        setTeamId(id);
+      }
+    }
+
     if (paths.includes('marketing') && paths.includes('campaigns')) {
       const id = paths[paths.length - 1];
       if (uuidValidate(id)) {
@@ -48,6 +58,7 @@ export function DashboardHeader() {
 
   const { data: contact, isLoading: isContactLoading } = api.contact.getContactById.useQuery({ id: contactId || '' }, { enabled: !!contactId });
   const { data: company, isLoading: isCompanyLoading } = api.company.getCompanyById.useQuery({ id: companyId || '' }, { enabled: !!companyId });
+  const { data: team, isLoading: isTeamLoading } = api.team.getTeamById.useQuery({ id: teamId || '' }, { enabled: !!teamId });
   const { data: campaign, isLoading: isCampaignLoading } = api.marketing.getCampaignById.useQuery({ id: campaignId || '' }, { enabled: !!campaignId });
 
   const isDashboard = paths.length === 2 && paths[1] === 'dashboard';
@@ -94,6 +105,13 @@ export function DashboardHeader() {
           return <Skeleton className='h-4 w-24' />;
         }
         return company.name;
+      }
+
+      if (paths.includes('crm') && paths.includes('team')) {
+        if (isTeamLoading || !team) {
+          return <Skeleton className='h-4 w-24' />;
+        }
+        return team.name;
       }
 
       if (paths.includes('marketing') && paths.includes('campaigns')) {

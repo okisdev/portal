@@ -209,7 +209,7 @@ export default function TeamIdPage() {
       accessorKey: 'name',
       header: ({ column }) => (
         <Button variant='ghost' onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
-          Name {column.getIsSorted() && <CaretSortIcon className='ml-2 inline' />}
+          {t('name')} {column.getIsSorted() && <CaretSortIcon className='ml-2 inline' />}
         </Button>
       ),
       cell: ({ row }) => (
@@ -230,7 +230,7 @@ export default function TeamIdPage() {
       accessorKey: 'role',
       header: ({ column }) => (
         <Button variant='ghost' onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
-          Role {column.getIsSorted() && <CaretSortIcon className='ml-2 inline' />}
+          {t('role')} {column.getIsSorted() && <CaretSortIcon className='ml-2 inline' />}
         </Button>
       ),
       cell: ({ row }) => {
@@ -243,7 +243,7 @@ export default function TeamIdPage() {
       accessorKey: 'phone',
       header: ({ column }) => (
         <Button variant='ghost' onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
-          Phone {column.getIsSorted() && <CaretSortIcon className='ml-2 inline' />}
+          {t('phone')} {column.getIsSorted() && <CaretSortIcon className='ml-2 inline' />}
         </Button>
       ),
       cell: ({ row }) => row.original.contact.phone || '-',
@@ -252,7 +252,7 @@ export default function TeamIdPage() {
       accessorKey: 'company',
       header: ({ column }) => (
         <Button variant='ghost' onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
-          Company {column.getIsSorted() && <CaretSortIcon className='ml-2 inline' />}
+          {t('company')} {column.getIsSorted() && <CaretSortIcon className='ml-2 inline' />}
         </Button>
       ),
       cell: ({ row }) => row.original.contact.company || '-',
@@ -261,7 +261,7 @@ export default function TeamIdPage() {
       accessorKey: 'status',
       header: ({ column }) => (
         <Button variant='ghost' onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
-          Status {column.getIsSorted() && <CaretSortIcon className='ml-2 inline' />}
+          {t('status')} {column.getIsSorted() && <CaretSortIcon className='ml-2 inline' />}
         </Button>
       ),
       cell: ({ row }) => <ColorBadge type='contactStatus' value={row.original.contact.status} />,
@@ -273,7 +273,7 @@ export default function TeamIdPage() {
           <DropdownMenu>
             <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
               <Button variant='ghost' className='h-8 w-8 p-0'>
-                <span className='sr-only'>Open menu</span>
+                <span className='sr-only'>{t('open_menu')}</span>
                 <MoreHorizontal className='size-4' />
               </Button>
             </DropdownMenuTrigger>
@@ -286,7 +286,7 @@ export default function TeamIdPage() {
                 }}
               >
                 <Eye className='mr-2 size-4' />
-                View
+                {t('view')}
               </DropdownMenuItem>
               <DropdownMenuItem
                 className='cursor-pointer text-destructive'
@@ -296,7 +296,7 @@ export default function TeamIdPage() {
                 }}
               >
                 <Trash2 className='mr-2 size-4' />
-                Delete
+                {t('delete')}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

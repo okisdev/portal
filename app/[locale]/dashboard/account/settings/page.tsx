@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { api } from '@/utils/trpc/client';
+import { BadgeX, Verified } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
@@ -14,7 +15,7 @@ import { toast } from 'sonner';
 export default function AccountSettingsPage() {
   const t = useTranslations();
 
-  const { data: me } = api.account.getMeFromDatabase.useQuery();
+  const { data: me, isLoading } = api.account.getMeFromDatabase.useQuery();
 
   const updateAccount = api.account.updateMe.useMutation();
   const updatePassword = api.account.updatePassword.useMutation();
@@ -148,14 +149,12 @@ export default function AccountSettingsPage() {
               <div className='space-y-4'>
                 <h2 className='font-medium text-2xl tracking-tight'>{t('contact_information')}</h2>
                 <div className='space-y-2'>
-                  <Label htmlFor='email'>{t('email_address')}</Label>
+                  <Label htmlFor='email' className='flex items-center gap-2'>
+                    {t('email_address')}
+                    {me?.emailVerified && !isLoading ? <Verified className='h-4 w-4 text-green-500' /> : <BadgeX className='h-4 w-4 text-red-500' />}
+                  </Label>
                   <div className='flex items-center gap-2'>
                     <Input type='email' id='email' value={email} onChange={(e) => setEmail(e.target.value)} />
-                    {me?.emailVerified ? (
-                      <span className='inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 font-medium text-green-800 text-xs'>{t('verified')}</span>
-                    ) : (
-                      <span className='inline-flex items-center rounded-full bg-red-100 px-2.5 py-0.5 font-medium text-red-800 text-xs'>{t('not_verified')}</span>
-                    )}
                   </div>
                 </div>
               </div>
