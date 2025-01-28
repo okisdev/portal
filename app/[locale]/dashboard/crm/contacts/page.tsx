@@ -481,7 +481,7 @@ export default function CRMContactsPage() {
 
   return (
     <div className='space-y-4 p-4'>
-      <PageHeader title={t('contacts')} description={t('contacts_description')} />
+      <PageHeader title={t('contacts')} subtitle={!isLoading ? `(${t('total_number_contacts', { count: filteredContacts.length })})` : undefined} description={t('contacts_description')} />
 
       <div className='flex flex-col gap-4'>
         <div className='flex items-center justify-between gap-4'>

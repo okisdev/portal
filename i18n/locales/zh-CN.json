@@ -413,5 +413,13 @@
   "user_not_found_error": "该电子邮件地址找不到帐户。",
   "registration_successful": "注册成功！",
   "user_or_password_incorrect_error": "错误的电子邮件或密码。\n请重试。",
-  "please_login_to_continue": "请登录继续"
+  "please_login_to_continue": "请登录继续",
+  "apply": "申请",
+  "last_30_days": "最近30天",
+  "last_7_days": "最近7天",
+  "last_90_days": "最近90天",
+  "pick_a_date_range": "选择日期范围",
+  "quick_select": "快速选择",
+  "total_number_contacts": "总计{count}联系人",
+  "total_number_teams": "总计{count}团队"
 }

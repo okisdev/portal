@@ -519,7 +519,7 @@ export default function CompanyPage() {
 
   return (
     <div className='space-y-4 p-4'>
-      <PageHeader title={t('companies')} description={t('companies_description')} />
+      <PageHeader title={t('companies')} subtitle={!isLoading ? `(${t('total_number_companies', { count: filteredCompanies.length })})` : undefined} description={t('companies_description')} />
 
       <div className='flex flex-col gap-4'>
         <div className='flex items-center justify-between gap-4'>

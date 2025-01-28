@@ -1,14 +1,17 @@
 interface PageHeaderProps {
   title: string;
+  subtitle?: string;
   description?: string;
   right?: React.ReactNode;
 }
 
-export function PageHeader({ title, description, right }: PageHeaderProps) {
+export function PageHeader({ title, subtitle, description, right }: PageHeaderProps) {
   return (
     <div className='flex items-start justify-between'>
       <div className='space-y-1'>
-        <h1 className='font-medium text-xl'>{title}</h1>
+        <p className='font-medium text-xl'>
+          {title} <span className='text-muted-foreground text-sm'>{subtitle}</span>
+        </p>
         {description && <p className='text-muted-foreground'>{description}</p>}
       </div>
       {right}

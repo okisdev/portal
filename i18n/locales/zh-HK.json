@@ -413,5 +413,13 @@
   "user_not_found_error": "該電子郵件地址找不到帳戶。",
   "registration_successful": "註冊成功！",
   "user_or_password_incorrect_error": "錯誤的電子郵件或密碼。\n請重試。",
-  "please_login_to_continue": "請登錄繼續"
+  "please_login_to_continue": "請登錄繼續",
+  "apply": "申請",
+  "last_30_days": "最近30天",
+  "last_7_days": "最近7天",
+  "last_90_days": "最近90天",
+  "pick_a_date_range": "選擇日期範圍",
+  "quick_select": "快速選擇",
+  "total_number_contacts": "總計{count}聯繫人",
+  "total_number_teams": "總計{count}團隊"
 }

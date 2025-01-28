@@ -413,5 +413,14 @@
   "user_not_found_error": "No account found with this email address.",
   "user_or_password_incorrect_error": "Incorrect email or password. Please try again.",
   "registration_successful": "Registration successful!",
-  "please_login_to_continue": "Please login to continue"
+  "please_login_to_continue": "Please login to continue",
+  "last_7_days": "Last 7 days",
+  "last_30_days": "Last 30 days",
+  "last_90_days": "Last 90 days",
+  "pick_a_date_range": "Pick a date range",
+  "quick_select": "Quick Select",
+  "apply": "Apply",
+  "total_number_contacts": "total {count} contacts",
+  "total_number_teams": "total {count} teams",
+  "total_number_companies": "total {count} companies"
 }
