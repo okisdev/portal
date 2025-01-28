@@ -1,9 +1,10 @@
 import { database } from '@/lib/database';
 import { credentialSchema } from '@/lib/schema';
 import { getUserFromDb } from '@/utils/database';
+import { UnexpectedError, UserOrPasswordIncorrectError } from '@/utils/error';
 import { DrizzleAdapter } from '@auth/drizzle-adapter';
 import bcrypt from 'bcrypt-edge';
-import NextAuth from 'next-auth';
+import NextAuth, { CredentialsSignin } from 'next-auth';
 import type { User } from 'next-auth';
 import Credentials from 'next-auth/providers/credentials';
 import Resend from 'next-auth/providers/resend';
@@ -23,13 +24,13 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           const dbUser = await getUserFromDb(email);
 
           if (!dbUser || !dbUser.password) {
-            throw new Error('Invalid credentials.');
+            throw new UserOrPasswordIncorrectError();
           }
 
           const isValidPassword = bcrypt.compareSync(password, dbUser.password);
 
           if (!isValidPassword) {
-            throw new Error('Invalid credentials.');
+            throw new UserOrPasswordIncorrectError();
           }
 
           const user: User = {
@@ -42,13 +43,15 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           return user;
         } catch (error) {
           console.error(error);
-          throw new Error('Invalid credentials.');
+          if (error instanceof CredentialsSignin) {
+            throw error;
+          }
+          throw new UnexpectedError(error as Error);
         }
       },
     }),
     Resend({
-      from: 'portal@mail.vifu.org',
-      name: 'Portal',
+      from: 'Portal <portal@mail.vifu.org>',
     }),
   ],
   session: {

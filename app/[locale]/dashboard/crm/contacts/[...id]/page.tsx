@@ -93,8 +93,6 @@ export default function ContactIdPage() {
   const [isMessageModalOpen, setIsMessageModalOpen] = useState(false);
   const [lastContactDate, setLastContactDate] = useState<Date | null>(contact?.lastContactedAt ? new Date(contact.lastContactedAt) : null);
   const [nextFollowUpDate, setNextFollowUpDate] = useState<Date | null>(contact?.nextFollowUpAt ? new Date(contact.nextFollowUpAt) : null);
-  const [isPastMeetingsOpen, setIsPastMeetingsOpen] = useState(false);
-  const [isUpcomingMeetingsOpen, setIsUpcomingMeetingsOpen] = useState(true);
 
   const assignToTeam = api.team.assignContactToTeam.useMutation({
     onSuccess: () => {

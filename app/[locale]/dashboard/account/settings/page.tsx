@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { api } from '@/utils/trpc/client';
+import { BadgeX, Verified } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
@@ -14,7 +15,7 @@ import { toast } from 'sonner';
 export default function AccountSettingsPage() {
   const t = useTranslations();
 
-  const { data: me } = api.account.getMeFromDatabase.useQuery();
+  const { data: me, isLoading } = api.account.getMeFromDatabase.useQuery();
 
   const updateAccount = api.account.updateMe.useMutation();
   const updatePassword = api.account.updatePassword.useMutation();
@@ -107,8 +108,8 @@ export default function AccountSettingsPage() {
       <div className='flex h-full flex-col space-y-8'>
         <Tabs defaultValue='profile' className='space-y-4'>
           <TabsList>
-            <TabsTrigger value='profile'>Profile</TabsTrigger>
-            <TabsTrigger value='password'>Password</TabsTrigger>
+            <TabsTrigger value='profile'>{t('profile')}</TabsTrigger>
+            <TabsTrigger value='password'>{t('password')}</TabsTrigger>
           </TabsList>
 
           <TabsContent value='profile' className='space-y-4'>
@@ -122,36 +123,38 @@ export default function AccountSettingsPage() {
                   </AvatarFallback>
                 </Avatar>
                 <div className='space-y-2'>
-                  <h2 className='font-medium text-2xl tracking-tight'>Profile Picture</h2>
-                  <p className='text-muted-foreground text-sm'>Update your profile picture</p>
+                  <h2 className='font-medium text-2xl tracking-tight'>{t('profile_picture')}</h2>
+                  <p className='text-muted-foreground text-sm'>{t('update_your_profile_picture')}</p>
                   <Button type='button' variant='outline' onClick={() => fileInputRef.current?.click()}>
-                    Change Photo
+                    {t('change_photo')}
                   </Button>
                   <Input type='file' ref={fileInputRef} onChange={handleImageUpload} accept='image/*' className='hidden' />
                 </div>
               </div>
 
               <div className='space-y-4'>
-                <h2 className='font-medium text-2xl tracking-tight'>Personal Information</h2>
+                <h2 className='font-medium text-2xl tracking-tight'>{t('personal_information')}</h2>
                 <div className='grid grid-cols-2 gap-6'>
                   <div className='space-y-2'>
-                    <Label htmlFor='firstName'>First Name</Label>
+                    <Label htmlFor='firstName'>{t('first_name')}</Label>
                     <Input type='text' id='firstName' value={firstName} onChange={(e) => setFirstName(e.target.value)} />
                   </div>
                   <div className='space-y-2'>
-                    <Label htmlFor='lastName'>Last Name</Label>
+                    <Label htmlFor='lastName'>{t('last_name')}</Label>
                     <Input type='text' id='lastName' value={lastName} onChange={(e) => setLastName(e.target.value)} />
                   </div>
                 </div>
               </div>
 
               <div className='space-y-4'>
-                <h2 className='font-medium text-2xl tracking-tight'>Contact Information</h2>
+                <h2 className='font-medium text-2xl tracking-tight'>{t('contact_information')}</h2>
                 <div className='space-y-2'>
-                  <Label htmlFor='email'>Email Address</Label>
+                  <Label htmlFor='email' className='flex items-center gap-2'>
+                    {t('email_address')}
+                    {me?.emailVerified && !isLoading ? <Verified className='h-4 w-4 text-green-500' /> : <BadgeX className='h-4 w-4 text-red-500' />}
+                  </Label>
                   <div className='flex items-center gap-2'>
                     <Input type='email' id='email' value={email} onChange={(e) => setEmail(e.target.value)} />
-                    {me?.emailVerified && <span className='inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 font-medium text-green-800 text-xs'>Verified</span>}
                   </div>
                 </div>
               </div>
@@ -166,23 +169,23 @@ export default function AccountSettingsPage() {
 
           <TabsContent value='password' className='space-y-4'>
             <div className='space-y-4'>
-              <h2 className='font-medium text-2xl tracking-tight'>Change Password</h2>
+              <h2 className='font-medium text-2xl tracking-tight'>{t('change_password')}</h2>
               <form onSubmit={handlePasswordSubmit} className='space-y-4'>
                 <div className='space-y-2'>
-                  <Label htmlFor='currentPassword'>Current Password</Label>
+                  <Label htmlFor='currentPassword'>{t('current_password')}</Label>
                   <Input type='password' id='currentPassword' value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} />
                 </div>
                 <div className='space-y-2'>
-                  <Label htmlFor='newPassword'>New Password</Label>
+                  <Label htmlFor='newPassword'>{t('new_password')}</Label>
                   <Input type='password' id='newPassword' value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
                 </div>
                 <div className='space-y-2'>
-                  <Label htmlFor='confirmPassword'>Confirm New Password</Label>
+                  <Label htmlFor='confirmPassword'>{t('confirm_new_password')}</Label>
                   <Input type='password' id='confirmPassword' value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
                 </div>
                 <div className='flex justify-end'>
                   <Button type='submit' disabled={updatePassword.isPending}>
-                    {updatePassword.isPending ? 'Updating Password...' : 'Update Password'}
+                    {updatePassword.isPending ? t('updating_password') : t('update_password')}
                   </Button>
                 </div>
               </form>

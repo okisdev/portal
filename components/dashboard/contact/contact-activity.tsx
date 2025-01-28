@@ -377,7 +377,7 @@ export function ContactActivity({ contactId }: { contactId: string }) {
                     value={newActivity}
                     onChange={(e) => handleInputChange(e)}
                     onKeyDown={(e) => handleKeyDown(e)}
-                    placeholder='Add a note... Use @ to mention someone'
+                    placeholder={t('add_a_note')}
                     className='min-h-[60px] resize-none'
                   />
                 </div>

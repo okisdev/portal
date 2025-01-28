@@ -54,12 +54,12 @@ export default function RegisterPage() {
       },
       {
         onSuccess: () => {
-          toast.success('Registration successful!');
-          router.push('/dashboard');
+          toast.success(t('registration_successful'));
+          router.push('/login?from=register&type=success');
         },
         onError: (error) => {
-          setError(error.message || 'Something went wrong. Please try again.');
-          toast.error(error.message || 'Something went wrong. Please try again.');
+          setError(error.message || t('unexpected_error'));
+          toast.error(error.message || t('unexpected_error'));
         },
       }
     );
@@ -70,8 +70,8 @@ export default function RegisterPage() {
   return (
     <motion.div key='register-form' initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.2 }}>
       <div className='space-y-2 text-center'>
-        <h1 className='font-medium text-foreground text-lg md:text-2xl'>Create your account</h1>
-        <p className='text-muted-foreground text-sm md:text-base'>Get started with your free Portal account</p>
+        <h1 className='font-medium text-foreground text-lg md:text-2xl'>{t('sign_up_title')}</h1>
+        <p className='text-muted-foreground text-sm md:text-base'>{t('sign_up_description')}</p>
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className='mt-6 space-y-4'>
@@ -79,7 +79,7 @@ export default function RegisterPage() {
 
         <div className='space-y-1'>
           <Label className='mb-1 block font-medium text-foreground text-sm'>{t('email')}</Label>
-          <input type='email' {...register('email')} className='w-full rounded-lg border bg-background p-2 focus:outline-none focus:ring-2 focus:ring-ring' placeholder='Enter your email' />
+          <input type='email' {...register('email')} className='w-full rounded-lg border bg-background p-2 focus:outline-none focus:ring-2 focus:ring-ring' placeholder={t('email_placeholder')} />
           {errors.email && <p className='mt-1 text-destructive text-sm'>{errors.email.message}</p>}
         </div>
 
@@ -111,7 +111,7 @@ export default function RegisterPage() {
           </button>
 
           <p className='text-center text-muted-foreground text-sm'>
-            Already have an account?{' '}
+            {t('already_have_an_account')}{' '}
             <a href='/login' className='text-muted-foreground underline hover:text-foreground'>
               {t('sign_in')}
             </a>

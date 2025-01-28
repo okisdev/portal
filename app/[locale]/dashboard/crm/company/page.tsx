@@ -27,8 +27,9 @@ import {
   getSortedRowModel,
   useReactTable,
 } from '@tanstack/react-table';
-import { Check, Filter, MoreHorizontal, Pencil, Trash2, X } from 'lucide-react';
+import { Check, ExternalLink, Filter, MoreHorizontal, Pencil, Trash2, X } from 'lucide-react';
 import { useTranslations } from 'next-intl';
+import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { usePathname } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
@@ -459,9 +460,12 @@ export default function CompanyPage() {
       accessorKey: 'website',
       header: t('website'),
       cell: ({ row }) => (
-        <a href={row.original.website} target='_blank' rel='noopener noreferrer' className='text-blue-500 hover:underline'>
-          {row.original.website || '—'}
-        </a>
+        <Button variant='ghost' size='sm' disabled={!row.original.website} asChild>
+          <Link href={row.original.website} target='_blank' rel='noopener noreferrer'>
+            {row.original.website ? t('visit') : '—'}
+            {row.original.website && <ExternalLink className='h-4 w-4' />}
+          </Link>
+        </Button>
       ),
     },
     {
@@ -519,7 +523,7 @@ export default function CompanyPage() {
 
   return (
     <div className='space-y-4 p-4'>
-      <PageHeader title={t('companies')} description={t('companies_description')} />
+      <PageHeader title={t('companies')} subtitle={!isLoading ? `(${t('total_number_companies', { count: filteredCompanies.length })})` : undefined} description={t('companies_description')} />
 
       <div className='flex flex-col gap-4'>
         <div className='flex items-center justify-between gap-4'>

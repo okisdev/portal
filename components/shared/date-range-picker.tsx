@@ -6,6 +6,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { cn } from '@/lib/utils';
 import { addMonths, format } from 'date-fns';
 import { Calendar as CalendarIcon } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import * as React from 'react';
 import type { DateRange } from 'react-day-picker';
 
@@ -18,6 +19,8 @@ interface DateRangePickerProps {
 }
 
 export function DateRangePicker({ className, initialDateFrom, initialDateTo, onChange, align = 'start' }: DateRangePickerProps) {
+  const t = useTranslations();
+
   const [isOpen, setIsOpen] = React.useState(false);
   const [currentMonth, setCurrentMonth] = React.useState<Date>(new Date());
   const [selectedRange, setSelectedRange] = React.useState<DateRange>({
@@ -27,11 +30,11 @@ export function DateRangePicker({ className, initialDateFrom, initialDateTo, onC
 
   const presets = [
     {
-      label: 'Today',
+      label: t('today'),
       dates: { from: new Date(), to: new Date() },
     },
     {
-      label: 'Last 7 days',
+      label: t('last_7_days'),
       dates: {
         from: (() => {
           const date = new Date();
@@ -42,11 +45,11 @@ export function DateRangePicker({ className, initialDateFrom, initialDateTo, onC
       },
     },
     {
-      label: 'Last 30 days',
+      label: t('last_30_days'),
       dates: { from: addMonths(new Date(), -1), to: new Date() },
     },
     {
-      label: 'Last 90 days',
+      label: t('last_90_days'),
       dates: { from: addMonths(new Date(), -3), to: new Date() },
     },
   ];
@@ -80,15 +83,15 @@ export function DateRangePicker({ className, initialDateFrom, initialDateTo, onC
                 format(selectedRange.from, 'LLL dd, y')
               )
             ) : (
-              <span>Pick a date range</span>
+              <span>{t('pick_a_date_range')}</span>
             )}
           </Button>
         </PopoverTrigger>
         <PopoverContent className='w-auto p-0' align={align}>
           <div className='flex'>
-            <div className='p-3 border-r min-w-[150px]'>
+            <div className='min-w-[150px] border-r p-3'>
               <div className='space-y-3'>
-                <h4 className='text-sm font-medium'>Quick Select</h4>
+                <h4 className='font-medium text-sm'>{t('quick_select')}</h4>
                 <div className='flex flex-col gap-2'>
                   {presets.map((preset) => (
                     <Button
@@ -188,7 +191,7 @@ export function DateRangePicker({ className, initialDateFrom, initialDateTo, onC
                   </div>
                 </div>
                 <div className='flex items-center justify-between border-t pt-4'>
-                  <div className='text-sm font-medium'>
+                  <div className='font-medium text-sm'>
                     {selectedRange?.from && format(selectedRange.from, 'MMM d, yyyy')}
                     {selectedRange?.to && ` - ${format(selectedRange.to, 'MMM d, yyyy')}`}
                   </div>
@@ -200,7 +203,7 @@ export function DateRangePicker({ className, initialDateFrom, initialDateTo, onC
                         setIsOpen(false);
                       }}
                     >
-                      Cancel
+                      {t('cancel')}
                     </Button>
                     <Button
                       onClick={() => {
@@ -208,7 +211,7 @@ export function DateRangePicker({ className, initialDateFrom, initialDateTo, onC
                         setIsOpen(false);
                       }}
                     >
-                      Apply
+                      {t('apply')}
                     </Button>
                   </div>
                 </div>

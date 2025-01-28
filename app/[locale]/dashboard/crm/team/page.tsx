@@ -220,6 +220,7 @@ export default function CRMTeamsPage() {
     <div className='space-y-4 p-4'>
       <PageHeader
         title={t('teams')}
+        subtitle={!isLoading ? `(${t('total_number_teams', { count: teams?.length ?? 0 })})` : undefined}
         description={t('teams_description')}
         right={
           <Button variant='outline' className='h-8' onClick={() => setIsCreateModalOpen(true)}>

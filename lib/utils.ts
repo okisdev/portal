@@ -1,15 +1,27 @@
 import { type ClassValue, clsx } from 'clsx';
+import { format } from 'date-fns';
+import { enUS, zhCN, zhHK } from 'date-fns/locale';
 import { twMerge } from 'tailwind-merge';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export function formatDate(date: Date, locale = 'en-US') {
-  return new Intl.DateTimeFormat(locale, {
-    dateStyle: 'medium',
-    timeStyle: 'short',
-  }).format(date);
+const localeMap = {
+  en: enUS,
+  'zh-HK': zhHK,
+  'zh-CN': zhCN,
+  'en-US': enUS,
+} as const;
+
+export function formatDate(date: Date, locale = typeof window !== 'undefined' ? window.navigator.language : 'en-US') {
+  // Get the base locale (e.g., 'en' from 'en-US')
+  const baseLocale = locale.split('-')[0] as keyof typeof localeMap;
+  const dateLocale = localeMap[locale as keyof typeof localeMap] || localeMap[baseLocale] || enUS;
+
+  return format(date, 'PP HH:mm', {
+    locale: dateLocale,
+  });
 }
 
 export function generateUUID() {

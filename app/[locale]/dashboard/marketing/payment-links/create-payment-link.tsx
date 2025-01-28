@@ -105,20 +105,20 @@ export function CreatePaymentLink() {
           </div>
           <div className='grid grid-cols-2 gap-4'>
             <div className='space-y-2'>
-              <Label htmlFor='firstName'>First Name</Label>
+              <Label htmlFor='firstName'>{t('first_name')}</Label>
               <Input id='firstName' name='firstName' value={formData.firstName} onChange={(e) => setFormData((prev) => ({ ...prev, firstName: e.target.value }))} placeholder='John' required />
             </div>
             <div className='space-y-2'>
-              <Label htmlFor='lastName'>Last Name</Label>
+              <Label htmlFor='lastName'>{t('last_name')}</Label>
               <Input id='lastName' name='lastName' value={formData.lastName} onChange={(e) => setFormData((prev) => ({ ...prev, lastName: e.target.value }))} placeholder='Doe' required />
             </div>
           </div>
           <div className='space-y-2'>
-            <Label htmlFor='amount'>Amount</Label>
+            <Label htmlFor='amount'>{t('amount')}</Label>
             <Input id='amount' name='amount' type='number' min='0.01' step='0.01' placeholder='99.99' required />
           </div>
           <Button type='submit' className='w-full' disabled={loading}>
-            {loading ? 'Creating...' : 'Create Link'}
+            {loading ? t('creating') : t('create_link')}
           </Button>
         </form>
       </DialogContent>
