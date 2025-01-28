@@ -404,5 +404,14 @@
   "email_placeholder": "输入您的电子邮件",
   "404_description": "您正在寻找的页面不存在。",
   "404_title": "404-找不到",
-  "go_back_to_home": "回到家"
+  "go_back_to_home": "回到家",
+  "error": "错误",
+  "sending": "发送...",
+  "signing_in": "签名...",
+  "password_incorrect_error": "密码不正确。\n请重试。",
+  "unexpected_error": "发生意外错误。\n请重试。",
+  "user_not_found_error": "该电子邮件地址找不到帐户。",
+  "registration_successful": "注册成功！",
+  "user_or_password_incorrect_error": "错误的电子邮件或密码。\n请重试。",
+  "please_login_to_continue": "请登录继续"
 }

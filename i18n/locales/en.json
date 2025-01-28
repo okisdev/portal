@@ -404,5 +404,14 @@
   "email_placeholder": "Enter your email",
   "go_back_to_home": "Go back to home",
   "404_title": "404 - Not Found",
-  "404_description": "The page you are looking for does not exist."
+  "404_description": "The page you are looking for does not exist.",
+  "sending": "Sending...",
+  "signing_in": "Signing In...",
+  "error": "Error",
+  "unexpected_error": "An unexpected error occurred. Please try again.",
+  "password_incorrect_error": "Incorrect password. Please try again.",
+  "user_not_found_error": "No account found with this email address.",
+  "user_or_password_incorrect_error": "Incorrect email or password. Please try again.",
+  "registration_successful": "Registration successful!",
+  "please_login_to_continue": "Please login to continue"
 }

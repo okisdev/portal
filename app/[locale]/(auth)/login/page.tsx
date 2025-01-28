@@ -7,6 +7,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { CheckCircle2, Loader2 } from 'lucide-react';
 import { signIn } from 'next-auth/react';
 import { useTranslations } from 'next-intl';
+import { useSearchParams } from 'next/navigation';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
@@ -21,6 +22,10 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 
 export default function LoginPage() {
   const t = useTranslations();
+
+  const searchParams = useSearchParams();
+  const from = searchParams.get('from');
+  const type = searchParams.get('type');
 
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -60,14 +65,34 @@ export default function LoginPage() {
       });
 
       if (result?.error) {
-        setError(result.error);
-        toast.error(result.error);
+        let errorMessage = t('unexpected_error');
+
+        console.log(result);
+
+        switch (result.code) {
+          case 'user_not_found':
+            errorMessage = t('user_not_found_error');
+            break;
+          case 'password_incorrect':
+            errorMessage = t('password_incorrect_error');
+            break;
+          case 'user_or_password_incorrect':
+            errorMessage = t('user_or_password_incorrect_error');
+            break;
+          case 'unexpected_error':
+            errorMessage = t('unexpected_error');
+            break;
+        }
+
+        setError(errorMessage);
+        toast.error(errorMessage);
       } else {
         window.location.href = '/dashboard';
       }
     } catch (err) {
-      setError('Something went wrong. Please try again.');
-      toast.error('Something went wrong. Please try again.');
+      setError(t('unexpected_error'));
+
+      toast.error(t('unexpected_error'));
     } finally {
       setLoading(false);
     }
@@ -91,8 +116,8 @@ export default function LoginPage() {
         setSentEmail(data.email);
       }
     } catch (err) {
-      setError('Something went wrong. Please try again.');
-      toast.error('Something went wrong. Please try again.');
+      setError(t('unexpected_error'));
+      toast.error(t('unexpected_error'));
     } finally {
       setLoading(false);
     }
@@ -108,7 +133,8 @@ export default function LoginPage() {
           </div>
 
           <form onSubmit={handleSubmit(onSubmit)} className='mt-6 space-y-4'>
-            {error && <Banner title='Error' description={error} variant='error' />}
+            {from === 'register' && type === 'success' && <Banner title={t('registration_successful')} description={t('please_login_to_continue')} variant='success' />}
+            {error && <Banner title={t('error')} description={error} variant='error' />}
 
             <div className='space-y-1'>
               <Label className='mb-1 flex justify-between font-medium text-foreground text-sm'>
@@ -155,7 +181,7 @@ export default function LoginPage() {
                 {loading ? (
                   <>
                     <Loader2 className='mr-2 h-5 w-5 animate-spin' />
-                    {isPasswordLogin ? 'Signing in...' : 'Sending...'}
+                    {isPasswordLogin ? t('signing_in') : t('sending')}
                   </>
                 ) : isPasswordLogin ? (
                   t('sign_in')

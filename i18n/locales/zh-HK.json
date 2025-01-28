@@ -404,5 +404,14 @@
   "email_placeholder": "輸入您的電子郵件",
   "404_description": "您正在尋找的頁面不存在。",
   "404_title": "404-找不到",
-  "go_back_to_home": "回到家"
+  "go_back_to_home": "回到家",
+  "error": "錯誤",
+  "sending": "發送...",
+  "signing_in": "簽名...",
+  "password_incorrect_error": "密碼不正確。\n請重試。",
+  "unexpected_error": "發生意外錯誤。\n請重試。",
+  "user_not_found_error": "該電子郵件地址找不到帳戶。",
+  "registration_successful": "註冊成功！",
+  "user_or_password_incorrect_error": "錯誤的電子郵件或密碼。\n請重試。",
+  "please_login_to_continue": "請登錄繼續"
 }

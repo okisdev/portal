@@ -54,12 +54,12 @@ export default function RegisterPage() {
       },
       {
         onSuccess: () => {
-          toast.success('Registration successful!');
-          router.push('/dashboard');
+          toast.success(t('registration_successful'));
+          router.push('/login?from=register&type=success');
         },
         onError: (error) => {
-          setError(error.message || 'Something went wrong. Please try again.');
-          toast.error(error.message || 'Something went wrong. Please try again.');
+          setError(error.message || t('unexpected_error'));
+          toast.error(error.message || t('unexpected_error'));
         },
       }
     );
