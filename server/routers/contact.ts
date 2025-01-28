@@ -18,7 +18,8 @@ export const contactRouter = createTRPCRouter({
       .where(
         sql`${contact.firstName} ILIKE ${`%${input.query}%`} OR 
             ${contact.lastName} ILIKE ${`%${input.query}%`} OR 
-            ${contact.email} ILIKE ${`%${input.query}%`}`
+            ${contact.email} ILIKE ${`%${input.query}%`} OR
+            ${contact.phone} ILIKE ${`%${input.query}%`}`
       )
       .limit(10);
   }),

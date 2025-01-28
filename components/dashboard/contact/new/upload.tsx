@@ -358,7 +358,7 @@ export default function ContactUpload() {
       <div className='mb-6 flex gap-4'>
         <Button variant='outline' className='h-8 gap-2' onClick={() => document.getElementById('csvUpload')?.click()}>
           <Upload className='h-4 w-4' />
-          Upload CSV
+          {t('upload_csv')}
         </Button>
         <Button variant='outline' className='h-8 gap-2' onClick={downloadTemplate}>
           <Download className='h-4 w-4' />
@@ -417,7 +417,7 @@ export default function ContactUpload() {
                     }}
                     className='w-full sm:w-auto'
                   >
-                    Cancel Import
+                    {t('cancel_import')}
                   </Button>
                 </div>
               </>
@@ -428,14 +428,14 @@ export default function ContactUpload() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>First Name</TableHead>
-                  <TableHead>Last Name</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Phone</TableHead>
-                  <TableHead>Company</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Source</TableHead>
-                  <TableHead>Remark</TableHead>
+                  <TableHead>{t('first_name')}</TableHead>
+                  <TableHead>{t('last_name')}</TableHead>
+                  <TableHead>{t('email')}</TableHead>
+                  <TableHead>{t('phone')}</TableHead>
+                  <TableHead>{t('company')}</TableHead>
+                  <TableHead>{t('status')}</TableHead>
+                  <TableHead>{t('source')}</TableHead>
+                  <TableHead>{t('remark')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -488,9 +488,9 @@ export default function ContactUpload() {
                           value={row.source ?? ''}
                           onChange={(value) => handleCsvEdit(index, 'source', value)}
                           items={sources}
-                          placeholder='Select source...'
-                          searchPlaceholder='Search source...'
-                          groupHeading='Sources'
+                          placeholder={t('select_source')}
+                          searchPlaceholder={t('search_source')}
+                          groupHeading={t('sources')}
                         />
                       </TableCell>
                       <TableCell>

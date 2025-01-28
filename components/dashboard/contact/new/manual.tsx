@@ -95,7 +95,7 @@ export default function ManualContactForm() {
             name='firstName'
             render={({ field }) => (
               <FormItem>
-                <FormLabel>First Name</FormLabel>
+                <FormLabel>{t('first_name')}</FormLabel>
                 <FormControl>
                   <Input placeholder='John' {...field} />
                 </FormControl>
@@ -109,7 +109,7 @@ export default function ManualContactForm() {
             name='lastName'
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Last Name</FormLabel>
+                <FormLabel>{t('last_name')}</FormLabel>
                 <FormControl>
                   <Input placeholder='Doe' {...field} />
                 </FormControl>
@@ -125,7 +125,7 @@ export default function ManualContactForm() {
             name='email'
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Email</FormLabel>
+                <FormLabel>{t('email')}</FormLabel>
                 <FormControl>
                   <Input type='email' placeholder='john@example.com' {...field} />
                 </FormControl>
@@ -181,9 +181,9 @@ export default function ManualContactForm() {
             name='source'
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Source</FormLabel>
+                <FormLabel>{t('source')}</FormLabel>
                 <FormControl>
-                  <Combobox value={field.value ?? ''} onChange={field.onChange} items={sources} placeholder='Select source...' searchPlaceholder='Search source...' groupHeading='Sources' />
+                  <Combobox value={field.value ?? ''} onChange={field.onChange} items={sources} placeholder={t('select_source')} searchPlaceholder={t('search_source')} groupHeading={t('sources')} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -197,15 +197,15 @@ export default function ManualContactForm() {
             name='status'
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Status</FormLabel>
+                <FormLabel>{t('status')}</FormLabel>
                 <FormControl>
                   <Combobox
                     value={field.value ?? ''}
                     onChange={field.onChange}
                     items={statusSchema.options}
-                    placeholder='Select a status'
-                    searchPlaceholder='Search status...'
-                    groupHeading='Statuses'
+                    placeholder={t('select_status')}
+                    searchPlaceholder={t('search_status')}
+                    groupHeading={t('statuses')}
                     allowCustom={false}
                     renderItem={(id) => {
                       const status = statusSchema.options.find((s) => s === id);
@@ -222,15 +222,15 @@ export default function ManualContactForm() {
             name='campaignCode'
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Campaign</FormLabel>
+                <FormLabel>{t('campaign')}</FormLabel>
                 <FormControl>
                   <Combobox
                     value={field.value ?? ''}
                     onChange={field.onChange}
                     items={campaigns?.map((c) => c.campaignCode) ?? []}
-                    placeholder='Select a campaign'
-                    searchPlaceholder='Search campaigns...'
-                    groupHeading='Campaigns'
+                    placeholder={t('select_campaign')}
+                    searchPlaceholder={t('search_campaigns')}
+                    groupHeading={t('campaigns')}
                     allowCustom={false}
                     renderItem={(code) => {
                       const campaign = campaigns?.find((c) => c.campaignCode === code);
@@ -249,9 +249,9 @@ export default function ManualContactForm() {
           name='remark'
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Remark</FormLabel>
+              <FormLabel>{t('remark')}</FormLabel>
               <FormControl>
-                <Textarea placeholder='Any additional notes...' {...field} />
+                <Textarea placeholder={t('any_additional_notes')} {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -260,7 +260,7 @@ export default function ManualContactForm() {
 
         <div className='flex justify-end'>
           <Button type='submit' disabled={isLoading}>
-            {isLoading ? 'Creating...' : 'Create Contact'}
+            {isLoading ? t('creating') : t('create_contact')}
           </Button>
         </div>
       </form>

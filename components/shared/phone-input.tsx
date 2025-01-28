@@ -70,9 +70,9 @@ export function PhoneInput({ className, value, onChange, ...props }: PhoneInputP
         value={selectedCountry?.label ?? ''}
         onChange={handleCountryChange}
         items={phoneCountries.map((country) => country.label)}
-        placeholder='Select'
-        searchPlaceholder='Search'
-        groupHeading='Countries'
+        placeholder={t('select_country')}
+        searchPlaceholder={t('search_country')}
+        groupHeading={t('countries')}
         className='w-[180px]'
         allowCustom={false}
       />

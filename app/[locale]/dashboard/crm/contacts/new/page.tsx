@@ -16,8 +16,8 @@ export default function ImportContacts() {
     <div className='space-y-4 p-4'>
       <Tabs defaultValue={activeTab} onValueChange={setActiveTab} className='w-full'>
         <PageHeader
-          title='Create Contact'
-          description='Create a new contact'
+          title={t('create_contact')}
+          description={t('create_a_new_contact')}
           right={
             <TabsList>
               <TabsTrigger value='manual'>{t('manual_create')}</TabsTrigger>
