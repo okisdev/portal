@@ -387,5 +387,22 @@
   "delete_user": "删除用户",
   "delete_user_description": "您确定要删除此用户吗？此操作无法撤销，并且将删除所有相关数据。",
   "campaign_not_found": "没有找到运动",
-  "remove": "消除"
+  "remove": "消除",
+  "already_have_an_account": "已经有一个帐户？",
+  "dont_have_an_account": "没有帐户？",
+  "forgot_password": "忘记密码？",
+  "login_description": "欢迎回来！\n请输入您的详细信息。",
+  "login_title": "登录到您的门户帐户",
+  "password_placeholder": "输入您的密码",
+  "remember_for_30_days": "记住30天",
+  "send_magic_link": "发送魔术链接",
+  "sign_up": "报名",
+  "sign_up_description": "开始使用您的免费门户帐户",
+  "sign_up_title": "创建您的门户帐户",
+  "use_magic_link": "使用魔术链接",
+  "use_password": "使用密码",
+  "email_placeholder": "输入您的电子邮件",
+  "404_description": "您正在寻找的页面不存在。",
+  "404_title": "404-找不到",
+  "go_back_to_home": "回到家"
 }

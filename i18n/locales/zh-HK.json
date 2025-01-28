@@ -387,5 +387,22 @@
   "delete_user": "刪除使用者",
   "delete_user_description": "您確定要刪除此使用者嗎？此操作無法撤銷，並且將刪除所有相關資料。",
   "campaign_not_found": "沒有找到運動",
-  "remove": "消除"
+  "remove": "消除",
+  "already_have_an_account": "已經有一個帳戶？",
+  "dont_have_an_account": "沒有帳戶？",
+  "forgot_password": "忘記密碼？",
+  "login_description": "歡迎回來！\n請輸入您的詳細信息。",
+  "login_title": "登錄到您的門戶帳戶",
+  "password_placeholder": "輸入您的密碼",
+  "remember_for_30_days": "記住30天",
+  "send_magic_link": "發送魔術鏈接",
+  "sign_up": "報名",
+  "sign_up_description": "開始使用您的免費門戶帳戶",
+  "sign_up_title": "創建您的門戶帳戶",
+  "use_magic_link": "使用魔術鏈接",
+  "use_password": "使用密碼",
+  "email_placeholder": "輸入您的電子郵件",
+  "404_description": "您正在尋找的頁面不存在。",
+  "404_title": "404-找不到",
+  "go_back_to_home": "回到家"
 }

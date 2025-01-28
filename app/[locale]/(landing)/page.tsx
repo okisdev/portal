@@ -9,9 +9,7 @@ export default function Home() {
   const searchParams = useSearchParams();
   const home = searchParams.get('home');
 
-  if (session.status === 'authenticated' && home !== '1') {
-    return redirect('/dashboard');
-  }
+  if (session.status === 'authenticated' && home !== '1') redirect('/dashboard');
 
   return (
     <div className='min-h-screen bg-gradient-to-b from-neutral-50 to-white dark:from-neutral-900 dark:to-neutral-800'>
