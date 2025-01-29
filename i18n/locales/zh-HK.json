@@ -458,5 +458,19 @@
   "will_cancel_at": "將在 {date} 取消",
   "will_renew_at": "將在 {date} 續訂",
   "workspace": "工作區",
-  "write_a_reply": "寫回覆...使用 @ 提及他人"
+  "write_a_reply": "寫回覆...使用 @ 提及他人",
+  "account_settings": "帳戶設置",
+  "account_settings_description": "管理您的帳戶",
+  "failed_to_update_password": "無法更新密碼",
+  "password_updated_successfully": "密碼成功更新",
+  "account_updated_successfully": "帳戶成功更新",
+  "failed_to_update_account": "無法更新帳戶",
+  "preferences": "偏好",
+  "timezone": "時區",
+  "failed_to_update_timezone": "無法更新時區",
+  "select_timezone": "選擇時區",
+  "timezone_updated_successfully": "TimeZone成功更新了",
+  "no_timezone_found": "找不到時區",
+  "search_timezone": "搜索時區",
+  "timezones": "時帶"
 }

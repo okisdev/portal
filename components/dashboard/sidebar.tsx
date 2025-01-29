@@ -91,7 +91,7 @@ export function DashboardSidebar() {
       <SidebarFooter>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton asChild>
+            <SidebarMenuButton tooltip={t('settings')} asChild>
               <Link href='/dashboard/account/settings'>
                 <Settings />
                 <span>{t('settings')}</span>
@@ -99,7 +99,7 @@ export function DashboardSidebar() {
             </SidebarMenuButton>
           </SidebarMenuItem>
           <SidebarMenuItem>
-            <SidebarMenuButton asChild>
+            <SidebarMenuButton tooltip={t('notifications')} asChild>
               <Link href='/dashboard/account/notifications'>
                 <Bell />
                 {unreadNotificationsCount && unreadNotificationsCount.count > 0 && <span className='-top-0.5 -right-0.5 absolute h-1.5 w-1.5 rounded-full bg-red-500' />}
@@ -112,7 +112,7 @@ export function DashboardSidebar() {
           <SidebarMenuItem className='flex items-center justify-between space-x-1'>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <SidebarMenuButton>
+                <SidebarMenuButton tooltip={t('account')}>
                   <Avatar className='h-4 w-4'>
                     <AvatarImage src={me?.image ?? ''} />
                     <AvatarFallback>{me?.name?.charAt(0) ?? me?.email?.charAt(0)}</AvatarFallback>
@@ -224,7 +224,7 @@ function SidebarGroupSection({ title, items, defaultOpen = true, onItemAction }:
             <SidebarMenu>
               {items.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
+                  <SidebarMenuButton tooltip={t(item.id)} asChild>
                     <Link href={item.url}>
                       <item.icon />
                       <span>{t(item.id)}</span>

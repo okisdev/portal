@@ -1,4 +1,5 @@
 import { user } from '@/drizzle/schema';
+import { timezoneSchema } from '@/lib/schema';
 import { createTRPCRouter, protectedProcedure } from '@/server/trpc';
 import { encryptPassword } from '@/utils/password';
 import { TRPCError } from '@trpc/server';
@@ -30,6 +31,7 @@ export const accountRouter = createTRPCRouter({
         emailVerified: user.emailVerified,
         role: user.role,
         username: user.username,
+        timezone: user.timezone,
       })
       .from(user)
       .where(eq(user.id, ctx.session.user.id))
@@ -74,5 +76,16 @@ export const accountRouter = createTRPCRouter({
       const hashedPassword = encryptPassword(input.newPassword);
 
       return ctx.db.update(user).set({ password: hashedPassword }).where(eq(user.id, ctx.session.user.id));
+    }),
+
+  updateTimezone: protectedProcedure
+    .input(
+      z.object({
+        timezone: timezoneSchema,
+      })
+    )
+    .mutation(({ ctx, input }) => {
+      if (!ctx.session.user.id) throw new TRPCError({ code: 'UNAUTHORIZED' });
+      return ctx.db.update(user).set({ timezone: input.timezone }).where(eq(user.id, ctx.session.user.id));
     }),
 });

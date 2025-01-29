@@ -1,7 +1,7 @@
 'use client';
 
 import { PageHeader } from '@/components/shared/page-header';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import {} from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -46,7 +46,6 @@ export default function TeamConfiguration() {
       <Tabs defaultValue='general' className='space-y-4'>
         <TabsList>
           <TabsTrigger value='general'>{t('general')}</TabsTrigger>
-          <TabsTrigger value='members'>{t('members')}</TabsTrigger>
           <TabsTrigger value='settings'>{t('settings')}</TabsTrigger>
         </TabsList>
 
@@ -62,45 +61,6 @@ export default function TeamConfiguration() {
                 <Input id='teamName' value={teamName} onChange={(e) => setTeamName(e.target.value)} />
               </div>
               <Button>{t('save_changes')}</Button>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value='members'>
-          <Card>
-            <CardHeader>
-              <CardTitle>{t('team_members')}</CardTitle>
-              <CardDescription>{t('team_members_description')}</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className='space-y-4'>
-                {teamMembers.map((member) => (
-                  <div key={member.id} className='flex items-center justify-between rounded-lg border p-4'>
-                    <div className='flex items-center space-x-4'>
-                      <Avatar>
-                        <AvatarImage src={member.avatarUrl} />
-                        <AvatarFallback>
-                          {member.name
-                            .split(' ')
-                            .map((n) => n[0])
-                            .join('')}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <p className='font-medium'>{member.name}</p>
-                        <p className='text-neutral-500 text-sm'>{member.email}</p>
-                      </div>
-                    </div>
-                    <div className='flex items-center space-x-2'>
-                      <span className='text-neutral-500 text-sm'>{member.role}</span>
-                      <Button variant='outline' size='sm'>
-                        Manage
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-                <Button>Add Team Member</Button>
-              </div>
             </CardContent>
           </Card>
         </TabsContent>

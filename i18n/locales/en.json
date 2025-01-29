@@ -458,5 +458,19 @@
   "will_cancel_at": "Will cancel at {date}",
   "will_renew_at": "Will renew at {date}",
   "workspace": "Workspace",
-  "write_a_reply": "Write a reply... Use @ to mention someone"
+  "write_a_reply": "Write a reply... Use @ to mention someone",
+  "account_settings": "Account Settings",
+  "account_settings_description": "Manage your account",
+  "password_updated_successfully": "Password updated successfully",
+  "failed_to_update_password": "Failed to update password",
+  "account_updated_successfully": "Account updated successfully",
+  "failed_to_update_account": "Failed to update account",
+  "preferences": "Preferences",
+  "timezone": "Timezone",
+  "timezone_updated_successfully": "Timezone updated successfully",
+  "failed_to_update_timezone": "Failed to update timezone",
+  "select_timezone": "Select timezone",
+  "timezones": "Timezones",
+  "no_timezone_found": "No timezone found",
+  "search_timezone": "Search timezone"
 }
