@@ -1,11 +1,15 @@
 'use client';
 
-import { Card, CardContent } from '@/components/ui/card';
 import { useEffect, useRef, useState } from 'react';
 
-const tabs = ['Overview', 'Integrations', 'Activity', 'Domains', 'Usage', 'Monitoring'];
+type TabSwitcherProps = {
+  config: {
+    label: string;
+    value: React.ReactNode;
+  }[];
+};
 
-export default function Frame() {
+export function TabSwitcher({ config }: TabSwitcherProps) {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const [activeIndex, setActiveIndex] = useState(0);
   const [hoverStyle, setHoverStyle] = useState({});
@@ -38,9 +42,9 @@ export default function Frame() {
 
   useEffect(() => {
     requestAnimationFrame(() => {
-      const overviewElement = tabRefs.current[0];
-      if (overviewElement) {
-        const { offsetLeft, offsetWidth } = overviewElement;
+      const firstElement = tabRefs.current[0];
+      if (firstElement) {
+        const { offsetLeft, offsetWidth } = firstElement;
         setActiveStyle({
           left: `${offsetLeft}px`,
           width: `${offsetWidth}px`,
@@ -49,42 +53,53 @@ export default function Frame() {
     });
   }, []);
 
+  const handleKeyDown = (index: number, e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      setActiveIndex(index);
+    }
+  };
+
   return (
-    <div className='flex min-h-screen w-full items-center justify-center dark:bg-[#0e0f11]'>
-      <Card className='relative flex h-[100px] w-full max-w-[1200px] items-center justify-center border-none shadow-none dark:bg-transparent'>
-        <CardContent className='p-0'>
-          <div className='relative'>
-            {/* Hover Highlight */}
-            <div
-              className='absolute flex h-[30px] items-center rounded-[6px] bg-[#0e0f1114] transition-all duration-300 ease-out dark:bg-[#ffffff1a]'
-              style={{
-                ...hoverStyle,
-                opacity: hoveredIndex !== null ? 1 : 0,
-              }}
-            />
+    <div className='flex h-full flex-col'>
+      <div className='flex-none'>
+        <div className='relative'>
+          <div
+            className='absolute flex h-[30px] items-center rounded-[6px] bg-foreground/10 transition-all duration-300 ease-out'
+            style={{
+              ...hoverStyle,
+              opacity: hoveredIndex !== null ? 1 : 0,
+            }}
+          />
 
-            <div className='absolute bottom-[-6px] h-[2px] bg-[#0e0f11] transition-all duration-300 ease-out dark:bg-white' style={activeStyle} />
+          <div className='absolute bottom-[-6px] h-[2px] bg-foreground transition-all duration-300 ease-out' style={activeStyle} />
 
-            <div className='relative flex items-center space-x-[6px]'>
-              {tabs.map((tab, index) => (
-                // biome-ignore lint/a11y/useKeyWithClickEvents: <explanation>
-                <div
-                  // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
-                  key={index}
-                  // biome-ignore lint/suspicious/noAssignInExpressions: <explanation>
-                  ref={(el) => (tabRefs.current[index] = el)}
-                  className={`h-[30px] cursor-pointer px-3 py-2 transition-colors duration-300 ${index === activeIndex ? 'text-[#0e0e10] dark:text-white' : 'text-[#0e0f1199] dark:text-[#ffffff99]'}`}
-                  onMouseEnter={() => setHoveredIndex(index)}
-                  onMouseLeave={() => setHoveredIndex(null)}
-                  onClick={() => setActiveIndex(index)}
-                >
-                  <div className='flex h-full items-center justify-center whitespace-nowrap font-[var(--www-mattmannucci-me-geist-regular-font-family)] text-sm leading-5'>{tab}</div>
-                </div>
-              ))}
-            </div>
+          <div className='relative flex items-center space-x-[6px]' role='tablist'>
+            {config.map((tab, index) => (
+              <div
+                key={tab.label}
+                ref={(el) => {
+                  tabRefs.current[index] = el;
+                }}
+                role='tab'
+                tabIndex={0}
+                aria-selected={index === activeIndex}
+                aria-controls={`panel-${tab.label}`}
+                className={`h-[30px] cursor-pointer px-3 py-2 transition-colors duration-300 ${index === activeIndex ? 'text-foreground' : 'text-foreground/60'}`}
+                onMouseEnter={() => setHoveredIndex(index)}
+                onMouseLeave={() => setHoveredIndex(null)}
+                onClick={() => setActiveIndex(index)}
+                onKeyDown={(e) => handleKeyDown(index, e)}
+              >
+                <div className='flex h-full items-center justify-center whitespace-nowrap font-[var(--www-mattmannucci-me-geist-regular-font-family)] text-sm leading-5'>{tab.label}</div>
+              </div>
+            ))}
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
+      <div className='relative mt-4 h-[calc(100%-44px)]' role='tabpanel' id={`panel-${config[activeIndex]?.label}`} aria-labelledby={config[activeIndex]?.label}>
+        {config[activeIndex]?.value}
+      </div>
     </div>
   );
 }

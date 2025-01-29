@@ -12,9 +12,9 @@ import type { EventFormData } from '@/components/shared/event-dialog';
 import { EventSection } from '@/components/shared/event-section';
 import { PageLoading } from '@/components/shared/page-loading';
 import { PhoneInput } from '@/components/shared/phone-input';
+import { TabSwitcher } from '@/components/shared/tab-switcher';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import {} from '@/components/ui/collapsible';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import {
   DropdownMenu,
@@ -29,13 +29,11 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import { sources } from '@/data/data';
 import { type Priority, type Status, statusSchema } from '@/lib/schema';
 import { formatDate } from '@/lib/utils';
 import { api } from '@/utils/trpc/client';
-import {} from 'framer-motion';
 import { Building2, Edit2, Mail, MessageSquare, MoreHorizontal, Phone, Save, Send, Users, X } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
@@ -487,7 +485,7 @@ export default function ContactIdPage() {
 
             <div className='flex-1 overflow-y-auto'>
               <div className='border-b p-6'>
-                <div className='flex items-center justify-between mb-2'>
+                <div className='mb-2 flex items-center justify-between'>
                   <h2 className='font-medium text-foreground'>{t('remark')}</h2>
                   <button
                     type='button'
@@ -542,7 +540,7 @@ export default function ContactIdPage() {
                 ) : (
                   <>
                     {contact?.leadingTeams?.map((team) => (
-                      <div key={team.id} className='flex items-center justify-between mb-3'>
+                      <div key={team.id} className='mb-3 flex items-center justify-between'>
                         <Link href={`/dashboard/crm/team/${team.id}`} className='text-sm transition-colors duration-200 hover:text-primary hover:underline'>
                           {team.name}
                         </Link>
@@ -550,7 +548,7 @@ export default function ContactIdPage() {
                       </div>
                     ))}
                     {contact?.subLeadingTeams?.map((team) => (
-                      <div key={team.id} className='flex items-center justify-between mb-3'>
+                      <div key={team.id} className='mb-3 flex items-center justify-between'>
                         <Link href={`/dashboard/crm/team/${team.id}`} className='text-sm transition-colors duration-200 hover:text-primary hover:underline'>
                           {team.name}
                         </Link>
@@ -558,7 +556,7 @@ export default function ContactIdPage() {
                       </div>
                     ))}
                     {contact?.referralTeams?.map((team) => (
-                      <div key={team.id} className='flex items-center justify-between mb-3'>
+                      <div key={team.id} className='mb-3 flex items-center justify-between'>
                         <Link href={`/dashboard/crm/team/${team.id}`} className='text-sm hover:text-primary'>
                           {team.name}
                         </Link>
@@ -573,25 +571,14 @@ export default function ContactIdPage() {
         </div>
 
         <div className='h-[calc(100vh-8rem)] overflow-hidden lg:col-span-2'>
-          <div className='h-full rounded-lg border bg-card text-card-foreground shadow-sm'>
-            <div className='h-full p-6'>
-              <Tabs defaultValue='activity' className='flex h-full flex-col'>
-                <TabsList className='grid w-full grid-cols-3'>
-                  <TabsTrigger value='activity'>{t('activity')}</TabsTrigger>
-                  <TabsTrigger value='subscription'>{t('subscription')}</TabsTrigger>
-                  <TabsTrigger value='management'>{t('management')}</TabsTrigger>
-                </TabsList>
-                <TabsContent value='activity' className='relative flex flex-1 flex-col'>
-                  <ContactActivity contactId={contactId[0]} />
-                </TabsContent>
-                <TabsContent value='subscription' className='flex w-full flex-col gap-4'>
-                  <p>{t('subscription')}</p>
-                </TabsContent>
-                <TabsContent value='management' className='flex w-full flex-col gap-4'>
-                  <p>{t('management')}</p>
-                </TabsContent>
-              </Tabs>
-            </div>
+          <div className='h-full rounded-lg border p-6'>
+            <TabSwitcher
+              config={[
+                { label: t('activity'), value: <ContactActivity contactId={contactId[0]} /> },
+                { label: t('subscription'), value: <p>{t('subscription')}</p> },
+                { label: t('management'), value: <p>{t('management')}</p> },
+              ]}
+            />
           </div>
         </div>
       </div>

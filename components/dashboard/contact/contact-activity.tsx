@@ -209,7 +209,7 @@ export function ContactActivity({ contactId }: { contactId: string }) {
   }, [activities]);
 
   return (
-    <div className='relative flex flex-1 flex-col'>
+    <div className='relative flex h-full flex-1 flex-col'>
       <div id='activities-container' className='absolute inset-0 overflow-y-auto pb-[6.5rem] sm:pb-[5.5rem]'>
         <div className='pointer-events-none sticky top-0 z-10 h-8 bg-gradient-to-b from-background to-transparent' />
         <div className='space-y-1'>
