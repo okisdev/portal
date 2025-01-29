@@ -152,7 +152,7 @@ export default function TeamPage() {
       <div className='grid gap-4 md:grid-cols-2'>
         <Card>
           <CardHeader>
-            <CardTitle>Total Users</CardTitle>
+            <CardTitle>{t('total_users')}</CardTitle>
             <CardDescription>Number of registered users</CardDescription>
           </CardHeader>
           <CardContent>

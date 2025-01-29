@@ -103,7 +103,6 @@
   "configuration": "Configuration",
   "confirm_new_password": "Confirm New Password",
   "contact": "Contact",
-  "contact_information": "Contact Information",
   "contact_updated_successfully": "Contact updated successfully",
   "contacts": "Contacts",
   "contacts_description": "Manage Contacts",
@@ -472,5 +471,17 @@
   "select_timezone": "Select timezone",
   "timezones": "Timezones",
   "no_timezone_found": "No timezone found",
-  "search_timezone": "Search timezone"
+  "search_timezone": "Search timezone",
+  "confirm_email_change": "Confirm Email Change",
+  "new_email": "New Email",
+  "confirm": "Confirm",
+  "confirming": "Confirming",
+  "updating": "Updating",
+  "update_email": "Update Email",
+  "confirm_new_email": "Confirm new email",
+  "update_email_address": "Update Email Address",
+  "update_email_address_description": "Update your email address",
+  "enter_new_email": "Enter new email",
+  "emails_do_not_match": "Emails do not match",
+  "total_users": "Total users"
 }

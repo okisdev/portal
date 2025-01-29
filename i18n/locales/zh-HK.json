@@ -103,7 +103,6 @@
   "configuration": "設定",
   "confirm_new_password": "確認新密碼",
   "contact": "聯絡人",
-  "contact_information": "聯絡資料",
   "contact_updated_successfully": "聯絡人更新成功",
   "contacts": "聯絡人",
   "contacts_description": "管理聯絡人",
@@ -472,5 +471,17 @@
   "timezone_updated_successfully": "TimeZone成功更新了",
   "no_timezone_found": "找不到時區",
   "search_timezone": "搜索時區",
-  "timezones": "時帶"
+  "timezones": "時帶",
+  "confirm": "確認",
+  "confirm_email_change": "確認電子郵件更改",
+  "confirming": "確認",
+  "new_email": "新電子郵件",
+  "confirm_new_email": "確認新電子郵件",
+  "update_email": "更新電子郵件",
+  "update_email_address": "更新電子郵件地址",
+  "update_email_address_description": "更新您的電子郵件地址",
+  "updating": "更新",
+  "enter_new_email": "輸入新電子郵件",
+  "emails_do_not_match": "電子郵件不匹配",
+  "total_users": "總用戶"
 }
