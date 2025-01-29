@@ -66,6 +66,7 @@ export const activitySubTypeSchema = z.enum([
   'REMARK_UPDATED',
 
   // Team Management
+  'TEAM_CREATED',
   'TEAM_ASSIGNED',
   'TEAM_REMOVED',
   'TEAM_UPDATED',

@@ -211,6 +211,7 @@ export const contactActivity = pgTable('contactActivity', {
       'REMARK_UPDATED',
 
       // Team Management
+      'TEAM_CREATED',
       'TEAM_ASSIGNED',
       'TEAM_REMOVED',
       'TEAM_UPDATED',
@@ -559,69 +560,61 @@ export const teamActivity = pgTable('teamActivity', {
     .references(() => user.id),
   type: text('type', {
     enum: [
+      'CONTACT', // Contact-related activities
+      'STATUS', // Status changes
+      'DATE', // Date-related activities
       'TEAM', // Team-related activities
-      'MEMBER', // Member-related activities
-      'MEETING', // Meeting-related activities
-      'GOAL', // Goal-related activities
-      'PERFORMANCE', // Performance-related activities
-      'ENGAGEMENT', // Engagement activities
       'CAMPAIGN', // Campaign-related activities
+      'DEAL', // Deal-related activities
       'PAYMENT', // Payment-related activities
+      'ENGAGEMENT', // Engagement activities like calls, emails
     ],
   }).notNull(),
   subType: text('subType', {
     enum: [
-      // Team Management
-      'TEAM_CREATED',
-      'TEAM_UPDATED',
-      'TEAM_ARCHIVED',
-      'TEAM_ACTIVATED',
+      // Contact Management
+      'CONTACT_CREATED',
+      'CONTACT_UPDATED',
+      'CONTACT_DELETED',
 
-      // Member Management
-      'MEMBER_ADDED',
-      'MEMBER_REMOVED',
-      'MEMBER_ROLE_UPDATED',
-      'LEADER_ASSIGNED',
-      'SUBLEADER_ASSIGNED',
-      'REFERRAL_ASSIGNED',
+      // Status Changes
+      'STATUS_CHANGED',
+      'PRIORITY_CHANGED',
 
-      // Meeting Management
+      // Date Related
+      'LAST_CONTACTED',
+      'NEXT_FOLLOW_UP',
+
+      // Engagement
       'MEETING_SCHEDULED',
       'MEETING_UPDATED',
       'MEETING_CANCELLED',
-      'MEETING_COMPLETED',
-      'MEETING_NO_SHOW',
-
-      // Goal Management
-      'GOAL_SET',
-      'GOAL_UPDATED',
-      'GOAL_ACHIEVED',
-      'GOAL_MISSED',
-
-      // Performance Tracking
-      'PERFORMANCE_REVIEWED',
-      'KPI_UPDATED',
-      'MILESTONE_REACHED',
-      'ACHIEVEMENT_UNLOCKED',
-
-      // Engagement
+      'CALL_LOGGED',
+      'EMAIL_SENT',
+      'EMAIL_SCHEDULED',
+      'MESSAGE_SENT',
       'NOTE_ADDED',
       'REMARK_UPDATED',
-      'DOCUMENT_SHARED',
-      'TASK_ASSIGNED',
-      'FEEDBACK_PROVIDED',
+
+      // Team Management
+      'TEAM_CREATED',
+      'TEAM_ASSIGNED',
+      'TEAM_REMOVED',
+      'TEAM_UPDATED',
 
       // Campaign Management
-      'CAMPAIGN_STARTED',
+      'CAMPAIGN_ASSIGNED',
+      'CAMPAIGN_REMOVED',
       'CAMPAIGN_UPDATED',
-      'CAMPAIGN_COMPLETED',
-      'CAMPAIGN_CANCELLED',
 
-      // Payment/Financial
-      'COMMISSION_RECORDED',
-      'BONUS_AWARDED',
-      'PAYMENT_PROCESSED',
-      'REVENUE_UPDATED',
+      // Deal Management
+      'DEAL_CREATED',
+      'DEAL_UPDATED',
+      'DEAL_CLOSED',
+
+      // Payment
+      'PAYMENT_LINK_CLICKED',
+      'PAYMENT_COMPLETED',
     ],
   }),
   initiatorType: text('initiatorType', { enum: ['user', 'system', 'team'] })

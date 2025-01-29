@@ -1,8 +1,9 @@
 import { calendarEvent, calendarEventParticipant, calendarFolder, company, contact, marketingCampaign, team, teamActivity, teamContact, teamMeeting, user, userNotifications } from '@/drizzle/schema';
 import { activitySubTypeSchema, activityTypeSchema } from '@/lib/schema';
 import { createContactActivityHelper } from '@/server/helper/contact';
+import { createTeamActivityHelper } from '@/server/helper/team';
 import { createTRPCRouter, protectedProcedure } from '@/server/trpc';
-import { and, eq, exists, inArray, sql } from 'drizzle-orm';
+import { and, asc, eq, exists, inArray, sql } from 'drizzle-orm';
 import { z } from 'zod';
 
 export const teamRouter = createTRPCRouter({
@@ -56,6 +57,15 @@ export const teamRouter = createTRPCRouter({
         })
         .returning();
 
+      await createTeamActivityHelper(ctx, {
+        teamId: newTeam.id,
+        type: 'TEAM',
+        subType: 'TEAM_CREATED',
+        description: `Team "${newTeam.name}" was created`,
+        initiatorType: 'user',
+        initiatorId: ctx.session.user.id,
+        metadata: { team: newTeam },
+      });
       return newTeam;
     }),
 
@@ -107,6 +117,19 @@ export const teamRouter = createTRPCRouter({
         },
       });
 
+      await createTeamActivityHelper(ctx, {
+        teamId: input.teamId,
+        type: 'TEAM',
+        subType: 'TEAM_ASSIGNED',
+        description: `Contact was assigned to team "${teamDetails.name}"`,
+        initiatorType: 'user',
+        initiatorId: ctx.session?.user.id,
+        metadata: {
+          teamId: input.teamId,
+          teamName: teamDetails.name,
+        },
+      });
+
       return result[0];
     }),
 
@@ -135,6 +158,19 @@ export const teamRouter = createTRPCRouter({
       // Log team removal activity
       await createContactActivityHelper(ctx, {
         contactId: input.contactId,
+        type: 'TEAM',
+        subType: 'TEAM_REMOVED',
+        description: `Contact was removed from team "${teamDetails.name}"`,
+        initiatorType: 'user',
+        initiatorId: ctx.session?.user.id,
+        metadata: {
+          teamId: input.teamId,
+          teamName: teamDetails.name,
+        },
+      });
+
+      await createTeamActivityHelper(ctx, {
+        teamId: input.teamId,
         type: 'TEAM',
         subType: 'TEAM_REMOVED',
         description: `Contact was removed from team "${teamDetails.name}"`,
@@ -243,31 +279,48 @@ export const teamRouter = createTRPCRouter({
           ...(input.remarks && { remarks: input.remarks }),
         })
         .where(eq(team.id, input.id));
+
+      await createTeamActivityHelper(ctx, {
+        teamId: input.id,
+        type: 'TEAM',
+        subType: 'TEAM_UPDATED',
+        description: `Team "${input.name}" was updated`,
+        initiatorType: 'user',
+        initiatorId: ctx.session?.user.id,
+        metadata: {
+          teamId: input.id,
+          teamName: input.name,
+        },
+      });
     }),
 
   updateTeamRemarks: protectedProcedure.input(z.object({ id: z.string(), remarks: z.string() })).mutation(async ({ ctx, input }) => {
-    return await ctx.db.update(team).set({ remarks: input.remarks }).where(eq(team.id, input.id));
+    const teamDetails = await ctx.db
+      .select({
+        name: team.name,
+      })
+      .from(team)
+      .where(eq(team.id, input.id))
+      .then((rows) => rows[0]);
+
+    await ctx.db.update(team).set({ remarks: input.remarks }).where(eq(team.id, input.id));
+
+    await createTeamActivityHelper(ctx, {
+      teamId: input.id,
+      type: 'TEAM',
+      subType: 'TEAM_UPDATED',
+      description: `Team "${teamDetails.name}" was updated`,
+      initiatorType: 'user',
+      initiatorId: ctx.session?.user.id,
+      metadata: {
+        teamId: input.id,
+        teamName: teamDetails.name,
+      },
+    });
   }),
 
-  getTeamActivities: protectedProcedure.input(z.object({ teamId: z.string() })).query(async ({ ctx, input }) => {
-    return await ctx.db
-      .select({
-        id: teamActivity.id,
-        type: teamActivity.type,
-        subType: teamActivity.subType,
-        description: teamActivity.description,
-        metadata: teamActivity.metadata,
-        createdAt: teamActivity.createdAt,
-        user: {
-          id: contact.id,
-          firstName: contact.firstName,
-          lastName: contact.lastName,
-        },
-      })
-      .from(teamActivity)
-      .leftJoin(contact, eq(teamActivity.userId, contact.id))
-      .where(eq(teamActivity.teamId, input.teamId))
-      .orderBy(teamActivity.createdAt);
+  getTeamActivities: protectedProcedure.input(z.object({ id: z.string() })).query(async ({ ctx, input }) => {
+    return await ctx.db.select().from(teamActivity).where(eq(teamActivity.teamId, input.id)).orderBy(asc(teamActivity.createdAt));
   }),
 
   createTeamActivity: protectedProcedure
@@ -279,7 +332,7 @@ export const teamRouter = createTRPCRouter({
         description: z.string(),
         initiatorType: z.enum(['user', 'system', 'team']).default('user'),
         initiatorId: z.string(),
-        metadata: z.string().optional(),
+        metadata: z.record(z.any()).optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -291,7 +344,7 @@ export const teamRouter = createTRPCRouter({
         initiatorType: input.initiatorType,
         initiatorId: input.initiatorId,
         description: input.description,
-        metadata: input.metadata,
+        metadata: input.metadata ? JSON.stringify(input.metadata) : null,
       });
 
       const mentionRegex = /@(\w+)/g;
@@ -310,7 +363,7 @@ export const teamRouter = createTRPCRouter({
             message: input.description,
             metadata: JSON.stringify({
               type: 'team',
-              teamId: input.teamId,
+              id: input.teamId,
             }),
           });
         }
@@ -357,6 +410,12 @@ export const teamRouter = createTRPCRouter({
       return await ctx.db.transaction(async (tx) => {
         // Set initial status based on meeting date
         const status = input.meetingDate < new Date() ? 'completed' : 'upcoming';
+
+        const teamDetails = await tx
+          .select()
+          .from(team)
+          .where(eq(team.id, input.teamId))
+          .then((rows) => rows[0]);
 
         const [newMeeting] = await tx
           .insert(teamMeeting)
@@ -411,6 +470,19 @@ export const teamRouter = createTRPCRouter({
           );
         }
 
+        await createTeamActivityHelper(ctx, {
+          teamId: input.teamId,
+          type: 'TEAM',
+          subType: 'MEETING_SCHEDULED',
+          description: `Team meeting "${input.title}" was scheduled`,
+          initiatorType: 'user',
+          initiatorId: ctx.session?.user.id,
+          metadata: {
+            teamId: input.teamId,
+            teamName: teamDetails.name,
+          },
+        });
+
         return newMeeting;
       });
     }),
@@ -442,13 +514,32 @@ export const teamRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      return await ctx.db.transaction(async (tx) => {
+      await ctx.db.transaction(async (tx) => {
         await tx.delete(calendarEvent).where(eq(calendarEvent.metadata, JSON.stringify({ teamMeetingId: input.id })));
 
         const [deletedMeeting] = await tx
           .delete(teamMeeting)
           .where(and(eq(teamMeeting.id, input.id), eq(teamMeeting.teamId, input.teamId)))
           .returning();
+
+        const teamDetails = await tx
+          .select()
+          .from(team)
+          .where(eq(team.id, input.teamId))
+          .then((rows) => rows[0]);
+
+        await createTeamActivityHelper(ctx, {
+          teamId: input.teamId,
+          type: 'TEAM',
+          subType: 'MEETING_CANCELLED',
+          description: `Team meeting "${deletedMeeting.title}" was cancelled`,
+          initiatorType: 'user',
+          initiatorId: ctx.session?.user.id,
+          metadata: {
+            teamId: input.teamId,
+            teamName: teamDetails.name,
+          },
+        });
 
         return deletedMeeting;
       });
@@ -462,7 +553,7 @@ export const teamRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      return await ctx.db.delete(teamActivity).where(eq(teamActivity.id, input.id));
+      await ctx.db.delete(teamActivity).where(eq(teamActivity.id, input.id));
     }),
 
   addTeamContact: protectedProcedure
@@ -485,6 +576,16 @@ export const teamRouter = createTRPCRouter({
 
       await createContactActivityHelper(ctx, {
         contactId: input.contactId,
+        type: 'TEAM',
+        subType: 'TEAM_ASSIGNED',
+        description: `Contact was added to team: ${team.name}`,
+        initiatorType: 'user',
+        initiatorId: ctx.session?.user.id,
+        metadata: { team },
+      });
+
+      await createTeamActivityHelper(ctx, {
+        teamId: input.teamId,
         type: 'TEAM',
         subType: 'TEAM_ASSIGNED',
         description: `Contact was added to team: ${team.name}`,

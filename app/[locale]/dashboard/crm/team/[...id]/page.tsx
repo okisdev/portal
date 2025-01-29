@@ -85,7 +85,7 @@ export default function TeamIdPage() {
   const { data: folders } = api.calendar.getMyFolders.useQuery();
   const { data: participantOptions } = api.calendar.getParticipantOptions.useQuery();
   const { data: teamActivities } = api.team.getTeamActivities.useQuery({
-    teamId: teamId[0],
+    id: teamId[0],
   });
   const { data: campaigns } = api.marketing.getActiveCampaigns.useQuery();
   const { data: companies } = api.company.getAllCompanies.useQuery();
@@ -103,7 +103,7 @@ export default function TeamIdPage() {
 
   const createTeamActivity = api.team.createTeamActivity.useMutation({
     onSuccess: () => {
-      utils.team.getTeamActivities.invalidate({ teamId: teamId[0] });
+      utils.team.getTeamActivities.invalidate({ id: teamId[0] });
       toast.success('Activity created successfully');
     },
     onError: (error) => {
@@ -166,7 +166,7 @@ export default function TeamIdPage() {
 
   const deleteTeamActivity = api.team.deleteTeamActivity.useMutation({
     onSuccess: () => {
-      utils.team.getTeamActivities.invalidate({ teamId: teamId[0] });
+      utils.team.getTeamActivities.invalidate({ id: teamId[0] });
       toast.success('Activity deleted successfully');
     },
     onError: (error: any) => {
@@ -478,19 +478,19 @@ export default function TeamIdPage() {
                         subType: activity.subType || 'NOTE_ADDED',
                         description: activity.description || '',
                         initiatorType: 'user',
-                        userId: activity.user?.id,
+                        userId: activity.userId,
                         metadata: activity.metadata,
                         createdAt: activity.createdAt,
                       }))}
                       onCreateActivity={(data) => {
                         createTeamActivity.mutate({
-                          teamId,
+                          teamId: teamId[0],
                           type: 'ENGAGEMENT',
                           subType: 'NOTE_ADDED',
                           description: data.description,
                           initiatorType: data.initiatorType,
                           initiatorId: data.initiatorId,
-                          metadata: data.metadata,
+                          metadata: data.metadata as any,
                         });
                       }}
                       isLoading={createTeamActivity.isPending}

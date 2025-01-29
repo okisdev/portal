@@ -596,14 +596,14 @@ export default function ContactIdPage() {
                         type: activity.type,
                         subType: activity.subType || 'NOTE_ADDED',
                         description: activity.description || '',
-                        initiatorType: activity.initiatorType === 'contact' ? 'user' : activity.initiatorType || 'user',
+                        initiatorType: 'user',
                         userId: activity.userId,
                         metadata: activity.metadata,
                         createdAt: activity.createdAt,
                       }))}
                       onCreateActivity={(data) => {
                         createContactActivity.mutate({
-                          contactId,
+                          contactId: contactId[0],
                           type: 'ENGAGEMENT',
                           subType: 'NOTE_ADDED',
                           description: data.description,

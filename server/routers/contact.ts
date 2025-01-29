@@ -184,9 +184,9 @@ export const contactRouter = createTRPCRouter({
           type: 'CAMPAIGN',
           subType: 'CAMPAIGN_ASSIGNED',
           description: `Contact ${result[0].name} (${result[0].email}) was assigned to campaign: ${campaign.name} (${campaign.campaignCode}).`,
-          metadata: { campaign },
           initiatorType: 'user',
           initiatorId: ctx.session?.user.id,
+          metadata: { campaign },
         });
       }
 
@@ -351,8 +351,8 @@ export const contactRouter = createTRPCRouter({
             title: `${ctx.session?.user.name || 'Someone'} mentioned you in a note`,
             message: input.description,
             metadata: JSON.stringify({
-              type: 'contact',
-              contactId: input.contactId,
+              type: 'contacts',
+              id: input.contactId,
             }),
           });
         }
