@@ -913,7 +913,7 @@ export const siteConfig = pgTable('siteConfig', {
     .notNull()
     .$defaultFn(() => crypto.randomUUID()),
   key: text('key', {
-    enum: ['name', 'description'],
+    enum: ['name', 'description', 'domain'],
   })
     .notNull()
     .unique(), // Unique key for the config

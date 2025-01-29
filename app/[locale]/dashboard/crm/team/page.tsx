@@ -275,7 +275,7 @@ export default function CRMTeamsPage() {
         open={!!teamToDelete}
         onOpenChange={(open) => !open && setTeamToDelete(null)}
         onConfirm={() => teamToDelete && handleDeleteTeam(teamToDelete)}
-        description={t('delete_team_description')}
+        description={t('delete_site_description')}
       />
 
       <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>

@@ -20,7 +20,7 @@ import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
-export default function TeamPage() {
+export function SiteMembers() {
   const t = useTranslations();
 
   const [editingUser, setEditingUser] = useState<User | null>(null);
@@ -146,8 +146,8 @@ export default function TeamPage() {
   }
 
   return (
-    <div className='space-y-4 p-4'>
-      <PageHeader title={t('team')} description={t('team_description')} />
+    <div className='space-y-4'>
+      <PageHeader title={t('site')} description={t('site_description')} />
 
       <div className='grid gap-4 md:grid-cols-2'>
         <Card>

@@ -18,7 +18,7 @@ import {
   SidebarMenuItem,
 } from '@/components/ui/sidebar';
 import { Skeleton } from '@/components/ui/skeleton';
-import { crmItems, languageItems, marketingItems, resourcesItems, teamItems, toolsItems, workspaceItems } from '@/config/dashboard';
+import { crmItems, languageItems, marketingItems, resourcesItems, siteItems, toolsItems, workspaceItems } from '@/config/dashboard';
 import { usePathname, useRouter } from '@/i18n/routing';
 import packageInfo from '@/package.json';
 import { copyToClipboard } from '@/utils/clipboard';
@@ -86,7 +86,7 @@ export function DashboardSidebar() {
         <SidebarGroupSection title={t('marketing')} items={marketingItems} />
         <SidebarGroupSection title={t('resources')} items={resourcesItems} />
         <SidebarGroupSection title={t('tools')} items={toolsItems} />
-        {me?.role === 'ADMIN' && <SidebarGroupSection title={t('team')} items={teamItems} />}
+        {me?.role === 'ADMIN' && <SidebarGroupSection title={t('site')} items={siteItems} />}
       </SidebarContent>
       <SidebarFooter>
         <SidebarMenu>
