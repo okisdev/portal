@@ -209,9 +209,9 @@ export function ContactActivity({ contactId }: { contactId: string }) {
   }, [activities]);
 
   return (
-    <div className='relative flex h-full flex-1 flex-col'>
-      <div id='activities-container' className='absolute inset-0 overflow-y-auto pb-[6.5rem] sm:pb-[5.5rem]'>
-        <div className='pointer-events-none sticky top-0 z-10 h-8 bg-gradient-to-b from-background to-transparent' />
+    <div className='flex h-full flex-col'>
+      <div id='activities-container' className='flex-1 overflow-y-auto'>
+        <div className='pointer-events-none sticky top-0 z-10 h-4 bg-gradient-to-b from-background to-transparent' />
         <div className='space-y-1'>
           {activities?.length === 0 && <p className='text-muted-foreground text-sm'>{t('no_activities_found')}</p>}
           {activities
@@ -362,7 +362,7 @@ export function ContactActivity({ contactId }: { contactId: string }) {
             })}
         </div>
       </div>
-      <div className='absolute right-0 bottom-0 left-0 bg-background p-4 sm:pt-4'>
+      <div className='mt-auto border-t bg-background p-4'>
         <form onSubmit={handleSubmitActivity} className='relative flex max-w-full flex-col gap-2 sm:flex-row'>
           <div className='relative flex-1'>
             <Popover open={showMentions}>
