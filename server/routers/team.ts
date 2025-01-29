@@ -253,7 +253,7 @@ export const teamRouter = createTRPCRouter({
       .select({
         id: teamActivity.id,
         type: teamActivity.type,
-        title: teamActivity.title,
+        subType: teamActivity.subType,
         description: teamActivity.description,
         metadata: teamActivity.metadata,
         createdAt: teamActivity.createdAt,
@@ -273,12 +273,50 @@ export const teamRouter = createTRPCRouter({
     .input(
       z.object({
         teamId: z.string(),
-        type: z.string(),
-        title: z.string(),
+        type: z.enum(['TEAM', 'CAMPAIGN', 'PAYMENT', 'ENGAGEMENT', 'MEMBER', 'MEETING', 'GOAL', 'PERFORMANCE']),
         description: z.string().optional(),
         metadata: z.string().optional(),
-        initiatorType: z.enum(['user', 'system']).default('user'),
+        initiatorType: z.enum(['user', 'system', 'team']).default('user'),
         initiatorId: z.string().optional(),
+        subType: z
+          .enum([
+            'TEAM_CREATED',
+            'TEAM_UPDATED',
+            'TEAM_ARCHIVED',
+            'TEAM_ACTIVATED',
+            'MEMBER_ADDED',
+            'MEMBER_REMOVED',
+            'MEMBER_ROLE_UPDATED',
+            'LEADER_ASSIGNED',
+            'SUBLEADER_ASSIGNED',
+            'REFERRAL_ASSIGNED',
+            'MEETING_SCHEDULED',
+            'MEETING_UPDATED',
+            'MEETING_CANCELLED',
+            'MEETING_COMPLETED',
+            'MEETING_NO_SHOW',
+            'GOAL_SET',
+            'GOAL_UPDATED',
+            'GOAL_ACHIEVED',
+            'GOAL_MISSED',
+            'PERFORMANCE_REVIEWED',
+            'KPI_UPDATED',
+            'MILESTONE_REACHED',
+            'ACHIEVEMENT_UNLOCKED',
+            'NOTE_ADDED',
+            'DOCUMENT_SHARED',
+            'TASK_ASSIGNED',
+            'FEEDBACK_PROVIDED',
+            'CAMPAIGN_STARTED',
+            'CAMPAIGN_UPDATED',
+            'CAMPAIGN_COMPLETED',
+            'CAMPAIGN_CANCELLED',
+            'COMMISSION_RECORDED',
+            'BONUS_AWARDED',
+            'PAYMENT_PROCESSED',
+            'REVENUE_UPDATED',
+          ])
+          .optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -288,11 +326,11 @@ export const teamRouter = createTRPCRouter({
           teamId: input.teamId,
           userId: ctx.session.user.id,
           type: input.type,
-          title: input.title,
           description: input.description,
           metadata: input.metadata,
           initiatorType: input.initiatorType,
           initiatorId: input.initiatorId,
+          subType: input.subType,
         })
         .returning();
 

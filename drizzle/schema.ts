@@ -797,3 +797,25 @@ export const companyCustomValue = pgTable('companyCustomValue', {
   createdAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
   updatedAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
 });
+
+export const siteConfig = pgTable('siteConfig', {
+  id: text()
+    .primaryKey()
+    .notNull()
+    .$defaultFn(() => crypto.randomUUID()),
+  key: text('key', {
+    enum: ['name', 'description'],
+  })
+    .notNull()
+    .unique(), // Unique key for the config
+  value: text().notNull(), // Value stored as text (can be JSON for complex values)
+  description: text(), // Optional description of what this config is for
+  type: text('type', {
+    enum: ['string', 'number', 'boolean', 'json', 'array'],
+  })
+    .notNull()
+    .default('string'), // Type of the value for proper parsing
+  isPublic: boolean().default(false), // Whether this config is publicly accessible
+  createdAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
+  updatedAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
+});

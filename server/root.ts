@@ -7,6 +7,7 @@ import { contactRouter } from '@/server/routers/contact';
 import { marketingRouter } from '@/server/routers/marketing';
 import { payRouter } from '@/server/routers/pay';
 import { resourceRouter } from '@/server/routers/resource';
+import { siteRouter } from '@/server/routers/site';
 import { taskRouter } from '@/server/routers/task';
 import { teamRouter } from '@/server/routers/team';
 import { userRouter } from '@/server/routers/user';
@@ -31,6 +32,7 @@ export const appRouter = createTRPCRouter({
   task: taskRouter,
   resource: resourceRouter,
   marketing: marketingRouter,
+  site: siteRouter,
 });
 
 // export type definition of API
