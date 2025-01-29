@@ -491,5 +491,7 @@
   "danger": "Danger",
   "danger_description": "Danger Place",
   "site_domain": "Site Domain",
-  "delete_site": "Delete Site"
+  "delete_site": "Delete Site",
+  "integrations": "Integrations",
+  "integrations_description": "Manage integrations"
 }

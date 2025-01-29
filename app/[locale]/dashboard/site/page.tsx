@@ -82,6 +82,7 @@ export default function SitePage() {
         <TabsList>
           <TabsTrigger value='general'>{t('general')}</TabsTrigger>
           <TabsTrigger value='members'>{t('members')}</TabsTrigger>
+          <TabsTrigger value='integrations'>{t('integrations')}</TabsTrigger>
           <TabsTrigger value='danger'>{t('danger')}</TabsTrigger>
         </TabsList>
 
@@ -109,6 +110,58 @@ export default function SitePage() {
 
         <TabsContent value='members'>
           <SiteMembers />
+        </TabsContent>
+
+        <TabsContent value='integrations'>
+          <Card>
+            <CardHeader>
+              <CardTitle>{t('integrations')}</CardTitle>
+              <CardDescription>{t('integrations_description')}</CardDescription>
+            </CardHeader>
+            <CardContent className='space-y-6'>
+              <div className='space-y-4'>
+                <div className='flex items-center justify-between border-b pb-4'>
+                  <div className='space-y-1'>
+                    <h4 className='font-semibold text-sm'>Slack</h4>
+                    <p className='text-muted-foreground text-sm'>Receive notifications and updates in your Slack workspace</p>
+                  </div>
+                  <Button variant='outline'>Connect</Button>
+                </div>
+
+                <div className='flex items-center justify-between border-b pb-4'>
+                  <div className='space-y-1'>
+                    <h4 className='font-semibold text-sm'>Google Calendar</h4>
+                    <p className='text-muted-foreground text-sm'>Sync events and schedules with Google Calendar</p>
+                  </div>
+                  <Button variant='outline'>Connect</Button>
+                </div>
+
+                <div className='flex items-center justify-between border-b pb-4'>
+                  <div className='space-y-1'>
+                    <h4 className='font-semibold text-sm'>GitHub</h4>
+                    <p className='text-muted-foreground text-sm'>Connect your repositories and track development progress</p>
+                  </div>
+                  <Button variant='outline'>Connect</Button>
+                </div>
+
+                <div className='flex items-center justify-between border-b pb-4'>
+                  <div className='space-y-1'>
+                    <h4 className='font-semibold text-sm'>Microsoft Teams</h4>
+                    <p className='text-muted-foreground text-sm'>Integrate with Teams for communication and collaboration</p>
+                  </div>
+                  <Button variant='outline'>Connect</Button>
+                </div>
+
+                <div className='flex items-center justify-between pb-4'>
+                  <div className='space-y-1'>
+                    <h4 className='font-semibold text-sm'>Zapier</h4>
+                    <p className='text-muted-foreground text-sm'>Connect with thousands of apps through Zapier automation</p>
+                  </div>
+                  <Button variant='outline'>Connect</Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
 
         <TabsContent value='danger'>

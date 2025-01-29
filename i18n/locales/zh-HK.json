@@ -491,5 +491,7 @@
   "danger": "危險",
   "danger_description": "危險的地方",
   "site_domain": "站點域",
-  "delete_site": "刪除站點"
+  "delete_site": "刪除站點",
+  "integrations": "集成",
+  "integrations_description": "管理集成"
 }
