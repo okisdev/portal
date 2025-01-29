@@ -289,295 +289,299 @@ export default function ContactIdPage() {
   return (
     <div className='container mx-auto min-h-[calc(100vh-4rem)] space-y-6 p-4 sm:p-6'>
       <div className='grid min-h-[calc(100vh-6rem)] grid-cols-1 gap-4 lg:grid-cols-3 lg:gap-6'>
-        <div className='h-[calc(100vh-8rem)] overflow-y-auto lg:col-span-1'>
-          <div className='rounded-lg border bg-card text-card-foreground shadow-sm'>
-            <div className='border-b p-6'>
-              <div className='flex items-start gap-4'>
-                <Avatar className='size-16'>
-                  <AvatarImage src='' />
-                  <AvatarFallback>{contact?.name?.charAt(0) || ''}</AvatarFallback>
-                </Avatar>
-                <div className='min-w-0 flex-1'>
-                  <div className='mb-2 flex items-center gap-2'>
-                    <h1 className='truncate font-semibold text-foreground text-xl'>{contact?.name}</h1>
-                  </div>
-                  <div className='space-y-1 text-muted-foreground text-sm'>
-                    {contact?.company && (
-                      <div className='flex items-center gap-2'>
-                        <Building2 className='size-4 shrink-0' />
-                        <Link href={`/dashboard/crm/contacts?company=${contact.company}`} className='hover:text-primary'>
-                          {contact.company}
-                        </Link>
-                      </div>
-                    )}
-                    {contact?.teams && contact.teams.length > 0 && (
-                      <div className='flex items-center gap-2'>
-                        <Users className='size-4 shrink-0' />
-                        <div className='flex flex-wrap gap-1'>
-                          {contact?.teams?.map((team) => (
-                            <Link key={team.id} href={`/dashboard/crm/team/${team.id}`} className='hover:text-primary'>
-                              {team.name}
-                            </Link>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                    {contact?.email && (
-                      <Link href={`mailto:${contact.email}`} target='_blank' rel='noopener noreferrer' className='flex items-center gap-2 hover:text-primary'>
-                        <Mail className='size-4 shrink-0' />
-                        <span className='truncate'>{contact.email}</span>
-                      </Link>
-                    )}
-                    {contact?.phone && (
-                      <Link href={`https://wa.me/${contact.phone.replace(/\D/g, '')}`} target='_blank' rel='noopener noreferrer' className='flex items-center gap-2 hover:text-primary'>
-                        <Phone className='size-4 shrink-0' />
-                        <span>{contact.phone}</span>
-                      </Link>
-                    )}
-                    {contact?.createdAt && (
-                      <div className='flex items-center gap-2 pt-3'>
-                        <span className='text-muted-foreground text-xs'>
-                          {t('created_at_via', {
-                            date: formatDate(new Date(contact.createdAt)),
-                            source: contact.source,
-                          })}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <button type='button' className='my-1 text-muted-foreground outline-none hover:text-foreground'>
-                      <MoreHorizontal className='size-4' />
-                    </button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align='end' className='bg-popover text-popover-foreground'>
-                    <DropdownMenuItem onClick={handleEditClick} className='cursor-pointer'>
-                      <Edit2 className='mr-2 size-4' />
-                      {t('edit')}
-                    </DropdownMenuItem>
-                    <DropdownMenuSub>
-                      <DropdownMenuSubTrigger className='cursor-pointer'>
-                        <Send className='mr-2 size-4' />
-                        {t('send')}
-                      </DropdownMenuSubTrigger>
-                      <DropdownMenuPortal>
-                        <DropdownMenuSubContent>
-                          <DropdownMenuItem onClick={() => setIsEmailModalOpen(true)} className='cursor-pointer'>
-                            <Mail className='mr-2 size-4' />
-                            {t('email')}
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => setIsMessageModalOpen(true)} className='cursor-pointer'>
-                            <MessageSquare className='mr-2 size-4' />
-                            {t('whatsapp')}
-                          </DropdownMenuItem>
-                        </DropdownMenuSubContent>
-                      </DropdownMenuPortal>
-                    </DropdownMenuSub>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
-            </div>
-
-            <div className='border-b p-6'>
-              <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
-                <div className='space-y-1.5'>
-                  <div className='flex items-center justify-between text-muted-foreground text-xs'>
-                    {t('last_contact')}
-                    {lastContactDate && (
-                      <button
-                        type='button'
-                        onClick={() => {
-                          setLastContactDate(null);
-                          updateContact.mutate({
-                            id: contactId[0],
-                            lastContactedAt: null,
-                          });
-                        }}
-                        className='text-muted-foreground hover:text-foreground'
-                      >
-                        <X className='size-3' />
-                      </button>
-                    )}
-                  </div>
-                  <div className='text-foreground text-sm'>
-                    <DateTimePicker
-                      size='sm'
-                      value={lastContactDate}
-                      onChange={(date) => setLastContactDate(date)}
-                      onClose={() => {
-                        const lastContactedAt = contact?.lastContactedAt ? new Date(contact.lastContactedAt).getTime() : null;
-                        const newTime = lastContactDate?.getTime() || null;
-
-                        if (lastContactedAt !== newTime) {
-                          updateContact.mutate({
-                            id: contactId[0],
-                            lastContactedAt: lastContactDate || undefined,
-                          });
-                        }
-                      }}
-                    />
-                  </div>
-                </div>
-                <div className='space-y-1.5'>
-                  <div className='flex items-center justify-between text-muted-foreground text-xs'>
-                    {t('next_follow_up')}
-                    {nextFollowUpDate && (
-                      <button
-                        type='button'
-                        onClick={() => {
-                          setNextFollowUpDate(null);
-                          updateContact.mutate({
-                            id: contactId[0],
-                            nextFollowUpAt: null,
-                          });
-                        }}
-                        className='text-muted-foreground hover:text-foreground'
-                      >
-                        <X className='size-3' />
-                      </button>
-                    )}
-                  </div>
-                  <div className='text-foreground text-sm'>
-                    <DateTimePicker
-                      size='sm'
-                      value={nextFollowUpDate}
-                      onChange={(date) => setNextFollowUpDate(date)}
-                      onClose={() => {
-                        const currentTime = contact?.nextFollowUpAt ? new Date(contact.nextFollowUpAt).getTime() : null;
-                        const newTime = nextFollowUpDate?.getTime() || null;
-
-                        if (currentTime !== newTime) {
-                          updateContact.mutate({
-                            id: contactId[0],
-                            nextFollowUpAt: nextFollowUpDate || undefined,
-                          });
-                        }
-                      }}
-                    />
-                  </div>
-                </div>
-                <div className='space-y-1.5'>
-                  <div className='text-muted-foreground text-xs'>{t('priority')}</div>
-                  <div className='text-foreground'>
-                    <Select value={contact?.priority || 'medium'} onValueChange={handlePriorityChange}>
-                      <SelectTrigger className='h-8'>
-                        <SelectValue>
-                          <ColorBadge type='priority' value={contact?.priority || 'medium'} />
-                        </SelectValue>
-                      </SelectTrigger>
-                      <SelectContent className='bg-popover text-popover-foreground'>
-                        {['high', 'medium', 'low'].map((priority) => (
-                          <SelectItem key={priority} value={priority}>
-                            <ColorBadge type='priority' value={priority} />
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-                <div className='space-y-1.5'>
-                  <div className='text-muted-foreground text-xs'>{t('status')}</div>
-                  <div className='text-foreground'>
-                    <Select value={contact?.status || 'lead'} onValueChange={handleStatusChange}>
-                      <SelectTrigger className='h-8'>
-                        <SelectValue>
-                          <ColorBadge type='contactStatus' value={contact?.status || 'lead'} />
-                        </SelectValue>
-                      </SelectTrigger>
-                      <SelectContent className='bg-popover text-popover-foreground'>
-                        {statusSchema.options.map((status) => (
-                          <SelectItem key={status} value={status}>
-                            <ColorBadge type='contactStatus' value={status} />
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className='space-y-2 border-b p-6'>
-              <div className='flex items-center justify-between'>
-                <h2 className='font-medium text-foreground'>{t('remark')}</h2>
-                <button
-                  type='button'
-                  className='text-muted-foreground hover:text-foreground'
-                  onClick={() => {
-                    if (isNotesEditing) {
-                      if (contact?.remark === editableRemark) {
-                        setEditableRemark('');
-                        setIsNotesEditing(false);
-                        return;
-                      }
-                      handleSaveNotes();
-                    } else {
-                      setIsNotesEditing(true);
-                    }
-                  }}
-                >
-                  {isNotesEditing ? (
-                    <div className='flex items-center gap-2'>
-                      <X className='size-4' />
-                      <Save className='size-4' />
+        <div className='h-[calc(100vh-8rem)] lg:col-span-1'>
+          <div className='flex h-full flex-col rounded-lg border bg-card text-card-foreground shadow-sm'>
+            <div className='flex-none'>
+              <div className='border-b p-6'>
+                <div className='flex items-start gap-4'>
+                  <Avatar className='size-16'>
+                    <AvatarImage src='' />
+                    <AvatarFallback>{contact?.name?.charAt(0) || ''}</AvatarFallback>
+                  </Avatar>
+                  <div className='min-w-0 flex-1'>
+                    <div className='mb-2 flex items-center gap-2'>
+                      <h1 className='truncate font-semibold text-foreground text-xl'>{contact?.name}</h1>
                     </div>
-                  ) : (
-                    <Edit2 className='size-4' />
-                  )}
-                </button>
+                    <div className='space-y-1 text-muted-foreground text-sm'>
+                      {contact?.company && (
+                        <div className='flex items-center gap-2'>
+                          <Building2 className='size-4 shrink-0' />
+                          <Link href={`/dashboard/crm/contacts?company=${contact.company}`} className='hover:text-primary'>
+                            {contact.company}
+                          </Link>
+                        </div>
+                      )}
+                      {contact?.teams && contact.teams.length > 0 && (
+                        <div className='flex items-center gap-2'>
+                          <Users className='size-4 shrink-0' />
+                          <div className='flex flex-wrap gap-1'>
+                            {contact?.teams?.map((team) => (
+                              <Link key={team.id} href={`/dashboard/crm/team/${team.id}`} className='hover:text-primary'>
+                                {team.name}
+                              </Link>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      {contact?.email && (
+                        <Link href={`mailto:${contact.email}`} target='_blank' rel='noopener noreferrer' className='flex items-center gap-2 hover:text-primary'>
+                          <Mail className='size-4 shrink-0' />
+                          <span className='truncate'>{contact.email}</span>
+                        </Link>
+                      )}
+                      {contact?.phone && (
+                        <Link href={`https://wa.me/${contact.phone.replace(/\D/g, '')}`} target='_blank' rel='noopener noreferrer' className='flex items-center gap-2 hover:text-primary'>
+                          <Phone className='size-4 shrink-0' />
+                          <span>{contact.phone}</span>
+                        </Link>
+                      )}
+                      {contact?.createdAt && (
+                        <div className='flex items-center gap-2 pt-3'>
+                          <span className='text-muted-foreground text-xs'>
+                            {t('created_at_via', {
+                              date: formatDate(new Date(contact.createdAt)),
+                              source: contact.source,
+                            })}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <button type='button' className='my-1 text-muted-foreground outline-none hover:text-foreground'>
+                        <MoreHorizontal className='size-4' />
+                      </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align='end' className='bg-popover text-popover-foreground'>
+                      <DropdownMenuItem onClick={handleEditClick} className='cursor-pointer'>
+                        <Edit2 className='mr-2 size-4' />
+                        {t('edit')}
+                      </DropdownMenuItem>
+                      <DropdownMenuSub>
+                        <DropdownMenuSubTrigger className='cursor-pointer'>
+                          <Send className='mr-2 size-4' />
+                          {t('send')}
+                        </DropdownMenuSubTrigger>
+                        <DropdownMenuPortal>
+                          <DropdownMenuSubContent>
+                            <DropdownMenuItem onClick={() => setIsEmailModalOpen(true)} className='cursor-pointer'>
+                              <Mail className='mr-2 size-4' />
+                              {t('email')}
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => setIsMessageModalOpen(true)} className='cursor-pointer'>
+                              <MessageSquare className='mr-2 size-4' />
+                              {t('whatsapp')}
+                            </DropdownMenuItem>
+                          </DropdownMenuSubContent>
+                        </DropdownMenuPortal>
+                      </DropdownMenuSub>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
               </div>
-              {isNotesEditing ? (
-                <Textarea value={editableRemark} onChange={(e) => setEditableRemark(e.target.value)} className='min-h-[100px] bg-background' placeholder='Add remark about this contact...' />
-              ) : (
-                <p className='whitespace-pre-wrap text-muted-foreground text-sm'>{contact?.remark || t('no_remark_added')}</p>
-              )}
+
+              <div className='border-b p-6'>
+                <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
+                  <div className='space-y-1.5'>
+                    <div className='flex items-center justify-between text-muted-foreground text-xs'>
+                      {t('last_contact')}
+                      {lastContactDate && (
+                        <button
+                          type='button'
+                          onClick={() => {
+                            setLastContactDate(null);
+                            updateContact.mutate({
+                              id: contactId[0],
+                              lastContactedAt: null,
+                            });
+                          }}
+                          className='text-muted-foreground hover:text-foreground'
+                        >
+                          <X className='size-3' />
+                        </button>
+                      )}
+                    </div>
+                    <div className='text-foreground text-sm'>
+                      <DateTimePicker
+                        size='sm'
+                        value={lastContactDate}
+                        onChange={(date) => setLastContactDate(date)}
+                        onClose={() => {
+                          const lastContactedAt = contact?.lastContactedAt ? new Date(contact.lastContactedAt).getTime() : null;
+                          const newTime = lastContactDate?.getTime() || null;
+
+                          if (lastContactedAt !== newTime) {
+                            updateContact.mutate({
+                              id: contactId[0],
+                              lastContactedAt: lastContactDate || undefined,
+                            });
+                          }
+                        }}
+                      />
+                    </div>
+                  </div>
+                  <div className='space-y-1.5'>
+                    <div className='flex items-center justify-between text-muted-foreground text-xs'>
+                      {t('next_follow_up')}
+                      {nextFollowUpDate && (
+                        <button
+                          type='button'
+                          onClick={() => {
+                            setNextFollowUpDate(null);
+                            updateContact.mutate({
+                              id: contactId[0],
+                              nextFollowUpAt: null,
+                            });
+                          }}
+                          className='text-muted-foreground hover:text-foreground'
+                        >
+                          <X className='size-3' />
+                        </button>
+                      )}
+                    </div>
+                    <div className='text-foreground text-sm'>
+                      <DateTimePicker
+                        size='sm'
+                        value={nextFollowUpDate}
+                        onChange={(date) => setNextFollowUpDate(date)}
+                        onClose={() => {
+                          const currentTime = contact?.nextFollowUpAt ? new Date(contact.nextFollowUpAt).getTime() : null;
+                          const newTime = nextFollowUpDate?.getTime() || null;
+
+                          if (currentTime !== newTime) {
+                            updateContact.mutate({
+                              id: contactId[0],
+                              nextFollowUpAt: nextFollowUpDate || undefined,
+                            });
+                          }
+                        }}
+                      />
+                    </div>
+                  </div>
+                  <div className='space-y-1.5'>
+                    <div className='text-muted-foreground text-xs'>{t('priority')}</div>
+                    <div className='text-foreground'>
+                      <Select value={contact?.priority || 'medium'} onValueChange={handlePriorityChange}>
+                        <SelectTrigger className='h-8'>
+                          <SelectValue>
+                            <ColorBadge type='priority' value={contact?.priority || 'medium'} />
+                          </SelectValue>
+                        </SelectTrigger>
+                        <SelectContent className='bg-popover text-popover-foreground'>
+                          {['high', 'medium', 'low'].map((priority) => (
+                            <SelectItem key={priority} value={priority}>
+                              <ColorBadge type='priority' value={priority} />
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  <div className='space-y-1.5'>
+                    <div className='text-muted-foreground text-xs'>{t('status')}</div>
+                    <div className='text-foreground'>
+                      <Select value={contact?.status || 'lead'} onValueChange={handleStatusChange}>
+                        <SelectTrigger className='h-8'>
+                          <SelectValue>
+                            <ColorBadge type='contactStatus' value={contact?.status || 'lead'} />
+                          </SelectValue>
+                        </SelectTrigger>
+                        <SelectContent className='bg-popover text-popover-foreground'>
+                          {statusSchema.options.map((status) => (
+                            <SelectItem key={status} value={status}>
+                              <ColorBadge type='contactStatus' value={status} />
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
 
-            <div className='space-y-2 border-b p-6'>
-              <EventSection
-                appointments={appointments || []}
-                calendarFolders={calendarFolders}
-                onCreateAppointment={handleBookAppointment}
-                onUpdateAppointment={(data) => updateAppointment.mutate(data)}
-                onDeleteAppointment={(id) => deleteAppointment.mutate(id)}
-                defaultTitle={t('meeting_with', { who: user?.name, name: contact?.name })}
-              />
-            </div>
-
-            <Payment contact={contact || {}} />
-
-            <div className='p-6'>
-              <h2 className='mb-4 font-medium'>{t('team_roles')}</h2>
-              <div className='space-y-3'>
-                {contact?.leadingTeams?.length === 0 && contact?.subLeadingTeams?.length === 0 && contact?.referralTeams?.length === 0 && (
-                  <p className='text-muted-foreground text-sm'>{t('no_team_roles_found')}</p>
+            <div className='flex-1 overflow-y-auto'>
+              <div className='space-y-2 border-b p-6'>
+                <div className='flex items-center justify-between'>
+                  <h2 className='font-medium text-foreground'>{t('remark')}</h2>
+                  <button
+                    type='button'
+                    className='text-muted-foreground hover:text-foreground'
+                    onClick={() => {
+                      if (isNotesEditing) {
+                        if (contact?.remark === editableRemark) {
+                          setEditableRemark('');
+                          setIsNotesEditing(false);
+                          return;
+                        }
+                        handleSaveNotes();
+                      } else {
+                        setIsNotesEditing(true);
+                      }
+                    }}
+                  >
+                    {isNotesEditing ? (
+                      <div className='flex items-center gap-2'>
+                        <X className='size-4' />
+                        <Save className='size-4' />
+                      </div>
+                    ) : (
+                      <Edit2 className='size-4' />
+                    )}
+                  </button>
+                </div>
+                {isNotesEditing ? (
+                  <Textarea value={editableRemark} onChange={(e) => setEditableRemark(e.target.value)} className='min-h-[100px] bg-background' placeholder='Add remark about this contact...' />
+                ) : (
+                  <p className='whitespace-pre-wrap text-muted-foreground text-sm'>{contact?.remark || t('no_remark_added')}</p>
                 )}
-                {contact?.leadingTeams?.map((team) => (
-                  <div key={team.id} className='flex items-center justify-between'>
-                    <Link href={`/dashboard/crm/team/${team.id}`} className='text-sm transition-colors duration-200 hover:text-primary hover:underline'>
-                      {team.name}
-                    </Link>
-                    <span className='text-muted-foreground text-xs'>{t('team_leader')}</span>
-                  </div>
-                ))}
-                {contact?.subLeadingTeams?.map((team) => (
-                  <div key={team.id} className='flex items-center justify-between'>
-                    <Link href={`/dashboard/crm/team/${team.id}`} className='text-sm transition-colors duration-200 hover:text-primary hover:underline'>
-                      {team.name}
-                    </Link>
-                    <span className='text-muted-foreground text-xs'>{t('sub_leader')}</span>
-                  </div>
-                ))}
-                {contact?.referralTeams?.map((team) => (
-                  <div key={team.id} className='flex items-center justify-between'>
-                    <Link href={`/dashboard/crm/team/${team.id}`} className='text-sm hover:text-primary'>
-                      {team.name}
-                    </Link>
-                    <span className='text-muted-foreground text-xs'>{t('referral')}</span>
-                  </div>
-                ))}
+              </div>
+
+              <div className='space-y-2 border-b p-6'>
+                <EventSection
+                  appointments={appointments || []}
+                  calendarFolders={calendarFolders}
+                  onCreateAppointment={handleBookAppointment}
+                  onUpdateAppointment={(data) => updateAppointment.mutate(data)}
+                  onDeleteAppointment={(id) => deleteAppointment.mutate(id)}
+                  defaultTitle={t('meeting_with', { who: user?.name, name: contact?.name })}
+                />
+              </div>
+
+              <Payment contact={contact || {}} />
+
+              <div className='p-6'>
+                <h2 className='mb-4 font-medium'>{t('team_roles')}</h2>
+                <div className='space-y-3'>
+                  {contact?.leadingTeams?.length === 0 && contact?.subLeadingTeams?.length === 0 && contact?.referralTeams?.length === 0 && (
+                    <p className='text-muted-foreground text-sm'>{t('no_team_roles_found')}</p>
+                  )}
+                  {contact?.leadingTeams?.map((team) => (
+                    <div key={team.id} className='flex items-center justify-between'>
+                      <Link href={`/dashboard/crm/team/${team.id}`} className='text-sm transition-colors duration-200 hover:text-primary hover:underline'>
+                        {team.name}
+                      </Link>
+                      <span className='text-muted-foreground text-xs'>{t('team_leader')}</span>
+                    </div>
+                  ))}
+                  {contact?.subLeadingTeams?.map((team) => (
+                    <div key={team.id} className='flex items-center justify-between'>
+                      <Link href={`/dashboard/crm/team/${team.id}`} className='text-sm transition-colors duration-200 hover:text-primary hover:underline'>
+                        {team.name}
+                      </Link>
+                      <span className='text-muted-foreground text-xs'>{t('sub_leader')}</span>
+                    </div>
+                  ))}
+                  {contact?.referralTeams?.map((team) => (
+                    <div key={team.id} className='flex items-center justify-between'>
+                      <Link href={`/dashboard/crm/team/${team.id}`} className='text-sm hover:text-primary'>
+                        {team.name}
+                      </Link>
+                      <span className='text-muted-foreground text-xs'>{t('referral')}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
           </div>
