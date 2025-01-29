@@ -456,5 +456,7 @@
   "will_renew_at": "Will renew at {date}",
   "workspace": "Workspace",
   "add_remark_about_this_contact": "Add remark about this contact...",
-  "REMARK_UPDATED": "Remark Updated"
+  "REMARK_UPDATED": "Remark Updated",
+  "write_a_reply": "Write a reply... Use @ to mention someone",
+  "search_users": "Search users..."
 }

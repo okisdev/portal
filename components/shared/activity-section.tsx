@@ -281,14 +281,14 @@ export function ActivitySection({ activities, onCreateActivity, isLoading }: Act
                                   value={replyText}
                                   onChange={(e) => handleInputChange(e, true)}
                                   onKeyDown={(e) => handleKeyDown(e, true)}
-                                  placeholder='Write a reply... Use @ to mention someone'
+                                  placeholder={t('write_a_reply')}
                                   className='min-h-[60px] resize-none'
                                 />
                               </div>
                             </PopoverTrigger>
                             <PopoverContent className='w-64 p-0' align='start'>
                               <Command>
-                                <CommandInput placeholder='Search users...' />
+                                <CommandInput placeholder={t('search_users')} />
                                 <CommandList>
                                   <CommandEmpty>{t('no_users_found')}</CommandEmpty>
                                   <CommandGroup>
@@ -362,7 +362,7 @@ export function ActivitySection({ activities, onCreateActivity, isLoading }: Act
               </PopoverTrigger>
               <PopoverContent className='w-64 p-0' align='start'>
                 <Command>
-                  <CommandInput placeholder='Search users...' />
+                  <CommandInput placeholder={t('search_users')} />
                   <CommandList>
                     <CommandEmpty>{t('no_users_found')}</CommandEmpty>
                     <CommandGroup>

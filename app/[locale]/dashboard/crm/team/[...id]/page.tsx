@@ -81,7 +81,9 @@ export default function TeamIdPage() {
   const { data: teamMeetings } = api.team.getTeamMeetings.useQuery({
     teamId: teamId[0],
   });
-  const { data: contacts } = api.contact.getAllContacts.useQuery();
+  const { data: contacts } = api.contact.getAllContacts.useQuery(undefined, {
+    enabled: isAddMemberOpen,
+  });
   const { data: folders } = api.calendar.getMyFolders.useQuery();
   const { data: participantOptions } = api.calendar.getParticipantOptions.useQuery();
   const { data: teamActivities } = api.team.getTeamActivities.useQuery({

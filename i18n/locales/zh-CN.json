@@ -456,5 +456,7 @@
   "will_renew_at": "将在 {date} 续订",
   "workspace": "工作区",
   "add_remark_about_this_contact": "加上有关此联系的评论...",
-  "REMARK_UPDATED": "备注更新"
+  "REMARK_UPDATED": "备注更新",
+  "write_a_reply": "写回复...使用 @提及某人",
+  "search_users": "搜索用户..."
 }
