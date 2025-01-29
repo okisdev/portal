@@ -555,13 +555,79 @@ export const teamActivity = pgTable('teamActivity', {
     .references(() => team.id, { onDelete: 'cascade' }),
   userId: text()
     .notNull()
-    .references(() => user.id), // who performed the activity
-  type: text().notNull(), // 'meeting_created', 'meeting_updated', 'member_added', 'member_removed', 'remark_updated', 'team_updated', etc.
-  initiatorType: text().notNull().default('system'), // 'user', 'system'
-  initiatorId: text(), // id of the initiator
-  title: text().notNull(), // e.g., "Added new team member"
-  description: text(), // optional detailed description
-  metadata: text(), // JSON string for additional data specific to activity type
+    .references(() => user.id),
+  type: text('type', {
+    enum: [
+      'TEAM', // Team-related activities
+      'MEMBER', // Member-related activities
+      'MEETING', // Meeting-related activities
+      'GOAL', // Goal-related activities
+      'PERFORMANCE', // Performance-related activities
+      'ENGAGEMENT', // Engagement activities
+      'CAMPAIGN', // Campaign-related activities
+      'PAYMENT', // Payment-related activities
+    ],
+  }).notNull(),
+  subType: text('subType', {
+    enum: [
+      // Team Management
+      'TEAM_CREATED',
+      'TEAM_UPDATED',
+      'TEAM_ARCHIVED',
+      'TEAM_ACTIVATED',
+
+      // Member Management
+      'MEMBER_ADDED',
+      'MEMBER_REMOVED',
+      'MEMBER_ROLE_UPDATED',
+      'LEADER_ASSIGNED',
+      'SUBLEADER_ASSIGNED',
+      'REFERRAL_ASSIGNED',
+
+      // Meeting Management
+      'MEETING_SCHEDULED',
+      'MEETING_UPDATED',
+      'MEETING_CANCELLED',
+      'MEETING_COMPLETED',
+      'MEETING_NO_SHOW',
+
+      // Goal Management
+      'GOAL_SET',
+      'GOAL_UPDATED',
+      'GOAL_ACHIEVED',
+      'GOAL_MISSED',
+
+      // Performance Tracking
+      'PERFORMANCE_REVIEWED',
+      'KPI_UPDATED',
+      'MILESTONE_REACHED',
+      'ACHIEVEMENT_UNLOCKED',
+
+      // Engagement
+      'NOTE_ADDED',
+      'DOCUMENT_SHARED',
+      'TASK_ASSIGNED',
+      'FEEDBACK_PROVIDED',
+
+      // Campaign Management
+      'CAMPAIGN_STARTED',
+      'CAMPAIGN_UPDATED',
+      'CAMPAIGN_COMPLETED',
+      'CAMPAIGN_CANCELLED',
+
+      // Payment/Financial
+      'COMMISSION_RECORDED',
+      'BONUS_AWARDED',
+      'PAYMENT_PROCESSED',
+      'REVENUE_UPDATED',
+    ],
+  }),
+  initiatorType: text('initiatorType', { enum: ['user', 'system', 'team'] })
+    .notNull()
+    .default('system'),
+  initiatorId: text(),
+  description: text(),
+  metadata: text(), // JSON string for additional data
   createdAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
   updatedAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
 });
@@ -623,6 +689,111 @@ export const contactCampaign = pgTable('contactCampaign', {
     .notNull()
     .references(() => marketingCampaign.campaignCode, { onDelete: 'cascade' }),
   joinedAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
+  createdAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
+  updatedAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
+});
+
+export const contactCustomField = pgTable('contactCustomField', {
+  id: text()
+    .primaryKey()
+    .notNull()
+    .$defaultFn(() => crypto.randomUUID()),
+  name: text().notNull(),
+  label: text().notNull(),
+  type: text('type', {
+    enum: ['text', 'number', 'date', 'boolean', 'select', 'multiselect'],
+  }).notNull(),
+  options: text(), // JSON array for select/multiselect options
+  required: boolean().default(false),
+  defaultValue: text(),
+  description: text(),
+  isActive: boolean().default(true),
+  createdAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
+  updatedAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
+});
+
+export const contactCustomValue = pgTable('contactCustomValue', {
+  id: text()
+    .primaryKey()
+    .notNull()
+    .$defaultFn(() => crypto.randomUUID()),
+  contactId: text()
+    .notNull()
+    .references(() => contact.id, { onDelete: 'cascade' }),
+  fieldId: text()
+    .notNull()
+    .references(() => contactCustomField.id, { onDelete: 'cascade' }),
+  value: text(),
+  createdAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
+  updatedAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
+});
+
+export const teamCustomField = pgTable('teamCustomField', {
+  id: text()
+    .primaryKey()
+    .notNull()
+    .$defaultFn(() => crypto.randomUUID()),
+  name: text().notNull(),
+  label: text().notNull(),
+  type: text('type', {
+    enum: ['text', 'number', 'date', 'boolean', 'select', 'multiselect'],
+  }).notNull(),
+  options: text(), // JSON array for select/multiselect options
+  required: boolean().default(false),
+  defaultValue: text(),
+  description: text(),
+  isActive: boolean().default(true),
+  createdAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
+  updatedAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
+});
+
+export const teamCustomValue = pgTable('teamCustomValue', {
+  id: text()
+    .primaryKey()
+    .notNull()
+    .$defaultFn(() => crypto.randomUUID()),
+  teamId: text()
+    .notNull()
+    .references(() => team.id, { onDelete: 'cascade' }),
+  fieldId: text()
+    .notNull()
+    .references(() => teamCustomField.id, { onDelete: 'cascade' }),
+  value: text(),
+  createdAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
+  updatedAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
+});
+
+export const companyCustomField = pgTable('companyCustomField', {
+  id: text()
+    .primaryKey()
+    .notNull()
+    .$defaultFn(() => crypto.randomUUID()),
+  name: text().notNull(),
+  label: text().notNull(),
+  type: text('type', {
+    enum: ['text', 'number', 'date', 'boolean', 'select', 'multiselect'],
+  }).notNull(),
+  options: text(), // JSON array for select/multiselect options
+  required: boolean().default(false),
+  defaultValue: text(),
+  description: text(),
+  isActive: boolean().default(true),
+  createdAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
+  updatedAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
+});
+
+export const companyCustomValue = pgTable('companyCustomValue', {
+  id: text()
+    .primaryKey()
+    .notNull()
+    .$defaultFn(() => crypto.randomUUID()),
+  companyId: text()
+    .notNull()
+    .references(() => company.id, { onDelete: 'cascade' }),
+  fieldId: text()
+    .notNull()
+    .references(() => companyCustomField.id, { onDelete: 'cascade' }),
+  value: text(),
   createdAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
   updatedAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
 });
