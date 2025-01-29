@@ -1,7 +1,8 @@
-import { calendarEvent, calendarEventParticipant, calendarFolder, company, contact, marketingCampaign, team, teamActivity, teamContact, teamMeeting } from '@/drizzle/schema';
+import { calendarEvent, calendarEventParticipant, calendarFolder, company, contact, marketingCampaign, team, teamActivity, teamContact, teamMeeting, user, userNotifications } from '@/drizzle/schema';
+import { activitySubTypeSchema, activityTypeSchema } from '@/lib/schema';
 import { createContactActivityHelper } from '@/server/helper/contact';
 import { createTRPCRouter, protectedProcedure } from '@/server/trpc';
-import { and, eq, exists, sql } from 'drizzle-orm';
+import { and, eq, exists, inArray, sql } from 'drizzle-orm';
 import { z } from 'zod';
 
 export const teamRouter = createTRPCRouter({
@@ -273,69 +274,47 @@ export const teamRouter = createTRPCRouter({
     .input(
       z.object({
         teamId: z.string(),
-        type: z.enum(['TEAM', 'CAMPAIGN', 'PAYMENT', 'ENGAGEMENT', 'MEMBER', 'MEETING', 'GOAL', 'PERFORMANCE']),
-        description: z.string().optional(),
-        metadata: z.string().optional(),
+        type: activityTypeSchema,
+        subType: activitySubTypeSchema,
+        description: z.string(),
         initiatorType: z.enum(['user', 'system', 'team']).default('user'),
-        initiatorId: z.string().optional(),
-        subType: z
-          .enum([
-            'TEAM_CREATED',
-            'TEAM_UPDATED',
-            'TEAM_ARCHIVED',
-            'TEAM_ACTIVATED',
-            'MEMBER_ADDED',
-            'MEMBER_REMOVED',
-            'MEMBER_ROLE_UPDATED',
-            'LEADER_ASSIGNED',
-            'SUBLEADER_ASSIGNED',
-            'REFERRAL_ASSIGNED',
-            'MEETING_SCHEDULED',
-            'MEETING_UPDATED',
-            'MEETING_CANCELLED',
-            'MEETING_COMPLETED',
-            'MEETING_NO_SHOW',
-            'GOAL_SET',
-            'GOAL_UPDATED',
-            'GOAL_ACHIEVED',
-            'GOAL_MISSED',
-            'PERFORMANCE_REVIEWED',
-            'KPI_UPDATED',
-            'MILESTONE_REACHED',
-            'ACHIEVEMENT_UNLOCKED',
-            'NOTE_ADDED',
-            'REMARK_UPDATED',
-            'DOCUMENT_SHARED',
-            'TASK_ASSIGNED',
-            'FEEDBACK_PROVIDED',
-            'CAMPAIGN_STARTED',
-            'CAMPAIGN_UPDATED',
-            'CAMPAIGN_COMPLETED',
-            'CAMPAIGN_CANCELLED',
-            'COMMISSION_RECORDED',
-            'BONUS_AWARDED',
-            'PAYMENT_PROCESSED',
-            'REVENUE_UPDATED',
-          ])
-          .optional(),
+        initiatorId: z.string(),
+        metadata: z.string().optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
-      const [newActivity] = await ctx.db
-        .insert(teamActivity)
-        .values({
-          teamId: input.teamId,
-          userId: ctx.session.user.id,
-          type: input.type,
-          description: input.description,
-          metadata: input.metadata,
-          initiatorType: input.initiatorType,
-          initiatorId: input.initiatorId,
-          subType: input.subType,
-        })
-        .returning();
+      await ctx.db.insert(teamActivity).values({
+        teamId: input.teamId,
+        userId: ctx.session?.user.id,
+        type: input.type,
+        subType: input.subType,
+        initiatorType: input.initiatorType,
+        initiatorId: input.initiatorId,
+        description: input.description,
+        metadata: input.metadata,
+      });
 
-      return newActivity;
+      const mentionRegex = /@(\w+)/g;
+      const mentions = input.description.match(mentionRegex)?.map((m) => m.slice(1)) || [];
+
+      if (mentions.length > 0) {
+        // Get all mentioned users
+        const mentionedUsers = await ctx.db.select().from(user).where(inArray(user.username, mentions));
+
+        // Create notifications for mentioned users
+        for (const mentionedUser of mentionedUsers) {
+          await ctx.db.insert(userNotifications).values({
+            userId: mentionedUser.id,
+            type: 'message',
+            title: `${ctx.session?.user.name || 'Someone'} mentioned you in a note`,
+            message: input.description,
+            metadata: JSON.stringify({
+              type: 'team',
+              teamId: input.teamId,
+            }),
+          });
+        }
+      }
     }),
 
   getTeamMeetings: protectedProcedure.input(z.object({ teamId: z.string() })).query(async ({ ctx, input }) => {

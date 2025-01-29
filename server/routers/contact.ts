@@ -324,7 +324,6 @@ export const contactRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      // Create the activity
       await ctx.db.insert(contactActivity).values({
         contactId: input.contactId,
         userId: ctx.session?.user.id,
@@ -352,13 +351,12 @@ export const contactRouter = createTRPCRouter({
             title: `${ctx.session?.user.name || 'Someone'} mentioned you in a note`,
             message: input.description,
             metadata: JSON.stringify({
+              type: 'contact',
               contactId: input.contactId,
             }),
           });
         }
       }
-
-      return true;
     }),
 
   deleteContactActivity: protectedProcedure.input(z.object({ id: z.string() })).mutation(({ ctx, input }) => {

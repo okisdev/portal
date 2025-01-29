@@ -35,7 +35,6 @@ import {
   useReactTable,
 } from '@tanstack/react-table';
 import { Calendar, Edit2, Eye, MoreHorizontal, Plus, Trash2 } from 'lucide-react';
-import { useSession } from 'next-auth/react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { notFound, useParams, useRouter, useSearchParams } from 'next/navigation';
@@ -48,7 +47,6 @@ export default function TeamIdPage() {
   const searchParams = useSearchParams();
   const mode = searchParams.get('mode');
   const t = useTranslations();
-  const session = useSession();
 
   const utils = api.useUtils();
 
@@ -57,7 +55,6 @@ export default function TeamIdPage() {
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = useState({});
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [newRemark, setNewRemark] = useState('');
   const [isNewMeetingModalOpen, setIsNewMeetingModalOpen] = useState(false);
   const [activityToDelete, setActivityToDelete] = useState<string | null>(null);
   const [meetingToDelete, setMeetingToDelete] = useState<string | null>(null);
@@ -360,20 +357,6 @@ export default function TeamIdPage() {
     });
   };
 
-  const handleSubmitActivity = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newRemark.trim()) return;
-
-    createTeamActivity.mutate({
-      teamId: teamId[0],
-      type: 'ENGAGEMENT',
-      subType: 'NOTE_ADDED',
-      description: newRemark,
-      initiatorType: 'user',
-      initiatorId: session.data?.user.id,
-    });
-  };
-
   const handleCreateMeeting = async (data: any) => {
     await createMeeting.mutateAsync({
       teamId: teamId[0],
@@ -501,7 +484,7 @@ export default function TeamIdPage() {
                       }))}
                       onCreateActivity={(data) => {
                         createTeamActivity.mutate({
-                          teamId: teamId[0],
+                          teamId,
                           type: 'ENGAGEMENT',
                           subType: 'NOTE_ADDED',
                           description: data.description,
