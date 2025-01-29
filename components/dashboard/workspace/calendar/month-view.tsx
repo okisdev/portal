@@ -1,5 +1,4 @@
 import { EventPopover } from '@/components/shared/event-popover';
-import {} from '@/components/ui/popover';
 import type { CalendarEventWithParticipants, CalendarFolder } from '@/lib/schema';
 import { cn } from '@/lib/utils';
 import { useTranslations } from 'next-intl';

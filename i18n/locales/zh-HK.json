@@ -454,5 +454,6 @@
   "whatsapp": "WhatsApp",
   "will_cancel_at": "將在 {date} 取消",
   "will_renew_at": "將在 {date} 續訂",
-  "workspace": "工作區"
+  "workspace": "工作區",
+  "add_remark_about_this_contact": "加上有關此聯繫的評論..."
 }

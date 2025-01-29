@@ -193,7 +193,7 @@ export const contactRouter = createTRPCRouter({
       return result[0];
     }),
 
-  updateContactRemark: protectedProcedure.input(z.object({ id: z.string(), remark: z.string() })).mutation(async ({ ctx, input }) => {
+  updateContactRemark: protectedProcedure.input(z.object({ id: z.string(), remark: z.string(), oldRemark: z.string().optional() })).mutation(async ({ ctx, input }) => {
     await ctx.db.update(contact).set({ remark: input.remark }).where(eq(contact.id, input.id));
 
     // Log remark update activity
@@ -204,6 +204,10 @@ export const contactRouter = createTRPCRouter({
       description: `Contact remark was updated to: ${input.remark}`,
       initiatorType: 'user',
       initiatorId: ctx.session?.user.id,
+      metadata: {
+        oldRemark: input.oldRemark,
+        newRemark: input.remark,
+      },
     });
   }),
 

@@ -169,6 +169,7 @@ export default function ContactIdPage() {
     updateContactRemark.mutate({
       id: contactId[0],
       remark: editableRemark,
+      oldRemark: contact?.remark || undefined,
     });
     setIsNotesEditing(false);
   };
@@ -191,10 +192,10 @@ export default function ContactIdPage() {
   }, [mode, contact]);
 
   useEffect(() => {
-    if (contact?.remark) {
-      setEditableRemark(contact.remark);
+    if (!isNotesEditing) {
+      setEditableRemark(contact?.remark || '');
     }
-  }, [contact?.remark]);
+  }, [isNotesEditing, contact?.remark]);
 
   useEffect(() => {
     if (contact?.lastContactedAt) {
@@ -514,7 +515,7 @@ export default function ContactIdPage() {
                   </button>
                 </div>
                 {isNotesEditing ? (
-                  <Textarea value={editableRemark} onChange={(e) => setEditableRemark(e.target.value)} className='min-h-[100px] bg-background' placeholder='Add remark about this contact...' />
+                  <Textarea value={editableRemark} onChange={(e) => setEditableRemark(e.target.value)} className='min-h-[100px] bg-background' placeholder={t('add_remark_about_this_contact')} />
                 ) : (
                   <p className='whitespace-pre-wrap text-muted-foreground text-sm'>{contact?.remark || t('no_remark_added')}</p>
                 )}
