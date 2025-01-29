@@ -1,4 +1,4 @@
-import { Building, Calendar, Contact, File, Gift, QrCode, Settings, Users } from 'lucide-react';
+import { Building, Calendar, Contact, File, Gift, QrCode, Users } from 'lucide-react';
 
 export const workspaceItems = [
   {
@@ -88,18 +88,12 @@ export const toolsItems = [
   },
 ];
 
-export const teamItems = [
+export const siteItems = [
   {
     id: 'overview',
     title: 'Overview',
-    url: '/dashboard/team',
+    url: '/dashboard/site',
     icon: Users,
-  },
-  {
-    id: 'configuration',
-    title: 'Configuration',
-    url: '/dashboard/team/configuration',
-    icon: Settings,
   },
 ];
 

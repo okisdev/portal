@@ -184,26 +184,30 @@ export const contactRouter = createTRPCRouter({
           type: 'CAMPAIGN',
           subType: 'CAMPAIGN_ASSIGNED',
           description: `Contact ${result[0].name} (${result[0].email}) was assigned to campaign: ${campaign.name} (${campaign.campaignCode}).`,
-          metadata: { campaign },
           initiatorType: 'user',
           initiatorId: ctx.session?.user.id,
+          metadata: { campaign },
         });
       }
 
       return result[0];
     }),
 
-  updateContactRemark: protectedProcedure.input(z.object({ id: z.string(), remark: z.string() })).mutation(async ({ ctx, input }) => {
+  updateContactRemark: protectedProcedure.input(z.object({ id: z.string(), remark: z.string(), oldRemark: z.string().optional() })).mutation(async ({ ctx, input }) => {
     await ctx.db.update(contact).set({ remark: input.remark }).where(eq(contact.id, input.id));
 
     // Log remark update activity
     await createContactActivityHelper(ctx, {
       contactId: input.id,
       type: 'ENGAGEMENT',
-      subType: 'NOTE_ADDED',
+      subType: 'REMARK_UPDATED',
       description: `Contact remark was updated to: ${input.remark}`,
       initiatorType: 'user',
       initiatorId: ctx.session?.user.id,
+      metadata: {
+        oldRemark: input.oldRemark,
+        newRemark: input.remark,
+      },
     });
   }),
 
@@ -320,7 +324,6 @@ export const contactRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      // Create the activity
       await ctx.db.insert(contactActivity).values({
         contactId: input.contactId,
         userId: ctx.session?.user.id,
@@ -348,13 +351,12 @@ export const contactRouter = createTRPCRouter({
             title: `${ctx.session?.user.name || 'Someone'} mentioned you in a note`,
             message: input.description,
             metadata: JSON.stringify({
-              contactId: input.contactId,
+              type: 'contacts',
+              id: input.contactId,
             }),
           });
         }
       }
-
-      return true;
     }),
 
   deleteContactActivity: protectedProcedure.input(z.object({ id: z.string() })).mutation(({ ctx, input }) => {

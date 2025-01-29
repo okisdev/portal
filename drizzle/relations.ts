@@ -8,9 +8,13 @@ import {
   calendarFolder,
   company,
   companyContact,
+  companyCustomField,
+  companyCustomValue,
   contact,
   contactActivity,
   contactCampaign,
+  contactCustomField,
+  contactCustomValue,
   contactDeal,
   marketingCampaign,
   paymentTrack,
@@ -23,6 +27,8 @@ import {
   team,
   teamActivity,
   teamContact,
+  teamCustomField,
+  teamCustomValue,
   teamMeeting,
   user,
   userNotifications,
@@ -83,6 +89,7 @@ export const contactRelations = relations(contact, ({ many, one }) => ({
   subLeadingTeams: many(team, { relationName: 'teamSubLeader' }),
   referralTeams: many(team, { relationName: 'teamReferral' }),
   receivedContent: many(resourceContentSendTrack),
+  customValues: many(contactCustomValue),
 }));
 
 export const contactDealRelations = relations(contactDeal, ({ one }) => ({
@@ -236,6 +243,7 @@ export const contactCampaignRelations = relations(contactCampaign, ({ one }) => 
 export const companyRelations = relations(company, ({ many }) => ({
   teams: many(team),
   contacts: many(companyContact),
+  customValues: many(companyCustomValue),
 }));
 
 export const teamRelations = relations(team, ({ many, one }) => ({
@@ -261,6 +269,7 @@ export const teamRelations = relations(team, ({ many, one }) => ({
     fields: [team.referralId],
     references: [contact.id],
   }),
+  customValues: many(teamCustomValue),
 }));
 
 export const teamContactRelations = relations(teamContact, ({ one }) => ({
@@ -339,5 +348,50 @@ export const companyContactRelations = relations(companyContact, ({ one }) => ({
   contact: one(contact, {
     fields: [companyContact.contactId],
     references: [contact.id],
+  }),
+}));
+
+export const contactCustomFieldRelations = relations(contactCustomField, ({ many }) => ({
+  values: many(contactCustomValue),
+}));
+
+export const contactCustomValueRelations = relations(contactCustomValue, ({ one }) => ({
+  contact: one(contact, {
+    fields: [contactCustomValue.contactId],
+    references: [contact.id],
+  }),
+  field: one(contactCustomField, {
+    fields: [contactCustomValue.fieldId],
+    references: [contactCustomField.id],
+  }),
+}));
+
+export const teamCustomFieldRelations = relations(teamCustomField, ({ many }) => ({
+  values: many(teamCustomValue),
+}));
+
+export const teamCustomValueRelations = relations(teamCustomValue, ({ one }) => ({
+  team: one(team, {
+    fields: [teamCustomValue.teamId],
+    references: [team.id],
+  }),
+  field: one(teamCustomField, {
+    fields: [teamCustomValue.fieldId],
+    references: [teamCustomField.id],
+  }),
+}));
+
+export const companyCustomFieldRelations = relations(companyCustomField, ({ many }) => ({
+  values: many(companyCustomValue),
+}));
+
+export const companyCustomValueRelations = relations(companyCustomValue, ({ one }) => ({
+  company: one(company, {
+    fields: [companyCustomValue.companyId],
+    references: [company.id],
+  }),
+  field: one(companyCustomField, {
+    fields: [companyCustomValue.fieldId],
+    references: [companyCustomField.id],
   }),
 }));

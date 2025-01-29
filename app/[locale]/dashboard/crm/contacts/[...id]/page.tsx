@@ -1,9 +1,9 @@
 'use client';
 
-import { ContactActivity } from '@/components/dashboard/contact/contact-activity';
 import { Payment } from '@/components/dashboard/contact/payment';
 import { SendEmail } from '@/components/dashboard/contact/send-email';
 import { SendWhatsAppMessage } from '@/components/dashboard/contact/send-whatsapp-message';
+import { ActivitySection } from '@/components/shared/activity-section';
 import { ColorBadge } from '@/components/shared/color-badge';
 import { Combobox } from '@/components/shared/combobox';
 import { DateTimePicker } from '@/components/shared/date-time-picker';
@@ -12,9 +12,9 @@ import type { EventFormData } from '@/components/shared/event-dialog';
 import { EventSection } from '@/components/shared/event-section';
 import { PageLoading } from '@/components/shared/page-loading';
 import { PhoneInput } from '@/components/shared/phone-input';
+import { TabSwitcher } from '@/components/shared/tab-switcher';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import {} from '@/components/ui/collapsible';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import {
   DropdownMenu,
@@ -29,13 +29,11 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import { sources } from '@/data/data';
 import { type Priority, type Status, statusSchema } from '@/lib/schema';
 import { formatDate } from '@/lib/utils';
 import { api } from '@/utils/trpc/client';
-import {} from 'framer-motion';
 import { Building2, Edit2, Mail, MessageSquare, MoreHorizontal, Phone, Save, Send, Users, X } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
@@ -52,18 +50,19 @@ export default function ContactIdPage() {
 
   const utils = api.useUtils();
 
-  const { data: user } = api.account.getMe.useQuery();
-
+  const { data: me } = api.account.getMe.useQuery();
   const { data: contact, isLoading } = api.contact.getContactById.useQuery({
     id: contactId[0],
   });
-
   const { data: appointments } = api.calendar.getAppointmentsByContactId.useQuery({
     contactId: contactId[0],
   });
   const { data: allTeams } = api.team.getAllTeams.useQuery();
   const { data: calendarFolders } = api.calendar.getMyFolders.useQuery();
   const { data: companies } = api.company.getAllCompanies.useQuery();
+  const { data: activities } = api.contact.getContactActivities.useQuery({
+    id: contactId[0],
+  });
 
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editForm, setEditForm] = useState({
@@ -119,6 +118,17 @@ export default function ContactIdPage() {
     },
   });
 
+  const createContactActivity = api.contact.createContactActivity.useMutation({
+    onSuccess: () => {
+      utils.contact.getContactActivities.invalidate({ id: contactId });
+      utils.user.getUnreadNotificationsCount.invalidate();
+      toast.success('Activity created successfully');
+    },
+    onError: (error) => {
+      toast.error(error.message);
+    },
+  });
+
   const createAppointment = api.calendar.createAppointment.useMutation({
     onSuccess: () => {
       setIsBookingModalOpen(false);
@@ -171,6 +181,7 @@ export default function ContactIdPage() {
     updateContactRemark.mutate({
       id: contactId[0],
       remark: editableRemark,
+      oldRemark: contact?.remark || undefined,
     });
     setIsNotesEditing(false);
   };
@@ -193,10 +204,10 @@ export default function ContactIdPage() {
   }, [mode, contact]);
 
   useEffect(() => {
-    if (contact?.remark) {
-      setEditableRemark(contact.remark);
+    if (!isNotesEditing) {
+      setEditableRemark(contact?.remark || '');
     }
-  }, [contact?.remark]);
+  }, [isNotesEditing, contact?.remark]);
 
   useEffect(() => {
     if (contact?.lastContactedAt) {
@@ -227,10 +238,6 @@ export default function ContactIdPage() {
       priority: contact?.priority || 'low',
     });
     setIsEditModalOpen(true);
-  };
-
-  const handleOpenBookingModal = () => {
-    setIsBookingModalOpen(true);
   };
 
   const handleAssignTeam = () => {
@@ -293,62 +300,56 @@ export default function ContactIdPage() {
   return (
     <div className='container mx-auto min-h-[calc(100vh-4rem)] space-y-6 p-4 sm:p-6'>
       <div className='grid min-h-[calc(100vh-6rem)] grid-cols-1 gap-4 lg:grid-cols-3 lg:gap-6'>
-        <div className='h-auto overflow-y-auto lg:col-span-1'>
-          <div className='rounded-lg border bg-card text-card-foreground shadow-sm'>
-            <div className='border-b p-6'>
+        <div className='h-[calc(100vh-8rem)] lg:col-span-1'>
+          <div className='flex h-full flex-col rounded-lg border bg-card text-card-foreground shadow-sm'>
+            <div className='flex-none border-b p-6'>
               <div className='flex items-start gap-4'>
                 <Avatar className='size-16'>
                   <AvatarImage src='' />
                   <AvatarFallback>{contact?.name?.charAt(0) || ''}</AvatarFallback>
                 </Avatar>
-                <div className='min-w-0 flex-1'>
-                  <div className='mb-2 flex items-center gap-2'>
-                    <h1 className='truncate font-semibold text-foreground text-xl'>{contact?.name}</h1>
-                  </div>
-                  <div className='space-y-1 text-muted-foreground text-sm'>
-                    {contact?.company && (
-                      <div className='flex items-center gap-2'>
-                        <Building2 className='size-4 shrink-0' />
-                        <Link href={`/dashboard/crm/contacts?company=${contact.company}`} className='hover:text-primary'>
-                          {contact.company}
-                        </Link>
-                      </div>
-                    )}
-                    {contact?.teams && contact.teams.length > 0 && (
-                      <div className='flex items-center gap-2'>
-                        <Users className='size-4 shrink-0' />
-                        <div className='flex flex-wrap gap-1'>
-                          {contact?.teams?.map((team) => (
-                            <Link key={team.id} href={`/dashboard/crm/team/${team.id}`} className='hover:text-primary'>
-                              {team.name}
-                            </Link>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                    {contact?.email && (
-                      <Link href={`mailto:${contact.email}`} target='_blank' rel='noopener noreferrer' className='flex items-center gap-2 hover:text-primary'>
-                        <Mail className='size-4 shrink-0' />
-                        <span className='truncate'>{contact.email}</span>
+                <div className='min-w-0 flex-1 space-y-1 text-muted-foreground text-sm'>
+                  <h1 className='mb-2 truncate font-semibold text-foreground text-xl'>{contact?.name}</h1>
+                  {contact?.company && (
+                    <div className='flex items-center gap-2'>
+                      <Building2 className='size-4 shrink-0' />
+                      <Link href={`/dashboard/crm/contacts?company=${contact.company}`} className='hover:text-primary'>
+                        {contact.company}
                       </Link>
-                    )}
-                    {contact?.phone && (
-                      <Link href={`https://wa.me/${contact.phone.replace(/\D/g, '')}`} target='_blank' rel='noopener noreferrer' className='flex items-center gap-2 hover:text-primary'>
-                        <Phone className='size-4 shrink-0' />
-                        <span>{contact.phone}</span>
-                      </Link>
-                    )}
-                    {contact?.createdAt && (
-                      <div className='flex items-center gap-2 pt-3'>
-                        <span className='text-muted-foreground text-xs'>
-                          {t('created_at_via', {
-                            date: formatDate(new Date(contact.createdAt)),
-                            source: contact.source,
-                          })}
-                        </span>
+                    </div>
+                  )}
+                  {contact?.teams && contact.teams.length > 0 && (
+                    <div className='flex items-center gap-2'>
+                      <Users className='size-4 shrink-0' />
+                      <div className='flex flex-wrap gap-1'>
+                        {contact?.teams?.map((team) => (
+                          <Link key={team.id} href={`/dashboard/crm/team/${team.id}`} className='hover:text-primary'>
+                            {team.name}
+                          </Link>
+                        ))}
                       </div>
-                    )}
-                  </div>
+                    </div>
+                  )}
+                  {contact?.email && (
+                    <Link href={`mailto:${contact.email}`} target='_blank' rel='noopener noreferrer' className='flex items-center gap-2 hover:text-primary'>
+                      <Mail className='size-4 shrink-0' />
+                      <span className='truncate'>{contact.email}</span>
+                    </Link>
+                  )}
+                  {contact?.phone && (
+                    <Link href={`https://wa.me/${contact.phone.replace(/\D/g, '')}`} target='_blank' rel='noopener noreferrer' className='flex items-center gap-2 hover:text-primary'>
+                      <Phone className='size-4 shrink-0' />
+                      <span>{contact.phone}</span>
+                    </Link>
+                  )}
+                  {contact?.createdAt && (
+                    <span className='block pt-3 text-xs'>
+                      {t('created_at_via', {
+                        date: formatDate(new Date(contact.createdAt)),
+                        source: contact.source,
+                      })}
+                    </span>
+                  )}
                 </div>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
@@ -384,7 +385,7 @@ export default function ContactIdPage() {
               </div>
             </div>
 
-            <div className='border-b p-6'>
+            <div className='flex-none border-b p-6'>
               <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
                 <div className='space-y-1.5'>
                   <div className='flex items-center justify-between text-muted-foreground text-xs'>
@@ -405,24 +406,22 @@ export default function ContactIdPage() {
                       </button>
                     )}
                   </div>
-                  <div className='text-foreground text-sm'>
-                    <DateTimePicker
-                      size='sm'
-                      value={lastContactDate}
-                      onChange={(date) => setLastContactDate(date)}
-                      onClose={() => {
-                        const lastContactedAt = contact?.lastContactedAt ? new Date(contact.lastContactedAt).getTime() : null;
-                        const newTime = lastContactDate?.getTime() || null;
+                  <DateTimePicker
+                    size='sm'
+                    value={lastContactDate}
+                    onChange={(date) => setLastContactDate(date)}
+                    onClose={() => {
+                      const lastContactedAt = contact?.lastContactedAt ? new Date(contact.lastContactedAt).getTime() : null;
+                      const newTime = lastContactDate?.getTime() || null;
 
-                        if (lastContactedAt !== newTime) {
-                          updateContact.mutate({
-                            id: contactId[0],
-                            lastContactedAt: lastContactDate || undefined,
-                          });
-                        }
-                      }}
-                    />
-                  </div>
+                      if (lastContactedAt !== newTime) {
+                        updateContact.mutate({
+                          id: contactId[0],
+                          lastContactedAt: lastContactDate || undefined,
+                        });
+                      }
+                    }}
+                  />
                 </div>
                 <div className='space-y-1.5'>
                   <div className='flex items-center justify-between text-muted-foreground text-xs'>
@@ -443,170 +442,184 @@ export default function ContactIdPage() {
                       </button>
                     )}
                   </div>
-                  <div className='text-foreground text-sm'>
-                    <DateTimePicker
-                      size='sm'
-                      value={nextFollowUpDate}
-                      onChange={(date) => setNextFollowUpDate(date)}
-                      onClose={() => {
-                        const currentTime = contact?.nextFollowUpAt ? new Date(contact.nextFollowUpAt).getTime() : null;
-                        const newTime = nextFollowUpDate?.getTime() || null;
+                  <DateTimePicker
+                    size='sm'
+                    value={nextFollowUpDate}
+                    onChange={(date) => setNextFollowUpDate(date)}
+                    onClose={() => {
+                      const currentTime = contact?.nextFollowUpAt ? new Date(contact.nextFollowUpAt).getTime() : null;
+                      const newTime = nextFollowUpDate?.getTime() || null;
 
-                        if (currentTime !== newTime) {
-                          updateContact.mutate({
-                            id: contactId[0],
-                            nextFollowUpAt: nextFollowUpDate || undefined,
-                          });
-                        }
-                      }}
-                    />
-                  </div>
-                </div>
-                <div className='space-y-1.5'>
-                  <div className='text-muted-foreground text-xs'>{t('priority')}</div>
-                  <div className='text-foreground'>
-                    <Select value={contact?.priority || 'medium'} onValueChange={handlePriorityChange}>
-                      <SelectTrigger className='h-8'>
-                        <SelectValue>
-                          <ColorBadge type='priority' value={contact?.priority || 'medium'} />
-                        </SelectValue>
-                      </SelectTrigger>
-                      <SelectContent className='bg-popover text-popover-foreground'>
-                        {['high', 'medium', 'low'].map((priority) => (
-                          <SelectItem key={priority} value={priority}>
-                            <ColorBadge type='priority' value={priority} />
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-                <div className='space-y-1.5'>
-                  <div className='text-muted-foreground text-xs'>{t('status')}</div>
-                  <div className='text-foreground'>
-                    <Select value={contact?.status || 'lead'} onValueChange={handleStatusChange}>
-                      <SelectTrigger className='h-8'>
-                        <SelectValue>
-                          <ColorBadge type='contactStatus' value={contact?.status || 'lead'} />
-                        </SelectValue>
-                      </SelectTrigger>
-                      <SelectContent className='bg-popover text-popover-foreground'>
-                        {statusSchema.options.map((status) => (
-                          <SelectItem key={status} value={status}>
-                            <ColorBadge type='contactStatus' value={status} />
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className='space-y-2 border-b p-6'>
-              <div className='flex items-center justify-between'>
-                <h2 className='font-medium text-foreground'>{t('remark')}</h2>
-                <button
-                  type='button'
-                  className='text-muted-foreground hover:text-foreground'
-                  onClick={() => {
-                    if (isNotesEditing) {
-                      if (contact?.remark === editableRemark) {
-                        setEditableRemark('');
-                        setIsNotesEditing(false);
-                        return;
+                      if (currentTime !== newTime) {
+                        updateContact.mutate({
+                          id: contactId[0],
+                          nextFollowUpAt: nextFollowUpDate || undefined,
+                        });
                       }
-                      handleSaveNotes();
-                    } else {
-                      setIsNotesEditing(true);
-                    }
-                  }}
-                >
-                  {isNotesEditing ? (
-                    <div className='flex items-center gap-2'>
-                      <X className='size-4' />
-                      <Save className='size-4' />
-                    </div>
-                  ) : (
-                    <Edit2 className='size-4' />
-                  )}
-                </button>
+                    }}
+                  />
+                </div>
+                <div className='space-y-1.5'>
+                  <span className='text-muted-foreground text-xs'>{t('priority')}</span>
+                  <Select value={contact?.priority || 'medium'} onValueChange={handlePriorityChange}>
+                    <SelectTrigger className='h-8'>
+                      <SelectValue>
+                        <ColorBadge type='priority' value={contact?.priority || 'medium'} />
+                      </SelectValue>
+                    </SelectTrigger>
+                    <SelectContent className='bg-popover text-popover-foreground'>
+                      {['high', 'medium', 'low'].map((priority) => (
+                        <SelectItem key={priority} value={priority}>
+                          <ColorBadge type='priority' value={priority} />
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className='space-y-1.5'>
+                  <span className='text-muted-foreground text-xs'>{t('status')}</span>
+                  <Select value={contact?.status || 'lead'} onValueChange={handleStatusChange}>
+                    <SelectTrigger className='h-8'>
+                      <SelectValue>
+                        <ColorBadge type='contactStatus' value={contact?.status || 'lead'} />
+                      </SelectValue>
+                    </SelectTrigger>
+                    <SelectContent className='bg-popover text-popover-foreground'>
+                      {statusSchema.options.map((status) => (
+                        <SelectItem key={status} value={status}>
+                          <ColorBadge type='contactStatus' value={status} />
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
-              {isNotesEditing ? (
-                <Textarea value={editableRemark} onChange={(e) => setEditableRemark(e.target.value)} className='min-h-[100px] bg-background' placeholder='Add remark about this contact...' />
-              ) : (
-                <p className='whitespace-pre-wrap text-muted-foreground text-sm'>{contact?.remark || t('no_remark_added')}</p>
-              )}
             </div>
 
-            <div className='space-y-2 border-b p-6'>
-              <EventSection
-                appointments={appointments || []}
-                calendarFolders={calendarFolders}
-                onCreateAppointment={handleBookAppointment}
-                onUpdateAppointment={(data) => updateAppointment.mutate(data)}
-                onDeleteAppointment={(id) => deleteAppointment.mutate(id)}
-                defaultTitle={t('meeting_with', { who: user?.name, name: contact?.name })}
-              />
-            </div>
-
-            <Payment contact={contact || {}} />
-
-            <div className='p-6'>
-              <h2 className='mb-4 font-medium'>{t('team_roles')}</h2>
-              <div className='space-y-3'>
-                {contact?.leadingTeams?.length === 0 && contact?.subLeadingTeams?.length === 0 && contact?.referralTeams?.length === 0 && (
-                  <p className='text-muted-foreground text-sm'>{t('no_team_roles_found')}</p>
+            <div className='flex-1 overflow-y-auto'>
+              <div className='border-b p-6'>
+                <div className='mb-2 flex items-center justify-between'>
+                  <h2 className='font-medium text-foreground'>{t('remark')}</h2>
+                  <button
+                    type='button'
+                    className='text-muted-foreground hover:text-foreground'
+                    onClick={() => {
+                      if (isNotesEditing) {
+                        if (contact?.remark === editableRemark) {
+                          setEditableRemark('');
+                          setIsNotesEditing(false);
+                          return;
+                        }
+                        handleSaveNotes();
+                      } else {
+                        setIsNotesEditing(true);
+                      }
+                    }}
+                  >
+                    {isNotesEditing ? (
+                      <div className='flex items-center gap-2'>
+                        <X className='size-4' />
+                        <Save className='size-4' />
+                      </div>
+                    ) : (
+                      <Edit2 className='size-4' />
+                    )}
+                  </button>
+                </div>
+                {isNotesEditing ? (
+                  <Textarea value={editableRemark} onChange={(e) => setEditableRemark(e.target.value)} className='min-h-[100px] bg-background' placeholder={t('add_remark_about_this_contact')} />
+                ) : (
+                  <p className='whitespace-pre-wrap text-muted-foreground text-sm'>{contact?.remark || t('no_remark_added')}</p>
                 )}
-                {contact?.leadingTeams?.map((team) => (
-                  <div key={team.id} className='flex items-center justify-between'>
-                    <Link href={`/dashboard/crm/team/${team.id}`} className='text-sm transition-colors duration-200 hover:text-primary hover:underline'>
-                      {team.name}
-                    </Link>
-                    <span className='text-muted-foreground text-xs'>{t('team_leader')}</span>
-                  </div>
-                ))}
-                {contact?.subLeadingTeams?.map((team) => (
-                  <div key={team.id} className='flex items-center justify-between'>
-                    <Link href={`/dashboard/crm/team/${team.id}`} className='text-sm transition-colors duration-200 hover:text-primary hover:underline'>
-                      {team.name}
-                    </Link>
-                    <span className='text-muted-foreground text-xs'>{t('sub_leader')}</span>
-                  </div>
-                ))}
-                {contact?.referralTeams?.map((team) => (
-                  <div key={team.id} className='flex items-center justify-between'>
-                    <Link href={`/dashboard/crm/team/${team.id}`} className='text-sm hover:text-primary'>
-                      {team.name}
-                    </Link>
-                    <span className='text-muted-foreground text-xs'>{t('referral')}</span>
-                  </div>
-                ))}
+              </div>
+
+              <div className='border-b p-6'>
+                <EventSection
+                  appointments={appointments || []}
+                  calendarFolders={calendarFolders}
+                  onCreateAppointment={handleBookAppointment}
+                  onUpdateAppointment={(data) => updateAppointment.mutate(data)}
+                  onDeleteAppointment={(id) => deleteAppointment.mutate(id)}
+                  defaultTitle={t('meeting_with', { who: me?.name, name: contact?.name })}
+                />
+              </div>
+
+              <Payment contact={contact || {}} />
+
+              <div className='p-6'>
+                <h2 className='mb-4 font-medium'>{t('team_roles')}</h2>
+                {contact?.leadingTeams?.length === 0 && contact?.subLeadingTeams?.length === 0 && contact?.referralTeams?.length === 0 ? (
+                  <p className='text-muted-foreground text-sm'>{t('no_team_roles_found')}</p>
+                ) : (
+                  <>
+                    {contact?.leadingTeams?.map((team) => (
+                      <div key={team.id} className='mb-3 flex items-center justify-between'>
+                        <Link href={`/dashboard/crm/team/${team.id}`} className='text-sm transition-colors duration-200 hover:text-primary hover:underline'>
+                          {team.name}
+                        </Link>
+                        <span className='text-muted-foreground text-xs'>{t('team_leader')}</span>
+                      </div>
+                    ))}
+                    {contact?.subLeadingTeams?.map((team) => (
+                      <div key={team.id} className='mb-3 flex items-center justify-between'>
+                        <Link href={`/dashboard/crm/team/${team.id}`} className='text-sm transition-colors duration-200 hover:text-primary hover:underline'>
+                          {team.name}
+                        </Link>
+                        <span className='text-muted-foreground text-xs'>{t('sub_leader')}</span>
+                      </div>
+                    ))}
+                    {contact?.referralTeams?.map((team) => (
+                      <div key={team.id} className='mb-3 flex items-center justify-between'>
+                        <Link href={`/dashboard/crm/team/${team.id}`} className='text-sm hover:text-primary'>
+                          {team.name}
+                        </Link>
+                        <span className='text-muted-foreground text-xs'>{t('referral')}</span>
+                      </div>
+                    ))}
+                  </>
+                )}
               </div>
             </div>
           </div>
         </div>
 
-        <div className='h-full lg:col-span-2'>
-          <div className='h-full rounded-lg border bg-card text-card-foreground shadow-sm'>
-            <div className='h-full p-6'>
-              <Tabs defaultValue='activity' className='flex h-full flex-col'>
-                <TabsList className='grid w-full grid-cols-3'>
-                  <TabsTrigger value='activity'>{t('activity')}</TabsTrigger>
-                  <TabsTrigger value='subscription'>{t('subscription')}</TabsTrigger>
-                  <TabsTrigger value='management'>{t('management')}</TabsTrigger>
-                </TabsList>
-                <TabsContent value='activity' className='relative flex flex-1 flex-col'>
-                  <ContactActivity contactId={contactId[0]} />
-                </TabsContent>
-                <TabsContent value='subscription' className='flex w-full flex-col gap-4'>
-                  <p>{t('subscription')}</p>
-                </TabsContent>
-                <TabsContent value='management' className='flex w-full flex-col gap-4'>
-                  <p>{t('management')}</p>
-                </TabsContent>
-              </Tabs>
-            </div>
+        <div className='h-[calc(100vh-8rem)] overflow-hidden lg:col-span-2'>
+          <div className='h-full rounded-lg border p-6'>
+            <TabSwitcher
+              config={[
+                {
+                  label: t('activity'),
+                  value: (
+                    <ActivitySection
+                      activities={activities?.map((activity) => ({
+                        id: activity.id,
+                        type: activity.type,
+                        subType: activity.subType || 'NOTE_ADDED',
+                        description: activity.description || '',
+                        initiatorType: 'user',
+                        userId: activity.userId,
+                        metadata: activity.metadata,
+                        createdAt: activity.createdAt,
+                      }))}
+                      onCreateActivity={(data) => {
+                        createContactActivity.mutate({
+                          contactId: contactId[0],
+                          type: 'ENGAGEMENT',
+                          subType: 'NOTE_ADDED',
+                          description: data.description,
+                          initiatorType: data.initiatorType,
+                          initiatorId: data.initiatorId,
+                          metadata: data.metadata as any,
+                        });
+                      }}
+                      isLoading={createContactActivity.isPending}
+                    />
+                  ),
+                },
+                { label: t('subscription'), value: <p>{t('subscription')}</p> },
+                { label: t('management'), value: <p>{t('management')}</p> },
+              ]}
+            />
           </div>
         </div>
       </div>
@@ -730,7 +743,7 @@ export default function ContactIdPage() {
         onOpenChange={setIsBookingModalOpen}
         onSubmit={handleBookAppointment}
         defaultValues={{
-          title: t('meeting_with', { who: user?.name, name: contact?.name }),
+          title: t('meeting_with', { who: me?.name, name: contact?.name }),
           startAt: new Date(),
           endAt: new Date(Date.now() + 30 * 60000),
           folderId: 'default',

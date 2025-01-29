@@ -1,6 +1,7 @@
 'use client';
 
 import { ActionAlertDialog } from '@/components/shared/action-alert-dialog';
+import { ActivitySection } from '@/components/shared/activity-section';
 import { ColorBadge } from '@/components/shared/color-badge';
 import { Combobox } from '@/components/shared/combobox';
 import { ComboboxCommand } from '@/components/shared/combobox';
@@ -9,6 +10,7 @@ import { EventSection } from '@/components/shared/event-section';
 import { PageHeader } from '@/components/shared/page-header';
 import { PageLoading } from '@/components/shared/page-loading';
 import { PaginationTable } from '@/components/shared/pagination-table';
+import { TabSwitcher } from '@/components/shared/tab-switcher';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -53,7 +55,6 @@ export default function TeamIdPage() {
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = useState({});
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [newRemark, setNewRemark] = useState('');
   const [isNewMeetingModalOpen, setIsNewMeetingModalOpen] = useState(false);
   const [activityToDelete, setActivityToDelete] = useState<string | null>(null);
   const [meetingToDelete, setMeetingToDelete] = useState<string | null>(null);
@@ -80,11 +81,13 @@ export default function TeamIdPage() {
   const { data: teamMeetings } = api.team.getTeamMeetings.useQuery({
     teamId: teamId[0],
   });
-  const { data: contacts } = api.contact.getAllContacts.useQuery();
+  const { data: contacts } = api.contact.getAllContacts.useQuery(undefined, {
+    enabled: isAddMemberOpen,
+  });
   const { data: folders } = api.calendar.getMyFolders.useQuery();
   const { data: participantOptions } = api.calendar.getParticipantOptions.useQuery();
   const { data: teamActivities } = api.team.getTeamActivities.useQuery({
-    teamId: teamId[0],
+    id: teamId[0],
   });
   const { data: campaigns } = api.marketing.getActiveCampaigns.useQuery();
   const { data: companies } = api.company.getAllCompanies.useQuery();
@@ -102,7 +105,7 @@ export default function TeamIdPage() {
 
   const createTeamActivity = api.team.createTeamActivity.useMutation({
     onSuccess: () => {
-      utils.team.getTeamActivities.invalidate({ teamId: teamId[0] });
+      utils.team.getTeamActivities.invalidate({ id: teamId[0] });
       toast.success('Activity created successfully');
     },
     onError: (error) => {
@@ -165,7 +168,7 @@ export default function TeamIdPage() {
 
   const deleteTeamActivity = api.team.deleteTeamActivity.useMutation({
     onSuccess: () => {
-      utils.team.getTeamActivities.invalidate({ teamId: teamId[0] });
+      utils.team.getTeamActivities.invalidate({ id: teamId[0] });
       toast.success('Activity deleted successfully');
     },
     onError: (error: any) => {
@@ -356,18 +359,6 @@ export default function TeamIdPage() {
     });
   };
 
-  const handleSubmitActivity = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newRemark.trim()) return;
-
-    createTeamActivity.mutate({
-      teamId: teamId[0],
-      type: 'note',
-      title: 'Note',
-      description: newRemark,
-    });
-  };
-
   const handleCreateMeeting = async (data: any) => {
     await createMeeting.mutateAsync({
       teamId: teamId[0],
@@ -477,38 +468,39 @@ export default function TeamIdPage() {
           </div>
 
           <div className='rounded-lg border bg-card p-4'>
-            <div className='mb-4 flex items-center justify-between'>
-              <h2 className='font-medium'>{t('activities')}</h2>
-              <form onSubmit={handleSubmitActivity} className='flex max-w-md flex-1 gap-2'>
-                <Input value={newRemark} onChange={(e) => setNewRemark(e.target.value)} placeholder={t('add_activity')} className='h-8' />
-                <Button type='submit' size='sm' disabled={createTeamActivity.isPending}>
-                  {t('add')}
-                </Button>
-              </form>
-            </div>
-            <div className='space-y-3'>
-              {teamActivities?.map((activity) => (
-                <div key={activity.id} className='flex items-start justify-between rounded-lg border bg-card p-3'>
-                  <div className='space-y-1'>
-                    <div className='flex items-center gap-2'>
-                      <p className='font-medium text-sm'>{activity.title}</p>
-                      <ColorBadge type='status' value={activity.type} />
-                    </div>
-                    <p className='text-sm'>{activity.description}</p>
-                    <p className='text-muted-foreground text-xs'>{formatDate(new Date(activity.createdAt))}</p>
-                  </div>
-                  <Button
-                    variant='ghost'
-                    size='sm'
-                    onClick={() => {
-                      setActivityToDelete(activity.id);
-                    }}
-                  >
-                    <Trash2 className='size-4 text-muted-foreground' />
-                  </Button>
-                </div>
-              ))}
-            </div>
+            <TabSwitcher
+              config={[
+                {
+                  label: t('activity'),
+                  value: (
+                    <ActivitySection
+                      activities={teamActivities?.map((activity) => ({
+                        id: activity.id,
+                        type: activity.type,
+                        subType: activity.subType || 'NOTE_ADDED',
+                        description: activity.description || '',
+                        initiatorType: 'user',
+                        userId: activity.userId,
+                        metadata: activity.metadata,
+                        createdAt: activity.createdAt,
+                      }))}
+                      onCreateActivity={(data) => {
+                        createTeamActivity.mutate({
+                          teamId: teamId[0],
+                          type: 'ENGAGEMENT',
+                          subType: 'NOTE_ADDED',
+                          description: data.description,
+                          initiatorType: data.initiatorType,
+                          initiatorId: data.initiatorId,
+                          metadata: data.metadata as any,
+                        });
+                      }}
+                      isLoading={createTeamActivity.isPending}
+                    />
+                  ),
+                },
+              ]}
+            />
           </div>
         </div>
 

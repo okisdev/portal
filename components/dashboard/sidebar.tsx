@@ -2,7 +2,6 @@
 
 import { ActionAlertDialog } from '@/components/shared/action-alert-dialog';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Button } from '@/components/ui/button';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import {
@@ -19,7 +18,7 @@ import {
   SidebarMenuItem,
 } from '@/components/ui/sidebar';
 import { Skeleton } from '@/components/ui/skeleton';
-import { crmItems, languageItems, marketingItems, resourcesItems, teamItems, toolsItems, workspaceItems } from '@/config/dashboard';
+import { crmItems, languageItems, marketingItems, resourcesItems, siteItems, toolsItems, workspaceItems } from '@/config/dashboard';
 import { usePathname, useRouter } from '@/i18n/routing';
 import packageInfo from '@/package.json';
 import { copyToClipboard } from '@/utils/clipboard';
@@ -68,7 +67,7 @@ export function DashboardSidebar() {
   };
 
   return (
-    <Sidebar>
+    <Sidebar collapsible='icon'>
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
@@ -87,22 +86,33 @@ export function DashboardSidebar() {
         <SidebarGroupSection title={t('marketing')} items={marketingItems} />
         <SidebarGroupSection title={t('resources')} items={resourcesItems} />
         <SidebarGroupSection title={t('tools')} items={toolsItems} />
-        {me?.role === 'ADMIN' && <SidebarGroupSection title={t('team')} items={teamItems} />}
+        {me?.role === 'ADMIN' && <SidebarGroupSection title={t('site')} items={siteItems} />}
       </SidebarContent>
       <SidebarFooter>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton asChild>
+            <SidebarMenuButton tooltip={t('settings')} asChild>
               <Link href='/dashboard/account/settings'>
                 <Settings />
                 <span>{t('settings')}</span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
+          <SidebarMenuItem>
+            <SidebarMenuButton tooltip={t('notifications')} asChild>
+              <Link href='/dashboard/account/notifications'>
+                <Bell />
+                {unreadNotificationsCount && unreadNotificationsCount.count > 0 && <span className='-top-0.5 -right-0.5 absolute h-1.5 w-1.5 rounded-full bg-red-500' />}
+                <span>
+                  {t('notifications')} {unreadNotificationsCount && unreadNotificationsCount.count > 0 && `(${unreadNotificationsCount.count})`}
+                </span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
           <SidebarMenuItem className='flex items-center justify-between space-x-1'>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <SidebarMenuButton>
+                <SidebarMenuButton tooltip={t('account')}>
                   <Avatar className='h-4 w-4'>
                     <AvatarImage src={me?.image ?? ''} />
                     <AvatarFallback>{me?.name?.charAt(0) ?? me?.email?.charAt(0)}</AvatarFallback>
@@ -181,12 +191,6 @@ export function DashboardSidebar() {
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-            <Button type='button' variant='ghost' className='relative h-8 px-2' asChild>
-              <Link href='/dashboard/account/notifications'>
-                <Bell className='h-4 w-4' />
-                {unreadNotificationsCount && unreadNotificationsCount.count > 0 && <span className='-top-0.5 -right-0.5 absolute h-1.5 w-1.5 rounded-full bg-red-500' />}
-              </Link>
-            </Button>
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarFooter>
@@ -207,7 +211,7 @@ function SidebarGroupSection({ title, items, defaultOpen = true, onItemAction }:
   const t = useTranslations();
 
   return (
-    <Collapsible defaultOpen={defaultOpen} className='group/collapsible'>
+    <Collapsible defaultOpen={defaultOpen} className='group/collapsible' data-collapsible='icon'>
       <SidebarGroup>
         <SidebarGroupLabel asChild>
           <CollapsibleTrigger>
@@ -220,7 +224,7 @@ function SidebarGroupSection({ title, items, defaultOpen = true, onItemAction }:
             <SidebarMenu>
               {items.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
+                  <SidebarMenuButton tooltip={t(item.id)} asChild>
                     <Link href={item.url}>
                       <item.icon />
                       <span>{t(item.id)}</span>

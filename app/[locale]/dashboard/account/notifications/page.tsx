@@ -126,7 +126,7 @@ export default function NotificationsPage() {
               <div className='flex flex-row items-center gap-2'>
                 {notification.metadata && (
                   <Button variant='ghost' size='sm'>
-                    <Link href={`/dashboard/crm/contacts/${JSON.parse(notification.metadata)?.contactId}`}>{t('view')}</Link>
+                    <Link href={`/dashboard/crm/${JSON.parse(notification.metadata)?.type}/${JSON.parse(notification.metadata)?.id}`}>{t('view')}</Link>
                   </Button>
                 )}
                 {!notification.read && (

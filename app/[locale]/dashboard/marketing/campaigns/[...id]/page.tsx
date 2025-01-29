@@ -99,19 +99,19 @@ export default function CampaignDetailsPage() {
   const { data: contacts } = api.contact.getAllContacts.useQuery();
 
   const filterFields = [
-    { label: 'Name', value: 'name' },
-    { label: 'Email', value: 'email' },
-    { label: 'Company', value: 'company' },
-    { label: 'Status', value: 'status' },
-    { label: 'Source', value: 'source' },
+    { label: t('name'), value: 'name' },
+    { label: t('email'), value: 'email' },
+    { label: t('company'), value: 'company' },
+    { label: t('status'), value: 'status' },
+    { label: t('source'), value: 'source' },
   ];
 
   const filterOperators: { label: string; value: FilterOperator }[] = [
-    { label: 'Equals', value: '=' },
-    { label: 'Not equals', value: '!=' },
-    { label: 'Contains', value: 'contains' },
-    { label: 'Starts with', value: 'startsWith' },
-    { label: 'Ends with', value: 'endsWith' },
+    { label: t('equals'), value: '=' },
+    { label: t('not_equals'), value: '!=' },
+    { label: t('contains'), value: 'contains' },
+    { label: t('starts_with'), value: 'startsWith' },
+    { label: t('ends_with'), value: 'endsWith' },
   ];
 
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);

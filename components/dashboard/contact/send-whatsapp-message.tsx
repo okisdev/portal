@@ -129,7 +129,9 @@ export function SendWhatsAppMessage({ open, onOpenChange, recipient }: SendWhats
                   <AvatarImage src='' />
                   <AvatarFallback>{recipient.name?.charAt(0)}</AvatarFallback>
                 </Avatar>
-                <span className='text-sm'>{recipient.name}</span>
+                <span className='text-sm'>
+                  {recipient.name} ({recipient.phone})
+                </span>
               </div>
             </div>
           </div>
