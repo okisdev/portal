@@ -24,6 +24,7 @@
   "PAYMENT_COMPLETED": "已完成付款",
   "PAYMENT_LINK_CLICKED": "已點擊付款連結",
   "PRIORITY_CHANGED": "已更改優先順序",
+  "REMARK_UPDATED": "備註更新",
   "STATUS_CHANGED": "已更改狀態",
   "TEAM_ASSIGNED": "已分配團隊",
   "TEAM_REMOVED": "已移除團隊",
@@ -48,6 +49,7 @@
   "add_event": "新增活動",
   "add_meeting": "新增會議",
   "add_note": "新增備註",
+  "add_remark_about_this_contact": "加上有關此聯繫的評論...",
   "add_tags": "新增標籤",
   "address": "地址",
   "admin": "管理員",
@@ -71,8 +73,8 @@
   "average_payment": "平均付款金額",
   "back": "返回",
   "back_to_editor": "返回編輯器",
-  "by_who": "由 <name></name>",
   "by_system": "由系統執行",
+  "by_who": "由 <name></name>",
   "calendar": "日曆",
   "calendars": "日曆",
   "campaign": "營銷活動",
@@ -337,6 +339,7 @@
   "search_status": "搜尋狀態",
   "search_sub_leader": "搜尋副組長...",
   "search_team_leader": "搜尋團隊領導...",
+  "search_users": "搜索用戶...",
   "select_a_team": "選擇團隊",
   "select_campaign": "選擇營銷活動",
   "select_campaign_code": "選擇活動代碼",
@@ -455,8 +458,5 @@
   "will_cancel_at": "將在 {date} 取消",
   "will_renew_at": "將在 {date} 續訂",
   "workspace": "工作區",
-  "add_remark_about_this_contact": "加上有關此聯繫的評論...",
-  "REMARK_UPDATED": "備註更新",
-  "write_a_reply": "寫回复...使用 @提及某人",
-  "search_users": "搜索用戶..."
+  "write_a_reply": "寫回复...使用 @提及某人"
 }

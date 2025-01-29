@@ -24,6 +24,7 @@
   "PAYMENT_COMPLETED": "Payment Completed",
   "PAYMENT_LINK_CLICKED": "Payment Link Clicked",
   "PRIORITY_CHANGED": "Priority Changed",
+  "REMARK_UPDATED": "Remark Updated",
   "STATUS_CHANGED": "Status Changed",
   "TEAM_ASSIGNED": "Team Assigned",
   "TEAM_REMOVED": "Team Removed",
@@ -48,6 +49,7 @@
   "add_event": "Add Event",
   "add_meeting": "Add Meeting",
   "add_note": "Add Note",
+  "add_remark_about_this_contact": "Add remark about this contact...",
   "add_tags": "Add Tags",
   "address": "Address",
   "admin": "Admin",
@@ -71,8 +73,8 @@
   "average_payment": "Average Payment",
   "back": "Back",
   "back_to_editor": "Back to Editor",
-  "by_who": "By <name></name>",
   "by_system": "By System",
+  "by_who": "By <name></name>",
   "calendar": "Calendar",
   "calendars": "Calendars",
   "campaign": "Campaign",
@@ -337,6 +339,7 @@
   "search_status": "Search Status",
   "search_sub_leader": "Search sub leader...",
   "search_team_leader": "Search team leader",
+  "search_users": "Search users...",
   "select_a_team": "Select a team",
   "select_campaign": "Select Campaign",
   "select_campaign_code": "Select Campaign Code",
@@ -455,8 +458,5 @@
   "will_cancel_at": "Will cancel at {date}",
   "will_renew_at": "Will renew at {date}",
   "workspace": "Workspace",
-  "add_remark_about_this_contact": "Add remark about this contact...",
-  "REMARK_UPDATED": "Remark Updated",
-  "write_a_reply": "Write a reply... Use @ to mention someone",
-  "search_users": "Search users..."
+  "write_a_reply": "Write a reply... Use @ to mention someone"
 }
