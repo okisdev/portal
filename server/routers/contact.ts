@@ -200,7 +200,7 @@ export const contactRouter = createTRPCRouter({
     await createContactActivityHelper(ctx, {
       contactId: input.id,
       type: 'ENGAGEMENT',
-      subType: 'NOTE_ADDED',
+      subType: 'REMARK_UPDATED',
       description: `Contact remark was updated to: ${input.remark}`,
       initiatorType: 'user',
       initiatorId: ctx.session?.user.id,

@@ -455,5 +455,6 @@
   "will_cancel_at": "Will cancel at {date}",
   "will_renew_at": "Will renew at {date}",
   "workspace": "Workspace",
-  "add_remark_about_this_contact": "Add remark about this contact..."
+  "add_remark_about_this_contact": "Add remark about this contact...",
+  "REMARK_UPDATED": "Remark Updated"
 }

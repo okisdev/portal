@@ -63,6 +63,7 @@ export const activitySubTypeSchema = z.enum([
   'EMAIL_SCHEDULED',
   'MESSAGE_SENT',
   'NOTE_ADDED',
+  'REMARK_UPDATED',
 
   // Team Management
   'TEAM_ASSIGNED',

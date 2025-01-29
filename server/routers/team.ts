@@ -304,6 +304,7 @@ export const teamRouter = createTRPCRouter({
             'MILESTONE_REACHED',
             'ACHIEVEMENT_UNLOCKED',
             'NOTE_ADDED',
+            'REMARK_UPDATED',
             'DOCUMENT_SHARED',
             'TASK_ASSIGNED',
             'FEEDBACK_PROVIDED',

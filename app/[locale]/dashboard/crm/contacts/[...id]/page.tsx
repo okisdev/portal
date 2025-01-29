@@ -1,9 +1,9 @@
 'use client';
 
-import { ContactActivity } from '@/components/dashboard/contact/contact-activity';
 import { Payment } from '@/components/dashboard/contact/payment';
 import { SendEmail } from '@/components/dashboard/contact/send-email';
 import { SendWhatsAppMessage } from '@/components/dashboard/contact/send-whatsapp-message';
+import { ActivitySection } from '@/components/shared/activity-section';
 import { ColorBadge } from '@/components/shared/color-badge';
 import { Combobox } from '@/components/shared/combobox';
 import { DateTimePicker } from '@/components/shared/date-time-picker';
@@ -50,18 +50,19 @@ export default function ContactIdPage() {
 
   const utils = api.useUtils();
 
-  const { data: user } = api.account.getMe.useQuery();
-
+  const { data: me } = api.account.getMe.useQuery();
   const { data: contact, isLoading } = api.contact.getContactById.useQuery({
     id: contactId[0],
   });
-
   const { data: appointments } = api.calendar.getAppointmentsByContactId.useQuery({
     contactId: contactId[0],
   });
   const { data: allTeams } = api.team.getAllTeams.useQuery();
   const { data: calendarFolders } = api.calendar.getMyFolders.useQuery();
   const { data: companies } = api.company.getAllCompanies.useQuery();
+  const { data: activities } = api.contact.getContactActivities.useQuery({
+    id: contactId[0],
+  });
 
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editForm, setEditForm] = useState({
@@ -114,6 +115,17 @@ export default function ContactIdPage() {
       utils.contact.getContactById.invalidate({ id: contactId[0] });
       utils.contact.getContactActivities.invalidate({ id: contactId[0] });
       toast.success(t('remark_updated_successfully'));
+    },
+  });
+
+  const createContactActivity = api.contact.createContactActivity.useMutation({
+    onSuccess: () => {
+      utils.contact.getContactActivities.invalidate({ id: contactId });
+      utils.user.getUnreadNotificationsCount.invalidate();
+      toast.success('Activity created successfully');
+    },
+    onError: (error) => {
+      toast.error(error.message);
     },
   });
 
@@ -528,7 +540,7 @@ export default function ContactIdPage() {
                   onCreateAppointment={handleBookAppointment}
                   onUpdateAppointment={(data) => updateAppointment.mutate(data)}
                   onDeleteAppointment={(id) => deleteAppointment.mutate(id)}
-                  defaultTitle={t('meeting_with', { who: user?.name, name: contact?.name })}
+                  defaultTitle={t('meeting_with', { who: me?.name, name: contact?.name })}
                 />
               </div>
 
@@ -575,7 +587,35 @@ export default function ContactIdPage() {
           <div className='h-full rounded-lg border p-6'>
             <TabSwitcher
               config={[
-                { label: t('activity'), value: <ContactActivity contactId={contactId[0]} /> },
+                {
+                  label: t('activity'),
+                  value: (
+                    <ActivitySection
+                      activities={activities?.map((activity) => ({
+                        id: activity.id,
+                        type: activity.type,
+                        subType: activity.subType || 'NOTE_ADDED',
+                        description: activity.description || '',
+                        initiatorType: activity.initiatorType === 'contact' ? 'user' : activity.initiatorType || 'user',
+                        userId: activity.userId,
+                        metadata: activity.metadata,
+                        createdAt: activity.createdAt,
+                      }))}
+                      onCreateActivity={(data) => {
+                        createContactActivity.mutate({
+                          contactId,
+                          type: 'ENGAGEMENT',
+                          subType: 'NOTE_ADDED',
+                          description: data.description,
+                          initiatorType: data.initiatorType,
+                          initiatorId: data.initiatorId,
+                          metadata: data.metadata as any,
+                        });
+                      }}
+                      isLoading={createContactActivity.isPending}
+                    />
+                  ),
+                },
                 { label: t('subscription'), value: <p>{t('subscription')}</p> },
                 { label: t('management'), value: <p>{t('management')}</p> },
               ]}
@@ -703,7 +743,7 @@ export default function ContactIdPage() {
         onOpenChange={setIsBookingModalOpen}
         onSubmit={handleBookAppointment}
         defaultValues={{
-          title: t('meeting_with', { who: user?.name, name: contact?.name }),
+          title: t('meeting_with', { who: me?.name, name: contact?.name }),
           startAt: new Date(),
           endAt: new Date(Date.now() + 30 * 60000),
           folderId: 'default',

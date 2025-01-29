@@ -1,6 +1,7 @@
 'use client';
 
 import { ActionAlertDialog } from '@/components/shared/action-alert-dialog';
+import { ActivitySection } from '@/components/shared/activity-section';
 import { ColorBadge } from '@/components/shared/color-badge';
 import { Combobox } from '@/components/shared/combobox';
 import { ComboboxCommand } from '@/components/shared/combobox';
@@ -9,6 +10,7 @@ import { EventSection } from '@/components/shared/event-section';
 import { PageHeader } from '@/components/shared/page-header';
 import { PageLoading } from '@/components/shared/page-loading';
 import { PaginationTable } from '@/components/shared/pagination-table';
+import { TabSwitcher } from '@/components/shared/tab-switcher';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -33,6 +35,7 @@ import {
   useReactTable,
 } from '@tanstack/react-table';
 import { Calendar, Edit2, Eye, MoreHorizontal, Plus, Trash2 } from 'lucide-react';
+import { useSession } from 'next-auth/react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { notFound, useParams, useRouter, useSearchParams } from 'next/navigation';
@@ -45,6 +48,7 @@ export default function TeamIdPage() {
   const searchParams = useSearchParams();
   const mode = searchParams.get('mode');
   const t = useTranslations();
+  const session = useSession();
 
   const utils = api.useUtils();
 
@@ -362,9 +366,11 @@ export default function TeamIdPage() {
 
     createTeamActivity.mutate({
       teamId: teamId[0],
-      type: 'note',
-      title: 'Note',
+      type: 'ENGAGEMENT',
+      subType: 'NOTE_ADDED',
       description: newRemark,
+      initiatorType: 'user',
+      initiatorId: session.data?.user.id,
     });
   };
 
@@ -477,38 +483,39 @@ export default function TeamIdPage() {
           </div>
 
           <div className='rounded-lg border bg-card p-4'>
-            <div className='mb-4 flex items-center justify-between'>
-              <h2 className='font-medium'>{t('activities')}</h2>
-              <form onSubmit={handleSubmitActivity} className='flex max-w-md flex-1 gap-2'>
-                <Input value={newRemark} onChange={(e) => setNewRemark(e.target.value)} placeholder={t('add_activity')} className='h-8' />
-                <Button type='submit' size='sm' disabled={createTeamActivity.isPending}>
-                  {t('add')}
-                </Button>
-              </form>
-            </div>
-            <div className='space-y-3'>
-              {teamActivities?.map((activity) => (
-                <div key={activity.id} className='flex items-start justify-between rounded-lg border bg-card p-3'>
-                  <div className='space-y-1'>
-                    <div className='flex items-center gap-2'>
-                      <p className='font-medium text-sm'>{activity.title}</p>
-                      <ColorBadge type='status' value={activity.type} />
-                    </div>
-                    <p className='text-sm'>{activity.description}</p>
-                    <p className='text-muted-foreground text-xs'>{formatDate(new Date(activity.createdAt))}</p>
-                  </div>
-                  <Button
-                    variant='ghost'
-                    size='sm'
-                    onClick={() => {
-                      setActivityToDelete(activity.id);
-                    }}
-                  >
-                    <Trash2 className='size-4 text-muted-foreground' />
-                  </Button>
-                </div>
-              ))}
-            </div>
+            <TabSwitcher
+              config={[
+                {
+                  label: t('activity'),
+                  value: (
+                    <ActivitySection
+                      activities={teamActivities?.map((activity) => ({
+                        id: activity.id,
+                        type: activity.type,
+                        subType: activity.subType || 'NOTE_ADDED',
+                        description: activity.description || '',
+                        initiatorType: 'user',
+                        userId: activity.user?.id,
+                        metadata: activity.metadata,
+                        createdAt: activity.createdAt,
+                      }))}
+                      onCreateActivity={(data) => {
+                        createTeamActivity.mutate({
+                          teamId: teamId[0],
+                          type: 'ENGAGEMENT',
+                          subType: 'NOTE_ADDED',
+                          description: data.description,
+                          initiatorType: data.initiatorType,
+                          initiatorId: data.initiatorId,
+                          metadata: data.metadata,
+                        });
+                      }}
+                      isLoading={createTeamActivity.isPending}
+                    />
+                  ),
+                },
+              ]}
+            />
           </div>
         </div>
 

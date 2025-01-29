@@ -455,5 +455,6 @@
   "will_cancel_at": "将在 {date} 取消",
   "will_renew_at": "将在 {date} 续订",
   "workspace": "工作区",
-  "add_remark_about_this_contact": "加上有关此联系的评论..."
+  "add_remark_about_this_contact": "加上有关此联系的评论...",
+  "REMARK_UPDATED": "备注更新"
 }
