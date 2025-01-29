@@ -229,10 +229,6 @@ export default function ContactIdPage() {
     setIsEditModalOpen(true);
   };
 
-  const handleOpenBookingModal = () => {
-    setIsBookingModalOpen(true);
-  };
-
   const handleAssignTeam = () => {
     if (!selectedTeam) return;
 
@@ -293,7 +289,7 @@ export default function ContactIdPage() {
   return (
     <div className='container mx-auto min-h-[calc(100vh-4rem)] space-y-6 p-4 sm:p-6'>
       <div className='grid min-h-[calc(100vh-6rem)] grid-cols-1 gap-4 lg:grid-cols-3 lg:gap-6'>
-        <div className='h-auto overflow-y-auto lg:col-span-1'>
+        <div className='h-[calc(100vh-8rem)] overflow-y-auto lg:col-span-1'>
           <div className='rounded-lg border bg-card text-card-foreground shadow-sm'>
             <div className='border-b p-6'>
               <div className='flex items-start gap-4'>
@@ -587,7 +583,7 @@ export default function ContactIdPage() {
           </div>
         </div>
 
-        <div className='h-full lg:col-span-2'>
+        <div className='h-[calc(100vh-8rem)] overflow-hidden lg:col-span-2'>
           <div className='h-full rounded-lg border bg-card text-card-foreground shadow-sm'>
             <div className='h-full p-6'>
               <Tabs defaultValue='activity' className='flex h-full flex-col'>

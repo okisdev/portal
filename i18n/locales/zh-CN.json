@@ -71,7 +71,7 @@
   "average_payment": "平均付款金额",
   "back": "返回",
   "back_to_editor": "返回编辑器",
-  "by": "由 {name}",
+  "by_who": "由 <name></name>",
   "by_system": "由系统执行",
   "calendar": "日历",
   "calendars": "日历",

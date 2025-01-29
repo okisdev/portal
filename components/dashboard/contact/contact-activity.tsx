@@ -7,8 +7,9 @@ import { Button } from '@/components/ui/button';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Textarea } from '@/components/ui/textarea';
-import { cn } from '@/lib/utils';
+import { cn, formatDate } from '@/lib/utils';
 import { api } from '@/utils/trpc/client';
+import { format } from 'date-fns';
 import { ArrowUpRight } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import { useTranslations } from 'next-intl';
@@ -216,8 +217,8 @@ export function ContactActivity({ contactId }: { contactId: string }) {
           {activities
             ?.filter((activity) => activity.type !== 'CONTACT' && activity.subType !== 'CONTACT_UPDATED')
             .map((activity, index) => {
-              const currentDate = new Date(activity.createdAt).toDateString();
-              const prevDate = index > 0 ? new Date(activities[index - 1].createdAt).toDateString() : null;
+              const currentDate = format(new Date(activity.createdAt), 'PP');
+              const prevDate = index > 0 ? format(new Date(activities[index - 1].createdAt), 'PP') : null;
               const showDateDivider = currentDate !== prevDate;
 
               return (
@@ -263,18 +264,13 @@ export function ContactActivity({ contactId }: { contactId: string }) {
                             <span className='text-muted-foreground text-xs'>{t('by_system')}</span>
                           ) : (
                             <span className='flex items-center gap-1 text-muted-foreground text-xs'>
-                              {t.rich('by', {
+                              {t.rich('by_who', {
                                 name: () => <NameTag id={activity.userId} type='user' />,
                               })}
                             </span>
                           )}
                           <span className='text-muted-foreground text-xs'>•</span>
-                          <span className='text-muted-foreground text-xs'>
-                            {new Date(activity.createdAt).toLocaleTimeString([], {
-                              hour: '2-digit',
-                              minute: '2-digit',
-                            })}
-                          </span>
+                          <span className='text-muted-foreground text-xs'>{formatDate(new Date(activity.createdAt))}</span>
                         </div>
                         <div className='flex items-center gap-2'>
                           {activity.metadata && (
