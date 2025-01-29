@@ -2,7 +2,6 @@
 
 import { ActionAlertDialog } from '@/components/shared/action-alert-dialog';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Button } from '@/components/ui/button';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import {
@@ -68,7 +67,7 @@ export function DashboardSidebar() {
   };
 
   return (
-    <Sidebar>
+    <Sidebar collapsible='icon'>
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
@@ -96,6 +95,17 @@ export function DashboardSidebar() {
               <Link href='/dashboard/account/settings'>
                 <Settings />
                 <span>{t('settings')}</span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <SidebarMenuButton asChild>
+              <Link href='/dashboard/account/notifications'>
+                <Bell />
+                {unreadNotificationsCount && unreadNotificationsCount.count > 0 && <span className='-top-0.5 -right-0.5 absolute h-1.5 w-1.5 rounded-full bg-red-500' />}
+                <span>
+                  {t('notifications')} {unreadNotificationsCount && unreadNotificationsCount.count > 0 && `(${unreadNotificationsCount.count})`}
+                </span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
@@ -181,12 +191,6 @@ export function DashboardSidebar() {
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-            <Button type='button' variant='ghost' className='relative h-8 px-2' asChild>
-              <Link href='/dashboard/account/notifications'>
-                <Bell className='h-4 w-4' />
-                {unreadNotificationsCount && unreadNotificationsCount.count > 0 && <span className='-top-0.5 -right-0.5 absolute h-1.5 w-1.5 rounded-full bg-red-500' />}
-              </Link>
-            </Button>
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarFooter>
@@ -207,7 +211,7 @@ function SidebarGroupSection({ title, items, defaultOpen = true, onItemAction }:
   const t = useTranslations();
 
   return (
-    <Collapsible defaultOpen={defaultOpen} className='group/collapsible'>
+    <Collapsible defaultOpen={defaultOpen} className='group/collapsible' data-collapsible='icon'>
       <SidebarGroup>
         <SidebarGroupLabel asChild>
           <CollapsibleTrigger>

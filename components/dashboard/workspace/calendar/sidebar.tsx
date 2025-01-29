@@ -6,10 +6,13 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Skeleton } from '@/components/ui/skeleton';
 import type { CalendarFolder } from '@/lib/schema';
 import { cn } from '@/lib/utils';
+import type { Locale } from '@/types/i18n';
+import { addDays, endOfMonth, format, getDate, isSameDay, isSameMonth, startOfMonth, subDays } from 'date-fns';
+import { enUS, zhCN, zhHK } from 'date-fns/locale';
 import { ChevronsUpDown, MoreHorizontal, Pencil, Plus, Trash } from 'lucide-react';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { useState } from 'react';
-import { MONTHS, WEEKDAYS } from './constants';
+import { WEEKDAYS } from './constants';
 import { YearMonthPicker } from './year-month-picker';
 
 interface CalendarSidebarProps {
@@ -38,28 +41,41 @@ export function CalendarSidebar({
   onDeleteCalendar,
 }: CalendarSidebarProps) {
   const t = useTranslations();
+  const locale = useLocale() as Locale;
+
+  const dateLocale =
+    {
+      en: enUS,
+      'zh-HK': zhHK,
+      'zh-CN': zhCN,
+    }[locale] || enUS;
 
   const [folderToDelete, setFolderToDelete] = useState<string | null>(null);
 
   const getDaysInMonth = (date: Date) => {
-    const year = date.getFullYear();
-    const month = date.getMonth();
-    const firstDay = new Date(year, month, 1);
-    const lastDay = new Date(year, month + 1, 0);
+    const start = startOfMonth(date);
+    const end = endOfMonth(date);
     const days = [];
 
-    const firstDayOfWeek = firstDay.getDay();
+    // Get days from previous month
+    const firstDayOfWeek = start.getDay();
     for (let i = firstDayOfWeek - 1; i >= 0; i--) {
-      days.push(new Date(year, month, -i));
+      days.push(subDays(start, i + 1));
     }
 
-    for (let i = 1; i <= lastDay.getDate(); i++) {
-      days.push(new Date(year, month, i));
+    // Get days of current month
+    let currentDate = start;
+    while (currentDate <= end) {
+      days.push(currentDate);
+      currentDate = addDays(currentDate, 1);
     }
 
+    // Get days from next month
     const remainingDays = 42 - days.length;
-    for (let i = 1; i <= remainingDays; i++) {
-      days.push(new Date(year, month + 1, i));
+    currentDate = addDays(end, 1);
+    for (let i = 0; i < remainingDays; i++) {
+      days.push(currentDate);
+      currentDate = addDays(currentDate, 1);
     }
 
     return days;
@@ -71,9 +87,7 @@ export function CalendarSidebar({
         <Popover>
           <PopoverTrigger asChild>
             <Button variant='outline' className='w-full justify-between'>
-              <span>
-                {currentDate.getFullYear()} {MONTHS[currentDate.getMonth()]}
-              </span>
+              <span>{format(currentDate, 'MMMM yyyy', { locale: dateLocale })}</span>
               <ChevronsUpDown className='h-4 w-4' />
             </Button>
           </PopoverTrigger>
@@ -81,11 +95,8 @@ export function CalendarSidebar({
             <YearMonthPicker
               value={currentDate}
               onChange={(date) => {
-                // Update both selected date and current date
                 onDateSelect(date);
-                // Create a new date to avoid reference issues
                 const newDate = new Date(date);
-                // Set the date to the first of the month for consistent month view
                 newDate.setDate(1);
                 onDateSelect(newDate);
               }}
@@ -107,21 +118,17 @@ export function CalendarSidebar({
             <Button
               key={date.toISOString()}
               variant='ghost'
-              className={cn(
-                'h-6 w-6 p-0',
-                date.getMonth() !== currentDate.getMonth() && 'text-muted-foreground',
-                date.getDate() === selectedDate.getDate() && date.getMonth() === selectedDate.getMonth() && date.getFullYear() === selectedDate.getFullYear() && 'bg-primary text-primary-foreground'
-              )}
+              className={cn('h-6 w-6 p-0', !isSameMonth(date, currentDate) && 'text-muted-foreground', isSameDay(date, selectedDate) && 'bg-primary text-primary-foreground')}
               onClick={() => onDateSelect(date)}
             >
-              {date.getDate()}
+              {getDate(date)}
             </Button>
           ))}
       </div>
 
       <div className='flex flex-col gap-2'>
-        <div className='flex cursor-pointer items-center gap-2'>
-          <div className='flex-1 text-sm'>{t('calendars')}</div>
+        <div className='flex items-center justify-between gap-2'>
+          <p className='flex-1 text-sm'>{t('calendars')}</p>
           <Button variant='ghost' size='icon' className='h-6 w-6' onClick={onAddCalendar}>
             <Plus className='h-4 w-4' />
           </Button>

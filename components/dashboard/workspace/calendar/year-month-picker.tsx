@@ -1,6 +1,8 @@
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import type { Locale } from '@/types/i18n';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { useLocale, useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { MONTHS } from './constants';
 
@@ -13,6 +15,8 @@ export interface YearMonthPickerProps {
 export function YearMonthPicker({ value, onChange, onClose }: YearMonthPickerProps) {
   const [mode, setMode] = useState<'month' | 'year'>('month');
   const [displayYear, setDisplayYear] = useState(value.getFullYear());
+  const locale = useLocale() as Locale;
+  const t = useTranslations();
 
   const handlePrevious = () => {
     if (mode === 'month') {
@@ -68,7 +72,7 @@ export function YearMonthPicker({ value, onChange, onClose }: YearMonthPickerPro
               className={cn('h-9', value.getMonth() === index && value.getFullYear() === displayYear && 'bg-primary text-primary-foreground')}
               onClick={() => handleMonthClick(index)}
             >
-              {month.slice(0, 3)}
+              {locale === 'en' ? month.slice(0, 3) : t(month.toLowerCase())}
             </Button>
           ))}
         </div>
