@@ -1,9 +1,6 @@
-import { EventPopover } from '@/components/shared/event-popover';
 import type { CalendarEventWithParticipants, CalendarFolder } from '@/lib/schema';
-import { cn } from '@/lib/utils';
-import { isSameDay } from 'date-fns';
 import { useTranslations } from 'next-intl';
-import { WEEKDAYS } from './constants';
+import { DayHeader } from './day-header';
 import { TimeColumn } from './time-column';
 import { TimeGrid } from './time-grid';
 
@@ -24,13 +21,6 @@ interface DayViewProps {
 export function DayView({ currentDate, selectedDate, events, folders, hiddenCalendars, onTimeSelect, isSelecting, isTimeSlotSelected, onSelectionEnd, onEventEdit, onEventDelete }: DayViewProps) {
   const t = useTranslations();
 
-  const getAllDayEvents = () => {
-    return events.filter((event) => {
-      const eventDate = new Date(event.startAt);
-      return isSameDay(eventDate, currentDate) && event.isAllDay;
-    });
-  };
-
   return (
     <div className='flex min-h-0 flex-1 flex-col'>
       <div className='grid grid-cols-[50px_1fr] divide-x border-b bg-background md:grid-cols-[100px_1fr]'>
@@ -38,23 +28,16 @@ export function DayView({ currentDate, selectedDate, events, folders, hiddenCale
           <span className='hidden md:inline'>{t('time')}</span>
           <span className='md:hidden'>{t('time').charAt(0)}</span>
         </div>
-        <div className={cn('flex flex-col p-1 text-sm md:p-2', isSameDay(currentDate, selectedDate) && 'ring-2 ring-primary ring-inset')}>
-          <div className='font-medium'>
-            <span className='hidden md:inline'>{t(WEEKDAYS[currentDate.getDay()])}</span>
-            <span className='md:hidden'>{t(WEEKDAYS[currentDate.getDay()]).charAt(0)}</span>
-          </div>
-          <div className={cn('text-muted-foreground', isSameDay(currentDate, new Date()) && 'inline-flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground')}>
-            {currentDate.getDate()}
-          </div>
-          <div className='mt-1 flex flex-col gap-1'>
-            {getAllDayEvents()
-              .filter((event) => !hiddenCalendars.has(event.folderId))
-              .map((event) => {
-                const folder = folders?.find((f) => f.id === event.folderId);
-                return <EventPopover key={event.id} event={event} folder={folder} onEventEdit={onEventEdit} onEventDelete={onEventDelete} />;
-              })}
-          </div>
-        </div>
+        <DayHeader
+          date={currentDate}
+          selectedDate={selectedDate}
+          events={events}
+          folders={folders}
+          hiddenCalendars={hiddenCalendars}
+          onEventEdit={onEventEdit}
+          onEventDelete={onEventDelete}
+          isCompact={true}
+        />
       </div>
       <div className='flex-1 overflow-y-auto'>
         <div className='-mr-[1px] grid grid-cols-[50px_1fr] divide-x md:grid-cols-[100px_1fr]' style={{ height: 'calc(60px * 24)' }}>

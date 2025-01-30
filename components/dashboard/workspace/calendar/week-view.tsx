@@ -1,9 +1,7 @@
-import { EventPopover } from '@/components/shared/event-popover';
 import type { CalendarEventWithParticipants, CalendarFolder } from '@/lib/schema';
-import { cn } from '@/lib/utils';
-import { eachDayOfInterval, endOfWeek, isSameDay, startOfWeek } from 'date-fns';
+import { eachDayOfInterval, endOfWeek, startOfWeek } from 'date-fns';
 import { useTranslations } from 'next-intl';
-import { WEEKDAYS } from './constants';
+import { DayHeader } from './day-header';
 import { TimeColumn } from './time-column';
 import { TimeGrid } from './time-grid';
 
@@ -31,32 +29,21 @@ export function WeekView({ currentDate, selectedDate, events, folders, hiddenCal
     });
   };
 
-  const getEventsForDate = (date: Date) => {
-    return events.filter((event) => {
-      const eventDate = new Date(event.startAt);
-      return isSameDay(eventDate, date) && event.isAllDay;
-    });
-  };
-
   return (
     <div className='flex min-h-0 flex-1 flex-col'>
       <div className='grid grid-cols-8 divide-x border-b bg-background'>
         <div className='p-2 text-muted-foreground text-sm'>{t('time')}</div>
         {getWeekDays(currentDate).map((date) => (
-          <div key={date.toISOString()} className={cn('flex flex-col p-1 text-sm md:p-2', isSameDay(date, selectedDate) && 'ring-2 ring-primary ring-inset')}>
-            <div className='font-medium'>{t(WEEKDAYS[date.getDay()])}</div>
-            <div className={cn('text-muted-foreground', isSameDay(date, new Date()) && 'inline-flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground')}>
-              {date.getDate()}
-            </div>
-            <div className='mt-1 flex flex-col gap-1'>
-              {getEventsForDate(date)
-                .filter((event) => !hiddenCalendars.has(event.folderId))
-                .map((event) => {
-                  const folder = folders?.find((f) => f.id === event.folderId);
-                  return <EventPopover key={event.id} event={event} folder={folder} onEventEdit={onEventEdit} onEventDelete={onEventDelete} />;
-                })}
-            </div>
-          </div>
+          <DayHeader
+            key={date.toISOString()}
+            date={date}
+            selectedDate={selectedDate}
+            events={events}
+            folders={folders}
+            hiddenCalendars={hiddenCalendars}
+            onEventEdit={onEventEdit}
+            onEventDelete={onEventDelete}
+          />
         ))}
       </div>
       <div className='flex-1 overflow-y-auto'>

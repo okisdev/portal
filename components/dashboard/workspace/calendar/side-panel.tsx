@@ -15,7 +15,7 @@ import { useState } from 'react';
 import { WEEKDAYS } from './constants';
 import { YearMonthPicker } from './year-month-picker';
 
-interface CalendarSidebarProps {
+interface CalendarSidePanelProps {
   currentDate: Date;
   selectedDate: Date;
   isLoading: boolean;
@@ -28,7 +28,7 @@ interface CalendarSidebarProps {
   onDeleteCalendar: (folderId: string) => void;
 }
 
-export function CalendarSidebar({
+export function CalendarSidePanel({
   currentDate,
   selectedDate,
   isLoading,
@@ -39,7 +39,7 @@ export function CalendarSidebar({
   onAddCalendar,
   onEditCalendar,
   onDeleteCalendar,
-}: CalendarSidebarProps) {
+}: CalendarSidePanelProps) {
   const t = useTranslations();
   const locale = useLocale() as Locale;
 

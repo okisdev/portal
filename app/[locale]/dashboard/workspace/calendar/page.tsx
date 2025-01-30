@@ -4,7 +4,7 @@ import { ThreeDayView } from '@/components/dashboard/workspace/calendar/3-day-vi
 import { DayView } from '@/components/dashboard/workspace/calendar/day-view';
 import { CalendarHeader } from '@/components/dashboard/workspace/calendar/header';
 import { MonthView } from '@/components/dashboard/workspace/calendar/month-view';
-import { CalendarSidebar } from '@/components/dashboard/workspace/calendar/sidebar';
+import { CalendarSidePanel } from '@/components/dashboard/workspace/calendar/side-panel';
 import { WeekView } from '@/components/dashboard/workspace/calendar/week-view';
 import { EventDialog } from '@/components/shared/event-dialog';
 import { Button } from '@/components/ui/button';
@@ -366,7 +366,7 @@ export default function DashboardPersonalCalendar() {
     <>
       <div className='flex h-full flex-col md:flex-row'>
         <div className='hidden border-r md:block'>
-          <CalendarSidebar
+          <CalendarSidePanel
             currentDate={currentDate}
             selectedDate={selectedDate}
             isLoading={isLoadingFolders}
