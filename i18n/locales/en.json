@@ -520,5 +520,7 @@
   "enter_username": "Enter username",
   "passwords_do_not_match": "Passwords do not match",
   "username_format_error": "Username format error",
-  "username_already_exists": "Username already exists"
+  "username_already_exists": "Username already exists",
+  "users": "Users",
+  "use_query": "Use \"{query}\""
 }

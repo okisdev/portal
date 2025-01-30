@@ -1,10 +1,11 @@
 'use client';
 
+import { ComboboxCommand } from '@/components/shared/combobox';
 import { MetadataPopover } from '@/components/shared/metadata-popover';
 import { NameTag } from '@/components/shared/name-tag';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
+import {} from '@/components/ui/command';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
@@ -53,7 +54,26 @@ export function ActivitySection({ activities, onCreateActivity, isLoading }: Act
       id: user.id,
       username: user.username ?? user.id,
       display: user.name ?? user.username ?? user.id,
+      name: user.name,
     })) ?? [];
+
+  const userMentionItems = userMentionData.map((user) => user.username);
+
+  const renderMentionItem = (username: string) => {
+    const user = userMentionData.find((u) => u.username === username);
+
+    if (!user) return username;
+
+    return (
+      <div className='flex items-start gap-2'>
+        <Avatar className='h-6 w-6'>
+          <AvatarImage src={user.display} alt={user.name ?? user.username} />
+          <AvatarFallback>{(user.name ?? user.username)[0]}</AvatarFallback>
+        </Avatar>
+        <span className='text-left'>{user.name ?? user.username}</span>
+      </div>
+    );
+  };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>, isReply = false) => {
     const value = e.target.value;
@@ -295,25 +315,19 @@ export function ActivitySection({ activities, onCreateActivity, isLoading }: Act
                                 </div>
                               </PopoverTrigger>
                               <PopoverContent className='w-64 p-0' align='start'>
-                                <Command>
-                                  <CommandInput placeholder={t('search_users')} />
-                                  <CommandList>
-                                    <CommandEmpty>{t('no_users_found')}</CommandEmpty>
-                                    <CommandGroup>
-                                      {userMentionData
-                                        .filter((user) => user.display.toLowerCase().includes(mentionSearch.toLowerCase()))
-                                        .map((user) => (
-                                          <CommandItem key={user.id} onSelect={() => handleMention(user.username, true)} className='flex items-start gap-2 p-2'>
-                                            <Avatar className='h-6 w-6'>
-                                              <AvatarImage src={user.display} />
-                                              <AvatarFallback>{user.display[0]}</AvatarFallback>
-                                            </Avatar>
-                                            <span className='text-left'>{user.display}</span>
-                                          </CommandItem>
-                                        ))}
-                                    </CommandGroup>
-                                  </CommandList>
-                                </Command>
+                                <ComboboxCommand
+                                  query={mentionSearch}
+                                  setQuery={setMentionSearch}
+                                  value=''
+                                  onChange={(username) => handleMention(username, true)}
+                                  setOpen={setShowMentions}
+                                  items={userMentionItems}
+                                  searchPlaceholder={t('search_users')}
+                                  emptyText={t('no_users_found')}
+                                  groupHeading={t('users')}
+                                  allowCustom={false}
+                                  renderItem={renderMentionItem}
+                                />
                               </PopoverContent>
                             </Popover>
                           </div>
@@ -369,25 +383,19 @@ export function ActivitySection({ activities, onCreateActivity, isLoading }: Act
                 </div>
               </PopoverTrigger>
               <PopoverContent className='w-64 p-0' align='start'>
-                <Command>
-                  <CommandInput placeholder={t('search_users')} />
-                  <CommandList>
-                    <CommandEmpty>{t('no_users_found')}</CommandEmpty>
-                    <CommandGroup>
-                      {userMentionData
-                        .filter((user) => user.display.toLowerCase().includes(mentionSearch.toLowerCase()))
-                        .map((user) => (
-                          <CommandItem key={user.id} onSelect={() => handleMention(user.username)} className='flex items-start gap-2 p-2'>
-                            <Avatar className='h-6 w-6'>
-                              <AvatarImage src={user.display} />
-                              <AvatarFallback>{user.display[0]}</AvatarFallback>
-                            </Avatar>
-                            <span className='text-left'>{user.display}</span>
-                          </CommandItem>
-                        ))}
-                    </CommandGroup>
-                  </CommandList>
-                </Command>
+                <ComboboxCommand
+                  query={mentionSearch}
+                  setQuery={setMentionSearch}
+                  value=''
+                  onChange={handleMention}
+                  setOpen={setShowMentions}
+                  items={userMentionItems}
+                  searchPlaceholder={t('search_users')}
+                  emptyText={t('no_users_found')}
+                  groupHeading={t('users')}
+                  allowCustom={false}
+                  renderItem={renderMentionItem}
+                />
               </PopoverContent>
             </Popover>
           </div>

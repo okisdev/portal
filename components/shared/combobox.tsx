@@ -5,6 +5,7 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from '
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn, generateUUID } from '@/lib/utils';
 import { Check, ChevronsUpDown } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
 
 interface ComboboxProps {
@@ -37,6 +38,8 @@ interface ComboboxCommandProps {
 }
 
 function ComboboxCommand({ query, setQuery, value, onChange, setOpen, items, searchPlaceholder, emptyText, groupHeading, allowCustom, renderItem }: ComboboxCommandProps) {
+  const t = useTranslations();
+
   const filteredItems = items.filter((item) => item.toLowerCase().includes(query.toLowerCase()));
 
   return (
@@ -52,7 +55,7 @@ function ComboboxCommand({ query, setQuery, value, onChange, setOpen, items, sea
               setOpen(false);
             }}
           >
-            Use "{query}"
+            {t('use_query', { query })}
           </CommandItem>
         </CommandGroup>
       )}
