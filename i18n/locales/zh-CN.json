@@ -500,8 +500,7 @@
   "upload_existing_contacts": "上传现有联系人",
   "use_magic_link": "使用魔术链接",
   "use_password": "使用密码",
-  "use_query": "使用"{query
-  }"",
+  "use_query": "使用 \"{query}\"",
   "use_template": "使用模板",
   "user": "用户",
   "user_management": "用户管理",
