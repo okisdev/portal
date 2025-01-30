@@ -638,8 +638,6 @@ export const contactRouter = createTRPCRouter({
 
       // Process contacts that don't exist yet
       const newContacts = input.contacts.filter((contact) => !existingEmails.has(contact.email));
-      const totalContacts = newContacts.length;
-      let processedCount = 0;
 
       try {
         // Create all contacts in a single transaction
@@ -694,12 +692,9 @@ export const contactRouter = createTRPCRouter({
                   campaignCode,
                 });
               }
-
-              processedCount++;
             } catch (error) {
               console.error('Error creating contact:', error);
               errors.push({ email: contactData.email, error: error instanceof Error ? error.message : 'Unknown error' });
-              processedCount++;
             }
           }
 
@@ -707,63 +702,67 @@ export const contactRouter = createTRPCRouter({
         });
 
         // After transaction commits, create activities for each contact
-        for (const newContact of createdContacts) {
-          try {
-            // Log contact creation activity
-            await createContactActivityHelper(ctx, {
-              contactId: newContact.id,
-              type: 'CONTACT',
-              subType: 'CONTACT_CREATED',
-              description: `Contact ${newContact.name} (${newContact.email}) was created${newContact.source ? ` from ${newContact.source}` : ''}.`,
-              metadata: { source: newContact.source },
-              initiatorType: 'user',
-              initiatorId: ctx.session?.user.id,
-            });
-
-            // Handle referral case
-            if (newContact.source === 'referral') {
-              const referralContact = await ctx.db
-                .select()
-                .from(contact)
-                .where(eq(contact.email, newContact.source))
-                .then((rows) => rows[0]);
-
-              if (referralContact) {
-                await createContactActivityHelper(ctx, {
-                  contactId: newContact.id,
-                  type: 'CONTACT',
-                  subType: 'CONTACT_CREATED',
-                  description: `Contact was referred by ${referralContact.name} (${referralContact.email})`,
-                  metadata: { referralId: referralContact.id, referralEmail: referralContact.email },
-                  initiatorType: 'user',
-                  initiatorId: ctx.session?.user.id,
-                });
-              }
-            }
-
-            // Log campaign assignments
-            const campaigns = await ctx.db
-              .select()
-              .from(contactCampaign)
-              .innerJoin(marketingCampaign, eq(contactCampaign.campaignCode, marketingCampaign.campaignCode))
-              .where(eq(contactCampaign.contactId, newContact.id));
-
-            for (const { marketingCampaign: campaign } of campaigns) {
+        await Promise.all(
+          createdContacts.map(async (newContact) => {
+            try {
+              // Log contact creation activity
               await createContactActivityHelper(ctx, {
                 contactId: newContact.id,
-                type: 'CAMPAIGN',
-                subType: 'CAMPAIGN_ASSIGNED',
-                description: `Contact ${newContact.name} (${newContact.email}) was assigned to campaign: ${campaign.name} (${campaign.campaignCode}).`,
+                type: 'CONTACT',
+                subType: 'CONTACT_CREATED',
+                description: `Contact ${newContact.name} (${newContact.email}) was created${newContact.source ? ` from ${newContact.source}` : ''}.`,
+                metadata: { source: newContact.source },
                 initiatorType: 'user',
                 initiatorId: ctx.session?.user.id,
-                metadata: { campaign },
               });
+
+              // Handle referral case
+              if (newContact.source === 'referral') {
+                const referralContact = await ctx.db
+                  .select()
+                  .from(contact)
+                  .where(eq(contact.email, newContact.source))
+                  .then((rows) => rows[0]);
+
+                if (referralContact) {
+                  await createContactActivityHelper(ctx, {
+                    contactId: newContact.id,
+                    type: 'CONTACT',
+                    subType: 'CONTACT_CREATED',
+                    description: `Contact was referred by ${referralContact.name} (${referralContact.email})`,
+                    metadata: { referralId: referralContact.id, referralEmail: referralContact.email },
+                    initiatorType: 'user',
+                    initiatorId: ctx.session?.user.id,
+                  });
+                }
+              }
+
+              // Log campaign assignments
+              const campaigns = await ctx.db
+                .select()
+                .from(contactCampaign)
+                .innerJoin(marketingCampaign, eq(contactCampaign.campaignCode, marketingCampaign.campaignCode))
+                .where(eq(contactCampaign.contactId, newContact.id));
+
+              await Promise.all(
+                campaigns.map(async ({ marketingCampaign: campaign }) => {
+                  await createContactActivityHelper(ctx, {
+                    contactId: newContact.id,
+                    type: 'CAMPAIGN',
+                    subType: 'CAMPAIGN_ASSIGNED',
+                    description: `Contact ${newContact.name} (${newContact.email}) was assigned to campaign: ${campaign.name} (${campaign.campaignCode}).`,
+                    initiatorType: 'user',
+                    initiatorId: ctx.session?.user.id,
+                    metadata: { campaign },
+                  });
+                })
+              );
+            } catch (error) {
+              console.error('Error creating contact activities:', error);
+              errors.push({ email: newContact.email, error: error instanceof Error ? error.message : 'Unknown error' });
             }
-          } catch (error) {
-            console.error('Error creating contact activities:', error);
-            errors.push({ email: newContact.email, error: error instanceof Error ? error.message : 'Unknown error' });
-          }
-        }
+          })
+        );
 
         results.push(...createdContacts);
       } catch (error) {
@@ -775,11 +774,6 @@ export const contactRouter = createTRPCRouter({
         created: results,
         existing: existingContacts,
         errors,
-        progress: {
-          total: totalContacts,
-          processed: processedCount,
-          percentage: totalContacts > 0 ? (processedCount / totalContacts) * 100 : 0,
-        },
       };
     }),
 });

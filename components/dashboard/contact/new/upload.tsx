@@ -210,7 +210,7 @@ export default function ContactUpload() {
             }
 
             setShowPreview(true);
-            toast.success(`Successfully processed ${parsedData.length} contacts`);
+            toast.success(t('number_of_rows_processed_successfully', { count: parsedData.length }));
           } catch (error) {
             console.error('Error processing CSV:', error);
             toast.error('Failed to process CSV file');
@@ -263,27 +263,56 @@ export default function ContactUpload() {
     try {
       const nonDuplicateContacts = csvData.filter((contact) => !isRowEmpty(contact) && !duplicates.some((d) => d.email === contact.email));
       const totalContacts = nonDuplicateContacts.length;
+      const BATCH_SIZE = 25;
+      let processedCount = 0;
+      const allResults = {
+        created: [] as any[],
+        existing: [] as any[],
+        errors: [] as any[],
+      };
 
       setProgressStatus(t('processing_contacts'));
       const toastId = toast.loading(t('processing_contacts'));
 
-      const result = await createContacts.mutateAsync({
-        contacts: nonDuplicateContacts,
-      });
+      // Process contacts in batches
+      for (let i = 0; i < nonDuplicateContacts.length; i += BATCH_SIZE) {
+        if (cancelUploadRef.current) {
+          setProgressStatus('Import cancelled');
+          toast.error('Import cancelled', { id: toastId });
+          return;
+        }
 
-      // Update progress based on the mutation response
-      if (result.progress) {
-        setProgress(result.progress.percentage);
-        setProgressStatus(`Processed ${result.progress.processed} of ${result.progress.total} contacts...`);
+        const batch = nonDuplicateContacts.slice(i, i + BATCH_SIZE);
+        const result = await createContacts.mutateAsync({
+          contacts: batch,
+        });
+
+        // Accumulate results
+        allResults.created.push(...result.created);
+        allResults.existing.push(...result.existing);
+        allResults.errors.push(...result.errors);
+
+        // Update progress
+        processedCount += batch.length;
+        const percentage = (processedCount / totalContacts) * 100;
+        setProgress(percentage);
+        setProgressStatus(t('processed_number_of_total_contacts', { count: processedCount, total: totalContacts }));
       }
 
-      if (result.errors.length > 0) {
-        console.error('Some contacts failed to create:', result.errors);
-        setProgressStatus(`Failed to create ${result.errors.length} contacts`);
-        toast.error(`${result.errors.length} contacts failed to create. Check console for details.`, { id: toastId });
+      if (allResults.errors.length > 0) {
+        console.error('Some contacts failed to create:', allResults.errors);
+        setProgressStatus(`Failed to create ${allResults.errors.length} contacts`);
+        toast.error(`${allResults.errors.length} contacts failed to create. Check console for details.`, { id: toastId });
       } else {
         setProgressStatus('Import completed successfully');
-        toast.success(`Successfully created ${result.created.length} contacts${result.existing.length > 0 ? ` (${result.existing.length} duplicates skipped)` : ''}`, { id: toastId });
+        toast.success(
+          `${t('number_of_contacts_created', { count: allResults.created.length })} ${
+            allResults.existing.length > 0 ? ` (${t('number_of_duplicates_contacts_skipped', { count: allResults.existing.length })})` : ''
+          }`,
+          {
+            id: toastId,
+          }
+        );
       }
 
       router.push('/dashboard/crm/contacts');
@@ -398,7 +427,9 @@ export default function ContactUpload() {
               <>
                 <div className='flex-1 space-y-2'>
                   <Progress value={progress} className='w-full' />
-                  <p className='text-sm text-muted-foreground'>{progressStatus}</p>
+                  <p className='text-muted-foreground text-sm'>
+                    {progressStatus} {t('processing_time_description')}
+                  </p>
                 </div>
                 <Button type='button' variant='destructive' onClick={handleCancelUpload} disabled={isCancelling} className='shrink-0'>
                   {isCancelling ? t('cancelling') : t('cancel_upload')}
