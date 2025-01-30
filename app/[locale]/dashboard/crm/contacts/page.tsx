@@ -28,11 +28,9 @@ import {
 } from '@tanstack/react-table';
 import { Check, Eye, Filter, Import, MessageSquare, MoreHorizontal, Trash2, X } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { usePathname } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
-import { toast } from 'sonner';
 
 type SortConfig = {
   column: string;
@@ -594,24 +592,20 @@ export default function CRMContactsPage() {
               <DropdownMenuTrigger asChild>
                 <Button variant='outline' size='sm' className='flex h-8 items-center gap-2' disabled={isLoading}>
                   <Import className='mr-2 h-4 w-4' />
-                  {t('import')}
+                  {t('add_contact')}
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent>
-                <DropdownMenuItem className='cursor-pointer' onClick={() => router.push('/dashboard/crm/contacts/new?mode=simple')}>
+                <DropdownMenuItem className='cursor-pointer' onClick={() => router.push('/dashboard/crm/contacts/new?mode=manual')}>
                   <Import className='mr-2 h-4 w-4' />
-                  Basic CSV
+                  {t('manual')}
                 </DropdownMenuItem>
-                <DropdownMenuItem className='cursor-pointer' onClick={() => toast.info('Coming soon!')}>
+                <DropdownMenuItem className='cursor-pointer' onClick={() => router.push('/dashboard/crm/contacts/new?mode=import')}>
                   <Import className='mr-2 h-4 w-4' />
-                  Existing CRM
+                  {t('import')}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-
-            <Button variant='outline' size='sm' asChild className='h-8' disabled={isLoading}>
-              <Link href='/dashboard/crm/contacts/new'>{t('add_contact')}</Link>
-            </Button>
           </div>
         </div>
       </div>

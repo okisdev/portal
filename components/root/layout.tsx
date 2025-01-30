@@ -1,5 +1,5 @@
 import BodyProvider from '@/components/root/provider';
-import { cn } from '@/lib/utils';
+import { cn, isDev } from '@/lib/utils';
 import { geistSans } from '@/styles/font';
 import { NextIntlClientProvider } from 'next-intl';
 import { getMessages } from 'next-intl/server';
@@ -17,13 +17,15 @@ export default async function RootLayout(props: Props) {
 
   const messages = await getMessages();
 
+  const dev = isDev();
+
   return (
     <html lang={locale} suppressHydrationWarning>
       <head>
         <meta name='apple-mobile-web-app-title' content='Portal' />
         <meta name='theme-color' media='(prefers-color-scheme: light)' content='white' />
         <meta name='theme-color' media='(prefers-color-scheme: dark)' content='black' />
-        <script src='https://unpkg.com/react-scan/dist/auto.global.js' crossOrigin='anonymous' />
+        {dev && <script src='https://unpkg.com/react-scan/dist/auto.global.js' crossOrigin='anonymous' />}
         <Script src='https://unpkg.com/react-scan/dist/install-hook.global.js' strategy='beforeInteractive' />
         <Script defer src='https://umami.harisfox.com/script.js' data-website-id={process.env.NEXT_PUBLIC_UMAMI_WEBSITE_ID} />
       </head>

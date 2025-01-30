@@ -5,12 +5,16 @@ import ContactUpload from '@/components/dashboard/contact/new/upload';
 import { PageHeader } from '@/components/shared/page-header';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useTranslations } from 'next-intl';
+import { useSearchParams } from 'next/navigation';
 import { useState } from 'react';
 
 export default function ImportContacts() {
   const t = useTranslations();
 
-  const [activeTab, setActiveTab] = useState('manual');
+  const searchParams = useSearchParams();
+  const mode = searchParams.get('mode');
+
+  const [activeTab, setActiveTab] = useState(mode === 'manual' ? 'manual' : 'upload');
 
   return (
     <div className='space-y-4 p-4'>
