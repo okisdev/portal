@@ -43,9 +43,11 @@ export function WeekView({ currentDate, selectedDate, events, folders, hiddenCal
       <div className='grid grid-cols-8 divide-x border-b bg-background'>
         <div className='p-2 text-muted-foreground text-sm'>{t('time')}</div>
         {getWeekDays(currentDate).map((date) => (
-          <div key={date.toISOString()} className={cn('flex flex-col p-1 text-sm md:p-2', isSameDay(date, new Date()) && 'bg-accent', isSameDay(date, selectedDate) && 'bg-primary/10')}>
+          <div key={date.toISOString()} className={cn('flex flex-col p-1 text-sm md:p-2', isSameDay(date, selectedDate) && 'ring-2 ring-primary ring-inset')}>
             <div className='font-medium'>{t(WEEKDAYS[date.getDay()])}</div>
-            <div className='text-muted-foreground'>{date.getDate()}</div>
+            <div className={cn('text-muted-foreground', isSameDay(date, new Date()) && 'inline-flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground')}>
+              {date.getDate()}
+            </div>
             <div className='mt-1 flex flex-col gap-1'>
               {getEventsForDate(date)
                 .filter((event) => !hiddenCalendars.has(event.folderId))

@@ -38,12 +38,14 @@ export function DayView({ currentDate, selectedDate, events, folders, hiddenCale
           <span className='hidden md:inline'>{t('time')}</span>
           <span className='md:hidden'>{t('time').charAt(0)}</span>
         </div>
-        <div className={cn('flex flex-col p-1 text-sm md:p-2', isSameDay(currentDate, new Date()) && 'bg-accent', isSameDay(currentDate, selectedDate) && 'bg-primary/10')}>
+        <div className={cn('flex flex-col p-1 text-sm md:p-2', isSameDay(currentDate, selectedDate) && 'ring-2 ring-primary ring-inset')}>
           <div className='font-medium'>
             <span className='hidden md:inline'>{t(WEEKDAYS[currentDate.getDay()])}</span>
             <span className='md:hidden'>{t(WEEKDAYS[currentDate.getDay()]).charAt(0)}</span>
           </div>
-          <div className='text-muted-foreground'>{currentDate.getDate()}</div>
+          <div className={cn('text-muted-foreground', isSameDay(currentDate, new Date()) && 'inline-flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground')}>
+            {currentDate.getDate()}
+          </div>
           <div className='mt-1 flex flex-col gap-1'>
             {getAllDayEvents()
               .filter((event) => !hiddenCalendars.has(event.folderId))
