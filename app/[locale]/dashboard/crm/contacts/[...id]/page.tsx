@@ -32,7 +32,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { sources } from '@/data/data';
 import { type Priority, type Status, statusSchema } from '@/lib/schema';
-import { formatDate } from '@/lib/utils';
+import { formatDate } from '@/utils/date';
 import { api } from '@/utils/trpc/client';
 import { Building2, Edit2, Mail, MessageSquare, MoreHorizontal, Phone, Save, Send, Users, X } from 'lucide-react';
 import { useTranslations } from 'next-intl';

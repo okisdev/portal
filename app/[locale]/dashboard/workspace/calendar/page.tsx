@@ -13,6 +13,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel } from '@/components/
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import type { CalendarEventWithParticipants, CalendarFolder } from '@/lib/schema';
+import { randomColor } from '@/utils/color';
 import { api } from '@/utils/trpc/client';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useTranslations } from 'next-intl';
@@ -120,7 +121,7 @@ export default function DashboardPersonalCalendar() {
   const addCalendarForm = useForm<{ name: string; color: string; visibility: 'PUBLIC' | 'SHARED' | 'PRIVATE' }>({
     defaultValues: {
       name: '',
-      color: '#4f46e5',
+      color: randomColor('hex'),
       visibility: 'PRIVATE',
     },
   });

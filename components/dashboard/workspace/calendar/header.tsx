@@ -1,7 +1,11 @@
 import { Button } from '@/components/ui/button';
+import type { Locale } from '@/types/i18n';
+import { dateLocaleMap } from '@/utils/date';
+import { addDays, format } from 'date-fns';
+import { enUS } from 'date-fns/locale';
 import { ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { MONTHS } from './constants';
+import { useLocale } from 'next-intl';
 
 interface CalendarHeaderProps {
   currentDate: Date;
@@ -15,20 +19,22 @@ interface CalendarHeaderProps {
 
 export function CalendarHeader({ currentDate, view, onViewChange, onTodayClick, onPrevious, onNext, onAddEvent }: CalendarHeaderProps) {
   const t = useTranslations();
+  const locale = useLocale() as Locale;
+  const dateLocale = dateLocaleMap[locale] || enUS;
 
   const getHeaderText = () => {
     if (view === 'month') {
-      return `${currentDate.getFullYear()} ${MONTHS[currentDate.getMonth()]}`;
+      return format(currentDate, 'yyyy MMMM', { locale: dateLocale });
     }
     if (view === 'week') {
-      const endDate = new Date(currentDate.getTime() + 6 * 24 * 60 * 60 * 1000);
-      return `${MONTHS[currentDate.getMonth()]} ${currentDate.getDate()} - ${MONTHS[endDate.getMonth()]} ${endDate.getDate()}, ${currentDate.getFullYear()}`;
+      const endDate = addDays(currentDate, 6);
+      return format(currentDate, `MMMM d - ${currentDate.getMonth() !== endDate.getMonth() ? 'MMMM ' : ''}d, yyyy`, { locale: dateLocale });
     }
     if (view === '3days') {
-      const endDate = new Date(currentDate.getTime() + 2 * 24 * 60 * 60 * 1000);
-      return `${MONTHS[currentDate.getMonth()]} ${currentDate.getDate()} - ${MONTHS[endDate.getMonth()]} ${endDate.getDate()}, ${currentDate.getFullYear()}`;
+      const endDate = addDays(currentDate, 2);
+      return format(currentDate, `MMMM d - ${currentDate.getMonth() !== endDate.getMonth() ? 'MMMM ' : ''}d, yyyy`, { locale: dateLocale });
     }
-    return `${MONTHS[currentDate.getMonth()]} ${currentDate.getDate()}, ${currentDate.getFullYear()}`;
+    return format(currentDate, 'MMMM d, yyyy', { locale: dateLocale });
   };
 
   return (

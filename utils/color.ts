@@ -1,46 +1,10 @@
-export const getBadgeColor = (variant: string) => {
-  switch (variant) {
-    case 'high':
-      return 'bg-red-100 text-red-800';
-    case 'medium':
-      return 'bg-orange-100 text-orange-800';
-    case 'low':
-      return 'bg-green-100 text-green-800';
-    default:
-      return 'bg-neutral-100 text-neutral-800';
-  }
-};
-
-export function getStatusBadgeColor(status: string) {
-  switch (status) {
-    case 'lead':
-      return 'bg-yellow-100 text-yellow-800';
-    case 'appointment':
-      return 'bg-blue-100 text-blue-800';
-    case 'pitch':
-      return 'bg-green-100 text-green-800';
-    case 'trial':
-      return 'bg-red-100 text-red-800';
-    case 'final':
-      return 'bg-purple-100 text-purple-800';
-    case 'closed':
-      return 'bg-orange-100 text-orange-800';
-    case 'junk':
-      return 'bg-red-100 text-red-800';
-    default:
-      return 'bg-neutral-100 text-neutral-800';
-  }
+export function rgbToHex(rgb: string) {
+  const [r, g, b] = rgb.match(/\d+/g)?.map(Number) ?? [];
+  return `#${r.toString(16)}${g.toString(16)}${b.toString(16)}`;
 }
 
-export function getPriorityBadgeColor(priority: string) {
-  switch (priority) {
-    case 'high':
-      return 'bg-red-100 text-red-800';
-    case 'medium':
-      return 'bg-orange-100 text-orange-800';
-    case 'low':
-      return 'bg-green-100 text-green-800';
-    default:
-      return 'bg-neutral-100 text-neutral-800';
-  }
+export function randomColor(type: 'hex' | 'rgb' = 'hex') {
+  const color = `#${Math.floor(Math.random() * 16777215).toString(16)}`;
+
+  return type === 'hex' ? color : rgbToHex(color);
 }

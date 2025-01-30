@@ -13,7 +13,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Input } from '@/components/ui/input';
 import { useDebounce } from '@/hooks/use-debounce';
 import { type Contact, sourceSchema, statusSchema } from '@/lib/schema';
-import { formatDate } from '@/lib/utils';
+import { formatDate } from '@/utils/date';
 import { api } from '@/utils/trpc/client';
 import {
   type ColumnDef,

@@ -1,25 +1,8 @@
-import type { Locale } from '@/types/i18n';
 import { type ClassValue, clsx } from 'clsx';
-import { type Locale as DateFnsLocale, format } from 'date-fns';
-import { enUS, zhCN, zhHK } from 'date-fns/locale';
 import { twMerge } from 'tailwind-merge';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
-}
-
-const localeMap: Record<Locale, DateFnsLocale> = {
-  en: enUS,
-  'zh-HK': zhHK,
-  'zh-CN': zhCN,
-} as const;
-
-export function formatDate(date: Date, locale: Locale = (typeof window !== 'undefined' ? window.navigator.language : 'en') as Locale) {
-  const dateLocale = localeMap[locale] || enUS;
-
-  return format(date, 'PP HH:mm', {
-    locale: dateLocale,
-  });
 }
 
 export function generateUUID() {
