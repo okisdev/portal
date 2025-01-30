@@ -370,10 +370,10 @@ export default function ContactUpload() {
       {hasDuplicates && (
         <Banner
           variant='warning'
-          title='Duplicate Entries Detected'
-          description={`${duplicates.length} duplicate entries were found. Please review before proceeding.`}
+          title={t('duplicate_entries_detected')}
+          description={t('duplicate_entries_detected_description', { count: duplicates.length })}
           action={{
-            label: 'Download Duplicate List',
+            label: t('download_duplicate_list'),
             icon: <Download className='mr-2 h-4 w-4' />,
             onClick: downloadDuplicates,
           }}
@@ -385,7 +385,7 @@ export default function ContactUpload() {
           <div className='mt-6 flex gap-4'>
             {isLoading ? (
               <Button type='button' variant='destructive' onClick={handleCancelUpload} disabled={isCancelling} className='w-full sm:w-auto'>
-                {isCancelling ? 'Cancelling...' : 'Cancel Upload'}
+                {isCancelling ? t('cancelling') : t('cancel_upload')}
               </Button>
             ) : (
               <>
@@ -395,9 +395,9 @@ export default function ContactUpload() {
                       value={selectedCampaignCode ?? ''}
                       onChange={(value) => setSelectedCampaignCode(value)}
                       items={campaigns?.map((c) => c.campaignCode) ?? []}
-                      placeholder='Select a campaign (optional)'
-                      searchPlaceholder='Search campaigns...'
-                      groupHeading='Campaigns'
+                      placeholder={t('select_campaign_optional')}
+                      searchPlaceholder={t('search_campaigns')}
+                      groupHeading={t('campaigns')}
                       allowCustom={false}
                       renderItem={(code) => {
                         const campaign = campaigns?.find((c) => c.campaignCode === code);
@@ -406,7 +406,7 @@ export default function ContactUpload() {
                     />
                   </div>
                   <Button type='submit' disabled={isLoading} onClick={handleSubmit} className='w-full sm:w-auto'>
-                    Import Contacts
+                    {t('import_contacts')}
                   </Button>
                   <Button
                     type='button'

@@ -108,7 +108,7 @@ export default function TeamIdPage() {
   const createTeamActivity = api.team.createTeamActivity.useMutation({
     onSuccess: () => {
       utils.team.getTeamActivities.invalidate({ id: teamId[0] });
-      toast.success('Activity created successfully');
+      toast.success(t('activity_created_successfully'));
     },
     onError: (error) => {
       toast.error(error.message);
@@ -150,7 +150,8 @@ export default function TeamIdPage() {
     onSuccess: () => {
       setIsAddMemberOpen(false);
       utils.team.getTeamContacts.invalidate({ teamId: teamId[0] });
-      toast.success('Member added successfully');
+      utils.team.getTeamActivities.invalidate({ id: teamId[0] });
+      toast.success(t('contact_added_successfully'));
     },
     onError: (error) => {
       toast.error(error.message);
@@ -161,7 +162,8 @@ export default function TeamIdPage() {
     onSuccess: () => {
       setContactToDelete(null);
       utils.team.getTeamContacts.invalidate({ teamId: teamId[0] });
-      toast.success('Member removed successfully');
+      utils.team.getTeamActivities.invalidate({ id: teamId[0] });
+      toast.success(t('contact_removed_successfully'));
     },
     onError: (error) => {
       toast.error(error.message);
@@ -173,7 +175,7 @@ export default function TeamIdPage() {
       utils.team.getTeamActivities.invalidate({ id: teamId[0] });
       toast.success('Activity deleted successfully');
     },
-    onError: (error: any) => {
+    onError: (error) => {
       toast.error(error.message);
     },
   });
@@ -745,8 +747,8 @@ export default function TeamIdPage() {
         open={!!contactToDelete}
         onOpenChange={(open) => !open && setContactToDelete(null)}
         onConfirm={handleDeleteContact}
-        title='Remove Member'
-        description='Are you sure you want to remove this member from the team? This action cannot be undone.'
+        title={t('remove_contact')}
+        description={t('remove_contact_description')}
       />
     </div>
   );

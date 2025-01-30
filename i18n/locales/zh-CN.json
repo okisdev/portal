@@ -503,5 +503,18 @@
   "owner": "所有者",
   "you": "你",
   "delete_calendar": "删除日历",
-  "delete_calendar_description": "该动作不能撤消。\n这将永久删除日历和所有相关事件。"
+  "delete_calendar_description": "该动作不能撤消。\n这将永久删除日历和所有相关事件。",
+  "download_duplicate_list": "下载重复列表",
+  "duplicate_entries_detected": "检测到重复的条目",
+  "duplicate_entries_detected_description": "{count}发现了重复条目。\n请在继续之前进行审查。",
+  "cancel_upload": "取消上传",
+  "cancelling": "取消...",
+  "import_contacts": "进口联系人",
+  "select_campaign_optional": "选择一个广告系列（可选）",
+  "activity_created_successfully": "成功创建的活动",
+  "TEAM_CREATED": "团队创建了",
+  "contact_added_successfully": "联系成功添加",
+  "contact_removed_successfully": "联系成功删除",
+  "remove_contact": "删除联系人",
+  "remove_contact_description": "您确定要从团队中删除此联系人吗？\n该动作不能撤消。"
 }

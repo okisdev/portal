@@ -503,5 +503,18 @@
   "PUBLIC": "民眾",
   "SHARED": "共享",
   "delete_calendar": "刪除日曆",
-  "delete_calendar_description": "該動作不能撤消。\n這將永久刪除日曆和所有相關事件。"
+  "delete_calendar_description": "該動作不能撤消。\n這將永久刪除日曆和所有相關事件。",
+  "download_duplicate_list": "下載重複列表",
+  "duplicate_entries_detected": "檢測到重複的條目",
+  "duplicate_entries_detected_description": "{count}發現了重複條目。\n請在繼續之前進行審查。",
+  "cancel_upload": "取消上傳",
+  "cancelling": "取消...",
+  "import_contacts": "進口聯繫人",
+  "select_campaign_optional": "選擇一個廣告系列（可選）",
+  "activity_created_successfully": "成功創建的活動",
+  "TEAM_CREATED": "團隊創建了",
+  "contact_added_successfully": "聯繫成功添加",
+  "contact_removed_successfully": "聯繫成功刪除",
+  "remove_contact": "刪除聯繫人",
+  "remove_contact_description": "您確定要從團隊中刪除此聯繫人嗎？\n該動作不能撤消。"
 }

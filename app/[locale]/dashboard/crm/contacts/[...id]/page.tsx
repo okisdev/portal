@@ -120,9 +120,9 @@ export default function ContactIdPage() {
 
   const createContactActivity = api.contact.createContactActivity.useMutation({
     onSuccess: () => {
-      utils.contact.getContactActivities.invalidate({ id: contactId });
+      utils.contact.getContactActivities.invalidate({ id: contactId[0] });
       utils.user.getUnreadNotificationsCount.invalidate();
-      toast.success('Activity created successfully');
+      toast.success(t('activity_created_successfully'));
     },
     onError: (error) => {
       toast.error(error.message);

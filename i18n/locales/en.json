@@ -503,5 +503,18 @@
   "SHARED": "Shared",
   "PUBLIC": "Public",
   "delete_calendar": "Delete Calendar",
-  "delete_calendar_description": "This action cannot be undone. This will permanently delete the calendar and all associated events."
+  "delete_calendar_description": "This action cannot be undone. This will permanently delete the calendar and all associated events.",
+  "duplicate_entries_detected": "Duplicate Entries Detected",
+  "download_duplicate_list": "Download Duplicate List",
+  "duplicate_entries_detected_description": "{count} duplicate entries were found. Please review before proceeding.",
+  "cancelling": "Cancelling...",
+  "cancel_upload": "Cancel Upload",
+  "import_contacts": "Import Contacts",
+  "select_campaign_optional": "Select a campaign (optional)",
+  "activity_created_successfully": "Activity created successfully",
+  "TEAM_CREATED": "Team Created",
+  "contact_added_successfully": "Contact added successfully",
+  "contact_removed_successfully": "Contact removed successfully",
+  "remove_contact": "Remove Contact",
+  "remove_contact_description": "Are you sure you want to remove this contact from the team? This action cannot be undone."
 }
