@@ -85,11 +85,7 @@ export default function CompanyIdPage() {
   const { data: participantOptions } = api.calendar.getParticipantOptions.useQuery(undefined, {
     enabled: isNewMeetingModalOpen,
   });
-  const { data: teamActivities } = api.team.getTeamActivities.useQuery({
-    id: companyId[0],
-  });
-  const { data: campaigns } = api.marketing.getActiveCampaigns.useQuery();
-  const { data: companies } = api.company.getAllCompanies.useQuery();
+
   const { data: contacts } = api.contact.getAllContacts.useQuery(undefined, {
     enabled: isAddContactOpen,
   });
@@ -99,16 +95,6 @@ export default function CompanyIdPage() {
       router.push(`/dashboard/crm/company/${companyId[0]}`);
       utils.company.getCompanyById.invalidate({ id: companyId[0] });
       toast.success(t('company_updated_successfully'));
-    },
-    onError: (error) => {
-      toast.error(error.message);
-    },
-  });
-
-  const createTeamActivity = api.team.createTeamActivity.useMutation({
-    onSuccess: () => {
-      utils.team.getTeamActivities.invalidate({ id: companyId[0] });
-      toast.success(t('activity_created_successfully'));
     },
     onError: (error) => {
       toast.error(error.message);
