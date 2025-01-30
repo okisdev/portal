@@ -524,5 +524,8 @@
   "users": "Users",
   "use_query": "Use \"{query}\"",
   "new_campaign_description": "Create a new campaign",
-  "team_updated_successfully": "Team updated successfully"
+  "team_updated_successfully": "Team updated successfully",
+  "delete_meeting_description": "Are you sure you want to delete this meeting? This action cannot be undone.",
+  "delete_meeting": "Delete Meeting",
+  "team_meeting_title": "Team Meeting - {name}"
 }

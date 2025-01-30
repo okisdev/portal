@@ -56,7 +56,6 @@ export default function TeamIdPage() {
   const [rowSelection, setRowSelection] = useState({});
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isNewMeetingModalOpen, setIsNewMeetingModalOpen] = useState(false);
-  const [activityToDelete, setActivityToDelete] = useState<string | null>(null);
   const [meetingToDelete, setMeetingToDelete] = useState<string | null>(null);
   const [editForm, setEditForm] = useState({
     name: '',
@@ -164,16 +163,6 @@ export default function TeamIdPage() {
       utils.team.getTeamContacts.invalidate({ teamId: teamId[0] });
       utils.team.getTeamActivities.invalidate({ id: teamId[0] });
       toast.success(t('contact_removed_successfully'));
-    },
-    onError: (error) => {
-      toast.error(error.message);
-    },
-  });
-
-  const deleteTeamActivity = api.team.deleteTeamActivity.useMutation({
-    onSuccess: () => {
-      utils.team.getTeamActivities.invalidate({ id: teamId[0] });
-      toast.success('Activity deleted successfully');
     },
     onError: (error) => {
       toast.error(error.message);
@@ -325,7 +314,7 @@ export default function TeamIdPage() {
     onRowSelectionChange: setRowSelection,
     initialState: {
       pagination: {
-        pageSize: 13,
+        pageSize: 8,
       },
     },
     state: {
@@ -564,7 +553,7 @@ export default function TeamIdPage() {
                   teamId: teamId[0],
                 });
               }}
-              defaultTitle={`Team Meeting - ${team.name}`}
+              defaultTitle={t('team_meeting_title', { name: team.name })}
             />
           </div>
         </div>
@@ -710,22 +699,6 @@ export default function TeamIdPage() {
       />
 
       <ActionAlertDialog
-        open={!!activityToDelete}
-        onOpenChange={(open) => !open && setActivityToDelete(null)}
-        onConfirm={() => {
-          if (activityToDelete) {
-            deleteTeamActivity.mutate({
-              id: activityToDelete,
-              teamId: teamId[0],
-            });
-            setActivityToDelete(null);
-          }
-        }}
-        title='Delete Activity'
-        description='Are you sure you want to delete this activity? This action cannot be undone.'
-      />
-
-      <ActionAlertDialog
         open={!!meetingToDelete}
         onOpenChange={(open) => !open && setMeetingToDelete(null)}
         onConfirm={() => {
@@ -737,8 +710,8 @@ export default function TeamIdPage() {
             setMeetingToDelete(null);
           }
         }}
-        title='Delete Meeting'
-        description='Are you sure you want to delete this meeting? This action cannot be undone.'
+        title={t('delete_meeting')}
+        description={t('delete_meeting_description')}
       />
 
       <ActionAlertDialog

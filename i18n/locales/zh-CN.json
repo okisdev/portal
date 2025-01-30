@@ -524,5 +524,8 @@
   "users": "用户",
   "use_query": "使用“ {query}”",
   "new_campaign_description": "创建一个新活动",
-  "team_updated_successfully": "团队成功更新"
+  "team_updated_successfully": "团队成功更新",
+  "delete_meeting": "删除会议",
+  "delete_meeting_description": "您确定要删除这次会议吗？\n该动作不能撤消。",
+  "team_meeting_title": "团队会议 -  {name}"
 }

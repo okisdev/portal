@@ -63,17 +63,43 @@ export const accountRouter = createTRPCRouter({
         if (existingUser) throw new TRPCError({ code: 'CONFLICT', message: 'Username already exists' });
       }
 
-      return ctx.db
-        .update(user)
-        .set({
-          firstName: input.firstName,
-          lastName: input.lastName,
-          name: `${input.firstName} ${input.lastName}`,
-          email: input.email,
-          image: input.image,
-          username: input.username,
+      // First get the current user data to properly handle name updates
+      const currentUser = await ctx.db
+        .select({
+          firstName: user.firstName,
+          lastName: user.lastName,
         })
-        .where(eq(user.id, ctx.session.user.id));
+        .from(user)
+        .where(eq(user.id, ctx.session.user.id))
+        .then((rows) => rows[0]);
+
+      // Prepare update data only with provided fields
+      const updateData: Record<string, unknown> = {};
+
+      if (input.firstName !== undefined) {
+        updateData.firstName = input.firstName;
+      }
+      if (input.lastName !== undefined) {
+        updateData.lastName = input.lastName;
+      }
+      if (input.email !== undefined) {
+        updateData.email = input.email;
+      }
+      if (input.image !== undefined) {
+        updateData.image = input.image;
+      }
+      if (input.username !== undefined) {
+        updateData.username = input.username;
+      }
+
+      // Only update name if either firstName or lastName was provided
+      if (input.firstName !== undefined || input.lastName !== undefined) {
+        const newFirstName = input.firstName ?? currentUser?.firstName ?? '';
+        const newLastName = input.lastName ?? currentUser?.lastName ?? '';
+        updateData.name = `${newFirstName} ${newLastName}`.trim();
+      }
+
+      return ctx.db.update(user).set(updateData).where(eq(user.id, ctx.session.user.id));
     }),
 
   updatePassword: protectedProcedure

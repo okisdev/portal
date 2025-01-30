@@ -524,5 +524,8 @@
   "users": "用戶",
   "use_query": "使用“ {query}”",
   "new_campaign_description": "創建一個新活動",
-  "team_updated_successfully": "團隊成功更新"
+  "team_updated_successfully": "團隊成功更新",
+  "delete_meeting": "刪除會議",
+  "delete_meeting_description": "您確定要刪除這次會議嗎？\n該動作不能撤消。",
+  "team_meeting_title": "團隊會議 -  {name}"
 }
