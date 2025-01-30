@@ -180,7 +180,7 @@
   "download_duplicate_list": "Download Duplicate List",
   "draft": "Draft",
   "duplicate_entries_detected": "Duplicate Entries Detected",
-  "duplicate_entries_detected_description": "{count} duplicate entries were found. Please review before proceeding.",
+  "duplicate_entries_detected_description": "{count} duplicate entries were found in database. Please review before proceeding.",
   "edit": "Edit",
   "edit_calendar": "Edit Calendar",
   "edit_campaign": "Edit Campaign",
@@ -534,5 +534,10 @@
   "will_renew_at": "Will renew at {date}",
   "workspace": "Workspace",
   "write_a_reply": "Write a reply... Use @ to mention someone",
-  "you": "You"
+  "you": "You",
+  "manual": "Manual",
+  "processing": "Processing...",
+  "download_template": "Download Template",
+  "reset": "Reset",
+  "processing_contacts": "Processing contacts..."
 }

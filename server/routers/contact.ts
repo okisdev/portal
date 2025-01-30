@@ -600,4 +600,186 @@ export const contactRouter = createTRPCRouter({
         throw new Error('Failed to send email');
       }
     }),
+
+  createContacts: protectedProcedure
+    .input(
+      z.object({
+        contacts: z.array(
+          z.object({
+            name: z.string().optional(),
+            firstName: z.string().optional(),
+            lastName: z.string().optional(),
+            email: z.string(),
+            phone: z.string().optional(),
+            company: z.string().optional(),
+            companyId: z.string().nullable().optional(),
+            source: z.string().optional(),
+            remark: z.string().optional(),
+            status: statusSchema.optional(),
+            campaignCode: z.union([z.string(), z.array(z.string())]).optional(),
+          })
+        ),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const results: (typeof contact.$inferSelect)[] = [];
+      const errors: Array<{ email: string; error: string }> = [];
+
+      // Get all unique emails for existence check
+      const emails = [...new Set(input.contacts.map((contact) => contact.email))];
+      const existingContacts = await ctx.db
+        .select({
+          email: contact.email,
+        })
+        .from(contact)
+        .where(inArray(contact.email, emails));
+
+      const existingEmails = new Set(existingContacts.map((c) => c.email));
+
+      // Process contacts that don't exist yet
+      const newContacts = input.contacts.filter((contact) => !existingEmails.has(contact.email));
+      const totalContacts = newContacts.length;
+      let processedCount = 0;
+
+      try {
+        // Create all contacts in a single transaction
+        const createdContacts = await ctx.db.transaction(async (tx) => {
+          const created = [];
+
+          for (const contactData of newContacts) {
+            try {
+              // If campaignCode is an email, treat it as a referral
+              let referralContact = null;
+              if (typeof contactData.campaignCode === 'string' && contactData.campaignCode.includes('@')) {
+                referralContact = await tx
+                  .select()
+                  .from(contact)
+                  .where(eq(contact.email, contactData.campaignCode))
+                  .then((rows) => rows[0]);
+              }
+
+              const result = await tx
+                .insert(contact)
+                .values({
+                  name: contactData.name ?? `${contactData.firstName ?? ''} ${contactData.lastName ?? ''}`,
+                  firstName: contactData.firstName ?? '',
+                  lastName: contactData.lastName ?? '',
+                  email: contactData.email,
+                  phone: contactData.phone ?? '',
+                  company: contactData.company ?? '',
+                  companyId: contactData.companyId ?? null,
+                  source: contactData.source ?? (referralContact ? 'referral' : ''),
+                  status: contactData.status ?? 'lead',
+                  remark: contactData.remark ?? '',
+                })
+                .returning();
+
+              const newContact = result[0];
+              created.push(newContact);
+
+              // Handle campaign assignments within the transaction
+              const campaignCodes = typeof contactData.campaignCode === 'string' ? (contactData.campaignCode.includes('@') ? [] : [contactData.campaignCode]) : contactData.campaignCode || [];
+
+              for (const campaignCode of campaignCodes) {
+                const campaign = await tx
+                  .select()
+                  .from(marketingCampaign)
+                  .where(eq(marketingCampaign.campaignCode, campaignCode))
+                  .then((rows) => rows[0]);
+
+                if (!campaign) continue;
+
+                await tx.insert(contactCampaign).values({
+                  contactId: newContact.id,
+                  campaignCode,
+                });
+              }
+
+              processedCount++;
+            } catch (error) {
+              console.error('Error creating contact:', error);
+              errors.push({ email: contactData.email, error: error instanceof Error ? error.message : 'Unknown error' });
+              processedCount++;
+            }
+          }
+
+          return created;
+        });
+
+        // After transaction commits, create activities for each contact
+        for (const newContact of createdContacts) {
+          try {
+            // Log contact creation activity
+            await createContactActivityHelper(ctx, {
+              contactId: newContact.id,
+              type: 'CONTACT',
+              subType: 'CONTACT_CREATED',
+              description: `Contact ${newContact.name} (${newContact.email}) was created${newContact.source ? ` from ${newContact.source}` : ''}.`,
+              metadata: { source: newContact.source },
+              initiatorType: 'user',
+              initiatorId: ctx.session?.user.id,
+            });
+
+            // Handle referral case
+            if (newContact.source === 'referral') {
+              const referralContact = await ctx.db
+                .select()
+                .from(contact)
+                .where(eq(contact.email, newContact.source))
+                .then((rows) => rows[0]);
+
+              if (referralContact) {
+                await createContactActivityHelper(ctx, {
+                  contactId: newContact.id,
+                  type: 'CONTACT',
+                  subType: 'CONTACT_CREATED',
+                  description: `Contact was referred by ${referralContact.name} (${referralContact.email})`,
+                  metadata: { referralId: referralContact.id, referralEmail: referralContact.email },
+                  initiatorType: 'user',
+                  initiatorId: ctx.session?.user.id,
+                });
+              }
+            }
+
+            // Log campaign assignments
+            const campaigns = await ctx.db
+              .select()
+              .from(contactCampaign)
+              .innerJoin(marketingCampaign, eq(contactCampaign.campaignCode, marketingCampaign.campaignCode))
+              .where(eq(contactCampaign.contactId, newContact.id));
+
+            for (const { marketingCampaign: campaign } of campaigns) {
+              await createContactActivityHelper(ctx, {
+                contactId: newContact.id,
+                type: 'CAMPAIGN',
+                subType: 'CAMPAIGN_ASSIGNED',
+                description: `Contact ${newContact.name} (${newContact.email}) was assigned to campaign: ${campaign.name} (${campaign.campaignCode}).`,
+                initiatorType: 'user',
+                initiatorId: ctx.session?.user.id,
+                metadata: { campaign },
+              });
+            }
+          } catch (error) {
+            console.error('Error creating contact activities:', error);
+            errors.push({ email: newContact.email, error: error instanceof Error ? error.message : 'Unknown error' });
+          }
+        }
+
+        results.push(...createdContacts);
+      } catch (error) {
+        console.error('Transaction error:', error);
+        throw new Error('Failed to create contacts batch');
+      }
+
+      return {
+        created: results,
+        existing: existingContacts,
+        errors,
+        progress: {
+          total: totalContacts,
+          processed: processedCount,
+          percentage: totalContacts > 0 ? (processedCount / totalContacts) * 100 : 0,
+        },
+      };
+    }),
 });

@@ -5,7 +5,9 @@ import { ColorBadge } from '@/components/shared/color-badge';
 import { Combobox } from '@/components/shared/combobox';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Progress } from '@/components/ui/progress';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { sources } from '@/data/data';
 import { type Status, statusSchema } from '@/lib/schema';
@@ -46,6 +48,7 @@ export default function ContactUpload() {
   const router = useRouter();
   const t = useTranslations();
   const [isLoading, setIsLoading] = useState(false);
+  const [isProcessingCsv, setIsProcessingCsv] = useState(false);
   const [csvData, setCsvData] = useState<ContactFormData[]>([]);
   const [showPreview, setShowPreview] = useState(false);
   const [duplicates, setDuplicates] = useState<DuplicateContact[]>([]);
@@ -53,12 +56,14 @@ export default function ContactUpload() {
   const [isCancelling, setIsCancelling] = useState(false);
   const cancelUploadRef = useRef(false);
   const [selectedCampaignCode, setSelectedCampaignCode] = useState<string | undefined>(undefined);
+  const [progress, setProgress] = useState(0);
+  const [progressStatus, setProgressStatus] = useState('');
 
   const checkExistingContacts = api.contact.checkExistingContacts.useQuery({ emails: csvData.map((contact) => contact.email) }, { enabled: false });
   const { data: campaigns } = api.marketing.getActiveCampaigns.useQuery();
   const { data: companies } = api.company.getAllCompanies.useQuery();
 
-  const createContact = api.contact.createContact.useMutation({
+  const createContacts = api.contact.createContacts.useMutation({
     onError: (error) => {
       toast.error(error.message);
     },
@@ -104,6 +109,7 @@ export default function ContactUpload() {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    setIsProcessingCsv(true);
     try {
       Papa.parse(file, {
         header: true,
@@ -208,16 +214,20 @@ export default function ContactUpload() {
           } catch (error) {
             console.error('Error processing CSV:', error);
             toast.error('Failed to process CSV file');
+          } finally {
+            setIsProcessingCsv(false);
           }
         },
         error: (error) => {
           console.error('Error parsing CSV:', error);
           toast.error('Failed to parse CSV file');
+          setIsProcessingCsv(false);
         },
       });
     } catch (error) {
       console.error('Error handling CSV upload:', error);
       toast.error('Failed to handle CSV upload');
+      setIsProcessingCsv(false);
     }
   };
 
@@ -247,59 +257,41 @@ export default function ContactUpload() {
     e.preventDefault();
     setIsLoading(true);
     cancelUploadRef.current = false;
+    setProgress(0);
+    setProgressStatus('');
 
     try {
       const nonDuplicateContacts = csvData.filter((contact) => !isRowEmpty(contact) && !duplicates.some((d) => d.email === contact.email));
-
-      const batchSize = 10;
-      let processedCount = 0;
       const totalContacts = nonDuplicateContacts.length;
 
-      const toastId = toast.loading(`Processing contacts... (0/${totalContacts})`);
+      setProgressStatus(t('processing_contacts'));
+      const toastId = toast.loading(t('processing_contacts'));
 
-      while (processedCount < totalContacts && !cancelUploadRef.current) {
-        const endIdx = Math.min(processedCount + batchSize, totalContacts);
-        const batch = nonDuplicateContacts.slice(processedCount, endIdx);
+      const result = await createContacts.mutateAsync({
+        contacts: nonDuplicateContacts,
+      });
 
-        await Promise.all(
-          batch.map((contact) =>
-            createContact.mutateAsync({
-              firstName: contact.firstName,
-              lastName: contact.lastName,
-              name: formatName(contact.firstName, contact.lastName),
-              email: contact.email,
-              phone: contact.phone || '',
-              company: contact.company || '',
-              companyId: contact.companyId || null,
-              source: contact.source || '',
-              remark: contact.remark || '',
-              campaignCode: contact.campaignCodes?.length ? contact.campaignCodes.join(',') : selectedCampaignCode,
-            })
-          )
-        );
-
-        processedCount = endIdx;
-        toast.loading(`Processing contacts... (${processedCount}/${totalContacts})`, { id: toastId });
+      // Update progress based on the mutation response
+      if (result.progress) {
+        setProgress(result.progress.percentage);
+        setProgressStatus(`Processed ${result.progress.processed} of ${result.progress.total} contacts...`);
       }
 
-      if (cancelUploadRef.current) {
-        toast.error(`Upload cancelled. ${processedCount} contacts were processed.`, { id: toastId });
+      if (result.errors.length > 0) {
+        console.error('Some contacts failed to create:', result.errors);
+        setProgressStatus(`Failed to create ${result.errors.length} contacts`);
+        toast.error(`${result.errors.length} contacts failed to create. Check console for details.`, { id: toastId });
       } else {
-        toast.success(
-          totalContacts !== csvData.length ? `Created ${totalContacts} contacts (${csvData.length - totalContacts} duplicates skipped)` : `Successfully created ${totalContacts} contacts`,
-          { id: toastId }
-        );
+        setProgressStatus('Import completed successfully');
+        toast.success(`Successfully created ${result.created.length} contacts${result.existing.length > 0 ? ` (${result.existing.length} duplicates skipped)` : ''}`, { id: toastId });
       }
 
       router.push('/dashboard/crm/contacts');
       router.refresh();
     } catch (error: any) {
-      console.error('Error creating contact:', error);
-      if (error.message === 'Upload cancelled') {
-        toast.error('Upload cancelled by user');
-      } else {
-        toast.error('Failed to create contacts');
-      }
+      console.error('Error creating contacts:', error);
+      setProgressStatus('Import failed');
+      toast.error('Failed to create contacts');
     } finally {
       setIsLoading(false);
       setIsCancelling(false);
@@ -355,15 +347,21 @@ export default function ContactUpload() {
 
   return (
     <div className='space-y-4'>
-      <div className='mb-6 flex gap-4'>
-        <Button variant='outline' className='h-8 gap-2' onClick={() => document.getElementById('csvUpload')?.click()}>
-          <Upload className='h-4 w-4' />
-          {t('upload_csv')}
-        </Button>
-        <Button variant='outline' className='h-8 gap-2' onClick={downloadTemplate}>
-          <Download className='h-4 w-4' />
-          Download Template
-        </Button>
+      <div className='flex gap-4'>
+        {!showPreview && (
+          <>
+            <Button variant='outline' className='h-8 gap-2' onClick={() => document.getElementById('csvUpload')?.click()} disabled={isProcessingCsv}>
+              <Upload className='h-4 w-4' />
+              {isProcessingCsv ? t('processing') : t('upload_csv')}
+            </Button>
+            {!isProcessingCsv && (
+              <Button variant='outline' className='h-8 gap-2' onClick={downloadTemplate}>
+                <Download className='h-4 w-4' />
+                {t('download_template')}
+              </Button>
+            )}
+          </>
+        )}
         <input id='csvUpload' type='file' accept='.csv' className='hidden' onChange={handleCsvUpload} />
       </div>
 
@@ -380,13 +378,32 @@ export default function ContactUpload() {
         />
       )}
 
+      {isProcessingCsv && (
+        <div className='space-y-4'>
+          <Skeleton className='h-10 w-full' />
+          <Skeleton className='h-10 w-full' />
+          <Skeleton className='h-10 w-full' />
+          <Skeleton className='h-10 w-full' />
+          <Skeleton className='h-10 w-full' />
+          <Skeleton className='h-10 w-full' />
+          <Skeleton className='h-10 w-full' />
+          <Skeleton className='h-10 w-full' />
+        </div>
+      )}
+
       {showPreview && (
         <div className='mb-6 space-y-4'>
           <div className='mt-6 flex gap-4'>
             {isLoading ? (
-              <Button type='button' variant='destructive' onClick={handleCancelUpload} disabled={isCancelling} className='w-full sm:w-auto'>
-                {isCancelling ? t('cancelling') : t('cancel_upload')}
-              </Button>
+              <>
+                <div className='flex-1 space-y-2'>
+                  <Progress value={progress} className='w-full' />
+                  <p className='text-sm text-muted-foreground'>{progressStatus}</p>
+                </div>
+                <Button type='button' variant='destructive' onClick={handleCancelUpload} disabled={isCancelling} className='shrink-0'>
+                  {isCancelling ? t('cancelling') : t('cancel_upload')}
+                </Button>
+              </>
             ) : (
               <>
                 <div className='flex flex-1 items-center gap-4'>
@@ -405,19 +422,25 @@ export default function ContactUpload() {
                       }}
                     />
                   </div>
-                  <Button type='submit' disabled={isLoading} onClick={handleSubmit} className='w-full sm:w-auto'>
+                  <Button type='submit' size='sm' disabled={isLoading} onClick={handleSubmit}>
                     {t('import_contacts')}
                   </Button>
                   <Button
                     type='button'
+                    size='sm'
                     variant='outline'
                     onClick={() => {
                       setShowPreview(false);
                       setCsvData([]);
+                      setDuplicates([]);
+                      setHasDuplicates(false);
+                      setSelectedCampaignCode(undefined);
+                      // Reset the file input
+                      const fileInput = document.getElementById('csvUpload') as HTMLInputElement;
+                      if (fileInput) fileInput.value = '';
                     }}
-                    className='w-full sm:w-auto'
                   >
-                    {t('cancel_import')}
+                    {t('reset')}
                   </Button>
                 </div>
               </>
@@ -435,6 +458,7 @@ export default function ContactUpload() {
                   <TableHead>{t('company')}</TableHead>
                   <TableHead>{t('status')}</TableHead>
                   <TableHead>{t('source')}</TableHead>
+                  <TableHead>{t('campaign')}</TableHead>
                   <TableHead>{t('remark')}</TableHead>
                 </TableRow>
               </TableHeader>
@@ -491,6 +515,21 @@ export default function ContactUpload() {
                           placeholder={t('select_source')}
                           searchPlaceholder={t('search_source')}
                           groupHeading={t('sources')}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Combobox
+                          value={row.campaignCode ?? ''}
+                          onChange={(value) => handleCsvEdit(index, 'campaignCode', value)}
+                          items={campaigns?.map((c) => c.campaignCode) ?? []}
+                          placeholder={t('select_campaign')}
+                          searchPlaceholder={t('search_campaigns')}
+                          groupHeading={t('campaigns')}
+                          allowCustom={false}
+                          renderItem={(code) => {
+                            const campaign = campaigns?.find((c) => c.campaignCode === code);
+                            return campaign?.name ?? code;
+                          }}
                         />
                       </TableCell>
                       <TableCell>

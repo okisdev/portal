@@ -534,5 +534,10 @@
   "will_renew_at": "将在 {date} 续订",
   "workspace": "工作区",
   "write_a_reply": "写回复... 使用 @ 提及他人",
-  "you": "你"
+  "you": "你",
+  "manual": "手动的",
+  "processing": "加工...",
+  "download_template": "下载模板",
+  "reset": "重置",
+  "processing_contacts": "处理联系人..."
 }
