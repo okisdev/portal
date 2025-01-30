@@ -636,7 +636,7 @@ export const team = pgTable('team', {
   leaderId: text().references(() => contact.id),
   subLeaderId: text().references(() => contact.id),
   referralId: text().references(() => contact.id),
-  campaignCode: text().unique(),
+  campaignCode: text(),
   remarks: text(),
   createdBy: text()
     .notNull()

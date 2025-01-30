@@ -1,16 +1,12 @@
 'use client';
 
 import { ActionAlertDialog } from '@/components/shared/action-alert-dialog';
-import { ActivitySection } from '@/components/shared/activity-section';
 import { ColorBadge } from '@/components/shared/color-badge';
-import { Combobox } from '@/components/shared/combobox';
 import { ComboboxCommand } from '@/components/shared/combobox';
 import { EventDialog } from '@/components/shared/event-dialog';
-import { EventSection } from '@/components/shared/event-section';
 import { PageHeader } from '@/components/shared/page-header';
 import { PageLoading } from '@/components/shared/page-loading';
 import { PaginationTable } from '@/components/shared/pagination-table';
-import { TabSwitcher } from '@/components/shared/tab-switcher';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -34,15 +30,15 @@ import {
   getSortedRowModel,
   useReactTable,
 } from '@tanstack/react-table';
-import { Calendar, Edit2, Eye, MoreHorizontal, Plus, Trash2 } from 'lucide-react';
+import { Edit2, Eye, MoreHorizontal, Plus, Trash2, Users } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { notFound, useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
-export default function TeamIdPage() {
-  const { id: teamId } = useParams<{ id: string }>();
+export default function CompanyIdPage() {
+  const { id: companyId } = useParams<{ id: string }>();
   const router = useRouter();
   const searchParams = useSearchParams();
   const mode = searchParams.get('mode');
@@ -60,44 +56,49 @@ export default function TeamIdPage() {
   const [editForm, setEditForm] = useState({
     name: '',
     description: '',
-    leaderId: '',
-    subLeaderId: '',
-    referralId: '',
-    campaignCode: '',
-    remarks: '',
-    company: { id: '', name: '' },
+    industry: '',
+    size: '',
+    website: '',
+    address: '',
+    city: '',
+    state: '',
+    country: '',
+    postalCode: '',
+    phone: '',
+    email: '',
+    status: 'active' as 'active' | 'inactive',
   });
-  const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
+  const [isAddContactOpen, setIsAddContactOpen] = useState(false);
   const [searchValue, setSearchValue] = useState('');
   const [contactToDelete, setContactToDelete] = useState<string | null>(null);
 
-  const { data: team, isLoading } = api.team.getTeamById.useQuery({
-    id: teamId[0],
+  const { data: company, isLoading } = api.company.getCompanyById.useQuery({
+    id: companyId[0],
   });
-  const { data: teamContacts } = api.team.getTeamContacts.useQuery({
-    teamId: teamId[0],
+  const { data: companyContacts } = api.company.getCompanyContacts.useQuery({
+    companyId: companyId[0],
   });
-  const { data: teamMeetings } = api.team.getTeamMeetings.useQuery({
-    teamId: teamId[0],
-  });
-  const { data: contacts } = api.contact.getAllContacts.useQuery(undefined, {
-    enabled: isAddMemberOpen,
+  const { data: teams } = api.company.getCompanyTeams.useQuery({
+    companyId: companyId[0],
   });
   const { data: folders } = api.calendar.getMyFolders.useQuery();
   const { data: participantOptions } = api.calendar.getParticipantOptions.useQuery(undefined, {
     enabled: isNewMeetingModalOpen,
   });
   const { data: teamActivities } = api.team.getTeamActivities.useQuery({
-    id: teamId[0],
+    id: companyId[0],
   });
   const { data: campaigns } = api.marketing.getActiveCampaigns.useQuery();
   const { data: companies } = api.company.getAllCompanies.useQuery();
+  const { data: contacts } = api.contact.getAllContacts.useQuery(undefined, {
+    enabled: isAddContactOpen,
+  });
 
-  const updateTeam = api.team.updateTeam.useMutation({
+  const updateCompany = api.company.updateCompany.useMutation({
     onSuccess: () => {
-      router.push(`/dashboard/crm/team/${teamId[0]}`);
-      utils.team.getTeamById.invalidate({ id: teamId[0] });
-      toast.success(t('team_updated_successfully'));
+      router.push(`/dashboard/crm/company/${companyId[0]}`);
+      utils.company.getCompanyById.invalidate({ id: companyId[0] });
+      toast.success(t('company_updated_successfully'));
     },
     onError: (error) => {
       toast.error(error.message);
@@ -106,7 +107,7 @@ export default function TeamIdPage() {
 
   const createTeamActivity = api.team.createTeamActivity.useMutation({
     onSuccess: () => {
-      utils.team.getTeamActivities.invalidate({ id: teamId[0] });
+      utils.team.getTeamActivities.invalidate({ id: companyId[0] });
       toast.success(t('activity_created_successfully'));
     },
     onError: (error) => {
@@ -117,7 +118,7 @@ export default function TeamIdPage() {
   const createMeeting = api.team.createTeamMeeting.useMutation({
     onSuccess: () => {
       setIsNewMeetingModalOpen(false);
-      utils.team.getTeamMeetings.invalidate({ teamId: teamId[0] });
+      utils.team.getTeamMeetings.invalidate({ teamId: companyId[0] });
       toast.success('Meeting created successfully');
     },
     onError: (error) => {
@@ -127,7 +128,7 @@ export default function TeamIdPage() {
 
   const deleteTeamMeeting = api.team.deleteTeamMeeting.useMutation({
     onSuccess: () => {
-      utils.team.getTeamMeetings.invalidate({ teamId: teamId[0] });
+      utils.team.getTeamMeetings.invalidate({ teamId: companyId[0] });
       toast.success('Meeting deleted successfully');
     },
     onError: (error) => {
@@ -145,11 +146,10 @@ export default function TeamIdPage() {
     },
   });
 
-  const addTeamContact = api.team.addTeamContact.useMutation({
+  const addCompanyContact = api.company.addCompanyContact.useMutation({
     onSuccess: () => {
-      setIsAddMemberOpen(false);
-      utils.team.getTeamContacts.invalidate({ teamId: teamId[0] });
-      utils.team.getTeamActivities.invalidate({ id: teamId[0] });
+      setIsAddContactOpen(false);
+      utils.company.getCompanyContacts.invalidate({ companyId: companyId[0] });
       toast.success(t('contact_added_successfully'));
     },
     onError: (error) => {
@@ -157,11 +157,10 @@ export default function TeamIdPage() {
     },
   });
 
-  const removeContactFromTeam = api.team.removeContactFromTeam.useMutation({
+  const removeCompanyContact = api.company.removeCompanyContact.useMutation({
     onSuccess: () => {
       setContactToDelete(null);
-      utils.team.getTeamContacts.invalidate({ teamId: teamId[0] });
-      utils.team.getTeamActivities.invalidate({ id: teamId[0] });
+      utils.company.getCompanyContacts.invalidate({ companyId: companyId[0] });
       toast.success(t('contact_removed_successfully'));
     },
     onError: (error) => {
@@ -170,22 +169,27 @@ export default function TeamIdPage() {
   });
 
   useEffect(() => {
-    if (mode === 'edit' && team) {
+    if (mode === 'edit' && company) {
       setEditForm({
-        name: team.name,
-        description: team.description || '',
-        leaderId: team.leaderId || '',
-        subLeaderId: team.subLeaderId || '',
-        referralId: team.referralId || '',
-        campaignCode: team.campaignCode || '',
-        remarks: team.remarks || '',
-        company: team.company || { id: '', name: '' },
+        name: company.name,
+        description: company.description || '',
+        industry: company.industry || '',
+        size: company.size || '',
+        website: company.website || '',
+        address: company.address || '',
+        city: company.city || '',
+        state: company.state || '',
+        country: company.country || '',
+        postalCode: company.postalCode || '',
+        phone: company.phone || '',
+        email: company.email || '',
+        status: company.status || 'active',
       });
       setIsEditModalOpen(true);
     } else {
       setIsEditModalOpen(false);
     }
-  }, [mode, team]);
+  }, [mode, company]);
 
   const columns: ColumnDef<any>[] = [
     {
@@ -208,19 +212,22 @@ export default function TeamIdPage() {
           {t('name')} {column.getIsSorted() && <CaretSortIcon className='ml-2 inline' />}
         </Button>
       ),
-      cell: ({ row }) => (
-        <div className='flex items-center gap-2'>
-          <Avatar className='size-8'>
-            <AvatarFallback>{row.original.contact.firstName.charAt(0)}</AvatarFallback>
-          </Avatar>
-          <div>
-            <p className='font-medium'>
-              {row.original.contact.firstName} {row.original.contact.lastName}
-            </p>
-            <p className='text-muted-foreground text-sm'>{row.original.contact.email}</p>
+      cell: ({ row }) => {
+        const contact = row.original.contact;
+        return (
+          <div className='flex items-center gap-2'>
+            <Avatar className='size-8'>
+              <AvatarFallback>{contact.firstName.charAt(0)}</AvatarFallback>
+            </Avatar>
+            <div>
+              <p className='font-medium'>
+                {contact.firstName} {contact.lastName}
+              </p>
+              <p className='text-muted-foreground text-sm'>{contact.email}</p>
+            </div>
           </div>
-        </div>
-      ),
+        );
+      },
     },
     {
       accessorKey: 'role',
@@ -229,11 +236,16 @@ export default function TeamIdPage() {
           {t('role')} {column.getIsSorted() && <CaretSortIcon className='ml-2 inline' />}
         </Button>
       ),
-      cell: ({ row }) => {
-        const isLeader = team?.leaderId === row.original.contact.id;
-        const isSubLeader = team?.subLeaderId === row.original.contact.id;
-        return <div>{isLeader ? <ColorBadge type='status' value='leader' /> : isSubLeader ? <ColorBadge type='status' value='sub-leader' /> : <ColorBadge type='status' value='member' />}</div>;
-      },
+      cell: ({ row }) => <ColorBadge type='status' value={row.original.contact.role || 'employee'} />,
+    },
+    {
+      accessorKey: 'department',
+      header: ({ column }) => (
+        <Button variant='ghost' onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
+          {t('department')} {column.getIsSorted() && <CaretSortIcon className='ml-2 inline' />}
+        </Button>
+      ),
+      cell: ({ row }) => row.original.contact.department || '-',
     },
     {
       accessorKey: 'phone',
@@ -243,15 +255,6 @@ export default function TeamIdPage() {
         </Button>
       ),
       cell: ({ row }) => row.original.contact.phone || '-',
-    },
-    {
-      accessorKey: 'company',
-      header: ({ column }) => (
-        <Button variant='ghost' onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
-          {t('company')} {column.getIsSorted() && <CaretSortIcon className='ml-2 inline' />}
-        </Button>
-      ),
-      cell: ({ row }) => row.original.contact.company || '-',
     },
     {
       accessorKey: 'status',
@@ -302,7 +305,7 @@ export default function TeamIdPage() {
   ];
 
   const table = useReactTable({
-    data: teamContacts || [],
+    data: companyContacts || [],
     columns,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
@@ -327,34 +330,34 @@ export default function TeamIdPage() {
 
   if (isLoading) return <PageLoading />;
 
-  if (!team) return notFound();
+  if (!company) return notFound();
 
-  const handleAddMember = (contactId: string) => {
-    addTeamContact.mutate({
-      teamId: teamId[0],
+  const handleAddContact = (contactId: string) => {
+    addCompanyContact.mutate({
+      companyId: companyId[0],
       contactId,
     });
   };
 
   const handleEditClick = () => {
-    router.push(`/dashboard/crm/team/${teamId[0]}?mode=edit`);
+    router.push(`/dashboard/crm/company/${companyId[0]}?mode=edit`);
   };
 
   const handleCloseEdit = () => {
-    router.push(`/dashboard/crm/team/${teamId[0]}`);
+    router.push(`/dashboard/crm/company/${companyId[0]}`);
   };
 
   const handleSubmitEdit = (e: React.FormEvent) => {
     e.preventDefault();
-    updateTeam.mutate({
-      id: teamId[0],
+    updateCompany.mutate({
+      id: companyId[0],
       ...editForm,
     });
   };
 
   const handleCreateMeeting = async (data: any) => {
     await createMeeting.mutateAsync({
-      teamId: teamId[0],
+      teamId: companyId[0],
       title: data.title,
       description: data.description ?? '',
       meetingDate: data.startAt,
@@ -363,8 +366,8 @@ export default function TeamIdPage() {
 
   const handleDeleteContact = () => {
     if (contactToDelete) {
-      removeContactFromTeam.mutate({
-        teamId: teamId[0],
+      removeCompanyContact.mutate({
+        companyId: companyId[0],
         contactId: contactToDelete,
       });
     }
@@ -373,15 +376,12 @@ export default function TeamIdPage() {
   return (
     <div className='space-y-4 p-4'>
       <PageHeader
-        title={team.name}
-        description={team.description || ''}
+        title={company.name}
+        description={company.description || ''}
         right={
           <div className='flex items-center gap-2'>
-            <Button variant='outline' size='sm' className='h-8' onClick={() => setIsNewMeetingModalOpen(true)}>
-              <Calendar className='mr-1 size-4' /> {t('add_meeting')}
-            </Button>
             <Button variant='outline' size='sm' className='h-8' onClick={handleEditClick}>
-              <Edit2 className='mr-1 size-4' /> {t('edit_team')}
+              <Edit2 className='mr-1 size-4' /> {t('edit_company')}
             </Button>
           </div>
         }
@@ -391,8 +391,8 @@ export default function TeamIdPage() {
         <div className='col-span-2 space-y-4'>
           <div className='space-y-2 rounded-lg border bg-card p-4'>
             <div className='flex items-center justify-between'>
-              <p className='font-medium'>{t('team_members')}</p>
-              <Popover open={isAddMemberOpen} onOpenChange={setIsAddMemberOpen}>
+              <p className='font-medium'>{t('company_contacts')}</p>
+              <Popover open={isAddContactOpen} onOpenChange={setIsAddContactOpen}>
                 <PopoverTrigger asChild>
                   <Button variant='outline' size='sm' className='h-8'>
                     <Plus className='mr-1 size-4' /> {t('add_contact')}
@@ -403,13 +403,13 @@ export default function TeamIdPage() {
                     query={searchValue}
                     setQuery={setSearchValue}
                     value=''
-                    onChange={handleAddMember}
-                    setOpen={setIsAddMemberOpen}
+                    onChange={handleAddContact}
+                    setOpen={setIsAddContactOpen}
                     items={
                       contacts
                         ?.filter(
                           (contact) =>
-                            !teamContacts?.some((c) => c.contact.id === contact.id) &&
+                            !companyContacts?.some((c) => c.contact.id === contact.id) &&
                             (contact.firstName.toLowerCase().includes(searchValue.toLowerCase()) ||
                               contact.lastName.toLowerCase().includes(searchValue.toLowerCase()) ||
                               contact.email.toLowerCase().includes(searchValue.toLowerCase()))
@@ -441,7 +441,7 @@ export default function TeamIdPage() {
                 </PopoverContent>
               </Popover>
             </div>
-            {teamContacts && teamContacts?.length > 0 && (
+            {companyContacts && companyContacts?.length > 0 && (
               <PaginationTable
                 table={table}
                 columns={columns}
@@ -453,108 +453,98 @@ export default function TeamIdPage() {
           </div>
 
           <div className='rounded-lg border bg-card p-4'>
-            <TabSwitcher
-              config={[
-                {
-                  label: t('activity'),
-                  value: (
-                    <ActivitySection
-                      activities={teamActivities?.map((activity) => ({
-                        id: activity.id,
-                        type: activity.type,
-                        subType: activity.subType || 'NOTE_ADDED',
-                        description: activity.description || '',
-                        initiatorType: 'user',
-                        userId: activity.userId,
-                        metadata: activity.metadata,
-                        createdAt: activity.createdAt,
-                      }))}
-                      onCreateActivity={(data) => {
-                        createTeamActivity.mutate({
-                          teamId: teamId[0],
-                          type: 'ENGAGEMENT',
-                          subType: 'NOTE_ADDED',
-                          description: data.description,
-                          initiatorType: data.initiatorType,
-                          initiatorId: data.initiatorId,
-                          metadata: data.metadata as any,
-                        });
-                      }}
-                      isLoading={createTeamActivity.isPending}
-                    />
-                  ),
-                },
-              ]}
-            />
+            <div className='flex items-center justify-between'>
+              <p className='font-medium'>{t('company_teams')}</p>
+              <Button variant='outline' size='sm' className='h-8' onClick={() => router.push(`/dashboard/crm/team/new?companyId=${companyId[0]}`)}>
+                <Plus className='mr-1 size-4' /> {t('add_team')}
+              </Button>
+            </div>
+            <div className='mt-4 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3'>
+              {teams?.map((team) => (
+                <Link key={team.id} href={`/dashboard/crm/team/${team.id}`} className='rounded-lg border bg-card p-4 transition-colors hover:bg-muted/50'>
+                  <div className='flex items-start justify-between'>
+                    <div>
+                      <p className='font-medium'>{team.name}</p>
+                      <p className='text-muted-foreground text-sm'>{team.description || 'N/A'}</p>
+                    </div>
+                    <div className='flex items-center gap-2'>
+                      <div className='flex items-center gap-1'>
+                        <Users className='size-4' />
+                        <span className='text-sm'>{team.contacts}</span>
+                      </div>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
           </div>
         </div>
 
         <div className='space-y-4'>
           <div className='rounded-lg border bg-card p-4'>
-            <h2 className='mb-3 font-medium'>{t('team_information')}</h2>
+            <h2 className='mb-3 font-medium'>{t('company_information')}</h2>
             <div className='space-y-1'>
               <div>
-                <Label className='text-muted-foreground text-xs'>{t('team_leader')}</Label>
+                <Label className='text-muted-foreground text-xs'>{t('industry')}</Label>
+                <p className='text-sm'>{company.industry || 'N/A'}</p>
+              </div>
+              <div>
+                <Label className='text-muted-foreground text-xs'>{t('size')}</Label>
+                <p className='text-sm'>{company.size || 'N/A'}</p>
+              </div>
+              <div>
+                <Label className='text-muted-foreground text-xs'>{t('website')}</Label>
                 <p className='text-sm'>
-                  <Link href={team.leaderId ? `/dashboard/crm/contacts/${team.leaderId}` : ''}>{team.leaderId ? `${team.leader?.firstName} ${team.leader?.lastName}` : 'N/A'}</Link>
+                  {(company.website && (
+                    <a href={company.website} target='_blank' rel='noopener noreferrer' className='text-primary hover:underline'>
+                      {company.website}
+                    </a>
+                  )) ||
+                    'N/A'}
                 </p>
               </div>
               <div>
-                <Label className='text-muted-foreground text-xs'>{t('sub_leader')}</Label>
+                <Label className='text-muted-foreground text-xs'>{t('email')}</Label>
+                <p className='text-sm'>{company.email || 'N/A'}</p>
+              </div>
+              <div>
+                <Label className='text-muted-foreground text-xs'>{t('phone')}</Label>
+                <p className='text-sm'>{company.phone || 'N/A'}</p>
+              </div>
+              <div>
+                <Label className='text-muted-foreground text-xs'>{t('address')}</Label>
+                <p className='text-sm'>{[company.address, company.city, company.state, company.country, company.postalCode].filter(Boolean).join(', ') || 'N/A'}</p>
+              </div>
+              <div>
+                <Label className='text-muted-foreground text-xs'>{t('status')}</Label>
                 <p className='text-sm'>
-                  <Link href={team.subLeaderId ? `/dashboard/crm/contacts/${team.subLeaderId}` : ''}>{team.subLeaderId ? `${team.subLeader?.firstName} ${team.subLeader?.lastName}` : 'N/A'}</Link>
+                  <ColorBadge type='status' value={company.status || ''} />
                 </p>
-              </div>
-              <div>
-                <Label className='text-muted-foreground text-xs'>{t('referral')}</Label>
-                <p className='text-sm'>
-                  <Link href={team.referralId ? `/dashboard/crm/contacts/${team.referralId}` : ''}>{team.referralId ? `${team.referral?.firstName} ${team.referral?.lastName}` : 'N/A'}</Link>
-                </p>
-              </div>
-              <div>
-                <Label className='text-muted-foreground text-xs'>{t('company')}</Label>
-                <p className='text-sm'>
-                  <Link href={team.company ? `/dashboard/crm/company/${team.company?.id}` : ''}>{team.company?.name || 'N/A'}</Link>
-                </p>
-              </div>
-              <div>
-                <Label className='text-muted-foreground text-xs'>{t('campaign_code')}</Label>
-                <p className='text-sm'>{team.campaignCode || 'N/A'}</p>
-              </div>
-              <div>
-                <Label className='text-muted-foreground text-xs'>{t('remarks')}</Label>
-                <p className='text-sm'>{team.remarks || t('no_remark_added')}</p>
               </div>
               <div className='items-cen flex justify-end'>
-                <p className='text-muted-foreground text-xs'>{t('created_on', { date: formatDate(new Date(team.createdAt)) })}</p>
+                <p className='text-muted-foreground text-xs'>{t('created_on', { date: formatDate(new Date(company.createdAt)) })}</p>
               </div>
             </div>
           </div>
 
           <div className='rounded-lg border bg-card p-4'>
-            <EventSection
-              appointments={
-                teamMeetings?.map((meeting) => ({
-                  id: meeting.id,
-                  title: meeting.title,
-                  description: meeting.description,
-                  startAt: new Date(meeting.meetingDate),
-                })) || []
-              }
-              calendarFolders={folders}
-              onCreateAppointment={handleCreateMeeting}
-              onUpdateAppointment={(data) => {
-                // TODO: Add update meeting functionality
-                toast.error('Update meeting functionality not implemented yet');
-              }}
-              onDeleteAppointment={(id) => {
-                deleteTeamMeeting.mutate({
-                  id,
-                  teamId: teamId[0],
-                });
-              }}
-              defaultTitle={t('team_meeting_title', { name: team.name })}
-            />
+            <h2 className='mb-3 font-medium'>{t('company_stats')}</h2>
+            <div className='grid grid-cols-2 gap-4'>
+              <div className='rounded-lg border bg-background p-4'>
+                <div className='flex items-center gap-2'>
+                  <Users className='size-5' />
+                  <p className='font-medium text-sm'>{t('contacts')}</p>
+                </div>
+                <p className='mt-2 font-bold text-2xl'>{company.contactCount}</p>
+              </div>
+              <div className='rounded-lg border bg-background p-4'>
+                <div className='flex items-center gap-2'>
+                  <Users className='size-5' />
+                  <p className='font-medium text-sm'>{t('teams')}</p>
+                </div>
+                <p className='mt-2 font-bold text-2xl'>{company.teamCount}</p>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -562,117 +552,71 @@ export default function TeamIdPage() {
       <Dialog open={isEditModalOpen} onOpenChange={(open) => !open && handleCloseEdit()}>
         <DialogContent className='max-h-[90vh] max-w-xl overflow-y-auto'>
           <DialogHeader>
-            <DialogTitle>{t('edit_team_information')}</DialogTitle>
+            <DialogTitle>{t('edit_company_information')}</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSubmitEdit} className='space-y-4'>
             <div className='space-y-2'>
-              <Label>{t('team_name')}</Label>
+              <Label>{t('company')}</Label>
               <Input value={editForm.name} onChange={(e) => setEditForm({ ...editForm, name: e.target.value })} />
             </div>
             <div className='space-y-2'>
               <Label>{t('description')}</Label>
               <Textarea value={editForm.description} onChange={(e) => setEditForm({ ...editForm, description: e.target.value })} />
             </div>
-            <div className='space-y-2'>
-              <Label>{t('team_leader')}</Label>
-              <Combobox
-                value={
-                  editForm.leaderId
-                    ? `${teamContacts?.find((m) => m.contact.id === editForm.leaderId)?.contact.firstName} ${teamContacts?.find((m) => m.contact.id === editForm.leaderId)?.contact.lastName}`
-                    : ''
-                }
-                onChange={(value) => {
-                  const contact = teamContacts?.find((c) => `${c.contact.firstName} ${c.contact.lastName}` === value);
-                  setEditForm({ ...editForm, leaderId: contact?.contact.id || '' });
-                }}
-                items={teamContacts?.map((c) => `${c.contact.firstName} ${c.contact.lastName}`) || []}
-                placeholder={t('select_team_leader')}
-                searchPlaceholder={t('search_team_leader')}
-                allowCustom={false}
-                groupHeading={t('contacts')}
-              />
+            <div className='grid grid-cols-2 gap-4'>
+              <div className='space-y-2'>
+                <Label>{t('industry')}</Label>
+                <Input value={editForm.industry} onChange={(e) => setEditForm({ ...editForm, industry: e.target.value })} />
+              </div>
+              <div className='space-y-2'>
+                <Label>{t('size')}</Label>
+                <Input value={editForm.size} onChange={(e) => setEditForm({ ...editForm, size: e.target.value })} />
+              </div>
             </div>
             <div className='space-y-2'>
-              <Label>{t('sub_leader')}</Label>
-              <Combobox
-                value={
-                  editForm.subLeaderId
-                    ? `${teamContacts?.find((m) => m.contact.id === editForm.subLeaderId)?.contact.firstName} ${teamContacts?.find((m) => m.contact.id === editForm.subLeaderId)?.contact.lastName}`
-                    : ''
-                }
-                onChange={(value) => {
-                  const contact = teamContacts?.find((c) => `${c.contact.firstName} ${c.contact.lastName}` === value);
-                  setEditForm({ ...editForm, subLeaderId: contact?.contact.id || '' });
-                }}
-                items={teamContacts?.map((c) => `${c.contact.firstName} ${c.contact.lastName}`) || []}
-                placeholder={t('select_sub_leader')}
-                searchPlaceholder={t('search_sub_leader')}
-                allowCustom={false}
-                groupHeading={t('contacts')}
-              />
+              <Label>{t('website')}</Label>
+              <Input value={editForm.website} onChange={(e) => setEditForm({ ...editForm, website: e.target.value })} />
+            </div>
+            <div className='grid grid-cols-2 gap-4'>
+              <div className='space-y-2'>
+                <Label>{t('email')}</Label>
+                <Input value={editForm.email} onChange={(e) => setEditForm({ ...editForm, email: e.target.value })} />
+              </div>
+              <div className='space-y-2'>
+                <Label>{t('phone')}</Label>
+                <Input value={editForm.phone} onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })} />
+              </div>
             </div>
             <div className='space-y-2'>
-              <Label>{t('referral')}</Label>
-              <Combobox
-                value={
-                  editForm.referralId
-                    ? `${contacts?.find((c) => c.id === editForm.referralId)?.firstName} ${contacts?.find((c) => c.id === editForm.referralId)?.lastName} (${
-                        contacts?.find((c) => c.id === editForm.referralId)?.email
-                      })`
-                    : ''
-                }
-                onChange={(value) => {
-                  const contact = contacts?.find((c) => `${c.firstName} ${c.lastName} (${c.email})` === value);
-                  setEditForm({ ...editForm, referralId: contact?.id || '' });
-                }}
-                items={contacts?.map((contact) => `${contact.firstName} ${contact.lastName} (${contact.email})`) || []}
-                placeholder={t('select_referral')}
-                searchPlaceholder={t('search_referral')}
-                allowCustom={false}
-                groupHeading={t('contacts')}
-              />
+              <Label>{t('address')}</Label>
+              <Input value={editForm.address} onChange={(e) => setEditForm({ ...editForm, address: e.target.value })} />
             </div>
-            <div className='space-y-2'>
-              <Label>{t('campaign_code')}</Label>
-              <Combobox
-                value={editForm.campaignCode}
-                onChange={(value) => setEditForm({ ...editForm, campaignCode: value })}
-                items={campaigns?.map((campaign) => campaign.campaignCode || '') || []}
-                placeholder={t('select_campaign_code')}
-                searchPlaceholder={t('search_campaign_code')}
-                allowCustom={false}
-                groupHeading={t('campaigns')}
-                renderItem={(campaignCode) => {
-                  const campaign = campaigns?.find((c) => c.campaignCode === campaignCode);
-                  return campaign ? `${campaign.name} (${campaign.campaignCode})` : null;
-                }}
-              />
+            <div className='grid grid-cols-2 gap-4'>
+              <div className='space-y-2'>
+                <Label>{t('city')}</Label>
+                <Input value={editForm.city} onChange={(e) => setEditForm({ ...editForm, city: e.target.value })} />
+              </div>
+              <div className='space-y-2'>
+                <Label>{t('state')}</Label>
+                <Input value={editForm.state} onChange={(e) => setEditForm({ ...editForm, state: e.target.value })} />
+              </div>
             </div>
-            <div className='space-y-2'>
-              <Label>{t('company')}</Label>
-              <Combobox
-                value={editForm.company ? companies?.find((c) => c.id === editForm.company.id)?.name || '' : ''}
-                onChange={(value) => {
-                  const company = companies?.find((c) => c.name === value);
-                  setEditForm({ ...editForm, company: company || { id: '', name: '' } });
-                }}
-                items={companies?.map((company) => company.name) || []}
-                placeholder={t('select_company')}
-                searchPlaceholder={t('search_company')}
-                allowCustom={false}
-                groupHeading={t('companies')}
-              />
-            </div>
-            <div className='space-y-2'>
-              <Label>{t('remarks')}</Label>
-              <Textarea value={editForm.remarks} onChange={(e) => setEditForm({ ...editForm, remarks: e.target.value })} placeholder={t('enter_remarks')} />
+            <div className='grid grid-cols-2 gap-4'>
+              <div className='space-y-2'>
+                <Label>{t('country')}</Label>
+                <Input value={editForm.country} onChange={(e) => setEditForm({ ...editForm, country: e.target.value })} />
+              </div>
+              <div className='space-y-2'>
+                <Label>{t('postal_code')}</Label>
+                <Input value={editForm.postalCode} onChange={(e) => setEditForm({ ...editForm, postalCode: e.target.value })} />
+              </div>
             </div>
             <div className='flex justify-end space-x-2'>
               <Button type='button' variant='outline' onClick={() => setIsEditModalOpen(false)}>
                 {t('cancel')}
               </Button>
-              <Button type='submit' disabled={updateTeam.isPending}>
-                {updateTeam.isPending ? t('saving_loading') : t('save_changes')}
+              <Button type='submit' disabled={updateCompany.isPending}>
+                {updateCompany.isPending ? t('saving_loading') : t('save_changes')}
               </Button>
             </div>
           </form>
@@ -705,7 +649,7 @@ export default function TeamIdPage() {
           if (meetingToDelete) {
             deleteTeamMeeting.mutate({
               id: meetingToDelete,
-              teamId: teamId[0],
+              teamId: companyId[0],
             });
             setMeetingToDelete(null);
           }

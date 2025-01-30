@@ -52,18 +52,21 @@ interface EventDialogProps {
     users?: { id: string; name: string }[];
     contacts?: { id: string; name: string }[];
   };
-  initialParticipants?: {
-    type: 'user' | 'contact' | 'external';
-    id?: string;
-    email?: string;
-    name?: string;
-    role?: 'organizer' | 'required' | 'optional';
-  }[];
   onCreateFolder?: (name: string) => Promise<void>;
 }
 
-export function EventDialog({ open, onOpenChange, onSubmit, isEditMode = false, defaultValues, folders = [], participantOptions, initialParticipants = [], onCreateFolder }: EventDialogProps) {
+export function EventDialog({ open, onOpenChange, onSubmit, isEditMode = false, defaultValues, folders = [], participantOptions, onCreateFolder }: EventDialogProps) {
   const t = useTranslations();
+
+  const setAllDayEventTimes = (date: Date, isEnd = false) => {
+    const newDate = new Date(date);
+    newDate.setHours(0, 0, 0, 0);
+    if (isEnd) {
+      // For end date, add one day to make it end at 00:00 of the next day
+      newDate.setDate(newDate.getDate() + 1);
+    }
+    return newDate;
+  };
 
   const form = useForm<EventFormData>({
     resolver: zodResolver(eventFormSchema),
@@ -82,19 +85,41 @@ export function EventDialog({ open, onOpenChange, onSubmit, isEditMode = false, 
 
   useEffect(() => {
     if (open) {
+      const startAt = defaultValues?.startAt || new Date();
+      const endAt = defaultValues?.endAt || new Date();
+      const isAllDay = defaultValues?.isAllDay || false;
+
       form.reset({
         title: defaultValues?.title || '',
         description: defaultValues?.description || '',
         location: defaultValues?.location || '',
-        startAt: defaultValues?.startAt || new Date(),
-        endAt: defaultValues?.endAt || new Date(),
-        isAllDay: defaultValues?.isAllDay || false,
+        startAt: isAllDay ? setAllDayEventTimes(startAt) : startAt,
+        endAt: isAllDay ? setAllDayEventTimes(endAt, true) : endAt,
+        isAllDay,
         isPublic: defaultValues?.isPublic || false,
         folderId: defaultValues?.folderId || folders[0]?.id || '',
         participants: defaultValues?.participants || [],
       });
     }
   }, [defaultValues, folders, form, open]);
+
+  // Watch for changes to isAllDay and update times accordingly
+  useEffect(() => {
+    const subscription = form.watch((value, { name }) => {
+      if (name === 'isAllDay') {
+        const isAllDay = value.isAllDay;
+        const currentStart = form.getValues('startAt');
+        const currentEnd = form.getValues('endAt');
+
+        if (isAllDay) {
+          form.setValue('startAt', setAllDayEventTimes(currentStart));
+          form.setValue('endAt', setAllDayEventTimes(currentEnd, true));
+        }
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [form]);
 
   const handleCalendarSelect = async (value: string) => {
     if (onCreateFolder && !folders?.some((folder) => folder.name === value)) {
@@ -291,7 +316,7 @@ export function EventDialog({ open, onOpenChange, onSubmit, isEditMode = false, 
                             }}
                           >
                             <SelectTrigger>
-                              <SelectValue placeholder='Type' />
+                              <SelectValue placeholder={t('type')} />
                             </SelectTrigger>
                             <SelectContent>
                               <SelectItem value='user'>{t('user')}</SelectItem>

@@ -4,7 +4,7 @@ import { EventDialog } from '@/components/shared/event-dialog';
 import type { EventFormData } from '@/components/shared/event-dialog';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { formatDate } from '@/lib/utils';
+import { formatDate } from '@/utils/date';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Calendar, ChevronDown, Edit2, MoreHorizontal, Plus, Trash2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';

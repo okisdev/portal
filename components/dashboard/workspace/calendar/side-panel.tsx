@@ -1,4 +1,5 @@
 import { ActionAlertDialog } from '@/components/shared/action-alert-dialog';
+import { NameTag } from '@/components/shared/name-tag';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -9,13 +10,14 @@ import { cn } from '@/lib/utils';
 import type { Locale } from '@/types/i18n';
 import { addDays, endOfMonth, format, getDate, isSameDay, isSameMonth, startOfMonth, subDays } from 'date-fns';
 import { enUS, zhCN, zhHK } from 'date-fns/locale';
-import { ChevronsUpDown, MoreHorizontal, Pencil, Plus, Trash } from 'lucide-react';
+import { ChevronsUpDown, Eye, MoreHorizontal, Pencil, Plus, Trash } from 'lucide-react';
+import { useSession } from 'next-auth/react';
 import { useLocale, useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { WEEKDAYS } from './constants';
 import { YearMonthPicker } from './year-month-picker';
 
-interface CalendarSidebarProps {
+interface CalendarSidePanelProps {
   currentDate: Date;
   selectedDate: Date;
   isLoading: boolean;
@@ -28,7 +30,7 @@ interface CalendarSidebarProps {
   onDeleteCalendar: (folderId: string) => void;
 }
 
-export function CalendarSidebar({
+export function CalendarSidePanel({
   currentDate,
   selectedDate,
   isLoading,
@@ -39,9 +41,10 @@ export function CalendarSidebar({
   onAddCalendar,
   onEditCalendar,
   onDeleteCalendar,
-}: CalendarSidebarProps) {
+}: CalendarSidePanelProps) {
   const t = useTranslations();
   const locale = useLocale() as Locale;
+  const { data: session } = useSession();
 
   const dateLocale =
     {
@@ -109,7 +112,7 @@ export function CalendarSidebar({
       <div className='grid grid-cols-7 gap-1 text-sm'>
         {WEEKDAYS.map((day) => (
           <div key={day} className='text-center text-muted-foreground'>
-            {day.slice(0, 1)}
+            {locale === 'en' ? t(day).slice(0, 1) : t(day).slice(2)}
           </div>
         ))}
         {getDaysInMonth(currentDate)
@@ -157,18 +160,47 @@ export function CalendarSidebar({
                   <DropdownMenuTrigger asChild>
                     <Button variant='ghost' className='h-8 w-8 p-0' onClick={(e) => e.stopPropagation()}>
                       <MoreHorizontal className='h-4 w-4' />
-                      <span className='sr-only'>Open menu</span>
+                      <span className='sr-only'>{t('open_menu')}</span>
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align='end'>
-                    <DropdownMenuItem className='cursor-pointer' onClick={() => onEditCalendar(folder)}>
-                      <Pencil className='mr-2 h-4 w-4' />
-                      {t('edit')}
+                  <DropdownMenuContent align='end' className='w-72'>
+                    <DropdownMenuItem className='flex cursor-default flex-col items-start gap-1 p-3'>
+                      <div className='flex w-full items-center gap-2'>
+                        <div className='h-3 w-3 rounded-full' style={{ backgroundColor: folder.color ?? 'transparent' }} />
+                        <span className='flex-1 font-medium'>{folder.name}</span>
+                        <div className='rounded-full bg-secondary px-2 py-0.5 text-xs'>{folder.userId === session?.user?.id ? t('owner') : t('shared')}</div>
+                      </div>
+                      <div className='mt-2 w-full space-y-2 text-muted-foreground text-xs'>
+                        <div className='flex justify-between'>
+                          <span>{t('visibility')}:</span>
+                          <span className='font-medium'>{t(folder.visibility)}</span>
+                        </div>
+                        <div className='flex justify-between'>
+                          <span>{t('created_by')}:</span>
+                          <span className='font-medium'>{folder.userId === session?.user?.id ? t('you') : <NameTag id={folder.userId} type='user' />}</span>
+                        </div>
+                        <div className='flex justify-between'>
+                          <span>{t('created')}:</span>
+                          <span className='font-medium'>{format(new Date(folder.createdAt), 'PP', { locale: dateLocale })}</span>
+                        </div>
+                      </div>
                     </DropdownMenuItem>
-                    <DropdownMenuItem className='cursor-pointer text-destructive' onClick={() => setFolderToDelete(folder.id)}>
-                      <Trash className='mr-2 h-4 w-4' />
-                      {t('delete')}
+                    <DropdownMenuItem className='cursor-pointer' onClick={() => onToggleCalendar(folder.id)}>
+                      <Eye className='mr-2 h-4 w-4' />
+                      {hiddenCalendars.has(folder.id) ? t('show') : t('hide')}
                     </DropdownMenuItem>
+                    {folder.userId === session?.user?.id ? (
+                      <>
+                        <DropdownMenuItem className='cursor-pointer' onClick={() => onEditCalendar(folder)}>
+                          <Pencil className='mr-2 h-4 w-4' />
+                          {t('edit')}
+                        </DropdownMenuItem>
+                        <DropdownMenuItem className='cursor-pointer text-destructive' onClick={() => setFolderToDelete(folder.id)}>
+                          <Trash className='mr-2 h-4 w-4' />
+                          {t('delete')}
+                        </DropdownMenuItem>
+                      </>
+                    ) : null}
                   </DropdownMenuContent>
                 </DropdownMenu>
               </div>
@@ -186,10 +218,10 @@ export function CalendarSidebar({
             setFolderToDelete(null);
           }
         }}
-        title='Delete Calendar'
-        description='This action cannot be undone. This will permanently delete the calendar and all associated events.'
-        confirmText='Delete'
-        cancelText='Cancel'
+        title={t('delete_calendar')}
+        description={t('delete_calendar_description')}
+        confirmText={t('delete')}
+        cancelText={t('cancel')}
       />
     </div>
   );

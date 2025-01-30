@@ -7,7 +7,6 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import {} from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { timezones } from '@/data/data';
 import type { Timezone } from '@/lib/schema';
@@ -30,6 +29,8 @@ export default function AccountSettingsPage() {
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
   const [image, setImage] = useState('');
+  const [username, setUsername] = useState('');
+  const [usernameError, setUsernameError] = useState('');
   const [timezone, setTimezone] = useState<Timezone>('Asia/Hong_Kong');
   const [isEmailDialogOpen, setIsEmailDialogOpen] = useState(false);
   const [pendingEmail, setPendingEmail] = useState('');
@@ -42,6 +43,7 @@ export default function AccountSettingsPage() {
       setLastName(me.lastName ?? '');
       setEmail(me.email ?? '');
       setImage(me.image ?? '');
+      setUsername(me.username ?? '');
       setTimezone((me.timezone as Timezone) ?? 'Asia/Hong_Kong');
     }
   }, [me]);
@@ -60,6 +62,11 @@ export default function AccountSettingsPage() {
   };
 
   const handleNameChange = async (field: 'firstName' | 'lastName', value: string) => {
+    // Check if value has actually changed
+    if ((field === 'firstName' && value === me?.firstName) || (field === 'lastName' && value === me?.lastName)) {
+      return;
+    }
+
     const updateData = field === 'firstName' ? { firstName: value } : { lastName: value };
     try {
       await updateAccount.mutateAsync(updateData, {
@@ -88,6 +95,12 @@ export default function AccountSettingsPage() {
       return;
     }
 
+    // Check if email has actually changed
+    if (pendingEmail === me?.email) {
+      setIsEmailDialogOpen(false);
+      return;
+    }
+
     try {
       await updateAccount.mutateAsync(
         {
@@ -112,10 +125,17 @@ export default function AccountSettingsPage() {
 
   const handlePasswordSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
-    if (newPassword !== confirmPassword) {
-      console.error('Passwords do not match');
+
+    // Don't submit if any field is empty
+    if (!currentPassword || !newPassword || !confirmPassword) {
       return;
     }
+
+    if (newPassword !== confirmPassword) {
+      toast.error(t('passwords_do_not_match'));
+      return;
+    }
+
     try {
       await updatePassword.mutateAsync(
         {
@@ -141,6 +161,11 @@ export default function AccountSettingsPage() {
   };
 
   const handleTimezoneChange = async (value: Timezone) => {
+    // Check if timezone has actually changed
+    if (value === me?.timezone) {
+      return;
+    }
+
     try {
       await updateTimezone.mutateAsync(
         { timezone: value },
@@ -156,6 +181,42 @@ export default function AccountSettingsPage() {
       );
     } catch (error) {
       console.error('Failed to update timezone:', error);
+    }
+  };
+
+  const handleUsernameChange = async (value: string) => {
+    // Clear previous error
+    setUsernameError('');
+
+    // Check if username has actually changed
+    if (value === me?.username) {
+      return;
+    }
+
+    // Validate username format
+    if (!/^[a-z0-9_-]+$/.test(value)) {
+      setUsernameError(t('username_format_error'));
+      return;
+    }
+
+    try {
+      await updateAccount.mutateAsync(
+        { username: value },
+        {
+          onSuccess: () => {
+            toast.success(t('account_updated_successfully'));
+          },
+          onError: (error) => {
+            if (error.message === 'Username already exists') {
+              setUsernameError(t('username_already_exists'));
+            } else {
+              toast.error(t('failed_to_update_account'));
+            }
+          },
+        }
+      );
+    } catch (error) {
+      console.error('Failed to update username:', error);
     }
   };
 
@@ -195,28 +256,27 @@ export default function AccountSettingsPage() {
                 <div className='grid grid-cols-2 gap-6'>
                   <div className='space-y-2'>
                     <Label htmlFor='firstName'>{t('first_name')}</Label>
-                    <Input
-                      type='text'
-                      id='firstName'
-                      value={firstName}
-                      onChange={(e) => {
-                        setFirstName(e.target.value);
-                        handleNameChange('firstName', e.target.value);
-                      }}
-                    />
+                    <Input type='text' id='firstName' value={firstName} onChange={(e) => setFirstName(e.target.value)} onBlur={(e) => handleNameChange('firstName', e.target.value)} />
                   </div>
                   <div className='space-y-2'>
                     <Label htmlFor='lastName'>{t('last_name')}</Label>
-                    <Input
-                      type='text'
-                      id='lastName'
-                      value={lastName}
-                      onChange={(e) => {
-                        setLastName(e.target.value);
-                        handleNameChange('lastName', e.target.value);
-                      }}
-                    />
+                    <Input type='text' id='lastName' value={lastName} onChange={(e) => setLastName(e.target.value)} onBlur={(e) => handleNameChange('lastName', e.target.value)} />
                   </div>
+                </div>
+                <div className='space-y-2'>
+                  <Label htmlFor='username'>{t('username')}</Label>
+                  <Input
+                    type='text'
+                    id='username'
+                    value={username}
+                    onChange={(e) => {
+                      const lowercaseValue = e.target.value.toLowerCase().replace(/\s+/g, '');
+                      setUsername(lowercaseValue);
+                    }}
+                    onBlur={(e) => handleUsernameChange(e.target.value)}
+                    placeholder={t('enter_username')}
+                  />
+                  {usernameError && <p className='text-destructive text-sm'>{usernameError}</p>}
                 </div>
                 <div className='space-y-2'>
                   <Label htmlFor='email' className='flex items-center gap-2'>

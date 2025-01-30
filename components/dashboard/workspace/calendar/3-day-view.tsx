@@ -1,7 +1,7 @@
 import type { CalendarEventWithParticipants, CalendarFolder } from '@/lib/schema';
-import { cn } from '@/lib/utils';
+import { addDays, eachDayOfInterval } from 'date-fns';
 import { useTranslations } from 'next-intl';
-import { WEEKDAYS } from './constants';
+import { DayHeader } from './day-header';
 import { TimeColumn } from './time-column';
 import { TimeGrid } from './time-grid';
 
@@ -35,13 +35,10 @@ export function ThreeDayView({
   const t = useTranslations();
 
   const get3Days = (date: Date) => {
-    const days = [];
-    for (let i = 0; i < 3; i++) {
-      const day = new Date(date);
-      day.setDate(date.getDate() + i);
-      days.push(day);
-    }
-    return days;
+    return eachDayOfInterval({
+      start: date,
+      end: addDays(date, 2),
+    });
   };
 
   const threeDays = get3Days(currentDate);
@@ -54,20 +51,17 @@ export function ThreeDayView({
           <span className='md:hidden'>{t('time').charAt(0)}</span>
         </div>
         {threeDays.map((date) => (
-          <div
+          <DayHeader
             key={date.toISOString()}
-            className={cn(
-              'p-1 text-sm md:p-2',
-              date.getDate() === new Date().getDate() && date.getMonth() === new Date().getMonth() && date.getFullYear() === new Date().getFullYear() && 'bg-accent',
-              date.getDate() === selectedDate.getDate() && date.getMonth() === selectedDate.getMonth() && date.getFullYear() === selectedDate.getFullYear() && 'bg-primary/10'
-            )}
-          >
-            <div className='font-medium'>
-              <span className='hidden md:inline'>{t(WEEKDAYS[date.getDay()])}</span>
-              <span className='md:hidden'>{t(WEEKDAYS[date.getDay()]).charAt(0)}</span>
-            </div>
-            <div className='text-muted-foreground'>{date.getDate()}</div>
-          </div>
+            date={date}
+            selectedDate={selectedDate}
+            events={events}
+            folders={folders}
+            hiddenCalendars={hiddenCalendars}
+            onEventEdit={onEventEdit}
+            onEventDelete={onEventDelete}
+            isCompact={true}
+          />
         ))}
       </div>
       <div className='flex-1 overflow-y-auto'>
@@ -77,7 +71,7 @@ export function ThreeDayView({
             <TimeGrid
               key={date.toISOString()}
               date={date}
-              events={events}
+              events={events.filter((event) => !event.isAllDay)}
               folders={folders}
               hiddenCalendars={hiddenCalendars}
               onTimeSelect={onTimeSelect}

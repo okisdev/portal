@@ -1,4 +1,4 @@
-import { company, team } from '@/drizzle/schema';
+import { company, companyContact, contact, team, teamContact } from '@/drizzle/schema';
 import { createTRPCRouter, protectedProcedure } from '@/server/trpc';
 import { eq, sql } from 'drizzle-orm';
 import { z } from 'zod';
@@ -23,11 +23,33 @@ export const companyRouter = createTRPCRouter({
   }),
 
   getCompanyById: protectedProcedure.input(z.object({ id: z.string() })).query(async ({ ctx, input }) => {
-    return await ctx.db
-      .select()
+    const result = await ctx.db
+      .select({
+        id: company.id,
+        name: company.name,
+        description: company.description,
+        industry: company.industry,
+        size: company.size,
+        website: company.website,
+        address: company.address,
+        city: company.city,
+        state: company.state,
+        country: company.country,
+        postalCode: company.postalCode,
+        phone: company.phone,
+        email: company.email,
+        status: company.status,
+        metadata: company.metadata,
+        createdAt: company.createdAt,
+        updatedAt: company.updatedAt,
+        teamCount: sql<number>`(SELECT COUNT(*) FROM ${team} WHERE ${team.companyId} = ${company.id})`,
+        contactCount: sql<number>`(SELECT COUNT(*) FROM ${companyContact} WHERE ${companyContact.companyId} = ${company.id})`,
+      })
       .from(company)
       .where(eq(company.id, input.id))
       .then((rows) => rows[0]);
+
+    return result;
   }),
 
   createCompany: protectedProcedure
@@ -120,7 +142,7 @@ export const companyRouter = createTRPCRouter({
         description: team.description,
         createdAt: team.createdAt,
         updatedAt: team.updatedAt,
-        contacts: sql<number>`(SELECT COUNT(*) FROM team_contact WHERE team_contact.team_id = ${team.id})`,
+        contacts: sql<number>`(SELECT COUNT(*) FROM ${teamContact} WHERE ${teamContact.teamId} = ${team.id})`,
       })
       .from(team)
       .where(eq(team.companyId, input.companyId));
@@ -145,4 +167,55 @@ export const companyRouter = createTRPCRouter({
 
       return updatedCompany;
     }),
+
+  getCompanyContacts: protectedProcedure.input(z.object({ companyId: z.string() })).query(async ({ ctx, input }) => {
+    return await ctx.db
+      .select({
+        id: sql<string>`${companyContact.id}::text`,
+        contact: {
+          id: contact.id,
+          firstName: contact.firstName,
+          lastName: contact.lastName,
+          email: contact.email,
+          phone: contact.phone,
+          status: contact.status,
+          jobTitle: contact.jobTitle,
+          department: companyContact.department,
+          role: companyContact.role,
+          startDate: companyContact.startDate,
+          endDate: companyContact.endDate,
+          isActive: companyContact.isActive,
+        },
+      })
+      .from(companyContact)
+      .innerJoin(contact, eq(companyContact.contactId, contact.id))
+      .where(eq(companyContact.companyId, input.companyId));
+  }),
+
+  addCompanyContact: protectedProcedure
+    .input(
+      z.object({
+        companyId: z.string(),
+        contactId: z.string(),
+        role: z.enum(['employee', 'manager', 'executive', 'other']).optional(),
+        department: z.string().optional(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const [newCompanyContact] = await ctx.db
+        .insert(companyContact)
+        .values({
+          companyId: input.companyId,
+          contactId: input.contactId,
+          role: input.role,
+          department: input.department,
+        })
+        .returning();
+
+      return newCompanyContact;
+    }),
+
+  removeCompanyContact: protectedProcedure.input(z.object({ companyId: z.string(), contactId: z.string() })).mutation(async ({ ctx, input }) => {
+    await ctx.db.delete(companyContact).where(sql`${companyContact.companyId} = ${input.companyId} AND ${companyContact.contactId} = ${input.contactId}`);
+  }),
 });

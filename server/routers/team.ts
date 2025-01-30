@@ -3,6 +3,7 @@ import { activitySubTypeSchema, activityTypeSchema } from '@/lib/schema';
 import { createContactActivityHelper } from '@/server/helper/contact';
 import { createTeamActivityHelper } from '@/server/helper/team';
 import { createTRPCRouter, protectedProcedure } from '@/server/trpc';
+import { TRPCError } from '@trpc/server';
 import { and, asc, eq, exists, inArray, sql } from 'drizzle-orm';
 import { z } from 'zod';
 
@@ -233,12 +234,12 @@ export const teamRouter = createTRPCRouter({
         referralId: z.string().optional(),
         campaignCode: z.string().optional(),
         remarks: z.string().optional(),
-        companyId: z.string().optional(),
+        company: z.object({ id: z.string(), name: z.string() }).optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
       let campaignCodeToSet: string | undefined = input.campaignCode;
-      let companyIdToSet: string | undefined = input.companyId;
+      let companyIdToSet: string | null | undefined = input.company?.id;
 
       if (input.campaignCode) {
         // Verify campaign exists
@@ -253,17 +254,20 @@ export const teamRouter = createTRPCRouter({
         }
       }
 
-      if (input.companyId) {
+      if (input.company?.id) {
         // Verify company exists
         const companyRecord = await ctx.db
           .select()
           .from(company)
-          .where(eq(company.id, input.companyId))
+          .where(eq(company.id, input.company?.id))
           .then((rows) => rows[0]);
 
         if (!companyRecord) {
           companyIdToSet = undefined;
         }
+      } else {
+        // If companyId is explicitly set to undefined in the input, we want to remove the company association
+        companyIdToSet = null;
       }
 
       await ctx.db
@@ -274,8 +278,8 @@ export const teamRouter = createTRPCRouter({
           ...(input.leaderId && { leaderId: input.leaderId }),
           ...(input.subLeaderId && { subLeaderId: input.subLeaderId }),
           ...(input.referralId && { referralId: input.referralId }),
-          ...(campaignCodeToSet && { campaignCode: campaignCodeToSet }),
-          ...(companyIdToSet && { companyId: companyIdToSet }),
+          ...(campaignCodeToSet !== undefined && { campaignCode: campaignCodeToSet }),
+          ...(companyIdToSet !== undefined && { companyId: companyIdToSet }),
           ...(input.remarks && { remarks: input.remarks }),
         })
         .where(eq(team.id, input.id));
@@ -571,27 +575,57 @@ export const teamRouter = createTRPCRouter({
         .then((rows) => rows[0]);
 
       if (existingMember) {
-        throw new Error('Contact is already a member of this team');
+        throw new TRPCError({ code: 'CONFLICT', message: 'Contact is already a member of this team' });
+      }
+
+      // Get team details first
+      const teamDetails = await ctx.db
+        .select({
+          id: team.id,
+          name: team.name,
+        })
+        .from(team)
+        .where(eq(team.id, input.teamId))
+        .then((rows) => rows[0]);
+
+      const contactDetails = await ctx.db
+        .select({
+          firstName: contact.firstName,
+          lastName: contact.lastName,
+          email: contact.email,
+        })
+        .from(contact)
+        .where(eq(contact.id, input.contactId))
+        .then((rows) => rows[0]);
+
+      if (!teamDetails) {
+        throw new TRPCError({ code: 'NOT_FOUND', message: 'Team not found' });
       }
 
       await createContactActivityHelper(ctx, {
         contactId: input.contactId,
         type: 'TEAM',
         subType: 'TEAM_ASSIGNED',
-        description: `Contact was added to team: ${team.name}`,
+        description: `Contact was added to team: ${teamDetails.name}`,
         initiatorType: 'user',
         initiatorId: ctx.session?.user.id,
-        metadata: { team },
+        metadata: {
+          teamId: teamDetails.id,
+          teamName: teamDetails.name,
+        },
       });
 
       await createTeamActivityHelper(ctx, {
         teamId: input.teamId,
         type: 'TEAM',
         subType: 'TEAM_ASSIGNED',
-        description: `Contact was added to team: ${team.name}`,
+        description: `Contact ${contactDetails.firstName} ${contactDetails.lastName} (${contactDetails.email}) was added to team: ${teamDetails.name}`,
         initiatorType: 'user',
         initiatorId: ctx.session?.user.id,
-        metadata: { team },
+        metadata: {
+          teamId: teamDetails.id,
+          teamName: teamDetails.name,
+        },
       });
 
       const [newMember] = await ctx.db

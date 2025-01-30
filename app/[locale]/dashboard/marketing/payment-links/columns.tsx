@@ -2,7 +2,7 @@
 
 import { Badge } from '@/components/ui/badge';
 import { CopyButton } from '@/components/ui/copy-button';
-import { formatDate } from '@/lib/utils';
+import { formatDate } from '@/utils/date';
 import type { ColumnDef } from '@tanstack/react-table';
 import Link from 'next/link';
 import type { PaymentLink } from './types';

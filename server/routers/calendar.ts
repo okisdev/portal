@@ -2,6 +2,7 @@ import { calendarEvent, calendarEventParticipant, calendarFolder, contact, user 
 import { appointmentSchema } from '@/lib/schema';
 import { createContactActivityHelper } from '@/server/helper/contact';
 import { createTRPCRouter, protectedProcedure } from '@/server/trpc';
+import { TRPCError } from '@trpc/server';
 import { and, desc, eq, gte, inArray, lte, or } from 'drizzle-orm';
 import { z } from 'zod';
 
@@ -200,17 +201,30 @@ export const calendarRouter = createTRPCRouter({
       return result[0];
     }),
 
-  deleteEvent: protectedProcedure.input(z.string()).mutation(async ({ ctx, input }) => {
-    // Get event details before deletion
-    const event = await ctx.db
+  deleteEvent: protectedProcedure.input(z.object({ id: z.string() })).mutation(async ({ ctx, input }) => {
+    // Get event details and folder details before deletion
+    const eventWithFolder = await ctx.db
       .select({
-        id: calendarEvent.id,
-        title: calendarEvent.title,
-        startAt: calendarEvent.startAt,
+        event: calendarEvent,
+        folder: calendarFolder,
       })
       .from(calendarEvent)
-      .where(eq(calendarEvent.id, input))
+      .leftJoin(calendarFolder, eq(calendarEvent.folderId, calendarFolder.id))
+      .where(eq(calendarEvent.id, input.id))
       .then((rows) => rows[0]);
+
+    if (!eventWithFolder) {
+      throw new TRPCError({ code: 'NOT_FOUND', message: 'Event not found' });
+    }
+
+    const { event, folder } = eventWithFolder;
+
+    // Check permissions:
+    // 1. If event is in a private folder, only the creator can delete
+    // 2. If event is in a shared/public folder, any user can delete
+    if (folder?.visibility === 'PRIVATE' && event.userId !== ctx.session.user.id) {
+      throw new TRPCError({ code: 'FORBIDDEN', message: 'You do not have permission to delete this event' });
+    }
 
     // Get contact participant before deletion
     const participant = await ctx.db
@@ -218,7 +232,7 @@ export const calendarRouter = createTRPCRouter({
         participantId: calendarEventParticipant.participantId,
       })
       .from(calendarEventParticipant)
-      .where(and(eq(calendarEventParticipant.eventId, input), eq(calendarEventParticipant.participantType, 'contact')))
+      .where(and(eq(calendarEventParticipant.eventId, input.id), eq(calendarEventParticipant.participantType, 'contact')))
       .then((rows) => rows[0]);
 
     if (participant?.participantId) {
@@ -238,7 +252,7 @@ export const calendarRouter = createTRPCRouter({
       });
     }
 
-    return ctx.db.delete(calendarEvent).where(eq(calendarEvent.id, input));
+    return ctx.db.delete(calendarEvent).where(eq(calendarEvent.id, input.id));
   }),
 
   updateFolder: protectedProcedure
@@ -261,8 +275,32 @@ export const calendarRouter = createTRPCRouter({
         .where(and(eq(calendarFolder.id, input.id), eq(calendarFolder.userId, ctx.session.user.id)));
     }),
 
-  deleteFolder: protectedProcedure.input(z.string()).mutation(async ({ ctx, input }) => {
-    return ctx.db.delete(calendarFolder).where(and(eq(calendarFolder.id, input), eq(calendarFolder.userId, ctx.session.user.id)));
+  deleteFolder: protectedProcedure.input(z.object({ id: z.string() })).mutation(async ({ ctx, input }) => {
+    // Get folder details first
+    const folder = await ctx.db
+      .select()
+      .from(calendarFolder)
+      .where(eq(calendarFolder.id, input.id))
+      .then((rows) => rows[0]);
+
+    if (!folder) {
+      throw new TRPCError({ code: 'NOT_FOUND', message: 'Calendar folder not found' });
+    }
+
+    // Check if user has permission to delete the folder
+    if (folder.userId !== ctx.session.user.id) {
+      throw new TRPCError({ code: 'FORBIDDEN', message: 'You do not have permission to delete this folder' });
+    }
+
+    if (folder.isDefault) {
+      throw new TRPCError({ code: 'BAD_REQUEST', message: 'You cannot delete the default folder' });
+    }
+
+    // Delete all events in this folder first
+    await ctx.db.delete(calendarEvent).where(eq(calendarEvent.folderId, input.id));
+
+    // Finally delete the folder
+    return ctx.db.delete(calendarFolder).where(eq(calendarFolder.id, input.id));
   }),
 
   getParticipantOptions: protectedProcedure.query(async ({ ctx }) => {

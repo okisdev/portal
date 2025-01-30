@@ -1,6 +1,7 @@
 import { EventPopover } from '@/components/shared/event-popover';
 import type { CalendarEventWithParticipants, CalendarFolder } from '@/lib/schema';
 import { cn } from '@/lib/utils';
+import { addDays, eachDayOfInterval, endOfMonth, getDate, isSameDay, isSameMonth, startOfMonth, subDays } from 'date-fns';
 import { useTranslations } from 'next-intl';
 import { WEEKDAYS } from './constants';
 
@@ -19,31 +20,33 @@ export function MonthView({ currentDate, selectedDate, setSelectedDate, events, 
   const t = useTranslations();
 
   const getDaysInMonth = (date: Date) => {
-    const year = date.getFullYear();
-    const month = date.getMonth();
-    const firstDay = new Date(year, month, 1);
-    const lastDay = new Date(year, month + 1, 0);
-    const days = [];
+    const start = startOfMonth(date);
+    const end = endOfMonth(date);
 
-    const firstDayOfWeek = firstDay.getDay();
-    for (let i = firstDayOfWeek - 1; i >= 0; i--) {
-      days.push(new Date(year, month, -i));
+    // Get the days before the start of month to fill the calendar
+    const daysBeforeMonth = [];
+    const firstDayOfWeek = start.getDay();
+    if (firstDayOfWeek > 0) {
+      for (let i = firstDayOfWeek - 1; i >= 0; i--) {
+        daysBeforeMonth.push(subDays(start, i + 1));
+      }
     }
 
-    for (let i = 1; i <= lastDay.getDate(); i++) {
-      days.push(new Date(year, month, i));
-    }
+    // Get all days in the month
+    const daysInMonth = eachDayOfInterval({ start, end });
 
-    const remainingDays = 42 - days.length;
+    // Get the days after the month to complete the calendar grid
+    const daysAfterMonth = [];
+    const remainingDays = 42 - (daysBeforeMonth.length + daysInMonth.length);
     for (let i = 1; i <= remainingDays; i++) {
-      days.push(new Date(year, month + 1, i));
+      daysAfterMonth.push(addDays(end, i));
     }
 
-    return days;
+    return [...daysBeforeMonth, ...daysInMonth, ...daysAfterMonth];
   };
 
   const getEventsForDate = (date: Date) => {
-    return events?.filter((event) => event.startAt.getDate() === date.getDate() && event.startAt.getMonth() === date.getMonth() && event.startAt.getFullYear() === date.getFullYear()) ?? [];
+    return events?.filter((event) => isSameDay(event.startAt, date)) ?? [];
   };
 
   return (
@@ -60,24 +63,10 @@ export function MonthView({ currentDate, selectedDate, setSelectedDate, events, 
           // biome-ignore lint/a11y/useKeyWithClickEvents: <explanation>
           <div
             key={date.toISOString()}
-            className={cn(
-              'relative min-h-[120px] border-r border-b p-2',
-              date.getMonth() !== currentDate.getMonth() && 'bg-muted/50',
-              date.getDate() === selectedDate.getDate() && date.getMonth() === selectedDate.getMonth() && date.getFullYear() === selectedDate.getFullYear() && 'ring-2 ring-primary ring-inset'
-            )}
+            className={cn('relative min-h-[120px] border-r border-b p-2', !isSameMonth(date, currentDate) && 'bg-muted/50', isSameDay(date, selectedDate) && 'ring-2 ring-primary ring-inset')}
             onClick={() => setSelectedDate(date)}
           >
-            <span
-              className={cn(
-                'text-sm',
-                date.getDate() === new Date().getDate() &&
-                  date.getMonth() === new Date().getMonth() &&
-                  date.getFullYear() === new Date().getFullYear() &&
-                  'inline-flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground'
-              )}
-            >
-              {date.getDate()}
-            </span>
+            <span className={cn('text-sm', isSameDay(date, new Date()) && 'inline-flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground')}>{getDate(date)}</span>
             {events
               .filter((event) => !hiddenCalendars.has(event.folderId))
               .map((event) => {

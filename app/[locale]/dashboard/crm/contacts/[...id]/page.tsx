@@ -32,7 +32,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { sources } from '@/data/data';
 import { type Priority, type Status, statusSchema } from '@/lib/schema';
-import { formatDate } from '@/lib/utils';
+import { formatDate } from '@/utils/date';
 import { api } from '@/utils/trpc/client';
 import { Building2, Edit2, Mail, MessageSquare, MoreHorizontal, Phone, Save, Send, Users, X } from 'lucide-react';
 import { useTranslations } from 'next-intl';
@@ -120,9 +120,9 @@ export default function ContactIdPage() {
 
   const createContactActivity = api.contact.createContactActivity.useMutation({
     onSuccess: () => {
-      utils.contact.getContactActivities.invalidate({ id: contactId });
+      utils.contact.getContactActivities.invalidate({ id: contactId[0] });
       utils.user.getUnreadNotificationsCount.invalidate();
-      toast.success('Activity created successfully');
+      toast.success(t('activity_created_successfully'));
     },
     onError: (error) => {
       toast.error(error.message);
@@ -539,7 +539,7 @@ export default function ContactIdPage() {
                   calendarFolders={calendarFolders}
                   onCreateAppointment={handleBookAppointment}
                   onUpdateAppointment={(data) => updateAppointment.mutate(data)}
-                  onDeleteAppointment={(id) => deleteAppointment.mutate(id)}
+                  onDeleteAppointment={(id) => deleteAppointment.mutate({ id })}
                   defaultTitle={t('meeting_with', { who: me?.name, name: contact?.name })}
                 />
               </div>

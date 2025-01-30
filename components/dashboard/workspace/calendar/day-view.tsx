@@ -1,7 +1,6 @@
 import type { CalendarEventWithParticipants, CalendarFolder } from '@/lib/schema';
-import { cn } from '@/lib/utils';
 import { useTranslations } from 'next-intl';
-import { WEEKDAYS } from './constants';
+import { DayHeader } from './day-header';
 import { TimeColumn } from './time-column';
 import { TimeGrid } from './time-grid';
 
@@ -29,26 +28,23 @@ export function DayView({ currentDate, selectedDate, events, folders, hiddenCale
           <span className='hidden md:inline'>{t('time')}</span>
           <span className='md:hidden'>{t('time').charAt(0)}</span>
         </div>
-        <div
-          className={cn(
-            'p-2 text-sm',
-            currentDate.getDate() === new Date().getDate() && currentDate.getMonth() === new Date().getMonth() && currentDate.getFullYear() === new Date().getFullYear() && 'bg-accent',
-            currentDate.getDate() === selectedDate.getDate() && currentDate.getMonth() === selectedDate.getMonth() && currentDate.getFullYear() === selectedDate.getFullYear() && 'bg-primary/10'
-          )}
-        >
-          <div className='font-medium'>
-            <span className='hidden md:inline'>{t(WEEKDAYS[currentDate.getDay()])}</span>
-            <span className='md:hidden'>{t(WEEKDAYS[currentDate.getDay()]).charAt(0)}</span>
-          </div>
-          <div className='text-muted-foreground'>{currentDate.getDate()}</div>
-        </div>
+        <DayHeader
+          date={currentDate}
+          selectedDate={selectedDate}
+          events={events}
+          folders={folders}
+          hiddenCalendars={hiddenCalendars}
+          onEventEdit={onEventEdit}
+          onEventDelete={onEventDelete}
+          isCompact={true}
+        />
       </div>
       <div className='flex-1 overflow-y-auto'>
         <div className='-mr-[1px] grid grid-cols-[50px_1fr] divide-x md:grid-cols-[100px_1fr]' style={{ height: 'calc(60px * 24)' }}>
           <TimeColumn />
           <TimeGrid
             date={currentDate}
-            events={events}
+            events={events.filter((event) => !event.isAllDay)}
             folders={folders}
             hiddenCalendars={hiddenCalendars}
             onTimeSelect={onTimeSelect}

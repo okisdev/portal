@@ -1,7 +1,7 @@
 import type { CalendarEventWithParticipants, CalendarFolder } from '@/lib/schema';
-import { cn } from '@/lib/utils';
+import { eachDayOfInterval, endOfWeek, startOfWeek } from 'date-fns';
 import { useTranslations } from 'next-intl';
-import { WEEKDAYS } from './constants';
+import { DayHeader } from './day-header';
 import { TimeColumn } from './time-column';
 import { TimeGrid } from './time-grid';
 
@@ -23,15 +23,10 @@ export function WeekView({ currentDate, selectedDate, events, folders, hiddenCal
   const t = useTranslations();
 
   const getWeekDays = (date: Date) => {
-    const start = new Date(date);
-    start.setDate(start.getDate() - start.getDay());
-    const days = [];
-    for (let i = 0; i < 7; i++) {
-      const day = new Date(start);
-      day.setDate(start.getDate() + i);
-      days.push(day);
-    }
-    return days;
+    return eachDayOfInterval({
+      start: startOfWeek(date),
+      end: endOfWeek(date),
+    });
   };
 
   return (
@@ -39,17 +34,16 @@ export function WeekView({ currentDate, selectedDate, events, folders, hiddenCal
       <div className='grid grid-cols-8 divide-x border-b bg-background'>
         <div className='p-2 text-muted-foreground text-sm'>{t('time')}</div>
         {getWeekDays(currentDate).map((date) => (
-          <div
+          <DayHeader
             key={date.toISOString()}
-            className={cn(
-              'p-2 text-sm',
-              date.getDate() === new Date().getDate() && date.getMonth() === new Date().getMonth() && date.getFullYear() === new Date().getFullYear() && 'bg-accent',
-              date.getDate() === selectedDate.getDate() && date.getMonth() === selectedDate.getMonth() && date.getFullYear() === selectedDate.getFullYear() && 'bg-primary/10'
-            )}
-          >
-            <div className='font-medium'>{t(WEEKDAYS[date.getDay()])}</div>
-            <div className='text-muted-foreground'>{date.getDate()}</div>
-          </div>
+            date={date}
+            selectedDate={selectedDate}
+            events={events}
+            folders={folders}
+            hiddenCalendars={hiddenCalendars}
+            onEventEdit={onEventEdit}
+            onEventDelete={onEventDelete}
+          />
         ))}
       </div>
       <div className='flex-1 overflow-y-auto'>
@@ -59,7 +53,7 @@ export function WeekView({ currentDate, selectedDate, events, folders, hiddenCal
             <TimeGrid
               key={date.toISOString()}
               date={date}
-              events={events}
+              events={events.filter((event) => !event.isAllDay)}
               folders={folders}
               hiddenCalendars={hiddenCalendars}
               onTimeSelect={onTimeSelect}
