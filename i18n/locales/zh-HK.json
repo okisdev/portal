@@ -493,5 +493,15 @@
   "will_cancel_at": "將在 {date} 取消",
   "will_renew_at": "將在 {date} 續訂",
   "workspace": "工作區",
-  "write_a_reply": "寫回覆...使用 @ 提及他人"
+  "write_a_reply": "寫回覆...使用 @ 提及他人",
+  "hide": "隱藏",
+  "show": "展示",
+  "folder_info": "資料夾資訊",
+  "owner": "擁有者",
+  "you": "您",
+  "PRIVATE": "私人的",
+  "PUBLIC": "民眾",
+  "SHARED": "共享",
+  "delete_calendar": "刪除日曆",
+  "delete_calendar_description": "該動作不能撤消。\n這將永久刪除日曆和所有相關事件。"
 }

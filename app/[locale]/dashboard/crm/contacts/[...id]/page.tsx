@@ -539,7 +539,7 @@ export default function ContactIdPage() {
                   calendarFolders={calendarFolders}
                   onCreateAppointment={handleBookAppointment}
                   onUpdateAppointment={(data) => updateAppointment.mutate(data)}
-                  onDeleteAppointment={(id) => deleteAppointment.mutate(id)}
+                  onDeleteAppointment={(id) => deleteAppointment.mutate({ id })}
                   defaultTitle={t('meeting_with', { who: me?.name, name: contact?.name })}
                 />
               </div>

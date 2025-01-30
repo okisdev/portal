@@ -493,5 +493,15 @@
   "will_cancel_at": "将在 {date} 取消",
   "will_renew_at": "将在 {date} 续订",
   "workspace": "工作区",
-  "write_a_reply": "写回复...使用 @ 提及他人"
+  "write_a_reply": "写回复...使用 @ 提及他人",
+  "hide": "隐藏",
+  "show": "展示",
+  "PRIVATE": "私人的",
+  "PUBLIC": "民众",
+  "SHARED": "共享",
+  "folder_info": "文件夹信息",
+  "owner": "所有者",
+  "you": "你",
+  "delete_calendar": "删除日历",
+  "delete_calendar_description": "该动作不能撤消。\n这将永久删除日历和所有相关事件。"
 }

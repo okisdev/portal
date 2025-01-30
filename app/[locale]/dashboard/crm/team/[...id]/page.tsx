@@ -85,7 +85,9 @@ export default function TeamIdPage() {
     enabled: isAddMemberOpen,
   });
   const { data: folders } = api.calendar.getMyFolders.useQuery();
-  const { data: participantOptions } = api.calendar.getParticipantOptions.useQuery();
+  const { data: participantOptions } = api.calendar.getParticipantOptions.useQuery(undefined, {
+    enabled: isNewMeetingModalOpen,
+  });
   const { data: teamActivities } = api.team.getTeamActivities.useQuery({
     id: teamId[0],
   });
@@ -367,14 +369,6 @@ export default function TeamIdPage() {
       meetingDate: data.startAt,
     });
   };
-
-  const initialParticipants =
-    teamContacts?.map((c) => ({
-      type: 'contact' as const,
-      id: c.contact.id,
-      name: `${c.contact.firstName} ${c.contact.lastName}`,
-      role: 'required' as const,
-    })) || [];
 
   const handleDeleteContact = () => {
     if (contactToDelete) {
@@ -707,7 +701,6 @@ export default function TeamIdPage() {
             contacts: participantOptions.contacts,
           }
         }
-        initialParticipants={initialParticipants}
         onCreateFolder={async (name) => {
           await createFolder.mutateAsync({
             name,

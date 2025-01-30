@@ -493,5 +493,15 @@
   "will_cancel_at": "Will cancel at {date}",
   "will_renew_at": "Will renew at {date}",
   "workspace": "Workspace",
-  "write_a_reply": "Write a reply... Use @ to mention someone"
+  "write_a_reply": "Write a reply... Use @ to mention someone",
+  "show": "Show",
+  "hide": "Hide",
+  "folder_info": "Folder Info",
+  "owner": "Owner",
+  "you": "You",
+  "PRIVATE": "Private",
+  "SHARED": "Shared",
+  "PUBLIC": "Public",
+  "delete_calendar": "Delete Calendar",
+  "delete_calendar_description": "This action cannot be undone. This will permanently delete the calendar and all associated events."
 }

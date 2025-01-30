@@ -56,7 +56,7 @@ export function EventPopover({ event, folder, onEventEdit, onEventDelete, onEven
             </div>
             <p className='text-muted-foreground text-sm'>
               {event.isAllDay ? (
-                'All day'
+                t('all_day')
               ) : (
                 <>
                   {new Date(event.startAt).toLocaleTimeString([], {

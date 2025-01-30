@@ -90,7 +90,9 @@ export default function DashboardPersonalCalendar() {
     startDate: startOfMonth,
     endDate: endOfMonth,
   });
-  const { data: participantOptions } = api.calendar.getParticipantOptions.useQuery();
+  const { data: participantOptions } = api.calendar.getParticipantOptions.useQuery(undefined, {
+    enabled: isEventDialogOpen,
+  });
 
   const form = useForm<z.infer<typeof eventFormSchema>>({
     resolver: zodResolver(eventFormSchema),
@@ -403,7 +405,7 @@ export default function DashboardPersonalCalendar() {
               setIsEditCalendarOpen(true);
             }}
             onDeleteCalendar={(folderId) => {
-              toast.promise(deleteFolder.mutateAsync(folderId), {
+              toast.promise(deleteFolder.mutateAsync({ id: folderId }), {
                 loading: 'Deleting calendar...',
                 success: 'Calendar deleted successfully',
                 error: 'Failed to delete calendar',
@@ -433,7 +435,7 @@ export default function DashboardPersonalCalendar() {
               hiddenCalendars={hiddenCalendars}
               onEventEdit={handleEditEvent}
               onEventDelete={(eventId) => {
-                toast.promise(deleteEvent.mutateAsync(eventId), {
+                toast.promise(deleteEvent.mutateAsync({ id: eventId }), {
                   loading: 'Deleting event...',
                   success: 'Event deleted successfully',
                   error: 'Failed to delete event',
@@ -453,7 +455,7 @@ export default function DashboardPersonalCalendar() {
               onSelectionEnd={finishSelection}
               onEventEdit={handleEditEvent}
               onEventDelete={(eventId) => {
-                toast.promise(deleteEvent.mutateAsync(eventId), {
+                toast.promise(deleteEvent.mutateAsync({ id: eventId }), {
                   loading: 'Deleting event...',
                   success: 'Event deleted successfully',
                   error: 'Failed to delete event',
@@ -473,7 +475,7 @@ export default function DashboardPersonalCalendar() {
               onSelectionEnd={finishSelection}
               onEventEdit={handleEditEvent}
               onEventDelete={(eventId) => {
-                toast.promise(deleteEvent.mutateAsync(eventId), {
+                toast.promise(deleteEvent.mutateAsync({ id: eventId }), {
                   loading: 'Deleting event...',
                   success: 'Event deleted successfully',
                   error: 'Failed to delete event',
@@ -493,7 +495,7 @@ export default function DashboardPersonalCalendar() {
               onSelectionEnd={finishSelection}
               onEventEdit={handleEditEvent}
               onEventDelete={(eventId) => {
-                toast.promise(deleteEvent.mutateAsync(eventId), {
+                toast.promise(deleteEvent.mutateAsync({ id: eventId }), {
                   loading: 'Deleting event...',
                   success: 'Event deleted successfully',
                   error: 'Failed to delete event',
