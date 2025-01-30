@@ -527,5 +527,12 @@
   "will_renew_at": "將在 {date} 續訂",
   "workspace": "工作區",
   "write_a_reply": "寫回覆... 使用 @ 提及他人",
-  "you": "您"
+  "you": "您",
+  "company_contacts": "公司聯繫人",
+  "edit_company_information": "編輯公司信息",
+  "not_specified": "未指定",
+  "add_team": "添加團隊",
+  "company_information": "公司信息",
+  "company_teams": "公司團隊",
+  "company_stats": "公司統計數據"
 }
