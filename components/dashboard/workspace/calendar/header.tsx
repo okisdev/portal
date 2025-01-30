@@ -27,12 +27,23 @@ export function CalendarHeader({ currentDate, view, onViewChange, onTodayClick, 
       return format(currentDate, 'yyyy MMMM', { locale: dateLocale });
     }
     if (view === 'week') {
-      const endDate = addDays(currentDate, 6);
-      return format(currentDate, `MMMM d - ${currentDate.getMonth() !== endDate.getMonth() ? 'MMMM ' : ''}d, yyyy`, { locale: dateLocale });
+      const startDate = new Date(currentDate);
+      const day = startDate.getDay();
+      startDate.setDate(startDate.getDate() - day);
+      const endDate = addDays(startDate, 6);
+      const startYear = format(startDate, 'yyyy', { locale: dateLocale });
+      const endYear = format(endDate, 'yyyy', { locale: dateLocale });
+      const dateRange = `${format(startDate, 'MMMM d', { locale: dateLocale })} - ${format(endDate, startDate.getMonth() !== endDate.getMonth() ? 'MMMM d' : 'd', { locale: dateLocale })}`;
+      return startYear === endYear ? `${dateRange}, ${startYear}` : `${dateRange}, ${startYear}-${endYear}`;
     }
     if (view === '3days') {
-      const endDate = addDays(currentDate, 2);
-      return format(currentDate, `MMMM d - ${currentDate.getMonth() !== endDate.getMonth() ? 'MMMM ' : ''}d, yyyy`, { locale: dateLocale });
+      const startDate = new Date(currentDate);
+      const endDate = addDays(startDate, 2);
+      return `${format(startDate, 'MMMM d', { locale: dateLocale })} - ${format(endDate, startDate.getMonth() !== endDate.getMonth() ? 'MMMM d' : 'd', { locale: dateLocale })}, ${format(
+        startDate,
+        'yyyy',
+        { locale: dateLocale }
+      )}`;
     }
     return format(currentDate, 'MMMM d, yyyy', { locale: dateLocale });
   };
