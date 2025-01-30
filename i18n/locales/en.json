@@ -522,5 +522,7 @@
   "username_format_error": "Username format error",
   "username_already_exists": "Username already exists",
   "users": "Users",
-  "use_query": "Use \"{query}\""
+  "use_query": "Use \"{query}\"",
+  "new_campaign_description": "Create a new campaign",
+  "team_updated_successfully": "Team updated successfully"
 }

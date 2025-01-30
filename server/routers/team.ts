@@ -234,12 +234,12 @@ export const teamRouter = createTRPCRouter({
         referralId: z.string().optional(),
         campaignCode: z.string().optional(),
         remarks: z.string().optional(),
-        companyId: z.string().optional(),
+        company: z.object({ id: z.string(), name: z.string() }).optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
       let campaignCodeToSet: string | undefined = input.campaignCode;
-      let companyIdToSet: string | undefined = input.companyId;
+      let companyIdToSet: string | null | undefined = input.company?.id;
 
       if (input.campaignCode) {
         // Verify campaign exists
@@ -254,17 +254,20 @@ export const teamRouter = createTRPCRouter({
         }
       }
 
-      if (input.companyId) {
+      if (input.company?.id) {
         // Verify company exists
         const companyRecord = await ctx.db
           .select()
           .from(company)
-          .where(eq(company.id, input.companyId))
+          .where(eq(company.id, input.company?.id))
           .then((rows) => rows[0]);
 
         if (!companyRecord) {
           companyIdToSet = undefined;
         }
+      } else {
+        // If companyId is explicitly set to undefined in the input, we want to remove the company association
+        companyIdToSet = null;
       }
 
       await ctx.db
@@ -275,8 +278,8 @@ export const teamRouter = createTRPCRouter({
           ...(input.leaderId && { leaderId: input.leaderId }),
           ...(input.subLeaderId && { subLeaderId: input.subLeaderId }),
           ...(input.referralId && { referralId: input.referralId }),
-          ...(campaignCodeToSet && { campaignCode: campaignCodeToSet }),
-          ...(companyIdToSet && { companyId: companyIdToSet }),
+          ...(campaignCodeToSet !== undefined && { campaignCode: campaignCodeToSet }),
+          ...(companyIdToSet !== undefined && { companyId: companyIdToSet }),
           ...(input.remarks && { remarks: input.remarks }),
         })
         .where(eq(team.id, input.id));

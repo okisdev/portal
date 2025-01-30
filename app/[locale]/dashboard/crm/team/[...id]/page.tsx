@@ -66,7 +66,7 @@ export default function TeamIdPage() {
     referralId: '',
     campaignCode: '',
     remarks: '',
-    companyId: '',
+    company: { id: '', name: '' },
   });
   const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
   const [searchValue, setSearchValue] = useState('');
@@ -98,7 +98,7 @@ export default function TeamIdPage() {
     onSuccess: () => {
       router.push(`/dashboard/crm/team/${teamId[0]}`);
       utils.team.getTeamById.invalidate({ id: teamId[0] });
-      toast.success('Team updated successfully');
+      toast.success(t('team_updated_successfully'));
     },
     onError: (error) => {
       toast.error(error.message);
@@ -190,7 +190,7 @@ export default function TeamIdPage() {
         referralId: team.referralId || '',
         campaignCode: team.campaignCode || '',
         remarks: team.remarks || '',
-        companyId: team.companyId || '',
+        company: team.company || { id: '', name: '' },
       });
       setIsEditModalOpen(true);
     } else {
@@ -504,30 +504,28 @@ export default function TeamIdPage() {
           <div className='rounded-lg border bg-card p-4'>
             <h2 className='mb-3 font-medium'>{t('team_information')}</h2>
             <div className='space-y-1'>
-              {team.companyId && (
-                <div>
-                  <Label className='text-muted-foreground text-xs'>{t('company')}</Label>
-                  <p className='text-sm'>
-                    <Link href={`/dashboard/crm/company/${team.companyId}`}>{team.company?.name || 'N/A'}</Link>
-                  </p>
-                </div>
-              )}
               <div>
                 <Label className='text-muted-foreground text-xs'>{t('team_leader')}</Label>
                 <p className='text-sm'>
-                  <Link href={`/dashboard/crm/contacts/${team.leaderId}`}>{team.leaderId ? `${team.leader?.firstName} ${team.leader?.lastName}` : 'N/A'}</Link>
+                  <Link href={team.leaderId ? `/dashboard/crm/contacts/${team.leaderId}` : ''}>{team.leaderId ? `${team.leader?.firstName} ${team.leader?.lastName}` : 'N/A'}</Link>
                 </p>
               </div>
               <div>
                 <Label className='text-muted-foreground text-xs'>{t('sub_leader')}</Label>
                 <p className='text-sm'>
-                  <Link href={`/dashboard/crm/contacts/${team.subLeaderId}`}>{team.subLeaderId ? `${team.subLeader?.firstName} ${team.subLeader?.lastName}` : 'N/A'}</Link>
+                  <Link href={team.subLeaderId ? `/dashboard/crm/contacts/${team.subLeaderId}` : ''}>{team.subLeaderId ? `${team.subLeader?.firstName} ${team.subLeader?.lastName}` : 'N/A'}</Link>
                 </p>
               </div>
               <div>
                 <Label className='text-muted-foreground text-xs'>{t('referral')}</Label>
                 <p className='text-sm'>
-                  <Link href={`/dashboard/crm/contacts/${team.referralId}`}>{team.referralId ? `${team.referral?.firstName} ${team.referral?.lastName}` : 'N/A'}</Link>
+                  <Link href={team.referralId ? `/dashboard/crm/contacts/${team.referralId}` : ''}>{team.referralId ? `${team.referral?.firstName} ${team.referral?.lastName}` : 'N/A'}</Link>
+                </p>
+              </div>
+              <div>
+                <Label className='text-muted-foreground text-xs'>{t('company')}</Label>
+                <p className='text-sm'>
+                  <Link href={team.company ? `/dashboard/crm/company/${team.company?.id}` : ''}>{team.company?.name || 'N/A'}</Link>
                 </p>
               </div>
               <div>
@@ -664,10 +662,10 @@ export default function TeamIdPage() {
             <div className='space-y-2'>
               <Label>{t('company')}</Label>
               <Combobox
-                value={editForm.companyId ? companies?.find((c) => c.id === editForm.companyId)?.name || '' : ''}
+                value={editForm.company ? companies?.find((c) => c.id === editForm.company.id)?.name || '' : ''}
                 onChange={(value) => {
                   const company = companies?.find((c) => c.name === value);
-                  setEditForm({ ...editForm, companyId: company?.id || '' });
+                  setEditForm({ ...editForm, company: company || { id: '', name: '' } });
                 }}
                 items={companies?.map((company) => company.name) || []}
                 placeholder={t('select_company')}

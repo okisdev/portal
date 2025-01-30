@@ -29,6 +29,9 @@ const defaultValues: Partial<CampaignFormValues> = {
   status: 'draft',
   type: 'email',
   campaignCode: '',
+  name: '',
+  description: '',
+  metrics: '',
 };
 
 export default function NewCampaignPage() {
@@ -57,7 +60,7 @@ export default function NewCampaignPage() {
     <div className='space-y-4 p-4'>
       <PageHeader
         title={t('new_campaign')}
-        description='Create a new marketing campaign'
+        description={t('new_campaign_description')}
         right={
           <div className='space-x-2'>
             <Button variant='outline' onClick={() => router.back()}>
@@ -116,7 +119,7 @@ export default function NewCampaignPage() {
                     <SelectContent>
                       {campaignTypes.map((type) => (
                         <SelectItem key={type} value={type}>
-                          {t(type)}
+                          {type}
                         </SelectItem>
                       ))}
                     </SelectContent>
