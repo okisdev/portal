@@ -112,7 +112,7 @@ export function CalendarSidePanel({
       <div className='grid grid-cols-7 gap-1 text-sm'>
         {WEEKDAYS.map((day) => (
           <div key={day} className='text-center text-muted-foreground'>
-            {day.slice(0, 1)}
+            {locale === 'en' ? t(day).slice(0, 1) : t(day).slice(2)}
           </div>
         ))}
         {getDaysInMonth(currentDate)
