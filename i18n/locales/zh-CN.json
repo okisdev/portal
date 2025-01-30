@@ -516,5 +516,9 @@
   "contact_added_successfully": "联系成功添加",
   "contact_removed_successfully": "联系成功删除",
   "remove_contact": "删除联系人",
-  "remove_contact_description": "您确定要从团队中删除此联系人吗？\n该动作不能撤消。"
+  "remove_contact_description": "您确定要从团队中删除此联系人吗？\n该动作不能撤消。",
+  "enter_username": "输入用户名",
+  "passwords_do_not_match": "密码不匹配",
+  "username_already_exists": "用户名已经存在",
+  "username_format_error": "用户名格式错误"
 }

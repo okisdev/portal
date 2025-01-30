@@ -45,10 +45,23 @@ export const accountRouter = createTRPCRouter({
         lastName: z.string().optional(),
         email: z.string().email().optional(),
         image: z.string().optional(),
+        username: z
+          .string()
+          .regex(/^[a-z0-9_-]+$/, 'Username can only contain lowercase letters, numbers, underscores, and hyphens')
+          .optional(),
       })
     )
-    .mutation(({ ctx, input }) => {
+    .mutation(async ({ ctx, input }) => {
       if (!ctx.session.user.id) throw new TRPCError({ code: 'UNAUTHORIZED' });
+
+      if (input.username) {
+        const existingUser = await ctx.db
+          .select()
+          .from(user)
+          .where(eq(user.username, input.username))
+          .then((rows) => rows[0]);
+        if (existingUser) throw new TRPCError({ code: 'CONFLICT', message: 'Username already exists' });
+      }
 
       return ctx.db
         .update(user)
@@ -58,6 +71,7 @@ export const accountRouter = createTRPCRouter({
           name: `${input.firstName} ${input.lastName}`,
           email: input.email,
           image: input.image,
+          username: input.username,
         })
         .where(eq(user.id, ctx.session.user.id));
     }),

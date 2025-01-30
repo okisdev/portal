@@ -516,5 +516,9 @@
   "contact_added_successfully": "Contact added successfully",
   "contact_removed_successfully": "Contact removed successfully",
   "remove_contact": "Remove Contact",
-  "remove_contact_description": "Are you sure you want to remove this contact from the team? This action cannot be undone."
+  "remove_contact_description": "Are you sure you want to remove this contact from the team? This action cannot be undone.",
+  "enter_username": "Enter username",
+  "passwords_do_not_match": "Passwords do not match",
+  "username_format_error": "Username format error",
+  "username_already_exists": "Username already exists"
 }

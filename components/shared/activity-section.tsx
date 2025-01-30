@@ -166,6 +166,11 @@ export function ActivitySection({ activities, onCreateActivity, isLoading }: Act
         }
       }
     }
+
+    if (e.key === 'Escape' && showMentions) {
+      e.preventDefault();
+      setShowMentions(false);
+    }
   };
 
   useEffect(() => {
@@ -300,7 +305,7 @@ export function ActivitySection({ activities, onCreateActivity, isLoading }: Act
                                         .map((user) => (
                                           <CommandItem key={user.id} onSelect={() => handleMention(user.username, true)} className='flex items-start gap-2 p-2'>
                                             <Avatar className='h-6 w-6'>
-                                              <AvatarImage src={`https://avatar.vercel.sh/${user.id}`} />
+                                              <AvatarImage src={user.display} />
                                               <AvatarFallback>{user.display[0]}</AvatarFallback>
                                             </Avatar>
                                             <span className='text-left'>{user.display}</span>
