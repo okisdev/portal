@@ -482,7 +482,7 @@ export default function CampaignDetailsPage() {
                       }));
                     }}
                   >
-                    Add Condition
+                    {t('add_condition')}
                   </Button>
                 </div>
               </DropdownMenuContent>

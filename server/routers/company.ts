@@ -18,8 +18,11 @@ export const companyRouter = createTRPCRouter({
         status: company.status,
         createdAt: company.createdAt,
         teams: sql<number>`(SELECT COUNT(*) FROM ${team} WHERE ${team.companyId} = ${company.id})`,
+        contacts: sql<number>`(SELECT COUNT(*) FROM ${companyContact} WHERE ${companyContact.companyId} = ${company.id})`,
       })
-      .from(company);
+      .from(company)
+      .leftJoin(companyContact, eq(companyContact.companyId, company.id))
+      .groupBy(company.id, company.name, company.description, company.industry, company.size, company.website, company.email, company.phone, company.status, company.createdAt);
   }),
 
   getCompanyById: protectedProcedure.input(z.object({ id: z.string() })).query(async ({ ctx, input }) => {
@@ -46,6 +49,8 @@ export const companyRouter = createTRPCRouter({
         contactCount: sql<number>`(SELECT COUNT(*) FROM ${companyContact} WHERE ${companyContact.companyId} = ${company.id})`,
       })
       .from(company)
+      .leftJoin(team, eq(team.companyId, company.id))
+      .leftJoin(teamContact, eq(teamContact.teamId, team.id))
       .where(eq(company.id, input.id))
       .then((rows) => rows[0]);
 
@@ -145,6 +150,7 @@ export const companyRouter = createTRPCRouter({
         contacts: sql<number>`(SELECT COUNT(*) FROM ${teamContact} WHERE ${teamContact.teamId} = ${team.id})`,
       })
       .from(team)
+      .leftJoin(teamContact, eq(teamContact.teamId, team.id))
       .where(eq(team.companyId, input.companyId));
   }),
 
@@ -188,7 +194,7 @@ export const companyRouter = createTRPCRouter({
         },
       })
       .from(companyContact)
-      .innerJoin(contact, eq(companyContact.contactId, contact.id))
+      .leftJoin(contact, eq(companyContact.contactId, contact.id))
       .where(eq(companyContact.companyId, input.companyId));
   }),
 

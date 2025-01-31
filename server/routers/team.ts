@@ -22,7 +22,9 @@ export const teamRouter = createTRPCRouter({
            FROM ${company} c 
            WHERE c.id = ${team.companyId})`,
       })
-      .from(team);
+      .from(team)
+      .leftJoin(teamContact, eq(teamContact.teamId, team.id))
+      .groupBy(team.id, team.name, team.description, team.createdAt, team.createdBy, team.companyId);
   }),
 
   getContactTeams: protectedProcedure.input(z.object({ contactId: z.string() })).query(({ ctx, input }) => {

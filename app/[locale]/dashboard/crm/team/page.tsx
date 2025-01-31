@@ -269,7 +269,7 @@ export default function CRMTeamsPage() {
         />
       </div>
 
-      <PaginationTable table={table} columns={tableColumns} loading={isLoading} onRowClick={(row) => router.push(`/dashboard/crm/team/${row.id}`)} rowClassName='cursor-pointer hover:bg-muted' />
+      <PaginationTable table={table} columns={tableColumns} loading={isLoading} onRowClick={(row) => router.push(`/dashboard/crm/team/${row.id}`)} rowClassName='cursor-pointer' />
 
       <ActionAlertDialog
         open={!!teamToDelete}
@@ -290,7 +290,7 @@ export default function CRMTeamsPage() {
             </div>
             <div className='space-y-2'>
               <Label>{t('description')}</Label>
-              <Input value={newTeamDescription} onChange={(e) => setNewTeamDescription(e.target.value)} placeholder='Enter team description...' />
+              <Input value={newTeamDescription} onChange={(e) => setNewTeamDescription(e.target.value)} placeholder={t('enter_team_description')} />
             </div>
             <div className='flex justify-end gap-2'>
               <Button type='button' variant='outline' onClick={() => setIsCreateModalOpen(false)}>

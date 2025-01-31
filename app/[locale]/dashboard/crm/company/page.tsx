@@ -446,6 +446,11 @@ export default function CompanyPage() {
       header: t('teams'),
       cell: ({ row }) => <span>{row.original.teams || 0}</span>,
     },
+    // {
+    //   accessorKey: 'contacts',
+    //   header: t('contacts'),
+    //   cell: ({ row }) => <span>{row.original.contacts || 0}</span>,
+    // },
     {
       accessorKey: 'status',
       header: t('status'),
@@ -460,7 +465,7 @@ export default function CompanyPage() {
       accessorKey: 'website',
       header: t('website'),
       cell: ({ row }) => (
-        <Button variant='ghost' size='sm' disabled={!row.original.website} asChild>
+        <Button variant='ghost' size='sm' disabled={!row.original.website} asChild onClick={(e) => e.stopPropagation()}>
           <Link href={row.original.website} target='_blank' rel='noopener noreferrer'>
             {row.original.website ? t('visit') : '—'}
             {row.original.website && <ExternalLink className='h-4 w-4' />}
@@ -586,7 +591,7 @@ export default function CompanyPage() {
                       }));
                     }}
                   >
-                    Add Condition
+                    {t('add_condition')}
                   </Button>
                 </div>
               </DropdownMenuContent>
@@ -747,20 +752,6 @@ export default function CompanyPage() {
 
                 <FormField
                   control={createCompanyForm.control}
-                  name='phone'
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{t('phone')}</FormLabel>
-                      <FormControl>
-                        <PhoneInput value={field.value || ''} onChange={field.onChange} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={createCompanyForm.control}
                   name='status'
                   render={({ field }) => (
                     <FormItem>
@@ -781,6 +772,20 @@ export default function CompanyPage() {
                   )}
                 />
               </div>
+
+              <FormField
+                control={createCompanyForm.control}
+                name='phone'
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t('phone')}</FormLabel>
+                    <FormControl>
+                      <PhoneInput value={field.value || ''} onChange={field.onChange} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
               <FormField
                 control={createCompanyForm.control}

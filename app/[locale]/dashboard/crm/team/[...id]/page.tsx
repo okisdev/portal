@@ -441,6 +441,7 @@ export default function TeamIdPage() {
                 </PopoverContent>
               </Popover>
             </div>
+            {teamContacts && teamContacts.length === 0 && <p className='text-muted-foreground text-sm'>{t('no_team_contacts_found')}</p>}
             {teamContacts && teamContacts?.length > 0 && (
               <PaginationTable
                 table={table}
