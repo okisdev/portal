@@ -293,6 +293,8 @@
   "no_activities_found": "未找到活动",
   "no_calendars_found": "未找到日历",
   "no_columns_found": "未找到列",
+  "no_company_contacts_found": "找不到公司联系",
+  "no_company_teams_found": "找不到公司团队",
   "no_contacts_found": "未找到联系人",
   "no_locations_found": "未找到位置",
   "no_matching_tags": "没有匹配的标签",
@@ -304,6 +306,7 @@
   "no_remark_added": "尚未添加备注",
   "no_results": "暂无结果",
   "no_results_found": "未找到结果",
+  "no_team_contacts_found": "找不到团队成员",
   "no_team_roles_found": "未找到团队角色",
   "no_timezone_found": "未找到时区",
   "no_upcoming_meetings": "没有即将召开的会议",
@@ -514,7 +517,7 @@
   "upload_existing_contacts": "上传现有联系人",
   "use_magic_link": "使用魔术链接",
   "use_password": "使用密码",
-  "use_query": "使用「{query}」",
+  "use_query": "使用“{query}”",
   "use_template": "使用模板",
   "user": "用户",
   "user_management": "用户管理",
@@ -541,8 +544,5 @@
   "will_renew_at": "将在 {date} 续订",
   "workspace": "工作区",
   "write_a_reply": "写回复... 使用 @ 提及他人",
-  "you": "你",
-  "no_team_contacts_found": "找不到团队成员",
-  "no_company_contacts_found": "找不到公司联系",
-  "no_company_teams_found": "找不到公司团队"
+  "you": "你"
 }
