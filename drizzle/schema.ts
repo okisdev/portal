@@ -645,21 +645,27 @@ export const team = pgTable('team', {
   updatedAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
 });
 
-export const teamContact = pgTable('teamContact', {
-  id: text()
-    .primaryKey()
-    .notNull()
-    .$defaultFn(() => crypto.randomUUID()),
-  teamId: text()
-    .notNull()
-    .references(() => team.id, { onDelete: 'cascade' }),
-  contactId: text()
-    .notNull()
-    .references(() => contact.id, { onDelete: 'cascade' }),
-  assignedTo: text().references(() => user.id),
-  createdAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
-  updatedAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
-});
+export const teamContact = pgTable(
+  'teamContact',
+  {
+    id: text()
+      .primaryKey()
+      .notNull()
+      .$defaultFn(() => crypto.randomUUID()),
+    teamId: text()
+      .notNull()
+      .references(() => team.id, { onDelete: 'cascade' }),
+    contactId: text()
+      .notNull()
+      .references(() => contact.id, { onDelete: 'cascade' }),
+    assignedTo: text().references(() => user.id),
+    createdAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
+    updatedAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
+  },
+  (table) => ({
+    unq: unique().on(table.teamId, table.contactId),
+  })
+);
 
 export const teamActivity = pgTable('teamActivity', {
   id: text()
