@@ -255,7 +255,7 @@ export const teamRelations = relations(team, ({ many, one }) => ({
     fields: [team.createdBy],
     references: [user.id],
   }),
-  teamContacts: many(teamContact),
+  contacts: many(teamContact),
   activities: many(teamActivity),
   leader: one(contact, {
     fields: [team.leaderId],
