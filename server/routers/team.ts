@@ -16,7 +16,7 @@ export const teamRouter = createTRPCRouter({
         description: team.description,
         createdAt: team.createdAt,
         createdBy: team.createdBy,
-        contacts: sql<number>`count(${teamContact.contactId})`.mapWith(Number),
+        contacts: sql<number>`(SELECT COUNT(*) FROM ${teamContact} WHERE ${teamContact.teamId} = ${team.id})`,
         company: sql<{ id: string; name: string } | null>`
           (SELECT row_to_json(c) 
            FROM ${company} c 
