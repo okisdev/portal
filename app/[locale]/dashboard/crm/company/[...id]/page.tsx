@@ -2,11 +2,9 @@
 
 import { ActionAlertDialog } from '@/components/shared/action-alert-dialog';
 import { ColorBadge } from '@/components/shared/color-badge';
-import { ComboboxCommand } from '@/components/shared/combobox';
 import { EventDialog } from '@/components/shared/event-dialog';
 import { PageHeader } from '@/components/shared/page-header';
 import { PageLoading } from '@/components/shared/page-loading';
-import { PaginationTable } from '@/components/shared/pagination-table';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -14,7 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import {} from '@/components/ui/popover';
 import { Textarea } from '@/components/ui/textarea';
 import { formatDate } from '@/utils/date';
 import { api } from '@/utils/trpc/client';
@@ -375,7 +373,7 @@ export default function CompanyIdPage() {
 
       <div className='grid grid-cols-3 gap-4'>
         <div className='col-span-2 space-y-4'>
-          <div className='space-y-2 rounded-lg border bg-card p-4'>
+          {/* <div className='space-y-2 rounded-lg border bg-card p-4'>
             <div className='flex items-center justify-between'>
               <p className='font-medium'>{t('company_contacts')}</p>
               <Popover open={isAddContactOpen} onOpenChange={setIsAddContactOpen}>
@@ -437,7 +435,7 @@ export default function CompanyIdPage() {
                 rowClassName='cursor-pointer hover:bg-muted/50'
               />
             )}
-          </div>
+          </div> */}
 
           <div className='rounded-lg border bg-card p-4'>
             <div className='flex items-center justify-between'>
@@ -484,9 +482,9 @@ export default function CompanyIdPage() {
                 <Label className='text-muted-foreground text-xs'>{t('website')}</Label>
                 <p className='text-sm'>
                   {(company.website && (
-                    <a href={company.website} target='_blank' rel='noopener noreferrer' className='text-primary hover:underline'>
+                    <Link href={company.website} target='_blank' rel='noopener noreferrer' className='text-primary hover:underline'>
                       {company.website}
-                    </a>
+                    </Link>
                   )) ||
                     'N/A'}
                 </p>

@@ -49,6 +49,8 @@ export const companyRouter = createTRPCRouter({
         contactCount: sql<number>`(SELECT COUNT(*) FROM ${companyContact} WHERE ${companyContact.companyId} = ${company.id})`,
       })
       .from(company)
+      .leftJoin(team, eq(team.companyId, company.id))
+      .leftJoin(teamContact, eq(teamContact.teamId, team.id))
       .where(eq(company.id, input.id))
       .then((rows) => rows[0]);
 
@@ -192,7 +194,7 @@ export const companyRouter = createTRPCRouter({
         },
       })
       .from(companyContact)
-      .innerJoin(contact, eq(companyContact.contactId, contact.id))
+      .leftJoin(contact, eq(companyContact.contactId, contact.id))
       .where(eq(companyContact.companyId, input.companyId));
   }),
 

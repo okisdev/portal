@@ -7,6 +7,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { motion } from 'framer-motion';
 import { Loader2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
@@ -112,9 +113,9 @@ export default function RegisterPage() {
 
           <p className='text-center text-muted-foreground text-sm'>
             {t('already_have_an_account')}{' '}
-            <a href='/login' className='text-muted-foreground underline hover:text-foreground'>
+            <Link href='/login' className='text-muted-foreground underline hover:text-foreground'>
               {t('sign_in')}
-            </a>
+            </Link>
           </p>
         </div>
       </form>

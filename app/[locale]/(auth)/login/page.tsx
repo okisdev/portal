@@ -7,6 +7,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { CheckCircle2, Loader2 } from 'lucide-react';
 import { signIn } from 'next-auth/react';
 import { useTranslations } from 'next-intl';
+import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
@@ -166,9 +167,9 @@ export default function LoginPage() {
                 <span className='ml-2 text-muted-foreground text-sm'>{t('remember_for_30_days')}</span>
               </label>
               {isPasswordLogin && (
-                <a href='/forgot-password' className='text-muted-foreground text-sm hover:text-foreground hover:underline'>
+                <Link href='/forgot-password' className='text-muted-foreground text-sm hover:text-foreground hover:underline'>
                   {t('forgot_password')}
-                </a>
+                </Link>
               )}
             </div>
 
@@ -191,9 +192,9 @@ export default function LoginPage() {
               </button>
               <p className='text-center text-muted-foreground text-sm'>
                 {t('dont_have_an_account')}{' '}
-                <a href='/register' className='text-muted-foreground underline hover:text-foreground'>
+                <Link href='/register' className='text-muted-foreground underline hover:text-foreground'>
                   {t('sign_up')}
-                </a>
+                </Link>
               </p>
             </div>
           </form>
