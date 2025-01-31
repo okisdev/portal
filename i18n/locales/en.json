@@ -543,5 +543,8 @@
   "will_renew_at": "Will renew at {date}",
   "workspace": "Workspace",
   "write_a_reply": "Write a reply... Use @ to mention someone",
-  "you": "You"
+  "you": "You",
+  "no_team_contacts_found": "No team contacts found",
+  "no_company_contacts_found": "No company contacts found",
+  "no_company_teams_found": "No company teams found"
 }

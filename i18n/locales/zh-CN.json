@@ -543,5 +543,8 @@
   "will_renew_at": "将在 {date} 续订",
   "workspace": "工作区",
   "write_a_reply": "写回复... 使用 @ 提及他人",
-  "you": "你"
+  "you": "你",
+  "no_team_contacts_found": "找不到团队成员",
+  "no_company_contacts_found": "找不到公司联系",
+  "no_company_teams_found": "找不到公司团队"
 }

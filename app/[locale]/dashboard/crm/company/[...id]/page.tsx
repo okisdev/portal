@@ -427,6 +427,7 @@ export default function CompanyIdPage() {
                 </PopoverContent>
               </Popover>
             </div>
+            {companyContacts && companyContacts?.length === 0 && <p className='text-muted-foreground text-sm'>{t('no_company_contacts_found')}</p>}
             {companyContacts && companyContacts?.length > 0 && (
               <PaginationTable
                 table={table}
@@ -446,6 +447,7 @@ export default function CompanyIdPage() {
               </Button>
             </div>
             <div className='mt-4 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3'>
+              {teams && teams?.length === 0 && <p className='text-muted-foreground text-sm'>{t('no_company_teams_found')}</p>}
               {teams?.map((team) => (
                 <Link key={team.id} href={`/dashboard/crm/team/${team.id}`} className='rounded-lg border bg-card p-4 transition-colors hover:bg-muted/50'>
                   <div className='flex items-start justify-between'>

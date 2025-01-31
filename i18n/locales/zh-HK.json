@@ -543,5 +543,8 @@
   "will_renew_at": "將在 {date} 續訂",
   "workspace": "工作區",
   "write_a_reply": "寫回覆... 使用 @ 提及他人",
-  "you": "您"
+  "you": "您",
+  "no_team_contacts_found": "找不到團隊成員",
+  "no_company_contacts_found": "找不到公司聯繫",
+  "no_company_teams_found": "找不到公司團隊"
 }
