@@ -1,6 +1,5 @@
 'use client';
 
-import { createCompanySchema } from '@/app/[locale]/dashboard/crm/company/page';
 import { ActionAlertDialog } from '@/components/shared/action-alert-dialog';
 import { ColorBadge } from '@/components/shared/color-badge';
 import { EventDialog } from '@/components/shared/event-dialog';
@@ -23,7 +22,25 @@ import { notFound, useParams, useRouter, useSearchParams } from 'next/navigation
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
-import type { z } from 'zod';
+import { z } from 'zod';
+
+const createCompanySchema = z.object({
+  name: z.string().min(1, 'Name is required'),
+  description: z.string().optional(),
+  industry: z.string().optional(),
+  size: z.string().optional(),
+  website: z.string().optional(),
+  address: z.string().optional(),
+  city: z.string().optional(),
+  state: z.string().optional(),
+  country: z.string().optional(),
+  postalCode: z.string().optional(),
+  phone: z.string().optional(),
+  email: z.string().optional(),
+  status: z.enum(['active', 'inactive']).default('active'),
+});
+
+type CreateCompanySchema = z.infer<typeof createCompanySchema>;
 
 export default function CompanyIdPage() {
   const { id: companyId } = useParams<{ id: string }>();
@@ -39,7 +56,7 @@ export default function CompanyIdPage() {
   const [meetingToDelete, setMeetingToDelete] = useState<string | null>(null);
   const [contactToDelete, setContactToDelete] = useState<string | null>(null);
 
-  const editCompanyForm = useForm<z.infer<typeof createCompanySchema>>({
+  const editCompanyForm = useForm<CreateCompanySchema>({
     resolver: zodResolver(createCompanySchema),
     defaultValues: {
       name: '',
