@@ -542,7 +542,7 @@ export default function CRMContactsPage() {
                       }));
                     }}
                   >
-                    Add Condition
+                    {t('add_condition')}
                   </Button>
                 </div>
               </DropdownMenuContent>

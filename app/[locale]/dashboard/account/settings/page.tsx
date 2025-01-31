@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { timezones } from '@/data/data';
 import type { Timezone } from '@/lib/schema';
 import { api } from '@/utils/trpc/client';
@@ -281,7 +282,14 @@ export default function AccountSettingsPage() {
                 <div className='space-y-2'>
                   <Label htmlFor='email' className='flex items-center gap-2'>
                     {t('email_address')}
-                    {!isLoading && (me?.emailVerified ? <Verified className='h-4 w-4 text-green-500' /> : <BadgeX className='h-4 w-4 text-red-500' />)}
+                    {!isLoading && (
+                      <Tooltip>
+                        <TooltipTrigger>{me?.emailVerified ? <Verified className='h-4 w-4 text-green-500' /> : <BadgeX className='h-4 w-4 text-red-500' />}</TooltipTrigger>
+                        <TooltipContent side='right'>
+                          <p>{me?.emailVerified ? t('email_verified') : t('email_not_verified')}</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    )}
                   </Label>
                   <div className='flex items-center gap-2'>
                     <Input type='email' id='email' value={email} readOnly className='cursor-default' />

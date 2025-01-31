@@ -591,7 +591,7 @@ export default function CompanyPage() {
                       }));
                     }}
                   >
-                    Add Condition
+                    {t('add_condition')}
                   </Button>
                 </div>
               </DropdownMenuContent>
