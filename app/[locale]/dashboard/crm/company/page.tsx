@@ -54,7 +54,7 @@ type FilterConfig = {
   matchAll: boolean;
 };
 
-const createCompanySchema = z.object({
+export const createCompanySchema = z.object({
   name: z.string().min(1, 'Name is required'),
   description: z.string().optional(),
   industry: z.string().optional(),
@@ -70,7 +70,7 @@ const createCompanySchema = z.object({
   status: z.enum(['active', 'inactive']).default('active'),
 });
 
-type CreateCompanySchema = z.infer<typeof createCompanySchema>;
+export type CreateCompanySchema = z.infer<typeof createCompanySchema>;
 
 export default function CompanyPage() {
   const router = useRouter();
