@@ -93,7 +93,7 @@
     "sonner": "^1.7.3",
     "stripe": "^17.6.0",
     "superjson": "^2.2.2",
-    "tailwind-merge": "^2.6.0",
+    "tailwind-merge": "^3.0.0",
     "tailwindcss-animate": "^1.0.7",
     "turndown": "^7.2.0",
     "uuid": "^11.0.5",
