@@ -1,7 +1,7 @@
 import { contact } from '@/drizzle/schema';
 import { WhatsAppError, sendWhatsAppMessage } from '@/lib/whatsapp';
 import { createContactActivityHelper } from '@/server/helper/contact';
-import { createTRPCRouter, protectedProcedure } from '@/server/trpc';
+import { createTRPCRouter, protectedProcedure, publicProcedure } from '@/server/trpc';
 import { TRPCError } from '@trpc/server';
 import { eq } from 'drizzle-orm';
 import z from 'zod';
@@ -32,7 +32,64 @@ export const externalRouter = createTRPCRouter({
       }
     }),
 
-  receiveWhatsAppMessageToContactActivity: protectedProcedure
+  handleWhatsAppMessageStatus: publicProcedure
+    .input(
+      z.object({
+        messageId: z.string(),
+        status: z.string(),
+        timestamp: z.number(),
+        recipientId: z.string(),
+        conversationId: z.string().optional(),
+        metadata: z.record(z.any()).optional(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      try {
+        // Find the contact by phone number
+        const contactRecord = await ctx.db
+          .select()
+          .from(contact)
+          .where(eq(contact.phone, input.recipientId.replace(/\D/g, '')))
+          .then((rows) => rows[0]);
+
+        if (!contactRecord) {
+          throw new TRPCError({
+            code: 'NOT_FOUND',
+            message: 'Contact not found for this phone number',
+          });
+        }
+
+        // Create contact activity for the message status
+        await createContactActivityHelper(ctx, {
+          contactId: contactRecord.id,
+          type: 'ENGAGEMENT',
+          subType: 'MESSAGE_SENT',
+          description: `WhatsApp message ${input.status}`,
+          initiatorType: 'system',
+          initiatorId: 'whatsapp',
+          metadata: {
+            messageId: input.messageId,
+            status: input.status,
+            timestamp: input.timestamp,
+            conversationId: input.conversationId,
+            channel: 'whatsapp',
+            ...input.metadata,
+          },
+        });
+
+        return { success: true };
+      } catch (error) {
+        if (error instanceof TRPCError) {
+          throw error;
+        }
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to process WhatsApp message status',
+        });
+      }
+    }),
+
+  receiveWhatsAppMessageToContactActivity: publicProcedure
     .input(
       z.object({
         from: z.string(),
