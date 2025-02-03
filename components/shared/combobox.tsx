@@ -47,7 +47,7 @@ function ComboboxCommand({ query, setQuery, value, onChange, setOpen, items, sea
       <CommandInput placeholder={searchPlaceholder} value={query} onValueChange={setQuery} />
       <CommandEmpty>{emptyText}</CommandEmpty>
       {allowCustom && query && !filteredItems.includes(query) && (
-        <CommandGroup heading='Custom'>
+        <CommandGroup heading={t('custom')}>
           <CommandItem
             value={`custom-${query}`}
             onSelect={() => {

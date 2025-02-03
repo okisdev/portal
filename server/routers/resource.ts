@@ -8,7 +8,7 @@ const resourceContentSchema = z.object({
   title: z.string().min(1),
   description: z.string().optional(),
   content: z.string().min(1),
-  tags: z.array(z.string()).default([]).optional(),
+  tags: z.string().optional(),
   visibility: z.enum(['PUBLIC', 'SHARED', 'PRIVATE']),
 });
 
@@ -19,7 +19,7 @@ const resourceEmailSchema = z.object({
   description: z.string().optional(),
   subject: z.string().min(1),
   content: z.string().min(1),
-  tags: z.array(z.string()).default([]).optional(),
+  tags: z.string().optional(),
   visibility: z.enum(['PUBLIC', 'SHARED', 'PRIVATE']),
 });
 
@@ -27,7 +27,6 @@ export const resourceRouter = createTRPCRouter({
   createContent: protectedProcedure.input(resourceContentSchema).mutation(async ({ ctx, input }) => {
     return ctx.db.insert(resourceContent).values({
       ...input,
-      tags: input.tags ? JSON.stringify(input.tags) : null,
       createdBy: ctx.session.user.id,
       updatedBy: ctx.session.user.id,
     });
@@ -92,7 +91,7 @@ export const resourceRouter = createTRPCRouter({
       return result;
     }),
 
-  getContent: protectedProcedure.input(z.string()).query(async ({ ctx, input }) => {
+  getContent: protectedProcedure.input(z.object({ id: z.string(), includeShare: z.boolean().optional() })).query(async ({ ctx, input }) => {
     const userId = ctx.session.user.id;
 
     const result = await ctx.db
@@ -101,7 +100,7 @@ export const resourceRouter = createTRPCRouter({
       .leftJoin(resourceContentShare, eq(resourceContent.id, resourceContentShare.resourceId))
       .where(
         and(
-          eq(resourceContent.id, input),
+          eq(resourceContent.id, input.id),
           or(eq(resourceContent.createdBy, userId), eq(resourceContent.visibility, 'PUBLIC'), and(eq(resourceContent.visibility, 'SHARED'), eq(resourceContentShare.sharedWithUserId, userId)))
         )
       )
@@ -140,7 +139,6 @@ export const resourceRouter = createTRPCRouter({
         .update(resourceContent)
         .set({
           ...input.data,
-          tags: input.data.tags ? JSON.stringify(input.data.tags) : undefined,
           updatedBy: userId,
           updatedAt: new Date(),
         })
@@ -228,7 +226,6 @@ export const resourceRouter = createTRPCRouter({
       .insert(resourceEmails)
       .values({
         ...input,
-        tags: input.tags ? JSON.stringify(input.tags) : null,
         createdBy: ctx.session.user.id,
         updatedBy: ctx.session.user.id,
       })
@@ -303,7 +300,6 @@ export const resourceRouter = createTRPCRouter({
         .update(resourceEmails)
         .set({
           ...input.data,
-          tags: input.data.tags ? JSON.stringify(input.data.tags) : undefined,
           updatedBy: userId,
           updatedAt: new Date(),
         })

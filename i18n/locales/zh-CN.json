@@ -555,5 +555,6 @@
   "failed": "失败的",
   "read": "读",
   "sent": "发送",
-  "no_contents_found": "找不到内容"
+  "no_contents_found": "找不到内容",
+  "custom": "风俗"
 }

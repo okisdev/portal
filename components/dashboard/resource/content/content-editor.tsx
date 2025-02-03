@@ -5,29 +5,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { contentTags } from '@/data/data';
 import type { ResourceContent } from '@/lib/schema';
-import { Database, Eye, EyeOff, Tags, Trash, X } from 'lucide-react';
+import { Database, Eye, EyeOff, Plus, Save, Tags, Trash, X } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { SendHistoryDialog } from './send-history-dialog';
-
-function useDebounce<T extends (...args: any[]) => any>(callback: T, delay: number) {
-  const [timeoutId, setTimeoutId] = useState<NodeJS.Timeout | null>(null);
-
-  return useCallback(
-    (...args: Parameters<T>) => {
-      if (timeoutId) {
-        clearTimeout(timeoutId);
-      }
-
-      const newTimeoutId = setTimeout(() => {
-        callback(...args);
-      }, delay);
-
-      setTimeoutId(newTimeoutId);
-    },
-    [callback, delay]
-  );
-}
 
 interface ContentEditorProps {
   content: ResourceContent | null;
@@ -36,25 +17,91 @@ interface ContentEditorProps {
   isLoading?: boolean;
 }
 
+interface TagManagerProps {
+  tags: string[];
+  onTagsChange: (tags: string[]) => void;
+  disabled?: boolean;
+}
+
+function TagManager({ tags, onTagsChange, disabled }: TagManagerProps) {
+  const t = useTranslations();
+  const [isEditing, setIsEditing] = useState(false);
+
+  const handleAddTag = (value: string) => {
+    if (value && !tags.includes(value)) {
+      onTagsChange([...tags, value]);
+    }
+    setIsEditing(false);
+  };
+
+  const handleRemoveTag = (tagToRemove: string) => {
+    onTagsChange(tags.filter((tag) => tag !== tagToRemove));
+  };
+
+  return (
+    <div className='flex items-center gap-1.5'>
+      <Tags className='size-3 text-muted-foreground' />
+      {isEditing && !disabled ? (
+        <div className='flex-1'>
+          <Combobox
+            value=''
+            onChange={handleAddTag}
+            items={contentTags}
+            placeholder={t('add_tags')}
+            searchPlaceholder={t('tags_search_placeholder')}
+            emptyText={t('no_matching_tags')}
+            groupHeading={t('existing_tags')}
+            allowCustom
+            size='sm'
+          />
+        </div>
+      ) : (
+        <div className='flex items-center gap-1'>
+          <button type='button' onClick={() => !disabled && setIsEditing(true)} disabled={disabled} className='flex flex-wrap items-center gap-1 rounded-sm px-1 hover:bg-accent/40'>
+            {tags.length > 0 ? (
+              tags.map((tag) => (
+                <Badge key={tag} variant='secondary' className='gap-0.5 py-0.5 text-xs'>
+                  {tag}
+                  {!disabled && (
+                    <div
+                      onMouseDown={(e) => {
+                        e.stopPropagation();
+                        handleRemoveTag(tag);
+                      }}
+                      className='ml-1 cursor-pointer rounded-full outline-none hover:text-destructive'
+                    >
+                      <X className='size-2.5' />
+                    </div>
+                  )}
+                </Badge>
+              ))
+            ) : (
+              <span className='text-muted-foreground text-xs'>{t('add_tags')}</span>
+            )}
+          </button>
+          {tags.length > 0 && !disabled && (
+            <Button variant='ghost' size='sm' onClick={() => setIsEditing(true)} className='h-5 w-5 p-0'>
+              <Plus className='size-3' />
+            </Button>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function ContentEditor({ content, onUpdate, onDelete, isLoading }: ContentEditorProps) {
   const t = useTranslations();
 
   const [isViewMode, setIsViewMode] = useState(false);
   const [editingTitle, setEditingTitle] = useState(false);
   const [editingDescription, setEditingDescription] = useState(false);
-  const [editingTags, setEditingTags] = useState(false);
   const [tempTitle, setTempTitle] = useState(content?.title || '');
   const [tempDescription, setTempDescription] = useState(content?.description || '');
   const [tempTags, setTempTags] = useState<string[]>([]);
   const [showSendHistory, setShowSendHistory] = useState(false);
   const [editorContent, setEditorContent] = useState(content?.content || '');
-
-  // Debounced update handlers
-  const debouncedContentUpdate = useDebounce((value: string) => {
-    onUpdate({
-      content: value,
-    });
-  }, 1000); // 1 second delay
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
   useEffect(() => {
     if (content) {
@@ -64,7 +111,6 @@ export function ContentEditor({ content, onUpdate, onDelete, isLoading }: Conten
       setEditorContent(content.content);
       setEditingTitle(false);
       setEditingDescription(false);
-      setEditingTags(false);
       setIsViewMode(false);
     }
   }, [content]);
@@ -74,6 +120,7 @@ export function ContentEditor({ content, onUpdate, onDelete, isLoading }: Conten
       onUpdate({
         title: tempTitle,
       });
+      setHasUnsavedChanges(true);
     }
     setEditingTitle(false);
   };
@@ -83,52 +130,53 @@ export function ContentEditor({ content, onUpdate, onDelete, isLoading }: Conten
       onUpdate({
         description: tempDescription || undefined,
       });
+      setHasUnsavedChanges(true);
     }
     setEditingDescription(false);
   };
 
-  const handleAddTag = (value: string) => {
-    if (value && !tempTags.includes(value)) {
-      const newTags = [...tempTags, value];
-      setTempTags(newTags);
-      onUpdate({
-        tags: newTags.length > 0 ? JSON.stringify(newTags) : null,
-      });
-    }
-  };
-
-  const handleRemoveTag = (tagToRemove: string) => {
-    const newTags = tempTags.filter((tag) => tag !== tagToRemove);
+  const handleTagsChange = (newTags: string[]) => {
     setTempTags(newTags);
     onUpdate({
       tags: newTags.length > 0 ? JSON.stringify(newTags) : null,
     });
+    setHasUnsavedChanges(true);
   };
 
   const handleContentChange = (value: string) => {
     if (!isViewMode) {
       setEditorContent(value);
-      debouncedContentUpdate(value);
+      setHasUnsavedChanges(true);
     }
+  };
+
+  const handleSave = () => {
+    onUpdate({
+      title: tempTitle,
+      description: tempDescription || undefined,
+      tags: tempTags.length > 0 ? JSON.stringify(tempTags) : null,
+      content: editorContent,
+    });
+    setHasUnsavedChanges(false);
   };
 
   if (!content) return null;
 
   return (
     <div className='flex h-full flex-col overflow-hidden'>
-      <div className='border-b bg-background p-4'>
-        <div className='flex items-center justify-between'>
-          <div className='flex-1 space-y-2'>
+      <div className='border-b bg-background px-4 py-3'>
+        <div className='flex items-start justify-between gap-4'>
+          <div className='flex-1 space-y-1'>
             {editingTitle && !isViewMode ? (
               <Input
                 value={tempTitle}
                 onChange={(e) => setTempTitle(e.target.value)}
                 onBlur={handleTitleEdit}
                 onKeyDown={(e) => e.key === 'Enter' && handleTitleEdit()}
-                className='h-9 font-medium text-lg'
+                className='h-8 font-medium text-base'
               />
             ) : (
-              <button type='button' className='w-full rounded-md px-2 py-1 text-left font-medium text-lg hover:bg-accent/50' onClick={() => !isViewMode && setEditingTitle(true)} disabled={isViewMode}>
+              <button type='button' className='w-full rounded-sm p-0.5 text-left font-medium text-base hover:bg-accent/40' onClick={() => !isViewMode && setEditingTitle(true)} disabled={isViewMode}>
                 {content.title}
               </button>
             )}
@@ -138,70 +186,36 @@ export function ContentEditor({ content, onUpdate, onDelete, isLoading }: Conten
                 onChange={(e) => setTempDescription(e.target.value)}
                 onBlur={handleDescriptionEdit}
                 onKeyDown={(e) => e.key === 'Enter' && handleDescriptionEdit()}
-                className='h-8 text-muted-foreground text-sm'
+                className='h-7 text-muted-foreground text-sm'
               />
             ) : (
               <button
                 type='button'
-                className='w-full rounded-md px-2 py-1 text-left text-muted-foreground text-sm hover:bg-accent/50'
+                className='w-full rounded-sm p-0.5 text-left text-muted-foreground text-sm hover:bg-accent/40'
                 onClick={() => !isViewMode && setEditingDescription(true)}
                 disabled={isViewMode}
               >
                 {content.description || t('add_a_description')}
               </button>
             )}
-            <div className='flex items-center gap-2 px-2 py-1'>
-              <Tags className='size-3.5 text-muted-foreground' />
-              {editingTags && !isViewMode ? (
-                <div className='flex-1'>
-                  <Combobox
-                    value=''
-                    onChange={handleAddTag}
-                    items={contentTags}
-                    placeholder={t('add_tags')}
-                    searchPlaceholder={t('tags_search_placeholder')}
-                    emptyText={t('no_matching_tags')}
-                    groupHeading={t('existing_tags')}
-                    allowCustom
-                    size='sm'
-                  />
-                </div>
-              ) : (
-                <button type='button' onClick={() => !isViewMode && setEditingTags(true)} disabled={isViewMode} className='flex flex-wrap items-center gap-1.5 hover:bg-accent/50'>
-                  {tempTags.length > 0 ? (
-                    tempTags.map((tag) => (
-                      <Badge key={tag} variant='secondary' className='gap-1'>
-                        {tag}
-                        {!isViewMode && (
-                          <div
-                            onMouseDown={(e) => {
-                              e.stopPropagation();
-                              handleRemoveTag(tag);
-                            }}
-                            className='ml-1 cursor-pointer rounded-full outline-none hover:text-destructive'
-                          >
-                            <X className='size-3' />
-                          </div>
-                        )}
-                      </Badge>
-                    ))
-                  ) : (
-                    <span className='text-muted-foreground text-sm'>{t('add_tags')}</span>
-                  )}
-                </button>
-              )}
-            </div>
+            <TagManager tags={tempTags} onTagsChange={handleTagsChange} disabled={isViewMode} />
           </div>
-          <div className='ml-4 flex items-center gap-2'>
-            <Button variant='ghost' size='icon' onClick={() => setShowSendHistory(true)}>
-              <Database className='h-4 w-4' />
+          <div className='flex items-center gap-1'>
+            {hasUnsavedChanges && !isViewMode && (
+              <Button variant='ghost' size='sm' onClick={handleSave} disabled={isLoading} className='h-7 gap-1 px-2 text-xs'>
+                <Save className='h-3 w-3' />
+                {t('save')}
+              </Button>
+            )}
+            <Button variant='ghost' size='sm' onClick={() => setShowSendHistory(true)} className='h-7 w-7 p-0'>
+              <Database className='h-3 w-3' />
             </Button>
-            <Button variant='ghost' size='icon' onClick={() => setIsViewMode(!isViewMode)}>
-              {isViewMode ? <Eye className='h-4 w-4' /> : <EyeOff className='h-4 w-4' />}
+            <Button variant='ghost' size='sm' onClick={() => setIsViewMode(!isViewMode)} className='h-7 w-7 p-0'>
+              {isViewMode ? <Eye className='h-3 w-3' /> : <EyeOff className='h-3 w-3' />}
             </Button>
             {!isViewMode && (
-              <Button variant='ghost' size='icon' onClick={onDelete}>
-                <Trash className='h-4 w-4 text-destructive' />
+              <Button variant='ghost' size='sm' onClick={onDelete} className='h-7 w-7 p-0'>
+                <Trash className='h-3 w-3 text-destructive' />
               </Button>
             )}
           </div>

@@ -5,7 +5,6 @@ import { ContentForm } from '@/components/dashboard/resource/content/content-for
 import { ActionAlertDialog } from '@/components/shared/action-alert-dialog';
 import { PageHeader } from '@/components/shared/page-header';
 import { Badge } from '@/components/ui/badge';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { ResourceContent } from '@/lib/schema';
 import { api } from '@/utils/trpc/client';
@@ -28,9 +27,7 @@ export default function ContentPage() {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
   const { data: contents, isLoading: contentsLoading } = api.resource.getContents.useQuery();
-  const { data: content, isLoading: contentLoading } = api.resource.getContent.useQuery(id || '', {
-    enabled: !!id,
-  });
+  const { data: content, isLoading: contentLoading } = api.resource.getContent.useQuery({ id: id || '' }, { enabled: !!id });
 
   const createContent = api.resource.createContent.useMutation({
     onSuccess: () => {
@@ -85,13 +82,21 @@ export default function ContentPage() {
         content: data.content || currentContent.content,
         description: data.description === undefined ? currentContent.description || undefined : data.description || undefined,
         visibility: data.visibility || currentContent.visibility,
-        tags: Array.isArray(data.tags) ? data.tags : [],
+        tags: data.tags || undefined,
       };
 
-      updateContent.mutate({
-        id: currentContent.id,
-        data: updatedData,
-      });
+      updateContent.mutate(
+        {
+          id: currentContent.id,
+          data: updatedData,
+        },
+        {
+          onSuccess: () => {
+            utils.resource.getContents.invalidate();
+            utils.resource.getContent.invalidate({ id: currentContent.id });
+          },
+        }
+      );
     }
   };
 
@@ -124,7 +129,7 @@ export default function ContentPage() {
           />
         </div>
 
-        <ScrollArea className='flex-1 p-3'>
+        <div className='flex-1 overflow-y-auto p-3'>
           <div className='space-y-2'>
             {contentsLoading && (
               <>
@@ -182,7 +187,7 @@ export default function ContentPage() {
               );
             })}
           </div>
-        </ScrollArea>
+        </div>
       </div>
 
       <div className='flex-1'>

@@ -555,5 +555,6 @@
   "failed": "失敗的",
   "read": "讀",
   "no_contents_found": "找不到內容",
-  "sent": "發送"
+  "sent": "發送",
+  "custom": "風俗"
 }

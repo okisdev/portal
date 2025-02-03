@@ -555,5 +555,6 @@
   "read": "Read",
   "delivered": "Delivered",
   "sent": "Sent",
-  "no_contents_found": "No contents found"
+  "no_contents_found": "No contents found",
+  "custom": "Custom"
 }

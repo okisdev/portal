@@ -18,7 +18,7 @@ const formSchema = z.object({
   title: z.string().min(1, 'Title is required'),
   description: z.string().optional(),
   content: z.string().min(1, 'Content is required'),
-  tags: z.array(z.string()),
+  tags: z.string().optional(),
   visibility: z.enum(['PUBLIC', 'SHARED', 'PRIVATE']),
 });
 
@@ -40,7 +40,7 @@ export function ContentForm({ content, onSuccess, onSubmit, isSubmitting }: Cont
       title: '',
       description: '',
       content: '',
-      tags: [],
+      tags: '',
       visibility: 'PRIVATE',
     },
   });
@@ -51,7 +51,7 @@ export function ContentForm({ content, onSuccess, onSubmit, isSubmitting }: Cont
         title: content.title,
         description: content.description || '',
         content: content.content,
-        tags: content.tags ? JSON.parse(content.tags) : [],
+        tags: content.tags || '',
         visibility: content.visibility,
       });
     }
@@ -64,7 +64,7 @@ export function ContentForm({ content, onSuccess, onSubmit, isSubmitting }: Cont
         title: '',
         description: '',
         content: '',
-        tags: [],
+        tags: '',
         visibility: 'PRIVATE',
       });
     }
@@ -72,18 +72,19 @@ export function ContentForm({ content, onSuccess, onSubmit, isSubmitting }: Cont
   };
 
   const handleAddTag = (value: string) => {
-    const currentTags = form.getValues('tags');
+    const tags = form.getValues('tags');
+    const currentTags = tags ? (JSON.parse(tags) as string[]) : [];
     if (value && !currentTags.includes(value.toLowerCase())) {
-      form.setValue('tags', [...currentTags, value.toLowerCase()]);
+      const newTags = [...currentTags, value.toLowerCase()];
+      form.setValue('tags', JSON.stringify(newTags));
     }
   };
 
   const handleRemoveTag = (tagToRemove: string) => {
-    const currentTags = form.getValues('tags');
-    form.setValue(
-      'tags',
-      currentTags.filter((tag) => tag !== tagToRemove)
-    );
+    const tags = form.getValues('tags');
+    const currentTags = tags ? (JSON.parse(tags) as string[]) : [];
+    const newTags = currentTags.filter((tag) => tag !== tagToRemove);
+    form.setValue('tags', newTags.length > 0 ? JSON.stringify(newTags) : '');
   };
 
   return (
@@ -135,7 +136,7 @@ export function ContentForm({ content, onSuccess, onSubmit, isSubmitting }: Cont
                       allowCustom
                     />
                     <div className='flex flex-wrap gap-1.5'>
-                      {field.value.map((tag) => (
+                      {(field.value ? (JSON.parse(field.value) as string[]) : []).map((tag: string) => (
                         <Badge key={tag} variant='secondary' className='gap-1'>
                           {tag}
                           <button type='button' onClick={() => handleRemoveTag(tag)} className='ml-1 rounded-full outline-none hover:text-destructive'>
