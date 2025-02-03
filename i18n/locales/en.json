@@ -558,5 +558,6 @@
   "will_renew_at": "Will renew at {date}",
   "workspace": "Workspace",
   "write_a_reply": "Write a reply... Use @ to mention someone",
-  "you": "You"
+  "you": "You",
+  "no_message_templates_found": "No message templates found. Create templates with tags \"whatsapp\" or \"message\" to use them here."
 }

@@ -558,5 +558,6 @@
   "will_renew_at": "将在 {date} 续订",
   "workspace": "工作区",
   "write_a_reply": "写回复... 使用 @ 提及他人",
-  "you": "你"
+  "you": "你",
+  "no_message_templates_found": "找不到消息模板。\n使用标签“ WhatsApp”或“消息”创建模板在此处使用它们。"
 }

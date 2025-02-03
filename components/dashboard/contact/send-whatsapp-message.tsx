@@ -144,25 +144,27 @@ export function SendWhatsAppMessage({ open, onOpenChange, recipient }: SendWhats
                   {t('back_to_editor')}
                 </Button>
               </div>
-              {templates && templates.length > 0 ? (
-                <div className='grid gap-2'>
-                  {templates.map((template) => (
-                    <button
-                      key={template.resourceContent.id}
-                      type='button'
-                      onClick={() => handleSelectTemplate(template.resourceContent)}
-                      className='flex flex-col gap-1 rounded-lg border p-3 text-left hover:bg-accent'
-                    >
-                      <span className='font-medium'>{template.resourceContent.title}</span>
-                      <span className='text-muted-foreground text-sm'>{template.resourceContent.description}</span>
-                    </button>
-                  ))}
-                </div>
-              ) : (
-                <div className='rounded-lg border border-dashed p-4 text-center'>
-                  <p className='text-muted-foreground text-sm'>No message templates found. Create templates with tags "whatsapp" or "message" to use them here.</p>
-                </div>
-              )}
+              <div className='max-h-[300px] overflow-y-auto'>
+                {templates && templates.length > 0 ? (
+                  <div className='grid gap-2'>
+                    {templates.map((template) => (
+                      <button
+                        key={template.resourceContent.id}
+                        type='button'
+                        onClick={() => handleSelectTemplate(template.resourceContent)}
+                        className='flex flex-col gap-1 rounded-lg border p-3 text-left hover:bg-accent'
+                      >
+                        <span className='font-medium'>{template.resourceContent.title}</span>
+                        <span className='text-muted-foreground text-sm'>{template.resourceContent.description}</span>
+                      </button>
+                    ))}
+                  </div>
+                ) : (
+                  <div className='rounded-lg border border-dashed p-4 text-center'>
+                    <p className='text-muted-foreground text-sm'>{t('no_message_templates_found')}</p>
+                  </div>
+                )}
+              </div>
             </div>
           ) : (
             <div className='space-y-4'>
