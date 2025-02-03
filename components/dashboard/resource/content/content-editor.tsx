@@ -208,7 +208,7 @@ export function ContentEditor({ content, onUpdate, onDelete, isLoading }: Conten
         </div>
       </div>
 
-      <div className='flex-1 bg-background'>
+      <div className='flex-1'>
         <TipTapEditor key={content.id} content={editorContent} onChange={handleContentChange} disabled={isViewMode} editable={!isViewMode} className='h-full' />
       </div>
 

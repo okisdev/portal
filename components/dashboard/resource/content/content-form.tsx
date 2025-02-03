@@ -163,7 +163,7 @@ export function ContentForm({ content, onSuccess, onSubmit, isSubmitting }: Cont
             )}
           />
         </div>
-        <div className='flex-1 bg-background'>
+        <div className='flex-1'>
           <FormField
             control={form.control}
             name='content'
