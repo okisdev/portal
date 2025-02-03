@@ -1,5 +1,6 @@
 import { contact, resourceContent, resourceContentSendTrack, resourceContentShare, resourceEmails, user } from '@/drizzle/schema';
 import { createTRPCRouter, protectedProcedure } from '@/server/trpc';
+import { TRPCError } from '@trpc/server';
 import { and, eq, inArray, like, or, sql } from 'drizzle-orm';
 import { z } from 'zod';
 
@@ -132,7 +133,7 @@ export const resourceRouter = createTRPCRouter({
         .limit(1);
 
       if (!existing[0]) {
-        throw new Error('Not authorized to edit this content');
+        throw new TRPCError({ code: 'UNAUTHORIZED', message: 'Not authorized to edit this content' });
       }
 
       return ctx.db
@@ -156,7 +157,7 @@ export const resourceRouter = createTRPCRouter({
       .limit(1);
 
     if (!existing[0]) {
-      throw new Error('Not authorized to delete this content');
+      throw new TRPCError({ code: 'UNAUTHORIZED', message: 'Not authorized to delete this content' });
     }
 
     return ctx.db.delete(resourceContent).where(eq(resourceContent.id, input));
@@ -180,7 +181,7 @@ export const resourceRouter = createTRPCRouter({
         .limit(1);
 
       if (!existing[0]) {
-        throw new Error('Not authorized to share this content');
+        throw new TRPCError({ code: 'UNAUTHORIZED', message: 'Not authorized to share this content' });
       }
 
       if (existing[0].visibility === 'PRIVATE') {
@@ -216,7 +217,7 @@ export const resourceRouter = createTRPCRouter({
         .limit(1);
 
       if (!existing[0]) {
-        throw new Error('Not authorized to modify shares for this content');
+        throw new TRPCError({ code: 'UNAUTHORIZED', message: 'Not authorized to modify shares for this content' });
       }
 
       return ctx.db.delete(resourceContentShare).where(and(eq(resourceContentShare.resourceId, input.resourceId), eq(resourceContentShare.sharedWithUserId, input.userId)));
@@ -295,7 +296,7 @@ export const resourceRouter = createTRPCRouter({
         .limit(1);
 
       if (!existing[0]) {
-        throw new Error('Not authorized to edit this email template');
+        throw new TRPCError({ code: 'UNAUTHORIZED', message: 'Not authorized to edit this email template' });
       }
 
       return ctx.db
@@ -319,7 +320,7 @@ export const resourceRouter = createTRPCRouter({
       .limit(1);
 
     if (!existing[0]) {
-      throw new Error('Not authorized to delete this email template');
+      throw new TRPCError({ code: 'UNAUTHORIZED', message: 'Not authorized to delete this email template' });
     }
 
     return ctx.db.delete(resourceEmails).where(eq(resourceEmails.id, input));
@@ -367,7 +368,7 @@ export const resourceRouter = createTRPCRouter({
         .limit(1);
 
       if (!content[0]) {
-        throw new Error('Not authorized to view this content');
+        throw new TRPCError({ code: 'UNAUTHORIZED', message: 'Not authorized to view this content' });
       }
 
       return ctx.db

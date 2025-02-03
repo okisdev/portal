@@ -133,7 +133,9 @@ export default function ContentPage() {
                 <Skeleton className='h-24' />
               </>
             )}
-            {contents && contents.length === 0 && <div className='flex h-[200px] items-center justify-center rounded-lg border border-dashed text-muted-foreground text-sm'>No content found</div>}
+            {contents && contents.length === 0 && (
+              <div className='flex h-[200px] items-center justify-center rounded-lg border border-dashed text-muted-foreground text-sm'>{t('no_contents_found')}</div>
+            )}
             {contents?.map((item) => {
               const tags = item.resourceContent.tags ? JSON.parse(item.resourceContent.tags) : [];
               return (
@@ -146,21 +148,19 @@ export default function ContentPage() {
                   }`}
                 >
                   <div>
-                    <h3 className='line-clamp-1 font-medium group-hover:text-primary'>{item.resourceContent.title}</h3>
-                    {item.resourceContent.description && <p className='line-clamp-2 text-muted-foreground text-sm'>{item.resourceContent.description}</p>}
+                    <h3 className='line-clamp-1 font-medium text-sm group-hover:text-primary'>{item.resourceContent.title}</h3>
+                    {item.resourceContent.description && <p className='line-clamp-2 text-muted-foreground text-xs'>{item.resourceContent.description}</p>}
                   </div>
 
-                  <div className='flex flex-wrap gap-1.5'>
-                    {tags.length > 0 && (
-                      <div className='flex flex-wrap items-center gap-1.5'>
-                        {tags.map((tag: string) => (
-                          <Badge key={tag} variant='secondary' className='text-xs'>
-                            {tag}
-                          </Badge>
-                        ))}
-                      </div>
-                    )}
-                  </div>
+                  {tags.length > 0 && (
+                    <div className='flex flex-wrap items-center gap-1.5'>
+                      {tags.map((tag: string) => (
+                        <Badge key={tag} variant='secondary' className='text-xs'>
+                          {tag}
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
 
                   <div className='flex items-center gap-4 text-muted-foreground text-xs'>
                     <div className='flex items-center gap-1.5'>

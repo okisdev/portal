@@ -553,5 +553,7 @@
   "delete_content_description": "您確定要刪除此內容嗎？\n該動作不能撤消。",
   "delivered": "發表",
   "failed": "失敗的",
-  "read": "讀"
+  "read": "讀",
+  "no_contents_found": "找不到內容",
+  "sent": "發送"
 }

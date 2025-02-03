@@ -59,6 +59,16 @@ export function ContentForm({ content, onSuccess, onSubmit, isSubmitting }: Cont
 
   const onSubmitForm = (data: FormValues) => {
     onSubmit(data);
+    if (!content) {
+      form.reset({
+        title: '',
+        description: '',
+        content: '',
+        tags: [],
+        visibility: 'PRIVATE',
+      });
+    }
+    onSuccess?.();
   };
 
   const handleAddTag = (value: string) => {
@@ -144,14 +154,11 @@ export function ContentForm({ content, onSuccess, onSubmit, isSubmitting }: Cont
             control={form.control}
             name='visibility'
             render={({ field }) => (
-              <FormItem className='flex flex-row items-center justify-between rounded-lg border p-4'>
-                <div className='space-y-0.5'>
-                  <FormLabel className='text-base'>{t('public')}</FormLabel>
-                  <div className='text-muted-foreground text-sm'>{t('public_description')}</div>
-                </div>
+              <FormItem className='flex flex-row items-center space-x-2'>
                 <FormControl>
                   <Switch checked={field.value === 'PUBLIC'} onCheckedChange={(checked) => field.onChange(checked ? 'PUBLIC' : 'PRIVATE')} />
                 </FormControl>
+                <FormLabel className='text-sm'>{t('public_description')}</FormLabel>
               </FormItem>
             )}
           />
@@ -163,7 +170,7 @@ export function ContentForm({ content, onSuccess, onSubmit, isSubmitting }: Cont
             render={({ field }) => (
               <FormItem className='h-full'>
                 <FormControl>
-                  <TipTapEditor content={field.value} onChange={field.onChange} className='h-full border-none' />
+                  <TipTapEditor content={field.value} onChange={field.onChange} className='h-full' />
                 </FormControl>
                 <FormMessage />
               </FormItem>

@@ -115,7 +115,7 @@ export function ContentEditor({ content, onUpdate, onDelete, isLoading }: Conten
   if (!content) return null;
 
   return (
-    <div className='flex h-full flex-col'>
+    <div className='flex h-full flex-col overflow-hidden'>
       <div className='border-b bg-background p-4'>
         <div className='flex items-center justify-between'>
           <div className='flex-1 space-y-2'>
@@ -209,7 +209,7 @@ export function ContentEditor({ content, onUpdate, onDelete, isLoading }: Conten
       </div>
 
       <div className='flex-1 bg-background'>
-        <TipTapEditor key={content.id} content={editorContent} onChange={handleContentChange} disabled={isViewMode} editable={!isViewMode} className='h-full border-none' />
+        <TipTapEditor key={content.id} content={editorContent} onChange={handleContentChange} disabled={isViewMode} editable={!isViewMode} className='h-full' />
       </div>
 
       {content && <SendHistoryDialog open={showSendHistory} onOpenChange={setShowSendHistory} content={content} />}
