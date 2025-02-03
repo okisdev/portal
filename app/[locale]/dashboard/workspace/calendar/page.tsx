@@ -407,9 +407,9 @@ export default function DashboardPersonalCalendar() {
             }}
             onDeleteCalendar={(folderId) => {
               toast.promise(deleteFolder.mutateAsync({ id: folderId }), {
-                loading: 'Deleting calendar...',
-                success: 'Calendar deleted successfully',
-                error: 'Failed to delete calendar',
+                loading: t('deleting_calendar'),
+                success: t('calendar_deleted_successfully'),
+                error: t('failed_to_delete_calendar'),
               });
             }}
           />
@@ -437,9 +437,9 @@ export default function DashboardPersonalCalendar() {
               onEventEdit={handleEditEvent}
               onEventDelete={(eventId) => {
                 toast.promise(deleteEvent.mutateAsync({ id: eventId }), {
-                  loading: 'Deleting event...',
-                  success: 'Event deleted successfully',
-                  error: 'Failed to delete event',
+                  loading: t('deleting_event'),
+                  success: t('event_deleted_successfully'),
+                  error: t('failed_to_delete_event'),
                 });
               }}
             />
@@ -457,9 +457,9 @@ export default function DashboardPersonalCalendar() {
               onEventEdit={handleEditEvent}
               onEventDelete={(eventId) => {
                 toast.promise(deleteEvent.mutateAsync({ id: eventId }), {
-                  loading: 'Deleting event...',
-                  success: 'Event deleted successfully',
-                  error: 'Failed to delete event',
+                  loading: t('deleting_event'),
+                  success: t('event_deleted_successfully'),
+                  error: t('failed_to_delete_event'),
                 });
               }}
             />
@@ -477,9 +477,9 @@ export default function DashboardPersonalCalendar() {
               onEventEdit={handleEditEvent}
               onEventDelete={(eventId) => {
                 toast.promise(deleteEvent.mutateAsync({ id: eventId }), {
-                  loading: 'Deleting event...',
-                  success: 'Event deleted successfully',
-                  error: 'Failed to delete event',
+                  loading: t('deleting_event'),
+                  success: t('event_deleted_successfully'),
+                  error: t('failed_to_delete_event'),
                 });
               }}
             />
@@ -497,9 +497,9 @@ export default function DashboardPersonalCalendar() {
               onEventEdit={handleEditEvent}
               onEventDelete={(eventId) => {
                 toast.promise(deleteEvent.mutateAsync({ id: eventId }), {
-                  loading: 'Deleting event...',
-                  success: 'Event deleted successfully',
-                  error: 'Failed to delete event',
+                  loading: t('deleting_event'),
+                  success: t('event_deleted_successfully'),
+                  error: t('failed_to_delete_event'),
                 });
               }}
             />

@@ -9,6 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 import { api } from '@/utils/trpc/client';
 import { Plus } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { toast } from 'sonner';
@@ -28,6 +29,8 @@ interface Template {
 }
 
 export default function EmailsPage() {
+  const t = useTranslations();
+
   const router = useRouter();
   const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null);
   const [title, setTitle] = useState('');
@@ -52,7 +55,7 @@ export default function EmailsPage() {
   // Mutation to create a new template
   const createMutation = api.resource.createEmail.useMutation({
     onSuccess: (newTemplate) => {
-      toast.success('Email template created successfully');
+      toast.success(t('email_template_created_successfully'));
       utils.resource.getEmails.invalidate();
       if (newTemplate?.id) {
         router.push(`/dashboard/resource/emails/${newTemplate.id}`);
@@ -66,7 +69,7 @@ export default function EmailsPage() {
   // Mutation to delete a template
   const deleteMutation = api.resource.deleteEmail.useMutation({
     onSuccess: () => {
-      toast.success('Email template deleted successfully');
+      toast.success(t('email_template_deleted_successfully'));
       utils.resource.getEmails.invalidate();
       resetForm();
     },

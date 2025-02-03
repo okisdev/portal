@@ -75,7 +75,7 @@ export default function ManualContactForm() {
         name: formatName(values.firstName, values.lastName),
       });
 
-      toast.success('Contact created successfully');
+      toast.success(t('contact_created_successfully'));
       router.push(`/dashboard/crm/contacts/${result.id}`);
       router.refresh();
     } catch (error) {
