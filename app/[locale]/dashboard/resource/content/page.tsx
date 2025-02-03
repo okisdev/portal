@@ -170,7 +170,7 @@ export default function ContentPage() {
                   <div className='flex items-center gap-4 text-muted-foreground text-xs'>
                     <div className='flex items-center gap-1.5'>
                       <Clock className='size-3' />
-                      {formatDistanceToNow(new Date(item.resourceContent.createdAt), { addSuffix: true })}
+                      {formatDistanceToNow(new Date(item.resourceContent.updatedAt), { addSuffix: true })}
                     </div>
 
                     <div className='flex items-center gap-1.5'>

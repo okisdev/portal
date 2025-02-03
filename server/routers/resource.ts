@@ -1,7 +1,7 @@
 import { contact, resourceContent, resourceContentSendTrack, resourceContentShare, resourceEmails, user } from '@/drizzle/schema';
 import { createTRPCRouter, protectedProcedure } from '@/server/trpc';
 import { TRPCError } from '@trpc/server';
-import { and, eq, inArray, like, or, sql } from 'drizzle-orm';
+import { and, desc, eq, inArray, like, or, sql } from 'drizzle-orm';
 import { z } from 'zod';
 
 const resourceContentSchema = z.object({
@@ -86,7 +86,8 @@ export const resourceRouter = createTRPCRouter({
         .leftJoin(resourceContentSendTrack, eq(resourceContent.id, resourceContentSendTrack.resourceId))
         .leftJoin(contact, eq(resourceContentSendTrack.contactId, contact.id))
         .where(conditions)
-        .groupBy(resourceContent.id, resourceContentShare.id);
+        .groupBy(resourceContent.id, resourceContentShare.id)
+        .orderBy(desc(resourceContent.updatedAt));
 
       return result;
     }),

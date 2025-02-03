@@ -94,21 +94,32 @@ export function TipTapEditor({ content, onChange, placeholder = 'Start writing..
       }),
     ],
     content: content,
-    editable: editable && !disabled && mode === 'rich-text',
+    editable: editable && !disabled,
     onUpdate: ({ editor }) => {
-      const html = editor.getHTML();
-      setHtmlContent(html);
-      const markdown = turndownService.turndown(html);
-      setMarkdownContent(markdown);
-      onChange(mode === 'markdown' ? markdown : html);
+      if (!disabled && editable) {
+        const html = editor.getHTML();
+        setHtmlContent(html);
+        const markdown = turndownService.turndown(html);
+        setMarkdownContent(markdown);
+        onChange(mode === 'markdown' ? markdown : html);
+      }
     },
     editorProps: {
       attributes: {
-        class: 'prose prose-sm sm:prose-base lg:prose-lg xl:prose-2xl dark:prose-invert mx-auto h-full w-full flex-1 overflow-auto outline-none',
+        class: cn(
+          'prose prose-sm sm:prose-base lg:prose-lg xl:prose-2xl dark:prose-invert mx-auto h-full w-full flex-1 overflow-auto outline-none',
+          !editable || disabled ? 'pointer-events-none' : ''
+        ),
       },
     },
     immediatelyRender: false,
   });
+
+  useEffect(() => {
+    if (editor) {
+      editor.setEditable(editable && !disabled);
+    }
+  }, [editor, editable, disabled]);
 
   useEffect(() => {
     if (editor && content !== editor.getHTML()) {
@@ -171,7 +182,7 @@ export function TipTapEditor({ content, onChange, placeholder = 'Start writing..
 
   return (
     <div className={cn('flex h-full flex-col overflow-hidden', className)}>
-      {editable && (
+      {editable && !disabled && (
         <div className='flex flex-col items-start gap-1 border-b bg-muted/50 p-1'>
           <div className='flex gap-1'>
             <Button type='button' variant='ghost' size='sm' className={cn('gap-2', mode === 'rich-text' && 'bg-muted')} onClick={() => setMode('rich-text')}>
@@ -247,6 +258,7 @@ export function TipTapEditor({ content, onChange, placeholder = 'Start writing..
             className='absolute inset-0 w-full resize-none overflow-y-auto p-4 font-mono text-sm focus:outline-none'
             placeholder={t('html_placeholder')}
             disabled={disabled}
+            readOnly={!editable || disabled}
           />
         ) : mode === 'markdown' ? (
           <textarea
@@ -255,9 +267,17 @@ export function TipTapEditor({ content, onChange, placeholder = 'Start writing..
             className='absolute inset-0 w-full resize-none overflow-y-auto p-4 font-mono text-sm focus:outline-none'
             placeholder={t('markdown_placeholder')}
             disabled={disabled}
+            readOnly={!editable || disabled}
           />
         ) : (
-          <div className='absolute inset-0 overflow-y-auto'>
+          <div
+            className={cn('absolute inset-0 overflow-y-auto', editable && !disabled && mode === 'rich-text' ? 'cursor-text' : 'cursor-default select-text')}
+            onMouseDown={() => {
+              if (editable && !disabled && mode === 'rich-text') {
+                editor?.chain().focus().run();
+              }
+            }}
+          >
             <EditorContent editor={editor} className='prose prose-sm dark:prose-invert max-w-none p-4' />
           </div>
         )}

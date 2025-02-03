@@ -5,7 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { contentTags } from '@/data/data';
 import type { ResourceContent } from '@/lib/schema';
-import { Database, Eye, EyeOff, Plus, Save, Tags, Trash, X } from 'lucide-react';
+import { formatDistanceToNow } from 'date-fns';
+import { Clock, Database, Eye, EyeOff, Plus, Save, Tags, Trash, X } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
 import { SendHistoryDialog } from './send-history-dialog';
@@ -165,7 +166,7 @@ export function ContentEditor({ content, onUpdate, onDelete, isLoading }: Conten
   return (
     <div className='flex h-full flex-col overflow-hidden'>
       <div className='border-b bg-background px-4 py-3'>
-        <div className='flex items-start justify-between gap-4'>
+        <div className='flex h-full items-start justify-between gap-4'>
           <div className='flex-1 space-y-1'>
             {editingTitle && !isViewMode ? (
               <Input
@@ -200,24 +201,36 @@ export function ContentEditor({ content, onUpdate, onDelete, isLoading }: Conten
             )}
             <TagManager tags={tempTags} onTagsChange={handleTagsChange} disabled={isViewMode} />
           </div>
-          <div className='flex items-center gap-1'>
-            {hasUnsavedChanges && !isViewMode && (
-              <Button variant='ghost' size='sm' onClick={handleSave} disabled={isLoading} className='h-7 gap-1 px-2 text-xs'>
-                <Save className='h-3 w-3' />
-                {t('save')}
+          <div className='flex h-full flex-col items-center justify-between'>
+            <div className='flex items-center gap-1'>
+              {hasUnsavedChanges && !isViewMode && (
+                <Button variant='ghost' size='sm' onClick={handleSave} disabled={isLoading} className='h-7 gap-1 px-2 text-xs'>
+                  <Save className='h-3 w-3' />
+                  {t('save')}
+                </Button>
+              )}
+              <Button variant='ghost' size='sm' onClick={() => setShowSendHistory(true)} className='h-7 w-7 p-0'>
+                <Database className='h-3 w-3' />
               </Button>
-            )}
-            <Button variant='ghost' size='sm' onClick={() => setShowSendHistory(true)} className='h-7 w-7 p-0'>
-              <Database className='h-3 w-3' />
-            </Button>
-            <Button variant='ghost' size='sm' onClick={() => setIsViewMode(!isViewMode)} className='h-7 w-7 p-0'>
-              {isViewMode ? <Eye className='h-3 w-3' /> : <EyeOff className='h-3 w-3' />}
-            </Button>
-            {!isViewMode && (
-              <Button variant='ghost' size='sm' onClick={onDelete} className='h-7 w-7 p-0'>
-                <Trash className='h-3 w-3 text-destructive' />
+              <Button variant='ghost' size='sm' onClick={() => setIsViewMode(!isViewMode)} className='h-7 w-7 p-0'>
+                {isViewMode ? <Eye className='h-3 w-3' /> : <EyeOff className='h-3 w-3' />}
               </Button>
-            )}
+              {!isViewMode && (
+                <Button variant='ghost' size='sm' onClick={onDelete} className='h-7 w-7 p-0'>
+                  <Trash className='h-3 w-3 text-destructive' />
+                </Button>
+              )}
+            </div>
+            <div className='flex flex-col items-start gap-0.5'>
+              <div className='flex items-center gap-1.5 text-muted-foreground text-xs'>
+                <Clock className='size-3' />
+                {t('created_at', { time: formatDistanceToNow(new Date(content.createdAt), { addSuffix: true }) })}
+              </div>
+              <div className='flex items-center gap-1.5 text-muted-foreground text-xs'>
+                <Clock className='size-3' />
+                {t('last_updated_at', { time: formatDistanceToNow(new Date(content.updatedAt), { addSuffix: true }) })}
+              </div>
+            </div>
           </div>
         </div>
       </div>
