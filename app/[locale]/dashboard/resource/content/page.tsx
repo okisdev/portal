@@ -122,7 +122,7 @@ export default function ContentPage() {
           }
         />
 
-        <ScrollArea className='flex-1 -mx-4 px-4'>
+        <ScrollArea className='-mx-4 flex-1 px-4'>
           <div className='space-y-1 py-4'>
             {contentsLoading && (
               <>
@@ -176,6 +176,7 @@ export default function ContentPage() {
                       <div className='flex items-center gap-1'>
                         <Send className='size-3' />
                         {item.sendCount || 0} {item.sendCount === 1 ? 'send' : 'sends'}
+                        {item.recipients && item.recipients.length > 0 && ` to ${item.recipients.length} recipient${item.recipients.length === 1 ? '' : 's'}`}
                       </div>
                     </div>
                   </div>
@@ -198,8 +199,8 @@ export default function ContentPage() {
         open={isDeleteDialogOpen}
         onOpenChange={setIsDeleteDialogOpen}
         onConfirm={handleDelete}
-        title='Delete Content'
-        description='Are you sure you want to delete this content? This action cannot be undone.'
+        title={t('delete_content')}
+        description={t('delete_content_description')}
         confirmText={t('delete')}
         cancelText={t('cancel')}
       />

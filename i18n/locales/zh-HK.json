@@ -548,5 +548,10 @@
   "will_renew_at": "將在 {date} 續訂",
   "workspace": "工作區",
   "write_a_reply": "寫回覆... 使用 @ 提及他人",
-  "you": "您"
+  "you": "您",
+  "delete_content": "刪除內容",
+  "delete_content_description": "您確定要刪除此內容嗎？\n該動作不能撤消。",
+  "delivered": "發表",
+  "failed": "失敗的",
+  "read": "讀"
 }

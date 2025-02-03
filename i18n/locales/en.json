@@ -548,5 +548,11 @@
   "will_renew_at": "Will renew at {date}",
   "workspace": "Workspace",
   "write_a_reply": "Write a reply... Use @ to mention someone",
-  "you": "You"
+  "you": "You",
+  "delete_content_description": "Are you sure you want to delete this content? This action cannot be undone.",
+  "delete_content": "Delete Content",
+  "failed": "Failed",
+  "read": "Read",
+  "delivered": "Delivered",
+  "sent": "Sent"
 }

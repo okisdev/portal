@@ -548,5 +548,11 @@
   "will_renew_at": "将在 {date} 续订",
   "workspace": "工作区",
   "write_a_reply": "写回复... 使用 @ 提及他人",
-  "you": "你"
+  "you": "你",
+  "delete_content": "删除内容",
+  "delete_content_description": "您确定要删除此内容吗？\n该动作不能撤消。",
+  "delivered": "发表",
+  "failed": "失败的",
+  "read": "读",
+  "sent": "发送"
 }

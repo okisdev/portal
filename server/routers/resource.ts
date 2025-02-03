@@ -69,14 +69,24 @@ export const resourceRouter = createTRPCRouter({
           resourceContentShare: resourceContentShare,
           sendCount: sql<number>`count(distinct ${resourceContentSendTrack.id})`.mapWith(Number),
           lastSentAt: sql<Date | null>`max(${resourceContentSendTrack.sentAt})`.mapWith((d) => d && new Date(d)),
-          lastRecipient: contact,
+          recipients: sql<any[]>`
+            json_agg(
+              CASE WHEN ${contact.id} IS NOT NULL 
+              THEN json_build_object(
+                'id', ${contact.id},
+                'name', ${contact.name},
+                'email', ${contact.email}
+              )
+              ELSE null
+              END
+            ) FILTER (WHERE ${contact.id} IS NOT NULL)`.mapWith((r) => r || []),
         })
         .from(resourceContent)
         .leftJoin(resourceContentShare, eq(resourceContent.id, resourceContentShare.resourceId))
         .leftJoin(resourceContentSendTrack, eq(resourceContent.id, resourceContentSendTrack.resourceId))
         .leftJoin(contact, eq(resourceContentSendTrack.contactId, contact.id))
         .where(conditions)
-        .groupBy(resourceContent.id, resourceContentShare.id, contact.id);
+        .groupBy(resourceContent.id, resourceContentShare.id);
 
       return result;
     }),
