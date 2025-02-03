@@ -4,24 +4,21 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { Switch } from '@/components/ui/switch';
 import { contentTags } from '@/data/data';
 import type { ResourceContent } from '@/lib/schema';
-import { api } from '@/utils/trpc/client';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { X } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
-import { toast } from 'sonner';
 import { z } from 'zod';
 
 const formSchema = z.object({
   title: z.string().min(1, 'Title is required'),
   description: z.string().optional(),
   content: z.string().min(1, 'Content is required'),
-  tags: z.array(z.string()),
+  tags: z.string().optional(),
   visibility: z.enum(['PUBLIC', 'SHARED', 'PRIVATE']),
 });
 
@@ -43,29 +40,8 @@ export function ContentForm({ content, onSuccess, onSubmit, isSubmitting }: Cont
       title: '',
       description: '',
       content: '',
-      tags: [],
+      tags: '',
       visibility: 'PRIVATE',
-    },
-  });
-
-  const { mutate: createContent, isPending: isCreating } = api.resource.createContent.useMutation({
-    onSuccess: () => {
-      toast.success('Content created successfully');
-      form.reset();
-      onSuccess?.();
-    },
-    onError: (error) => {
-      toast.error(error.message);
-    },
-  });
-
-  const { mutate: updateContent, isPending: isUpdating } = api.resource.updateContent.useMutation({
-    onSuccess: () => {
-      toast.success('Content updated successfully');
-      onSuccess?.();
-    },
-    onError: (error) => {
-      toast.error(error.message);
     },
   });
 
@@ -75,7 +51,7 @@ export function ContentForm({ content, onSuccess, onSubmit, isSubmitting }: Cont
         title: content.title,
         description: content.description || '',
         content: content.content,
-        tags: content.tags ? JSON.parse(content.tags) : [],
+        tags: content.tags || '',
         visibility: content.visibility,
       });
     }
@@ -83,35 +59,46 @@ export function ContentForm({ content, onSuccess, onSubmit, isSubmitting }: Cont
 
   const onSubmitForm = (data: FormValues) => {
     onSubmit(data);
+    if (!content) {
+      form.reset({
+        title: '',
+        description: '',
+        content: '',
+        tags: '',
+        visibility: 'PRIVATE',
+      });
+    }
+    onSuccess?.();
   };
 
   const handleAddTag = (value: string) => {
-    const currentTags = form.getValues('tags');
+    const tags = form.getValues('tags');
+    const currentTags = tags ? (JSON.parse(tags) as string[]) : [];
     if (value && !currentTags.includes(value.toLowerCase())) {
-      form.setValue('tags', [...currentTags, value.toLowerCase()]);
+      const newTags = [...currentTags, value.toLowerCase()];
+      form.setValue('tags', JSON.stringify(newTags));
     }
   };
 
   const handleRemoveTag = (tagToRemove: string) => {
-    const currentTags = form.getValues('tags');
-    form.setValue(
-      'tags',
-      currentTags.filter((tag) => tag !== tagToRemove)
-    );
+    const tags = form.getValues('tags');
+    const currentTags = tags ? (JSON.parse(tags) as string[]) : [];
+    const newTags = currentTags.filter((tag) => tag !== tagToRemove);
+    form.setValue('tags', newTags.length > 0 ? JSON.stringify(newTags) : '');
   };
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmitForm)} className='flex h-full flex-col space-y-4'>
-        <div className='space-y-4'>
+      <form onSubmit={form.handleSubmit(onSubmitForm)} className='flex h-full flex-col'>
+        <div className='space-y-4 border-b bg-background p-4'>
           <FormField
             control={form.control}
             name='title'
             render={({ field }) => (
               <FormItem>
-                <FormLabel>{t('title')}</FormLabel>
+                <FormLabel className='text-muted-foreground text-sm'>{t('title')}</FormLabel>
                 <FormControl>
-                  <Input {...field} />
+                  <Input {...field} className='h-9 font-medium text-lg' />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -122,7 +109,7 @@ export function ContentForm({ content, onSuccess, onSubmit, isSubmitting }: Cont
             name='description'
             render={({ field }) => (
               <FormItem>
-                <FormLabel>{t('description')}</FormLabel>
+                <FormLabel className='text-muted-foreground text-sm'>{t('description')}</FormLabel>
                 <FormControl>
                   <Input {...field} value={field.value || ''} />
                 </FormControl>
@@ -135,7 +122,7 @@ export function ContentForm({ content, onSuccess, onSubmit, isSubmitting }: Cont
             name='tags'
             render={({ field }) => (
               <FormItem>
-                <FormLabel>{t('tags')}</FormLabel>
+                <FormLabel className='text-muted-foreground text-sm'>{t('tags')}</FormLabel>
                 <FormControl>
                   <div className='space-y-2'>
                     <Combobox
@@ -148,8 +135,8 @@ export function ContentForm({ content, onSuccess, onSubmit, isSubmitting }: Cont
                       groupHeading={t('existing_tags')}
                       allowCustom
                     />
-                    <div className='flex flex-wrap gap-2'>
-                      {field.value.map((tag) => (
+                    <div className='flex flex-wrap gap-1.5'>
+                      {(field.value ? (JSON.parse(field.value) as string[]) : []).map((tag: string) => (
                         <Badge key={tag} variant='secondary' className='gap-1'>
                           {tag}
                           <button type='button' onClick={() => handleRemoveTag(tag)} className='ml-1 rounded-full outline-none hover:text-destructive'>
@@ -168,37 +155,34 @@ export function ContentForm({ content, onSuccess, onSubmit, isSubmitting }: Cont
             control={form.control}
             name='visibility'
             render={({ field }) => (
-              <FormItem className='flex flex-row items-center justify-between rounded-lg border p-4'>
-                <div className='space-y-0.5'>
-                  <FormLabel className='text-base'>{t('public')}</FormLabel>
-                  <div className='text-muted-foreground text-sm'>{t('public_description')}</div>
-                </div>
+              <FormItem className='flex flex-row items-center space-x-2'>
                 <FormControl>
                   <Switch checked={field.value === 'PUBLIC'} onCheckedChange={(checked) => field.onChange(checked ? 'PUBLIC' : 'PRIVATE')} />
                 </FormControl>
+                <FormLabel className='text-sm'>{t('public_description')}</FormLabel>
               </FormItem>
             )}
           />
         </div>
-        <div className='flex-1 rounded-lg border bg-background'>
+        <div className='flex-1'>
           <FormField
             control={form.control}
             name='content'
             render={({ field }) => (
               <FormItem className='h-full'>
                 <FormControl>
-                  <ScrollArea className='h-full'>
-                    <TipTapEditor content={field.value} onChange={field.onChange} className='border-none' />
-                  </ScrollArea>
+                  <TipTapEditor content={field.value} onChange={field.onChange} className='h-full' />
                 </FormControl>
                 <FormMessage />
               </FormItem>
             )}
           />
         </div>
-        <Button type='submit' disabled={isCreating || isUpdating}>
-          {content ? t('update') : t('create')}
-        </Button>
+        <div className='border-t bg-background p-4'>
+          <Button type='submit' disabled={isSubmitting} className='w-full'>
+            {content ? t('update') : t('create')}
+          </Button>
+        </div>
       </form>
     </Form>
   );

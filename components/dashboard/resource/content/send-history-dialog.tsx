@@ -63,7 +63,7 @@ export function SendHistoryDialog({ open, onOpenChange, content }: SendHistoryDi
       {
         accessorKey: 'status',
         header: t('status'),
-        cell: ({ row }) => <span className='capitalize'>{row.original.status.toLowerCase()}</span>,
+        cell: ({ row }) => <span>{t(row.original.status)}</span>,
       },
     ],
     [t]

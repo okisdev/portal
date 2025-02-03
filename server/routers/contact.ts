@@ -3,6 +3,7 @@ import { activitySubTypeSchema, activityTypeSchema, prioritySchema, statusSchema
 import { createContactActivityHelper } from '@/server/helper/contact';
 import { createTRPCRouter, protectedProcedure, publicProcedure } from '@/server/trpc';
 import { sendEmail } from '@/utils/email';
+import { TRPCError } from '@trpc/server';
 import { and, asc, desc, eq, inArray, sql } from 'drizzle-orm';
 import { z } from 'zod';
 
@@ -562,7 +563,7 @@ export const contactRouter = createTRPCRouter({
     .mutation(async ({ input, ctx }) => {
       try {
         if (!ctx.session.user.email) {
-          throw new Error('User email is not set');
+          throw new TRPCError({ code: 'BAD_REQUEST', message: 'User email is not set' });
         }
 
         await sendEmail({
@@ -597,7 +598,7 @@ export const contactRouter = createTRPCRouter({
           success: true,
         };
       } catch (error) {
-        throw new Error('Failed to send email');
+        throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Failed to send email' });
       }
     }),
 
@@ -767,7 +768,7 @@ export const contactRouter = createTRPCRouter({
         results.push(...createdContacts);
       } catch (error) {
         console.error('Transaction error:', error);
-        throw new Error('Failed to create contacts batch');
+        throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Failed to create contacts batch' });
       }
 
       return {

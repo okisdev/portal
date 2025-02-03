@@ -1,13 +1,14 @@
 import { contact, resourceContent, resourceContentSendTrack, resourceContentShare, resourceEmails, user } from '@/drizzle/schema';
 import { createTRPCRouter, protectedProcedure } from '@/server/trpc';
-import { and, eq, inArray, like, or, sql } from 'drizzle-orm';
+import { TRPCError } from '@trpc/server';
+import { and, desc, eq, inArray, like, or, sql } from 'drizzle-orm';
 import { z } from 'zod';
 
 const resourceContentSchema = z.object({
   title: z.string().min(1),
   description: z.string().optional(),
   content: z.string().min(1),
-  tags: z.array(z.string()).default([]).optional(),
+  tags: z.string().optional(),
   visibility: z.enum(['PUBLIC', 'SHARED', 'PRIVATE']),
 });
 
@@ -18,7 +19,7 @@ const resourceEmailSchema = z.object({
   description: z.string().optional(),
   subject: z.string().min(1),
   content: z.string().min(1),
-  tags: z.array(z.string()).default([]).optional(),
+  tags: z.string().optional(),
   visibility: z.enum(['PUBLIC', 'SHARED', 'PRIVATE']),
 });
 
@@ -26,7 +27,6 @@ export const resourceRouter = createTRPCRouter({
   createContent: protectedProcedure.input(resourceContentSchema).mutation(async ({ ctx, input }) => {
     return ctx.db.insert(resourceContent).values({
       ...input,
-      tags: input.tags ? JSON.stringify(input.tags) : null,
       createdBy: ctx.session.user.id,
       updatedBy: ctx.session.user.id,
     });
@@ -69,19 +69,30 @@ export const resourceRouter = createTRPCRouter({
           resourceContentShare: resourceContentShare,
           sendCount: sql<number>`count(distinct ${resourceContentSendTrack.id})`.mapWith(Number),
           lastSentAt: sql<Date | null>`max(${resourceContentSendTrack.sentAt})`.mapWith((d) => d && new Date(d)),
-          lastRecipient: contact,
+          recipients: sql<any[]>`
+            json_agg(
+              CASE WHEN ${contact.id} IS NOT NULL 
+              THEN json_build_object(
+                'id', ${contact.id},
+                'name', ${contact.name},
+                'email', ${contact.email}
+              )
+              ELSE null
+              END
+            ) FILTER (WHERE ${contact.id} IS NOT NULL)`.mapWith((r) => r || []),
         })
         .from(resourceContent)
         .leftJoin(resourceContentShare, eq(resourceContent.id, resourceContentShare.resourceId))
         .leftJoin(resourceContentSendTrack, eq(resourceContent.id, resourceContentSendTrack.resourceId))
         .leftJoin(contact, eq(resourceContentSendTrack.contactId, contact.id))
         .where(conditions)
-        .groupBy(resourceContent.id, resourceContentShare.id, contact.id);
+        .groupBy(resourceContent.id, resourceContentShare.id)
+        .orderBy(desc(resourceContent.updatedAt));
 
       return result;
     }),
 
-  getContent: protectedProcedure.input(z.string()).query(async ({ ctx, input }) => {
+  getContent: protectedProcedure.input(z.object({ id: z.string(), includeShare: z.boolean().optional() })).query(async ({ ctx, input }) => {
     const userId = ctx.session.user.id;
 
     const result = await ctx.db
@@ -90,7 +101,7 @@ export const resourceRouter = createTRPCRouter({
       .leftJoin(resourceContentShare, eq(resourceContent.id, resourceContentShare.resourceId))
       .where(
         and(
-          eq(resourceContent.id, input),
+          eq(resourceContent.id, input.id),
           or(eq(resourceContent.createdBy, userId), eq(resourceContent.visibility, 'PUBLIC'), and(eq(resourceContent.visibility, 'SHARED'), eq(resourceContentShare.sharedWithUserId, userId)))
         )
       )
@@ -122,14 +133,13 @@ export const resourceRouter = createTRPCRouter({
         .limit(1);
 
       if (!existing[0]) {
-        throw new Error('Not authorized to edit this content');
+        throw new TRPCError({ code: 'UNAUTHORIZED', message: 'Not authorized to edit this content' });
       }
 
       return ctx.db
         .update(resourceContent)
         .set({
           ...input.data,
-          tags: input.data.tags ? JSON.stringify(input.data.tags) : undefined,
           updatedBy: userId,
           updatedAt: new Date(),
         })
@@ -146,7 +156,7 @@ export const resourceRouter = createTRPCRouter({
       .limit(1);
 
     if (!existing[0]) {
-      throw new Error('Not authorized to delete this content');
+      throw new TRPCError({ code: 'UNAUTHORIZED', message: 'Not authorized to delete this content' });
     }
 
     return ctx.db.delete(resourceContent).where(eq(resourceContent.id, input));
@@ -170,7 +180,7 @@ export const resourceRouter = createTRPCRouter({
         .limit(1);
 
       if (!existing[0]) {
-        throw new Error('Not authorized to share this content');
+        throw new TRPCError({ code: 'UNAUTHORIZED', message: 'Not authorized to share this content' });
       }
 
       if (existing[0].visibility === 'PRIVATE') {
@@ -206,7 +216,7 @@ export const resourceRouter = createTRPCRouter({
         .limit(1);
 
       if (!existing[0]) {
-        throw new Error('Not authorized to modify shares for this content');
+        throw new TRPCError({ code: 'UNAUTHORIZED', message: 'Not authorized to modify shares for this content' });
       }
 
       return ctx.db.delete(resourceContentShare).where(and(eq(resourceContentShare.resourceId, input.resourceId), eq(resourceContentShare.sharedWithUserId, input.userId)));
@@ -217,7 +227,6 @@ export const resourceRouter = createTRPCRouter({
       .insert(resourceEmails)
       .values({
         ...input,
-        tags: input.tags ? JSON.stringify(input.tags) : null,
         createdBy: ctx.session.user.id,
         updatedBy: ctx.session.user.id,
       })
@@ -285,14 +294,13 @@ export const resourceRouter = createTRPCRouter({
         .limit(1);
 
       if (!existing[0]) {
-        throw new Error('Not authorized to edit this email template');
+        throw new TRPCError({ code: 'UNAUTHORIZED', message: 'Not authorized to edit this email template' });
       }
 
       return ctx.db
         .update(resourceEmails)
         .set({
           ...input.data,
-          tags: input.data.tags ? JSON.stringify(input.data.tags) : undefined,
           updatedBy: userId,
           updatedAt: new Date(),
         })
@@ -309,7 +317,7 @@ export const resourceRouter = createTRPCRouter({
       .limit(1);
 
     if (!existing[0]) {
-      throw new Error('Not authorized to delete this email template');
+      throw new TRPCError({ code: 'UNAUTHORIZED', message: 'Not authorized to delete this email template' });
     }
 
     return ctx.db.delete(resourceEmails).where(eq(resourceEmails.id, input));
@@ -357,7 +365,7 @@ export const resourceRouter = createTRPCRouter({
         .limit(1);
 
       if (!content[0]) {
-        throw new Error('Not authorized to view this content');
+        throw new TRPCError({ code: 'UNAUTHORIZED', message: 'Not authorized to view this content' });
       }
 
       return ctx.db
