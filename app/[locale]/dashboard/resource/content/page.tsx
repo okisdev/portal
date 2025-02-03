@@ -10,7 +10,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import type { ResourceContent } from '@/lib/schema';
 import { api } from '@/utils/trpc/client';
 import { formatDistanceToNow } from 'date-fns';
-import { Clock, Eye, Send, Tag } from 'lucide-react';
+import { Clock, Eye, Send } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -108,32 +108,32 @@ export default function ContentPage() {
 
   return (
     <div className='flex h-full'>
-      <div className='flex w-80 flex-col border-r p-4'>
-        <PageHeader
-          title={t('content')}
-          right={
-            <button
-              type='button'
-              onClick={handleNewContent}
-              className='inline-flex h-9 items-center justify-center rounded-md bg-primary px-3 font-medium text-primary-foreground text-sm ring-offset-background transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50'
-            >
-              {t('new')}
-            </button>
-          }
-        />
+      <div className='flex w-80 flex-col border-r bg-muted/10'>
+        <div className='border-b bg-background p-4'>
+          <PageHeader
+            title={t('content')}
+            right={
+              <button
+                type='button'
+                onClick={handleNewContent}
+                className='inline-flex h-9 items-center justify-center rounded-md bg-primary px-3 font-medium text-primary-foreground text-sm ring-offset-background transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50'
+              >
+                {t('new')}
+              </button>
+            }
+          />
+        </div>
 
-        <ScrollArea className='-mx-4 flex-1 px-4'>
-          <div className='space-y-1 py-4'>
+        <ScrollArea className='flex-1 p-3'>
+          <div className='space-y-2'>
             {contentsLoading && (
               <>
-                <Skeleton className='h-10' />
-                <Skeleton className='h-10' />
-                <Skeleton className='h-10' />
-                <Skeleton className='h-10' />
-                <Skeleton className='h-10' />
+                <Skeleton className='h-24' />
+                <Skeleton className='h-24' />
+                <Skeleton className='h-24' />
               </>
             )}
-            {contents && contents.length === 0 && <div className='p-4 text-center text-muted-foreground text-sm'>No content found</div>}
+            {contents && contents.length === 0 && <div className='flex h-[200px] items-center justify-center rounded-lg border border-dashed text-muted-foreground text-sm'>No content found</div>}
             {contents?.map((item) => {
               const tags = item.resourceContent.tags ? JSON.parse(item.resourceContent.tags) : [];
               return (
@@ -141,17 +141,18 @@ export default function ContentPage() {
                   key={item.resourceContent.id}
                   type='button'
                   onClick={() => router.push(`/dashboard/resource/content?id=${item.resourceContent.id}`)}
-                  className={`w-full space-y-2 rounded-lg border p-3 text-left transition-colors hover:bg-accent ${currentContent?.id === item.resourceContent.id ? 'bg-accent' : ''}`}
+                  className={`group w-full space-y-2 rounded-lg border bg-background p-3 text-left transition-all hover:border-primary/20 hover:shadow-sm ${
+                    currentContent?.id === item.resourceContent.id ? 'border-primary/40 shadow-sm' : ''
+                  }`}
                 >
                   <div>
-                    <h3 className='line-clamp-1 font-medium'>{item.resourceContent.title}</h3>
+                    <h3 className='line-clamp-1 font-medium group-hover:text-primary'>{item.resourceContent.title}</h3>
                     {item.resourceContent.description && <p className='line-clamp-2 text-muted-foreground text-sm'>{item.resourceContent.description}</p>}
                   </div>
 
                   <div className='flex flex-wrap gap-1.5'>
                     {tags.length > 0 && (
-                      <div className='flex items-center gap-1 text-muted-foreground text-xs'>
-                        <Tag className='size-3' />
+                      <div className='flex flex-wrap items-center gap-1.5'>
                         {tags.map((tag: string) => (
                           <Badge key={tag} variant='secondary' className='text-xs'>
                             {tag}
@@ -161,23 +162,20 @@ export default function ContentPage() {
                     )}
                   </div>
 
-                  <div className='flex flex-col gap-2'>
-                    <div className='flex items-center gap-3 text-muted-foreground text-xs'>
-                      <div className='flex items-center gap-1'>
-                        <Clock className='size-3' />
-                        {formatDistanceToNow(new Date(item.resourceContent.createdAt), { addSuffix: true })}
-                      </div>
+                  <div className='flex items-center gap-4 text-muted-foreground text-xs'>
+                    <div className='flex items-center gap-1.5'>
+                      <Clock className='size-3' />
+                      {formatDistanceToNow(new Date(item.resourceContent.createdAt), { addSuffix: true })}
+                    </div>
 
-                      <div className='flex items-center gap-1'>
-                        <Eye className='size-3' />
-                        {item.resourceContent.visibility.toLowerCase()}
-                      </div>
+                    <div className='flex items-center gap-1.5'>
+                      <Eye className='size-3' />
+                      {item.resourceContent.visibility.toLowerCase()}
+                    </div>
 
-                      <div className='flex items-center gap-1'>
-                        <Send className='size-3' />
-                        {item.sendCount || 0} {item.sendCount === 1 ? 'send' : 'sends'}
-                        {item.recipients && item.recipients.length > 0 && ` to ${item.recipients.length} recipient${item.recipients.length === 1 ? '' : 's'}`}
-                      </div>
+                    <div className='flex items-center gap-1.5'>
+                      <Send className='size-3' />
+                      {item.sendCount || 0}
                     </div>
                   </div>
                 </button>
@@ -187,7 +185,7 @@ export default function ContentPage() {
         </ScrollArea>
       </div>
 
-      <div className='flex-1 p-4'>
+      <div className='flex-1'>
         {id ? (
           <ContentEditor content={currentContent} onUpdate={handleUpdate} onDelete={() => setIsDeleteDialogOpen(true)} isLoading={contentLoading} />
         ) : (

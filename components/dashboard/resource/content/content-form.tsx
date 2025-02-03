@@ -4,17 +4,14 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { Switch } from '@/components/ui/switch';
 import { contentTags } from '@/data/data';
 import type { ResourceContent } from '@/lib/schema';
-import { api } from '@/utils/trpc/client';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { X } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
-import { toast } from 'sonner';
 import { z } from 'zod';
 
 const formSchema = z.object({
@@ -45,27 +42,6 @@ export function ContentForm({ content, onSuccess, onSubmit, isSubmitting }: Cont
       content: '',
       tags: [],
       visibility: 'PRIVATE',
-    },
-  });
-
-  const { mutate: createContent, isPending: isCreating } = api.resource.createContent.useMutation({
-    onSuccess: () => {
-      toast.success('Content created successfully');
-      form.reset();
-      onSuccess?.();
-    },
-    onError: (error) => {
-      toast.error(error.message);
-    },
-  });
-
-  const { mutate: updateContent, isPending: isUpdating } = api.resource.updateContent.useMutation({
-    onSuccess: () => {
-      toast.success('Content updated successfully');
-      onSuccess?.();
-    },
-    onError: (error) => {
-      toast.error(error.message);
     },
   });
 
@@ -102,16 +78,16 @@ export function ContentForm({ content, onSuccess, onSubmit, isSubmitting }: Cont
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmitForm)} className='flex h-full flex-col space-y-4'>
-        <div className='space-y-4'>
+      <form onSubmit={form.handleSubmit(onSubmitForm)} className='flex h-full flex-col'>
+        <div className='space-y-4 border-b bg-background p-4'>
           <FormField
             control={form.control}
             name='title'
             render={({ field }) => (
               <FormItem>
-                <FormLabel>{t('title')}</FormLabel>
+                <FormLabel className='text-muted-foreground text-sm'>{t('title')}</FormLabel>
                 <FormControl>
-                  <Input {...field} />
+                  <Input {...field} className='h-9 font-medium text-lg' />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -122,7 +98,7 @@ export function ContentForm({ content, onSuccess, onSubmit, isSubmitting }: Cont
             name='description'
             render={({ field }) => (
               <FormItem>
-                <FormLabel>{t('description')}</FormLabel>
+                <FormLabel className='text-muted-foreground text-sm'>{t('description')}</FormLabel>
                 <FormControl>
                   <Input {...field} value={field.value || ''} />
                 </FormControl>
@@ -135,7 +111,7 @@ export function ContentForm({ content, onSuccess, onSubmit, isSubmitting }: Cont
             name='tags'
             render={({ field }) => (
               <FormItem>
-                <FormLabel>{t('tags')}</FormLabel>
+                <FormLabel className='text-muted-foreground text-sm'>{t('tags')}</FormLabel>
                 <FormControl>
                   <div className='space-y-2'>
                     <Combobox
@@ -148,7 +124,7 @@ export function ContentForm({ content, onSuccess, onSubmit, isSubmitting }: Cont
                       groupHeading={t('existing_tags')}
                       allowCustom
                     />
-                    <div className='flex flex-wrap gap-2'>
+                    <div className='flex flex-wrap gap-1.5'>
                       {field.value.map((tag) => (
                         <Badge key={tag} variant='secondary' className='gap-1'>
                           {tag}
@@ -180,25 +156,25 @@ export function ContentForm({ content, onSuccess, onSubmit, isSubmitting }: Cont
             )}
           />
         </div>
-        <div className='flex-1 rounded-lg border bg-background'>
+        <div className='flex-1 bg-background'>
           <FormField
             control={form.control}
             name='content'
             render={({ field }) => (
               <FormItem className='h-full'>
                 <FormControl>
-                  <ScrollArea className='h-full'>
-                    <TipTapEditor content={field.value} onChange={field.onChange} className='border-none' />
-                  </ScrollArea>
+                  <TipTapEditor content={field.value} onChange={field.onChange} className='h-full border-none' />
                 </FormControl>
                 <FormMessage />
               </FormItem>
             )}
           />
         </div>
-        <Button type='submit' disabled={isCreating || isUpdating}>
-          {content ? t('update') : t('create')}
-        </Button>
+        <div className='border-t bg-background p-4'>
+          <Button type='submit' disabled={isSubmitting} className='w-full'>
+            {content ? t('update') : t('create')}
+          </Button>
+        </div>
       </form>
     </Form>
   );
