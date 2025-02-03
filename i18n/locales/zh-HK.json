@@ -559,5 +559,7 @@
   "workspace": "工作區",
   "write_a_reply": "寫回覆... 使用 @ 提及他人",
   "you": "您",
-  "no_message_templates_found": "找不到消息模板。\n使用標籤“ WhatsApp”或“消息”創建模板在此處使用它們。"
+  "no_message_templates_found": "找不到消息模板。\n使用標籤“ WhatsApp”或“消息”創建模板在此處使用它們。",
+  "MESSAGE_RECEIVED": "收到的消息",
+  "whatsapp_message_sent_successfully": "WhatsApp消息成功發送"
 }

@@ -560,5 +560,6 @@
   "write_a_reply": "Write a reply... Use @ to mention someone",
   "you": "You",
   "no_message_templates_found": "No message templates found. Create templates with tags \"whatsapp\" or \"message\" to use them here.",
-  "whatsapp_message_sent_successfully": "WhatsApp message sent successfully"
+  "whatsapp_message_sent_successfully": "WhatsApp message sent successfully",
+  "MESSAGE_RECEIVED": "Message Received"
 }

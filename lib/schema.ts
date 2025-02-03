@@ -62,6 +62,7 @@ export const activitySubTypeSchema = z.enum([
   'EMAIL_SENT',
   'EMAIL_SCHEDULED',
   'MESSAGE_SENT',
+  'MESSAGE_RECEIVED',
   'NOTE_ADDED',
   'REMARK_UPDATED',
 

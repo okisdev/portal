@@ -321,6 +321,7 @@ export const contactActivity = pgTable('contactActivity', {
       'EMAIL_SENT',
       'EMAIL_SCHEDULED',
       'MESSAGE_SENT',
+      'MESSAGE_RECEIVED',
       'NOTE_ADDED',
       'REMARK_UPDATED',
 
@@ -707,6 +708,7 @@ export const teamActivity = pgTable('teamActivity', {
       'EMAIL_SENT',
       'EMAIL_SCHEDULED',
       'MESSAGE_SENT',
+      'MESSAGE_RECEIVED',
       'NOTE_ADDED',
       'REMARK_UPDATED',
 

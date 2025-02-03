@@ -5,11 +5,14 @@
  * LICENSE file in the root directory of this source tree.
  */
 
+import { appRouter } from '@/server/root';
+import { createTRPCContext } from '@/server/trpc';
 import axios from 'axios';
 import { type NextRequest, NextResponse } from 'next/server';
 
 const WEBHOOK_VERIFY_TOKEN = process.env.WEBHOOK_VERIFY_TOKEN;
 const GRAPH_API_TOKEN = process.env.GRAPH_API_TOKEN;
+const WHATSAPP_PHONE_NUMBER_ID = process.env.WHATSAPP_PHONE_NUMBER_ID;
 
 export async function POST(req: NextRequest) {
   try {
@@ -24,30 +27,26 @@ export async function POST(req: NextRequest) {
 
     // check if the incoming message contains text
     if (message?.type === 'text') {
-      // extract the business number to send the reply from it
-      const business_phone_number_id = body.entry?.[0].changes?.[0].value?.metadata?.phone_number_id;
+      // Create tRPC caller
+      const ctx = await createTRPCContext({
+        headers: req.headers,
+        // Since this is a webhook, we'll create an anonymous session
+        session: null,
+      });
+      const caller = appRouter.createCaller(ctx);
 
-      // send a reply message
-      await axios({
-        method: 'POST',
-        url: `https://graph.facebook.com/v18.0/${business_phone_number_id}/messages`,
-        headers: {
-          Authorization: `Bearer ${GRAPH_API_TOKEN}`,
-        },
-        data: {
-          messaging_product: 'whatsapp',
-          to: message.from,
-          text: { body: `Echo: ${message.text.body}` },
-          context: {
-            message_id: message.id,
-          },
-        },
+      // Save the message as a contact activity
+      await caller.external.receiveWhatsAppMessageToContactActivity({
+        from: message.from,
+        message: message.text.body,
+        messageId: message.id,
+        timestamp: message.timestamp,
       });
 
-      // mark incoming message as read
+      // Mark message as read
       await axios({
         method: 'POST',
-        url: `https://graph.facebook.com/v18.0/${business_phone_number_id}/messages`,
+        url: `https://graph.facebook.com/v18.0/${WHATSAPP_PHONE_NUMBER_ID}/messages`,
         headers: {
           Authorization: `Bearer ${GRAPH_API_TOKEN}`,
         },
