@@ -1,13 +1,6 @@
-/**
- * Copyright (c) Meta Platforms, Inc. and affiliates.
- *
- * This source code is licensed under the MIT license found in the
- * LICENSE file in the root directory of this source tree.
- */
-
 import { appRouter } from '@/server/root';
 import { createTRPCContext } from '@/server/trpc';
-import axios from 'axios';
+import ky from 'ky';
 import { type NextRequest, NextResponse } from 'next/server';
 
 const WEBHOOK_VERIFY_TOKEN = process.env.WEBHOOK_VERIFY_TOKEN;
@@ -44,13 +37,11 @@ export async function POST(req: NextRequest) {
       });
 
       // Mark message as read
-      await axios({
-        method: 'POST',
-        url: `https://graph.facebook.com/v18.0/${WHATSAPP_PHONE_NUMBER_ID}/messages`,
+      await ky.post(`https://graph.facebook.com/v18.0/${WHATSAPP_PHONE_NUMBER_ID}/messages`, {
         headers: {
           Authorization: `Bearer ${GRAPH_API_TOKEN}`,
         },
-        data: {
+        json: {
           messaging_product: 'whatsapp',
           status: 'read',
           message_id: message.id,

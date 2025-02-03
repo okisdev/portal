@@ -37,8 +37,9 @@ export async function sendWhatsAppMessage(to: string, message: string) {
 
     return response.data;
   } catch (error) {
-    if (axios.isAxiosError(error)) {
-      throw new WhatsAppError(error.response?.data?.error?.message || 'Failed to send WhatsApp message');
+    if (axios.isAxiosError(error) && error.response?.data) {
+      const errorMessage = typeof error.response.data === 'object' && 'error' in error.response.data ? error.response.data.error.message : 'Failed to send WhatsApp message';
+      throw new WhatsAppError(errorMessage);
     }
     throw new WhatsAppError('Failed to send WhatsApp message');
   }
