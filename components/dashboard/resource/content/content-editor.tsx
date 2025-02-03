@@ -5,9 +5,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { contentTags } from '@/data/data';
 import type { ResourceContent } from '@/lib/schema';
+import type { Locale } from '@/types/i18n';
+import { dateLocaleMap } from '@/utils/date';
 import { formatDistanceToNow } from 'date-fns';
 import { Clock, Database, Eye, EyeOff, Plus, Save, Tags, Trash, X } from 'lucide-react';
 import { useTranslations } from 'next-intl';
+import { useLocale } from 'next-intl';
 import { useEffect, useState } from 'react';
 import { SendHistoryDialog } from './send-history-dialog';
 
@@ -93,6 +96,8 @@ function TagManager({ tags, onTagsChange, disabled }: TagManagerProps) {
 
 export function ContentEditor({ content, onUpdate, onDelete, isLoading }: ContentEditorProps) {
   const t = useTranslations();
+  const locale = useLocale() as Locale;
+  const dateLocale = dateLocaleMap[locale];
 
   const [isViewMode, setIsViewMode] = useState(false);
   const [editingTitle, setEditingTitle] = useState(false);
@@ -224,11 +229,11 @@ export function ContentEditor({ content, onUpdate, onDelete, isLoading }: Conten
             <div className='flex flex-col items-start gap-0.5'>
               <div className='flex items-center gap-1.5 text-muted-foreground text-xs'>
                 <Clock className='size-3' />
-                {t('created_at', { time: formatDistanceToNow(new Date(content.createdAt), { addSuffix: true }) })}
+                {t('created_at', { time: formatDistanceToNow(new Date(content.createdAt), { addSuffix: true, locale: dateLocale }) })}
               </div>
               <div className='flex items-center gap-1.5 text-muted-foreground text-xs'>
                 <Clock className='size-3' />
-                {t('last_updated_at', { time: formatDistanceToNow(new Date(content.updatedAt), { addSuffix: true }) })}
+                {t('last_updated_at', { time: formatDistanceToNow(new Date(content.updatedAt), { addSuffix: true, locale: dateLocale }) })}
               </div>
             </div>
           </div>
