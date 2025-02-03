@@ -15,19 +15,33 @@ export async function POST(req: NextRequest) {
     // log incoming messages
     console.log('Incoming webhook message:', JSON.stringify(body, null, 2));
 
+    // Create tRPC caller
+    const ctx = await createTRPCContext({
+      headers: req.headers,
+      // Since this is a webhook, we'll create an anonymous session
+      session: null,
+    });
+    const caller = appRouter.createCaller(ctx);
+
+    // Handle message status updates
+    const status = body.entry?.[0]?.changes[0]?.value?.statuses?.[0];
+    if (status) {
+      await caller.external.handleWhatsAppMessageStatus({
+        messageId: status.id,
+        status: status.status,
+        timestamp: status.timestamp,
+        recipientId: status.recipient_id,
+        conversationId: status.conversation?.id,
+        metadata: status,
+      });
+      return NextResponse.json({ success: true }, { status: 200 });
+    }
+
     // check if the webhook request contains a message
     const message = body.entry?.[0]?.changes[0]?.value?.messages?.[0];
 
     // check if the incoming message contains text
     if (message?.type === 'text') {
-      // Create tRPC caller
-      const ctx = await createTRPCContext({
-        headers: req.headers,
-        // Since this is a webhook, we'll create an anonymous session
-        session: null,
-      });
-      const caller = appRouter.createCaller(ctx);
-
       // Save the message as a contact activity
       await caller.external.receiveWhatsAppMessageToContactActivity({
         from: message.from,

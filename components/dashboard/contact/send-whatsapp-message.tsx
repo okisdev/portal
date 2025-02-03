@@ -86,18 +86,8 @@ export function SendWhatsAppMessage({ open, onOpenChange, recipient }: SendWhats
       message: message,
     });
 
-    // Log the message activity
-    createContactActivity.mutate({
-      contactId: recipient.id,
-      type: 'ENGAGEMENT',
-      subType: 'MESSAGE_SENT',
-      initiatorType: 'user',
-      initiatorId: session?.user.id || '',
-      description: message,
-      metadata: {
-        message,
-      },
-    });
+    // Close the dialog and show success message
+    handleClose();
   };
 
   const handleSelectTemplate = (template: ResourceContent) => {
