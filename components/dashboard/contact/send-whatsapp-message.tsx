@@ -44,6 +44,16 @@ export function SendWhatsAppMessage({ open, onOpenChange, recipient }: SendWhats
     },
   });
 
+  const sendWhatsAppMessage = api.external.sendWhatsAppMessage.useMutation({
+    onSuccess: () => {
+      toast.success(t('whatsapp_message_sent_successfully'));
+      handleClose();
+    },
+    onError: (error) => {
+      toast.error(error.message);
+    },
+  });
+
   const createContentSendTrack = api.resource.createContentSendTrack.useMutation({
     onSuccess: () => {
       utils.resource.getContents.invalidate();
@@ -59,7 +69,7 @@ export function SendWhatsAppMessage({ open, onOpenChange, recipient }: SendWhats
     onOpenChange(false);
   };
 
-  const handleSend = () => {
+  const handleSend = async () => {
     if (!message.trim()) {
       toast.error('Please enter a message');
       return;
@@ -69,6 +79,12 @@ export function SendWhatsAppMessage({ open, onOpenChange, recipient }: SendWhats
       toast.error('Contact does not have a phone number');
       return;
     }
+
+    // Send message via WhatsApp
+    sendWhatsAppMessage.mutate({
+      to: recipient.phone.replace(/\D/g, ''),
+      message: message,
+    });
 
     // Log the message activity
     createContactActivity.mutate({
@@ -82,10 +98,6 @@ export function SendWhatsAppMessage({ open, onOpenChange, recipient }: SendWhats
         message,
       },
     });
-
-    // Open WhatsApp with the message
-    const whatsappUrl = `https://wa.me/${recipient.phone.replace(/\D/g, '')}?text=${encodeURIComponent(message)}`;
-    window.open(whatsappUrl, '_blank');
   };
 
   const handleSelectTemplate = (template: ResourceContent) => {
