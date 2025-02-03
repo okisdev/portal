@@ -336,7 +336,7 @@ export default function CampaignDetailsPage() {
 
   const updateCampaign = api.marketing.updateCampaign.useMutation({
     onSuccess: () => {
-      toast.success('Campaign updated successfully');
+      toast.success(t('campaign_updated_successfully'));
       setIsEditDialogOpen(false);
       utils.marketing.getCampaignById.invalidate({ id: id[0] });
     },

@@ -17,6 +17,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { api } from '@/utils/trpc/client';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { FilterIcon, LayoutGridIcon, ListIcon, PlusIcon } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
@@ -62,6 +63,8 @@ export default function TasksPage() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
+  const t = useTranslations();
+
   // Get view mode from URL or default to list
   const defaultViewMode = (searchParams.get('view') as ViewMode) || 'list';
   const [viewMode, setViewMode] = useState<ViewMode>(defaultViewMode);
@@ -93,20 +96,20 @@ export default function TasksPage() {
         priority: 'medium',
         dueDate: undefined,
       });
-      toast.success('Task created successfully');
+      toast.success(t('task_created_successfully'));
     },
   });
   const updateTask = api.task.update.useMutation({
     onSuccess: () => {
       utils.task.getAll.invalidate();
       setEditingTask(null);
-      toast.success('Task updated successfully');
+      toast.success(t('task_updated_successfully'));
     },
   });
   const deleteTask = api.task.delete.useMutation({
     onSuccess: () => {
       utils.task.getAll.invalidate();
-      toast.success('Task deleted successfully');
+      toast.success(t('task_deleted_successfully'));
     },
   });
 

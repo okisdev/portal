@@ -41,7 +41,7 @@ export default function EmailDetailPage() {
   // Mutation to update the template
   const updateMutation = api.resource.updateEmail.useMutation({
     onSuccess: () => {
-      toast.success('Email template updated successfully');
+      toast.success(t('email_template_updated_successfully'));
       if (id) {
         utils.resource.getEmail.invalidate(id);
       }
@@ -54,7 +54,7 @@ export default function EmailDetailPage() {
   // Mutation to delete the template
   const deleteMutation = api.resource.deleteEmail.useMutation({
     onSuccess: () => {
-      toast.success('Email template deleted successfully');
+      toast.success(t('email_template_deleted_successfully'));
       router.push('/dashboard/resource/emails');
     },
     onError: (error) => {

@@ -81,7 +81,7 @@ export default function MarketingCampaignsPage() {
   const { data: campaigns = [], isLoading } = api.marketing.getAllCampaigns.useQuery();
   const updateCampaign = api.marketing.updateCampaign.useMutation({
     onSuccess: () => {
-      toast.success('Campaign updated successfully');
+      toast.success(t('campaign_updated_successfully'));
       setEditingCampaign(null);
       utils.marketing.getAllCampaigns.invalidate();
     },

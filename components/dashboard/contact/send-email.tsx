@@ -49,7 +49,7 @@ export function SendEmail({ open, onOpenChange, recipient }: SendEmailProps) {
 
   const sendEmail = api.contact.sendEmail.useMutation({
     onSuccess: () => {
-      toast.success('Email sent successfully');
+      toast.success(t('email_sent_successfully'));
       utils.contact.getContactById.invalidate({ id: recipient.id });
       handleClose();
     },
@@ -60,7 +60,7 @@ export function SendEmail({ open, onOpenChange, recipient }: SendEmailProps) {
 
   // const scheduleEmail = api.contact.scheduleEmail.useMutation({
   //   onSuccess: () => {
-  //     toast.success('Email scheduled successfully');
+  //     toast.success(t('email_scheduled_successfully'));
   //     handleClose();
   //   },
   //   onError: (error) => {

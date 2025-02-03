@@ -71,7 +71,7 @@ export default function CRMTeamsPage() {
   const deleteTeam = api.team.deleteTeam.useMutation({
     onSuccess: () => {
       utils.team.getAllTeams.invalidate();
-      toast.success('Team deleted successfully');
+      toast.success(t('team_deleted_successfully'));
     },
     onError: (error) => {
       toast.error(error.message);

@@ -32,7 +32,7 @@ export function SiteMembers() {
   const { mutate: updateUser, isPending: updateUserPending } = api.admin.updateUser.useMutation({
     onSuccess: () => {
       utils.admin.getUsers.invalidate();
-      toast.success('User updated successfully');
+      toast.success(t('user_updated_successfully'));
     },
     onError: (error) => {
       toast.error(error.message);
@@ -42,7 +42,7 @@ export function SiteMembers() {
   const { mutate: deleteUser } = api.admin.deleteUser.useMutation({
     onSuccess: () => {
       utils.admin.getUsers.invalidate();
-      toast.success('User deleted successfully');
+      toast.success(t('user_deleted_successfully'));
       setUserToDelete(null);
     },
     onError: (error) => {

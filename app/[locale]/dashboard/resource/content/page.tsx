@@ -31,7 +31,7 @@ export default function ContentPage() {
 
   const createContent = api.resource.createContent.useMutation({
     onSuccess: () => {
-      toast.success('Content created successfully');
+      toast.success(t('content_created_successfully'));
       router.push('/dashboard/resource/content');
       utils.resource.getContents.invalidate();
     },
@@ -44,7 +44,7 @@ export default function ContentPage() {
 
   const updateContent = api.resource.updateContent.useMutation({
     onSuccess: () => {
-      toast.success('Content updated successfully');
+      toast.success(t('content_updated_successfully'));
       utils.resource.getContents.invalidate();
     },
     onError: (error) => {
@@ -56,7 +56,7 @@ export default function ContentPage() {
 
   const deleteContent = api.resource.deleteContent.useMutation({
     onSuccess: () => {
-      toast.success('Content deleted successfully');
+      toast.success(t('content_deleted_successfully'));
       setCurrentContent(null);
       router.push('/dashboard/resource/content');
       utils.resource.getContents.invalidate();

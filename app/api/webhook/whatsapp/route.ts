@@ -1,5 +1,5 @@
 import { appRouter } from '@/server/root';
-import { createTRPCContext } from '@/server/trpc';
+import { createCallerFactory, createTRPCContext } from '@/server/trpc';
 import ky from 'ky';
 import { type NextRequest, NextResponse } from 'next/server';
 
@@ -21,7 +21,7 @@ export async function POST(req: NextRequest) {
       // Since this is a webhook, we'll create an anonymous session
       session: null,
     });
-    const caller = appRouter.createCaller(ctx);
+    const caller = createCallerFactory(appRouter)(ctx);
 
     // Handle message status updates
     const status = body.entry?.[0]?.changes[0]?.value?.statuses?.[0];
@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
       await caller.external.handleWhatsAppMessageStatus({
         messageId: status.id,
         status: status.status,
-        timestamp: status.timestamp,
+        timestamp: Number(status.timestamp),
         recipientId: status.recipient_id,
         conversationId: status.conversation?.id,
         metadata: status,
@@ -47,7 +47,7 @@ export async function POST(req: NextRequest) {
         from: message.from,
         message: message.text.body,
         messageId: message.id,
-        timestamp: message.timestamp,
+        timestamp: Number(message.timestamp),
       });
 
       // Mark message as read

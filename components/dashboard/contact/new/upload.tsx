@@ -304,7 +304,7 @@ export default function ContactUpload() {
         setProgressStatus(`Failed to create ${allResults.errors.length} contacts`);
         toast.error(`${allResults.errors.length} contacts failed to create. Check console for details.`, { id: toastId });
       } else {
-        setProgressStatus('Import completed successfully');
+        setProgressStatus(t('import_completed_successfully'));
         toast.success(
           `${t('number_of_contacts_created', { count: allResults.created.length })} ${
             allResults.existing.length > 0 ? ` (${t('number_of_duplicates_contacts_skipped', { count: allResults.existing.length })})` : ''

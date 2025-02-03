@@ -118,7 +118,7 @@ export default function TeamIdPage() {
     onSuccess: () => {
       setIsNewMeetingModalOpen(false);
       utils.team.getTeamMeetings.invalidate({ teamId: teamId[0] });
-      toast.success('Meeting created successfully');
+      toast.success(t('meeting_created_successfully'));
     },
     onError: (error) => {
       toast.error(error.message);
@@ -128,7 +128,7 @@ export default function TeamIdPage() {
   const deleteTeamMeeting = api.team.deleteTeamMeeting.useMutation({
     onSuccess: () => {
       utils.team.getTeamMeetings.invalidate({ teamId: teamId[0] });
-      toast.success('Meeting deleted successfully');
+      toast.success(t('meeting_deleted_successfully'));
     },
     onError: (error) => {
       toast.error(error.message);
@@ -138,7 +138,7 @@ export default function TeamIdPage() {
   const createFolder = api.calendar.createFolder.useMutation({
     onSuccess: () => {
       utils.calendar.getMyFolders.invalidate();
-      toast.success('Folder created successfully');
+      toast.success(t('folder_created_successfully'));
     },
     onError: (error) => {
       toast.error(error.message);
