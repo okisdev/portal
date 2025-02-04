@@ -2,7 +2,7 @@ import { normalizePhoneNumber } from '@/utils/number';
 import axios from 'axios';
 
 const WHATSAPP_PHONE_NUMBER_ID = process.env.WHATSAPP_PHONE_NUMBER_ID;
-const GRAPH_API_TOKEN = process.env.GRAPH_API_TOKEN;
+const META_GRAPH_API_TOKEN = process.env.META_GRAPH_API_TOKEN;
 
 export class WhatsAppError extends Error {
   constructor(message: string) {
@@ -12,7 +12,7 @@ export class WhatsAppError extends Error {
 }
 
 export async function sendWhatsAppMessage(to: string, message: string) {
-  if (!WHATSAPP_PHONE_NUMBER_ID || !GRAPH_API_TOKEN) {
+  if (!WHATSAPP_PHONE_NUMBER_ID || !META_GRAPH_API_TOKEN) {
     throw new WhatsAppError('WhatsApp API configuration is missing');
   }
 
@@ -21,7 +21,7 @@ export async function sendWhatsAppMessage(to: string, message: string) {
       method: 'POST',
       url: `https://graph.facebook.com/v18.0/${WHATSAPP_PHONE_NUMBER_ID}/messages`,
       headers: {
-        Authorization: `Bearer ${GRAPH_API_TOKEN}`,
+        Authorization: `Bearer ${META_GRAPH_API_TOKEN}`,
         'Content-Type': 'application/json',
       },
       data: {

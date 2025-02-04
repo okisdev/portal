@@ -4,7 +4,7 @@ import ky from 'ky';
 import { type NextRequest, NextResponse } from 'next/server';
 
 const WEBHOOK_VERIFY_TOKEN = process.env.WEBHOOK_VERIFY_TOKEN;
-const GRAPH_API_TOKEN = process.env.GRAPH_API_TOKEN;
+const META_GRAPH_API_TOKEN = process.env.META_GRAPH_API_TOKEN;
 const WHATSAPP_PHONE_NUMBER_ID = process.env.WHATSAPP_PHONE_NUMBER_ID;
 
 export async function POST(req: NextRequest) {
@@ -53,7 +53,7 @@ export async function POST(req: NextRequest) {
       // Mark message as read
       await ky.post(`https://graph.facebook.com/v18.0/${WHATSAPP_PHONE_NUMBER_ID}/messages`, {
         headers: {
-          Authorization: `Bearer ${GRAPH_API_TOKEN}`,
+          Authorization: `Bearer ${META_GRAPH_API_TOKEN}`,
         },
         json: {
           messaging_product: 'whatsapp',

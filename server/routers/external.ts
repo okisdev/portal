@@ -21,6 +21,7 @@ export const externalRouter = createTRPCRouter({
         return result;
       } catch (error) {
         if (error instanceof WhatsAppError) {
+          console.error(error);
           throw new TRPCError({
             code: 'INTERNAL_SERVER_ERROR',
             message: error.message,
@@ -46,7 +47,6 @@ export const externalRouter = createTRPCRouter({
     )
     .mutation(async ({ ctx, input }) => {
       try {
-        // Find the contact by phone number
         const contactRecord = await ctx.db
           .select()
           .from(contact)
@@ -60,7 +60,6 @@ export const externalRouter = createTRPCRouter({
           });
         }
 
-        // Create contact activity for the message status
         await createContactActivityHelper(ctx, {
           contactId: contactRecord.id,
           type: 'ENGAGEMENT',
@@ -101,7 +100,6 @@ export const externalRouter = createTRPCRouter({
     )
     .mutation(async ({ ctx, input }) => {
       try {
-        // Find the contact by phone number
         const contactRecord = await ctx.db
           .select()
           .from(contact)
@@ -115,7 +113,6 @@ export const externalRouter = createTRPCRouter({
           });
         }
 
-        // Create contact activity for the received message
         await createContactActivityHelper(ctx, {
           contactId: contactRecord.id,
           type: 'ENGAGEMENT',
