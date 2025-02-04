@@ -22,7 +22,7 @@ export const externalRouter = createTRPCRouter({
       } catch (error) {
         throw new TRPCError({
           code: 'INTERNAL_SERVER_ERROR',
-          message: JSON.stringify(error),
+          message: 'Failed to send WhatsApp message',
         });
       }
     }),
