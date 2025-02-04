@@ -1,5 +1,4 @@
-import { normalizePhoneNumber } from '@/utils/number';
-import axios from 'axios';
+import ky from 'ky';
 
 const WHATSAPP_PHONE_NUMBER_ID = process.env.WHATSAPP_PHONE_NUMBER_ID;
 const META_GRAPH_API_TOKEN = process.env.META_GRAPH_API_TOKEN;
@@ -7,7 +6,7 @@ const META_GRAPH_API_TOKEN = process.env.META_GRAPH_API_TOKEN;
 export class WhatsAppError extends Error {
   constructor(message: string) {
     super(message);
-    this.name = 'WhatsAppError';
+    this.name = `WhatsAppError: ${message}`;
   }
 }
 
@@ -17,17 +16,15 @@ export async function sendWhatsAppMessage(to: string, message: string) {
   }
 
   try {
-    const response = await axios({
-      method: 'POST',
-      url: `https://graph.facebook.com/v18.0/${WHATSAPP_PHONE_NUMBER_ID}/messages`,
+    const response = await ky.post(`https://graph.facebook.com/v22.0/${WHATSAPP_PHONE_NUMBER_ID}/messages`, {
       headers: {
         Authorization: `Bearer ${META_GRAPH_API_TOKEN}`,
         'Content-Type': 'application/json',
       },
-      data: {
+      json: {
         messaging_product: 'whatsapp',
         recipient_type: 'individual',
-        to: normalizePhoneNumber(to),
+        to: to,
         type: 'text',
         text: {
           preview_url: false,
@@ -36,12 +33,8 @@ export async function sendWhatsAppMessage(to: string, message: string) {
       },
     });
 
-    return response.data;
+    return response.json();
   } catch (error) {
-    if (axios.isAxiosError(error) && error.response?.data) {
-      const errorMessage = typeof error.response.data === 'object' && 'error' in error.response.data ? error.response.data.error.message : 'Failed to send WhatsApp message';
-      throw new WhatsAppError(errorMessage);
-    }
-    throw new WhatsAppError('Failed to send WhatsApp message');
+    throw new WhatsAppError(`Failed to send WhatsApp message: ${error}`);
   }
 }

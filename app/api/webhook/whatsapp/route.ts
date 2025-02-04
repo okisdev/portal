@@ -51,7 +51,7 @@ export async function POST(req: NextRequest) {
       });
 
       // Mark message as read
-      await ky.post(`https://graph.facebook.com/v18.0/${WHATSAPP_PHONE_NUMBER_ID}/messages`, {
+      await ky.post(`https://graph.facebook.com/v22.0/${WHATSAPP_PHONE_NUMBER_ID}/messages`, {
         headers: {
           Authorization: `Bearer ${META_GRAPH_API_TOKEN}`,
         },

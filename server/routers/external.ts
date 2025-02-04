@@ -1,5 +1,5 @@
 import { contact } from '@/drizzle/schema';
-import { WhatsAppError, sendWhatsAppMessage } from '@/lib/whatsapp';
+import { sendWhatsAppMessage } from '@/lib/whatsapp';
 import { createContactActivityHelper } from '@/server/helper/contact';
 import { createTRPCRouter, protectedProcedure, publicProcedure } from '@/server/trpc';
 import { formatPhoneNumber, normalizePhoneNumber } from '@/utils/number';
@@ -20,16 +20,9 @@ export const externalRouter = createTRPCRouter({
         const result = await sendWhatsAppMessage(input.to, input.message);
         return result;
       } catch (error) {
-        if (error instanceof WhatsAppError) {
-          console.error(error);
-          throw new TRPCError({
-            code: 'INTERNAL_SERVER_ERROR',
-            message: error.message,
-          });
-        }
         throw new TRPCError({
           code: 'INTERNAL_SERVER_ERROR',
-          message: 'Failed to send WhatsApp message',
+          message: JSON.stringify(error),
         });
       }
     }),
