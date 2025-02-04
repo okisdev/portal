@@ -1,7 +1,8 @@
 import { contact } from '@/drizzle/schema';
-import { WhatsAppError, sendWhatsAppMessage } from '@/lib/whatsapp';
+import { sendWhatsAppMessage } from '@/lib/whatsapp';
 import { createContactActivityHelper } from '@/server/helper/contact';
 import { createTRPCRouter, protectedProcedure, publicProcedure } from '@/server/trpc';
+import { formatPhoneNumber, normalizePhoneNumber } from '@/utils/number';
 import { TRPCError } from '@trpc/server';
 import { eq } from 'drizzle-orm';
 import z from 'zod';
@@ -19,12 +20,6 @@ export const externalRouter = createTRPCRouter({
         const result = await sendWhatsAppMessage(input.to, input.message);
         return result;
       } catch (error) {
-        if (error instanceof WhatsAppError) {
-          throw new TRPCError({
-            code: 'INTERNAL_SERVER_ERROR',
-            message: error.message,
-          });
-        }
         throw new TRPCError({
           code: 'INTERNAL_SERVER_ERROR',
           message: 'Failed to send WhatsApp message',
@@ -45,11 +40,10 @@ export const externalRouter = createTRPCRouter({
     )
     .mutation(async ({ ctx, input }) => {
       try {
-        // Find the contact by phone number
         const contactRecord = await ctx.db
           .select()
           .from(contact)
-          .where(eq(contact.phone, input.recipientId.replace(/\D/g, '')))
+          .where(eq(contact.phone, normalizePhoneNumber(input.recipientId)))
           .then((rows) => rows[0]);
 
         if (!contactRecord) {
@@ -59,7 +53,6 @@ export const externalRouter = createTRPCRouter({
           });
         }
 
-        // Create contact activity for the message status
         await createContactActivityHelper(ctx, {
           contactId: contactRecord.id,
           type: 'ENGAGEMENT',
@@ -100,11 +93,10 @@ export const externalRouter = createTRPCRouter({
     )
     .mutation(async ({ ctx, input }) => {
       try {
-        // Find the contact by phone number
         const contactRecord = await ctx.db
           .select()
           .from(contact)
-          .where(eq(contact.phone, input.from.replace(/\D/g, '')))
+          .where(eq(contact.phone, formatPhoneNumber(input.from)))
           .then((rows) => rows[0]);
 
         if (!contactRecord) {
@@ -114,7 +106,6 @@ export const externalRouter = createTRPCRouter({
           });
         }
 
-        // Create contact activity for the received message
         await createContactActivityHelper(ctx, {
           contactId: contactRecord.id,
           type: 'ENGAGEMENT',
