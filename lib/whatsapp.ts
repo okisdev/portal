@@ -1,3 +1,4 @@
+import { normalizePhoneNumber } from '@/utils/number';
 import axios from 'axios';
 
 const WHATSAPP_PHONE_NUMBER_ID = process.env.WHATSAPP_PHONE_NUMBER_ID;
@@ -26,7 +27,7 @@ export async function sendWhatsAppMessage(to: string, message: string) {
       data: {
         messaging_product: 'whatsapp',
         recipient_type: 'individual',
-        to: to.replace(/\D/g, ''), // Clean phone number
+        to: normalizePhoneNumber(to),
         type: 'text',
         text: {
           preview_url: false,

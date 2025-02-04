@@ -587,5 +587,6 @@
   "will_renew_at": "將在 {date} 續訂",
   "workspace": "工作區",
   "write_a_reply": "寫回覆...使用 @ 提及他人",
-  "you": "您"
+  "you": "您",
+  "conversation": "對話"
 }

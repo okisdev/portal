@@ -6,6 +6,7 @@ import { SendWhatsAppMessage } from '@/components/dashboard/contact/send-whatsap
 import { ActivitySection } from '@/components/shared/activity-section';
 import { ColorBadge } from '@/components/shared/color-badge';
 import { Combobox } from '@/components/shared/combobox';
+import { ConversationSection } from '@/components/shared/conversation-section';
 import { DateTimePicker } from '@/components/shared/date-time-picker';
 import { EventDialog } from '@/components/shared/event-dialog';
 import type { EventFormData } from '@/components/shared/event-dialog';
@@ -613,6 +614,36 @@ export default function ContactIdPage() {
                         });
                       }}
                       isLoading={createContactActivity.isPending}
+                    />
+                  ),
+                },
+                {
+                  label: t('conversation'),
+                  value: (
+                    <ConversationSection
+                      activities={activities?.map((activity) => ({
+                        id: activity.id,
+                        type: activity.type as 'ENGAGEMENT',
+                        subType: (activity.subType || 'NOTE_ADDED') as 'MESSAGE_SENT' | 'MESSAGE_RECEIVED' | 'NOTE_ADDED',
+                        description: activity.description || '',
+                        initiatorType: activity.initiatorType || 'user',
+                        userId: activity.userId,
+                        metadata: activity.metadata ? (typeof activity.metadata === 'string' ? JSON.parse(activity.metadata) : activity.metadata) : null,
+                        createdAt: activity.createdAt,
+                      }))}
+                      onCreateActivity={(data) => {
+                        createContactActivity.mutate({
+                          contactId: contactId[0],
+                          type: 'ENGAGEMENT',
+                          subType: data.subType as 'MESSAGE_SENT' | 'MESSAGE_RECEIVED' | 'NOTE_ADDED',
+                          description: data.description,
+                          initiatorType: data.initiatorType,
+                          initiatorId: data.initiatorId,
+                          metadata: data.metadata,
+                        });
+                      }}
+                      isLoading={createContactActivity.isPending}
+                      contactId={contact?.phone || ''}
                     />
                   ),
                 },

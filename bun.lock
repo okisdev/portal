@@ -61,6 +61,7 @@
         "jspdf": "^2.5.2",
         "jszip": "^3.10.1",
         "ky": "^1.7.4",
+        "libphonenumber-js": "^1.11.19",
         "lucide-react": "^0.474.0",
         "next": "^15.1.6",
         "next-auth": "^5.0.0-beta.25",
@@ -861,6 +862,8 @@
     "ky": ["ky@1.7.4", "", {}, "sha512-zYEr/gh7uLW2l4su11bmQ2M9xLgQLjyvx58UyNM/6nuqyWFHPX5ktMjvpev3F8QWdjSsHUpnWew4PBCswBNuMQ=="],
 
     "leac": ["leac@0.6.0", "", {}, "sha512-y+SqErxb8h7nE/fiEX07jsbuhrpO9lL8eca7/Y1nuWV2moNlXhyd59iDGcRf6moVyDMbmTNzL40SUyrFU/yDpg=="],
+
+    "libphonenumber-js": ["libphonenumber-js@1.11.19", "", {}, "sha512-bW/Yp/9dod6fmyR+XqSUL1N5JE7QRxQ3KrBIbYS1FTv32e5i3SEtQVX+71CYNv8maWNSOgnlCoNp9X78f/cKiA=="],
 
     "lie": ["lie@3.3.0", "", { "dependencies": { "immediate": "~3.0.5" } }, "sha512-UaiMJzeWRlEujzAuw5LokY1L5ecNQYZKfmyZ9L7wDHb/p5etKaxXhohBcrw0EYby+G/NA52vRSN4N39dxHAIwQ=="],
 
