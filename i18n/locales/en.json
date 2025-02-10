@@ -137,6 +137,7 @@
   "content_deleted_successfully": "Content deleted successfully",
   "content_updated_successfully": "Content updated successfully",
   "contents": "Contents",
+  "conversation": "Conversation",
   "copied_to_clipboard": "Copied to clipboard",
   "copy_html": "Copy HTML",
   "copy_to_clipboard_failed": "Failed to copy to clipboard",
@@ -587,6 +588,5 @@
   "will_renew_at": "Will renew at {date}",
   "workspace": "Workspace",
   "write_a_reply": "Write a reply... Use @ to mention someone",
-  "you": "You",
-  "conversation": "Conversation"
+  "you": "You"
 }
