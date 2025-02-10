@@ -1,8 +1,12 @@
+import { CalendarEvent } from '@/database/models/calendarEvent';
+import { CalendarEventParticipant } from '@/database/models/calendarEventParticipant';
+import { CalendarFolder } from '@/database/models/calendarFolder';
 import { Company } from '@/database/models/company';
 import { MarketingCampaign } from '@/database/models/marketingCampaign';
 import { Team } from '@/database/models/team';
 import { TeamActivity } from '@/database/models/teamActivity';
 import { TeamContact } from '@/database/models/teamContact';
+import { TeamMeeting } from '@/database/models/teamMeeting';
 import { User } from '@/database/models/user';
 import { UserNotifications } from '@/database/models/userNotifications';
 import { activitySubTypeSchema, activityTypeSchema } from '@/lib/schema';
@@ -289,25 +293,7 @@ export const teamRouter = createTRPCRouter({
     }),
 
   getTeamMeetings: protectedProcedure.input(z.object({ teamId: z.string() })).query(async ({ ctx, input }) => {
-    const meetings = await ctx.db
-      .select({
-        id: teamMeeting.id,
-        title: teamMeeting.title,
-        description: teamMeeting.description,
-        meetingDate: teamMeeting.meetingDate,
-        status: teamMeeting.status,
-        createdAt: teamMeeting.createdAt,
-        createdBy: teamMeeting.createdBy,
-        creator: {
-          id: contact.id,
-          firstName: contact.firstName,
-          lastName: contact.lastName,
-        },
-      })
-      .from(teamMeeting)
-      .leftJoin(contact, eq(teamMeeting.createdBy, contact.id))
-      .where(eq(teamMeeting.teamId, input.teamId))
-      .orderBy(teamMeeting.meetingDate);
+    const meetings = await TeamMeeting.find({ teamId: input.teamId }).sort({ meetingDate: 1 });
 
     return meetings.map((meeting) => ({
       ...meeting,
@@ -325,103 +311,66 @@ export const teamRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      return await TeamMeeting.transaction(async (tx) => {
-        // Set initial status based on meeting date
-        const status = input.meetingDate < new Date() ? 'completed' : 'upcoming';
+      // Set initial status based on meeting date
+      const status = input.meetingDate < new Date() ? 'completed' : 'upcoming';
 
-        const teamDetails = await tx
-          .select()
-          .from(team)
-          .where(eq(team.id, input.teamId))
-          .then((rows) => rows[0]);
+      const teamDetails = await Team.findById(input.teamId);
 
-        const [newMeeting] = await tx
-          .insert(teamMeeting)
-          .values({
-            teamId: input.teamId,
-            title: input.title,
-            description: input.description,
-            meetingDate: input.meetingDate,
-            status: status,
-            createdBy: ctx.session.user.id,
-          })
-          .returning();
-
-        const defaultFolder = await tx
-          .select()
-          .from(calendarFolder)
-          .where(eq(calendarFolder.userId, ctx.session.user.id))
-          .limit(1)
-          .then((rows) => rows[0]);
-
-        const [calendarEvt] = await tx
-          .insert(calendarEvent)
-          .values({
-            userId: ctx.session.user.id,
-            title: input.title,
-            description: input.description,
-            startAt: input.meetingDate,
-            endAt: new Date(input.meetingDate.getTime() + 60 * 60 * 1000),
-            isAllDay: false,
-            isPublic: true,
-            folderId: defaultFolder?.id ?? '',
-            metadata: JSON.stringify({ teamMeetingId: newMeeting.id }),
-          })
-          .returning();
-
-        const teamMembers = await tx
-          .select({
-            contactId: teamContact.contactId,
-          })
-          .from(teamContact)
-          .where(eq(teamContact.teamId, input.teamId));
-
-        if (teamMembers.length > 0) {
-          await tx.insert(calendarEventParticipant).values(
-            teamMembers.map((member) => ({
-              eventId: calendarEvt.id,
-              participantType: 'contact' as const,
-              participantId: member.contactId,
-              status: 'pending' as const,
-              role: 'required' as const,
-            }))
-          );
-        }
-
-        await createTeamActivityHelper(ctx, {
-          teamId: input.teamId,
-          type: 'TEAM',
-          subType: 'MEETING_SCHEDULED',
-          description: `Team meeting "${input.title}" was scheduled`,
-          initiatorType: 'user',
-          initiatorId: ctx.session?.user.id,
-          metadata: {
-            teamId: input.teamId,
-            teamName: teamDetails.name,
-          },
-        });
-
-        return newMeeting;
+      const newMeeting = await TeamMeeting.create({
+        teamId: input.teamId,
+        title: input.title,
+        description: input.description,
+        meetingDate: input.meetingDate,
+        status: status,
+        createdBy: ctx.session.user.id,
       });
+
+      const defaultFolder = await CalendarFolder.findOne({ userId: ctx.session.user.id });
+
+      const calendarEvent = await CalendarEvent.create({
+        userId: ctx.session.user.id,
+        title: input.title,
+        description: input.description,
+        startAt: input.meetingDate,
+        endAt: new Date(input.meetingDate.getTime() + 60 * 60 * 1000),
+        isAllDay: false,
+        isPublic: true,
+        folderId: defaultFolder?.id ?? '',
+        metadata: JSON.stringify({ teamMeetingId: newMeeting.id }),
+      });
+
+      const teamMembers = await TeamContact.find({ teamId: input.teamId });
+
+      if (teamMembers.length > 0) {
+        await CalendarEventParticipant.create(
+          teamMembers.map((member) => ({
+            eventId: calendarEvent.id,
+            participantType: 'contact' as const,
+            participantId: member.contactId,
+            status: 'pending' as const,
+            role: 'required' as const,
+          }))
+        );
+      }
+
+      await createTeamActivityHelper(ctx, {
+        teamId: input.teamId,
+        type: 'TEAM',
+        subType: 'MEETING_SCHEDULED',
+        description: `Team meeting "${input.title}" was scheduled`,
+        initiatorType: 'user',
+        initiatorId: ctx.session?.user.id,
+        metadata: {
+          teamId: input.teamId,
+          teamName: teamDetails.name,
+        },
+      });
+
+      return newMeeting;
     }),
 
   getTeamContacts: protectedProcedure.input(z.object({ teamId: z.string() })).query(async ({ ctx, input }) => {
-    return await ctx.db
-      .select({
-        id: teamContact.id,
-        contact: {
-          id: contact.id,
-          firstName: contact.firstName,
-          lastName: contact.lastName,
-          email: contact.email,
-          phone: contact.phone,
-          company: contact.company,
-          status: contact.status,
-        },
-      })
-      .from(teamContact)
-      .innerJoin(contact, eq(teamContact.contactId, contact.id))
-      .where(eq(teamContact.teamId, input.teamId));
+    return await TeamContact.find({ teamId: input.teamId }).populate('contact');
   }),
 
   deleteTeamMeeting: protectedProcedure
@@ -432,35 +381,32 @@ export const teamRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      await ctx.db.transaction(async (tx) => {
-        await tx.delete(calendarEvent).where(eq(calendarEvent.metadata, JSON.stringify({ teamMeetingId: input.id })));
+      // Get meeting details before deletion
+      const meetingToDelete = await TeamMeeting.findOne({ id: input.id, teamId: input.teamId });
 
-        const [deletedMeeting] = await tx
-          .delete(teamMeeting)
-          .where(and(eq(teamMeeting.id, input.id), eq(teamMeeting.teamId, input.teamId)))
-          .returning();
+      if (!meetingToDelete) {
+        throw new TRPCError({ code: 'NOT_FOUND', message: 'Meeting not found' });
+      }
 
-        const teamDetails = await tx
-          .select()
-          .from(team)
-          .where(eq(team.id, input.teamId))
-          .then((rows) => rows[0]);
+      await CalendarEvent.deleteOne({ metadata: JSON.stringify({ teamMeetingId: input.id }) });
+      await TeamMeeting.deleteOne({ id: input.id, teamId: input.teamId });
 
-        await createTeamActivityHelper(ctx, {
+      const teamDetails = await Team.findById(input.teamId);
+
+      await createTeamActivityHelper(ctx, {
+        teamId: input.teamId,
+        type: 'TEAM',
+        subType: 'MEETING_CANCELLED',
+        description: `Team meeting "${meetingToDelete.title}" was cancelled`,
+        initiatorType: 'user',
+        initiatorId: ctx.session?.user.id,
+        metadata: {
           teamId: input.teamId,
-          type: 'TEAM',
-          subType: 'MEETING_CANCELLED',
-          description: `Team meeting "${deletedMeeting.title}" was cancelled`,
-          initiatorType: 'user',
-          initiatorId: ctx.session?.user.id,
-          metadata: {
-            teamId: input.teamId,
-            teamName: teamDetails.name,
-          },
-        });
-
-        return deletedMeeting;
+          teamName: teamDetails.name,
+        },
       });
+
+      return meetingToDelete;
     }),
 
   deleteTeamActivity: protectedProcedure
@@ -471,7 +417,7 @@ export const teamRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      await ctx.db.delete(teamActivity).where(eq(teamActivity.id, input.id));
+      await TeamActivity.deleteOne({ id: input.id, teamId: input.teamId });
     }),
 
   addTeamContact: protectedProcedure
@@ -482,35 +428,16 @@ export const teamRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      const existingMember = await ctx.db
-        .select()
-        .from(teamContact)
-        .where(and(eq(teamContact.teamId, input.teamId), eq(teamContact.contactId, input.contactId)))
-        .then((rows) => rows[0]);
+      const existingMember = await TeamContact.findOne({ teamId: input.teamId, contactId: input.contactId });
 
       if (existingMember) {
         throw new TRPCError({ code: 'CONFLICT', message: 'Contact is already a member of this team' });
       }
 
       // Get team details first
-      const teamDetails = await ctx.db
-        .select({
-          id: team.id,
-          name: team.name,
-        })
-        .from(team)
-        .where(eq(team.id, input.teamId))
-        .then((rows) => rows[0]);
+      const teamDetails = await Team.findById(input.teamId);
 
-      const contactDetails = await ctx.db
-        .select({
-          firstName: contact.firstName,
-          lastName: contact.lastName,
-          email: contact.email,
-        })
-        .from(contact)
-        .where(eq(contact.id, input.contactId))
-        .then((rows) => rows[0]);
+      const contactDetails = await User.findById(input.contactId);
 
       if (!teamDetails) {
         throw new TRPCError({ code: 'NOT_FOUND', message: 'Team not found' });
@@ -542,18 +469,15 @@ export const teamRouter = createTRPCRouter({
         },
       });
 
-      const [newMember] = await ctx.db
-        .insert(teamContact)
-        .values({
-          teamId: input.teamId,
-          contactId: input.contactId,
-        })
-        .returning();
+      const newMember = await TeamContact.create({
+        teamId: input.teamId,
+        contactId: input.contactId,
+      });
 
       return newMember;
     }),
 
   deleteTeam: protectedProcedure.input(z.object({ id: z.string() })).mutation(async ({ ctx, input }) => {
-    return await ctx.db.delete(team).where(eq(team.id, input.id));
+    return await Team.deleteOne({ id: input.id });
   }),
 });

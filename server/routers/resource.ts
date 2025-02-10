@@ -1,9 +1,10 @@
 import { ResourceContent } from '@/database/models/resourceContent';
-import { ResourceContentShare } from '@/database/models/resourceContentShare';
-import { ResourceEmail } from '@/database/models/resourceEmail';
 import { ResourceContentSendTrack } from '@/database/models/resourceContentSendTrack';
+import { ResourceContentShare } from '@/database/models/resourceContentShare';
+import { ResourceEmails } from '@/database/models/resourceEmails';
 import { createTRPCRouter, protectedProcedure } from '@/server/trpc';
 import { TRPCError } from '@trpc/server';
+import type { FilterQuery } from 'mongoose';
 import { z } from 'zod';
 
 const resourceContentSchema = z.object({
@@ -14,8 +15,6 @@ const resourceContentSchema = z.object({
   visibility: z.enum(['PUBLIC', 'SHARED', 'PRIVATE']),
 });
 
-export type ResourceContent = z.infer<typeof resourceContentSchema>;
-
 const resourceEmailSchema = z.object({
   title: z.string().min(1),
   description: z.string().optional(),
@@ -25,12 +24,41 @@ const resourceEmailSchema = z.object({
   visibility: z.enum(['PUBLIC', 'SHARED', 'PRIVATE']),
 });
 
+interface ResourceContentDocument {
+  _id: string;
+  title: string;
+  description?: string;
+  content: string;
+  tags?: string;
+  visibility: 'PUBLIC' | 'SHARED' | 'PRIVATE';
+  createdBy: string;
+  updatedBy: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+interface ResourceEmailDocument {
+  _id: string;
+  title: string;
+  description?: string;
+  subject: string;
+  content: string;
+  tags?: string;
+  visibility: 'PUBLIC' | 'SHARED' | 'PRIVATE';
+  createdBy: string;
+  updatedBy: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 export const resourceRouter = createTRPCRouter({
   createContent: protectedProcedure.input(resourceContentSchema).mutation(async ({ ctx, input }) => {
-    return ResourceContent.create({
+    return await ResourceContent.create({
       ...input,
       createdBy: ctx.session.user.id,
       updatedBy: ctx.session.user.id,
+      createdAt: new Date(),
+      updatedAt: new Date(),
     });
   }),
 
@@ -46,70 +74,138 @@ export const resourceRouter = createTRPCRouter({
     )
     .query(async ({ ctx, input }) => {
       const userId = ctx.session.user.id;
-      let conditions = or(
-        eq(resourceContent.createdBy, userId),
-        eq(resourceContent.visibility, 'PUBLIC'),
-        and(eq(resourceContent.visibility, 'SHARED'), eq(resourceContentShare.sharedWithUserId, userId))
-      );
+      let query: FilterQuery<ResourceContentDocument> = {
+        $or: [
+          { createdBy: userId },
+          { visibility: 'PUBLIC' },
+          {
+            $and: [
+              { visibility: 'SHARED' },
+              {
+                _id: {
+                  $in: await ResourceContentShare.distinct('resourceId', {
+                    sharedWithUserId: userId,
+                  }),
+                },
+              },
+            ],
+          },
+        ],
+      };
 
       if (input?.visibility) {
-        conditions = and(conditions, inArray(resourceContent.visibility, input.visibility));
+        query = {
+          $and: [query, { visibility: { $in: input.visibility } }],
+        } as FilterQuery<ResourceContentDocument>;
       }
 
       if (input?.search) {
-        conditions = and(conditions, or(like(resourceContent.title, `%${input.search}%`), like(resourceContent.description, `%${input.search}%`)));
+        query = {
+          $and: [
+            query,
+            {
+              $or: [{ title: { $regex: input.search, $options: 'i' } }, { description: { $regex: input.search, $options: 'i' } }],
+            },
+          ],
+        } as FilterQuery<ResourceContentDocument>;
       }
 
       if (input?.tags && input.tags.length > 0) {
-        const tagConditions = input.tags.map((tag) => like(resourceContent.tags, `%${tag}%`));
-        conditions = and(conditions, or(...tagConditions));
+        const tagConditions = input.tags.map((tag) => ({
+          tags: { $regex: tag, $options: 'i' },
+        }));
+        query = {
+          $and: [query, { $or: tagConditions }],
+        } as FilterQuery<ResourceContentDocument>;
       }
 
-      const result = await ctx.db
-        .select({
-          resourceContent: resourceContent,
-          resourceContentShare: resourceContentShare,
-          sendCount: sql<number>`count(distinct ${resourceContentSendTrack.id})`.mapWith(Number),
-          lastSentAt: sql<Date | null>`max(${resourceContentSendTrack.sentAt})`.mapWith((d) => d && new Date(d)),
-          recipients: sql<any[]>`
-            json_agg(
-              CASE WHEN ${contact.id} IS NOT NULL 
-              THEN json_build_object(
-                'id', ${contact.id},
-                'name', ${contact.name},
-                'email', ${contact.email}
-              )
-              ELSE null
-              END
-            ) FILTER (WHERE ${contact.id} IS NOT NULL)`.mapWith((r) => r || []),
-        })
-        .from(resourceContent)
-        .leftJoin(resourceContentShare, eq(resourceContent.id, resourceContentShare.resourceId))
-        .leftJoin(resourceContentSendTrack, eq(resourceContent.id, resourceContentSendTrack.resourceId))
-        .leftJoin(contact, eq(resourceContentSendTrack.contactId, contact.id))
-        .where(conditions)
-        .groupBy(resourceContent.id, resourceContentShare.id)
-        .orderBy(desc(resourceContent.updatedAt));
+      const resources = await ResourceContent.find(query).sort({ updatedAt: -1 }).lean();
 
-      return result;
+      const resourceIds = resources.map((r) => r._id);
+
+      const [sendTracks, shares] = await Promise.all([
+        ResourceContentSendTrack.aggregate([
+          {
+            $match: { resourceId: { $in: resourceIds } },
+          },
+          {
+            $lookup: {
+              from: 'contact',
+              localField: 'contactId',
+              foreignField: '_id',
+              as: 'contact',
+            },
+          },
+          {
+            $group: {
+              _id: '$resourceId',
+              sendCount: { $sum: 1 },
+              lastSentAt: { $max: '$sentAt' },
+              recipients: {
+                $push: {
+                  $cond: [
+                    { $ne: [{ $arrayElemAt: ['$contact', 0] }, null] },
+                    {
+                      id: { $arrayElemAt: ['$contact._id', 0] },
+                      name: { $arrayElemAt: ['$contact.name', 0] },
+                      email: { $arrayElemAt: ['$contact.email', 0] },
+                    },
+                    null,
+                  ],
+                },
+              },
+            },
+          },
+        ]),
+        ResourceContentShare.find({ resourceId: { $in: resourceIds } }).lean(),
+      ]);
+
+      return resources.map((resource) => {
+        const sendTrack = sendTracks.find((st) => st._id.equals(resource._id));
+        const resourceShares = shares.filter((s) => s.resourceId.equals(resource._id));
+        return {
+          ...resource,
+          sendCount: sendTrack?.sendCount || 0,
+          lastSentAt: sendTrack?.lastSentAt || null,
+          recipients: sendTrack?.recipients.filter(Boolean) || [],
+          shares: resourceShares,
+        };
+      });
     }),
 
   getContent: protectedProcedure.input(z.object({ id: z.string(), includeShare: z.boolean().optional() })).query(async ({ ctx, input }) => {
     const userId = ctx.session.user.id;
 
-    const result = await ctx.db
-      .select()
-      .from(resourceContent)
-      .leftJoin(resourceContentShare, eq(resourceContent.id, resourceContentShare.resourceId))
-      .where(
-        and(
-          eq(resourceContent.id, input.id),
-          or(eq(resourceContent.createdBy, userId), eq(resourceContent.visibility, 'PUBLIC'), and(eq(resourceContent.visibility, 'SHARED'), eq(resourceContentShare.sharedWithUserId, userId)))
-        )
-      )
-      .limit(1);
+    const resource = await ResourceContent.findOne({
+      _id: input.id,
+      $or: [
+        { createdBy: userId },
+        { visibility: 'PUBLIC' },
+        {
+          $and: [
+            { visibility: 'SHARED' },
+            {
+              _id: {
+                $in: await ResourceContentShare.distinct('resourceId', {
+                  sharedWithUserId: userId,
+                }),
+              },
+            },
+          ],
+        },
+      ],
+    }).lean();
 
-    return result[0];
+    if (!resource) {
+      throw new TRPCError({ code: 'NOT_FOUND', message: 'Resource not found' });
+    }
+
+    if (input.includeShare) {
+      const shares = await ResourceContentShare.find({ resourceId: resource._id }).lean();
+      return { ...resource, shares };
+    }
+
+    return resource;
   }),
 
   updateContent: protectedProcedure
@@ -122,46 +218,56 @@ export const resourceRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       const userId = ctx.session.user.id;
 
-      const existing = await ctx.db
-        .select()
-        .from(resourceContent)
-        .leftJoin(resourceContentShare, eq(resourceContent.id, resourceContentShare.resourceId))
-        .where(
-          and(
-            eq(resourceContent.id, input.id),
-            or(eq(resourceContent.createdBy, userId), and(eq(resourceContent.visibility, 'SHARED'), eq(resourceContentShare.sharedWithUserId, userId), eq(resourceContentShare.permission, 'edit')))
-          )
-        )
-        .limit(1);
+      const resource = await ResourceContent.findOne({
+        _id: input.id,
+        $or: [
+          { createdBy: userId },
+          {
+            $and: [
+              { visibility: 'SHARED' },
+              {
+                _id: {
+                  $in: await ResourceContentShare.distinct('resourceId', {
+                    sharedWithUserId: userId,
+                    permission: 'edit',
+                  }),
+                },
+              },
+            ],
+          },
+        ],
+      });
 
-      if (!existing[0]) {
+      if (!resource) {
         throw new TRPCError({ code: 'UNAUTHORIZED', message: 'Not authorized to edit this content' });
       }
 
-      return ctx.db
-        .update(resourceContent)
-        .set({
+      return await ResourceContent.findByIdAndUpdate(
+        input.id,
+        {
           ...input.data,
           updatedBy: userId,
           updatedAt: new Date(),
-        })
-        .where(eq(resourceContent.id, input.id));
+        },
+        { new: true }
+      );
     }),
 
   deleteContent: protectedProcedure.input(z.string()).mutation(async ({ ctx, input }) => {
     const userId = ctx.session.user.id;
 
-    const existing = await ctx.db
-      .select()
-      .from(resourceContent)
-      .where(and(eq(resourceContent.id, input), eq(resourceContent.createdBy, userId)))
-      .limit(1);
+    const resource = await ResourceContent.findOne({
+      _id: input,
+      createdBy: userId,
+    });
 
-    if (!existing[0]) {
+    if (!resource) {
       throw new TRPCError({ code: 'UNAUTHORIZED', message: 'Not authorized to delete this content' });
     }
 
-    return ctx.db.delete(resourceContent).where(eq(resourceContent.id, input));
+    await Promise.all([ResourceContent.findByIdAndDelete(input), ResourceContentShare.deleteMany({ resourceId: input }), ResourceContentSendTrack.deleteMany({ resourceId: input })]);
+
+    return { success: true };
   }),
 
   shareContent: protectedProcedure
@@ -175,32 +281,35 @@ export const resourceRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       const userId = ctx.session.user.id;
 
-      const existing = await ctx.db
-        .select()
-        .from(resourceContent)
-        .where(and(eq(resourceContent.id, input.resourceId), eq(resourceContent.createdBy, userId)))
-        .limit(1);
+      const resource = await ResourceContent.findOne({
+        _id: input.resourceId,
+        createdBy: userId,
+      });
 
-      if (!existing[0]) {
+      if (!resource) {
         throw new TRPCError({ code: 'UNAUTHORIZED', message: 'Not authorized to share this content' });
       }
 
-      if (existing[0].visibility === 'PRIVATE') {
-        await ctx.db.update(resourceContent).set({ visibility: 'SHARED' }).where(eq(resourceContent.id, input.resourceId));
+      if (resource.visibility === 'PRIVATE') {
+        await ResourceContent.findByIdAndUpdate(input.resourceId, { visibility: 'SHARED' });
       }
 
-      await ctx.db.delete(resourceContentShare).where(and(eq(resourceContentShare.resourceId, input.resourceId), inArray(resourceContentShare.sharedWithUserId, input.userIds)));
+      await ResourceContentShare.deleteMany({
+        resourceId: input.resourceId,
+        sharedWithUserId: { $in: input.userIds },
+      });
 
-      return ctx.db.insert(resourceContentShare).values(
+      return await ResourceContentShare.insertMany(
         input.userIds.map((userId) => ({
           resourceId: input.resourceId,
           sharedWithUserId: userId,
           permission: input.permission,
+          createdAt: new Date(),
+          updatedAt: new Date(),
         }))
       );
     }),
 
-  // Remove share for a user
   removeShare: protectedProcedure
     .input(
       z.object({
@@ -211,30 +320,31 @@ export const resourceRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       const userId = ctx.session.user.id;
 
-      const existing = await ctx.db
-        .select()
-        .from(resourceContent)
-        .where(and(eq(resourceContent.id, input.resourceId), eq(resourceContent.createdBy, userId)))
-        .limit(1);
+      const resource = await ResourceContent.findOne({
+        _id: input.resourceId,
+        createdBy: userId,
+      });
 
-      if (!existing[0]) {
+      if (!resource) {
         throw new TRPCError({ code: 'UNAUTHORIZED', message: 'Not authorized to modify shares for this content' });
       }
 
-      return ctx.db.delete(resourceContentShare).where(and(eq(resourceContentShare.resourceId, input.resourceId), eq(resourceContentShare.sharedWithUserId, input.userId)));
+      await ResourceContentShare.deleteOne({
+        resourceId: input.resourceId,
+        sharedWithUserId: input.userId,
+      });
+
+      return { success: true };
     }),
 
   createEmail: protectedProcedure.input(resourceEmailSchema).mutation(async ({ ctx, input }) => {
-    const [newEmail] = await ctx.db
-      .insert(resourceEmails)
-      .values({
-        ...input,
-        createdBy: ctx.session.user.id,
-        updatedBy: ctx.session.user.id,
-      })
-      .returning();
-
-    return newEmail;
+    return await ResourceEmails.create({
+      ...input,
+      createdBy: ctx.session.user.id,
+      updatedBy: ctx.session.user.id,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
   }),
 
   getEmails: protectedProcedure
@@ -249,34 +359,52 @@ export const resourceRouter = createTRPCRouter({
     )
     .query(async ({ ctx, input }) => {
       const userId = ctx.session.user.id;
-      let conditions = or(eq(resourceEmails.createdBy, userId), eq(resourceEmails.visibility, 'PUBLIC'));
+      let query: FilterQuery<ResourceEmailDocument> = {
+        $or: [{ createdBy: userId }, { visibility: 'PUBLIC' }],
+      };
 
       if (input?.visibility) {
-        conditions = and(conditions, eq(resourceEmails.visibility, input.visibility));
+        query = {
+          $and: [query, { visibility: input.visibility }],
+        } as FilterQuery<ResourceEmailDocument>;
       }
 
       if (input?.search) {
-        conditions = and(conditions, or(like(resourceEmails.title, `%${input.search}%`), like(resourceEmails.description, `%${input.search}%`), like(resourceEmails.subject, `%${input.search}%`)));
+        query = {
+          $and: [
+            query,
+            {
+              $or: [{ title: { $regex: input.search, $options: 'i' } }, { description: { $regex: input.search, $options: 'i' } }, { subject: { $regex: input.search, $options: 'i' } }],
+            },
+          ],
+        } as FilterQuery<ResourceEmailDocument>;
       }
 
       if (input?.tags && input.tags.length > 0) {
-        const tagConditions = input.tags.map((tag) => like(resourceEmails.tags, `%${tag}%`));
-        conditions = and(conditions, or(...tagConditions));
+        const tagConditions = input.tags.map((tag) => ({
+          tags: { $regex: tag, $options: 'i' },
+        }));
+        query = {
+          $and: [query, { $or: tagConditions }],
+        } as FilterQuery<ResourceEmailDocument>;
       }
 
-      return ctx.db.select().from(resourceEmails).where(conditions);
+      return await ResourceEmails.find(query).sort({ updatedAt: -1 }).lean();
     }),
 
   getEmail: protectedProcedure.input(z.string()).query(async ({ ctx, input }) => {
     const userId = ctx.session.user.id;
 
-    const result = await ctx.db
-      .select()
-      .from(resourceEmails)
-      .where(and(eq(resourceEmails.id, input), or(eq(resourceEmails.createdBy, userId), eq(resourceEmails.visibility, 'PUBLIC'))))
-      .limit(1);
+    const email = await ResourceEmails.findOne({
+      _id: input,
+      $or: [{ createdBy: userId }, { visibility: 'PUBLIC' }],
+    }).lean();
 
-    return result[0];
+    if (!email) {
+      throw new TRPCError({ code: 'NOT_FOUND', message: 'Email template not found' });
+    }
+
+    return email;
   }),
 
   updateEmail: protectedProcedure
@@ -289,40 +417,40 @@ export const resourceRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       const userId = ctx.session.user.id;
 
-      const existing = await ctx.db
-        .select()
-        .from(resourceEmails)
-        .where(and(eq(resourceEmails.id, input.id), eq(resourceEmails.createdBy, userId)))
-        .limit(1);
+      const email = await ResourceEmails.findOne({
+        _id: input.id,
+        createdBy: userId,
+      });
 
-      if (!existing[0]) {
+      if (!email) {
         throw new TRPCError({ code: 'UNAUTHORIZED', message: 'Not authorized to edit this email template' });
       }
 
-      return ctx.db
-        .update(resourceEmails)
-        .set({
+      return await ResourceEmails.findByIdAndUpdate(
+        input.id,
+        {
           ...input.data,
           updatedBy: userId,
           updatedAt: new Date(),
-        })
-        .where(eq(resourceEmails.id, input.id));
+        },
+        { new: true }
+      );
     }),
 
   deleteEmail: protectedProcedure.input(z.string()).mutation(async ({ ctx, input }) => {
     const userId = ctx.session.user.id;
 
-    const existing = await ctx.db
-      .select()
-      .from(resourceEmails)
-      .where(and(eq(resourceEmails.id, input), eq(resourceEmails.createdBy, userId)))
-      .limit(1);
+    const email = await ResourceEmails.findOne({
+      _id: input,
+      createdBy: userId,
+    });
 
-    if (!existing[0]) {
+    if (!email) {
       throw new TRPCError({ code: 'UNAUTHORIZED', message: 'Not authorized to delete this email template' });
     }
 
-    return ctx.db.delete(resourceEmails).where(eq(resourceEmails.id, input));
+    await ResourceEmails.findByIdAndDelete(input);
+    return { success: true };
   }),
 
   createContentSendTrack: protectedProcedure
@@ -335,12 +463,15 @@ export const resourceRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      return ctx.db.insert(resourceContentSendTrack).values({
+      return await ResourceContentSendTrack.create({
         resourceId: input.resourceId,
         contactId: input.contactId,
         sentBy: ctx.session.user.id,
+        sentAt: new Date(),
         status: input.status,
         metadata: input.metadata ? JSON.stringify(input.metadata) : null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
       });
     }),
 
@@ -353,36 +484,65 @@ export const resourceRouter = createTRPCRouter({
     .query(async ({ ctx, input }) => {
       const userId = ctx.session.user.id;
 
-      // First check if user has access to this content
-      const content = await ctx.db
-        .select()
-        .from(resourceContent)
-        .leftJoin(resourceContentShare, eq(resourceContent.id, resourceContentShare.resourceId))
-        .where(
-          and(
-            eq(resourceContent.id, input.resourceId),
-            or(eq(resourceContent.createdBy, userId), eq(resourceContent.visibility, 'PUBLIC'), and(eq(resourceContent.visibility, 'SHARED'), eq(resourceContentShare.sharedWithUserId, userId)))
-          )
-        )
-        .limit(1);
+      const resource = await ResourceContent.findOne({
+        _id: input.resourceId,
+        $or: [
+          { createdBy: userId },
+          { visibility: 'PUBLIC' },
+          {
+            $and: [
+              { visibility: 'SHARED' },
+              {
+                _id: {
+                  $in: await ResourceContentShare.distinct('resourceId', {
+                    sharedWithUserId: userId,
+                  }),
+                },
+              },
+            ],
+          },
+        ],
+      });
 
-      if (!content[0]) {
+      if (!resource) {
         throw new TRPCError({ code: 'UNAUTHORIZED', message: 'Not authorized to view this content' });
       }
 
-      return ctx.db
-        .select({
-          id: resourceContentSendTrack.id,
-          sentAt: resourceContentSendTrack.sentAt,
-          status: resourceContentSendTrack.status,
-          metadata: resourceContentSendTrack.metadata,
-          contact: contact,
-          sentBy: user,
-        })
-        .from(resourceContentSendTrack)
-        .leftJoin(contact, eq(resourceContentSendTrack.contactId, contact.id))
-        .leftJoin(user, eq(resourceContentSendTrack.sentBy, user.id))
-        .where(eq(resourceContentSendTrack.resourceId, input.resourceId))
-        .orderBy(resourceContentSendTrack.sentAt);
+      const sendHistory = await ResourceContentSendTrack.aggregate([
+        {
+          $match: { resourceId: resource._id },
+        },
+        {
+          $lookup: {
+            from: 'contact',
+            localField: 'contactId',
+            foreignField: '_id',
+            as: 'contact',
+          },
+        },
+        {
+          $lookup: {
+            from: 'user',
+            localField: 'sentBy',
+            foreignField: '_id',
+            as: 'sentBy',
+          },
+        },
+        {
+          $project: {
+            id: '$_id',
+            sentAt: 1,
+            status: 1,
+            metadata: 1,
+            contact: { $arrayElemAt: ['$contact', 0] },
+            sentBy: { $arrayElemAt: ['$sentBy', 0] },
+          },
+        },
+        {
+          $sort: { sentAt: 1 },
+        },
+      ]);
+
+      return sendHistory;
     }),
 });

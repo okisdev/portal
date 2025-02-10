@@ -157,10 +157,13 @@ export default function KanbanBoard({ tasks, visibleStatuses, onEdit, onDelete, 
     onStatusChange(taskId, newStatus);
   };
 
-  const tasksByStatus = visibleStatuses.reduce((acc, status) => {
-    acc[status] = tasks.filter((task) => task.status === status);
-    return acc;
-  }, {} as Record<string, Task[]>);
+  const tasksByStatus = visibleStatuses.reduce(
+    (acc, status) => {
+      acc[status] = tasks.filter((task) => task.status === status);
+      return acc;
+    },
+    {} as Record<string, Task[]>
+  );
 
   return (
     <div className={`h-full ${isDragging ? 'cursor-grabbing' : ''}`}>
