@@ -1,6 +1,5 @@
-import { userTask } from '@/drizzle/schema';
+import { UserTask } from '@/database/models/userTask';
 import { createTRPCRouter, protectedProcedure } from '@/server/trpc';
-import { and, eq } from 'drizzle-orm';
 import { z } from 'zod';
 
 export const taskRouter = createTRPCRouter({
@@ -31,7 +30,7 @@ export const taskRouter = createTRPCRouter({
         parentTaskId: input.parentTaskId,
       } as const;
 
-      return ctx.db.insert(userTask).values(taskData);
+      return UserTask.create(taskData);
     }),
 
   getAll: protectedProcedure
@@ -49,34 +48,26 @@ export const taskRouter = createTRPCRouter({
       const conditions = [];
 
       if (input?.status) {
-        conditions.push(eq(userTask.status, input.status));
+        conditions.push({ status: input.status });
       }
       if (input?.priority) {
-        conditions.push(eq(userTask.priority, input.priority));
+        conditions.push({ priority: input.priority });
       }
       if (input?.assignedToMe) {
-        conditions.push(eq(userTask.assignedTo, ctx.session.user.id));
+        conditions.push({ assignedTo: ctx.session.user.id });
       } else {
-        conditions.push(eq(userTask.userId, ctx.session.user.id));
+        conditions.push({ userId: ctx.session.user.id });
       }
       if (input?.parentTaskId) {
-        conditions.push(eq(userTask.parentTaskId, input.parentTaskId));
+        conditions.push({ parentTaskId: input.parentTaskId });
       }
 
-      return ctx.db
-        .select()
-        .from(userTask)
-        .where(and(...conditions))
-        .orderBy(userTask.createdAt);
+      return UserTask.find({ ...conditions }).sort({ createdAt: -1 });
     }),
 
   // Get task by ID
   getById: protectedProcedure.input(z.object({ id: z.string() })).query(async ({ ctx, input }) => {
-    return ctx.db
-      .select()
-      .from(userTask)
-      .where(and(eq(userTask.id, input.id), eq(userTask.userId, ctx.session.user.id)))
-      .then((rows) => rows[0]);
+    return UserTask.findOne({ id: input.id, userId: ctx.session.user.id });
   }),
 
   // Update task
@@ -104,14 +95,11 @@ export const taskRouter = createTRPCRouter({
         labels: labels ? JSON.stringify(labels) : undefined,
       } as const;
 
-      return ctx.db
-        .update(userTask)
-        .set(updateData)
-        .where(and(eq(userTask.id, input.id), eq(userTask.userId, ctx.session.user.id)));
+      return UserTask.updateOne({ id: input.id, userId: ctx.session.user.id }, updateData);
     }),
 
   // Delete task
   delete: protectedProcedure.input(z.object({ id: z.string() })).mutation(async ({ ctx, input }) => {
-    return ctx.db.delete(userTask).where(and(eq(userTask.id, input.id), eq(userTask.userId, ctx.session.user.id)));
+    return UserTask.deleteOne({ id: input.id, userId: ctx.session.user.id });
   }),
 });

@@ -1,4 +1,4 @@
-import User from '@/database/models/User';
+import { User } from '@/database/models/user';
 import { generateUUID } from '@/lib/utils';
 import { createTRPCRouter, publicProcedure } from '@/server/trpc';
 import { TRPCError } from '@trpc/server';

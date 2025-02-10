@@ -1,4 +1,4 @@
-import Contact from '@/database/models/Contact';
+import { Contact } from '@/database/models/contact';
 import { sendWhatsAppMessage } from '@/lib/whatsapp';
 import { createContactActivityHelper } from '@/server/helper/contact';
 import { createTRPCRouter, protectedProcedure, publicProcedure } from '@/server/trpc';

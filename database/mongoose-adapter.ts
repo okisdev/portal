@@ -1,27 +1,11 @@
-import mongoose, { type Model } from 'mongoose';
-import type { Account as AdapterAccount } from 'next-auth';
+import { Account } from '@/database/models/account';
+import { Session } from '@/database/models/session';
+import { User } from '@/database/models/user';
+import { VerificationToken } from '@/database/models/verificationToken';
+import type mongoose from 'mongoose';
 import type { Adapter, AdapterSession, AdapterUser, VerificationToken as AdapterVerificationToken } from 'next-auth/adapters';
 
 export function MongooseAdapter(dbConnect: Promise<typeof mongoose>): Adapter {
-  // Load Models
-  if (!mongoose.models.User) {
-    require('./models/User');
-  }
-  if (!mongoose.models.Account) {
-    require('./models/Account');
-  }
-  if (!mongoose.models.Session) {
-    require('./models/Session');
-  }
-  if (!mongoose.models.VerificationToken) {
-    require('./models/VerificationToken');
-  }
-
-  const User = mongoose.models.User as Model<AdapterUser>;
-  const Account = mongoose.models.Account as Model<AdapterAccount>;
-  const Session = mongoose.models.Session as Model<AdapterSession>;
-  const VerificationToken = mongoose.models.VerificationToken as Model<AdapterVerificationToken>;
-
   return {
     async createUser(data) {
       await dbConnect;

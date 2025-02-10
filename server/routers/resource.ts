@@ -1,7 +1,9 @@
-import { contact, resourceContent, resourceContentSendTrack, resourceContentShare, resourceEmails, user } from '@/drizzle/schema';
+import { ResourceContent } from '@/database/models/resourceContent';
+import { ResourceContentShare } from '@/database/models/resourceContentShare';
+import { ResourceEmail } from '@/database/models/resourceEmail';
+import { ResourceContentSendTrack } from '@/database/models/resourceContentSendTrack';
 import { createTRPCRouter, protectedProcedure } from '@/server/trpc';
 import { TRPCError } from '@trpc/server';
-import { and, desc, eq, inArray, like, or, sql } from 'drizzle-orm';
 import { z } from 'zod';
 
 const resourceContentSchema = z.object({
@@ -25,7 +27,7 @@ const resourceEmailSchema = z.object({
 
 export const resourceRouter = createTRPCRouter({
   createContent: protectedProcedure.input(resourceContentSchema).mutation(async ({ ctx, input }) => {
-    return ctx.db.insert(resourceContent).values({
+    return ResourceContent.create({
       ...input,
       createdBy: ctx.session.user.id,
       updatedBy: ctx.session.user.id,

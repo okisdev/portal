@@ -1,9 +1,9 @@
-import { subscriptionCoupon, subscriptionPlan } from '@/drizzle/schema';
+import { SubscriptionCoupon } from '@/database/models/subscriptionCoupon';
+import { SubscriptionPlan } from '@/database/models/subscriptionPlan';
 import { stripe } from '@/lib/payment';
 import { generateCouponCode } from '@/lib/utils';
 import { createTRPCRouter, protectedProcedure } from '@/server/trpc';
 import { TRPCError } from '@trpc/server';
-import { asc, eq } from 'drizzle-orm';
 import { z } from 'zod';
 
 export const payRouter = createTRPCRouter({
@@ -224,11 +224,7 @@ export const payRouter = createTRPCRouter({
   }),
 
   fetchStripeSubscriptionPlanByCouponCode: protectedProcedure.input(z.object({ code: z.string() })).query(async ({ ctx, input }) => {
-    const coupon = await ctx.db
-      .select()
-      .from(subscriptionCoupon)
-      .where(eq(subscriptionCoupon.code, input.code))
-      .then((rows) => rows[0]);
+    const coupon = await SubscriptionCoupon.findOne({ code: input.code });
 
     if (!coupon) {
       return null;
@@ -249,19 +245,15 @@ export const payRouter = createTRPCRouter({
   }),
 
   fetchLocalSubscriptionPlans: protectedProcedure.query(async ({ ctx }) => {
-    return await ctx.db.select().from(subscriptionPlan).orderBy(asc(subscriptionPlan.price));
+    return await SubscriptionPlan.find().sort({ price: 1 });
   }),
 
   fetchSubscriptionCouponByCode: protectedProcedure.input(z.object({ code: z.string() })).query(async ({ ctx, input }) => {
-    return await ctx.db
-      .select()
-      .from(subscriptionCoupon)
-      .where(eq(subscriptionCoupon.code, input.code))
-      .then((rows) => rows[0]);
+    return await SubscriptionCoupon.findOne({ code: input.code });
   }),
 
   fetchSubscriptionCoupons: protectedProcedure.query(async ({ ctx }) => {
-    return await ctx.db.select().from(subscriptionCoupon).orderBy(asc(subscriptionCoupon.discountPercent));
+    return await SubscriptionCoupon.find().sort({ discountPercent: 1 });
   }),
 
   createSubscriptionCoupon: protectedProcedure
@@ -280,7 +272,7 @@ export const payRouter = createTRPCRouter({
 
       try {
         if (input.discountPercent === 100) {
-          return await ctx.db.insert(subscriptionCoupon).values({
+          return await SubscriptionCoupon.create({
             code: couponCode,
             discountPercent: 0,
             maxUses: input.maxUses,
@@ -304,7 +296,7 @@ export const payRouter = createTRPCRouter({
           duration_in_months: 1,
         });
 
-        return await ctx.db.insert(subscriptionCoupon).values({
+        return await SubscriptionCoupon.create({
           code: couponCode,
           discountPercent: (100 - input.discountPercent) / 100,
           maxUses: input.maxUses,
@@ -391,7 +383,7 @@ export const payRouter = createTRPCRouter({
       })
       .filter((item) => item.price);
 
-    const localPlans = await ctx.db.select().from(subscriptionPlan);
+    const localPlans = await SubscriptionPlan.find();
 
     for (const item of productwithPrices) {
       const { product, price } = item;
@@ -415,13 +407,13 @@ export const payRouter = createTRPCRouter({
       };
 
       if (existingPlan) {
-        await ctx.db.update(subscriptionPlan).set(planData).where(eq(subscriptionPlan.id, existingPlan.id));
+        await SubscriptionPlan.updateOne({ id: existingPlan.id }, { $set: planData });
       } else {
-        await ctx.db.insert(subscriptionPlan).values(planData);
+        await SubscriptionPlan.create(planData);
       }
     }
 
-    const updatedLocalPlans = await ctx.db.select().from(subscriptionPlan).orderBy(asc(subscriptionPlan.price));
+    const updatedLocalPlans = await SubscriptionPlan.find().sort({ price: 1 });
 
     return {
       stripeProducts: productwithPrices,
@@ -468,7 +460,7 @@ export const payRouter = createTRPCRouter({
           await stripe.coupons.del(input.stripeId);
         }
 
-        return await ctx.db.delete(subscriptionCoupon).where(eq(subscriptionCoupon.id, input.id));
+        return await SubscriptionCoupon.deleteOne({ id: input.id });
       } catch (error) {
         console.error('Error deleting coupon:', error);
         throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Failed to delete coupon' });

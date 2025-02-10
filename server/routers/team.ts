@@ -1,44 +1,26 @@
-import { calendarEvent, calendarEventParticipant, calendarFolder, company, contact, marketingCampaign, team, teamActivity, teamContact, teamMeeting, user, userNotifications } from '@/drizzle/schema';
+import { Company } from '@/database/models/company';
+import { MarketingCampaign } from '@/database/models/marketingCampaign';
+import { Team } from '@/database/models/team';
+import { TeamActivity } from '@/database/models/teamActivity';
+import { TeamContact } from '@/database/models/teamContact';
+import { User } from '@/database/models/user';
+import { UserNotifications } from '@/database/models/userNotifications';
 import { activitySubTypeSchema, activityTypeSchema } from '@/lib/schema';
 import { createContactActivityHelper } from '@/server/helper/contact';
 import { createTeamActivityHelper } from '@/server/helper/team';
 import { createTRPCRouter, protectedProcedure } from '@/server/trpc';
 import { TRPCError } from '@trpc/server';
-import { and, asc, eq, exists, inArray, sql } from 'drizzle-orm';
 import { z } from 'zod';
 
 export const teamRouter = createTRPCRouter({
   getAllTeams: protectedProcedure.query(async ({ ctx }) => {
-    return await ctx.db
-      .select({
-        id: team.id,
-        name: team.name,
-        description: team.description,
-        createdAt: team.createdAt,
-        createdBy: team.createdBy,
-        contacts: sql<number>`(SELECT COUNT(*) FROM ${teamContact} WHERE ${teamContact.teamId} = ${team.id})`,
-        company: sql<{ id: string; name: string } | null>`
-          (SELECT row_to_json(c) 
-           FROM ${company} c 
-           WHERE c.id = ${team.companyId})`,
-      })
-      .from(team)
-      .leftJoin(teamContact, eq(teamContact.teamId, team.id))
-      .groupBy(team.id, team.name, team.description, team.createdAt, team.createdBy, team.companyId);
+    return await Team.find().populate('contacts').populate('company');
   }),
 
   getContactTeams: protectedProcedure.input(z.object({ contactId: z.string() })).query(({ ctx, input }) => {
-    return ctx.db
-      .select()
-      .from(team)
-      .where(
-        exists(
-          ctx.db
-            .select()
-            .from(teamContact)
-            .where(and(eq(teamContact.teamId, team.id), eq(teamContact.contactId, input.contactId)))
-        )
-      );
+    return Team.find({
+      contacts: { $in: [input.contactId] },
+    });
   }),
 
   createTeam: protectedProcedure
@@ -50,15 +32,12 @@ export const teamRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      const [newTeam] = await ctx.db
-        .insert(team)
-        .values({
-          name: input.name,
-          description: input.description,
-          createdBy: ctx.session.user.id,
-          companyId: input.companyId,
-        })
-        .returning();
+      const newTeam = await Team.create({
+        name: input.name,
+        description: input.description,
+        createdBy: ctx.session.user.id,
+        companyId: input.companyId,
+      });
 
       await createTeamActivityHelper(ctx, {
         teamId: newTeam.id,
@@ -81,30 +60,17 @@ export const teamRouter = createTRPCRouter({
     )
     .mutation(async ({ ctx, input }) => {
       // Check if already assigned
-      const existing = await ctx.db
-        .select()
-        .from(teamContact)
-        .where(and(eq(teamContact.teamId, input.teamId), eq(teamContact.contactId, input.contactId)))
-        .then((rows) => rows[0]);
+      const existing = await TeamContact.findOne({ teamId: input.teamId, contactId: input.contactId });
 
       if (existing) return existing;
 
       // Get team details for activity log
-      const teamDetails = await ctx.db
-        .select({
-          name: team.name,
-        })
-        .from(team)
-        .where(eq(team.id, input.teamId))
-        .then((rows) => rows[0]);
+      const teamDetails = await Team.findById(input.teamId);
 
-      const result = await ctx.db
-        .insert(teamContact)
-        .values({
-          teamId: input.teamId,
-          contactId: input.contactId,
-        })
-        .returning();
+      const result = await TeamContact.create({
+        teamId: input.teamId,
+        contactId: input.contactId,
+      });
 
       // Log team assignment activity
       await createContactActivityHelper(ctx, {
@@ -145,18 +111,9 @@ export const teamRouter = createTRPCRouter({
     )
     .mutation(async ({ ctx, input }) => {
       // Get team details for activity log
-      const teamDetails = await ctx.db
-        .select({
-          name: team.name,
-        })
-        .from(team)
-        .where(eq(team.id, input.teamId))
-        .then((rows) => rows[0]);
+      const teamDetails = await Team.findById(input.teamId);
 
-      const result = await ctx.db
-        .delete(teamContact)
-        .where(and(eq(teamContact.teamId, input.teamId), eq(teamContact.contactId, input.contactId)))
-        .returning();
+      const result = await TeamContact.deleteOne({ teamId: input.teamId, contactId: input.contactId });
 
       // Log team removal activity
       await createContactActivityHelper(ctx, {
@@ -185,44 +142,11 @@ export const teamRouter = createTRPCRouter({
         },
       });
 
-      return result[0];
+      return result;
     }),
 
   getTeamById: protectedProcedure.input(z.object({ id: z.string() })).query(async ({ ctx, input }) => {
-    return ctx.db
-      .select({
-        id: team.id,
-        name: team.name,
-        description: team.description,
-        createdAt: team.createdAt,
-        updatedAt: team.updatedAt,
-        createdBy: team.createdBy,
-        leaderId: team.leaderId,
-        subLeaderId: team.subLeaderId,
-        referralId: team.referralId,
-        campaignCode: team.campaignCode,
-        remarks: team.remarks,
-        companyId: team.companyId,
-        company: sql<{ id: string; name: string } | null>`
-          (SELECT row_to_json(c) 
-           FROM ${company} c 
-           WHERE c.id = ${team.companyId})`,
-        leader: sql<{ id: string; firstName: string; lastName: string } | null>`
-          (SELECT row_to_json(c) 
-           FROM ${contact} c 
-           WHERE c.id = ${team.leaderId})`,
-        subLeader: sql<{ id: string; firstName: string; lastName: string } | null>`
-          (SELECT row_to_json(c) 
-           FROM ${contact} c 
-           WHERE c.id = ${team.subLeaderId})`,
-        referral: sql<{ id: string; firstName: string; lastName: string } | null>`
-          (SELECT row_to_json(c) 
-           FROM ${contact} c 
-           WHERE c.id = ${team.referralId})`,
-      })
-      .from(team)
-      .where(eq(team.id, input.id))
-      .then((rows) => rows[0]);
+    return Team.findById(input.id);
   }),
 
   updateTeam: protectedProcedure
@@ -245,11 +169,7 @@ export const teamRouter = createTRPCRouter({
 
       if (input.campaignCode) {
         // Verify campaign exists
-        const campaign = await ctx.db
-          .select()
-          .from(marketingCampaign)
-          .where(eq(marketingCampaign.campaignCode, input.campaignCode))
-          .then((rows) => rows[0]);
+        const campaign = await MarketingCampaign.findOne({ campaignCode: input.campaignCode });
 
         if (!campaign) {
           campaignCodeToSet = undefined;
@@ -258,11 +178,7 @@ export const teamRouter = createTRPCRouter({
 
       if (input.company?.id) {
         // Verify company exists
-        const companyRecord = await ctx.db
-          .select()
-          .from(company)
-          .where(eq(company.id, input.company?.id))
-          .then((rows) => rows[0]);
+        const companyRecord = await Company.findById(input.company?.id);
 
         if (!companyRecord) {
           companyIdToSet = undefined;
@@ -272,19 +188,21 @@ export const teamRouter = createTRPCRouter({
         companyIdToSet = null;
       }
 
-      await ctx.db
-        .update(team)
-        .set({
-          ...(input.name && { name: input.name }),
-          ...(input.description && { description: input.description }),
-          ...(input.leaderId && { leaderId: input.leaderId }),
-          ...(input.subLeaderId && { subLeaderId: input.subLeaderId }),
-          ...(input.referralId && { referralId: input.referralId }),
-          ...(campaignCodeToSet !== undefined && { campaignCode: campaignCodeToSet }),
-          ...(companyIdToSet !== undefined && { companyId: companyIdToSet }),
-          ...(input.remarks && { remarks: input.remarks }),
-        })
-        .where(eq(team.id, input.id));
+      await Team.updateOne(
+        { id: input.id },
+        {
+          $set: {
+            ...(input.name && { name: input.name }),
+            ...(input.description && { description: input.description }),
+            ...(input.leaderId && { leaderId: input.leaderId }),
+            ...(input.subLeaderId && { subLeaderId: input.subLeaderId }),
+            ...(input.referralId && { referralId: input.referralId }),
+            ...(campaignCodeToSet !== undefined && { campaignCode: campaignCodeToSet }),
+            ...(companyIdToSet !== undefined && { companyId: companyIdToSet }),
+            ...(input.remarks && { remarks: input.remarks }),
+          },
+        }
+      );
 
       await createTeamActivityHelper(ctx, {
         teamId: input.id,
@@ -301,15 +219,9 @@ export const teamRouter = createTRPCRouter({
     }),
 
   updateTeamRemarks: protectedProcedure.input(z.object({ id: z.string(), remarks: z.string() })).mutation(async ({ ctx, input }) => {
-    const teamDetails = await ctx.db
-      .select({
-        name: team.name,
-      })
-      .from(team)
-      .where(eq(team.id, input.id))
-      .then((rows) => rows[0]);
+    const teamDetails = await Team.findById(input.id);
 
-    await ctx.db.update(team).set({ remarks: input.remarks }).where(eq(team.id, input.id));
+    await Team.updateOne({ id: input.id }, { $set: { remarks: input.remarks } });
 
     await createTeamActivityHelper(ctx, {
       teamId: input.id,
@@ -326,7 +238,7 @@ export const teamRouter = createTRPCRouter({
   }),
 
   getTeamActivities: protectedProcedure.input(z.object({ id: z.string() })).query(async ({ ctx, input }) => {
-    return await ctx.db.select().from(teamActivity).where(eq(teamActivity.teamId, input.id)).orderBy(asc(teamActivity.createdAt));
+    return await TeamActivity.find({ teamId: input.id }).sort({ createdAt: -1 });
   }),
 
   createTeamActivity: protectedProcedure
@@ -342,7 +254,7 @@ export const teamRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      await ctx.db.insert(teamActivity).values({
+      await TeamActivity.create({
         teamId: input.teamId,
         userId: ctx.session?.user.id,
         type: input.type,
@@ -358,11 +270,11 @@ export const teamRouter = createTRPCRouter({
 
       if (mentions.length > 0) {
         // Get all mentioned users
-        const mentionedUsers = await ctx.db.select().from(user).where(inArray(user.username, mentions));
+        const mentionedUsers = await User.find({ username: { $in: mentions } });
 
         // Create notifications for mentioned users
         for (const mentionedUser of mentionedUsers) {
-          await ctx.db.insert(userNotifications).values({
+          await UserNotifications.create({
             userId: mentionedUser.id,
             type: 'message',
             title: `${ctx.session?.user.name || 'Someone'} mentioned you in a note`,
@@ -413,7 +325,7 @@ export const teamRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      return await ctx.db.transaction(async (tx) => {
+      return await TeamMeeting.transaction(async (tx) => {
         // Set initial status based on meeting date
         const status = input.meetingDate < new Date() ? 'completed' : 'upcoming';
 

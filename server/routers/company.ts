@@ -1,4 +1,4 @@
-import Company from '@/database/models/Company';
+import { Company } from '@/database/models/company';
 import { createTRPCRouter, protectedProcedure } from '@/server/trpc';
 import { z } from 'zod';
 

@@ -1,4 +1,4 @@
-import User from '@/database/models/User';
+import { User } from '@/database/models/user';
 import { generateUUID } from '@/lib/utils';
 import { TRPCError } from '@trpc/server';
 import mongoose from 'mongoose';

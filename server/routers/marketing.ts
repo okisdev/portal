@@ -1,128 +1,45 @@
-import { contact, contactCampaign, marketingCampaign } from '@/drizzle/schema';
+import { ContactCampaign } from '@/database/models/contactCampaign';
+import { MarketingCampaign } from '@/database/models/marketingCampaign';
 import { createTRPCRouter, protectedProcedure } from '@/server/trpc';
-import { desc, eq, sql } from 'drizzle-orm';
 import { z } from 'zod';
 
 export const marketingRouter = createTRPCRouter({
   getAllCampaigns: protectedProcedure.query(({ ctx }) => {
-    return ctx.db
-      .select({
-        id: marketingCampaign.id,
-        name: marketingCampaign.name,
-        campaignCode: marketingCampaign.campaignCode,
-        description: marketingCampaign.description,
-        type: marketingCampaign.type,
-        status: marketingCampaign.status,
-        metrics: marketingCampaign.metrics,
-        contactCount: sql<number>`(SELECT COUNT(*) FROM ${contactCampaign} WHERE ${contactCampaign.campaignCode} = ${marketingCampaign.campaignCode})`,
-        createdAt: marketingCampaign.createdAt,
-        updatedAt: marketingCampaign.updatedAt,
-        createdBy: marketingCampaign.createdBy,
-        updatedBy: marketingCampaign.updatedBy,
-      })
-      .from(marketingCampaign)
-      .orderBy(desc(marketingCampaign.createdAt));
+    return MarketingCampaign.find();
   }),
 
   getCampaignById: protectedProcedure.input(z.object({ id: z.string() })).query(({ ctx, input }) => {
-    return ctx.db
-      .select({
-        id: marketingCampaign.id,
-        name: marketingCampaign.name,
-        campaignCode: marketingCampaign.campaignCode,
-        description: marketingCampaign.description,
-        type: marketingCampaign.type,
-        status: marketingCampaign.status,
-        metrics: marketingCampaign.metrics,
-        contactCount: sql<number>`(SELECT COUNT(*) FROM ${contactCampaign} WHERE ${contactCampaign.campaignCode} = ${marketingCampaign.campaignCode})`,
-        createdAt: marketingCampaign.createdAt,
-        updatedAt: marketingCampaign.updatedAt,
-        createdBy: marketingCampaign.createdBy,
-        updatedBy: marketingCampaign.updatedBy,
-      })
-      .from(marketingCampaign)
-      .where(eq(marketingCampaign.id, input.id))
-      .then((rows) => rows[0]);
+    return MarketingCampaign.findOne({ id: input.id });
   }),
 
   getActiveCampaigns: protectedProcedure.query(({ ctx }) => {
-    return ctx.db
-      .select({
-        id: marketingCampaign.id,
-        name: marketingCampaign.name,
-        campaignCode: marketingCampaign.campaignCode,
-        description: marketingCampaign.description,
-        type: marketingCampaign.type,
-        status: marketingCampaign.status,
-        metrics: marketingCampaign.metrics,
-        contactCount: sql<number>`(SELECT COUNT(*) FROM ${contactCampaign} WHERE ${contactCampaign.campaignCode} = ${marketingCampaign.campaignCode})`,
-        createdAt: marketingCampaign.createdAt,
-        updatedAt: marketingCampaign.updatedAt,
-        createdBy: marketingCampaign.createdBy,
-        updatedBy: marketingCampaign.updatedBy,
-      })
-      .from(marketingCampaign)
-      .where(eq(marketingCampaign.status, 'active'))
-      .orderBy(desc(marketingCampaign.createdAt));
+    return MarketingCampaign.find({ status: 'active' }).sort({ createdAt: -1 });
   }),
 
   getCampaignByCode: protectedProcedure.input(z.object({ code: z.string() })).query(({ ctx, input }) => {
-    return ctx.db
-      .select({
-        id: marketingCampaign.id,
-        name: marketingCampaign.name,
-        campaignCode: marketingCampaign.campaignCode,
-        description: marketingCampaign.description,
-        type: marketingCampaign.type,
-        status: marketingCampaign.status,
-        metrics: marketingCampaign.metrics,
-        contactCount: sql<number>`(SELECT COUNT(*) FROM ${contactCampaign} WHERE ${contactCampaign.campaignCode} = ${input.code})`,
-        createdAt: marketingCampaign.createdAt,
-        updatedAt: marketingCampaign.updatedAt,
-      })
-      .from(marketingCampaign)
-      .where(eq(marketingCampaign.campaignCode, input.code))
-      .then((rows) => rows[0]);
+    return MarketingCampaign.findOne({ campaignCode: input.code });
   }),
 
   getCampaignContacts: protectedProcedure.input(z.object({ code: z.string().optional(), id: z.string().optional() })).query(({ ctx, input }) => {
     if (input.id) {
-      return ctx.db
-        .select({
-          id: contact.id,
-          name: contact.name,
-          firstName: contact.firstName,
-          lastName: contact.lastName,
-          email: contact.email,
-          phone: contact.phone,
-          company: contact.company,
-          status: contact.status,
-          joinedAt: contactCampaign.joinedAt,
-        })
-        .from(marketingCampaign)
-        .innerJoin(contactCampaign, eq(contactCampaign.campaignCode, marketingCampaign.campaignCode))
-        .innerJoin(contact, eq(contactCampaign.contactId, contact.id))
-        .where(eq(marketingCampaign.id, input.id));
-    }
-    if (input.code) {
-      return ctx.db
-        .select({
-          id: contact.id,
-          name: contact.name,
-          firstName: contact.firstName,
-          lastName: contact.lastName,
-          email: contact.email,
-          phone: contact.phone,
-          company: contact.company,
-          status: contact.status,
-          joinedAt: contactCampaign.joinedAt,
-        })
-        .from(contactCampaign)
-        .innerJoin(contact, eq(contactCampaign.contactId, contact.id))
-        .where(eq(contactCampaign.campaignCode, input.code));
+      return MarketingCampaign.findOne({ id: input.id }).then((campaign) => {
+        return ContactCampaign.find({ campaignCode: campaign?.campaignCode }).then((contacts) => {
+          return contacts.map((contact) => {
+            return contact.contactId;
+          });
+        });
+      });
     }
 
-    return null;
+    if (input.code) {
+      return MarketingCampaign.findOne({ campaignCode: input.code }).then((campaign) => {
+        return ContactCampaign.find({ campaignCode: campaign?.campaignCode }).then((contacts) => {
+          return contacts.map((contact) => {
+            return contact.contactId;
+          });
+        });
+      });
+    }
   }),
 
   createCampaign: protectedProcedure
@@ -137,13 +54,10 @@ export const marketingRouter = createTRPCRouter({
       })
     )
     .mutation(({ ctx, input }) => {
-      return ctx.db
-        .insert(marketingCampaign)
-        .values({
-          ...input,
-          createdBy: ctx.session.user.id,
-        })
-        .returning();
+      return MarketingCampaign.create({
+        ...input,
+        createdBy: ctx.session.user.id,
+      });
     }),
 
   updateCampaign: protectedProcedure
@@ -159,16 +73,10 @@ export const marketingRouter = createTRPCRouter({
     )
     .mutation(({ ctx, input }) => {
       const { code, ...updateData } = input;
-      return ctx.db
-        .update(marketingCampaign)
-        .set({
-          ...updateData,
-          updatedBy: ctx.session.user.id,
-        })
-        .where(eq(marketingCampaign.campaignCode, code));
+      return MarketingCampaign.updateOne({ campaignCode: code }, { $set: { ...updateData, updatedBy: ctx.session.user.id } });
     }),
 
   deleteCampaign: protectedProcedure.input(z.object({ code: z.string() })).mutation(({ ctx, input }) => {
-    return ctx.db.delete(marketingCampaign).where(eq(marketingCampaign.campaignCode, input.code));
+    return MarketingCampaign.deleteOne({ campaignCode: input.code });
   }),
 });

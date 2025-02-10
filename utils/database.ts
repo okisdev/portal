@@ -1,4 +1,4 @@
-import User from '@/database/models/User';
+import { User } from '@/database/models/user';
 import { connectToDatabase } from '@/lib/database';
 
 export const getUserFromDb = async (email: string) => {

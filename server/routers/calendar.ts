@@ -1,8 +1,8 @@
-import CalendarEvent from '@/database/models/CalendarEvent';
-import CalendarEventParticipant from '@/database/models/CalendarEventParticipant';
-import CalendarFolder from '@/database/models/CalendarFolder';
-import Contact from '@/database/models/Contact';
-import User from '@/database/models/User';
+import { CalendarEvent } from '@/database/models/calendarEvent';
+import { CalendarEventParticipant } from '@/database/models/calendarEventParticipant';
+import { CalendarFolder } from '@/database/models/calendarFolder';
+import { Contact } from '@/database/models/contact';
+import { User } from '@/database/models/user';
 import { appointmentSchema } from '@/lib/schema';
 import { createContactActivityHelper } from '@/server/helper/contact';
 import { createTRPCRouter, protectedProcedure } from '@/server/trpc';

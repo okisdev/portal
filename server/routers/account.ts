@@ -1,4 +1,4 @@
-import User from '@/database/models/User';
+import { User } from '@/database/models/user';
 import { timezoneSchema } from '@/lib/schema';
 import { createTRPCRouter, protectedProcedure } from '@/server/trpc';
 import { encryptPassword } from '@/utils/password';

@@ -1,4 +1,4 @@
-import Contact, { type IContact } from '@/database/models/Contact';
+import { Contact } from '@/database/models/contact';
 import { prioritySchema, statusSchema } from '@/lib/schema';
 import { createContactActivityHelper } from '@/server/helper/contact';
 import { createTRPCRouter, protectedProcedure, publicProcedure } from '@/server/trpc';
@@ -240,7 +240,7 @@ export const contactRouter = createTRPCRouter({
     )
     .query(async ({ ctx, input }) => {
       const existingContacts = await Contact.find({ email: { $in: input.emails } }, { email: 1 });
-      return existingContacts.map((contact: IContact) => contact.email);
+      return existingContacts.map((contact) => contact.email);
     }),
 
   sendEmail: protectedProcedure

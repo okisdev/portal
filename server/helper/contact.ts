@@ -1,4 +1,4 @@
-import ContactActivity from '@/database/models/ContactActivity';
+import { ContactActivity } from '@/database/models/contactActivity';
 import type { ActivitySubType, ActivityType } from '@/lib/schema';
 
 export const createContactActivityHelper = async (
