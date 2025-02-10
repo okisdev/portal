@@ -746,7 +746,7 @@ export const contactRouter = createTRPCRouter({
                 .where(eq(contactCampaign.contactId, newContact.id));
 
               await Promise.all(
-                campaigns.map(async ({ marketingCampaign: campaign }) => {
+                campaigns.map(async ({ portal_marketingCampaign: campaign }) => {
                   await createContactActivityHelper(ctx, {
                     contactId: newContact.id,
                     type: 'CAMPAIGN',
