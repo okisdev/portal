@@ -1,11 +1,9 @@
-import { user } from '@/drizzle/schema';
-import { database } from '@/lib/database';
-import { eq } from 'drizzle-orm';
+import User from '@/database/models/User';
+import { connectToDatabase } from '@/lib/database';
 
 export const getUserFromDb = async (email: string) => {
-  return await database
-    .select()
-    .from(user)
-    .where(eq(user.email, email))
-    .then((rows) => rows[0]);
+  await connectToDatabase();
+  const user = await User.findOne({ email });
+  if (!user) return null;
+  return user.toObject();
 };
