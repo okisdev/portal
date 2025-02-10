@@ -137,6 +137,7 @@
   "content_deleted_successfully": "內容成功刪除",
   "content_updated_successfully": "內容成功更新",
   "contents": "內容",
+  "conversation": "對話",
   "copied_to_clipboard": "已複製到剪貼簿",
   "copy_html": "複製 HTML",
   "copy_to_clipboard_failed": "複製到剪貼簿失敗",
@@ -587,6 +588,5 @@
   "will_renew_at": "將在 {date} 續訂",
   "workspace": "工作區",
   "write_a_reply": "寫回覆...使用 @ 提及他人",
-  "you": "您",
-  "conversation": "對話"
+  "you": "您"
 }
