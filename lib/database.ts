@@ -1,10 +1,4 @@
-// Add type declarations for global mongoose cache
-declare global {
-  var mongoose: {
-    conn: typeof mongoose | null;
-    promise: Promise<typeof mongoose> | null;
-  };
-}
+import mongoose from 'mongoose';
 
 const DATABASE_URL = process.env.DATABASE_URL;
 
@@ -33,7 +27,8 @@ export async function connectToDatabase() {
   }
 
   try {
-    cached.conn = await cached.promise;
+    const mongoose = await cached.promise;
+    cached.conn = mongoose;
   } catch (e) {
     cached.promise = null;
     throw e;

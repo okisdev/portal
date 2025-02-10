@@ -1,21 +1,23 @@
-import { calendarEvent, calendarEventParticipant, calendarFolder, contact, user } from '@/drizzle/schema';
+import CalendarEvent from '@/database/models/CalendarEvent';
+import CalendarEventParticipant from '@/database/models/CalendarEventParticipant';
+import CalendarFolder from '@/database/models/CalendarFolder';
+import Contact from '@/database/models/Contact';
+import User from '@/database/models/User';
 import { appointmentSchema } from '@/lib/schema';
 import { createContactActivityHelper } from '@/server/helper/contact';
 import { createTRPCRouter, protectedProcedure } from '@/server/trpc';
 import { TRPCError } from '@trpc/server';
-import { and, desc, eq, gte, inArray, lte, or } from 'drizzle-orm';
 import { z } from 'zod';
 
 export const calendarRouter = createTRPCRouter({
-  getMyFolders: protectedProcedure.query(({ ctx }) => {
-    return ctx.db.select().from(calendarFolder).where(eq(calendarFolder.userId, ctx.session.user.id));
+  getMyFolders: protectedProcedure.query(async ({ ctx }) => {
+    return await CalendarFolder.find({ userId: ctx.session.user.id });
   }),
 
-  getAllFolders: protectedProcedure.query(({ ctx }) => {
-    return ctx.db
-      .select()
-      .from(calendarFolder)
-      .where(or(eq(calendarFolder.visibility, 'PUBLIC'), eq(calendarFolder.userId, ctx.session.user.id), eq(calendarFolder.visibility, 'SHARED')));
+  getAllFolders: protectedProcedure.query(async ({ ctx }) => {
+    return await CalendarFolder.find({
+      $or: [{ visibility: 'PUBLIC' }, { userId: ctx.session.user.id }, { visibility: 'SHARED' }],
+    });
   }),
 
   createFolder: protectedProcedure
@@ -31,27 +33,23 @@ export const calendarRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      const existing = await ctx.db
-        .select()
-        .from(calendarFolder)
-        .where(and(eq(calendarFolder.userId, ctx.session.user.id), eq(calendarFolder.name, input.name)))
-        .then((rows) => rows[0]);
+      const existing = await CalendarFolder.findOne({
+        userId: ctx.session.user.id,
+        name: input.name,
+      });
 
       if (existing) {
         return existing;
       }
 
       // Create new folder
-      const [folder] = await ctx.db
-        .insert(calendarFolder)
-        .values({
-          userId: ctx.session.user.id,
-          name: input.name,
-          color: input.color,
-          isDefault: input.isDefault,
-          visibility: input.visibility,
-        })
-        .returning();
+      const folder = await CalendarFolder.create({
+        userId: ctx.session.user.id,
+        name: input.name,
+        color: input.color,
+        isDefault: input.isDefault,
+        visibility: input.visibility,
+      });
 
       return folder;
     }),
@@ -64,35 +62,32 @@ export const calendarRouter = createTRPCRouter({
       })
     )
     .query(async ({ ctx, input }) => {
-      const events = await ctx.db
-        .select({
-          event: calendarEvent,
-          folder: calendarFolder,
-        })
-        .from(calendarEvent)
-        .leftJoin(calendarFolder, eq(calendarEvent.folderId, calendarFolder.id))
-        .where(
-          and(
-            or(eq(calendarEvent.userId, ctx.session.user.id), eq(calendarFolder.visibility, 'SHARED'), eq(calendarFolder.visibility, 'PUBLIC')),
-            gte(calendarEvent.startAt, input.startDate),
-            lte(calendarEvent.endAt, input.endDate)
-          )
-        )
-        .orderBy(desc(calendarEvent.startAt));
+      const events = await CalendarEvent.aggregate([
+        {
+          $lookup: {
+            from: 'calendarfolders',
+            localField: 'folderId',
+            foreignField: '_id',
+            as: 'folder',
+          },
+        },
+        {
+          $match: {
+            $or: [{ userId: ctx.session.user.id }, { 'folder.visibility': 'SHARED' }, { 'folder.visibility': 'PUBLIC' }],
+            startAt: { $gte: input.startDate },
+            endAt: { $lte: input.endDate },
+          },
+        },
+        { $sort: { startAt: -1 } },
+      ]);
 
-      const participants = await ctx.db
-        .select()
-        .from(calendarEventParticipant)
-        .where(
-          inArray(
-            calendarEventParticipant.eventId,
-            events.map((e) => e.event.id)
-          )
-        );
+      const participants = await CalendarEventParticipant.find({
+        eventId: { $in: events.map((e) => e._id) },
+      });
 
-      return events.map((row) => ({
-        ...row.event,
-        participants: participants.filter((p) => p.eventId === row.event.id),
+      return events.map((event) => ({
+        ...event,
+        participants: participants.filter((p) => p.eventId.toString() === event._id.toString()),
       }));
     }),
 
@@ -123,13 +118,10 @@ export const calendarRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      const [event] = await ctx.db
-        .insert(calendarEvent)
-        .values({
-          userId: ctx.session.user.id,
-          ...input,
-        })
-        .returning();
+      const [event] = await CalendarEvent.create({
+        userId: ctx.session.user.id,
+        ...input,
+      });
 
       if (input.participants.length > 0) {
         const participants = input.participants.map((p) => ({
@@ -138,11 +130,11 @@ export const calendarRouter = createTRPCRouter({
           email: p.email,
           name: p.name,
           role: p.role,
-          eventId: event.id,
+          eventId: event._id,
           status: 'pending' as const,
         }));
 
-        await ctx.db.insert(calendarEventParticipant).values(participants);
+        await CalendarEventParticipant.create(participants);
       }
 
       return event;
@@ -160,24 +152,21 @@ export const calendarRouter = createTRPCRouter({
     )
     .mutation(async ({ ctx, input }) => {
       // Get contact participant
-      const participant = await ctx.db
-        .select({
-          participantId: calendarEventParticipant.participantId,
-        })
-        .from(calendarEventParticipant)
-        .where(and(eq(calendarEventParticipant.eventId, input.id), eq(calendarEventParticipant.participantType, 'contact')))
-        .then((rows) => rows[0]);
+      const participant = await CalendarEventParticipant.findOne({
+        eventId: input.id,
+        participantType: 'contact',
+      });
 
-      const result = await ctx.db
-        .update(calendarEvent)
-        .set({
+      const result = await CalendarEvent.findByIdAndUpdate(
+        input.id,
+        {
           title: input.title,
           description: input.description,
           startAt: input.startAt,
           endAt: input.endAt,
-        })
-        .where(eq(calendarEvent.id, input.id))
-        .returning();
+        },
+        { new: true }
+      );
 
       if (participant?.participantId) {
         // Log meeting update activity
@@ -198,61 +187,46 @@ export const calendarRouter = createTRPCRouter({
         });
       }
 
-      return result[0];
+      return result;
     }),
 
   deleteEvent: protectedProcedure.input(z.object({ id: z.string() })).mutation(async ({ ctx, input }) => {
-    // Get event details and folder details before deletion
-    const eventWithFolder = await ctx.db
-      .select({
-        event: calendarEvent,
-        folder: calendarFolder,
-      })
-      .from(calendarEvent)
-      .leftJoin(calendarFolder, eq(calendarEvent.folderId, calendarFolder.id))
-      .where(eq(calendarEvent.id, input.id))
-      .then((rows) => rows[0]);
+    const eventWithFolder = await CalendarEvent.findById(input.id).populate('folder');
 
     if (!eventWithFolder) {
       throw new TRPCError({ code: 'NOT_FOUND', message: 'Event not found' });
     }
 
-    const { event, folder } = eventWithFolder;
-
-    // Check permissions:
-    // 1. If event is in a private folder, only the creator can delete
-    // 2. If event is in a shared/public folder, any user can delete
-    if (folder?.visibility === 'PRIVATE' && event.userId !== ctx.session.user.id) {
-      throw new TRPCError({ code: 'FORBIDDEN', message: 'You do not have permission to delete this event' });
+    // Check permissions
+    if (eventWithFolder.folder?.visibility === 'PRIVATE' && eventWithFolder.userId.toString() !== ctx.session.user.id) {
+      throw new TRPCError({
+        code: 'FORBIDDEN',
+        message: 'You do not have permission to delete this event',
+      });
     }
 
-    // Get contact participant before deletion
-    const participant = await ctx.db
-      .select({
-        participantId: calendarEventParticipant.participantId,
-      })
-      .from(calendarEventParticipant)
-      .where(and(eq(calendarEventParticipant.eventId, input.id), eq(calendarEventParticipant.participantType, 'contact')))
-      .then((rows) => rows[0]);
+    const participant = await CalendarEventParticipant.findOne({
+      eventId: input.id,
+      participantType: 'contact',
+    });
 
-    if (participant?.participantId) {
-      // Log meeting cancellation activity
+    if (participant) {
       await createContactActivityHelper(ctx, {
         contactId: participant.participantId,
         type: 'ENGAGEMENT',
         subType: 'MEETING_CANCELLED',
-        description: `Meeting "${event.title}" scheduled for ${new Date(event.startAt).toLocaleString()} was cancelled.`,
+        description: `Meeting "${eventWithFolder.title}" scheduled for ${new Date(eventWithFolder.startAt).toLocaleString()} was cancelled.`,
         initiatorType: 'user',
         initiatorId: ctx.session?.user.id,
         metadata: {
-          eventId: event.id,
-          title: event.title,
-          startAt: event.startAt,
+          eventId: eventWithFolder._id,
+          title: eventWithFolder.title,
+          startAt: eventWithFolder.startAt,
         },
       });
     }
 
-    return ctx.db.delete(calendarEvent).where(eq(calendarEvent.id, input.id));
+    return await CalendarEvent.findByIdAndDelete(input.id);
   }),
 
   updateFolder: protectedProcedure
@@ -265,30 +239,27 @@ export const calendarRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      return ctx.db
-        .update(calendarFolder)
-        .set({
+      return await CalendarFolder.findByIdAndUpdate(
+        input.id,
+        {
           name: input.name,
           color: input.color,
           visibility: input.visibility,
-        })
-        .where(and(eq(calendarFolder.id, input.id), eq(calendarFolder.userId, ctx.session.user.id)));
+        },
+        { new: true }
+      );
     }),
 
   deleteFolder: protectedProcedure.input(z.object({ id: z.string() })).mutation(async ({ ctx, input }) => {
     // Get folder details first
-    const folder = await ctx.db
-      .select()
-      .from(calendarFolder)
-      .where(eq(calendarFolder.id, input.id))
-      .then((rows) => rows[0]);
+    const folder = await CalendarFolder.findById(input.id);
 
     if (!folder) {
       throw new TRPCError({ code: 'NOT_FOUND', message: 'Calendar folder not found' });
     }
 
     // Check if user has permission to delete the folder
-    if (folder.userId !== ctx.session.user.id) {
+    if (folder.userId.toString() !== ctx.session.user.id) {
       throw new TRPCError({ code: 'FORBIDDEN', message: 'You do not have permission to delete this folder' });
     }
 
@@ -297,15 +268,15 @@ export const calendarRouter = createTRPCRouter({
     }
 
     // Delete all events in this folder first
-    await ctx.db.delete(calendarEvent).where(eq(calendarEvent.folderId, input.id));
+    await CalendarEvent.deleteMany({ folderId: input.id });
 
     // Finally delete the folder
-    return ctx.db.delete(calendarFolder).where(eq(calendarFolder.id, input.id));
+    return await CalendarFolder.findByIdAndDelete(input.id);
   }),
 
   getParticipantOptions: protectedProcedure.query(async ({ ctx }) => {
-    const users = await ctx.db.select().from(user);
-    const contacts = await ctx.db.select().from(contact);
+    const users = await User.find();
+    const contacts = await Contact.find();
 
     return {
       users: users.map((u) => ({
@@ -323,42 +294,27 @@ export const calendarRouter = createTRPCRouter({
   createAppointment: protectedProcedure.input(appointmentSchema).mutation(async ({ ctx, input }) => {
     const { title, description, startAt, endAt, contactId } = input;
 
-    const contactStatus = await ctx.db
-      .select({ status: contact.status })
-      .from(contact)
-      .where(eq(contact.id, contactId))
-      .then((rows) => rows[0]?.status);
+    const contactStatus = await Contact.findById(contactId);
 
     // Create the calendar event
-    const [event] = await ctx.db
-      .insert(calendarEvent)
-      .values({
-        userId: ctx.session.user.id,
-        title,
-        description,
-        startAt,
-        endAt,
-        isAllDay: false,
-        isPublic: false,
-        folderId:
-          (
-            await ctx.db
-              .select()
-              .from(calendarFolder)
-              .where(eq(calendarFolder.userId, ctx.session.user.id))
-              .limit(1)
-              .then((rows) => rows[0])
-          )?.id ?? '',
-      })
-      .returning();
+    const [event] = await CalendarEvent.create({
+      userId: ctx.session.user.id,
+      title,
+      description,
+      startAt,
+      endAt,
+      isAllDay: false,
+      isPublic: false,
+      folderId: (await CalendarFolder.findOne({ userId: ctx.session.user.id }))?.id ?? '',
+    });
 
-    if (contactStatus === 'lead') {
-      await ctx.db.update(contact).set({ status: 'appointment' }).where(eq(contact.id, contactId));
+    if (contactStatus?.status === 'lead') {
+      await Contact.findByIdAndUpdate(contactId, { status: 'appointment' });
     }
 
     // Add the contact as a participant
-    await ctx.db.insert(calendarEventParticipant).values({
-      eventId: event.id,
+    await CalendarEventParticipant.create({
+      eventId: event._id,
       participantType: 'contact',
       participantId: contactId,
       status: 'accepted',
@@ -374,7 +330,7 @@ export const calendarRouter = createTRPCRouter({
       initiatorType: 'user',
       initiatorId: ctx.session?.user.id,
       metadata: {
-        eventId: event.id,
+        eventId: event._id,
         startAt,
         endAt,
         description,
@@ -385,19 +341,9 @@ export const calendarRouter = createTRPCRouter({
   }),
 
   getAppointmentsByContactId: protectedProcedure.input(z.object({ contactId: z.string() })).query(async ({ ctx, input }) => {
-    return await ctx.db
-      .select({
-        id: calendarEvent.id,
-        title: calendarEvent.title,
-        description: calendarEvent.description,
-        startAt: calendarEvent.startAt,
-        endAt: calendarEvent.endAt,
-      })
-      .from(calendarEvent)
-      .innerJoin(
-        calendarEventParticipant,
-        and(eq(calendarEventParticipant.eventId, calendarEvent.id), eq(calendarEventParticipant.participantId, input.contactId), eq(calendarEventParticipant.participantType, 'contact'))
-      )
-      .orderBy(desc(calendarEvent.startAt));
+    return await CalendarEvent.find({
+      participantId: input.contactId,
+      participantType: 'contact',
+    }).sort({ startAt: -1 });
   }),
 });

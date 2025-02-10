@@ -1,16 +1,12 @@
-import { user } from '@/drizzle/schema';
+import User from '@/database/models/User';
 import { generateUUID } from '@/lib/utils';
 import { TRPCError } from '@trpc/server';
-import { eq } from 'drizzle-orm';
+import mongoose from 'mongoose';
 import { z } from 'zod';
 import { createTRPCRouter, protectedProcedure } from '../trpc';
 
 const adminProcedure = protectedProcedure.use(async ({ ctx, next }) => {
-  const currentUser = await ctx.db
-    .select()
-    .from(user)
-    .where(eq(user.id, ctx.session.user.id))
-    .then((res) => res[0]);
+  const currentUser = await User.findById(ctx.session.user.id);
 
   if (!currentUser || currentUser.role !== 'ADMIN') {
     throw new TRPCError({
@@ -27,16 +23,12 @@ export const adminRouter = createTRPCRouter({
     return ctx.session.user;
   }),
 
-  getUsers: adminProcedure.query(({ ctx }) => {
-    return ctx.db.select().from(user).execute();
+  getUsers: adminProcedure.query(async ({ ctx }) => {
+    return User.find();
   }),
 
-  getUser: adminProcedure.input(z.string()).query(({ ctx, input }) => {
-    return ctx.db
-      .select()
-      .from(user)
-      .where(eq(user.id, input))
-      .then((res) => res[0]);
+  getUser: adminProcedure.input(z.string()).query(async ({ ctx, input }) => {
+    return User.findById(input);
   }),
 
   createUser: adminProcedure
@@ -48,14 +40,11 @@ export const adminRouter = createTRPCRouter({
         username: z.string().optional(),
       })
     )
-    .mutation(({ ctx, input }) => {
-      return ctx.db
-        .insert(user)
-        .values({
-          id: generateUUID(),
-          ...input,
-        })
-        .execute();
+    .mutation(async ({ ctx, input }) => {
+      return User.create({
+        _id: generateUUID(),
+        ...input,
+      });
     }),
 
   updateUser: adminProcedure
@@ -64,28 +53,24 @@ export const adminRouter = createTRPCRouter({
         id: z.string(),
         role: z.enum(['ADMIN', 'SALES', 'MANAGER', 'USER']).nullish(),
         email: z.string().email().optional(),
+        name: z.string().optional(),
         firstName: z.string().optional(),
         lastName: z.string().optional(),
         username: z.string().optional(),
       })
     )
-    .mutation(({ ctx, input }) => {
-      const updateData = {
-        ...(input.role && { role: input.role }),
-        ...(input.email && { email: input.email }),
-        ...(input.firstName && { firstName: input.firstName }),
-        ...(input.lastName && { lastName: input.lastName }),
-        ...(input.firstName &&
-          input.lastName && {
-            name: `${input.firstName} ${input.lastName}`,
-          }),
-        ...(input.username && { username: input.username }),
-      };
+    .mutation(async ({ ctx, input }) => {
+      const { id, ...updateData } = input;
 
-      return ctx.db.update(user).set(updateData).where(eq(user.id, input.id)).execute();
+      if (input.firstName && input.lastName) {
+        updateData.name = `${input.firstName} ${input.lastName}`;
+      }
+
+      return User.findByIdAndUpdate(id, updateData, { new: true });
     }),
 
-  deleteUser: adminProcedure.input(z.string()).mutation(({ ctx, input }) => {
-    return ctx.db.delete(user).where(eq(user.id, input)).execute();
+  deleteUser: adminProcedure.input(z.string()).mutation(async ({ ctx, input }) => {
+    const User = mongoose.models.User;
+    return User.findByIdAndDelete(input);
   }),
 });

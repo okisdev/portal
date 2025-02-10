@@ -1,10 +1,9 @@
-import { contact } from '@/drizzle/schema';
+import Contact from '@/database/models/Contact';
 import { sendWhatsAppMessage } from '@/lib/whatsapp';
 import { createContactActivityHelper } from '@/server/helper/contact';
 import { createTRPCRouter, protectedProcedure, publicProcedure } from '@/server/trpc';
 import { formatPhoneNumber, normalizePhoneNumber } from '@/utils/number';
 import { TRPCError } from '@trpc/server';
-import { eq } from 'drizzle-orm';
 import z from 'zod';
 
 export const externalRouter = createTRPCRouter({
@@ -40,11 +39,9 @@ export const externalRouter = createTRPCRouter({
     )
     .mutation(async ({ ctx, input }) => {
       try {
-        const contactRecord = await ctx.db
-          .select()
-          .from(contact)
-          .where(eq(contact.phone, normalizePhoneNumber(input.recipientId)))
-          .then((rows) => rows[0]);
+        const contactRecord = await Contact.findOne({
+          phone: normalizePhoneNumber(input.recipientId),
+        });
 
         if (!contactRecord) {
           throw new TRPCError({
@@ -93,11 +90,9 @@ export const externalRouter = createTRPCRouter({
     )
     .mutation(async ({ ctx, input }) => {
       try {
-        const contactRecord = await ctx.db
-          .select()
-          .from(contact)
-          .where(eq(contact.phone, formatPhoneNumber(input.from)))
-          .then((rows) => rows[0]);
+        const contactRecord = await Contact.findOne({
+          phone: formatPhoneNumber(input.from),
+        });
 
         if (!contactRecord) {
           throw new TRPCError({

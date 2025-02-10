@@ -1,4 +1,4 @@
-import { contactActivity } from '@/drizzle/schema';
+import ContactActivity from '@/database/models/ContactActivity';
 import type { ActivitySubType, ActivityType } from '@/lib/schema';
 
 export const createContactActivityHelper = async (
@@ -13,7 +13,7 @@ export const createContactActivityHelper = async (
     metadata?: Record<string, any>;
   }
 ) => {
-  return ctx.db.insert(contactActivity).values({
+  return ContactActivity.create({
     contactId: input.contactId,
     userId: ctx.session?.user.id,
     type: input.type,

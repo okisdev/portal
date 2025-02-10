@@ -1,4 +1,3 @@
-import { teamActivity } from '@/drizzle/schema';
 import type { ActivitySubType, ActivityType } from '@/lib/schema';
 
 export const createTeamActivityHelper = async (
@@ -13,7 +12,7 @@ export const createTeamActivityHelper = async (
     metadata?: Record<string, any>;
   }
 ) => {
-  return ctx.db.insert(teamActivity).values({
+  return TeamActivity.create({
     teamId: input.teamId,
     userId: ctx.session?.user.id,
     type: input.type,

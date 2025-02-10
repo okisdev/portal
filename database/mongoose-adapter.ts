@@ -1,8 +1,8 @@
-import mongoose, { type Mongoose, type Model } from 'mongoose';
+import mongoose, { type Model } from 'mongoose';
 import type { Account as AdapterAccount } from 'next-auth';
 import type { Adapter, AdapterSession, AdapterUser, VerificationToken as AdapterVerificationToken } from 'next-auth/adapters';
 
-export function MongooseAdapter(dbConnect: Promise<Mongoose>): Adapter {
+export function MongooseAdapter(dbConnect: Promise<typeof mongoose>): Adapter {
   // Load Models
   if (!mongoose.models.User) {
     require('./models/User');
