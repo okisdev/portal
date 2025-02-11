@@ -1,3 +1,4 @@
+import { activitySubTypeSchema, activityTypeSchema } from '@/lib/schema';
 import { createTRPCRouter, protectedProcedure } from '@/server/trpc';
 import { TRPCError } from '@trpc/server';
 import { z } from 'zod';

@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn, generateUUID } from '@/lib/utils';
 import { api } from '@/utils/trpc/client';
+import type { Portal_UserNotifications } from '@prisma/client';
 import { formatDistanceToNow } from 'date-fns';
 import { Bell, Mail, MessageSquare } from 'lucide-react';
 import { useTranslations } from 'next-intl';
@@ -44,7 +45,7 @@ export default function NotificationsPage() {
     },
   });
 
-  const filteredNotifications = notifications?.filter((notification) => {
+  const filteredNotifications = notifications?.filter((notification: Portal_UserNotifications) => {
     if (filterType === 'all') return true;
     if (filterType === 'unread') return !notification.read;
     return notification.type === filterType;
