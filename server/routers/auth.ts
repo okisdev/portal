@@ -1,8 +1,6 @@
-import { user } from '@/drizzle/schema';
 import { generateUUID } from '@/lib/utils';
 import { createTRPCRouter, publicProcedure } from '@/server/trpc';
 import { TRPCError } from '@trpc/server';
-import { eq } from 'drizzle-orm';
 import z from 'zod';
 
 export const authRouter = createTRPCRouter({
@@ -16,16 +14,22 @@ export const authRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       const { email, password } = input;
 
-      const existingUser = await ctx.db.select().from(user).where(eq(user.email, email));
+      const existingUser = await ctx.db.portal_user.findFirst({
+        where: {
+          email,
+        },
+      });
 
-      if (existingUser.length > 0) {
+      if (existingUser) {
         throw new TRPCError({ code: 'CONFLICT', message: 'User already exists with this email' });
       }
 
-      return ctx.db.insert(user).values({
-        id: generateUUID(),
-        email,
-        password,
+      return ctx.db.portal_user.create({
+        data: {
+          id: generateUUID(),
+          email,
+          password,
+        },
       });
     }),
 });

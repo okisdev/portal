@@ -1,15 +1,13 @@
-import { siteConfig } from '@/drizzle/schema';
 import { createTRPCRouter, protectedProcedure } from '@/server/trpc';
-import { eq } from 'drizzle-orm';
 import { z } from 'zod';
 
 export const siteRouter = createTRPCRouter({
   getConfig: protectedProcedure.input(z.object({ key: z.enum(['name', 'description', 'domain']) })).query(async ({ ctx, input }) => {
-    const config = await ctx.db
-      .select()
-      .from(siteConfig)
-      .where(eq(siteConfig.key, input.key))
-      .then((rows) => rows[0]);
+    const config = await ctx.db.portal_siteConfig.findFirst({
+      where: {
+        key: input.key,
+      },
+    });
 
     if (!config) {
       return {
@@ -28,7 +26,7 @@ export const siteRouter = createTRPCRouter({
   }),
 
   getAllConfig: protectedProcedure.query(async ({ ctx }) => {
-    return ctx.db.select().from(siteConfig);
+    return ctx.db.portal_siteConfig.findMany();
   }),
 
   updateConfig: protectedProcedure
@@ -42,39 +40,43 @@ export const siteRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      const existing = await ctx.db
-        .select()
-        .from(siteConfig)
-        .where(eq(siteConfig.key, input.key))
-        .then((rows) => rows[0]);
+      const existing = await ctx.db.portal_siteConfig.findFirst({
+        where: {
+          key: input.key,
+        },
+      });
 
       if (existing) {
-        return ctx.db
-          .update(siteConfig)
-          .set({
+        return ctx.db.portal_siteConfig.update({
+          where: {
+            key: input.key,
+          },
+          data: {
             value: input.value,
             description: input.description,
             type: input.type,
             isPublic: input.isPublic,
             updatedAt: new Date(),
-          })
-          .where(eq(siteConfig.key, input.key))
-          .returning();
+          },
+        });
       }
 
-      return ctx.db
-        .insert(siteConfig)
-        .values({
+      return ctx.db.portal_siteConfig.create({
+        data: {
           key: input.key,
           value: input.value,
           description: input.description,
           type: input.type,
           isPublic: input.isPublic,
-        })
-        .returning();
+        },
+      });
     }),
 
   deleteConfig: protectedProcedure.input(z.object({ key: z.enum(['name', 'description', 'domain']) })).mutation(async ({ ctx, input }) => {
-    return ctx.db.delete(siteConfig).where(eq(siteConfig.key, input.key));
+    return ctx.db.portal_siteConfig.delete({
+      where: {
+        key: input.key,
+      },
+    });
   }),
 });

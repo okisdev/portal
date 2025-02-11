@@ -1,42 +1,60 @@
-import { user, userNotifications } from '@/drizzle/schema';
 import { createTRPCRouter, protectedProcedure } from '@/server/trpc';
-import { and, count, desc, eq } from 'drizzle-orm';
 import { z } from 'zod';
 
 export const userRouter = createTRPCRouter({
   getAllUsers: protectedProcedure.query(({ ctx }) => {
-    return ctx.db.select().from(user);
+    return ctx.db.portal_user.findMany();
   }),
 
   getUserById: protectedProcedure.input(z.object({ id: z.string() })).query(({ ctx, input }) => {
-    return ctx.db
-      .select()
-      .from(user)
-      .where(eq(user.id, input.id))
-      .then((rows) => rows[0]);
+    return ctx.db.portal_user.findUnique({
+      where: {
+        id: input.id,
+      },
+    });
   }),
 
   getNotifications: protectedProcedure.query(({ ctx }) => {
-    return ctx.db.select().from(userNotifications).where(eq(userNotifications.userId, ctx.session.user.id)).orderBy(desc(userNotifications.createdAt));
+    return ctx.db.portal_userNotifications.findMany({
+      where: {
+        userId: ctx.session.user.id,
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
   }),
 
   getUnreadNotificationsCount: protectedProcedure.query(({ ctx }) => {
-    return ctx.db
-      .select({ count: count() })
-      .from(userNotifications)
-      .where(and(eq(userNotifications.userId, ctx.session.user.id), eq(userNotifications.read, false)))
-      .then((rows) => rows[0]);
+    return ctx.db.portal_userNotifications.count({
+      where: {
+        userId: ctx.session.user.id,
+        read: false,
+      },
+    });
   }),
 
   markNotificationAsRead: protectedProcedure.input(z.number()).mutation(({ ctx, input }) => {
-    return ctx.db
-      .update(userNotifications)
-      .set({ read: true })
-      .where(and(eq(userNotifications.userId, ctx.session.user.id), eq(userNotifications.id, input)));
+    return ctx.db.portal_userNotifications.update({
+      where: {
+        id: input,
+        userId: ctx.session.user.id,
+      },
+      data: {
+        read: true,
+      },
+    });
   }),
 
   markAllNotificationsAsRead: protectedProcedure.mutation(({ ctx }) => {
-    return ctx.db.update(userNotifications).set({ read: true }).where(eq(userNotifications.userId, ctx.session.user.id));
+    return ctx.db.portal_userNotifications.updateMany({
+      where: {
+        userId: ctx.session.user.id,
+      },
+      data: {
+        read: true,
+      },
+    });
   }),
 
   createNotification: protectedProcedure
@@ -50,12 +68,14 @@ export const userRouter = createTRPCRouter({
       })
     )
     .mutation(({ ctx, input }) => {
-      return ctx.db.insert(userNotifications).values({
-        userId: input.userId,
-        type: input.type,
-        title: input.title,
-        message: input.message,
-        metadata: input.metadata ? JSON.stringify(input.metadata) : null,
+      return ctx.db.portal_userNotifications.create({
+        data: {
+          userId: input.userId,
+          type: input.type,
+          title: input.title,
+          message: input.message,
+          metadata: input.metadata ? JSON.stringify(input.metadata) : null,
+        },
       });
     }),
 });

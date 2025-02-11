@@ -1,16 +1,14 @@
-import { user } from '@/drizzle/schema';
-import { generateUUID } from '@/lib/utils';
 import { TRPCError } from '@trpc/server';
-import { eq } from 'drizzle-orm';
 import { z } from 'zod';
 import { createTRPCRouter, protectedProcedure } from '../trpc';
+import { generateUUID } from '@/lib/utils';
 
 const adminProcedure = protectedProcedure.use(async ({ ctx, next }) => {
-  const currentUser = await ctx.db
-    .select()
-    .from(user)
-    .where(eq(user.id, ctx.session.user.id))
-    .then((res) => res[0]);
+  const currentUser = await ctx.db.portal_user.findUnique({
+    where: {
+      id: ctx.session.user.id,
+    },
+  });
 
   if (!currentUser || currentUser.role !== 'ADMIN') {
     throw new TRPCError({
@@ -28,15 +26,15 @@ export const adminRouter = createTRPCRouter({
   }),
 
   getUsers: adminProcedure.query(({ ctx }) => {
-    return ctx.db.select().from(user).execute();
+    return ctx.db.portal_user.findMany();
   }),
 
   getUser: adminProcedure.input(z.string()).query(({ ctx, input }) => {
-    return ctx.db
-      .select()
-      .from(user)
-      .where(eq(user.id, input))
-      .then((res) => res[0]);
+    return ctx.db.portal_user.findUnique({
+      where: {
+        id: input,
+      },
+    });
   }),
 
   createUser: adminProcedure
@@ -49,13 +47,12 @@ export const adminRouter = createTRPCRouter({
       })
     )
     .mutation(({ ctx, input }) => {
-      return ctx.db
-        .insert(user)
-        .values({
+      return ctx.db.portal_user.create({
+        data: {
           id: generateUUID(),
           ...input,
-        })
-        .execute();
+        },
+      });
     }),
 
   updateUser: adminProcedure
@@ -82,10 +79,19 @@ export const adminRouter = createTRPCRouter({
         ...(input.username && { username: input.username }),
       };
 
-      return ctx.db.update(user).set(updateData).where(eq(user.id, input.id)).execute();
+      return ctx.db.portal_user.update({
+        where: {
+          id: input.id,
+        },
+        data: updateData,
+      });
     }),
 
   deleteUser: adminProcedure.input(z.string()).mutation(({ ctx, input }) => {
-    return ctx.db.delete(user).where(eq(user.id, input)).execute();
+    return ctx.db.portal_user.delete({
+      where: {
+        id: input,
+      },
+    });
   }),
 });

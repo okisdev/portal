@@ -1,125 +1,194 @@
-import { contact, contactCampaign, marketingCampaign } from '@/drizzle/schema';
 import { createTRPCRouter, protectedProcedure } from '@/server/trpc';
-import { desc, eq, sql } from 'drizzle-orm';
 import { z } from 'zod';
 
 export const marketingRouter = createTRPCRouter({
-  getAllCampaigns: protectedProcedure.query(({ ctx }) => {
-    return ctx.db
-      .select({
-        id: marketingCampaign.id,
-        name: marketingCampaign.name,
-        campaignCode: marketingCampaign.campaignCode,
-        description: marketingCampaign.description,
-        type: marketingCampaign.type,
-        status: marketingCampaign.status,
-        metrics: marketingCampaign.metrics,
-        contactCount: sql<number>`(SELECT COUNT(*) FROM ${contactCampaign} WHERE ${contactCampaign.campaignCode} = ${marketingCampaign.campaignCode})`,
-        createdAt: marketingCampaign.createdAt,
-        updatedAt: marketingCampaign.updatedAt,
-        createdBy: marketingCampaign.createdBy,
-        updatedBy: marketingCampaign.updatedBy,
-      })
-      .from(marketingCampaign)
-      .orderBy(desc(marketingCampaign.createdAt));
+  getAllCampaigns: protectedProcedure.query(async ({ ctx }) => {
+    const campaigns = await ctx.db.portal_marketingCampaign.findMany({
+      select: {
+        id: true,
+        name: true,
+        campaignCode: true,
+        description: true,
+        type: true,
+        status: true,
+        metrics: true,
+        createdAt: true,
+        updatedAt: true,
+        createdBy: true,
+        updatedBy: true,
+        portal_contactCampaign: {
+          select: {
+            _count: true,
+          },
+        },
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
+
+    return campaigns.map((campaign) => ({
+      ...campaign,
+      contactCount: campaign.portal_contactCampaign._count,
+    }));
   }),
 
-  getCampaignById: protectedProcedure.input(z.object({ id: z.string() })).query(({ ctx, input }) => {
-    return ctx.db
-      .select({
-        id: marketingCampaign.id,
-        name: marketingCampaign.name,
-        campaignCode: marketingCampaign.campaignCode,
-        description: marketingCampaign.description,
-        type: marketingCampaign.type,
-        status: marketingCampaign.status,
-        metrics: marketingCampaign.metrics,
-        contactCount: sql<number>`(SELECT COUNT(*) FROM ${contactCampaign} WHERE ${contactCampaign.campaignCode} = ${marketingCampaign.campaignCode})`,
-        createdAt: marketingCampaign.createdAt,
-        updatedAt: marketingCampaign.updatedAt,
-        createdBy: marketingCampaign.createdBy,
-        updatedBy: marketingCampaign.updatedBy,
-      })
-      .from(marketingCampaign)
-      .where(eq(marketingCampaign.id, input.id))
-      .then((rows) => rows[0]);
+  getCampaignById: protectedProcedure.input(z.object({ id: z.string() })).query(async ({ ctx, input }) => {
+    const campaign = await ctx.db.portal_marketingCampaign.findUnique({
+      where: { id: input.id },
+      select: {
+        id: true,
+        name: true,
+        campaignCode: true,
+        description: true,
+        type: true,
+        status: true,
+        metrics: true,
+        createdAt: true,
+        updatedAt: true,
+        createdBy: true,
+        updatedBy: true,
+        portal_contactCampaign: {
+          select: {
+            _count: true,
+          },
+        },
+      },
+    });
+
+    return campaign
+      ? {
+          ...campaign,
+          contactCount: campaign.portal_contactCampaign._count,
+        }
+      : null;
   }),
 
-  getActiveCampaigns: protectedProcedure.query(({ ctx }) => {
-    return ctx.db
-      .select({
-        id: marketingCampaign.id,
-        name: marketingCampaign.name,
-        campaignCode: marketingCampaign.campaignCode,
-        description: marketingCampaign.description,
-        type: marketingCampaign.type,
-        status: marketingCampaign.status,
-        metrics: marketingCampaign.metrics,
-        contactCount: sql<number>`(SELECT COUNT(*) FROM ${contactCampaign} WHERE ${contactCampaign.campaignCode} = ${marketingCampaign.campaignCode})`,
-        createdAt: marketingCampaign.createdAt,
-        updatedAt: marketingCampaign.updatedAt,
-        createdBy: marketingCampaign.createdBy,
-        updatedBy: marketingCampaign.updatedBy,
-      })
-      .from(marketingCampaign)
-      .where(eq(marketingCampaign.status, 'active'))
-      .orderBy(desc(marketingCampaign.createdAt));
+  getActiveCampaigns: protectedProcedure.query(async ({ ctx }) => {
+    const campaigns = await ctx.db.portal_marketingCampaign.findMany({
+      where: {
+        status: 'active',
+      },
+      select: {
+        id: true,
+        name: true,
+        campaignCode: true,
+        description: true,
+        type: true,
+        status: true,
+        metrics: true,
+        createdAt: true,
+        updatedAt: true,
+        createdBy: true,
+        updatedBy: true,
+        portal_contactCampaign: {
+          select: {
+            _count: true,
+          },
+        },
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
+
+    return campaigns.map((campaign) => ({
+      ...campaign,
+      contactCount: campaign.portal_contactCampaign._count,
+    }));
   }),
 
-  getCampaignByCode: protectedProcedure.input(z.object({ code: z.string() })).query(({ ctx, input }) => {
-    return ctx.db
-      .select({
-        id: marketingCampaign.id,
-        name: marketingCampaign.name,
-        campaignCode: marketingCampaign.campaignCode,
-        description: marketingCampaign.description,
-        type: marketingCampaign.type,
-        status: marketingCampaign.status,
-        metrics: marketingCampaign.metrics,
-        contactCount: sql<number>`(SELECT COUNT(*) FROM ${contactCampaign} WHERE ${contactCampaign.campaignCode} = ${input.code})`,
-        createdAt: marketingCampaign.createdAt,
-        updatedAt: marketingCampaign.updatedAt,
-      })
-      .from(marketingCampaign)
-      .where(eq(marketingCampaign.campaignCode, input.code))
-      .then((rows) => rows[0]);
+  getCampaignByCode: protectedProcedure.input(z.object({ code: z.string() })).query(async ({ ctx, input }) => {
+    const campaign = await ctx.db.portal_marketingCampaign.findUnique({
+      where: { campaignCode: input.code },
+      select: {
+        id: true,
+        name: true,
+        campaignCode: true,
+        description: true,
+        type: true,
+        status: true,
+        metrics: true,
+        createdAt: true,
+        updatedAt: true,
+        portal_contactCampaign: {
+          select: {
+            _count: true,
+          },
+        },
+      },
+    });
+
+    return campaign
+      ? {
+          ...campaign,
+          contactCount: campaign.portal_contactCampaign._count,
+        }
+      : null;
   }),
 
-  getCampaignContacts: protectedProcedure.input(z.object({ code: z.string().optional(), id: z.string().optional() })).query(({ ctx, input }) => {
+  getCampaignContacts: protectedProcedure.input(z.object({ code: z.string().optional(), id: z.string().optional() })).query(async ({ ctx, input }) => {
     if (input.id) {
-      return ctx.db
-        .select({
-          id: contact.id,
-          name: contact.name,
-          firstName: contact.firstName,
-          lastName: contact.lastName,
-          email: contact.email,
-          phone: contact.phone,
-          company: contact.company,
-          status: contact.status,
-          joinedAt: contactCampaign.joinedAt,
-        })
-        .from(marketingCampaign)
-        .innerJoin(contactCampaign, eq(contactCampaign.campaignCode, marketingCampaign.campaignCode))
-        .innerJoin(contact, eq(contactCampaign.contactId, contact.id))
-        .where(eq(marketingCampaign.id, input.id));
+      return ctx.db.portal_contact.findMany({
+        where: {
+          portal_contactCampaign: {
+            some: {
+              portal_marketingCampaign: {
+                id: input.id,
+              },
+            },
+          },
+        },
+        select: {
+          id: true,
+          name: true,
+          firstName: true,
+          lastName: true,
+          email: true,
+          phone: true,
+          company: true,
+          status: true,
+          portal_contactCampaign: {
+            select: {
+              joinedAt: true,
+            },
+            where: {
+              portal_marketingCampaign: {
+                id: input.id,
+              },
+            },
+          },
+        },
+      });
     }
     if (input.code) {
-      return ctx.db
-        .select({
-          id: contact.id,
-          name: contact.name,
-          firstName: contact.firstName,
-          lastName: contact.lastName,
-          email: contact.email,
-          phone: contact.phone,
-          company: contact.company,
-          status: contact.status,
-          joinedAt: contactCampaign.joinedAt,
-        })
-        .from(contactCampaign)
-        .innerJoin(contact, eq(contactCampaign.contactId, contact.id))
-        .where(eq(contactCampaign.campaignCode, input.code));
+      return ctx.db.portal_contact.findMany({
+        where: {
+          portal_contactCampaign: {
+            some: {
+              campaignCode: input.code,
+            },
+          },
+        },
+        select: {
+          id: true,
+          name: true,
+          firstName: true,
+          lastName: true,
+          email: true,
+          phone: true,
+          company: true,
+          status: true,
+          portal_contactCampaign: {
+            select: {
+              joinedAt: true,
+            },
+            where: {
+              campaignCode: input.code,
+            },
+          },
+        },
+      });
     }
 
     return null;
@@ -136,14 +205,13 @@ export const marketingRouter = createTRPCRouter({
         metrics: z.string().optional(),
       })
     )
-    .mutation(({ ctx, input }) => {
-      return ctx.db
-        .insert(marketingCampaign)
-        .values({
+    .mutation(async ({ ctx, input }) => {
+      return ctx.db.portal_marketingCampaign.create({
+        data: {
           ...input,
           createdBy: ctx.session.user.id,
-        })
-        .returning();
+        },
+      });
     }),
 
   updateCampaign: protectedProcedure
@@ -157,18 +225,20 @@ export const marketingRouter = createTRPCRouter({
         metrics: z.string().optional(),
       })
     )
-    .mutation(({ ctx, input }) => {
+    .mutation(async ({ ctx, input }) => {
       const { code, ...updateData } = input;
-      return ctx.db
-        .update(marketingCampaign)
-        .set({
+      return ctx.db.portal_marketingCampaign.update({
+        where: { campaignCode: code },
+        data: {
           ...updateData,
           updatedBy: ctx.session.user.id,
-        })
-        .where(eq(marketingCampaign.campaignCode, code));
+        },
+      });
     }),
 
-  deleteCampaign: protectedProcedure.input(z.object({ code: z.string() })).mutation(({ ctx, input }) => {
-    return ctx.db.delete(marketingCampaign).where(eq(marketingCampaign.campaignCode, input.code));
+  deleteCampaign: protectedProcedure.input(z.object({ code: z.string() })).mutation(async ({ ctx, input }) => {
+    return ctx.db.portal_marketingCampaign.delete({
+      where: { campaignCode: input.code },
+    });
   }),
 });

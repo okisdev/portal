@@ -1,44 +1,47 @@
-import { calendarEvent, calendarEventParticipant, calendarFolder, company, contact, marketingCampaign, team, teamActivity, teamContact, teamMeeting, user, userNotifications } from '@/drizzle/schema';
-import { activitySubTypeSchema, activityTypeSchema } from '@/lib/schema';
-import { createContactActivityHelper } from '@/server/helper/contact';
-import { createTeamActivityHelper } from '@/server/helper/team';
 import { createTRPCRouter, protectedProcedure } from '@/server/trpc';
 import { TRPCError } from '@trpc/server';
-import { and, asc, eq, exists, inArray, sql } from 'drizzle-orm';
 import { z } from 'zod';
 
 export const teamRouter = createTRPCRouter({
   getAllTeams: protectedProcedure.query(async ({ ctx }) => {
-    return await ctx.db
-      .select({
-        id: team.id,
-        name: team.name,
-        description: team.description,
-        createdAt: team.createdAt,
-        createdBy: team.createdBy,
-        contacts: sql<number>`(SELECT COUNT(*) FROM ${teamContact} WHERE ${teamContact.teamId} = ${team.id})`,
-        company: sql<{ id: string; name: string } | null>`
-          (SELECT row_to_json(c) 
-           FROM ${company} c 
-           WHERE c.id = ${team.companyId})`,
-      })
-      .from(team)
-      .leftJoin(teamContact, eq(teamContact.teamId, team.id))
-      .groupBy(team.id, team.name, team.description, team.createdAt, team.createdBy, team.companyId);
+    const teams = await ctx.db.portal_team.findMany({
+      select: {
+        id: true,
+        name: true,
+        description: true,
+        createdAt: true,
+        createdBy: true,
+        portal_company: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+        portal_teamContact: {
+          select: {
+            id: true,
+          },
+        },
+      },
+    });
+
+    return teams.map((team) => ({
+      ...team,
+      contacts: team.portal_teamContact.length,
+      company: team.portal_company,
+    }));
   }),
 
   getContactTeams: protectedProcedure.input(z.object({ contactId: z.string() })).query(({ ctx, input }) => {
-    return ctx.db
-      .select()
-      .from(team)
-      .where(
-        exists(
-          ctx.db
-            .select()
-            .from(teamContact)
-            .where(and(eq(teamContact.teamId, team.id), eq(teamContact.contactId, input.contactId)))
-        )
-      );
+    return ctx.db.portal_team.findMany({
+      where: {
+        portal_teamContact: {
+          some: {
+            contactId: input.contactId,
+          },
+        },
+      },
+    });
   }),
 
   createTeam: protectedProcedure
@@ -50,25 +53,27 @@ export const teamRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      const [newTeam] = await ctx.db
-        .insert(team)
-        .values({
+      const newTeam = await ctx.db.portal_team.create({
+        data: {
           name: input.name,
           description: input.description,
           createdBy: ctx.session.user.id,
           companyId: input.companyId,
-        })
-        .returning();
-
-      await createTeamActivityHelper(ctx, {
-        teamId: newTeam.id,
-        type: 'TEAM',
-        subType: 'TEAM_CREATED',
-        description: `Team "${newTeam.name}" was created`,
-        initiatorType: 'user',
-        initiatorId: ctx.session.user.id,
-        metadata: { team: newTeam },
+        },
       });
+
+      await ctx.db.portal_teamActivity.create({
+        data: {
+          teamId: newTeam.id,
+          type: 'TEAM',
+          subType: 'TEAM_CREATED',
+          description: `Team "${newTeam.name}" was created`,
+          initiatorType: 'user',
+          initiatorId: ctx.session.user.id,
+          metadata: JSON.stringify({ team: newTeam }),
+        },
+      });
+
       return newTeam;
     }),
 
@@ -81,59 +86,60 @@ export const teamRouter = createTRPCRouter({
     )
     .mutation(async ({ ctx, input }) => {
       // Check if already assigned
-      const existing = await ctx.db
-        .select()
-        .from(teamContact)
-        .where(and(eq(teamContact.teamId, input.teamId), eq(teamContact.contactId, input.contactId)))
-        .then((rows) => rows[0]);
+      const existing = await ctx.db.portal_teamContact.findFirst({
+        where: {
+          teamId: input.teamId,
+          contactId: input.contactId,
+        },
+      });
 
       if (existing) return existing;
 
       // Get team details for activity log
-      const teamDetails = await ctx.db
-        .select({
-          name: team.name,
-        })
-        .from(team)
-        .where(eq(team.id, input.teamId))
-        .then((rows) => rows[0]);
+      const teamDetails = await ctx.db.portal_team.findUnique({
+        where: { id: input.teamId },
+        select: { name: true },
+      });
 
-      const result = await ctx.db
-        .insert(teamContact)
-        .values({
+      const result = await ctx.db.portal_teamContact.create({
+        data: {
           teamId: input.teamId,
           contactId: input.contactId,
-        })
-        .returning();
+        },
+      });
 
       // Log team assignment activity
-      await createContactActivityHelper(ctx, {
-        contactId: input.contactId,
-        type: 'TEAM',
-        subType: 'TEAM_ASSIGNED',
-        description: `Contact was assigned to team "${teamDetails.name}"`,
-        initiatorType: 'user',
-        initiatorId: ctx.session?.user.id,
-        metadata: {
-          teamId: input.teamId,
-          teamName: teamDetails.name,
+      await ctx.db.portal_contactActivity.create({
+        data: {
+          contactId: input.contactId,
+          type: 'TEAM',
+          subType: 'TEAM_ASSIGNED',
+          description: `Contact was assigned to team "${teamDetails?.name}"`,
+          initiatorType: 'user',
+          initiatorId: ctx.session?.user.id,
+          metadata: JSON.stringify({
+            teamId: input.teamId,
+            teamName: teamDetails?.name,
+          }),
         },
       });
 
-      await createTeamActivityHelper(ctx, {
-        teamId: input.teamId,
-        type: 'TEAM',
-        subType: 'TEAM_ASSIGNED',
-        description: `Contact was assigned to team "${teamDetails.name}"`,
-        initiatorType: 'user',
-        initiatorId: ctx.session?.user.id,
-        metadata: {
+      await ctx.db.portal_teamActivity.create({
+        data: {
           teamId: input.teamId,
-          teamName: teamDetails.name,
+          type: 'TEAM',
+          subType: 'TEAM_ASSIGNED',
+          description: `Contact was assigned to team "${teamDetails?.name}"`,
+          initiatorType: 'user',
+          initiatorId: ctx.session?.user.id,
+          metadata: JSON.stringify({
+            teamId: input.teamId,
+            teamName: teamDetails?.name,
+          }),
         },
       });
 
-      return result[0];
+      return result;
     }),
 
   removeContactFromTeam: protectedProcedure
@@ -145,84 +151,99 @@ export const teamRouter = createTRPCRouter({
     )
     .mutation(async ({ ctx, input }) => {
       // Get team details for activity log
-      const teamDetails = await ctx.db
-        .select({
-          name: team.name,
-        })
-        .from(team)
-        .where(eq(team.id, input.teamId))
-        .then((rows) => rows[0]);
+      const teamDetails = await ctx.db.portal_team.findUnique({
+        where: { id: input.teamId },
+        select: { name: true },
+      });
 
-      const result = await ctx.db
-        .delete(teamContact)
-        .where(and(eq(teamContact.teamId, input.teamId), eq(teamContact.contactId, input.contactId)))
-        .returning();
+      const result = await ctx.db.portal_teamContact.delete({
+        where: {
+          teamId_contactId: {
+            teamId: input.teamId,
+            contactId: input.contactId,
+          },
+        },
+      });
 
       // Log team removal activity
-      await createContactActivityHelper(ctx, {
-        contactId: input.contactId,
-        type: 'TEAM',
-        subType: 'TEAM_REMOVED',
-        description: `Contact was removed from team "${teamDetails.name}"`,
-        initiatorType: 'user',
-        initiatorId: ctx.session?.user.id,
-        metadata: {
-          teamId: input.teamId,
-          teamName: teamDetails.name,
+      await ctx.db.portal_contactActivity.create({
+        data: {
+          contactId: input.contactId,
+          type: 'TEAM',
+          subType: 'TEAM_REMOVED',
+          description: `Contact was removed from team "${teamDetails?.name}"`,
+          initiatorType: 'user',
+          initiatorId: ctx.session?.user.id,
+          metadata: JSON.stringify({
+            teamId: input.teamId,
+            teamName: teamDetails?.name,
+          }),
         },
       });
 
-      await createTeamActivityHelper(ctx, {
-        teamId: input.teamId,
-        type: 'TEAM',
-        subType: 'TEAM_REMOVED',
-        description: `Contact was removed from team "${teamDetails.name}"`,
-        initiatorType: 'user',
-        initiatorId: ctx.session?.user.id,
-        metadata: {
+      await ctx.db.portal_teamActivity.create({
+        data: {
           teamId: input.teamId,
-          teamName: teamDetails.name,
+          type: 'TEAM',
+          subType: 'TEAM_REMOVED',
+          description: `Contact was removed from team "${teamDetails?.name}"`,
+          initiatorType: 'user',
+          initiatorId: ctx.session?.user.id,
+          metadata: JSON.stringify({
+            teamId: input.teamId,
+            teamName: teamDetails?.name,
+          }),
         },
       });
 
-      return result[0];
+      return result;
     }),
 
   getTeamById: protectedProcedure.input(z.object({ id: z.string() })).query(async ({ ctx, input }) => {
-    return ctx.db
-      .select({
-        id: team.id,
-        name: team.name,
-        description: team.description,
-        createdAt: team.createdAt,
-        updatedAt: team.updatedAt,
-        createdBy: team.createdBy,
-        leaderId: team.leaderId,
-        subLeaderId: team.subLeaderId,
-        referralId: team.referralId,
-        campaignCode: team.campaignCode,
-        remarks: team.remarks,
-        companyId: team.companyId,
-        company: sql<{ id: string; name: string } | null>`
-          (SELECT row_to_json(c) 
-           FROM ${company} c 
-           WHERE c.id = ${team.companyId})`,
-        leader: sql<{ id: string; firstName: string; lastName: string } | null>`
-          (SELECT row_to_json(c) 
-           FROM ${contact} c 
-           WHERE c.id = ${team.leaderId})`,
-        subLeader: sql<{ id: string; firstName: string; lastName: string } | null>`
-          (SELECT row_to_json(c) 
-           FROM ${contact} c 
-           WHERE c.id = ${team.subLeaderId})`,
-        referral: sql<{ id: string; firstName: string; lastName: string } | null>`
-          (SELECT row_to_json(c) 
-           FROM ${contact} c 
-           WHERE c.id = ${team.referralId})`,
-      })
-      .from(team)
-      .where(eq(team.id, input.id))
-      .then((rows) => rows[0]);
+    return ctx.db.portal_team.findUnique({
+      where: { id: input.id },
+      select: {
+        id: true,
+        name: true,
+        description: true,
+        createdAt: true,
+        updatedAt: true,
+        createdBy: true,
+        leaderId: true,
+        subLeaderId: true,
+        referralId: true,
+        campaignCode: true,
+        remarks: true,
+        companyId: true,
+        portal_company: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+        portal_leader: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+          },
+        },
+        portal_subLeader: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+          },
+        },
+        portal_referral: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+          },
+        },
+      },
+    });
   }),
 
   updateTeam: protectedProcedure
@@ -245,11 +266,11 @@ export const teamRouter = createTRPCRouter({
 
       if (input.campaignCode) {
         // Verify campaign exists
-        const campaign = await ctx.db
-          .select()
-          .from(marketingCampaign)
-          .where(eq(marketingCampaign.campaignCode, input.campaignCode))
-          .then((rows) => rows[0]);
+        const campaign = await ctx.db.portal_marketingCampaign.findFirst({
+          where: {
+            campaignCode: input.campaignCode,
+          },
+        });
 
         if (!campaign) {
           campaignCodeToSet = undefined;
@@ -258,11 +279,9 @@ export const teamRouter = createTRPCRouter({
 
       if (input.company?.id) {
         // Verify company exists
-        const companyRecord = await ctx.db
-          .select()
-          .from(company)
-          .where(eq(company.id, input.company?.id))
-          .then((rows) => rows[0]);
+        const companyRecord = await ctx.db.portal_company.findUnique({
+          where: { id: input.company.id },
+        });
 
         if (!companyRecord) {
           companyIdToSet = undefined;
@@ -272,9 +291,9 @@ export const teamRouter = createTRPCRouter({
         companyIdToSet = null;
       }
 
-      await ctx.db
-        .update(team)
-        .set({
+      await ctx.db.portal_team.update({
+        where: { id: input.id },
+        data: {
           ...(input.name && { name: input.name }),
           ...(input.description && { description: input.description }),
           ...(input.leaderId && { leaderId: input.leaderId }),
@@ -283,50 +302,57 @@ export const teamRouter = createTRPCRouter({
           ...(campaignCodeToSet !== undefined && { campaignCode: campaignCodeToSet }),
           ...(companyIdToSet !== undefined && { companyId: companyIdToSet }),
           ...(input.remarks && { remarks: input.remarks }),
-        })
-        .where(eq(team.id, input.id));
+        },
+      });
 
-      await createTeamActivityHelper(ctx, {
-        teamId: input.id,
-        type: 'TEAM',
-        subType: 'TEAM_UPDATED',
-        description: `Team "${input.name}" was updated`,
-        initiatorType: 'user',
-        initiatorId: ctx.session?.user.id,
-        metadata: {
+      await ctx.db.portal_teamActivity.create({
+        data: {
           teamId: input.id,
-          teamName: input.name,
+          type: 'TEAM',
+          subType: 'TEAM_UPDATED',
+          description: `Team "${input.name}" was updated`,
+          initiatorType: 'user',
+          initiatorId: ctx.session?.user.id,
+          metadata: JSON.stringify({
+            teamId: input.id,
+            teamName: input.name,
+          }),
         },
       });
     }),
 
   updateTeamRemarks: protectedProcedure.input(z.object({ id: z.string(), remarks: z.string() })).mutation(async ({ ctx, input }) => {
-    const teamDetails = await ctx.db
-      .select({
-        name: team.name,
-      })
-      .from(team)
-      .where(eq(team.id, input.id))
-      .then((rows) => rows[0]);
+    const teamDetails = await ctx.db.portal_team.findUnique({
+      where: { id: input.id },
+      select: { name: true },
+    });
 
-    await ctx.db.update(team).set({ remarks: input.remarks }).where(eq(team.id, input.id));
+    await ctx.db.portal_team.update({
+      where: { id: input.id },
+      data: { remarks: input.remarks },
+    });
 
-    await createTeamActivityHelper(ctx, {
-      teamId: input.id,
-      type: 'TEAM',
-      subType: 'TEAM_UPDATED',
-      description: `Team "${teamDetails.name}" was updated`,
-      initiatorType: 'user',
-      initiatorId: ctx.session?.user.id,
-      metadata: {
+    await ctx.db.portal_teamActivity.create({
+      data: {
         teamId: input.id,
-        teamName: teamDetails.name,
+        type: 'TEAM',
+        subType: 'TEAM_UPDATED',
+        description: `Team "${teamDetails?.name}" was updated`,
+        initiatorType: 'user',
+        initiatorId: ctx.session?.user.id,
+        metadata: JSON.stringify({
+          teamId: input.id,
+          teamName: teamDetails?.name,
+        }),
       },
     });
   }),
 
   getTeamActivities: protectedProcedure.input(z.object({ id: z.string() })).query(async ({ ctx, input }) => {
-    return await ctx.db.select().from(teamActivity).where(eq(teamActivity.teamId, input.id)).orderBy(asc(teamActivity.createdAt));
+    return ctx.db.portal_teamActivity.findMany({
+      where: { teamId: input.id },
+      orderBy: { createdAt: 'asc' },
+    });
   }),
 
   createTeamActivity: protectedProcedure
@@ -342,15 +368,17 @@ export const teamRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      await ctx.db.insert(teamActivity).values({
-        teamId: input.teamId,
-        userId: ctx.session?.user.id,
-        type: input.type,
-        subType: input.subType,
-        initiatorType: input.initiatorType,
-        initiatorId: input.initiatorId,
-        description: input.description,
-        metadata: input.metadata ? JSON.stringify(input.metadata) : null,
+      await ctx.db.portal_teamActivity.create({
+        data: {
+          teamId: input.teamId,
+          userId: ctx.session?.user.id,
+          type: input.type,
+          subType: input.subType,
+          initiatorType: input.initiatorType,
+          initiatorId: input.initiatorId,
+          description: input.description,
+          metadata: input.metadata ? JSON.stringify(input.metadata) : null,
+        },
       });
 
       const mentionRegex = /@(\w+)/g;
@@ -358,44 +386,53 @@ export const teamRouter = createTRPCRouter({
 
       if (mentions.length > 0) {
         // Get all mentioned users
-        const mentionedUsers = await ctx.db.select().from(user).where(inArray(user.username, mentions));
+        const mentionedUsers = await ctx.db.portal_user.findMany({
+          where: {
+            username: {
+              in: mentions,
+            },
+          },
+        });
 
         // Create notifications for mentioned users
         for (const mentionedUser of mentionedUsers) {
-          await ctx.db.insert(userNotifications).values({
-            userId: mentionedUser.id,
-            type: 'message',
-            title: `${ctx.session?.user.name || 'Someone'} mentioned you in a note`,
-            message: input.description,
-            metadata: JSON.stringify({
-              type: 'team',
-              id: input.teamId,
-            }),
+          await ctx.db.portal_userNotifications.create({
+            data: {
+              userId: mentionedUser.id,
+              type: 'message',
+              title: `${ctx.session?.user.name || 'Someone'} mentioned you in a note`,
+              message: input.description,
+              metadata: JSON.stringify({
+                type: 'team',
+                id: input.teamId,
+              }),
+            },
           });
         }
       }
     }),
 
   getTeamMeetings: protectedProcedure.input(z.object({ teamId: z.string() })).query(async ({ ctx, input }) => {
-    const meetings = await ctx.db
-      .select({
-        id: teamMeeting.id,
-        title: teamMeeting.title,
-        description: teamMeeting.description,
-        meetingDate: teamMeeting.meetingDate,
-        status: teamMeeting.status,
-        createdAt: teamMeeting.createdAt,
-        createdBy: teamMeeting.createdBy,
-        creator: {
-          id: contact.id,
-          firstName: contact.firstName,
-          lastName: contact.lastName,
+    const meetings = await ctx.db.portal_teamMeeting.findMany({
+      where: { teamId: input.teamId },
+      select: {
+        id: true,
+        title: true,
+        description: true,
+        meetingDate: true,
+        status: true,
+        createdAt: true,
+        createdBy: true,
+        portal_creator: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+          },
         },
-      })
-      .from(teamMeeting)
-      .leftJoin(contact, eq(teamMeeting.createdBy, contact.id))
-      .where(eq(teamMeeting.teamId, input.teamId))
-      .orderBy(teamMeeting.meetingDate);
+      },
+      orderBy: { meetingDate: 'asc' },
+    });
 
     return meetings.map((meeting) => ({
       ...meeting,
@@ -413,38 +450,31 @@ export const teamRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      return await ctx.db.transaction(async (tx) => {
+      return await ctx.db.$transaction(async (tx) => {
         // Set initial status based on meeting date
         const status = input.meetingDate < new Date() ? 'completed' : 'upcoming';
 
-        const teamDetails = await tx
-          .select()
-          .from(team)
-          .where(eq(team.id, input.teamId))
-          .then((rows) => rows[0]);
+        const teamDetails = await tx.portal_team.findUnique({
+          where: { id: input.teamId },
+        });
 
-        const [newMeeting] = await tx
-          .insert(teamMeeting)
-          .values({
+        const newMeeting = await tx.portal_teamMeeting.create({
+          data: {
             teamId: input.teamId,
             title: input.title,
             description: input.description,
             meetingDate: input.meetingDate,
             status: status,
             createdBy: ctx.session.user.id,
-          })
-          .returning();
+          },
+        });
 
-        const defaultFolder = await tx
-          .select()
-          .from(calendarFolder)
-          .where(eq(calendarFolder.userId, ctx.session.user.id))
-          .limit(1)
-          .then((rows) => rows[0]);
+        const defaultFolder = await tx.portal_calendarFolder.findFirst({
+          where: { userId: ctx.session.user.id },
+        });
 
-        const [calendarEvt] = await tx
-          .insert(calendarEvent)
-          .values({
+        const calendarEvt = await tx.portal_calendarEvent.create({
+          data: {
             userId: ctx.session.user.id,
             title: input.title,
             description: input.description,
@@ -454,38 +484,38 @@ export const teamRouter = createTRPCRouter({
             isPublic: true,
             folderId: defaultFolder?.id ?? '',
             metadata: JSON.stringify({ teamMeetingId: newMeeting.id }),
-          })
-          .returning();
+          },
+        });
 
-        const teamMembers = await tx
-          .select({
-            contactId: teamContact.contactId,
-          })
-          .from(teamContact)
-          .where(eq(teamContact.teamId, input.teamId));
+        const teamMembers = await tx.portal_teamContact.findMany({
+          where: { teamId: input.teamId },
+          select: { contactId: true },
+        });
 
         if (teamMembers.length > 0) {
-          await tx.insert(calendarEventParticipant).values(
-            teamMembers.map((member) => ({
+          await tx.portal_calendarEventParticipant.createMany({
+            data: teamMembers.map((member) => ({
               eventId: calendarEvt.id,
-              participantType: 'contact' as const,
+              participantType: 'contact',
               participantId: member.contactId,
-              status: 'pending' as const,
-              role: 'required' as const,
-            }))
-          );
+              status: 'pending',
+              role: 'required',
+            })),
+          });
         }
 
-        await createTeamActivityHelper(ctx, {
-          teamId: input.teamId,
-          type: 'TEAM',
-          subType: 'MEETING_SCHEDULED',
-          description: `Team meeting "${input.title}" was scheduled`,
-          initiatorType: 'user',
-          initiatorId: ctx.session?.user.id,
-          metadata: {
+        await tx.portal_teamActivity.create({
+          data: {
             teamId: input.teamId,
-            teamName: teamDetails.name,
+            type: 'TEAM',
+            subType: 'MEETING_SCHEDULED',
+            description: `Team meeting "${input.title}" was scheduled`,
+            initiatorType: 'user',
+            initiatorId: ctx.session?.user.id,
+            metadata: JSON.stringify({
+              teamId: input.teamId,
+              teamName: teamDetails?.name,
+            }),
           },
         });
 
@@ -494,22 +524,23 @@ export const teamRouter = createTRPCRouter({
     }),
 
   getTeamContacts: protectedProcedure.input(z.object({ teamId: z.string() })).query(async ({ ctx, input }) => {
-    return await ctx.db
-      .select({
-        id: teamContact.id,
-        contact: {
-          id: contact.id,
-          firstName: contact.firstName,
-          lastName: contact.lastName,
-          email: contact.email,
-          phone: contact.phone,
-          company: contact.company,
-          status: contact.status,
+    return ctx.db.portal_teamContact.findMany({
+      where: { teamId: input.teamId },
+      select: {
+        id: true,
+        portal_contact: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            email: true,
+            phone: true,
+            company: true,
+            status: true,
+          },
         },
-      })
-      .from(teamContact)
-      .innerJoin(contact, eq(teamContact.contactId, contact.id))
-      .where(eq(teamContact.teamId, input.teamId));
+      },
+    });
   }),
 
   deleteTeamMeeting: protectedProcedure
@@ -520,30 +551,36 @@ export const teamRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      await ctx.db.transaction(async (tx) => {
-        await tx.delete(calendarEvent).where(eq(calendarEvent.metadata, JSON.stringify({ teamMeetingId: input.id })));
+      return await ctx.db.$transaction(async (tx) => {
+        await tx.portal_calendarEvent.deleteMany({
+          where: {
+            metadata: JSON.stringify({ teamMeetingId: input.id }),
+          },
+        });
 
-        const [deletedMeeting] = await tx
-          .delete(teamMeeting)
-          .where(and(eq(teamMeeting.id, input.id), eq(teamMeeting.teamId, input.teamId)))
-          .returning();
-
-        const teamDetails = await tx
-          .select()
-          .from(team)
-          .where(eq(team.id, input.teamId))
-          .then((rows) => rows[0]);
-
-        await createTeamActivityHelper(ctx, {
-          teamId: input.teamId,
-          type: 'TEAM',
-          subType: 'MEETING_CANCELLED',
-          description: `Team meeting "${deletedMeeting.title}" was cancelled`,
-          initiatorType: 'user',
-          initiatorId: ctx.session?.user.id,
-          metadata: {
+        const deletedMeeting = await tx.portal_teamMeeting.delete({
+          where: {
+            id: input.id,
             teamId: input.teamId,
-            teamName: teamDetails.name,
+          },
+        });
+
+        const teamDetails = await tx.portal_team.findUnique({
+          where: { id: input.teamId },
+        });
+
+        await tx.portal_teamActivity.create({
+          data: {
+            teamId: input.teamId,
+            type: 'TEAM',
+            subType: 'MEETING_CANCELLED',
+            description: `Team meeting "${deletedMeeting.title}" was cancelled`,
+            initiatorType: 'user',
+            initiatorId: ctx.session?.user.id,
+            metadata: JSON.stringify({
+              teamId: input.teamId,
+              teamName: teamDetails?.name,
+            }),
           },
         });
 
@@ -559,7 +596,9 @@ export const teamRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      await ctx.db.delete(teamActivity).where(eq(teamActivity.id, input.id));
+      await ctx.db.portal_teamActivity.delete({
+        where: { id: input.id },
+      });
     }),
 
   addTeamContact: protectedProcedure
@@ -570,78 +609,82 @@ export const teamRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      const existingMember = await ctx.db
-        .select()
-        .from(teamContact)
-        .where(and(eq(teamContact.teamId, input.teamId), eq(teamContact.contactId, input.contactId)))
-        .then((rows) => rows[0]);
+      const existingMember = await ctx.db.portal_teamContact.findFirst({
+        where: {
+          teamId: input.teamId,
+          contactId: input.contactId,
+        },
+      });
 
       if (existingMember) {
         throw new TRPCError({ code: 'CONFLICT', message: 'Contact is already a member of this team' });
       }
 
       // Get team details first
-      const teamDetails = await ctx.db
-        .select({
-          id: team.id,
-          name: team.name,
-        })
-        .from(team)
-        .where(eq(team.id, input.teamId))
-        .then((rows) => rows[0]);
+      const teamDetails = await ctx.db.portal_team.findUnique({
+        where: { id: input.teamId },
+        select: {
+          id: true,
+          name: true,
+        },
+      });
 
-      const contactDetails = await ctx.db
-        .select({
-          firstName: contact.firstName,
-          lastName: contact.lastName,
-          email: contact.email,
-        })
-        .from(contact)
-        .where(eq(contact.id, input.contactId))
-        .then((rows) => rows[0]);
+      const contactDetails = await ctx.db.portal_contact.findUnique({
+        where: { id: input.contactId },
+        select: {
+          firstName: true,
+          lastName: true,
+          email: true,
+        },
+      });
 
       if (!teamDetails) {
         throw new TRPCError({ code: 'NOT_FOUND', message: 'Team not found' });
       }
 
-      await createContactActivityHelper(ctx, {
-        contactId: input.contactId,
-        type: 'TEAM',
-        subType: 'TEAM_ASSIGNED',
-        description: `Contact was added to team: ${teamDetails.name}`,
-        initiatorType: 'user',
-        initiatorId: ctx.session?.user.id,
-        metadata: {
-          teamId: teamDetails.id,
-          teamName: teamDetails.name,
+      await ctx.db.portal_contactActivity.create({
+        data: {
+          contactId: input.contactId,
+          type: 'TEAM',
+          subType: 'TEAM_ASSIGNED',
+          description: `Contact was added to team: ${teamDetails.name}`,
+          initiatorType: 'user',
+          initiatorId: ctx.session?.user.id,
+          metadata: JSON.stringify({
+            teamId: teamDetails.id,
+            teamName: teamDetails.name,
+          }),
         },
       });
 
-      await createTeamActivityHelper(ctx, {
-        teamId: input.teamId,
-        type: 'TEAM',
-        subType: 'TEAM_ASSIGNED',
-        description: `Contact ${contactDetails.firstName} ${contactDetails.lastName} (${contactDetails.email}) was added to team: ${teamDetails.name}`,
-        initiatorType: 'user',
-        initiatorId: ctx.session?.user.id,
-        metadata: {
-          teamId: teamDetails.id,
-          teamName: teamDetails.name,
+      await ctx.db.portal_teamActivity.create({
+        data: {
+          teamId: input.teamId,
+          type: 'TEAM',
+          subType: 'TEAM_ASSIGNED',
+          description: `Contact ${contactDetails?.firstName} ${contactDetails?.lastName} (${contactDetails?.email}) was added to team: ${teamDetails.name}`,
+          initiatorType: 'user',
+          initiatorId: ctx.session?.user.id,
+          metadata: JSON.stringify({
+            teamId: teamDetails.id,
+            teamName: teamDetails.name,
+          }),
         },
       });
 
-      const [newMember] = await ctx.db
-        .insert(teamContact)
-        .values({
+      const newMember = await ctx.db.portal_teamContact.create({
+        data: {
           teamId: input.teamId,
           contactId: input.contactId,
-        })
-        .returning();
+        },
+      });
 
       return newMember;
     }),
 
   deleteTeam: protectedProcedure.input(z.object({ id: z.string() })).mutation(async ({ ctx, input }) => {
-    return await ctx.db.delete(team).where(eq(team.id, input.id));
+    return ctx.db.portal_team.delete({
+      where: { id: input.id },
+    });
   }),
 });

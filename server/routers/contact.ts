@@ -1,15 +1,17 @@
-import { contact, contactActivity, contactCampaign, marketingCampaign, team, teamContact, user, userNotifications } from '@/drizzle/schema';
 import { activitySubTypeSchema, activityTypeSchema, prioritySchema, statusSchema } from '@/lib/schema';
 import { createContactActivityHelper } from '@/server/helper/contact';
 import { createTRPCRouter, protectedProcedure, publicProcedure } from '@/server/trpc';
 import { sendEmail } from '@/utils/email';
 import { TRPCError } from '@trpc/server';
-import { and, asc, desc, eq, inArray, sql } from 'drizzle-orm';
 import { z } from 'zod';
 
 export const contactRouter = createTRPCRouter({
   getAllContacts: protectedProcedure.query(({ ctx }) => {
-    return ctx.db.select().from(contact).orderBy(desc(contact.createdAt));
+    return ctx.db.portal_contact.findMany({
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
   }),
 
   getContactByQuery: protectedProcedure
@@ -21,70 +23,74 @@ export const contactRouter = createTRPCRouter({
     )
     .query(async ({ ctx, input }) => {
       if (!input.query.trim()) {
-        return ctx.db.select().from(contact).orderBy(desc(contact.createdAt)).limit(input.limit);
+        return ctx.db.portal_contact.findMany({
+          orderBy: {
+            createdAt: 'desc',
+          },
+          take: input.limit,
+        });
       }
 
-      return ctx.db
-        .select()
-        .from(contact)
-        .where(
-          sql`${contact.firstName} ILIKE ${`%${input.query}%`} OR 
-            ${contact.lastName} ILIKE ${`%${input.query}%`} OR 
-            ${contact.email} ILIKE ${`%${input.query}%`} OR
-            ${contact.phone} ILIKE ${`%${input.query}%`}`
-        )
-        .limit(input.limit);
+      return ctx.db.portal_contact.findMany({
+        where: {
+          OR: [
+            { firstName: { contains: input.query, mode: 'insensitive' } },
+            { lastName: { contains: input.query, mode: 'insensitive' } },
+            { email: { contains: input.query, mode: 'insensitive' } },
+            { phone: { contains: input.query, mode: 'insensitive' } },
+          ],
+        },
+        take: input.limit,
+      });
     }),
 
   getContactById: protectedProcedure.input(z.object({ id: z.string() })).query(async ({ ctx, input }) => {
-    return ctx.db
-      .select({
-        id: contact.id,
-        name: contact.name,
-        firstName: contact.firstName,
-        lastName: contact.lastName,
-        email: contact.email,
-        phone: contact.phone,
-        company: contact.company,
-        companyId: contact.companyId,
-        source: contact.source,
-        priority: contact.priority,
-        workExperience: contact.workExperience,
-        currentRole: contact.currentRole,
-        industry: contact.industry,
-        skills: contact.skills,
-        status: contact.status,
-        lastContactedAt: contact.lastContactedAt,
-        nextFollowUpAt: contact.nextFollowUpAt,
-        remark: contact.remark,
-        campaigns: sql<Array<{ code: string; name: string }>>`
-          (SELECT json_agg(json_build_object('code', mc."campaignCode", 'name', mc.name))
-           FROM ${marketingCampaign} mc 
-           INNER JOIN ${contactCampaign} cc ON cc."campaignCode" = mc."campaignCode"
-           WHERE cc."contactId" = ${input.id})`,
-        teams: sql<Array<{ id: string; name: string }>>`
-          (SELECT json_agg(json_build_object('id', t.id, 'name', t.name))
-           FROM ${team} t 
-           INNER JOIN ${teamContact} tc ON tc."teamId" = t.id
-           WHERE tc."contactId" = ${input.id})`,
-        leadingTeams: sql<Array<{ id: string; name: string }>>`
-          (SELECT json_agg(json_build_object('id', t.id, 'name', t.name))
-           FROM ${team} t 
-           WHERE t."leaderId" = ${input.id})`,
-        subLeadingTeams: sql<Array<{ id: string; name: string }>>`
-          (SELECT json_agg(json_build_object('id', t.id, 'name', t.name))
-           FROM ${team} t 
-           WHERE t."subLeaderId" = ${input.id})`,
-        referralTeams: sql<Array<{ id: string; name: string }>>`
-          (SELECT json_agg(json_build_object('id', t.id, 'name', t.name))
-           FROM ${team} t 
-           WHERE t."referralId" = ${input.id})`,
-        createdAt: contact.createdAt,
-        updatedAt: contact.updatedAt,
-      })
-      .from(contact)
-      .where(eq(contact.id, input.id))
-      .then((rows) => rows[0]);
+    const contact = await ctx.db.portal_contact.findUnique({
+      where: { id: input.id },
+      include: {
+        campaigns: {
+          include: {
+            campaign: true,
+          },
+        },
+        teams: {
+          include: {
+            team: true,
+          },
+        },
+        leadingTeams: true,
+        subLeadingTeams: true,
+        referralTeams: true,
+      },
+    });
+
+    if (!contact) {
+      throw new TRPCError({ code: 'NOT_FOUND', message: 'Contact not found' });
+    }
+
+    return {
+      ...contact,
+      campaigns: contact.campaigns.map((cc) => ({
+        code: cc.campaign.campaignCode,
+        name: cc.campaign.name,
+      })),
+      teams: contact.teams.map((tc) => ({
+        id: tc.team.id,
+        name: tc.team.name,
+      })),
+      leadingTeams: contact.leadingTeams.map((t) => ({
+        id: t.id,
+        name: t.name,
+      })),
+      subLeadingTeams: contact.subLeadingTeams.map((t) => ({
+        id: t.id,
+        name: t.name,
+      })),
+      referralTeams: contact.referralTeams.map((t) => ({
+        id: t.id,
+        name: t.name,
+      })),
+    };
   }),
 
   createContact: protectedProcedure
@@ -104,27 +110,22 @@ export const contactRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      const existingContact = await ctx.db
-        .select()
-        .from(contact)
-        .where(eq(contact.email, input.email))
-        .then((rows) => rows[0]);
+      const existingContact = await ctx.db.portal_contact.findUnique({
+        where: { email: input.email },
+      });
 
       if (existingContact) return existingContact;
 
       // If campaignCode is an email, treat it as a referral
       let referralContact = null;
       if (typeof input.campaignCode === 'string' && input.campaignCode.includes('@')) {
-        referralContact = await ctx.db
-          .select()
-          .from(contact)
-          .where(eq(contact.email, input.campaignCode))
-          .then((rows) => rows[0]);
+        referralContact = await ctx.db.portal_contact.findUnique({
+          where: { email: input.campaignCode },
+        });
       }
 
-      const result = await ctx.db
-        .insert(contact)
-        .values({
+      const result = await ctx.db.portal_contact.create({
+        data: {
           name: input.name ?? `${input.firstName ?? ''} ${input.lastName ?? ''}`,
           firstName: input.firstName ?? '',
           lastName: input.lastName ?? '',
@@ -135,15 +136,15 @@ export const contactRouter = createTRPCRouter({
           source: input.source ?? (referralContact ? 'referral' : ''),
           status: input.status ?? 'lead',
           remark: input.remark ?? '',
-        })
-        .returning();
+        },
+      });
 
       // Log contact creation activity
       await createContactActivityHelper(ctx, {
-        contactId: result[0].id,
+        contactId: result.id,
         type: 'CONTACT',
         subType: 'CONTACT_CREATED',
-        description: `Contact ${result[0].name} (${result[0].email}) was created${input.source ? ` from ${input.source}` : ''}.`,
+        description: `Contact ${result.name} (${result.email}) was created${input.source ? ` from ${input.source}` : ''}.`,
         metadata: { source: input.source, campaignCode: input.campaignCode },
         initiatorType: 'user',
         initiatorId: ctx.session?.user.id,
@@ -152,7 +153,7 @@ export const contactRouter = createTRPCRouter({
       // Handle referral case
       if (referralContact) {
         await createContactActivityHelper(ctx, {
-          contactId: result[0].id,
+          contactId: result.id,
           type: 'CONTACT',
           subType: 'CONTACT_CREATED',
           description: `Contact was referred by ${referralContact.name} (${referralContact.email})`,
@@ -166,36 +167,39 @@ export const contactRouter = createTRPCRouter({
       const campaignCodes = typeof input.campaignCode === 'string' ? (input.campaignCode.includes('@') ? [] : [input.campaignCode]) : input.campaignCode || [];
 
       for (const campaignCode of campaignCodes) {
-        const campaign = await ctx.db
-          .select()
-          .from(marketingCampaign)
-          .where(eq(marketingCampaign.campaignCode, campaignCode))
-          .then((rows) => rows[0]);
+        const campaign = await ctx.db.portal_marketingCampaign.findUnique({
+          where: { campaignCode },
+        });
 
         if (!campaign) continue;
 
-        await ctx.db.insert(contactCampaign).values({
-          contactId: result[0].id,
-          campaignCode,
+        await ctx.db.portal_contactCampaign.create({
+          data: {
+            contactId: result.id,
+            campaignCode,
+          },
         });
 
         // Log campaign assignment activity
         await createContactActivityHelper(ctx, {
-          contactId: result[0].id,
+          contactId: result.id,
           type: 'CAMPAIGN',
           subType: 'CAMPAIGN_ASSIGNED',
-          description: `Contact ${result[0].name} (${result[0].email}) was assigned to campaign: ${campaign.name} (${campaign.campaignCode}).`,
+          description: `Contact ${result.name} (${result.email}) was assigned to campaign: ${campaign.name} (${campaign.campaignCode}).`,
           initiatorType: 'user',
           initiatorId: ctx.session?.user.id,
           metadata: { campaign },
         });
       }
 
-      return result[0];
+      return result;
     }),
 
   updateContactRemark: protectedProcedure.input(z.object({ id: z.string(), remark: z.string(), oldRemark: z.string().optional() })).mutation(async ({ ctx, input }) => {
-    await ctx.db.update(contact).set({ remark: input.remark }).where(eq(contact.id, input.id));
+    await ctx.db.portal_contact.update({
+      where: { id: input.id },
+      data: { remark: input.remark },
+    });
 
     // Log remark update activity
     await createContactActivityHelper(ctx, {
@@ -221,37 +225,35 @@ export const contactRouter = createTRPCRouter({
     )
     .mutation(async ({ ctx, input }) => {
       // Check if already in campaign
-      const existing = await ctx.db
-        .select()
-        .from(contactCampaign)
-        .where(and(eq(contactCampaign.contactId, input.contactId), eq(contactCampaign.campaignCode, input.campaignCode)))
-        .then((rows) => rows[0]);
+      const existing = await ctx.db.portal_contactCampaign.findFirst({
+        where: {
+          contactId: input.contactId,
+          campaignCode: input.campaignCode,
+        },
+      });
 
       if (existing) return existing;
 
-      const campaign = await ctx.db
-        .select()
-        .from(marketingCampaign)
-        .where(eq(marketingCampaign.campaignCode, input.campaignCode))
-        .then((rows) => rows[0]);
+      const campaign = await ctx.db.portal_marketingCampaign.findUnique({
+        where: { campaignCode: input.campaignCode },
+      });
 
       await createContactActivityHelper(ctx, {
         contactId: input.contactId,
         type: 'CAMPAIGN',
         subType: 'CAMPAIGN_ASSIGNED',
-        description: `Contact was assigned to campaign: ${campaign.name} (${campaign.campaignCode}).`,
+        description: `Contact was assigned to campaign: ${campaign?.name} (${campaign?.campaignCode}).`,
         initiatorType: 'user',
         initiatorId: ctx.session?.user.id,
         metadata: { campaign },
       });
 
-      return ctx.db
-        .insert(contactCampaign)
-        .values({
+      return ctx.db.portal_contactCampaign.create({
+        data: {
           contactId: input.contactId,
           campaignCode: input.campaignCode,
-        })
-        .returning();
+        },
+      });
     }),
 
   removeContactFromCampaign: protectedProcedure
@@ -262,19 +264,22 @@ export const contactRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      const campaign = await ctx.db
-        .select()
-        .from(marketingCampaign)
-        .where(eq(marketingCampaign.campaignCode, input.campaignCode))
-        .then((rows) => rows[0]);
+      const campaign = await ctx.db.portal_marketingCampaign.findUnique({
+        where: { campaignCode: input.campaignCode },
+      });
 
-      const result = await ctx.db.delete(contactCampaign).where(and(eq(contactCampaign.contactId, input.contactId), eq(contactCampaign.campaignCode, input.campaignCode)));
+      const result = await ctx.db.portal_contactCampaign.deleteMany({
+        where: {
+          contactId: input.contactId,
+          campaignCode: input.campaignCode,
+        },
+      });
 
       await createContactActivityHelper(ctx, {
         contactId: input.contactId,
         type: 'CAMPAIGN',
         subType: 'CAMPAIGN_REMOVED',
-        description: `Contact was removed from campaign: ${campaign.name} (${campaign.campaignCode}).`,
+        description: `Contact was removed from campaign: ${campaign?.name} (${campaign?.campaignCode}).`,
         initiatorType: 'user',
         initiatorId: ctx.session?.user.id,
         metadata: { campaign },
@@ -285,31 +290,35 @@ export const contactRouter = createTRPCRouter({
 
   deleteContact: protectedProcedure.input(z.object({ id: z.string() })).mutation(async ({ ctx, input }) => {
     // Get contact details before deletion for activity log
-    const contactDetails = await ctx.db
-      .select({
-        name: contact.name,
-        email: contact.email,
-      })
-      .from(contact)
-      .where(eq(contact.id, input.id))
-      .then((rows) => rows[0]);
+    const contactDetails = await ctx.db.portal_contact.findUnique({
+      where: { id: input.id },
+      select: {
+        name: true,
+        email: true,
+      },
+    });
 
     // Log deletion activity before actually deleting
     await createContactActivityHelper(ctx, {
       contactId: input.id,
       type: 'CONTACT',
       subType: 'CONTACT_DELETED',
-      description: `Contact ${contactDetails.name} (${contactDetails.email}) was deleted.`,
-      metadata: { name: contactDetails.name, email: contactDetails.email },
+      description: `Contact ${contactDetails?.name} (${contactDetails?.email}) was deleted.`,
+      metadata: { name: contactDetails?.name, email: contactDetails?.email },
       initiatorType: 'user',
       initiatorId: ctx.session?.user.id,
     });
 
-    return ctx.db.delete(contact).where(eq(contact.id, input.id));
+    return ctx.db.portal_contact.delete({
+      where: { id: input.id },
+    });
   }),
 
   getContactActivities: protectedProcedure.input(z.object({ id: z.string() })).query(({ ctx, input }) => {
-    return ctx.db.select().from(contactActivity).where(eq(contactActivity.contactId, input.id)).orderBy(asc(contactActivity.createdAt));
+    return ctx.db.portal_contactActivity.findMany({
+      where: { contactId: input.id },
+      orderBy: { createdAt: 'asc' },
+    });
   }),
 
   createContactActivity: protectedProcedure
@@ -325,15 +334,17 @@ export const contactRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      await ctx.db.insert(contactActivity).values({
-        contactId: input.contactId,
-        userId: ctx.session?.user.id,
-        type: input.type,
-        subType: input.subType,
-        initiatorType: input.initiatorType,
-        initiatorId: input.initiatorId,
-        description: input.description,
-        metadata: input.metadata ? JSON.stringify(input.metadata) : null,
+      await ctx.db.portal_contactActivity.create({
+        data: {
+          contactId: input.contactId,
+          userId: ctx.session?.user.id,
+          type: input.type,
+          subType: input.subType,
+          initiatorType: input.initiatorType,
+          initiatorId: input.initiatorId,
+          description: input.description,
+          metadata: input.metadata ? JSON.stringify(input.metadata) : null,
+        },
       });
 
       // Handle @mentions
@@ -342,26 +353,36 @@ export const contactRouter = createTRPCRouter({
 
       if (mentions.length > 0) {
         // Get all mentioned users
-        const mentionedUsers = await ctx.db.select().from(user).where(inArray(user.username, mentions));
+        const mentionedUsers = await ctx.db.portal_user.findMany({
+          where: {
+            username: {
+              in: mentions,
+            },
+          },
+        });
 
         // Create notifications for mentioned users
         for (const mentionedUser of mentionedUsers) {
-          await ctx.db.insert(userNotifications).values({
-            userId: mentionedUser.id,
-            type: 'message',
-            title: `${ctx.session?.user.name || 'Someone'} mentioned you in a note`,
-            message: input.description,
-            metadata: JSON.stringify({
-              type: 'contacts',
-              id: input.contactId,
-            }),
+          await ctx.db.portal_userNotifications.create({
+            data: {
+              userId: mentionedUser.id,
+              type: 'message',
+              title: `${ctx.session?.user.name || 'Someone'} mentioned you in a note`,
+              message: input.description,
+              metadata: JSON.stringify({
+                type: 'contacts',
+                id: input.contactId,
+              }),
+            },
           });
         }
       }
     }),
 
   deleteContactActivity: protectedProcedure.input(z.object({ id: z.string() })).mutation(({ ctx, input }) => {
-    return ctx.db.delete(contactActivity).where(eq(contactActivity.id, input.id));
+    return ctx.db.portal_contactActivity.delete({
+      where: { id: input.id },
+    });
   }),
 
   updateContact: protectedProcedure
@@ -391,21 +412,23 @@ export const contactRouter = createTRPCRouter({
       const { id, ...updateData } = input;
 
       // Get current contact data for comparison
-      const currentContact = await ctx.db
-        .select()
-        .from(contact)
-        .where(eq(contact.id, id))
-        .then((rows) => rows[0]);
+      const currentContact = await ctx.db.portal_contact.findUnique({
+        where: { id },
+      });
+
+      if (!currentContact) {
+        throw new TRPCError({ code: 'NOT_FOUND', message: 'Contact not found' });
+      }
 
       // Only update name if firstName or lastName is provided
       const firstName = input.firstName ?? currentContact.firstName;
       const lastName = input.lastName ?? currentContact.lastName;
       const name = `${firstName} ${lastName}`.trim();
 
-      const result = await ctx.db
-        .update(contact)
-        .set({ ...updateData, name })
-        .where(eq(contact.id, id));
+      const result = await ctx.db.portal_contact.update({
+        where: { id },
+        data: { ...updateData, name },
+      });
 
       // Log status change if status was updated
       if (input.status && input.status !== currentContact.status) {
@@ -520,32 +543,44 @@ export const contactRouter = createTRPCRouter({
       })
     )
     .query(async ({ ctx, input }) => {
-      const existingContacts = await ctx.db
-        .select({
-          email: contact.email,
-        })
-        .from(contact)
-        .where(inArray(contact.email, input.emails));
+      const existingContacts = await ctx.db.portal_contact.findMany({
+        where: {
+          email: {
+            in: input.emails,
+          },
+        },
+        select: {
+          email: true,
+        },
+      });
 
       return existingContacts.map((contact) => contact.email);
     }),
 
   getContactsByCampaignId: protectedProcedure.input(z.object({ campaignCode: z.string() })).query(async ({ ctx, input }) => {
-    return ctx.db
-      .select({
-        id: contact.id,
-        name: contact.name,
-        firstName: contact.firstName,
-        lastName: contact.lastName,
-        email: contact.email,
-        phone: contact.phone,
-        company: contact.company,
-        status: contact.status,
-        joinedAt: contactCampaign.joinedAt,
-      })
-      .from(contactCampaign)
-      .innerJoin(contact, eq(contactCampaign.contactId, contact.id))
-      .where(eq(contactCampaign.campaignCode, input.campaignCode));
+    return ctx.db.portal_contactCampaign.findMany({
+      where: {
+        campaignCode: input.campaignCode,
+      },
+      include: {
+        contact: {
+          select: {
+            id: true,
+            name: true,
+            firstName: true,
+            lastName: true,
+            email: true,
+            phone: true,
+            company: true,
+            status: true,
+          },
+        },
+      },
+      select: {
+        joinedAt: true,
+        contact: true,
+      },
+    });
   }),
 
   sendEmail: protectedProcedure
@@ -577,21 +612,23 @@ export const contactRouter = createTRPCRouter({
         });
 
         // Log the email activity
-        await ctx.db.insert(contactActivity).values({
-          type: 'ENGAGEMENT',
-          subType: 'EMAIL_SENT',
-          description: `Email sent to ${input.to} with subject: ${input.subject}`,
-          initiatorType: 'user',
-          userId: ctx.session.user.id,
-          contactId: input.contactId,
-          metadata: JSON.stringify({
-            to: input.to,
-            subject: input.subject,
-            content: input.content,
-            cc: input.cc,
-            bcc: input.bcc,
-            attachments: input.attachments,
-          }),
+        await ctx.db.portal_contactActivity.create({
+          data: {
+            type: 'ENGAGEMENT',
+            subType: 'EMAIL_SENT',
+            description: `Email sent to ${input.to} with subject: ${input.subject}`,
+            initiatorType: 'user',
+            userId: ctx.session.user.id,
+            contactId: input.contactId,
+            metadata: JSON.stringify({
+              to: input.to,
+              subject: input.subject,
+              content: input.content,
+              cc: input.cc,
+              bcc: input.bcc,
+              attachments: input.attachments,
+            }),
+          },
         });
 
         return {
@@ -623,17 +660,21 @@ export const contactRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      const results: (typeof contact.$inferSelect)[] = [];
+      const results: any[] = [];
       const errors: Array<{ email: string; error: string }> = [];
 
       // Get all unique emails for existence check
       const emails = [...new Set(input.contacts.map((contact) => contact.email))];
-      const existingContacts = await ctx.db
-        .select({
-          email: contact.email,
-        })
-        .from(contact)
-        .where(inArray(contact.email, emails));
+      const existingContacts = await ctx.db.portal_contact.findMany({
+        where: {
+          email: {
+            in: emails,
+          },
+        },
+        select: {
+          email: true,
+        },
+      });
 
       const existingEmails = new Set(existingContacts.map((c) => c.email));
 
@@ -641,8 +682,8 @@ export const contactRouter = createTRPCRouter({
       const newContacts = input.contacts.filter((contact) => !existingEmails.has(contact.email));
 
       try {
-        // Create all contacts in a single transaction
-        const createdContacts = await ctx.db.transaction(async (tx) => {
+        // Create all contacts in a transaction
+        const createdContacts = await ctx.db.$transaction(async (tx) => {
           const created = [];
 
           for (const contactData of newContacts) {
@@ -650,16 +691,13 @@ export const contactRouter = createTRPCRouter({
               // If campaignCode is an email, treat it as a referral
               let referralContact = null;
               if (typeof contactData.campaignCode === 'string' && contactData.campaignCode.includes('@')) {
-                referralContact = await tx
-                  .select()
-                  .from(contact)
-                  .where(eq(contact.email, contactData.campaignCode))
-                  .then((rows) => rows[0]);
+                referralContact = await tx.portal_contact.findUnique({
+                  where: { email: contactData.campaignCode },
+                });
               }
 
-              const result = await tx
-                .insert(contact)
-                .values({
+              const result = await tx.portal_contact.create({
+                data: {
                   name: contactData.name ?? `${contactData.firstName ?? ''} ${contactData.lastName ?? ''}`,
                   firstName: contactData.firstName ?? '',
                   lastName: contactData.lastName ?? '',
@@ -670,27 +708,27 @@ export const contactRouter = createTRPCRouter({
                   source: contactData.source ?? (referralContact ? 'referral' : ''),
                   status: contactData.status ?? 'lead',
                   remark: contactData.remark ?? '',
-                })
-                .returning();
+                },
+              });
 
-              const newContact = result[0];
+              const newContact = result;
               created.push(newContact);
 
               // Handle campaign assignments within the transaction
               const campaignCodes = typeof contactData.campaignCode === 'string' ? (contactData.campaignCode.includes('@') ? [] : [contactData.campaignCode]) : contactData.campaignCode || [];
 
               for (const campaignCode of campaignCodes) {
-                const campaign = await tx
-                  .select()
-                  .from(marketingCampaign)
-                  .where(eq(marketingCampaign.campaignCode, campaignCode))
-                  .then((rows) => rows[0]);
+                const campaign = await tx.portal_marketingCampaign.findUnique({
+                  where: { campaignCode },
+                });
 
                 if (!campaign) continue;
 
-                await tx.insert(contactCampaign).values({
-                  contactId: newContact.id,
-                  campaignCode,
+                await tx.portal_contactCampaign.create({
+                  data: {
+                    contactId: newContact.id,
+                    campaignCode,
+                  },
                 });
               }
             } catch (error) {
@@ -719,11 +757,9 @@ export const contactRouter = createTRPCRouter({
 
               // Handle referral case
               if (newContact.source === 'referral') {
-                const referralContact = await ctx.db
-                  .select()
-                  .from(contact)
-                  .where(eq(contact.email, newContact.source))
-                  .then((rows) => rows[0]);
+                const referralContact = await ctx.db.portal_contact.findUnique({
+                  where: { email: newContact.source },
+                });
 
                 if (referralContact) {
                   await createContactActivityHelper(ctx, {
@@ -739,14 +775,15 @@ export const contactRouter = createTRPCRouter({
               }
 
               // Log campaign assignments
-              const campaigns = await ctx.db
-                .select()
-                .from(contactCampaign)
-                .innerJoin(marketingCampaign, eq(contactCampaign.campaignCode, marketingCampaign.campaignCode))
-                .where(eq(contactCampaign.contactId, newContact.id));
+              const campaigns = await ctx.db.portal_contactCampaign.findMany({
+                where: { contactId: newContact.id },
+                include: {
+                  campaign: true,
+                },
+              });
 
               await Promise.all(
-                campaigns.map(async ({ portal_marketingCampaign: campaign }) => {
+                campaigns.map(async ({ campaign }) => {
                   await createContactActivityHelper(ctx, {
                     contactId: newContact.id,
                     type: 'CAMPAIGN',

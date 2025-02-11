@@ -1,7 +1,5 @@
-import { contact, resourceContent, resourceContentSendTrack, resourceContentShare, resourceEmails, user } from '@/drizzle/schema';
 import { createTRPCRouter, protectedProcedure } from '@/server/trpc';
 import { TRPCError } from '@trpc/server';
-import { and, desc, eq, inArray, like, or, sql } from 'drizzle-orm';
 import { z } from 'zod';
 
 const resourceContentSchema = z.object({
@@ -25,10 +23,12 @@ const resourceEmailSchema = z.object({
 
 export const resourceRouter = createTRPCRouter({
   createContent: protectedProcedure.input(resourceContentSchema).mutation(async ({ ctx, input }) => {
-    return ctx.db.insert(resourceContent).values({
-      ...input,
-      createdBy: ctx.session.user.id,
-      updatedBy: ctx.session.user.id,
+    return ctx.db.portal_resourceContent.create({
+      data: {
+        ...input,
+        createdBy: ctx.session.user.id,
+        updatedBy: ctx.session.user.id,
+      },
     });
   }),
 
@@ -44,70 +44,101 @@ export const resourceRouter = createTRPCRouter({
     )
     .query(async ({ ctx, input }) => {
       const userId = ctx.session.user.id;
-      let conditions = or(
-        eq(resourceContent.createdBy, userId),
-        eq(resourceContent.visibility, 'PUBLIC'),
-        and(eq(resourceContent.visibility, 'SHARED'), eq(resourceContentShare.sharedWithUserId, userId))
-      );
+
+      const where = {
+        OR: [
+          { createdBy: userId },
+          { visibility: 'PUBLIC' },
+          {
+            AND: [
+              { visibility: 'SHARED' },
+              {
+                portal_resourceContentShare: {
+                  some: {
+                    sharedWithUserId: userId,
+                  },
+                },
+              },
+            ],
+          },
+        ],
+      };
 
       if (input?.visibility) {
-        conditions = and(conditions, inArray(resourceContent.visibility, input.visibility));
+        where.visibility = { in: input.visibility };
       }
 
       if (input?.search) {
-        conditions = and(conditions, or(like(resourceContent.title, `%${input.search}%`), like(resourceContent.description, `%${input.search}%`)));
+        where.OR = [{ title: { contains: input.search } }, { description: { contains: input.search } }];
       }
 
       if (input?.tags && input.tags.length > 0) {
-        const tagConditions = input.tags.map((tag) => like(resourceContent.tags, `%${tag}%`));
-        conditions = and(conditions, or(...tagConditions));
+        where.OR = input.tags.map((tag) => ({
+          tags: { contains: tag },
+        }));
       }
 
-      const result = await ctx.db
-        .select({
-          resourceContent: resourceContent,
-          resourceContentShare: resourceContentShare,
-          sendCount: sql<number>`count(distinct ${resourceContentSendTrack.id})`.mapWith(Number),
-          lastSentAt: sql<Date | null>`max(${resourceContentSendTrack.sentAt})`.mapWith((d) => d && new Date(d)),
-          recipients: sql<any[]>`
-            json_agg(
-              CASE WHEN ${contact.id} IS NOT NULL 
-              THEN json_build_object(
-                'id', ${contact.id},
-                'name', ${contact.name},
-                'email', ${contact.email}
-              )
-              ELSE null
-              END
-            ) FILTER (WHERE ${contact.id} IS NOT NULL)`.mapWith((r) => r || []),
-        })
-        .from(resourceContent)
-        .leftJoin(resourceContentShare, eq(resourceContent.id, resourceContentShare.resourceId))
-        .leftJoin(resourceContentSendTrack, eq(resourceContent.id, resourceContentSendTrack.resourceId))
-        .leftJoin(contact, eq(resourceContentSendTrack.contactId, contact.id))
-        .where(conditions)
-        .groupBy(resourceContent.id, resourceContentShare.id)
-        .orderBy(desc(resourceContent.updatedAt));
+      const result = await ctx.db.portal_resourceContent.findMany({
+        include: {
+          portal_resourceContentShare: true,
+          portal_resourceContentSendTrack: {
+            include: {
+              contact: true,
+            },
+          },
+        },
+        where,
+        orderBy: {
+          updatedAt: 'desc',
+        },
+      });
 
-      return result;
+      return result.map((content) => ({
+        resourceContent: content,
+        resourceContentShare: content.portal_resourceContentShare,
+        sendCount: content.portal_resourceContentSendTrack.length,
+        lastSentAt:
+          content.portal_resourceContentSendTrack.length > 0
+            ? content.portal_resourceContentSendTrack.reduce((max, track) => (track.sentAt > max ? track.sentAt : max), content.portal_resourceContentSendTrack[0].sentAt)
+            : null,
+        recipients: content.portal_resourceContentSendTrack
+          .map((track) => track.contact)
+          .filter(Boolean)
+          .map((contact) => ({
+            id: contact.id,
+            name: contact.name,
+            email: contact.email,
+          })),
+      }));
     }),
 
   getContent: protectedProcedure.input(z.object({ id: z.string(), includeShare: z.boolean().optional() })).query(async ({ ctx, input }) => {
     const userId = ctx.session.user.id;
 
-    const result = await ctx.db
-      .select()
-      .from(resourceContent)
-      .leftJoin(resourceContentShare, eq(resourceContent.id, resourceContentShare.resourceId))
-      .where(
-        and(
-          eq(resourceContent.id, input.id),
-          or(eq(resourceContent.createdBy, userId), eq(resourceContent.visibility, 'PUBLIC'), and(eq(resourceContent.visibility, 'SHARED'), eq(resourceContentShare.sharedWithUserId, userId)))
-        )
-      )
-      .limit(1);
-
-    return result[0];
+    return ctx.db.portal_resourceContent.findFirst({
+      include: {
+        portal_resourceContentShare: true,
+      },
+      where: {
+        id: input.id,
+        OR: [
+          { createdBy: userId },
+          { visibility: 'PUBLIC' },
+          {
+            AND: [
+              { visibility: 'SHARED' },
+              {
+                portal_resourceContentShare: {
+                  some: {
+                    sharedWithUserId: userId,
+                  },
+                },
+              },
+            ],
+          },
+        ],
+      },
+    });
   }),
 
   updateContent: protectedProcedure
@@ -120,46 +151,62 @@ export const resourceRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       const userId = ctx.session.user.id;
 
-      const existing = await ctx.db
-        .select()
-        .from(resourceContent)
-        .leftJoin(resourceContentShare, eq(resourceContent.id, resourceContentShare.resourceId))
-        .where(
-          and(
-            eq(resourceContent.id, input.id),
-            or(eq(resourceContent.createdBy, userId), and(eq(resourceContent.visibility, 'SHARED'), eq(resourceContentShare.sharedWithUserId, userId), eq(resourceContentShare.permission, 'edit')))
-          )
-        )
-        .limit(1);
+      const existing = await ctx.db.portal_resourceContent.findFirst({
+        include: {
+          portal_resourceContentShare: true,
+        },
+        where: {
+          id: input.id,
+          OR: [
+            { createdBy: userId },
+            {
+              AND: [
+                { visibility: 'SHARED' },
+                {
+                  portal_resourceContentShare: {
+                    some: {
+                      sharedWithUserId: userId,
+                      permission: 'edit',
+                    },
+                  },
+                },
+              ],
+            },
+          ],
+        },
+      });
 
-      if (!existing[0]) {
+      if (!existing) {
         throw new TRPCError({ code: 'UNAUTHORIZED', message: 'Not authorized to edit this content' });
       }
 
-      return ctx.db
-        .update(resourceContent)
-        .set({
+      return ctx.db.portal_resourceContent.update({
+        where: { id: input.id },
+        data: {
           ...input.data,
           updatedBy: userId,
           updatedAt: new Date(),
-        })
-        .where(eq(resourceContent.id, input.id));
+        },
+      });
     }),
 
   deleteContent: protectedProcedure.input(z.string()).mutation(async ({ ctx, input }) => {
     const userId = ctx.session.user.id;
 
-    const existing = await ctx.db
-      .select()
-      .from(resourceContent)
-      .where(and(eq(resourceContent.id, input), eq(resourceContent.createdBy, userId)))
-      .limit(1);
+    const existing = await ctx.db.portal_resourceContent.findFirst({
+      where: {
+        id: input,
+        createdBy: userId,
+      },
+    });
 
-    if (!existing[0]) {
+    if (!existing) {
       throw new TRPCError({ code: 'UNAUTHORIZED', message: 'Not authorized to delete this content' });
     }
 
-    return ctx.db.delete(resourceContent).where(eq(resourceContent.id, input));
+    return ctx.db.portal_resourceContent.delete({
+      where: { id: input },
+    });
   }),
 
   shareContent: protectedProcedure
@@ -173,32 +220,40 @@ export const resourceRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       const userId = ctx.session.user.id;
 
-      const existing = await ctx.db
-        .select()
-        .from(resourceContent)
-        .where(and(eq(resourceContent.id, input.resourceId), eq(resourceContent.createdBy, userId)))
-        .limit(1);
+      const existing = await ctx.db.portal_resourceContent.findFirst({
+        where: {
+          id: input.resourceId,
+          createdBy: userId,
+        },
+      });
 
-      if (!existing[0]) {
+      if (!existing) {
         throw new TRPCError({ code: 'UNAUTHORIZED', message: 'Not authorized to share this content' });
       }
 
-      if (existing[0].visibility === 'PRIVATE') {
-        await ctx.db.update(resourceContent).set({ visibility: 'SHARED' }).where(eq(resourceContent.id, input.resourceId));
+      if (existing.visibility === 'PRIVATE') {
+        await ctx.db.portal_resourceContent.update({
+          where: { id: input.resourceId },
+          data: { visibility: 'SHARED' },
+        });
       }
 
-      await ctx.db.delete(resourceContentShare).where(and(eq(resourceContentShare.resourceId, input.resourceId), inArray(resourceContentShare.sharedWithUserId, input.userIds)));
+      await ctx.db.portal_resourceContentShare.deleteMany({
+        where: {
+          resourceId: input.resourceId,
+          sharedWithUserId: { in: input.userIds },
+        },
+      });
 
-      return ctx.db.insert(resourceContentShare).values(
-        input.userIds.map((userId) => ({
+      return ctx.db.portal_resourceContentShare.createMany({
+        data: input.userIds.map((userId) => ({
           resourceId: input.resourceId,
           sharedWithUserId: userId,
           permission: input.permission,
-        }))
-      );
+        })),
+      });
     }),
 
-  // Remove share for a user
   removeShare: protectedProcedure
     .input(
       z.object({
@@ -209,30 +264,35 @@ export const resourceRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       const userId = ctx.session.user.id;
 
-      const existing = await ctx.db
-        .select()
-        .from(resourceContent)
-        .where(and(eq(resourceContent.id, input.resourceId), eq(resourceContent.createdBy, userId)))
-        .limit(1);
+      const existing = await ctx.db.portal_resourceContent.findFirst({
+        where: {
+          id: input.resourceId,
+          createdBy: userId,
+        },
+      });
 
-      if (!existing[0]) {
+      if (!existing) {
         throw new TRPCError({ code: 'UNAUTHORIZED', message: 'Not authorized to modify shares for this content' });
       }
 
-      return ctx.db.delete(resourceContentShare).where(and(eq(resourceContentShare.resourceId, input.resourceId), eq(resourceContentShare.sharedWithUserId, input.userId)));
+      return ctx.db.portal_resourceContentShare.delete({
+        where: {
+          resourceId_sharedWithUserId: {
+            resourceId: input.resourceId,
+            sharedWithUserId: input.userId,
+          },
+        },
+      });
     }),
 
   createEmail: protectedProcedure.input(resourceEmailSchema).mutation(async ({ ctx, input }) => {
-    const [newEmail] = await ctx.db
-      .insert(resourceEmails)
-      .values({
+    return ctx.db.portal_resourceEmails.create({
+      data: {
         ...input,
         createdBy: ctx.session.user.id,
         updatedBy: ctx.session.user.id,
-      })
-      .returning();
-
-    return newEmail;
+      },
+    });
   }),
 
   getEmails: protectedProcedure
@@ -247,34 +307,36 @@ export const resourceRouter = createTRPCRouter({
     )
     .query(async ({ ctx, input }) => {
       const userId = ctx.session.user.id;
-      let conditions = or(eq(resourceEmails.createdBy, userId), eq(resourceEmails.visibility, 'PUBLIC'));
+      const where = {
+        OR: [{ createdBy: userId }, { visibility: 'PUBLIC' }],
+      };
 
       if (input?.visibility) {
-        conditions = and(conditions, eq(resourceEmails.visibility, input.visibility));
+        where.visibility = input.visibility;
       }
 
       if (input?.search) {
-        conditions = and(conditions, or(like(resourceEmails.title, `%${input.search}%`), like(resourceEmails.description, `%${input.search}%`), like(resourceEmails.subject, `%${input.search}%`)));
+        where.OR = [{ title: { contains: input.search } }, { description: { contains: input.search } }, { subject: { contains: input.search } }];
       }
 
       if (input?.tags && input.tags.length > 0) {
-        const tagConditions = input.tags.map((tag) => like(resourceEmails.tags, `%${tag}%`));
-        conditions = and(conditions, or(...tagConditions));
+        where.OR = input.tags.map((tag) => ({
+          tags: { contains: tag },
+        }));
       }
 
-      return ctx.db.select().from(resourceEmails).where(conditions);
+      return ctx.db.portal_resourceEmails.findMany({ where });
     }),
 
   getEmail: protectedProcedure.input(z.string()).query(async ({ ctx, input }) => {
     const userId = ctx.session.user.id;
 
-    const result = await ctx.db
-      .select()
-      .from(resourceEmails)
-      .where(and(eq(resourceEmails.id, input), or(eq(resourceEmails.createdBy, userId), eq(resourceEmails.visibility, 'PUBLIC'))))
-      .limit(1);
-
-    return result[0];
+    return ctx.db.portal_resourceEmails.findFirst({
+      where: {
+        id: input,
+        OR: [{ createdBy: userId }, { visibility: 'PUBLIC' }],
+      },
+    });
   }),
 
   updateEmail: protectedProcedure
@@ -287,40 +349,44 @@ export const resourceRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       const userId = ctx.session.user.id;
 
-      const existing = await ctx.db
-        .select()
-        .from(resourceEmails)
-        .where(and(eq(resourceEmails.id, input.id), eq(resourceEmails.createdBy, userId)))
-        .limit(1);
+      const existing = await ctx.db.portal_resourceEmails.findFirst({
+        where: {
+          id: input.id,
+          createdBy: userId,
+        },
+      });
 
-      if (!existing[0]) {
+      if (!existing) {
         throw new TRPCError({ code: 'UNAUTHORIZED', message: 'Not authorized to edit this email template' });
       }
 
-      return ctx.db
-        .update(resourceEmails)
-        .set({
+      return ctx.db.portal_resourceEmails.update({
+        where: { id: input.id },
+        data: {
           ...input.data,
           updatedBy: userId,
           updatedAt: new Date(),
-        })
-        .where(eq(resourceEmails.id, input.id));
+        },
+      });
     }),
 
   deleteEmail: protectedProcedure.input(z.string()).mutation(async ({ ctx, input }) => {
     const userId = ctx.session.user.id;
 
-    const existing = await ctx.db
-      .select()
-      .from(resourceEmails)
-      .where(and(eq(resourceEmails.id, input), eq(resourceEmails.createdBy, userId)))
-      .limit(1);
+    const existing = await ctx.db.portal_resourceEmails.findFirst({
+      where: {
+        id: input,
+        createdBy: userId,
+      },
+    });
 
-    if (!existing[0]) {
+    if (!existing) {
       throw new TRPCError({ code: 'UNAUTHORIZED', message: 'Not authorized to delete this email template' });
     }
 
-    return ctx.db.delete(resourceEmails).where(eq(resourceEmails.id, input));
+    return ctx.db.portal_resourceEmails.delete({
+      where: { id: input },
+    });
   }),
 
   createContentSendTrack: protectedProcedure
@@ -333,12 +399,14 @@ export const resourceRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      return ctx.db.insert(resourceContentSendTrack).values({
-        resourceId: input.resourceId,
-        contactId: input.contactId,
-        sentBy: ctx.session.user.id,
-        status: input.status,
-        metadata: input.metadata ? JSON.stringify(input.metadata) : null,
+      return ctx.db.portal_resourceContentSendTrack.create({
+        data: {
+          resourceId: input.resourceId,
+          contactId: input.contactId,
+          sentBy: ctx.session.user.id,
+          status: input.status,
+          metadata: input.metadata,
+        },
       });
     }),
 
@@ -351,36 +419,56 @@ export const resourceRouter = createTRPCRouter({
     .query(async ({ ctx, input }) => {
       const userId = ctx.session.user.id;
 
-      // First check if user has access to this content
-      const content = await ctx.db
-        .select()
-        .from(resourceContent)
-        .leftJoin(resourceContentShare, eq(resourceContent.id, resourceContentShare.resourceId))
-        .where(
-          and(
-            eq(resourceContent.id, input.resourceId),
-            or(eq(resourceContent.createdBy, userId), eq(resourceContent.visibility, 'PUBLIC'), and(eq(resourceContent.visibility, 'SHARED'), eq(resourceContentShare.sharedWithUserId, userId)))
-          )
-        )
-        .limit(1);
+      const content = await ctx.db.portal_resourceContent.findFirst({
+        include: {
+          portal_resourceContentShare: true,
+        },
+        where: {
+          id: input.resourceId,
+          OR: [
+            { createdBy: userId },
+            { visibility: 'PUBLIC' },
+            {
+              AND: [
+                { visibility: 'SHARED' },
+                {
+                  portal_resourceContentShare: {
+                    some: {
+                      sharedWithUserId: userId,
+                    },
+                  },
+                },
+              ],
+            },
+          ],
+        },
+      });
 
-      if (!content[0]) {
+      if (!content) {
         throw new TRPCError({ code: 'UNAUTHORIZED', message: 'Not authorized to view this content' });
       }
 
-      return ctx.db
-        .select({
-          id: resourceContentSendTrack.id,
-          sentAt: resourceContentSendTrack.sentAt,
-          status: resourceContentSendTrack.status,
-          metadata: resourceContentSendTrack.metadata,
-          contact: contact,
-          sentBy: user,
-        })
-        .from(resourceContentSendTrack)
-        .leftJoin(contact, eq(resourceContentSendTrack.contactId, contact.id))
-        .leftJoin(user, eq(resourceContentSendTrack.sentBy, user.id))
-        .where(eq(resourceContentSendTrack.resourceId, input.resourceId))
-        .orderBy(resourceContentSendTrack.sentAt);
+      return ctx.db.portal_resourceContentSendTrack.findMany({
+        select: {
+          id: true,
+          sentAt: true,
+          status: true,
+          metadata: true,
+          contact: true,
+          sentByUser: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+            },
+          },
+        },
+        where: {
+          resourceId: input.resourceId,
+        },
+        orderBy: {
+          sentAt: 'asc',
+        },
+      });
     }),
 });
