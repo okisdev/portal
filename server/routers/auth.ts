@@ -29,6 +29,12 @@ export const authRouter = createTRPCRouter({
           id: generateUUID(),
           email,
           password,
+          firstName: email.split('@')[0],
+          lastName: '',
+          name: email.split('@')[0],
+          role: 'USER',
+          timezone: 'UTC',
+          username: email.split('@')[0],
         },
       });
     }),

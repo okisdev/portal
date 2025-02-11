@@ -1,7 +1,6 @@
 import { TRPCError } from '@trpc/server';
 import { z } from 'zod';
 import { createTRPCRouter, protectedProcedure } from '../trpc';
-import { generateUUID } from '@/lib/utils';
 
 const adminProcedure = protectedProcedure.use(async ({ ctx, next }) => {
   const currentUser = await ctx.db.portal_user.findUnique({
@@ -36,24 +35,6 @@ export const adminRouter = createTRPCRouter({
       },
     });
   }),
-
-  createUser: adminProcedure
-    .input(
-      z.object({
-        email: z.string().email(),
-        name: z.string(),
-        role: z.enum(['ADMIN', 'SALES', 'MANAGER', 'USER']),
-        username: z.string().optional(),
-      })
-    )
-    .mutation(({ ctx, input }) => {
-      return ctx.db.portal_user.create({
-        data: {
-          id: generateUUID(),
-          ...input,
-        },
-      });
-    }),
 
   updateUser: adminProcedure
     .input(
