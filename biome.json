@@ -87,8 +87,7 @@
       "**/node_modules/**",
       "**/.next/**",
       "**/.turbo/**",
-      "**/dist/**",
-      "**/drizzle/meta/**"
+      "**/dist/**"
     ]
   }
 }

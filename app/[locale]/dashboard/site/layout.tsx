@@ -1,7 +1,5 @@
 import { auth } from '@/auth';
-import { user } from '@/drizzle/schema';
 import { database } from '@/lib/database';
-import { eq } from 'drizzle-orm';
 import { notFound } from 'next/navigation';
 
 export default async function DashboardLayout({
@@ -15,11 +13,11 @@ export default async function DashboardLayout({
     return notFound();
   }
 
-  const currentUser = await database
-    .select()
-    .from(user)
-    .where(eq(user.id, session.user.id))
-    .then((res) => res[0]);
+  const currentUser = await database.portal_user.findUnique({
+    where: {
+      id: session.user.id,
+    },
+  });
 
   if (!currentUser || currentUser.role !== 'ADMIN') {
     return notFound();

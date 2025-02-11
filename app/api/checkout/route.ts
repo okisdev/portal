@@ -1,7 +1,5 @@
-import { contact } from '@/drizzle/schema';
 import { database } from '@/lib/database';
 import { stripe } from '@/lib/payment';
-import { eq } from 'drizzle-orm';
 import { type NextRequest, NextResponse } from 'next/server';
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
@@ -20,7 +18,11 @@ export async function GET(request: NextRequest) {
 
     // Get contact email from metadata
     const { contactId } = paymentIntent.metadata;
-    const [currentContact] = await database.select({ email: contact.email }).from(contact).where(eq(contact.id, contactId)).execute();
+    const currentContact = await database.portal_contact.findUnique({
+      where: {
+        id: contactId,
+      },
+    });
 
     const session = await stripe.checkout.sessions.create({
       line_items: [

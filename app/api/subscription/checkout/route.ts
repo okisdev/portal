@@ -1,7 +1,5 @@
-import { subscriptionCoupon } from '@/drizzle/schema';
 import { database } from '@/lib/database';
 import { stripe } from '@/lib/payment';
-import { eq } from 'drizzle-orm';
 import { type NextRequest, NextResponse } from 'next/server';
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
@@ -18,7 +16,11 @@ export async function POST(request: NextRequest) {
     }
 
     // Get the coupon details from the database
-    const [coupon] = await database.select().from(subscriptionCoupon).where(eq(subscriptionCoupon.code, couponCode)).execute();
+    const coupon = await database.portal_subscriptionCoupon.findUnique({
+      where: {
+        code: couponCode,
+      },
+    });
 
     if (!coupon) {
       return NextResponse.json({ error: 'Invalid coupon code' }, { status: 400 });

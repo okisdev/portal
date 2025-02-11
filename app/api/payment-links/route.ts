@@ -1,7 +1,5 @@
 import { auth } from '@/auth';
-import { contact, paymentTrack } from '@/drizzle/schema';
 import { database } from '@/lib/database';
-import { eq } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 
 export const runtime = 'edge';
@@ -17,32 +15,36 @@ export async function POST(request: Request) {
     const { email, firstName, lastName, amount } = body;
 
     // Find or create contact
-    let [existingContact] = await database.select().from(contact).where(eq(contact.email, email));
+    let existingContact = await database.portal_contact.findUnique({
+      where: {
+        email,
+      },
+    });
 
     if (!existingContact) {
-      [existingContact] = await database
-        .insert(contact)
-        .values({
+      [existingContact] = await database.portal_contact.create({
+        data: {
           email,
           firstName,
           lastName,
           name: `${firstName} ${lastName}`,
           status: 'lead',
           assignedTo: session.user.id,
-        })
-        .returning();
+        },
+        returning: true,
+      });
     }
 
     // Create payment track
-    const [track] = await database
-      .insert(paymentTrack)
-      .values({
+    const [track] = await database.portal_paymentTrack.create({
+      data: {
         contactId: existingContact.id,
         userId: session.user.id,
         amount,
         currency: 'usd', // You might want to make this configurable
-      })
-      .returning();
+      },
+      returning: true,
+    });
 
     return NextResponse.json(track);
   } catch (error) {
