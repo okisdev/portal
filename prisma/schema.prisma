@@ -4,7 +4,7 @@ generator client {
 
 datasource db {
   provider = "mongodb"
-  url      = "mongodb+srv://harryyang:1HKjnXcvM7V0htBx@portal-beta.bxzxn.mongodb.net/portfoplus"
+  url      = env("DATABASE_URL")
 }
 
 type AdminreportsData {
