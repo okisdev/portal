@@ -594,5 +594,7 @@
   "please_enter_a_message": "请输入消息",
   "please_enter_a_subject": "请输入一个主题",
   "please_select_a_schedule_date": "请选择时间表日期",
-  "invalid_phone_number": "无效的电话号码：{number}"
+  "invalid_phone_number": "无效的电话号码：{number}",
+  "enter_email_address": "输入电子邮件地址",
+  "invalid_email_address": "无效的电子邮件地址"
 }

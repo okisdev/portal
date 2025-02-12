@@ -594,5 +594,7 @@
   "please_enter_a_message": "請輸入消息",
   "please_enter_a_subject": "請輸入一個主題",
   "please_select_a_schedule_date": "請選擇時間表日期",
-  "invalid_phone_number": "無效的電話號碼：{number}"
+  "invalid_phone_number": "無效的電話號碼：{number}",
+  "enter_email_address": "輸入電子郵件地址",
+  "invalid_email_address": "無效的電子郵件地址"
 }

@@ -594,5 +594,7 @@
   "please_select_a_schedule_date": "Please select a schedule date",
   "contact_does_not_have_a_phone_number": "Contact does not have a phone number",
   "compose_email": "Compose email",
-  "invalid_phone_number": "Invalid phone number: {number}"
+  "invalid_phone_number": "Invalid phone number: {number}",
+  "enter_email_address": "Enter email address",
+  "invalid_email_address": "Invalid email address"
 }

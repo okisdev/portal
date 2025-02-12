@@ -6,7 +6,7 @@ import { phoneCountries } from '@/data/data';
 import { cn } from '@/lib/utils';
 import { isValidPhoneNumber } from 'libphonenumber-js';
 import { useTranslations } from 'next-intl';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
 interface PhoneInputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'onChange'> {
@@ -21,9 +21,8 @@ export function PhoneInput({ className, value, onChange, onValidityChange, ...pr
   const [selectedCountry, setSelectedCountry] = useState<(typeof phoneCountries)[0] | null>(null);
   const [phoneNumber, setPhoneNumber] = useState('');
   const [isValid, setIsValid] = useState(false);
-  const typingTimeoutRef = useRef<NodeJS.Timeout>(null);
 
-  const validateAndNotify = (number: string, shouldNotify = true) => {
+  const validateAndNotify = (number: string, shouldNotify = false) => {
     if (!selectedCountry) {
       setIsValid(false);
       onValidityChange?.(false);
@@ -32,6 +31,7 @@ export function PhoneInput({ className, value, onChange, onValidityChange, ...pr
 
     try {
       const isNumberValid = isValidPhoneNumber(number);
+
       setIsValid(isNumberValid);
       onValidityChange?.(isNumberValid);
 
@@ -99,18 +99,6 @@ export function PhoneInput({ className, value, onChange, onValidityChange, ...pr
     if (selectedCountry) {
       const newValue = `${selectedCountry.code} ${newPhone}`.trim();
       onChange(newValue);
-
-      // Clear existing timeout
-      if (typingTimeoutRef.current) {
-        clearTimeout(typingTimeoutRef.current);
-      }
-
-      // Set new timeout to validate after typing stops
-      typingTimeoutRef.current = setTimeout(() => {
-        validateAndNotify(newValue, true);
-      }, 1000); // Wait 1 second after typing stops before showing toast
-
-      // Validate immediately but don't show toast
       validateAndNotify(newValue, false);
     } else {
       onChange(newPhone);
@@ -119,14 +107,12 @@ export function PhoneInput({ className, value, onChange, onValidityChange, ...pr
     }
   };
 
-  // Cleanup timeout on unmount
-  useEffect(() => {
-    return () => {
-      if (typingTimeoutRef.current) {
-        clearTimeout(typingTimeoutRef.current);
-      }
-    };
-  }, []);
+  const handleBlur = () => {
+    if (selectedCountry) {
+      const fullNumber = `${selectedCountry.code} ${phoneNumber}`.trim();
+      validateAndNotify(fullNumber, true);
+    }
+  };
 
   return (
     <div className={cn('flex gap-2', className)}>
@@ -144,6 +130,7 @@ export function PhoneInput({ className, value, onChange, onValidityChange, ...pr
         type='tel'
         value={phoneNumber}
         onChange={handlePhoneChange}
+        onBlur={handleBlur}
         className={cn('flex-1', isValid ? 'border-green-500 focus-visible:ring-green-500' : selectedCountry ? 'border-red-500 focus-visible:ring-red-500' : '')}
         placeholder={selectedCountry ? undefined : t('enter_phone_number')}
         {...props}
