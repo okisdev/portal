@@ -47,7 +47,15 @@ export default function LoginPage() {
   const email = watch('email');
   const password = watch('password');
 
-  const { data: isValidDomain } = api.auth.validateEmailDomain.useQuery({ email: email || '' }, { enabled: !!email && email.includes('@') });
+  const [shouldValidate, setShouldValidate] = useState(false);
+
+  const { data: isValidDomain } = api.auth.validateEmailDomain.useQuery({ email: email || '' }, { enabled: shouldValidate && !!email && email.includes('@') });
+
+  const handleEmailBlur = () => {
+    if (email?.includes('@')) {
+      setShouldValidate(true);
+    }
+  };
 
   const onSubmit = async (data: LoginFormValues) => {
     if (!isValidDomain) {
@@ -151,7 +159,13 @@ export default function LoginPage() {
                   {isPasswordLogin ? t('use_magic_link') : t('use_password')}
                 </button>
               </Label>
-              <input type='email' {...register('email')} className='w-full rounded-lg border bg-background p-2 focus:outline-none focus:ring-2 focus:ring-ring' placeholder={t('email_placeholder')} />
+              <input
+                type='email'
+                {...register('email')}
+                onBlur={handleEmailBlur}
+                className='w-full rounded-lg border bg-background p-2 focus:outline-none focus:ring-2 focus:ring-ring'
+                placeholder={t('email_placeholder')}
+              />
               {errors.email && <p className='mt-1 text-destructive text-sm'>{errors.email.message}</p>}
             </div>
 
