@@ -11,10 +11,12 @@ export const authRouter = createTRPCRouter({
       z.object({
         email: z.string().email(),
         password: z.string().min(8),
+        firstName: z.string().min(1),
+        lastName: z.string().min(1),
       })
     )
     .mutation(async ({ ctx, input }) => {
-      const { email, password } = input;
+      const { email, password, firstName, lastName } = input;
 
       // Check if user exists
       const existingUser = await ctx.db.select().from(user).where(eq(user.email, email));
@@ -36,6 +38,9 @@ export const authRouter = createTRPCRouter({
           id: generateUUID(),
           email,
           password,
+          firstName,
+          lastName,
+          name: `${firstName} ${lastName}`,
         });
       }
 
@@ -54,6 +59,9 @@ export const authRouter = createTRPCRouter({
         id: generateUUID(),
         email,
         password,
+        firstName,
+        lastName,
+        name: `${firstName} ${lastName}`,
       });
     }),
 
