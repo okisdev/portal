@@ -220,7 +220,7 @@ export function ActivitySection({ activities, onCreateActivity, isLoading }: Act
   return (
     <div className='flex h-full flex-col'>
       <div id='activities-container' className='flex-1 overflow-y-auto'>
-        <div className='pointer-events-none sticky top-0 z-10 h-4 bg-gradient-to-b from-background to-transparent' />
+        <div className='pointer-events-none sticky top-0 z-10 h-4 bg-linear-to-b from-background to-transparent' />
         <div className='space-y-1'>
           {activities?.length === 0 && <p className='text-muted-foreground text-sm'>{t('no_activities_found')}</p>}
           {activities
@@ -233,7 +233,7 @@ export function ActivitySection({ activities, onCreateActivity, isLoading }: Act
               return (
                 <div key={activity.id} id={`note-${activity.id}`}>
                   {showDateDivider && (
-                    <div className='sticky top-0 bg-background/95 py-2 backdrop-blur supports-[backdrop-filter]:bg-background/60'>
+                    <div className='sticky top-0 bg-background/95 py-2 backdrop-blur-sm supports-backdrop-filter:bg-background/60'>
                       <p className='font-medium text-muted-foreground text-sm'>{currentDate}</p>
                     </div>
                   )}

@@ -107,7 +107,7 @@ export function TipTapEditor({ content, onChange, placeholder = 'Start writing..
     editorProps: {
       attributes: {
         class: cn(
-          'prose prose-sm sm:prose-base lg:prose-lg xl:prose-2xl dark:prose-invert mx-auto h-full w-full flex-1 overflow-auto outline-none',
+          'prose prose-sm sm:prose-base lg:prose-lg xl:prose-2xl dark:prose-invert mx-auto h-full w-full flex-1 overflow-auto outline-hidden',
           !editable || disabled ? 'pointer-events-none' : ''
         ),
       },
@@ -255,7 +255,7 @@ export function TipTapEditor({ content, onChange, placeholder = 'Start writing..
           <textarea
             value={htmlContent}
             onChange={handleHtmlChange}
-            className='absolute inset-0 w-full resize-none overflow-y-auto p-4 font-mono text-sm focus:outline-none'
+            className='absolute inset-0 w-full resize-none overflow-y-auto p-4 font-mono text-sm focus:outline-hidden'
             placeholder={t('html_placeholder')}
             disabled={disabled}
             readOnly={!editable || disabled}
@@ -264,7 +264,7 @@ export function TipTapEditor({ content, onChange, placeholder = 'Start writing..
           <textarea
             value={markdownContent}
             onChange={handleMarkdownChange}
-            className='absolute inset-0 w-full resize-none overflow-y-auto p-4 font-mono text-sm focus:outline-none'
+            className='absolute inset-0 w-full resize-none overflow-y-auto p-4 font-mono text-sm focus:outline-hidden'
             placeholder={t('markdown_placeholder')}
             disabled={disabled}
             readOnly={!editable || disabled}

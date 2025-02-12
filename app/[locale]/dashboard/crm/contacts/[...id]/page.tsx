@@ -302,7 +302,7 @@ export default function ContactIdPage() {
     <div className='container mx-auto min-h-[calc(100vh-4rem)] space-y-6 p-4 sm:p-6'>
       <div className='grid min-h-[calc(100vh-6rem)] grid-cols-1 gap-4 lg:grid-cols-3 lg:gap-6'>
         <div className='h-[calc(100vh-8rem)] lg:col-span-1'>
-          <div className='flex h-full flex-col rounded-lg border bg-card text-card-foreground shadow-sm'>
+          <div className='flex h-full flex-col rounded-lg border bg-card text-card-foreground shadow-xs'>
             <div className='flex-none border-b p-6'>
               <div className='flex items-start gap-4'>
                 <Avatar className='size-16'>
@@ -354,7 +354,7 @@ export default function ContactIdPage() {
                 </div>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <button type='button' className='my-1 text-muted-foreground outline-none hover:text-foreground'>
+                    <button type='button' className='my-1 text-muted-foreground outline-hidden hover:text-foreground'>
                       <MoreHorizontal className='size-4' />
                     </button>
                   </DropdownMenuTrigger>

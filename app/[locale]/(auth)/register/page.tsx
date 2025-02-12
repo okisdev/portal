@@ -80,7 +80,7 @@ export default function RegisterPage() {
 
         <div className='space-y-1'>
           <Label className='mb-1 block font-medium text-foreground text-sm'>{t('email')}</Label>
-          <input type='email' {...register('email')} className='w-full rounded-lg border bg-background p-2 focus:outline-none focus:ring-2 focus:ring-ring' placeholder={t('email_placeholder')} />
+          <input type='email' {...register('email')} className='w-full rounded-lg border bg-background p-2 focus:outline-hidden focus:ring-2 focus:ring-ring' placeholder={t('email_placeholder')} />
           {errors.email && <p className='mt-1 text-destructive text-sm'>{errors.email.message}</p>}
         </div>
 
@@ -89,7 +89,7 @@ export default function RegisterPage() {
           <input
             type='password'
             {...register('password')}
-            className='w-full rounded-lg border bg-background p-2 focus:outline-none focus:ring-2 focus:ring-ring'
+            className='w-full rounded-lg border bg-background p-2 focus:outline-hidden focus:ring-2 focus:ring-ring'
             placeholder={t('create_a_password')}
           />
           {errors.password && <p className='mt-1 text-destructive text-sm'>{errors.password.message}</p>}
