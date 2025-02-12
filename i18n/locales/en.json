@@ -588,5 +588,10 @@
   "will_renew_at": "Will renew at {date}",
   "workspace": "Workspace",
   "write_a_reply": "Write a reply... Use @ to mention someone",
-  "you": "You"
+  "you": "You",
+  "please_enter_a_message": "Please enter a message",
+  "please_enter_a_subject": "Please enter a subject",
+  "please_select_a_schedule_date": "Please select a schedule date",
+  "contact_does_not_have_a_phone_number": "Contact does not have a phone number",
+  "compose_email": "Compose email"
 }

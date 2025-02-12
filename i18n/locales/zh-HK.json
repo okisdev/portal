@@ -588,5 +588,10 @@
   "will_renew_at": "將在 {date} 續訂",
   "workspace": "工作區",
   "write_a_reply": "寫回覆...使用 @ 提及他人",
-  "you": "您"
+  "you": "您",
+  "compose_email": "撰寫電子郵件",
+  "contact_does_not_have_a_phone_number": "聯繫人沒有電話號碼",
+  "please_enter_a_message": "請輸入消息",
+  "please_enter_a_subject": "請輸入一個主題",
+  "please_select_a_schedule_date": "請選擇時間表日期"
 }
