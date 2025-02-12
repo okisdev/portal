@@ -593,5 +593,6 @@
   "contact_does_not_have_a_phone_number": "聯繫人沒有電話號碼",
   "please_enter_a_message": "請輸入消息",
   "please_enter_a_subject": "請輸入一個主題",
-  "please_select_a_schedule_date": "請選擇時間表日期"
+  "please_select_a_schedule_date": "請選擇時間表日期",
+  "invalid_phone_number": "無效的電話號碼：{number}"
 }
