@@ -168,7 +168,7 @@ export const calendarRouter = createTRPCRouter({
         .where(and(eq(calendarEventParticipant.eventId, input.id), eq(calendarEventParticipant.participantType, 'contact')))
         .then((rows) => rows[0]);
 
-      const result = await ctx.db
+      const [result] = await ctx.db
         .update(calendarEvent)
         .set({
           title: input.title,
@@ -178,6 +178,12 @@ export const calendarRouter = createTRPCRouter({
         })
         .where(eq(calendarEvent.id, input.id))
         .returning();
+
+      const thisContact = await ctx.db
+        .select()
+        .from(contact)
+        .where(eq(contact.id, participant?.participantId ?? ''))
+        .then((rows) => rows[0]);
 
       if (participant?.participantId) {
         // Log meeting update activity
@@ -189,16 +195,19 @@ export const calendarRouter = createTRPCRouter({
           initiatorType: 'user',
           initiatorId: ctx.session?.user.id,
           metadata: {
-            eventId: input.id,
-            title: input.title,
-            startAt: input.startAt,
-            endAt: input.endAt,
-            description: input.description,
+            contact: thisContact,
+            event: result,
+            oldStartAt: input.startAt,
+            newStartAt: input.startAt,
+            oldEndAt: input.endAt,
+            newEndAt: input.endAt,
+            oldDescription: input.description,
+            newDescription: input.description,
           },
         });
       }
 
-      return result[0];
+      return result;
     }),
 
   deleteEvent: protectedProcedure.input(z.object({ id: z.string() })).mutation(async ({ ctx, input }) => {
@@ -241,13 +250,13 @@ export const calendarRouter = createTRPCRouter({
         contactId: participant.participantId,
         type: 'ENGAGEMENT',
         subType: 'MEETING_CANCELLED',
-        description: `Meeting "${event.title}" scheduled for ${new Date(event.startAt).toLocaleString()} was cancelled.`,
         initiatorType: 'user',
         initiatorId: ctx.session?.user.id,
         metadata: {
-          eventId: event.id,
-          title: event.title,
+          contact: participant,
+          event: event,
           startAt: event.startAt,
+          endAt: event.endAt,
         },
       });
     }
@@ -323,11 +332,11 @@ export const calendarRouter = createTRPCRouter({
   createAppointment: protectedProcedure.input(appointmentSchema).mutation(async ({ ctx, input }) => {
     const { title, description, startAt, endAt, contactId } = input;
 
-    const contactStatus = await ctx.db
-      .select({ status: contact.status })
+    const thisContact = await ctx.db
+      .select()
       .from(contact)
       .where(eq(contact.id, contactId))
-      .then((rows) => rows[0]?.status);
+      .then((rows) => rows[0]);
 
     // Create the calendar event
     const [event] = await ctx.db
@@ -352,7 +361,7 @@ export const calendarRouter = createTRPCRouter({
       })
       .returning();
 
-    if (contactStatus === 'lead') {
+    if (thisContact.status === 'lead') {
       await ctx.db.update(contact).set({ status: 'appointment' }).where(eq(contact.id, contactId));
     }
 
@@ -370,15 +379,15 @@ export const calendarRouter = createTRPCRouter({
       contactId,
       type: 'ENGAGEMENT',
       subType: 'MEETING_SCHEDULED',
-      description: `Meeting "${title}" scheduled for ${new Date(startAt).toLocaleString()}${description ? ` - ${description}` : ''}`,
-      initiatorType: 'user',
-      initiatorId: ctx.session?.user.id,
       metadata: {
-        eventId: event.id,
+        contact: thisContact,
+        event: event,
         startAt,
         endAt,
         description,
       },
+      initiatorType: 'user',
+      initiatorId: ctx.session?.user.id,
     });
 
     return event;

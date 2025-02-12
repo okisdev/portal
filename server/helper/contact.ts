@@ -7,7 +7,7 @@ export const createContactActivityHelper = async (
     contactId: string;
     type: ActivityType;
     subType: ActivitySubType;
-    description: string;
+    description?: string | null;
     initiatorType?: 'user' | 'contact' | 'system';
     initiatorId?: string;
     metadata?: Record<string, any>;
@@ -20,7 +20,7 @@ export const createContactActivityHelper = async (
     subType: input.subType,
     initiatorType: input.initiatorType || 'system',
     initiatorId: input.initiatorId || ctx.session?.user.id,
-    description: input.description,
+    description: input.description || null,
     metadata: input.metadata ? JSON.stringify(input.metadata) : null,
   });
 };

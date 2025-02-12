@@ -51,8 +51,10 @@ export const activitySubTypeSchema = z.enum([
   'PRIORITY_CHANGED',
 
   // Date Related
-  'LAST_CONTACTED',
-  'NEXT_FOLLOW_UP',
+  'LAST_CONTACTED_UPDATED',
+  'LAST_CONTACTED_REMOVED',
+  'NEXT_FOLLOW_UP_UPDATED',
+  'NEXT_FOLLOW_UP_REMOVED',
 
   // Engagement
   'MEETING_SCHEDULED',
@@ -68,9 +70,10 @@ export const activitySubTypeSchema = z.enum([
 
   // Team Management
   'TEAM_CREATED',
-  'TEAM_ASSIGNED',
-  'TEAM_REMOVED',
   'TEAM_UPDATED',
+  'TEAM_DELETED',
+  'TEAM_CONTACT_ASSIGNED',
+  'TEAM_CONTACT_REMOVED',
 
   // Campaign Management
   'CAMPAIGN_ASSIGNED',

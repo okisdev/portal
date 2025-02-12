@@ -310,8 +310,10 @@ export const contactActivity = pgTable('portal_contactActivity', {
       'PRIORITY_CHANGED',
 
       // Date Related
-      'LAST_CONTACTED',
-      'NEXT_FOLLOW_UP',
+      'LAST_CONTACTED_UPDATED',
+      'LAST_CONTACTED_REMOVED',
+      'NEXT_FOLLOW_UP_UPDATED',
+      'NEXT_FOLLOW_UP_REMOVED',
 
       // Engagement
       'MEETING_SCHEDULED',
@@ -327,9 +329,10 @@ export const contactActivity = pgTable('portal_contactActivity', {
 
       // Team Management
       'TEAM_CREATED',
-      'TEAM_ASSIGNED',
-      'TEAM_REMOVED',
       'TEAM_UPDATED',
+      'TEAM_DELETED',
+      'TEAM_CONTACT_ASSIGNED',
+      'TEAM_CONTACT_REMOVED',
 
       // Campaign Management
       'CAMPAIGN_ASSIGNED',
@@ -697,8 +700,10 @@ export const teamActivity = pgTable('portal_teamActivity', {
       'PRIORITY_CHANGED',
 
       // Date Related
-      'LAST_CONTACTED',
-      'NEXT_FOLLOW_UP',
+      'LAST_CONTACTED_UPDATED',
+      'LAST_CONTACTED_REMOVED',
+      'NEXT_FOLLOW_UP_UPDATED',
+      'NEXT_FOLLOW_UP_REMOVED',
 
       // Engagement
       'MEETING_SCHEDULED',
@@ -714,9 +719,10 @@ export const teamActivity = pgTable('portal_teamActivity', {
 
       // Team Management
       'TEAM_CREATED',
-      'TEAM_ASSIGNED',
-      'TEAM_REMOVED',
       'TEAM_UPDATED',
+      'TEAM_DELETED',
+      'TEAM_CONTACT_ASSIGNED',
+      'TEAM_CONTACT_REMOVED',
 
       // Campaign Management
       'CAMPAIGN_ASSIGNED',
