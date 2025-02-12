@@ -129,12 +129,12 @@ export default function SitePage() {
                 <Input id='siteDomain' placeholder='portal' value={siteDomain} onChange={(e) => setSiteDomain(e.target.value)} />
               </div>
               <div className='space-y-2'>
-                <Label htmlFor='supportEmailDomain'>{t('support_email_domain')}</Label>
+                <Label htmlFor='supportEmailDomain'>{t('support_email_domains')}</Label>
                 <Input id='supportEmailDomain' placeholder='support.portal.com, help.portal.com' value={supportEmailDomain} onChange={handleSupportEmailDomainChange} />
-                <p className='text-sm text-muted-foreground'>{t('support_email_domains_description')}</p>
+                <p className='text-muted-foreground text-sm'>{t('support_email_domains_description')}</p>
               </div>
               <Button onClick={handleSaveChanges} disabled={isLoading}>
-                {isLoading ? 'Saving...' : t('save_changes')}
+                {isLoading ? t('saving') : t('save_changes')}
               </Button>
             </CardContent>
           </Card>
