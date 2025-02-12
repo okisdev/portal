@@ -5,13 +5,16 @@ import { ColorBadge } from '@/components/shared/color-badge';
 import { Combobox } from '@/components/shared/combobox';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Progress } from '@/components/ui/progress';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { sources } from '@/data/data';
 import { type Status, statusSchema } from '@/lib/schema';
 import { generateUUID } from '@/lib/utils';
 import { api } from '@/utils/trpc/client';
 import { Download, Upload } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import Papa from 'papaparse';
 import { useRef, useState } from 'react';
@@ -24,10 +27,13 @@ interface ContactFormData {
   phone?: string;
   gender?: string;
   company?: string;
+  companyId?: string | null;
   jobTitle?: string;
   status: Status;
   source?: string;
   remark?: string;
+  campaignCode?: string;
+  campaignCodes?: string[];
 }
 
 interface DuplicateContact {
@@ -40,17 +46,24 @@ interface DuplicateContact {
 
 export default function ContactUpload() {
   const router = useRouter();
+  const t = useTranslations();
   const [isLoading, setIsLoading] = useState(false);
+  const [isProcessingCsv, setIsProcessingCsv] = useState(false);
   const [csvData, setCsvData] = useState<ContactFormData[]>([]);
   const [showPreview, setShowPreview] = useState(false);
   const [duplicates, setDuplicates] = useState<DuplicateContact[]>([]);
   const [hasDuplicates, setHasDuplicates] = useState(false);
   const [isCancelling, setIsCancelling] = useState(false);
   const cancelUploadRef = useRef(false);
+  const [selectedCampaignCode, setSelectedCampaignCode] = useState<string | undefined>(undefined);
+  const [progress, setProgress] = useState(0);
+  const [progressStatus, setProgressStatus] = useState('');
 
   const checkExistingContacts = api.contact.checkExistingContacts.useQuery({ emails: csvData.map((contact) => contact.email) }, { enabled: false });
+  const { data: campaigns } = api.marketing.getActiveCampaigns.useQuery();
+  const { data: companies } = api.company.getAllCompanies.useQuery();
 
-  const createContact = api.contact.createContact.useMutation({
+  const createContacts = api.contact.createContacts.useMutation({
     onError: (error) => {
       toast.error(error.message);
     },
@@ -96,8 +109,8 @@ export default function ContactUpload() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Create a promise that wraps the Papa.parse operation
-    const parsePromise = new Promise<ContactFormData[]>((resolve, reject) => {
+    setIsProcessingCsv(true);
+    try {
       Papa.parse(file, {
         header: true,
         complete: async (results) => {
@@ -105,6 +118,16 @@ export default function ContactUpload() {
             const parsedData = (results.data as any[])
               .filter((row) => row.name || row.firstName || row.email)
               .map((row) => {
+                const campaignCodes: string[] = [];
+                if (row.campaignCode) {
+                  const codes = row.campaignCode.split(',').map((code: string) => code.trim());
+                  for (const code of codes) {
+                    if (campaigns?.some((c) => c.campaignCode === code) && !campaignCodes.includes(code)) {
+                      campaignCodes.push(code);
+                    }
+                  }
+                }
+
                 if (row.firstName || row.lastName) {
                   return {
                     firstName: row.firstName || '',
@@ -115,6 +138,8 @@ export default function ContactUpload() {
                     status: row.status || 'lead',
                     source: row.source || '',
                     remark: row.remark || '',
+                    campaignCodes,
+                    campaignCode: campaignCodes.join(',') || '', // Store all campaign codes
                   };
                 }
 
@@ -128,9 +153,17 @@ export default function ContactUpload() {
                   status: row.status || 'lead',
                   source: row.source || '',
                   remark: row.remark || '',
+                  campaignCodes,
+                  campaignCode: campaignCodes.join(',') || '', // Store all campaign codes
                 };
               })
               .filter((row) => !isRowEmpty(row));
+
+            // Set the global campaign code if any row has a campaign code
+            const firstCampaignCode = parsedData.find((row) => row.campaignCodes?.length)?.campaignCodes?.[0];
+            if (firstCampaignCode) {
+              setSelectedCampaignCode(firstCampaignCode);
+            }
 
             setCsvData(parsedData);
 
@@ -177,28 +210,40 @@ export default function ContactUpload() {
             }
 
             setShowPreview(true);
-            resolve(parsedData);
+            toast.success(t('number_of_rows_processed_successfully', { count: parsedData.length }));
           } catch (error) {
-            reject(error);
+            console.error('Error processing CSV:', error);
+            toast.error('Failed to process CSV file');
+          } finally {
+            setIsProcessingCsv(false);
           }
         },
         error: (error) => {
-          reject(error);
+          console.error('Error parsing CSV:', error);
+          toast.error('Failed to parse CSV file');
+          setIsProcessingCsv(false);
         },
       });
-    });
-
-    await toast.promise(parsePromise, {
-      loading: 'Processing CSV file...',
-      success: (data: ContactFormData[]) => `Successfully processed ${data.length} contacts`,
-      error: 'Failed to process CSV file',
-    });
+    } catch (error) {
+      console.error('Error handling CSV upload:', error);
+      toast.error('Failed to handle CSV upload');
+      setIsProcessingCsv(false);
+    }
   };
 
   const handleCsvEdit = (index: number, field: keyof ContactFormData, value: string) => {
     setCsvData((prev) => {
       const newData = [...prev];
-      newData[index] = { ...newData[index], [field]: value };
+      if (field === 'company') {
+        const selectedCompany = companies?.find((c) => c.name === value);
+        newData[index] = {
+          ...newData[index],
+          company: selectedCompany ? selectedCompany.name : value,
+          companyId: selectedCompany?.id || null,
+        };
+      } else {
+        newData[index] = { ...newData[index], [field]: value };
+      }
       return newData;
     });
   };
@@ -212,65 +257,70 @@ export default function ContactUpload() {
     e.preventDefault();
     setIsLoading(true);
     cancelUploadRef.current = false;
-
-    const processBatch = async (contacts: typeof csvData, startIdx: number, batchSize: number, totalContacts: number) => {
-      if (cancelUploadRef.current) {
-        throw new Error('Upload cancelled');
-      }
-
-      const endIdx = Math.min(startIdx + batchSize, contacts.length);
-      const batch = contacts.slice(startIdx, endIdx);
-
-      await Promise.all(
-        batch.map((contact) =>
-          createContact.mutateAsync({
-            firstName: contact.firstName,
-            lastName: contact.lastName,
-            name: formatName(contact.firstName, contact.lastName),
-            email: contact.email,
-            phone: contact.phone || '',
-            company: contact.company || '',
-            source: contact.source || '',
-            remark: contact.remark || '',
-          })
-        )
-      );
-
-      return endIdx;
-    };
+    setProgress(0);
+    setProgressStatus('');
 
     try {
       const nonDuplicateContacts = csvData.filter((contact) => !isRowEmpty(contact) && !duplicates.some((d) => d.email === contact.email));
-
-      const batchSize = 10;
-      let processedCount = 0;
       const totalContacts = nonDuplicateContacts.length;
+      const BATCH_SIZE = 25;
+      let processedCount = 0;
+      const allResults = {
+        created: [] as any[],
+        existing: [] as any[],
+        errors: [] as any[],
+      };
 
-      const toastId = toast.loading(`Processing contacts... (0/${totalContacts})`);
+      setProgressStatus(t('processing_contacts'));
+      const toastId = toast.loading(t('processing_contacts'));
 
-      while (processedCount < totalContacts && !cancelUploadRef.current) {
-        processedCount = await processBatch(nonDuplicateContacts, processedCount, batchSize, totalContacts);
-        toast.loading(`Processing contacts... (${processedCount}/${totalContacts})`, { id: toastId });
+      // Process contacts in batches
+      for (let i = 0; i < nonDuplicateContacts.length; i += BATCH_SIZE) {
+        if (cancelUploadRef.current) {
+          setProgressStatus('Import cancelled');
+          toast.error('Import cancelled', { id: toastId });
+          return;
+        }
+
+        const batch = nonDuplicateContacts.slice(i, i + BATCH_SIZE);
+        const result = await createContacts.mutateAsync({
+          contacts: batch,
+        });
+
+        // Accumulate results
+        allResults.created.push(...result.created);
+        allResults.existing.push(...result.existing);
+        allResults.errors.push(...result.errors);
+
+        // Update progress
+        processedCount += batch.length;
+        const percentage = (processedCount / totalContacts) * 100;
+        setProgress(percentage);
+        setProgressStatus(t('processed_number_of_total_contacts', { count: processedCount, total: totalContacts }));
       }
 
-      if (cancelUploadRef.current) {
-        toast.error(`Upload cancelled. ${processedCount} contacts were processed.`, { id: toastId });
+      if (allResults.errors.length > 0) {
+        console.error('Some contacts failed to create:', allResults.errors);
+        setProgressStatus(`Failed to create ${allResults.errors.length} contacts`);
+        toast.error(`${allResults.errors.length} contacts failed to create. Check console for details.`, { id: toastId });
       } else {
+        setProgressStatus(t('import_completed_successfully'));
         toast.success(
-          totalContacts !== csvData.length ? `Created ${totalContacts} contacts (${csvData.length - totalContacts} duplicates skipped)` : `Successfully created ${totalContacts} contacts`,
-          { id: toastId }
+          `${t('number_of_contacts_created', { count: allResults.created.length })} ${
+            allResults.existing.length > 0 ? ` (${t('number_of_duplicates_contacts_skipped', { count: allResults.existing.length })})` : ''
+          }`,
+          {
+            id: toastId,
+          }
         );
       }
 
       router.push('/dashboard/crm/contacts');
       router.refresh();
     } catch (error: any) {
-      console.error('Error creating contact:', error);
-      if (error.message === 'Upload cancelled') {
-        toast.error('Upload cancelled by user');
-      } else {
-        toast.error('Failed to create contacts');
-      }
+      console.error('Error creating contacts:', error);
+      setProgressStatus('Import failed');
+      toast.error('Failed to create contacts');
     } finally {
       setIsLoading(false);
       setIsCancelling(false);
@@ -300,52 +350,130 @@ export default function ContactUpload() {
     link.click();
   };
 
+  const downloadTemplate = () => {
+    // Create template data with example row
+    const templateData = [
+      {
+        firstName: '',
+        lastName: '',
+        email: '',
+        phone: '',
+        company: '',
+        status: 'lead',
+        source: '',
+        remark: '',
+        campaignCode: 'CAMP1,CAMP2,CAMP3', // Example of multiple campaign codes
+      },
+    ];
+
+    const csv = Papa.unparse(templateData);
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = 'contact_import_template.csv';
+    link.click();
+  };
+
   return (
     <div className='space-y-4'>
-      <div className='mb-6 flex gap-4'>
-        <Button variant='outline' className='h-8 gap-2' onClick={() => document.getElementById('csvUpload')?.click()}>
-          <Upload className='h-4 w-4' />
-          Upload CSV
-        </Button>
+      <div className='flex gap-4'>
+        {!showPreview && (
+          <>
+            <Button variant='outline' className='h-8 gap-2' onClick={() => document.getElementById('csvUpload')?.click()} disabled={isProcessingCsv}>
+              <Upload className='h-4 w-4' />
+              {isProcessingCsv ? t('processing') : t('upload_csv')}
+            </Button>
+            {!isProcessingCsv && (
+              <Button variant='outline' className='h-8 gap-2' onClick={downloadTemplate}>
+                <Download className='h-4 w-4' />
+                {t('download_template')}
+              </Button>
+            )}
+          </>
+        )}
         <input id='csvUpload' type='file' accept='.csv' className='hidden' onChange={handleCsvUpload} />
       </div>
 
       {hasDuplicates && (
         <Banner
           variant='warning'
-          title='Duplicate Entries Detected'
-          description={`${duplicates.length} duplicate entries were found. Please review before proceeding.`}
+          title={t('duplicate_entries_detected')}
+          description={t('duplicate_entries_detected_description', { count: duplicates.length })}
           action={{
-            label: 'Download Duplicate List',
+            label: t('download_duplicate_list'),
             icon: <Download className='mr-2 h-4 w-4' />,
             onClick: downloadDuplicates,
           }}
         />
       )}
 
+      {isProcessingCsv && (
+        <div className='space-y-4'>
+          <Skeleton className='h-10 w-full' />
+          <Skeleton className='h-10 w-full' />
+          <Skeleton className='h-10 w-full' />
+          <Skeleton className='h-10 w-full' />
+          <Skeleton className='h-10 w-full' />
+          <Skeleton className='h-10 w-full' />
+          <Skeleton className='h-10 w-full' />
+          <Skeleton className='h-10 w-full' />
+        </div>
+      )}
+
       {showPreview && (
         <div className='mb-6 space-y-4'>
           <div className='mt-6 flex gap-4'>
             {isLoading ? (
-              <Button type='button' variant='destructive' onClick={handleCancelUpload} disabled={isCancelling} className='w-full sm:w-auto'>
-                {isCancelling ? 'Cancelling...' : 'Cancel Upload'}
-              </Button>
+              <>
+                <div className='flex-1 space-y-2'>
+                  <Progress value={progress} className='w-full' />
+                  <p className='text-muted-foreground text-sm'>
+                    {progressStatus} {t('processing_time_description')}
+                  </p>
+                </div>
+                <Button type='button' variant='destructive' onClick={handleCancelUpload} disabled={isCancelling} className='shrink-0'>
+                  {isCancelling ? t('cancelling') : t('cancel_upload')}
+                </Button>
+              </>
             ) : (
               <>
-                <Button type='submit' disabled={isLoading} onClick={handleSubmit} className='w-full sm:w-auto'>
-                  Import Contacts
-                </Button>
-                <Button
-                  type='button'
-                  variant='outline'
-                  onClick={() => {
-                    setShowPreview(false);
-                    setCsvData([]);
-                  }}
-                  className='w-full sm:w-auto'
-                >
-                  Cancel Import
-                </Button>
+                <div className='flex flex-1 items-center gap-4'>
+                  <div className='w-64'>
+                    <Combobox
+                      value={selectedCampaignCode ?? ''}
+                      onChange={(value) => setSelectedCampaignCode(value)}
+                      items={campaigns?.map((c) => c.campaignCode) ?? []}
+                      placeholder={t('select_campaign_optional')}
+                      searchPlaceholder={t('search_campaigns')}
+                      groupHeading={t('campaigns')}
+                      allowCustom={false}
+                      renderItem={(code) => {
+                        const campaign = campaigns?.find((c) => c.campaignCode === code);
+                        return campaign?.name ?? code;
+                      }}
+                    />
+                  </div>
+                  <Button type='submit' size='sm' disabled={isLoading} onClick={handleSubmit}>
+                    {t('import_contacts')}
+                  </Button>
+                  <Button
+                    type='button'
+                    size='sm'
+                    variant='outline'
+                    onClick={() => {
+                      setShowPreview(false);
+                      setCsvData([]);
+                      setDuplicates([]);
+                      setHasDuplicates(false);
+                      setSelectedCampaignCode(undefined);
+                      // Reset the file input
+                      const fileInput = document.getElementById('csvUpload') as HTMLInputElement;
+                      if (fileInput) fileInput.value = '';
+                    }}
+                  >
+                    {t('reset')}
+                  </Button>
+                </div>
               </>
             )}
           </div>
@@ -354,14 +482,15 @@ export default function ContactUpload() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>First Name</TableHead>
-                  <TableHead>Last Name</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Phone</TableHead>
-                  <TableHead>Company</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Source</TableHead>
-                  <TableHead>Remark</TableHead>
+                  <TableHead>{t('first_name')}</TableHead>
+                  <TableHead>{t('last_name')}</TableHead>
+                  <TableHead>{t('email')}</TableHead>
+                  <TableHead>{t('phone')}</TableHead>
+                  <TableHead>{t('company')}</TableHead>
+                  <TableHead>{t('status')}</TableHead>
+                  <TableHead>{t('source')}</TableHead>
+                  <TableHead>{t('campaign')}</TableHead>
+                  <TableHead>{t('remark')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -382,7 +511,18 @@ export default function ContactUpload() {
                         <Input value={row.phone} onChange={(e) => handleCsvEdit(index, 'phone', e.target.value)} />
                       </TableCell>
                       <TableCell>
-                        <Input value={row.company} onChange={(e) => handleCsvEdit(index, 'company', e.target.value)} />
+                        <Combobox
+                          value={row.company ?? ''}
+                          onChange={(value) => {
+                            const selectedCompany = companies?.find((c) => c.name === value);
+                            handleCsvEdit(index, 'company', selectedCompany ? selectedCompany.name : value);
+                          }}
+                          items={companies?.map((c) => c.name) || []}
+                          placeholder={t('select_company')}
+                          searchPlaceholder={t('search_company')}
+                          groupHeading={t('companies')}
+                          allowCustom={true}
+                        />
                       </TableCell>
                       <TableCell>
                         <Select value={row.status} onValueChange={(value) => handleCsvEdit(index, 'status', value)}>
@@ -403,9 +543,24 @@ export default function ContactUpload() {
                           value={row.source ?? ''}
                           onChange={(value) => handleCsvEdit(index, 'source', value)}
                           items={sources}
-                          placeholder='Select source...'
-                          searchPlaceholder='Search source...'
-                          groupHeading='Sources'
+                          placeholder={t('select_source')}
+                          searchPlaceholder={t('search_source')}
+                          groupHeading={t('sources')}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Combobox
+                          value={row.campaignCode ?? ''}
+                          onChange={(value) => handleCsvEdit(index, 'campaignCode', value)}
+                          items={campaigns?.map((c) => c.campaignCode) ?? []}
+                          placeholder={t('select_campaign')}
+                          searchPlaceholder={t('search_campaigns')}
+                          groupHeading={t('campaigns')}
+                          allowCustom={false}
+                          renderItem={(code) => {
+                            const campaign = campaigns?.find((c) => c.campaignCode === code);
+                            return campaign?.name ?? code;
+                          }}
                         />
                       </TableCell>
                       <TableCell>

@@ -1,4 +1,5 @@
 import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 import { AlertCircle } from 'lucide-react';
 import type { ReactNode } from 'react';
 
@@ -44,12 +45,12 @@ export function Banner({ title, description, variant = 'info', action }: BannerP
   const styles = variantStyles[variant];
 
   return (
-    <div className={`mb-4 rounded-lg border ${styles.container} p-4`}>
-      <div className='mb-2 flex items-center gap-2'>
-        <AlertCircle className={`h-5 w-5 ${styles.icon}`} />
-        <h3 className={`font-medium ${styles.title}`}>{title}</h3>
+    <div className={cn('space-y-2 rounded-lg border p-4', styles.container)}>
+      <div className='flex items-center gap-2'>
+        <AlertCircle className={cn('h-5 w-5', styles.icon)} />
+        <h3 className={cn('font-medium', styles.title)}>{title}</h3>
       </div>
-      {description && <p className={`mb-2 text-sm ${styles.description}`}>{description}</p>}
+      {description && <p className={cn('text-sm', styles.description)}>{description}</p>}
       {action && (
         <Button variant='outline' size='sm' onClick={action.onClick}>
           {action.icon}

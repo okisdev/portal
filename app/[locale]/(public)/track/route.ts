@@ -5,7 +5,7 @@ import { stripe } from '@/lib/payment';
 import { eq } from 'drizzle-orm';
 import { type NextRequest, NextResponse } from 'next/server';
 
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+const APP_URL = process.env.NODE_ENV === 'production' ? process.env.NEXT_PUBLIC_APP_URL : 'http://localhost:3000';
 
 export async function GET(request: NextRequest) {
   const { searchParams } = request.nextUrl;
@@ -36,8 +36,8 @@ export async function GET(request: NextRequest) {
     await database.insert(contactActivity).values({
       contactId: track.contactId,
       userId: track.userId,
-      type: 'PAYMENT_LINK_CLICKED',
-      title: 'Payment link clicked',
+      type: 'PAYMENT',
+      subType: 'PAYMENT_LINK_CLICKED',
       description: `Payment link for ${track.amount / 100} ${track.currency.toUpperCase()} was clicked`,
       metadata: JSON.stringify({
         trackId: track.id,

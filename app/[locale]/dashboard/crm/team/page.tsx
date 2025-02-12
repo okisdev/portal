@@ -1,31 +1,60 @@
 'use client';
 
 import { ActionAlertDialog } from '@/components/shared/action-alert-dialog';
+import { Combobox } from '@/components/shared/combobox';
 import { PageHeader } from '@/components/shared/page-header';
+import { PaginationTable } from '@/components/shared/pagination-table';
 import { TableLoading } from '@/components/shared/table-loading';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { formatDate } from '@/lib/utils';
+import { formatDate } from '@/utils/date';
 import { api } from '@/utils/trpc/client';
+import {
+  type ColumnDef,
+  type ColumnFiltersState,
+  type SortingState,
+  type VisibilityState,
+  getCoreRowModel,
+  getFilteredRowModel,
+  getPaginationRowModel,
+  getSortedRowModel,
+  useReactTable,
+} from '@tanstack/react-table';
 import { MoreHorizontal, Pencil, Plus, Trash, Users } from 'lucide-react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { Check } from 'lucide-react';
+import { useTranslations } from 'next-intl';
+import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
-export default function TeamPage() {
-  const router = useRouter();
-  const searchParams = useSearchParams();
+type TeamWithCount = {
+  id: string;
+  name: string;
+  description: string | null;
+  createdAt: Date;
+  createdBy: string;
+  contacts: number;
+  company: { id: string; name: string } | null;
+};
 
-  const mode = searchParams.get('mode');
+export default function CRMTeamsPage() {
+  const router = useRouter();
+  const t = useTranslations();
 
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [newTeamName, setNewTeamName] = useState('');
   const [newTeamDescription, setNewTeamDescription] = useState('');
   const [teamToDelete, setTeamToDelete] = useState<string | null>(null);
+
+  const [sorting, setSorting] = useState<SortingState>([]);
+  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
+  const [rowSelection, setRowSelection] = useState({});
+  const [selectedColumn, setSelectedColumn] = useState('');
 
   const utils = api.useUtils();
   const { data: teams, isLoading } = api.team.getAllTeams.useQuery();
@@ -42,7 +71,7 @@ export default function TeamPage() {
   const deleteTeam = api.team.deleteTeam.useMutation({
     onSuccess: () => {
       utils.team.getAllTeams.invalidate();
-      toast.success('Team deleted successfully');
+      toast.success(t('team_deleted_successfully'));
     },
     onError: (error) => {
       toast.error(error.message);
@@ -64,21 +93,125 @@ export default function TeamPage() {
     setTeamToDelete(null);
   };
 
+  const tableColumns: ColumnDef<TeamWithCount>[] = [
+    {
+      id: 'select',
+      header: ({ table }) => (
+        <Checkbox
+          checked={table.getIsAllPageRowsSelected() || (table.getIsSomePageRowsSelected() && 'indeterminate')}
+          onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+          aria-label='Select all'
+        />
+      ),
+      cell: ({ row }) => <Checkbox checked={row.getIsSelected()} onCheckedChange={(value) => row.toggleSelected(!!value)} aria-label='Select row' />,
+      enableSorting: false,
+      enableHiding: false,
+    },
+    {
+      accessorKey: 'name',
+      header: t('team_name'),
+      cell: ({ row }) => (
+        <div className='flex items-center gap-2'>
+          <Users className='size-4 text-muted-foreground' />
+          {row.getValue('name')}
+        </div>
+      ),
+    },
+    {
+      accessorKey: 'description',
+      header: t('description'),
+    },
+    {
+      accessorKey: 'contacts',
+      header: t('contacts'),
+    },
+    {
+      accessorKey: 'company',
+      header: t('company'),
+      cell: ({ row }) => {
+        const company = row.original.company;
+        return company ? company.name : '-';
+      },
+    },
+    {
+      accessorKey: 'createdAt',
+      header: t('created'),
+      cell: ({ row }) => formatDate(new Date(row.getValue('createdAt'))),
+    },
+    {
+      id: 'actions',
+      cell: ({ row }) => (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+            <Button variant='ghost' className='h-8 w-8 p-0'>
+              <span className='sr-only'>Open menu</span>
+              <MoreHorizontal className='h-4 w-4' />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align='end'>
+            <DropdownMenuItem
+              onClick={(e) => {
+                e.stopPropagation();
+                router.push(`/dashboard/crm/team/${row.original.id}?mode=edit`);
+              }}
+              className='cursor-pointer'
+            >
+              <Pencil className='mr-2 h-4 w-4' />
+              {t('edit_team')}
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              className='cursor-pointer text-destructive'
+              onClick={(e) => {
+                e.stopPropagation();
+                setTeamToDelete(row.original.id);
+              }}
+            >
+              <Trash className='mr-2 h-4 w-4' />
+              {t('delete_team')}
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      ),
+    },
+  ];
+
+  const table = useReactTable({
+    data: teams ?? [],
+    columns: tableColumns,
+    onSortingChange: setSorting,
+    onColumnFiltersChange: setColumnFilters,
+    getCoreRowModel: getCoreRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    onColumnVisibilityChange: setColumnVisibility,
+    onRowSelectionChange: setRowSelection,
+    initialState: {
+      pagination: {
+        pageSize: 13,
+      },
+    },
+    state: {
+      sorting,
+      columnFilters,
+      columnVisibility,
+      rowSelection,
+    },
+  });
+
   if (isLoading) {
     return (
       <div className='space-y-4 p-4'>
         <PageHeader
-          title='Teams'
-          description='Manage teams and their contacts.'
+          title={t('teams')}
+          description={t('teams_description')}
           right={
             <Button variant='outline' className='h-8' disabled>
-              <Plus className='mr-2 size-4' /> Create Team
+              <Plus className='mr-2 size-4' /> {t('create_team')}
             </Button>
           }
         />
-        <div className='rounded-lg border bg-card text-card-foreground'>
-          <TableLoading columnCount={4} rowCount={5} />
-        </div>
+        <TableLoading columnCount={5} rowCount={5} />
       </div>
     );
   }
@@ -86,110 +219,85 @@ export default function TeamPage() {
   return (
     <div className='space-y-4 p-4'>
       <PageHeader
-        title='Teams'
-        description='Manage teams and their contacts.'
+        title={t('teams')}
+        subtitle={!isLoading ? `(${t('total_number_teams', { count: teams?.length ?? 0 })})` : undefined}
+        description={t('teams_description')}
         right={
           <Button variant='outline' className='h-8' onClick={() => setIsCreateModalOpen(true)}>
-            <Plus className='mr-2 size-4' /> Create Team
+            <Plus className='mr-2 size-4' /> {t('create_team')}
           </Button>
         }
       />
 
-      <div className='rounded-lg border bg-card text-card-foreground'>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Team Name</TableHead>
-              <TableHead>Description</TableHead>
-              <TableHead>Contacts</TableHead>
-              <TableHead>Created</TableHead>
-              <TableHead className='text-right'>Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {teams?.map((team) => (
-              <TableRow key={team.id} onClick={() => router.push(`/dashboard/crm/team/${team.id}`)} className='cursor-pointer hover:bg-muted'>
-                <TableCell className='font-medium'>
-                  <div className='flex items-center gap-2'>
-                    <Users className='size-4 text-muted-foreground' />
-                    {team.name}
-                  </div>
-                </TableCell>
-                <TableCell>{team.description}</TableCell>
-                <TableCell>{team.contacts}</TableCell>
-                <TableCell>{formatDate(new Date(team.createdAt))}</TableCell>
-                <TableCell className='text-right'>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant='ghost' className='h-8 w-8 p-0'>
-                        <span className='sr-only'>Open menu</span>
-                        <MoreHorizontal className='h-4 w-4' />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align='end'>
-                      <DropdownMenuItem
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          router.push(`/dashboard/crm/team/${team.id}?mode=edit`);
-                        }}
-                        className='cursor-pointer'
-                      >
-                        <Pencil className='mr-2 h-4 w-4' />
-                        Edit team
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        className='cursor-pointer text-destructive'
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setTeamToDelete(team.id);
-                        }}
-                      >
-                        <Trash className='mr-2 h-4 w-4' />
-                        Delete team
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-          <TableFooter>
-            <TableRow>
-              <TableCell colSpan={5} className='text-right'>
-                <p className='text-neutral-500 text-sm'>Total {teams?.length} teams</p>
-              </TableCell>
-            </TableRow>
-          </TableFooter>
-        </Table>
+      <div className='flex items-center py-4'>
+        <Input
+          placeholder={t('filter_teams')}
+          value={(table.getColumn('name')?.getFilterValue() as string) ?? ''}
+          onChange={(event) => table.getColumn('name')?.setFilterValue(event.target.value)}
+          className='h-8 max-w-sm'
+        />
+        <Combobox
+          value={selectedColumn}
+          onChange={(value) => {
+            setSelectedColumn(value);
+            const column = table.getAllColumns().find((col) => col.id === value);
+            if (column) {
+              column.toggleVisibility(!column.getIsVisible());
+            }
+          }}
+          items={table
+            .getAllColumns()
+            .filter((column) => column.getCanHide())
+            .map((column) => column.id)}
+          placeholder={t('columns')}
+          searchPlaceholder={t('search_columns')}
+          emptyText={t('no_columns_found')}
+          groupHeading={t('available_columns')}
+          allowCustom={false}
+          renderItem={(item) => {
+            const column = table.getAllColumns().find((col) => col.id === item);
+            return (
+              <div className='flex w-full items-center justify-between'>
+                <span className='capitalize'>{item}</span>
+                {column?.getIsVisible() && <Check className='h-4 w-4' />}
+              </div>
+            );
+          }}
+          className='ml-2 w-48'
+          size='sm'
+          alwaysPlaceHolder={true}
+        />
       </div>
+
+      <PaginationTable table={table} columns={tableColumns} loading={isLoading} onRowClick={(row) => router.push(`/dashboard/crm/team/${row.id}`)} rowClassName='cursor-pointer' />
 
       <ActionAlertDialog
         open={!!teamToDelete}
         onOpenChange={(open) => !open && setTeamToDelete(null)}
         onConfirm={() => teamToDelete && handleDeleteTeam(teamToDelete)}
-        description='This action cannot be undone. This will permanently delete the team and remove all associated data.'
+        description={t('delete_site_description')}
       />
 
       <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
         <DialogContent className='max-h-[90vh] max-w-xl overflow-y-auto'>
           <DialogHeader>
-            <DialogTitle>Create New Team</DialogTitle>
+            <DialogTitle>{t('create_new_team')}</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleCreateTeam} className='space-y-4'>
             <div className='space-y-2'>
-              <Label>Team Name</Label>
+              <Label>{t('team_name')}</Label>
               <Input value={newTeamName} onChange={(e) => setNewTeamName(e.target.value)} placeholder='Enter team name...' />
             </div>
             <div className='space-y-2'>
-              <Label>Description</Label>
-              <Input value={newTeamDescription} onChange={(e) => setNewTeamDescription(e.target.value)} placeholder='Enter team description...' />
+              <Label>{t('description')}</Label>
+              <Input value={newTeamDescription} onChange={(e) => setNewTeamDescription(e.target.value)} placeholder={t('enter_team_description')} />
             </div>
             <div className='flex justify-end gap-2'>
               <Button type='button' variant='outline' onClick={() => setIsCreateModalOpen(false)}>
-                Cancel
+                {t('cancel')}
               </Button>
               <Button type='submit' disabled={createTeam.isPending}>
-                Create Team
+                {t('create_team')}
               </Button>
             </div>
           </form>

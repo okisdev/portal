@@ -3,8 +3,11 @@
 import { PageHeader } from '@/components/shared/page-header';
 import { PageLoading } from '@/components/shared/page-loading';
 import { useSession } from 'next-auth/react';
+import { useTranslations } from 'next-intl';
 
 export default function Dashboard() {
+  const t = useTranslations();
+
   const { data: session, status } = useSession();
 
   if (status === 'loading') {
@@ -13,7 +16,7 @@ export default function Dashboard() {
 
   return (
     <div className='space-y-4 p-4'>
-      <PageHeader title={`Welcome back, ${session?.user?.name}`} description='Welcome to your dashboard' />
+      <PageHeader title={t('welcome_back', { name: session?.user?.name })} description={t('welcome_description')} />
     </div>
   );
 }

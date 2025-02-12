@@ -1,97 +1,117 @@
-import { Calendar, Coins, Contact, File, Gift, Image, Link, Mail, Settings, Tornado, Users } from 'lucide-react';
+import { Building, Calendar, Contact, File, Gift, QrCode, Users } from 'lucide-react';
 
-export const personalItems = [
+export const workspaceItems = [
   {
+    id: 'calendar',
     title: 'Calendar',
-    url: '/dashboard/personal/calendar',
+    url: '/dashboard/workspace/calendar',
     icon: Calendar,
   },
-  {
-    title: 'Tasks',
-    url: '/dashboard/personal/tasks',
-    icon: Tornado,
-  },
+  // {
+  //   id: 'tasks',
+  //   title: 'Tasks',
+  //   url: '/dashboard/workspace/tasks',
+  //   icon: Tornado,
+  // },
 ];
 
 export const crmItems = [
   {
+    id: 'contacts',
     title: 'Contacts',
     url: '/dashboard/crm/contacts',
     icon: Contact,
   },
   {
+    id: 'teams',
     title: 'Teams',
     url: '/dashboard/crm/team',
     icon: Users,
   },
   {
-    title: 'Payments',
-    url: '/dashboard/crm/payments',
-    icon: Coins,
+    id: 'company',
+    title: 'Company',
+    url: '/dashboard/crm/company',
+    icon: Building,
   },
+  // {
+  //   title: 'Payments',
+  //   url: '/dashboard/crm/payments',
+  //   icon: Coins,
+  // },
 ];
 
 export const marketingItems = [
   {
+    id: 'campaigns',
     title: 'Campaigns',
     url: '/dashboard/marketing/campaigns',
     icon: Gift,
   },
-  {
-    title: 'Payment Links',
-    url: '/dashboard/marketing/payment-links',
-    icon: Link,
-  },
-  {
-    title: 'Subscription Management',
-    url: '/dashboard/marketing/subscription-management',
-    icon: Link,
-  },
+  // {
+  //   title: 'Payment Links',
+  //   url: '/dashboard/marketing/payment-links',
+  //   icon: Link,
+  // },
+  // {
+  //   title: 'Subscription Management',
+  //   url: '/dashboard/marketing/subscription-management',
+  //   icon: Link,
+  // },
 ];
 
 export const resourcesItems = [
   {
+    id: 'content',
     title: 'Content',
     url: '/dashboard/resource/content',
     icon: File,
   },
+  // {
+  //   title: 'Emails',
+  //   url: '/dashboard/resource/emails',
+  //   icon: Mail,
+  // },
+  // {
+  //   title: 'Media',
+  //   url: '/dashboard/resource/media',
+  //   icon: Image,
+  // },
+];
+
+export const toolsItems = [
   {
-    title: 'Emails',
-    url: '/dashboard/resource/emails',
-    icon: Mail,
-  },
-  {
-    title: 'Media',
-    url: '/dashboard/resource/media',
-    icon: Image,
+    id: 'qrcode',
+    title: 'QR Code',
+    url: '/dashboard/tools/qrcode',
+    icon: QrCode,
   },
 ];
 
-export const teamItems = [
+export const siteItems = [
   {
+    id: 'overview',
     title: 'Overview',
-    url: '/dashboard/team',
+    url: '/dashboard/site',
     icon: Users,
-  },
-  {
-    title: 'Configuration',
-    url: '/dashboard/team/configuration',
-    icon: Settings,
   },
 ];
 
 export const languageItems = [
   {
+    id: 'en',
     title: 'English',
     value: 'en',
     flag: '🇺🇸',
   },
   {
+    id: 'zh-CN',
     title: '简体中文',
     value: 'zh-CN',
     flag: '🇨🇳',
   },
   {
+    id: 'zh-HK',
     title: '繁体中文',
     value: 'zh-HK',
     flag: '🇭🇰',

@@ -14,7 +14,10 @@
         "AUTH_SECRET",
         "DATABASE_URL",
         "STRIPE_KEY",
-        "NEXT_PUBLIC_APP_URL"
+        "NEXT_PUBLIC_APP_URL",
+        "WEBHOOK_VERIFY_TOKEN",
+        "META_GRAPH_API_TOKEN",
+        "WHATSAPP_PHONE_NUMBER_ID"
       ]
     },
     "check-types": {
