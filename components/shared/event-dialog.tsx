@@ -157,7 +157,13 @@ export function EventDialog({ open, onOpenChange, onSubmit, isEditMode = false, 
           <DialogTitle>{isEditMode ? t('edit_event') : t('create_new_event')}</DialogTitle>
         </DialogHeader>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-4'>
+          <form
+            onSubmit={form.handleSubmit((data) => {
+              onSubmit(data);
+              onOpenChange(false);
+            })}
+            className='space-y-4'
+          >
             <FormField
               control={form.control}
               name='title'
@@ -437,9 +443,7 @@ export function EventDialog({ open, onOpenChange, onSubmit, isEditMode = false, 
             )}
 
             <div className='flex justify-end gap-2'>
-              <Button type='submit'>
-                {isEditMode ? t('update') : t('create')} {t('event')}
-              </Button>
+              <Button type='submit'>{isEditMode ? t('update_event') : t('create_event')}</Button>
             </div>
           </form>
         </Form>

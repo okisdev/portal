@@ -596,5 +596,7 @@
   "compose_email": "Compose email",
   "invalid_phone_number": "Invalid phone number: {number}",
   "enter_email_address": "Enter email address",
-  "invalid_email_address": "Invalid email address"
+  "invalid_email_address": "Invalid email address",
+  "create_event": "Create Event",
+  "update_event": "Update Event"
 }

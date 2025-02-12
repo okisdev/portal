@@ -596,5 +596,7 @@
   "please_select_a_schedule_date": "请选择时间表日期",
   "invalid_phone_number": "无效的电话号码：{number}",
   "enter_email_address": "输入电子邮件地址",
-  "invalid_email_address": "无效的电子邮件地址"
+  "invalid_email_address": "无效的电子邮件地址",
+  "create_event": "创建事件",
+  "update_event": "更新事件"
 }
