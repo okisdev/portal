@@ -369,8 +369,10 @@ export const teamRouter = createTRPCRouter({
         for (const mentionedUser of mentionedUsers) {
           await ctx.db.insert(userNotifications).values({
             userId: mentionedUser.id,
-            type: 'message',
-            title: `${ctx.session?.user.name || 'Someone'} mentioned you in a note`,
+            type: 'MESSAGE',
+            subType: 'MENTIONED',
+            initiatorId: ctx.session?.user.id,
+            initiatorType: 'user',
             message: input.description,
             metadata: JSON.stringify({
               type: 'team',

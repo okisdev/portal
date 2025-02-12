@@ -422,13 +422,15 @@ export const subscriptionPlan = pgTable('portal_subscriptionPlan', {
 export const userNotifications = pgTable('portal_userNotifications', {
   id: serial('id').primaryKey(),
   userId: varchar('user_id').notNull(),
-  type: varchar('type').notNull(),
-  title: varchar('title').notNull(),
+  type: varchar('type', { enum: ['MESSAGE'] }).notNull(),
+  subType: varchar('sub_type', { enum: ['MENTIONED', 'NOTE_ADDED', 'NOTE_UPDATED', 'NOTE_DELETED'] }),
+  initiatorId: varchar('initiator_id'),
+  initiatorType: varchar('initiator_type', { enum: ['user', 'contact', 'team', 'system'] }),
   message: text('message').notNull(),
   read: boolean('read').default(false),
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow(),
-  metadata: text('metadata'),
+  metadata: text(),
 });
 
 export const calendarFolder = pgTable('portal_calendarFolder', {

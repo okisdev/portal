@@ -9,12 +9,15 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Textarea } from '@/components/ui/textarea';
 import type { ActivitySubType, ActivityType } from '@/lib/schema';
 import { cn } from '@/lib/utils';
-import { formatDate } from '@/utils/date';
+import type { Locale } from '@/types/i18n';
+import { dateLocaleMap, formatDate } from '@/utils/date';
 import { api } from '@/utils/trpc/client';
 import { format } from 'date-fns';
+import { enUS } from 'date-fns/locale';
 import { ArrowUpRight } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import { useTranslations } from 'next-intl';
+import { useLocale } from 'next-intl';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 interface Activity {
@@ -36,6 +39,7 @@ interface ActivitySectionProps {
 
 export function ActivitySection({ activities, onCreateActivity, isLoading }: ActivitySectionProps) {
   const t = useTranslations();
+  const locale = useLocale() as Locale;
   const { data: session } = useSession();
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -127,26 +131,26 @@ export function ActivitySection({ activities, onCreateActivity, isLoading }: Act
           return t('activity_team_meeting_scheduled', {
             team: `${JSON.parse(activity.metadata as string).team?.name} (${JSON.parse(activity.metadata as string).team?.id})`,
             title: `${JSON.parse(activity.metadata as string).event?.title}`,
-            startAt: JSON.parse(activity.metadata as string).startAt,
-            endAt: JSON.parse(activity.metadata as string).endAt,
+            startAt: formatDate(new Date(JSON.parse(activity.metadata as string).startAt), locale),
+            endAt: formatDate(new Date(JSON.parse(activity.metadata as string).endAt), locale),
             description: JSON.parse(activity.metadata as string).description,
           });
         }
         return t('activity_meeting_scheduled', {
           contact: `${JSON.parse(activity.metadata as string).contact?.name} (${JSON.parse(activity.metadata as string).contact?.email})`,
           title: `${JSON.parse(activity.metadata as string).event?.title}`,
-          startAt: JSON.parse(activity.metadata as string).startAt,
-          endAt: JSON.parse(activity.metadata as string).endAt,
+          startAt: formatDate(new Date(JSON.parse(activity.metadata as string).startAt), locale),
+          endAt: formatDate(new Date(JSON.parse(activity.metadata as string).endAt), locale),
           description: JSON.parse(activity.metadata as string).description,
         });
       case 'MEETING_UPDATED':
         return t('activity_meeting_updated', {
           contact: `${JSON.parse(activity.metadata as string).contact?.name} (${JSON.parse(activity.metadata as string).contact?.email})`,
           title: `${JSON.parse(activity.metadata as string).event?.title}`,
-          newStartAt: JSON.parse(activity.metadata as string).newStartAt,
-          oldStartAt: JSON.parse(activity.metadata as string).oldStartAt,
-          newEndAt: JSON.parse(activity.metadata as string).newEndAt,
-          oldEndAt: JSON.parse(activity.metadata as string).oldEndAt,
+          newStartAt: formatDate(new Date(JSON.parse(activity.metadata as string).newStartAt), locale),
+          oldStartAt: formatDate(new Date(JSON.parse(activity.metadata as string).oldStartAt), locale),
+          newEndAt: formatDate(new Date(JSON.parse(activity.metadata as string).newEndAt), locale),
+          oldEndAt: formatDate(new Date(JSON.parse(activity.metadata as string).oldEndAt), locale),
           newDescription: JSON.parse(activity.metadata as string).newDescription,
           oldDescription: JSON.parse(activity.metadata as string).oldDescription,
         });
@@ -155,15 +159,15 @@ export function ActivitySection({ activities, onCreateActivity, isLoading }: Act
           return t('activity_team_meeting_cancelled', {
             team: `${JSON.parse(activity.metadata as string).team?.name} (${JSON.parse(activity.metadata as string).team?.id})`,
             title: `${JSON.parse(activity.metadata as string).event?.title}`,
-            startAt: JSON.parse(activity.metadata as string).startAt,
-            endAt: JSON.parse(activity.metadata as string).endAt,
+            startAt: formatDate(new Date(JSON.parse(activity.metadata as string).startAt), locale),
+            endAt: formatDate(new Date(JSON.parse(activity.metadata as string).endAt), locale),
           });
         }
         return t('activity_meeting_cancelled', {
           contact: `${JSON.parse(activity.metadata as string).contact?.name} (${JSON.parse(activity.metadata as string).contact?.email})`,
           title: `${JSON.parse(activity.metadata as string).event?.title}`,
-          startAt: JSON.parse(activity.metadata as string).startAt,
-          endAt: JSON.parse(activity.metadata as string).endAt,
+          startAt: formatDate(new Date(JSON.parse(activity.metadata as string).startAt), locale),
+          endAt: formatDate(new Date(JSON.parse(activity.metadata as string).endAt), locale),
         });
       case 'REMARK_UPDATED':
         return t('activity_contact_remark_updated', {
@@ -350,8 +354,8 @@ export function ActivitySection({ activities, onCreateActivity, isLoading }: Act
           {activities
             ?.filter((activity) => activity.subType !== 'CONTACT_UPDATED')
             .map((activity, index) => {
-              const currentDate = format(new Date(activity.createdAt), 'PP');
-              const prevDate = index > 0 ? format(new Date(activities[index - 1].createdAt), 'PP') : null;
+              const currentDate = format(new Date(activity.createdAt), 'PP', { locale: dateLocaleMap[locale] || enUS });
+              const prevDate = index > 0 ? format(new Date(activities[index - 1].createdAt), 'PP', { locale: dateLocaleMap[locale] || enUS }) : null;
               const showDateDivider = currentDate !== prevDate;
 
               return (
@@ -403,7 +407,7 @@ export function ActivitySection({ activities, onCreateActivity, isLoading }: Act
                             </span>
                           )}
                           <span className='text-muted-foreground text-xs'>•</span>
-                          <span className='text-muted-foreground text-xs'>{formatDate(new Date(activity.createdAt))}</span>
+                          <span className='text-muted-foreground text-xs'>{formatDate(new Date(activity.createdAt), locale as any)}</span>
                         </div>
                         <div className='flex items-center gap-2'>
                           {activity.metadata && (

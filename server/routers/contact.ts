@@ -374,16 +374,25 @@ export const contactRouter = createTRPCRouter({
         // Get all mentioned users
         const mentionedUsers = await ctx.db.select().from(user).where(inArray(user.username, mentions));
 
+        const thisContact = await ctx.db
+          .select()
+          .from(contact)
+          .where(eq(contact.id, input.contactId))
+          .then((rows) => rows[0]);
+
         // Create notifications for mentioned users
         for (const mentionedUser of mentionedUsers) {
           await ctx.db.insert(userNotifications).values({
             userId: mentionedUser.id,
-            type: 'message',
-            title: `${ctx.session?.user.name || 'Someone'} mentioned you in a note`,
+            type: 'MESSAGE',
+            subType: 'MENTIONED',
+            initiatorId: ctx.session?.user.id,
+            initiatorType: 'user',
             message: input.description,
             metadata: JSON.stringify({
               type: 'contacts',
-              id: input.contactId,
+              contact: thisContact,
+              user: mentionedUser,
             }),
           });
         }

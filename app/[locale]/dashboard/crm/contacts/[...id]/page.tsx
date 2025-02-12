@@ -94,6 +94,8 @@ export default function ContactIdPage() {
   const [lastContactDate, setLastContactDate] = useState<Date | null>(contact?.lastContactedAt ? new Date(contact.lastContactedAt) : null);
   const [nextFollowUpDate, setNextFollowUpDate] = useState<Date | null>(contact?.nextFollowUpAt ? new Date(contact.nextFollowUpAt) : null);
 
+  console.log('nextFollowUpDate, ', nextFollowUpDate);
+
   const assignToTeam = api.team.assignContactToTeam.useMutation({
     onSuccess: () => {
       setIsTeamModalOpen(false);
@@ -123,7 +125,7 @@ export default function ContactIdPage() {
     onSuccess: () => {
       utils.contact.getContactActivities.invalidate({ id: contactId[0] });
       utils.user.getUnreadNotificationsCount.invalidate();
-      toast.success(t('activity_created_successfully'));
+      toast.success(t('note_added_successfully'));
     },
     onError: (error) => {
       toast.error(error.message);
@@ -217,6 +219,14 @@ export default function ContactIdPage() {
       setLastContactDate(null);
     }
   }, [contact?.lastContactedAt]);
+
+  useEffect(() => {
+    if (contact?.nextFollowUpAt) {
+      setNextFollowUpDate(new Date(contact.nextFollowUpAt));
+    } else {
+      setNextFollowUpDate(null);
+    }
+  }, [contact?.nextFollowUpAt]);
 
   if (isLoading) {
     return <PageLoading />;

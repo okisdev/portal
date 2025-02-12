@@ -61,9 +61,9 @@ export function DateTimePicker({
     <Popover onOpenChange={(open) => !open && onClose?.()}>
       <PopoverTrigger asChild>
         <div>
-          <Button size={size} type='button' variant={'outline'} className={cn('w-full pl-3 text-left font-normal', !value && 'w-full text-muted-foreground')}>
-            {value ? showTimePicker ? format(value, 'MM/dd/yyyy HH:mm') : format(value, 'MM/dd/yyyy') : <span>{t('select_date')}</span>}
-            <CalendarIcon className='ml-auto h-4 w-4 opacity-50' />
+          <Button size={size} type='button' variant={'outline'} className={cn('flex w-full items-center pl-3 text-left font-normal', !value && 'text-muted-foreground')}>
+            <span className='truncate'>{value ? showTimePicker ? format(value, 'MM/dd/yyyy HH:mm') : format(value, 'MM/dd/yyyy') : <span>{t('select_date')}</span>}</span>
+            <CalendarIcon className='ml-auto h-4 w-4 flex-shrink-0 opacity-50' />
           </Button>
         </div>
       </PopoverTrigger>

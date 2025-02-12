@@ -1,4 +1,5 @@
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { cn } from '@/lib/utils';
 import { Info } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import type { ReactNode } from 'react';
@@ -25,7 +26,7 @@ export function MetadataPopover({ title, withTitle = true, trigger, children, cl
           </button>
         )}
       </PopoverTrigger>
-      <PopoverContent className={className} align={align}>
+      <PopoverContent className={cn('h-auto max-h-[50vh] overflow-y-auto', className)} align={align}>
         {children}
       </PopoverContent>
     </Popover>
