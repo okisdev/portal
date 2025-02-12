@@ -210,6 +210,8 @@
   "delete_calendar_description": "This action cannot be undone. This will permanently delete the calendar and all associated events.",
   "delete_content": "Delete Content",
   "delete_content_description": "Are you sure you want to delete this content? This action cannot be undone.",
+  "delete_event": "Delete Event",
+  "delete_event_description": "Confirm to delete this event?",
   "delete_meeting": "Delete Meeting",
   "delete_meeting_description": "Are you sure you want to delete this meeting? This action cannot be undone.",
   "delete_site": "Delete Site",
@@ -356,6 +358,8 @@
   "next": "Next",
   "nextFollowUpAt": "Next FollowUp At",
   "next_follow_up": "Next Follow Up",
+  "next_follow_up_cannot_be_earlier_than_last_contact": "Next follow up date cannot be earlier than last contact date",
+  "next_follow_up_cannot_be_earlier_than_today": "Next follow up date cannot be earlier than today",
   "no_activities_found": "No activities found.",
   "no_calendars_found": "No calendars found",
   "no_columns_found": "No columns found.",
@@ -627,5 +631,7 @@
   "will_renew_at": "Will renew at {date}",
   "workspace": "Workspace",
   "write_a_reply": "Write a reply... Use @ to mention someone",
-  "you": "You"
+  "you": "You",
+  "login": "Login",
+  "close_menu": "Close menu"
 }

@@ -6,6 +6,7 @@ import { CalendarHeader } from '@/components/dashboard/workspace/calendar/header
 import { MonthView } from '@/components/dashboard/workspace/calendar/month-view';
 import { CalendarSidePanel } from '@/components/dashboard/workspace/calendar/side-panel';
 import { WeekView } from '@/components/dashboard/workspace/calendar/week-view';
+import { ActionAlertDialog } from '@/components/shared/action-alert-dialog';
 import { EventDialog } from '@/components/shared/event-dialog';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -64,6 +65,8 @@ export default function DashboardPersonalCalendar() {
   const [selectionStart, setSelectionStart] = useState<{ date: Date; hour: number; minute: number } | null>(null);
   const [selectionEnd, setSelectionEnd] = useState<{ date: Date; hour: number; minute: number } | null>(null);
   const [isSelecting, setIsSelecting] = useState(false);
+  const [isDeleteEventDialogOpen, setIsDeleteEventDialogOpen] = useState(false);
+  const [eventToDelete, setEventToDelete] = useState<string | null>(null);
 
   const utils = api.useUtils();
 
@@ -365,6 +368,22 @@ export default function DashboardPersonalCalendar() {
     }
   };
 
+  const handleDeleteEvent = (eventId: string) => {
+    setEventToDelete(eventId);
+    setIsDeleteEventDialogOpen(true);
+  };
+
+  const confirmDeleteEvent = () => {
+    if (eventToDelete) {
+      toast.promise(deleteEvent.mutateAsync({ id: eventToDelete }), {
+        loading: t('deleting_event'),
+        success: t('event_deleted_successfully'),
+        error: t('failed_to_delete_event'),
+      });
+      setEventToDelete(null);
+    }
+  };
+
   return (
     <>
       <div className='flex h-full flex-col md:flex-row'>
@@ -435,13 +454,7 @@ export default function DashboardPersonalCalendar() {
               folders={folders ?? []}
               hiddenCalendars={hiddenCalendars}
               onEventEdit={handleEditEvent}
-              onEventDelete={(eventId) => {
-                toast.promise(deleteEvent.mutateAsync({ id: eventId }), {
-                  loading: t('deleting_event'),
-                  success: t('event_deleted_successfully'),
-                  error: t('failed_to_delete_event'),
-                });
-              }}
+              onEventDelete={handleDeleteEvent}
             />
           ) : view === 'week' ? (
             <WeekView
@@ -455,13 +468,7 @@ export default function DashboardPersonalCalendar() {
               isTimeSlotSelected={isTimeSlotSelected}
               onSelectionEnd={finishSelection}
               onEventEdit={handleEditEvent}
-              onEventDelete={(eventId) => {
-                toast.promise(deleteEvent.mutateAsync({ id: eventId }), {
-                  loading: t('deleting_event'),
-                  success: t('event_deleted_successfully'),
-                  error: t('failed_to_delete_event'),
-                });
-              }}
+              onEventDelete={handleDeleteEvent}
             />
           ) : view === '3days' ? (
             <ThreeDayView
@@ -475,13 +482,7 @@ export default function DashboardPersonalCalendar() {
               isTimeSlotSelected={isTimeSlotSelected}
               onSelectionEnd={finishSelection}
               onEventEdit={handleEditEvent}
-              onEventDelete={(eventId) => {
-                toast.promise(deleteEvent.mutateAsync({ id: eventId }), {
-                  loading: t('deleting_event'),
-                  success: t('event_deleted_successfully'),
-                  error: t('failed_to_delete_event'),
-                });
-              }}
+              onEventDelete={handleDeleteEvent}
             />
           ) : (
             <DayView
@@ -495,13 +496,7 @@ export default function DashboardPersonalCalendar() {
               isTimeSlotSelected={isTimeSlotSelected}
               onSelectionEnd={finishSelection}
               onEventEdit={handleEditEvent}
-              onEventDelete={(eventId) => {
-                toast.promise(deleteEvent.mutateAsync({ id: eventId }), {
-                  loading: t('deleting_event'),
-                  success: t('event_deleted_successfully'),
-                  error: t('failed_to_delete_event'),
-                });
-              }}
+              onEventDelete={handleDeleteEvent}
             />
           )}
         </div>
@@ -738,6 +733,16 @@ export default function DashboardPersonalCalendar() {
           </Form>
         </DialogContent>
       </Dialog>
+
+      <ActionAlertDialog
+        open={isDeleteEventDialogOpen}
+        onOpenChange={setIsDeleteEventDialogOpen}
+        onConfirm={confirmDeleteEvent}
+        title={t('delete_event')}
+        description={t('delete_event_description')}
+        cancelText={t('cancel')}
+        confirmText={t('delete')}
+      />
     </>
   );
 }

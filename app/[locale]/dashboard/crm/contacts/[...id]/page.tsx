@@ -461,6 +461,24 @@ export default function ContactIdPage() {
                       const currentTime = contact?.nextFollowUpAt ? new Date(contact.nextFollowUpAt).getTime() : null;
                       const newTime = nextFollowUpDate?.getTime() || null;
 
+                      if (nextFollowUpDate) {
+                        const today = new Date();
+                        today.setHours(0, 0, 0, 0);
+                        const lastContact = lastContactDate ? new Date(lastContactDate) : null;
+
+                        if (nextFollowUpDate < today) {
+                          setNextFollowUpDate(null);
+                          toast.error(t('next_follow_up_cannot_be_earlier_than_today'));
+                          return;
+                        }
+
+                        if (lastContact && nextFollowUpDate < lastContact) {
+                          setNextFollowUpDate(null);
+                          toast.error(t('next_follow_up_cannot_be_earlier_than_last_contact'));
+                          return;
+                        }
+                      }
+
                       if (currentTime !== newTime) {
                         updateContact.mutate({
                           id: contactId[0],

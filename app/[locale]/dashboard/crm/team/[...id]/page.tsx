@@ -540,6 +540,7 @@ export default function TeamIdPage() {
                   title: meeting.title,
                   description: meeting.description,
                   startAt: new Date(meeting.meetingDate),
+                  endAt: new Date(meeting.meetingDate),
                 })) || []
               }
               calendarFolders={folders}

@@ -182,16 +182,16 @@ export function ActivitySection({ activities, onCreateActivity, isLoading }: Act
       case 'TEAM_CONTACT_ASSIGNED':
         return t('activity_team_assigned', {
           contact: `${JSON.parse(activity.metadata as string).contact?.name} (${JSON.parse(activity.metadata as string).contact?.email})`,
-          team: `${JSON.parse(activity.metadata as string).team?.name} (${JSON.parse(activity.metadata as string).team?.id})`,
+          team: `${JSON.parse(activity.metadata as string).team?.name}`,
         });
       case 'TEAM_CONTACT_REMOVED':
         return t('activity_team_contact_removed', {
           contact: `${JSON.parse(activity.metadata as string).contact?.name} (${JSON.parse(activity.metadata as string).contact?.email})`,
-          team: `${JSON.parse(activity.metadata as string).team?.name} (${JSON.parse(activity.metadata as string).team?.id})`,
+          team: `${JSON.parse(activity.metadata as string).team?.name}`,
         });
       case 'TEAM_UPDATED':
         return t('activity_team_updated', {
-          team: `${JSON.parse(activity.metadata as string).team?.name} (${JSON.parse(activity.metadata as string).team?.id})`,
+          team: `${JSON.parse(activity.metadata as string).team?.name}`,
         });
       case 'CAMPAIGN_REMOVED':
         return t('activity_campaign_removed', {
