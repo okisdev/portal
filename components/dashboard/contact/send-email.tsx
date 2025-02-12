@@ -84,17 +84,17 @@ export function SendEmail({ open, onOpenChange, recipient }: SendEmailProps) {
 
   const handleSend = () => {
     if (!formData.subject.trim()) {
-      toast.error('Please enter a subject');
+      toast.error(t('please_enter_a_subject'));
       return;
     }
 
     if (!formData.content.trim()) {
-      toast.error('Please enter a message');
+      toast.error(t('please_enter_a_message'));
       return;
     }
 
     if (isScheduleMode && !scheduledDate) {
-      toast.error('Please select a schedule date');
+      toast.error(t('please_select_a_schedule_date'));
       return;
     }
 
@@ -137,7 +137,7 @@ export function SendEmail({ open, onOpenChange, recipient }: SendEmailProps) {
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className='max-h-[90vh] max-w-2xl overflow-y-auto p-4 sm:p-6'>
         <DialogHeader>
-          <DialogTitle>Compose email</DialogTitle>
+          <DialogTitle>{t('compose_email')}</DialogTitle>
         </DialogHeader>
         <div className='space-y-4 py-2 sm:py-4'>
           <div className='flex flex-col gap-2 border-b pb-4 sm:flex-row sm:items-center sm:gap-4'>

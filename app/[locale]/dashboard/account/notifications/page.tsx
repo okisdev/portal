@@ -4,17 +4,22 @@ import { PageHeader } from '@/components/shared/page-header';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
+import type { Notifications } from '@/lib/schema';
 import { cn, generateUUID } from '@/lib/utils';
+import type { Locale } from '@/types/i18n';
+import { dateLocaleMap } from '@/utils/date';
 import { api } from '@/utils/trpc/client';
 import { formatDistanceToNow } from 'date-fns';
 import { Bell, Mail, MessageSquare } from 'lucide-react';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
 export default function NotificationsPage() {
   const t = useTranslations();
+  const locale = useLocale() as Locale;
+  const dateLocale = dateLocaleMap[locale];
 
   const [filterType, setFilterType] = useState('all');
 
@@ -49,6 +54,17 @@ export default function NotificationsPage() {
     if (filterType === 'unread') return !notification.read;
     return notification.type === filterType;
   });
+
+  const renderNotificationType = (notification: Notifications) => {
+    switch (notification.subType) {
+      case 'MENTIONED':
+        return t('notification_message_mentioned', {
+          user: JSON.parse(notification.metadata || '{}')?.user?.name,
+        });
+      default:
+        return notification.subType;
+    }
+  };
 
   return (
     <div className='space-y-6 p-6'>
@@ -113,11 +129,14 @@ export default function NotificationsPage() {
               </div>
               <div className='min-w-0 flex-1'>
                 <div className='flex items-start justify-between gap-4'>
-                  <p className={cn('font-medium text-sm', notification.read ? 'text-neutral-700 dark:text-neutral-300' : 'text-neutral-900 dark:text-neutral-50')}>{notification.title}</p>
+                  <p className={cn('font-medium text-sm', notification.read ? 'text-neutral-700 dark:text-neutral-300' : 'text-neutral-900 dark:text-neutral-50')}>
+                    {renderNotificationType(notification)}
+                  </p>
                   <time className='whitespace-nowrap text-neutral-500 text-xs dark:text-neutral-400'>
                     {notification.createdAt &&
                       formatDistanceToNow(new Date(notification.createdAt), {
                         addSuffix: true,
+                        locale: dateLocale,
                       })}
                   </time>
                 </div>

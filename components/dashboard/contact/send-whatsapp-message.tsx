@@ -9,6 +9,7 @@ import { api } from '@/utils/trpc/client';
 import { MessageSquare, Send } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import { useTranslations } from 'next-intl';
+import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
@@ -22,6 +23,8 @@ export function SendWhatsAppMessage({ open, onOpenChange, recipient }: SendWhats
   if (!recipient) return null;
 
   const t = useTranslations();
+
+  const router = useRouter();
 
   const utils = api.useUtils();
   const { data: session } = useSession();
@@ -71,20 +74,22 @@ export function SendWhatsAppMessage({ open, onOpenChange, recipient }: SendWhats
 
   const handleSend = async () => {
     if (!message.trim()) {
-      toast.error('Please enter a message');
+      toast.error(t('please_enter_a_message'));
       return;
     }
 
     if (!recipient.phone) {
-      toast.error('Contact does not have a phone number');
+      toast.error(t('contact_does_not_have_a_phone_number'));
       return;
     }
 
     // Send message via WhatsApp
-    sendWhatsAppMessage.mutate({
-      to: recipient.phone.replace(/\D/g, ''),
-      message: message,
-    });
+    // sendWhatsAppMessage.mutate({
+    //   to: recipient.phone.replace(/\D/g, ''),
+    //   message: message,
+    // });
+
+    router.push(`https://wa.me/${recipient.phone.replace(/\D/g, '')}?text=${message}`);
 
     // Close the dialog and show success message
     handleClose();

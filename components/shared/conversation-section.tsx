@@ -15,7 +15,6 @@ import { ArrowUpRight } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import { useTranslations } from 'next-intl';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { toast } from 'sonner';
 
 interface Activity {
   id: string;
@@ -150,30 +149,14 @@ export function ConversationSection({ activities, onCreateActivity, isLoading, c
 
     if (!newActivity.trim()) return;
 
-    if (!replyingTo) {
-      const sendWhatsAppMessage = api.external.sendWhatsAppMessage.useMutation({
-        onSuccess: () => {
-          setNewActivity('');
-        },
-        onError: (error) => {
-          toast.error(error.message);
-        },
-      });
-
-      sendWhatsAppMessage.mutate({
-        to: contactId || '',
-        message: newActivity,
-      });
-    } else {
-      onCreateActivity({
-        type: 'ENGAGEMENT',
-        subType: 'NOTE_ADDED',
-        description: newActivity,
-        initiatorType: 'user',
-        initiatorId: session?.user.id || '',
-        metadata: replyingTo ? { replyTo: replyingTo } : undefined,
-      });
-    }
+    onCreateActivity({
+      type: 'ENGAGEMENT',
+      subType: 'NOTE_ADDED',
+      description: newActivity,
+      initiatorType: 'user',
+      initiatorId: session?.user.id || '',
+      metadata: replyingTo ? { replyTo: replyingTo } : undefined,
+    });
 
     setNewActivity('');
   };

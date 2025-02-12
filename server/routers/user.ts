@@ -43,8 +43,10 @@ export const userRouter = createTRPCRouter({
     .input(
       z.object({
         userId: z.string(),
-        type: z.string(),
-        title: z.string(),
+        type: z.enum(['MESSAGE']),
+        subType: z.enum(['MENTIONED', 'NOTE_ADDED', 'NOTE_UPDATED', 'NOTE_DELETED']),
+        initiatorId: z.string().optional(),
+        initiatorType: z.enum(['user', 'contact', 'team', 'system']),
         message: z.string(),
         metadata: z.record(z.string(), z.string()).optional(),
       })
@@ -53,7 +55,9 @@ export const userRouter = createTRPCRouter({
       return ctx.db.insert(userNotifications).values({
         userId: input.userId,
         type: input.type,
-        title: input.title,
+        subType: input.subType,
+        initiatorId: input.initiatorId,
+        initiatorType: input.initiatorType,
         message: input.message,
         metadata: input.metadata ? JSON.stringify(input.metadata) : null,
       });

@@ -7,10 +7,12 @@ import { PageHeader } from '@/components/shared/page-header';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { ResourceContent } from '@/lib/schema';
+import type { Locale } from '@/types/i18n';
+import { dateLocaleMap } from '@/utils/date';
 import { api } from '@/utils/trpc/client';
 import { formatDistanceToNow } from 'date-fns';
 import { Clock, Eye, Send } from 'lucide-react';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
@@ -22,6 +24,8 @@ export default function ContentPage() {
   const utils = api.useUtils();
 
   const t = useTranslations();
+  const locale = useLocale() as Locale;
+  const dateLocale = dateLocaleMap[locale];
 
   const [currentContent, setCurrentContent] = useState<ResourceContent | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -170,7 +174,7 @@ export default function ContentPage() {
                   <div className='flex items-center gap-4 text-muted-foreground text-xs'>
                     <div className='flex items-center gap-1.5'>
                       <Clock className='size-3' />
-                      {formatDistanceToNow(new Date(item.resourceContent.updatedAt), { addSuffix: true })}
+                      {formatDistanceToNow(new Date(item.resourceContent.updatedAt), { addSuffix: true, locale: dateLocale })}
                     </div>
 
                     <div className='flex items-center gap-1.5'>

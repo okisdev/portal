@@ -107,7 +107,7 @@ export default function TeamIdPage() {
   const createTeamActivity = api.team.createTeamActivity.useMutation({
     onSuccess: () => {
       utils.team.getTeamActivities.invalidate({ id: teamId[0] });
-      toast.success(t('activity_created_successfully'));
+      toast.success(t('note_added_successfully'));
     },
     onError: (error) => {
       toast.error(error.message);
@@ -540,6 +540,7 @@ export default function TeamIdPage() {
                   title: meeting.title,
                   description: meeting.description,
                   startAt: new Date(meeting.meetingDate),
+                  endAt: new Date(meeting.meetingDate),
                 })) || []
               }
               calendarFolders={folders}

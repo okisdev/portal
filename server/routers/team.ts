@@ -64,10 +64,11 @@ export const teamRouter = createTRPCRouter({
         teamId: newTeam.id,
         type: 'TEAM',
         subType: 'TEAM_CREATED',
-        description: `Team "${newTeam.name}" was created`,
+        metadata: {
+          team: newTeam,
+        },
         initiatorType: 'user',
         initiatorId: ctx.session.user.id,
-        metadata: { team: newTeam },
       });
       return newTeam;
     }),
@@ -98,6 +99,12 @@ export const teamRouter = createTRPCRouter({
         .where(eq(team.id, input.teamId))
         .then((rows) => rows[0]);
 
+      const thisContact = await ctx.db
+        .select()
+        .from(contact)
+        .where(eq(contact.id, input.contactId))
+        .then((rows) => rows[0]);
+
       const result = await ctx.db
         .insert(teamContact)
         .values({
@@ -110,26 +117,24 @@ export const teamRouter = createTRPCRouter({
       await createContactActivityHelper(ctx, {
         contactId: input.contactId,
         type: 'TEAM',
-        subType: 'TEAM_ASSIGNED',
-        description: `Contact was assigned to team "${teamDetails.name}"`,
+        subType: 'TEAM_CONTACT_ASSIGNED',
         initiatorType: 'user',
         initiatorId: ctx.session?.user.id,
         metadata: {
-          teamId: input.teamId,
-          teamName: teamDetails.name,
+          contact: thisContact,
+          team: teamDetails,
         },
       });
 
       await createTeamActivityHelper(ctx, {
         teamId: input.teamId,
         type: 'TEAM',
-        subType: 'TEAM_ASSIGNED',
-        description: `Contact was assigned to team "${teamDetails.name}"`,
+        subType: 'TEAM_CONTACT_ASSIGNED',
         initiatorType: 'user',
         initiatorId: ctx.session?.user.id,
         metadata: {
-          teamId: input.teamId,
-          teamName: teamDetails.name,
+          contact: thisContact,
+          team: teamDetails,
         },
       });
 
@@ -162,26 +167,24 @@ export const teamRouter = createTRPCRouter({
       await createContactActivityHelper(ctx, {
         contactId: input.contactId,
         type: 'TEAM',
-        subType: 'TEAM_REMOVED',
-        description: `Contact was removed from team "${teamDetails.name}"`,
+        subType: 'TEAM_CONTACT_REMOVED',
         initiatorType: 'user',
         initiatorId: ctx.session?.user.id,
         metadata: {
-          teamId: input.teamId,
-          teamName: teamDetails.name,
+          contact: result,
+          team: teamDetails,
         },
       });
 
       await createTeamActivityHelper(ctx, {
         teamId: input.teamId,
         type: 'TEAM',
-        subType: 'TEAM_REMOVED',
-        description: `Contact was removed from team "${teamDetails.name}"`,
+        subType: 'TEAM_CONTACT_REMOVED',
         initiatorType: 'user',
         initiatorId: ctx.session?.user.id,
         metadata: {
-          teamId: input.teamId,
-          teamName: teamDetails.name,
+          team: teamDetails,
+          contact: result,
         },
       });
 
@@ -272,6 +275,12 @@ export const teamRouter = createTRPCRouter({
         companyIdToSet = null;
       }
 
+      const thisTeam = await ctx.db
+        .select()
+        .from(team)
+        .where(eq(team.id, input.id))
+        .then((rows) => rows[0]);
+
       await ctx.db
         .update(team)
         .set({
@@ -290,12 +299,10 @@ export const teamRouter = createTRPCRouter({
         teamId: input.id,
         type: 'TEAM',
         subType: 'TEAM_UPDATED',
-        description: `Team "${input.name}" was updated`,
         initiatorType: 'user',
         initiatorId: ctx.session?.user.id,
         metadata: {
-          teamId: input.id,
-          teamName: input.name,
+          team: thisTeam,
         },
       });
     }),
@@ -315,12 +322,10 @@ export const teamRouter = createTRPCRouter({
       teamId: input.id,
       type: 'TEAM',
       subType: 'TEAM_UPDATED',
-      description: `Team "${teamDetails.name}" was updated`,
       initiatorType: 'user',
       initiatorId: ctx.session?.user.id,
       metadata: {
-        teamId: input.id,
-        teamName: teamDetails.name,
+        team: teamDetails,
       },
     });
   }),
@@ -364,8 +369,10 @@ export const teamRouter = createTRPCRouter({
         for (const mentionedUser of mentionedUsers) {
           await ctx.db.insert(userNotifications).values({
             userId: mentionedUser.id,
-            type: 'message',
-            title: `${ctx.session?.user.name || 'Someone'} mentioned you in a note`,
+            type: 'MESSAGE',
+            subType: 'MENTIONED',
+            initiatorId: ctx.session?.user.id,
+            initiatorType: 'user',
             message: input.description,
             metadata: JSON.stringify({
               type: 'team',
@@ -480,12 +487,14 @@ export const teamRouter = createTRPCRouter({
           teamId: input.teamId,
           type: 'TEAM',
           subType: 'MEETING_SCHEDULED',
-          description: `Team meeting "${input.title}" was scheduled`,
           initiatorType: 'user',
           initiatorId: ctx.session?.user.id,
           metadata: {
-            teamId: input.teamId,
-            teamName: teamDetails.name,
+            team: teamDetails,
+            event: calendarEvt,
+            startAt: input.meetingDate,
+            endAt: new Date(input.meetingDate.getTime() + 60 * 60 * 1000),
+            description: input.description,
           },
         });
 
@@ -538,12 +547,12 @@ export const teamRouter = createTRPCRouter({
           teamId: input.teamId,
           type: 'TEAM',
           subType: 'MEETING_CANCELLED',
-          description: `Team meeting "${deletedMeeting.title}" was cancelled`,
           initiatorType: 'user',
           initiatorId: ctx.session?.user.id,
           metadata: {
-            teamId: input.teamId,
-            teamName: teamDetails.name,
+            team: teamDetails,
+            event: deletedMeeting,
+            startAt: deletedMeeting.meetingDate,
           },
         });
 
@@ -607,26 +616,24 @@ export const teamRouter = createTRPCRouter({
       await createContactActivityHelper(ctx, {
         contactId: input.contactId,
         type: 'TEAM',
-        subType: 'TEAM_ASSIGNED',
-        description: `Contact was added to team: ${teamDetails.name}`,
+        subType: 'TEAM_CONTACT_ASSIGNED',
         initiatorType: 'user',
         initiatorId: ctx.session?.user.id,
         metadata: {
-          teamId: teamDetails.id,
-          teamName: teamDetails.name,
+          contact: contactDetails,
+          team: teamDetails,
         },
       });
 
       await createTeamActivityHelper(ctx, {
         teamId: input.teamId,
         type: 'TEAM',
-        subType: 'TEAM_ASSIGNED',
-        description: `Contact ${contactDetails.firstName} ${contactDetails.lastName} (${contactDetails.email}) was added to team: ${teamDetails.name}`,
+        subType: 'TEAM_CONTACT_ASSIGNED',
         initiatorType: 'user',
         initiatorId: ctx.session?.user.id,
         metadata: {
-          teamId: teamDetails.id,
-          teamName: teamDetails.name,
+          contact: contactDetails,
+          team: teamDetails,
         },
       });
 

@@ -4,7 +4,7 @@ import { eq } from 'drizzle-orm';
 import { z } from 'zod';
 
 export const siteRouter = createTRPCRouter({
-  getConfig: protectedProcedure.input(z.object({ key: z.enum(['name', 'description', 'domain']) })).query(async ({ ctx, input }) => {
+  getConfig: protectedProcedure.input(z.object({ key: z.enum(['name', 'description', 'domain', 'supportEmailDomain']) })).query(async ({ ctx, input }) => {
     const config = await ctx.db
       .select()
       .from(siteConfig)
@@ -34,7 +34,7 @@ export const siteRouter = createTRPCRouter({
   updateConfig: protectedProcedure
     .input(
       z.object({
-        key: z.enum(['name', 'description', 'domain']),
+        key: z.enum(['name', 'description', 'domain', 'supportEmailDomain']),
         value: z.string(),
         description: z.string().optional(),
         type: z.enum(['string', 'number', 'boolean', 'json', 'array']).default('string'),
@@ -74,7 +74,7 @@ export const siteRouter = createTRPCRouter({
         .returning();
     }),
 
-  deleteConfig: protectedProcedure.input(z.object({ key: z.enum(['name', 'description', 'domain']) })).mutation(async ({ ctx, input }) => {
+  deleteConfig: protectedProcedure.input(z.object({ key: z.enum(['name', 'description', 'domain', 'supportEmailDomain']) })).mutation(async ({ ctx, input }) => {
     return ctx.db.delete(siteConfig).where(eq(siteConfig.key, input.key));
   }),
 });

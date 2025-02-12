@@ -4,19 +4,48 @@ import { Combobox } from '@/components/shared/combobox';
 import { Input } from '@/components/ui/input';
 import { phoneCountries } from '@/data/data';
 import { cn } from '@/lib/utils';
+import { isValidPhoneNumber } from 'libphonenumber-js';
 import { useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
 
 interface PhoneInputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'onChange'> {
   value: string;
   onChange: (value: string) => void;
+  onValidityChange?: (isValid: boolean) => void;
 }
 
-export function PhoneInput({ className, value, onChange, ...props }: PhoneInputProps) {
+export function PhoneInput({ className, value, onChange, onValidityChange, ...props }: PhoneInputProps) {
   const t = useTranslations();
 
   const [selectedCountry, setSelectedCountry] = useState<(typeof phoneCountries)[0] | null>(null);
   const [phoneNumber, setPhoneNumber] = useState('');
+  const [isValid, setIsValid] = useState(false);
+
+  const validateAndNotify = (number: string, shouldNotify = false) => {
+    if (!selectedCountry) {
+      setIsValid(false);
+      onValidityChange?.(false);
+      return;
+    }
+
+    try {
+      const isNumberValid = isValidPhoneNumber(number);
+
+      setIsValid(isNumberValid);
+      onValidityChange?.(isNumberValid);
+
+      if (shouldNotify && !isNumberValid && number.length > 0) {
+        toast.error(t('invalid_phone_number', { number }));
+      }
+    } catch {
+      setIsValid(false);
+      onValidityChange?.(false);
+      if (shouldNotify && number.length > 0) {
+        toast.error(t('invalid_phone_number', { number }));
+      }
+    }
+  };
 
   useEffect(() => {
     // Try to detect country code from the value
@@ -28,7 +57,9 @@ export function PhoneInput({ className, value, onChange, ...props }: PhoneInputP
         const country = phoneCountries.find((c) => c.code === detectedCode);
         if (country) {
           setSelectedCountry(country);
-          setPhoneNumber(value.slice(detectedCode.length).trim());
+          const numberWithoutCode = value.slice(detectedCode.length).trim();
+          setPhoneNumber(numberWithoutCode);
+          validateAndNotify(value, false);
           return;
         }
       }
@@ -36,20 +67,28 @@ export function PhoneInput({ className, value, onChange, ...props }: PhoneInputP
       // If no country code detected or not matched, just set the number
       setSelectedCountry(null);
       setPhoneNumber(value);
+      setIsValid(false);
+      onValidityChange?.(false);
     } else {
       setSelectedCountry(null);
       setPhoneNumber('');
+      setIsValid(false);
+      onValidityChange?.(false);
     }
-  }, [value]);
+  }, [value, onValidityChange]);
 
   const handleCountryChange = (countryLabel: string) => {
     const country = phoneCountries.find((c) => c.label === countryLabel);
     setSelectedCountry(country || null);
 
     if (country) {
-      onChange(`${country.code} ${phoneNumber}`.trim());
+      const newValue = `${country.code} ${phoneNumber}`.trim();
+      onChange(newValue);
+      validateAndNotify(newValue, true);
     } else {
       onChange(phoneNumber);
+      setIsValid(false);
+      onValidityChange?.(false);
     }
   };
 
@@ -58,9 +97,20 @@ export function PhoneInput({ className, value, onChange, ...props }: PhoneInputP
     setPhoneNumber(newPhone);
 
     if (selectedCountry) {
-      onChange(`${selectedCountry.code} ${newPhone}`.trim());
+      const newValue = `${selectedCountry.code} ${newPhone}`.trim();
+      onChange(newValue);
+      validateAndNotify(newValue, false);
     } else {
       onChange(newPhone);
+      setIsValid(false);
+      onValidityChange?.(false);
+    }
+  };
+
+  const handleBlur = () => {
+    if (selectedCountry) {
+      const fullNumber = `${selectedCountry.code} ${phoneNumber}`.trim();
+      validateAndNotify(fullNumber, true);
     }
   };
 
@@ -76,7 +126,15 @@ export function PhoneInput({ className, value, onChange, ...props }: PhoneInputP
         className='w-[180px]'
         allowCustom={false}
       />
-      <Input type='tel' value={phoneNumber} onChange={handlePhoneChange} className='flex-1' placeholder={selectedCountry ? undefined : t('enter_phone_number')} {...props} />
+      <Input
+        type='tel'
+        value={phoneNumber}
+        onChange={handlePhoneChange}
+        onBlur={handleBlur}
+        className={cn('flex-1', isValid ? 'border-green-500 focus-visible:ring-green-500' : selectedCountry ? 'border-red-500 focus-visible:ring-red-500' : '')}
+        placeholder={selectedCountry ? undefined : t('enter_phone_number')}
+        {...props}
+      />
     </div>
   );
 }

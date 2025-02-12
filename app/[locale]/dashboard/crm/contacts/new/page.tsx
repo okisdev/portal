@@ -14,7 +14,7 @@ export default function ImportContacts() {
   const searchParams = useSearchParams();
   const mode = searchParams.get('mode');
 
-  const [activeTab, setActiveTab] = useState(mode === 'manual' ? 'manual' : 'upload');
+  const [activeTab, setActiveTab] = useState(mode === 'upload' ? 'upload' : 'manual');
 
   return (
     <div className='space-y-4 p-4'>

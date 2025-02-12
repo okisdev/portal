@@ -18,12 +18,14 @@ export default function SitePage() {
 
   const [siteName, setSiteName] = useState('');
   const [siteDomain, setSiteDomain] = useState('');
+  const [supportEmailDomain, setSupportEmailDomain] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
   const utils = api.useUtils();
 
   const { data: siteNameConfig } = api.site.getConfig.useQuery({ key: 'name' });
   const { data: siteDomainConfig } = api.site.getConfig.useQuery({ key: 'domain' });
+  const { data: supportEmailDomainConfig } = api.site.getConfig.useQuery({ key: 'supportEmailDomain' });
 
   useEffect(() => {
     if (siteNameConfig) {
@@ -37,9 +39,24 @@ export default function SitePage() {
     }
   }, [siteDomainConfig]);
 
+  useEffect(() => {
+    if (supportEmailDomainConfig) {
+      setSupportEmailDomain(supportEmailDomainConfig.value);
+    }
+  }, [supportEmailDomainConfig]);
+
+  const handleSupportEmailDomainChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    // Clean up the input by removing spaces around commas and filtering out empty entries
+    const domains = e.target.value
+      .split(',')
+      .map((domain) => domain.trim())
+      .filter(Boolean);
+    setSupportEmailDomain(domains.join(','));
+  };
+
   const { mutate: updateSiteConfig } = api.site.updateConfig.useMutation({
     onSuccess: (_, variables) => {
-      const configType = variables.key === 'name' ? 'Site name' : 'Site domain';
+      const configType = variables.key === 'name' ? 'Site name' : variables.key === 'domain' ? 'Site domain' : 'Support email domain';
       toast.success(`${configType} updated successfully`);
       utils.site.getConfig.invalidate({ key: variables.key });
     },
@@ -66,6 +83,16 @@ export default function SitePage() {
       updateSiteConfig({
         key: 'domain',
         value: siteDomain,
+        type: 'string',
+        isPublic: true,
+      });
+    }
+
+    // Update support email domain if changed
+    if (supportEmailDomainConfig?.value !== supportEmailDomain) {
+      updateSiteConfig({
+        key: 'supportEmailDomain',
+        value: supportEmailDomain,
         type: 'string',
         isPublic: true,
       });
@@ -101,8 +128,13 @@ export default function SitePage() {
                 <Label htmlFor='siteDomain'>{t('site_domain')}</Label>
                 <Input id='siteDomain' placeholder='portal' value={siteDomain} onChange={(e) => setSiteDomain(e.target.value)} />
               </div>
+              <div className='space-y-2'>
+                <Label htmlFor='supportEmailDomain'>{t('support_email_domains')}</Label>
+                <Input id='supportEmailDomain' placeholder='support.portal.com, help.portal.com' value={supportEmailDomain} onChange={handleSupportEmailDomainChange} />
+                <p className='text-muted-foreground text-sm'>{t('support_email_domains_description')}</p>
+              </div>
               <Button onClick={handleSaveChanges} disabled={isLoading}>
-                {isLoading ? 'Saving...' : t('save_changes')}
+                {isLoading ? t('saving') : t('save_changes')}
               </Button>
             </CardContent>
           </Card>

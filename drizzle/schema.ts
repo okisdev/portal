@@ -310,8 +310,10 @@ export const contactActivity = pgTable('portal_contactActivity', {
       'PRIORITY_CHANGED',
 
       // Date Related
-      'LAST_CONTACTED',
-      'NEXT_FOLLOW_UP',
+      'LAST_CONTACTED_UPDATED',
+      'LAST_CONTACTED_REMOVED',
+      'NEXT_FOLLOW_UP_UPDATED',
+      'NEXT_FOLLOW_UP_REMOVED',
 
       // Engagement
       'MEETING_SCHEDULED',
@@ -327,9 +329,10 @@ export const contactActivity = pgTable('portal_contactActivity', {
 
       // Team Management
       'TEAM_CREATED',
-      'TEAM_ASSIGNED',
-      'TEAM_REMOVED',
       'TEAM_UPDATED',
+      'TEAM_DELETED',
+      'TEAM_CONTACT_ASSIGNED',
+      'TEAM_CONTACT_REMOVED',
 
       // Campaign Management
       'CAMPAIGN_ASSIGNED',
@@ -419,13 +422,15 @@ export const subscriptionPlan = pgTable('portal_subscriptionPlan', {
 export const userNotifications = pgTable('portal_userNotifications', {
   id: serial('id').primaryKey(),
   userId: varchar('user_id').notNull(),
-  type: varchar('type').notNull(),
-  title: varchar('title').notNull(),
+  type: varchar('type', { enum: ['MESSAGE'] }).notNull(),
+  subType: varchar('sub_type', { enum: ['MENTIONED', 'NOTE_ADDED', 'NOTE_UPDATED', 'NOTE_DELETED'] }),
+  initiatorId: varchar('initiator_id'),
+  initiatorType: varchar('initiator_type', { enum: ['user', 'contact', 'team', 'system'] }),
   message: text('message').notNull(),
   read: boolean('read').default(false),
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow(),
-  metadata: text('metadata'),
+  metadata: text(),
 });
 
 export const calendarFolder = pgTable('portal_calendarFolder', {
@@ -697,8 +702,10 @@ export const teamActivity = pgTable('portal_teamActivity', {
       'PRIORITY_CHANGED',
 
       // Date Related
-      'LAST_CONTACTED',
-      'NEXT_FOLLOW_UP',
+      'LAST_CONTACTED_UPDATED',
+      'LAST_CONTACTED_REMOVED',
+      'NEXT_FOLLOW_UP_UPDATED',
+      'NEXT_FOLLOW_UP_REMOVED',
 
       // Engagement
       'MEETING_SCHEDULED',
@@ -714,9 +721,10 @@ export const teamActivity = pgTable('portal_teamActivity', {
 
       // Team Management
       'TEAM_CREATED',
-      'TEAM_ASSIGNED',
-      'TEAM_REMOVED',
       'TEAM_UPDATED',
+      'TEAM_DELETED',
+      'TEAM_CONTACT_ASSIGNED',
+      'TEAM_CONTACT_REMOVED',
 
       // Campaign Management
       'CAMPAIGN_ASSIGNED',
@@ -915,7 +923,7 @@ export const siteConfig = pgTable('portal_siteConfig', {
     .notNull()
     .$defaultFn(() => crypto.randomUUID()),
   key: text('key', {
-    enum: ['name', 'description', 'domain'],
+    enum: ['name', 'description', 'domain', 'supportEmailDomain'],
   })
     .notNull()
     .unique(), // Unique key for the config

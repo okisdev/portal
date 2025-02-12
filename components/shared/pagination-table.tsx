@@ -31,39 +31,37 @@ export function PaginationTable<TData>({ table, columns, loading, onRowClick, ro
         {loading ? (
           <TableLoading columnCount={columns.length} rowCount={13} />
         ) : (
-          <div className='relative'>
-            <div className='max-h-[800px] overflow-auto'>
-              <Table>
-                <TableHeader>
-                  {table.getHeaderGroups().map((headerGroup) => (
-                    <TableRow key={headerGroup.id}>
-                      {headerGroup.headers.map((header) => (
-                        <TableHead key={header.id}>{header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}</TableHead>
+          <div className='relative max-h-[800px] overflow-auto'>
+            <Table>
+              <TableHeader>
+                {table.getHeaderGroups().map((headerGroup) => (
+                  <TableRow key={headerGroup.id}>
+                    {headerGroup.headers.map((header) => (
+                      <TableHead key={header.id}>{header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}</TableHead>
+                    ))}
+                  </TableRow>
+                ))}
+              </TableHeader>
+              <TableBody>
+                {table.getRowModel().rows?.length ? (
+                  table.getRowModel().rows.map((row) => (
+                    <TableRow key={row.id} data-state={row.getIsSelected() && 'selected'} className={rowClassName} onClick={(e) => handleRowClick(e, row.original)}>
+                      {row.getVisibleCells().map((cell) => (
+                        <TableCell key={cell.id} data-checkbox-cell={cell.column.id === 'select' ? true : undefined}>
+                          {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                        </TableCell>
                       ))}
                     </TableRow>
-                  ))}
-                </TableHeader>
-                <TableBody>
-                  {table.getRowModel().rows?.length ? (
-                    table.getRowModel().rows.map((row) => (
-                      <TableRow key={row.id} data-state={row.getIsSelected() && 'selected'} className={rowClassName} onClick={(e) => handleRowClick(e, row.original)}>
-                        {row.getVisibleCells().map((cell) => (
-                          <TableCell key={cell.id} data-checkbox-cell={cell.column.id === 'select' ? true : undefined}>
-                            {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                          </TableCell>
-                        ))}
-                      </TableRow>
-                    ))
-                  ) : (
-                    <TableRow>
-                      <TableCell colSpan={columns.length} className='h-24 text-center'>
-                        {t('no_results')}
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </div>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={columns.length} className='h-24 text-center'>
+                      {t('no_results')}
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
           </div>
         )}
       </div>

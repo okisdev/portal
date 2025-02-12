@@ -123,7 +123,7 @@ export default function ContactIdPage() {
     onSuccess: () => {
       utils.contact.getContactActivities.invalidate({ id: contactId[0] });
       utils.user.getUnreadNotificationsCount.invalidate();
-      toast.success(t('activity_created_successfully'));
+      toast.success(t('note_added_successfully'));
     },
     onError: (error) => {
       toast.error(error.message);
@@ -217,6 +217,14 @@ export default function ContactIdPage() {
       setLastContactDate(null);
     }
   }, [contact?.lastContactedAt]);
+
+  useEffect(() => {
+    if (contact?.nextFollowUpAt) {
+      setNextFollowUpDate(new Date(contact.nextFollowUpAt));
+    } else {
+      setNextFollowUpDate(null);
+    }
+  }, [contact?.nextFollowUpAt]);
 
   if (isLoading) {
     return <PageLoading />;
@@ -450,6 +458,24 @@ export default function ContactIdPage() {
                     onClose={() => {
                       const currentTime = contact?.nextFollowUpAt ? new Date(contact.nextFollowUpAt).getTime() : null;
                       const newTime = nextFollowUpDate?.getTime() || null;
+
+                      if (nextFollowUpDate) {
+                        const today = new Date();
+                        today.setHours(0, 0, 0, 0);
+                        const lastContact = lastContactDate ? new Date(lastContactDate) : null;
+
+                        if (nextFollowUpDate < today) {
+                          setNextFollowUpDate(null);
+                          toast.error(t('next_follow_up_cannot_be_earlier_than_today'));
+                          return;
+                        }
+
+                        if (lastContact && nextFollowUpDate < lastContact) {
+                          setNextFollowUpDate(null);
+                          toast.error(t('next_follow_up_cannot_be_earlier_than_last_contact'));
+                          return;
+                        }
+                      }
 
                       if (currentTime !== newTime) {
                         updateContact.mutate({

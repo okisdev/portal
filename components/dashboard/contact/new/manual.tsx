@@ -1,6 +1,7 @@
 'use client';
 
 import { Combobox } from '@/components/shared/combobox';
+import { EmailInput } from '@/components/shared/email-input';
 import { PhoneInput } from '@/components/shared/phone-input';
 import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
@@ -127,7 +128,7 @@ export default function ManualContactForm() {
               <FormItem>
                 <FormLabel>{t('email')}</FormLabel>
                 <FormControl>
-                  <Input type='email' placeholder='john@example.com' {...field} />
+                  <EmailInput value={field.value || ''} onChange={field.onChange} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
