@@ -1,6 +1,7 @@
 'use client';
 
 import { Menu, Sparkle, X } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useState } from 'react';
 
@@ -12,6 +13,8 @@ const navigation = [
 ];
 
 export default function Header() {
+  const t = useTranslations();
+
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
@@ -41,13 +44,13 @@ export default function Header() {
         </div>
         <div className='hidden items-center lg:flex lg:flex-1 lg:justify-end lg:gap-x-4'>
           <Link href='/login' className='font-semibold text-neutral-900 text-sm leading-6 hover:text-neutral-600 dark:text-neutral-300 dark:hover:text-white'>
-            Log in
+            {t('sign_in')}
           </Link>
           <Link
             href='/register'
             className='rounded-md bg-neutral-900 px-3 py-2 font-semibold text-sm text-white shadow-sm hover:bg-neutral-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-neutral-900 focus-visible:outline-offset-2 dark:bg-neutral-700 dark:hover:bg-neutral-600'
           >
-            Sign up
+            {t('sign_up')}
           </Link>
         </div>
       </nav>
@@ -67,7 +70,7 @@ export default function Header() {
                 </div>
               </Link>
               <button type='button' className='-m-2.5 rounded-md p-2.5 text-neutral-700 hover:text-neutral-900 dark:text-neutral-300 dark:hover:text-white' onClick={() => setMobileMenuOpen(false)}>
-                <span className='sr-only'>Close menu</span>
+                <span className='sr-only'>{t('close_menu')}</span>
                 <X className='h-6 w-6' aria-hidden='true' />
               </button>
             </div>
@@ -94,14 +97,14 @@ export default function Header() {
                   className='block rounded-lg px-3 py-2.5 font-semibold text-base text-neutral-900 leading-7 hover:bg-neutral-50 dark:text-neutral-300 dark:hover:bg-neutral-800'
                   onClick={() => setMobileMenuOpen(false)}
                 >
-                  Log in
+                  {t('sign_in')}
                 </Link>
                 <Link
                   href='/register'
                   className='block w-8/12 rounded-lg bg-neutral-900 px-3 py-2.5 font-semibold text-base text-white leading-7 hover:bg-neutral-800 dark:bg-neutral-700 dark:hover:bg-neutral-600'
                   onClick={() => setMobileMenuOpen(false)}
                 >
-                  Sign up
+                  {t('sign_up')}
                 </Link>
               </div>
             </div>

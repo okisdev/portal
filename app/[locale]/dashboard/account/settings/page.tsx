@@ -1,25 +1,42 @@
 'use client';
 
+import { Combobox } from '@/components/shared/combobox';
 import { PageHeader } from '@/components/shared/page-header';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { timezones } from '@/data/data';
+import type { Timezone } from '@/lib/schema';
 import { api } from '@/utils/trpc/client';
+import { BadgeX, Check, Pencil, Verified } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
 export default function AccountSettingsPage() {
-  const { data: me } = api.account.getMeFromDatabase.useQuery();
+  const t = useTranslations();
+
+  const { data: me, isLoading } = api.account.getMeFromDatabase.useQuery();
 
   const updateAccount = api.account.updateMe.useMutation();
   const updatePassword = api.account.updatePassword.useMutation();
+  const updateTimezone = api.account.updateTimezone.useMutation();
 
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
   const [image, setImage] = useState('');
+  const [username, setUsername] = useState('');
+  const [usernameError, setUsernameError] = useState('');
+  const [timezone, setTimezone] = useState<Timezone>('Asia/Hong_Kong');
+  const [isEmailDialogOpen, setIsEmailDialogOpen] = useState(false);
+  const [pendingEmail, setPendingEmail] = useState('');
+  const [confirmPendingEmail, setConfirmPendingEmail] = useState('');
+  const [emailError, setEmailError] = useState('');
 
   useEffect(() => {
     if (me) {
@@ -27,6 +44,8 @@ export default function AccountSettingsPage() {
       setLastName(me.lastName ?? '');
       setEmail(me.email ?? '');
       setImage(me.image ?? '');
+      setUsername(me.username ?? '');
+      setTimezone((me.timezone as Timezone) ?? 'Asia/Hong_Kong');
     }
   }, [me]);
 
@@ -43,36 +62,81 @@ export default function AccountSettingsPage() {
     formData.append('file', file);
   };
 
-  const handleSubmit = async (event: React.FormEvent) => {
-    event.preventDefault();
+  const handleNameChange = async (field: 'firstName' | 'lastName', value: string) => {
+    // Check if value has actually changed
+    if ((field === 'firstName' && value === me?.firstName) || (field === 'lastName' && value === me?.lastName)) {
+      return;
+    }
+
+    const updateData = field === 'firstName' ? { firstName: value } : { lastName: value };
     try {
-      await updateAccount.mutateAsync(
-        {
-          firstName,
-          lastName,
-          email,
-          image,
+      await updateAccount.mutateAsync(updateData, {
+        onSuccess: () => {
+          toast.success(t('account_updated_successfully'));
         },
-        {
-          onSuccess: () => {
-            toast.success('Account updated successfully');
-          },
-          onError: (error) => {
-            toast.error('Failed to update account');
-          },
-        }
-      );
+        onError: () => {
+          toast.error(t('failed_to_update_account'));
+        },
+      });
     } catch (error) {
       console.error('Failed to update account:', error);
     }
   };
 
-  const handlePasswordSubmit = async (event: React.FormEvent) => {
-    event.preventDefault();
-    if (newPassword !== confirmPassword) {
-      console.error('Passwords do not match');
+  const handleEmailEditClick = () => {
+    setPendingEmail(email);
+    setConfirmPendingEmail('');
+    setEmailError('');
+    setIsEmailDialogOpen(true);
+  };
+
+  const confirmEmailChange = async () => {
+    if (pendingEmail !== confirmPendingEmail) {
+      setEmailError(t('emails_do_not_match'));
       return;
     }
+
+    // Check if email has actually changed
+    if (pendingEmail === me?.email) {
+      setIsEmailDialogOpen(false);
+      return;
+    }
+
+    try {
+      await updateAccount.mutateAsync(
+        {
+          email: pendingEmail,
+        },
+        {
+          onSuccess: () => {
+            setEmail(pendingEmail);
+            setIsEmailDialogOpen(false);
+            setEmailError('');
+            toast.success(t('account_updated_successfully'));
+          },
+          onError: () => {
+            toast.error(t('failed_to_update_account'));
+          },
+        }
+      );
+    } catch (error) {
+      console.error('Failed to update email:', error);
+    }
+  };
+
+  const handlePasswordSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
+
+    // Don't submit if any field is empty
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      toast.error(t('passwords_do_not_match'));
+      return;
+    }
+
     try {
       await updatePassword.mutateAsync(
         {
@@ -82,10 +146,10 @@ export default function AccountSettingsPage() {
         },
         {
           onSuccess: () => {
-            toast.success('Password updated successfully');
+            toast.success(t('password_updated_successfully'));
           },
-          onError: (error) => {
-            toast.error('Failed to update password');
+          onError: () => {
+            toast.error(t('failed_to_update_password'));
           },
         }
       );
@@ -97,19 +161,79 @@ export default function AccountSettingsPage() {
     }
   };
 
+  const handleTimezoneChange = async (value: Timezone) => {
+    // Check if timezone has actually changed
+    if (value === me?.timezone) {
+      return;
+    }
+
+    try {
+      await updateTimezone.mutateAsync(
+        { timezone: value },
+        {
+          onSuccess: () => {
+            setTimezone(value);
+            toast.success(t('timezone_updated_successfully'));
+          },
+          onError: () => {
+            toast.error(t('failed_to_update_timezone'));
+          },
+        }
+      );
+    } catch (error) {
+      console.error('Failed to update timezone:', error);
+    }
+  };
+
+  const handleUsernameChange = async (value: string) => {
+    // Clear previous error
+    setUsernameError('');
+
+    // Check if username has actually changed
+    if (value === me?.username) {
+      return;
+    }
+
+    // Validate username format
+    if (!/^[a-z0-9_-]+$/.test(value)) {
+      setUsernameError(t('username_format_error'));
+      return;
+    }
+
+    try {
+      await updateAccount.mutateAsync(
+        { username: value },
+        {
+          onSuccess: () => {
+            toast.success(t('account_updated_successfully'));
+          },
+          onError: (error) => {
+            if (error.message === 'Username already exists') {
+              setUsernameError(t('username_already_exists'));
+            } else {
+              toast.error(t('failed_to_update_account'));
+            }
+          },
+        }
+      );
+    } catch (error) {
+      console.error('Failed to update username:', error);
+    }
+  };
+
   return (
-    <div className='space-y-4 p-4'>
-      <PageHeader title='Account Settings' description='Manage your account settings' />
+    <div className='container mx-auto max-w-4xl space-y-4 px-4 pt-10'>
+      <PageHeader title={t('account_settings')} description={t('account_settings_description')} />
 
       <div className='flex h-full flex-col space-y-8'>
         <Tabs defaultValue='profile' className='space-y-4'>
           <TabsList>
-            <TabsTrigger value='profile'>Profile</TabsTrigger>
-            <TabsTrigger value='password'>Password</TabsTrigger>
+            <TabsTrigger value='profile'>{t('profile')}</TabsTrigger>
+            <TabsTrigger value='password'>{t('password')}</TabsTrigger>
           </TabsList>
 
           <TabsContent value='profile' className='space-y-4'>
-            <form onSubmit={handleSubmit} className='space-y-8'>
+            <div className='space-y-8'>
               <div className='flex items-center space-x-8'>
                 <Avatar className='h-28 w-28'>
                   <AvatarImage src={image || '/default-avatar.png'} alt='Profile picture' />
@@ -119,67 +243,108 @@ export default function AccountSettingsPage() {
                   </AvatarFallback>
                 </Avatar>
                 <div className='space-y-2'>
-                  <h2 className='font-medium text-2xl tracking-tight'>Profile Picture</h2>
-                  <p className='text-muted-foreground text-sm'>Update your profile picture</p>
+                  <h2 className='font-medium text-xl tracking-tight'>{t('profile_picture')}</h2>
+                  <p className='text-muted-foreground text-sm'>{t('update_your_profile_picture')}</p>
                   <Button type='button' variant='outline' onClick={() => fileInputRef.current?.click()}>
-                    Change Photo
+                    {t('change_photo')}
                   </Button>
                   <Input type='file' ref={fileInputRef} onChange={handleImageUpload} accept='image/*' className='hidden' />
                 </div>
               </div>
 
               <div className='space-y-4'>
-                <h2 className='font-medium text-2xl tracking-tight'>Personal Information</h2>
+                <h2 className='font-medium text-xl tracking-tight'>{t('personal_information')}</h2>
                 <div className='grid grid-cols-2 gap-6'>
                   <div className='space-y-2'>
-                    <Label htmlFor='firstName'>First Name</Label>
-                    <Input type='text' id='firstName' value={firstName} onChange={(e) => setFirstName(e.target.value)} />
+                    <Label htmlFor='firstName'>{t('first_name')}</Label>
+                    <Input type='text' id='firstName' value={firstName} onChange={(e) => setFirstName(e.target.value)} onBlur={(e) => handleNameChange('firstName', e.target.value)} />
                   </div>
                   <div className='space-y-2'>
-                    <Label htmlFor='lastName'>Last Name</Label>
-                    <Input type='text' id='lastName' value={lastName} onChange={(e) => setLastName(e.target.value)} />
+                    <Label htmlFor='lastName'>{t('last_name')}</Label>
+                    <Input type='text' id='lastName' value={lastName} onChange={(e) => setLastName(e.target.value)} onBlur={(e) => handleNameChange('lastName', e.target.value)} />
+                  </div>
+                </div>
+                <div className='space-y-2'>
+                  <Label htmlFor='username'>{t('username')}</Label>
+                  <Input
+                    type='text'
+                    id='username'
+                    value={username}
+                    onChange={(e) => {
+                      const lowercaseValue = e.target.value.toLowerCase().replace(/\s+/g, '');
+                      setUsername(lowercaseValue);
+                    }}
+                    onBlur={(e) => handleUsernameChange(e.target.value)}
+                    placeholder={t('enter_username')}
+                  />
+                  {usernameError && <p className='text-destructive text-sm'>{usernameError}</p>}
+                </div>
+                <div className='space-y-2'>
+                  <Label htmlFor='email' className='flex items-center gap-2'>
+                    {t('email_address')}
+                    {!isLoading && (
+                      <Tooltip>
+                        <TooltipTrigger>{me?.emailVerified ? <Verified className='h-4 w-4 text-green-500' /> : <BadgeX className='h-4 w-4 text-red-500' />}</TooltipTrigger>
+                        <TooltipContent side='right'>
+                          <p>{me?.emailVerified ? t('email_verified') : t('email_not_verified')}</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    )}
+                  </Label>
+                  <div className='flex items-center gap-2'>
+                    <Input type='email' id='email' value={email} readOnly className='cursor-default' />
+                    <Button variant='outline' size='icon' onClick={handleEmailEditClick} className='shrink-0'>
+                      <Pencil className='h-4 w-4' />
+                    </Button>
                   </div>
                 </div>
               </div>
 
               <div className='space-y-4'>
-                <h2 className='font-medium text-2xl tracking-tight'>Contact Information</h2>
+                <h2 className='font-medium text-xl tracking-tight'>{t('preferences')}</h2>
+
                 <div className='space-y-2'>
-                  <Label htmlFor='email'>Email Address</Label>
-                  <div className='flex items-center gap-2'>
-                    <Input type='email' id='email' value={email} onChange={(e) => setEmail(e.target.value)} />
-                    {me?.emailVerified && <span className='inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 font-medium text-green-800 text-xs'>Verified</span>}
-                  </div>
+                  <Label htmlFor='timezone'>{t('timezone')}</Label>
+                  <Combobox
+                    value={timezone}
+                    onChange={(value) => handleTimezoneChange(value as Timezone)}
+                    items={timezones.map((tz) => tz.value)}
+                    placeholder={t('select_timezone')}
+                    searchPlaceholder={t('search_timezone')}
+                    emptyText={t('no_timezone_found')}
+                    groupHeading={t('timezones')}
+                    allowCustom={false}
+                    renderItem={(item) => (
+                      <div className='flex w-full items-center justify-between'>
+                        <span>{`${timezones.find((tz) => tz.value === item)?.value} (${timezones.find((tz) => tz.value === item)?.code})` || item}</span>
+                        {timezone === item && <Check className='h-4 w-4' />}
+                      </div>
+                    )}
+                  />
                 </div>
               </div>
-
-              <div className='flex justify-end'>
-                <Button type='submit' disabled={updateAccount.isPending}>
-                  {updateAccount.isPending ? 'Saving...' : 'Save Changes'}
-                </Button>
-              </div>
-            </form>
+            </div>
           </TabsContent>
 
           <TabsContent value='password' className='space-y-4'>
             <div className='space-y-4'>
-              <h2 className='font-medium text-2xl tracking-tight'>Change Password</h2>
+              <h2 className='font-medium text-2xl tracking-tight'>{t('change_password')}</h2>
               <form onSubmit={handlePasswordSubmit} className='space-y-4'>
                 <div className='space-y-2'>
-                  <Label htmlFor='currentPassword'>Current Password</Label>
+                  <Label htmlFor='currentPassword'>{t('current_password')}</Label>
                   <Input type='password' id='currentPassword' value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} />
                 </div>
                 <div className='space-y-2'>
-                  <Label htmlFor='newPassword'>New Password</Label>
+                  <Label htmlFor='newPassword'>{t('new_password')}</Label>
                   <Input type='password' id='newPassword' value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
                 </div>
                 <div className='space-y-2'>
-                  <Label htmlFor='confirmPassword'>Confirm New Password</Label>
+                  <Label htmlFor='confirmPassword'>{t('confirm_new_password')}</Label>
                   <Input type='password' id='confirmPassword' value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
                 </div>
                 <div className='flex justify-end'>
                   <Button type='submit' disabled={updatePassword.isPending}>
-                    {updatePassword.isPending ? 'Updating Password...' : 'Update Password'}
+                    {updatePassword.isPending ? t('updating_password') : t('update_password')}
                   </Button>
                 </div>
               </form>
@@ -187,6 +352,44 @@ export default function AccountSettingsPage() {
           </TabsContent>
         </Tabs>
       </div>
+
+      <Dialog
+        open={isEmailDialogOpen}
+        onOpenChange={(open) => {
+          setIsEmailDialogOpen(open);
+          if (!open) {
+            setEmailError('');
+            setPendingEmail('');
+            setConfirmPendingEmail('');
+          }
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t('update_email_address')}</DialogTitle>
+            <DialogDescription>{t('update_email_address_description')}</DialogDescription>
+          </DialogHeader>
+          <div className='space-y-4 py-4'>
+            <div className='space-y-2'>
+              <Label htmlFor='newEmail'>{t('new_email')}</Label>
+              <Input id='newEmail' type='email' value={pendingEmail} onChange={(e) => setPendingEmail(e.target.value)} placeholder={t('enter_new_email')} />
+            </div>
+            <div className='space-y-2'>
+              <Label htmlFor='confirmEmail'>{t('confirm_new_email')}</Label>
+              <Input id='confirmEmail' type='email' value={confirmPendingEmail} onChange={(e) => setConfirmPendingEmail(e.target.value)} placeholder={t('confirm_new_email')} />
+            </div>
+            {emailError && <p className='text-destructive text-sm'>{emailError}</p>}
+          </div>
+          <DialogFooter>
+            <Button variant='outline' onClick={() => setIsEmailDialogOpen(false)}>
+              {t('cancel')}
+            </Button>
+            <Button onClick={confirmEmailChange} disabled={updateAccount.isPending || !pendingEmail || !confirmPendingEmail}>
+              {updateAccount.isPending ? t('updating') : t('update_email')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

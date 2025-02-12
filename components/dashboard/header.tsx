@@ -1,21 +1,65 @@
 'use client';
 
-import { Laptop, Moon, Sun } from 'lucide-react';
-import { useTheme } from 'next-themes';
-
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
 import { Button } from '@/components/ui/button';
 import { CommandDialog, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { Separator } from '@/components/ui/separator';
 import { SidebarTrigger } from '@/components/ui/sidebar';
+import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
+import { api } from '@/utils/trpc/client';
+import { Laptop, Moon, Sun } from 'lucide-react';
+import { useTranslations } from 'next-intl';
+import { useTheme } from 'next-themes';
 import { usePathname } from 'next/navigation';
 import React, { useCallback, useEffect, useState } from 'react';
+import { validate as uuidValidate } from 'uuid';
 
 export function DashboardHeader() {
   const pathname = usePathname();
 
+  const t = useTranslations();
+
   const paths = pathname.replace('/dashboard/', '').split('/');
+
+  const [contactId, setContactId] = useState<string | null>(null);
+  const [companyId, setCompanyId] = useState<string | null>(null);
+  const [teamId, setTeamId] = useState<string | null>(null);
+  const [campaignId, setCampaignId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (paths.includes('contacts')) {
+      const id = paths[paths.length - 1];
+      if (uuidValidate(id)) {
+        setContactId(id);
+      }
+    }
+    if (paths.includes('company')) {
+      const id = paths[paths.length - 1];
+      if (uuidValidate(id)) {
+        setCompanyId(id);
+      }
+    }
+
+    if (paths.includes('crm') && paths.includes('team')) {
+      const id = paths[paths.length - 1];
+      if (uuidValidate(id)) {
+        setTeamId(id);
+      }
+    }
+
+    if (paths.includes('marketing') && paths.includes('campaigns')) {
+      const id = paths[paths.length - 1];
+      if (uuidValidate(id)) {
+        setCampaignId(id);
+      }
+    }
+  }, [paths]);
+
+  const { data: contact, isLoading: isContactLoading } = api.contact.getContactById.useQuery({ id: contactId || '' }, { enabled: !!contactId });
+  const { data: company, isLoading: isCompanyLoading } = api.company.getCompanyById.useQuery({ id: companyId || '' }, { enabled: !!companyId });
+  const { data: team, isLoading: isTeamLoading } = api.team.getTeamById.useQuery({ id: teamId || '' }, { enabled: !!teamId });
+  const { data: campaign, isLoading: isCampaignLoading } = api.marketing.getCampaignById.useQuery({ id: campaignId || '' }, { enabled: !!campaignId });
 
   const isDashboard = paths.length === 2 && paths[1] === 'dashboard';
 
@@ -43,10 +87,44 @@ export function DashboardHeader() {
     return () => document.removeEventListener('keydown', down);
   }, []);
 
-  const formatPathSegment = (segment: string) => {
-    const words = segment.split('-');
+  const i18nPath = (segment: string) => {
+    if (segment.trim() === '') {
+      return segment;
+    }
 
-    return words.map((word) => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+    if (uuidValidate(segment)) {
+      if (paths.includes('contacts')) {
+        if (isContactLoading || !contact) {
+          return <Skeleton className='h-4 w-24' />;
+        }
+        return `${contact.firstName} ${contact.lastName}`;
+      }
+
+      if (paths.includes('company')) {
+        if (isCompanyLoading || !company) {
+          return <Skeleton className='h-4 w-24' />;
+        }
+        return company.name;
+      }
+
+      if (paths.includes('crm') && paths.includes('team')) {
+        if (isTeamLoading || !team) {
+          return <Skeleton className='h-4 w-24' />;
+        }
+        return team.name;
+      }
+
+      if (paths.includes('marketing') && paths.includes('campaigns')) {
+        if (isCampaignLoading || !campaign) {
+          return <Skeleton className='h-4 w-24' />;
+        }
+        return campaign.name;
+      }
+
+      return segment;
+    }
+
+    return t(segment);
   };
 
   const runCommand = useCallback((command: () => unknown) => {
@@ -65,9 +143,9 @@ export function DashboardHeader() {
               <React.Fragment key={path}>
                 <BreadcrumbItem>
                   {index === paths.length - 1 ? (
-                    <BreadcrumbPage>{formatPathSegment(path)}</BreadcrumbPage>
+                    <BreadcrumbPage>{i18nPath(path)}</BreadcrumbPage>
                   ) : (
-                    <BreadcrumbLink href={`/dashboard/${paths.slice(0, index + 1).join('/')}`}>{formatPathSegment(path)}</BreadcrumbLink>
+                    <BreadcrumbLink href={`/dashboard/${paths.slice(0, index + 1).join('/')}`}>{i18nPath(path)}</BreadcrumbLink>
                   )}
                 </BreadcrumbItem>
                 {index < paths.length - 1 && !isDashboard && <BreadcrumbSeparator />}
@@ -82,29 +160,29 @@ export function DashboardHeader() {
           className={cn('relative h-8 w-full justify-start rounded-[0.5rem] bg-muted/50 font-normal text-muted-foreground text-sm shadow-none sm:pr-12 md:w-40 lg:w-56 xl:w-64')}
           onClick={() => setOpen(true)}
         >
-          <span className='hidden lg:inline-flex'>Search...</span>
-          <span className='inline-flex lg:hidden'>Search...</span>
+          <span className='hidden lg:inline-flex'>{t('search_placeholder')}</span>
+          <span className='inline-flex lg:hidden'>{t('search_placeholder')}</span>
           <kbd className='pointer-events-none absolute top-[0.3rem] right-[0.3rem] hidden h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-medium font-mono text-[10px] opacity-100 sm:flex'>
             <span className='text-xs'>⌘</span>K
           </kbd>
         </Button>
         <CommandDialog open={open} onOpenChange={setOpen}>
-          <CommandInput placeholder='Type a command or search...' />
+          <CommandInput placeholder={t('search_placeholder')} />
           <CommandList>
-            <CommandEmpty>No results found.</CommandEmpty>
+            <CommandEmpty>{t('no_results_found')}</CommandEmpty>
 
-            <CommandGroup heading='Theme'>
+            <CommandGroup heading={t('theme')}>
               <CommandItem onSelect={() => runCommand(() => setTheme('light'))}>
                 <Sun />
-                Light
+                {t('light')}
               </CommandItem>
               <CommandItem onSelect={() => runCommand(() => setTheme('dark'))}>
                 <Moon />
-                Dark
+                {t('dark')}
               </CommandItem>
               <CommandItem onSelect={() => runCommand(() => setTheme('system'))}>
                 <Laptop />
-                System
+                {t('system')}
               </CommandItem>
             </CommandGroup>
           </CommandList>

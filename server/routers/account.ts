@@ -1,8 +1,9 @@
-import { user, userNotifications } from '@/drizzle/schema';
+import { user } from '@/drizzle/schema';
+import { timezoneSchema } from '@/lib/schema';
 import { createTRPCRouter, protectedProcedure } from '@/server/trpc';
 import { encryptPassword } from '@/utils/password';
 import { TRPCError } from '@trpc/server';
-import { and, desc, eq } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 import z from 'zod';
 
 export const accountRouter = createTRPCRouter({
@@ -30,6 +31,7 @@ export const accountRouter = createTRPCRouter({
         emailVerified: user.emailVerified,
         role: user.role,
         username: user.username,
+        timezone: user.timezone,
       })
       .from(user)
       .where(eq(user.id, ctx.session.user.id))
@@ -43,21 +45,61 @@ export const accountRouter = createTRPCRouter({
         lastName: z.string().optional(),
         email: z.string().email().optional(),
         image: z.string().optional(),
+        username: z
+          .string()
+          .regex(/^[a-z0-9_-]+$/, 'Username can only contain lowercase letters, numbers, underscores, and hyphens')
+          .optional(),
       })
     )
-    .mutation(({ ctx, input }) => {
+    .mutation(async ({ ctx, input }) => {
       if (!ctx.session.user.id) throw new TRPCError({ code: 'UNAUTHORIZED' });
 
-      return ctx.db
-        .update(user)
-        .set({
-          firstName: input.firstName,
-          lastName: input.lastName,
-          name: `${input.firstName} ${input.lastName}`,
-          email: input.email,
-          image: input.image,
+      if (input.username) {
+        const existingUser = await ctx.db
+          .select()
+          .from(user)
+          .where(eq(user.username, input.username))
+          .then((rows) => rows[0]);
+        if (existingUser) throw new TRPCError({ code: 'CONFLICT', message: 'Username already exists' });
+      }
+
+      // First get the current user data to properly handle name updates
+      const currentUser = await ctx.db
+        .select({
+          firstName: user.firstName,
+          lastName: user.lastName,
         })
-        .where(eq(user.id, ctx.session.user.id));
+        .from(user)
+        .where(eq(user.id, ctx.session.user.id))
+        .then((rows) => rows[0]);
+
+      // Prepare update data only with provided fields
+      const updateData: Record<string, unknown> = {};
+
+      if (input.firstName !== undefined) {
+        updateData.firstName = input.firstName;
+      }
+      if (input.lastName !== undefined) {
+        updateData.lastName = input.lastName;
+      }
+      if (input.email !== undefined) {
+        updateData.email = input.email;
+      }
+      if (input.image !== undefined) {
+        updateData.image = input.image;
+      }
+      if (input.username !== undefined) {
+        updateData.username = input.username;
+      }
+
+      // Only update name if either firstName or lastName was provided
+      if (input.firstName !== undefined || input.lastName !== undefined) {
+        const newFirstName = input.firstName ?? currentUser?.firstName ?? '';
+        const newLastName = input.lastName ?? currentUser?.lastName ?? '';
+        updateData.name = `${newFirstName} ${newLastName}`.trim();
+      }
+
+      return ctx.db.update(user).set(updateData).where(eq(user.id, ctx.session.user.id));
     }),
 
   updatePassword: protectedProcedure
@@ -76,18 +118,14 @@ export const accountRouter = createTRPCRouter({
       return ctx.db.update(user).set({ password: hashedPassword }).where(eq(user.id, ctx.session.user.id));
     }),
 
-  getNotifications: protectedProcedure.query(({ ctx }) => {
-    return ctx.db.select().from(userNotifications).where(eq(userNotifications.userId, ctx.session.user.id)).orderBy(desc(userNotifications.createdAt));
-  }),
-
-  markNotificationAsRead: protectedProcedure.input(z.number()).mutation(({ ctx, input }) => {
-    return ctx.db
-      .update(userNotifications)
-      .set({ read: true })
-      .where(and(eq(userNotifications.userId, ctx.session.user.id), eq(userNotifications.id, input)));
-  }),
-
-  markAllNotificationsAsRead: protectedProcedure.mutation(({ ctx }) => {
-    return ctx.db.update(userNotifications).set({ read: true }).where(eq(userNotifications.userId, ctx.session.user.id));
-  }),
+  updateTimezone: protectedProcedure
+    .input(
+      z.object({
+        timezone: timezoneSchema,
+      })
+    )
+    .mutation(({ ctx, input }) => {
+      if (!ctx.session.user.id) throw new TRPCError({ code: 'UNAUTHORIZED' });
+      return ctx.db.update(user).set({ timezone: input.timezone }).where(eq(user.id, ctx.session.user.id));
+    }),
 });

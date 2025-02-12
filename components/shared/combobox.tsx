@@ -5,6 +5,7 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from '
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn, generateUUID } from '@/lib/utils';
 import { Check, ChevronsUpDown } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
 
 interface ComboboxProps {
@@ -18,6 +19,8 @@ interface ComboboxProps {
   allowCustom?: boolean;
   renderItem?: (item: string) => React.ReactNode;
   className?: string;
+  size?: 'sm' | 'lg' | 'default' | 'icon' | null | undefined;
+  alwaysPlaceHolder?: boolean;
 }
 
 interface ComboboxCommandProps {
@@ -35,12 +38,16 @@ interface ComboboxCommandProps {
 }
 
 function ComboboxCommand({ query, setQuery, value, onChange, setOpen, items, searchPlaceholder, emptyText, groupHeading, allowCustom, renderItem }: ComboboxCommandProps) {
+  const t = useTranslations();
+
+  const filteredItems = items.filter((item) => item.toLowerCase().includes(query.toLowerCase()));
+
   return (
     <Command>
       <CommandInput placeholder={searchPlaceholder} value={query} onValueChange={setQuery} />
       <CommandEmpty>{emptyText}</CommandEmpty>
-      {allowCustom && query && (
-        <CommandGroup heading='Custom'>
+      {allowCustom && query && !filteredItems.includes(query) && (
+        <CommandGroup heading={t('custom')}>
           <CommandItem
             value={`custom-${query}`}
             onSelect={() => {
@@ -48,17 +55,17 @@ function ComboboxCommand({ query, setQuery, value, onChange, setOpen, items, sea
               setOpen(false);
             }}
           >
-            Use "{query}"
+            {t('use_query', { query })}
           </CommandItem>
         </CommandGroup>
       )}
       <CommandGroup heading={groupHeading} className='max-h-[300px] overflow-y-auto'>
-        {items.map((item) => (
+        {filteredItems.map((item) => (
           <CommandItem
             key={item + generateUUID()}
             value={item}
             onSelect={() => {
-              onChange(item);
+              onChange(value === item ? '' : item);
               setOpen(false);
             }}
             className='flex cursor-pointer items-center gap-2'
@@ -89,6 +96,8 @@ function Combobox({
   allowCustom = true,
   renderItem,
   className,
+  size = 'default',
+  alwaysPlaceHolder = false,
 }: ComboboxProps) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
@@ -108,9 +117,9 @@ function Combobox({
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <Button variant='outline' aria-expanded={open} className={cn('w-full justify-between px-3 font-normal', className)}>
-          {value || placeholder}
-          <ChevronsUpDown className='ml-2 h-4 w-4 shrink-0 opacity-50' />
+        <Button variant='outline' size={size} aria-expanded={open} className={cn('group w-full justify-between px-3 font-normal', className)}>
+          <span className='flex-1 text-left'>{alwaysPlaceHolder ? placeholder : value || placeholder}</span>
+          <ChevronsUpDown className='h-4 w-4 shrink-0 opacity-50' />
         </Button>
       </PopoverTrigger>
       <PopoverContent className='w-[--radix-popper-anchor-width] p-0' align='end'>

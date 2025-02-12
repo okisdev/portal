@@ -1,52 +1,59 @@
 'use client';
 
-import { ColorBadge } from '@/components/shared/color-badge';
 import { Combobox } from '@/components/shared/combobox';
+import { EmailInput } from '@/components/shared/email-input';
+import { PhoneInput } from '@/components/shared/phone-input';
 import { Button } from '@/components/ui/button';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { insuranceCompanies, sources } from '@/data/data';
-import { type Status, statusSchema } from '@/lib/schema';
+import { Textarea } from '@/components/ui/textarea';
+import { sources } from '@/data/data';
+import { statusSchema } from '@/lib/schema';
 import { api } from '@/utils/trpc/client';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
+import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
+import { z } from 'zod';
 
-interface ContactFormData {
-  firstName: string;
-  lastName: string;
-  email: string;
-  phone?: string;
-  gender?: string;
-  company?: string;
-  jobTitle?: string;
-  status: Status;
-  source?: string;
-  remark?: string;
-}
-
-interface FormErrors {
-  email?: string;
-  phone?: string;
-  contactInfo?: string;
-}
+const formSchema = z.object({
+  firstName: z.string().min(1, 'First name is required'),
+  lastName: z.string().min(1, 'Last name is required'),
+  email: z.string().email('Invalid email address'),
+  phone: z.string().optional(),
+  company: z.string().optional(),
+  companyId: z.string().nullable().optional(),
+  source: z.string().optional(),
+  remark: z.string().optional(),
+  status: statusSchema.optional(),
+  campaignCode: z.string().optional(),
+});
 
 export default function ManualContactForm() {
+  const t = useTranslations();
+
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
-  const [errors, setErrors] = useState<FormErrors>({});
-  const [formData, setFormData] = useState<ContactFormData>({
-    firstName: '',
-    lastName: '',
-    email: '',
-    phone: '',
-    gender: '',
-    company: '',
-    jobTitle: '',
-    status: 'lead',
-    source: '',
-    remark: '',
+
+  const { data: campaigns } = api.marketing.getActiveCampaigns.useQuery();
+  const { data: companies } = api.company.getAllCompanies.useQuery();
+
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      firstName: '',
+      lastName: '',
+      email: '',
+      phone: '',
+      company: '',
+      companyId: null,
+      source: '',
+      remark: '',
+      status: 'lead',
+      campaignCode: '',
+    },
   });
 
   const createContact = api.contact.createContact.useMutation({
@@ -55,83 +62,21 @@ export default function ManualContactForm() {
     },
   });
 
-  const validateForm = (): boolean => {
-    const newErrors: FormErrors = {};
-    let isValid = true;
-
-    // Check if at least one of email or phone is provided
-    if (!formData.email && !formData.phone) {
-      newErrors.contactInfo = 'Either email or phone must be provided';
-      isValid = false;
-    }
-
-    // If email is provided, validate it
-    if (formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = 'Please enter a valid email address';
-      isValid = false;
-    }
-
-    // If phone is provided, validate it (basic validation)
-    if (formData.phone && formData.phone.length < 6) {
-      newErrors.phone = 'Please enter a valid phone number';
-      isValid = false;
-    }
-
-    setErrors(newErrors);
-    return isValid;
-  };
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-
-    // Clear errors when user types
-    if (errors[name as keyof FormErrors]) {
-      setErrors((prev) => ({
-        ...prev,
-        [name]: undefined,
-        contactInfo: undefined, // Clear the combined error message as well
-      }));
-    }
-  };
-
-  const handleSelectChange = (name: string, value: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
-
   const formatName = (firstName: string, lastName?: string) => {
     if (firstName && lastName) return `${firstName} ${lastName}`;
     return firstName || '';
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!validateForm()) {
-      return;
-    }
-
+  const handleSubmit = async (values: z.infer<typeof formSchema>) => {
     setIsLoading(true);
 
     try {
       const result = await createContact.mutateAsync({
-        firstName: formData.firstName,
-        lastName: formData.lastName,
-        name: formatName(formData.firstName, formData.lastName),
-        email: formData.email,
-        phone: formData.phone || '',
-        company: formData.company || '',
-        source: formData.source || '',
-        remark: formData.remark || '',
+        ...values,
+        name: formatName(values.firstName, values.lastName),
       });
 
-      toast.success('Contact created successfully');
+      toast.success(t('contact_created_successfully'));
       router.push(`/dashboard/crm/contacts/${result.id}`);
       router.refresh();
     } catch (error) {
@@ -143,105 +88,183 @@ export default function ManualContactForm() {
   };
 
   return (
-    <form onSubmit={handleSubmit} className='max-w-2xl space-y-6'>
-      <div className='grid grid-cols-2 gap-4'>
-        <div className='space-y-2'>
-          <Label htmlFor='firstName'>First Name *</Label>
-          <Input id='firstName' name='firstName' value={formData.firstName} onChange={handleChange} required />
-        </div>
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(handleSubmit)} className='space-y-4'>
+        <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
+          <FormField
+            control={form.control}
+            name='firstName'
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{t('first_name')}</FormLabel>
+                <FormControl>
+                  <Input placeholder='John' {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
-        <div className='space-y-2'>
-          <Label htmlFor='lastName'>Last Name *</Label>
-          <Input id='lastName' name='lastName' value={formData.lastName} onChange={handleChange} required />
-        </div>
-      </div>
-
-      <div className='grid grid-cols-2 gap-4'>
-        <div className='space-y-2'>
-          <Label htmlFor='email' className='flex items-center justify-between'>
-            <span>Email {!formData.phone && '*'}</span>
-            {errors.email && <span className='text-destructive text-sm'>{errors.email}</span>}
-          </Label>
-          <Input id='email' name='email' type='email' value={formData.email} onChange={handleChange} className={errors.email ? 'border-destructive' : ''} />
-        </div>
-
-        <div className='space-y-2'>
-          <Label htmlFor='phone' className='flex items-center justify-between'>
-            <span>Phone {!formData.email && '*'}</span>
-            {errors.phone && <span className='text-destructive text-sm'>{errors.phone}</span>}
-          </Label>
-          <Input id='phone' name='phone' type='tel' value={formData.phone} onChange={handleChange} className={errors.phone ? 'border-destructive' : ''} />
-        </div>
-      </div>
-
-      {errors.contactInfo && <div className='text-destructive text-sm'>{errors.contactInfo}</div>}
-
-      <div className='grid grid-cols-2 gap-4'>
-        <div className='space-y-2'>
-          <Label htmlFor='gender'>Gender</Label>
-          <Select name='gender' value={formData.gender} onValueChange={(value) => handleSelectChange('gender', value)}>
-            <SelectTrigger>
-              <SelectValue placeholder='Select gender' />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value='male'>Male</SelectItem>
-              <SelectItem value='female'>Female</SelectItem>
-              <SelectItem value='other'>Other</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className='space-y-2'>
-          <Label htmlFor='company'>Company</Label>
-          <Combobox
-            value={formData.company ?? ''}
-            onChange={(value) => handleSelectChange('company', value)}
-            items={insuranceCompanies}
-            placeholder='Select company'
-            searchPlaceholder='Search company...'
-            groupHeading='Companies'
+          <FormField
+            control={form.control}
+            name='lastName'
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{t('last_name')}</FormLabel>
+                <FormControl>
+                  <Input placeholder='Doe' {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
           />
         </div>
-      </div>
 
-      <div className='grid grid-cols-2 gap-4'>
-        <div className='space-y-2'>
-          <Label htmlFor='status'>Status *</Label>
-          <Select name='status' value={formData.status} onValueChange={(value) => handleSelectChange('status', value)} required>
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {statusSchema.options.map((status) => (
-                <SelectItem key={status} value={status}>
-                  <ColorBadge type='contactStatus' value={status} />
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+        <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
+          <FormField
+            control={form.control}
+            name='email'
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{t('email')}</FormLabel>
+                <FormControl>
+                  <EmailInput value={field.value || ''} onChange={field.onChange} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
-        <div className='space-y-2'>
-          <Label htmlFor='source'>Source</Label>
-          <Combobox
-            value={formData.source ?? ''}
-            onChange={(value) => handleSelectChange('source', value)}
-            items={sources}
-            placeholder='Select source...'
-            searchPlaceholder='Search source...'
-            groupHeading='Sources'
+          <FormField
+            control={form.control}
+            name='phone'
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{t('phone')}</FormLabel>
+                <FormControl>
+                  <PhoneInput value={field.value || ''} onChange={field.onChange} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
           />
         </div>
-      </div>
 
-      <div className='flex gap-4'>
-        <Button type='submit' disabled={isLoading} className='w-full sm:w-auto'>
-          {isLoading ? 'Creating...' : 'Create Contact'}
-        </Button>
-        <Button type='button' variant='outline' onClick={() => router.back()} className='w-full sm:w-auto'>
-          Cancel
-        </Button>
-      </div>
-    </form>
+        <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
+          <FormField
+            control={form.control}
+            name='company'
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{t('company')}</FormLabel>
+                <FormControl>
+                  <Combobox
+                    value={field.value ?? ''}
+                    onChange={(value) => {
+                      const selectedCompany = companies?.find((c) => c.name === value);
+                      form.setValue('company', selectedCompany ? selectedCompany.name : value);
+                      form.setValue('companyId', selectedCompany?.id || null);
+                    }}
+                    items={companies?.map((c) => c.name) || []}
+                    placeholder={t('select_company')}
+                    searchPlaceholder={t('search_company')}
+                    groupHeading={t('companies')}
+                    allowCustom={true}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name='source'
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{t('source')}</FormLabel>
+                <FormControl>
+                  <Combobox value={field.value ?? ''} onChange={field.onChange} items={sources} placeholder={t('select_source')} searchPlaceholder={t('search_source')} groupHeading={t('sources')} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+
+        <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
+          <FormField
+            control={form.control}
+            name='status'
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{t('status')}</FormLabel>
+                <FormControl>
+                  <Combobox
+                    value={field.value ?? ''}
+                    onChange={field.onChange}
+                    items={statusSchema.options}
+                    placeholder={t('select_status')}
+                    searchPlaceholder={t('search_status')}
+                    groupHeading={t('statuses')}
+                    allowCustom={false}
+                    renderItem={(id) => {
+                      const status = statusSchema.options.find((s) => s === id);
+                      return status ?? id;
+                    }}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name='campaignCode'
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{t('campaign')}</FormLabel>
+                <FormControl>
+                  <Combobox
+                    value={field.value ?? ''}
+                    onChange={field.onChange}
+                    items={campaigns?.map((c) => c.campaignCode) ?? []}
+                    placeholder={t('select_campaign')}
+                    searchPlaceholder={t('search_campaigns')}
+                    groupHeading={t('campaigns')}
+                    allowCustom={false}
+                    renderItem={(code) => {
+                      const campaign = campaigns?.find((c) => c.campaignCode === code);
+                      return campaign?.name ?? code;
+                    }}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+
+        <FormField
+          control={form.control}
+          name='remark'
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>{t('remark')}</FormLabel>
+              <FormControl>
+                <Textarea placeholder={t('any_additional_notes')} {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <div className='flex justify-end'>
+          <Button type='submit' disabled={isLoading}>
+            {isLoading ? t('creating') : t('create_contact')}
+          </Button>
+        </div>
+      </form>
+    </Form>
   );
 }

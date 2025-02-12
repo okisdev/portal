@@ -1,3 +1,4 @@
+import LocaleProvider from '@/app/[locale]/provider';
 import RootLayout from '@/components/root/layout';
 import { routing } from '@/i18n/routing';
 import type { Locale } from '@/types/i18n';
@@ -15,5 +16,9 @@ export default async function LocaleLayout(props: Props) {
 
   if (!routing.locales.includes(locale as Locale)) notFound();
 
-  return <RootLayout params={{ locale }}>{children}</RootLayout>;
+  return (
+    <RootLayout params={{ locale }}>
+      <LocaleProvider>{children}</LocaleProvider>
+    </RootLayout>
+  );
 }

@@ -1,63 +1,11 @@
-import { calendarEvent, calendarEventParticipant, calendarFolder, contact, contactActivity, team, teamActivity, teamContact, teamMeeting } from '@/drizzle/schema';
+import { calendarEvent, calendarEventParticipant, calendarFolder, company, contact, marketingCampaign, team, teamActivity, teamContact, teamMeeting, user, userNotifications } from '@/drizzle/schema';
+import { activitySubTypeSchema, activityTypeSchema } from '@/lib/schema';
+import { createContactActivityHelper } from '@/server/helper/contact';
+import { createTeamActivityHelper } from '@/server/helper/team';
 import { createTRPCRouter, protectedProcedure } from '@/server/trpc';
-import { and, eq, exists, sql } from 'drizzle-orm';
+import { TRPCError } from '@trpc/server';
+import { and, asc, eq, exists, inArray, sql } from 'drizzle-orm';
 import { z } from 'zod';
-
-const activityTypeEnum = z.enum([
-  // Contact Management
-  'CONTACT_CREATED',
-  'CONTACT_UPDATED',
-  'CONTACT_DELETED',
-
-  // Status Changes
-  'STATUS_CHANGED',
-  'PRIORITY_CHANGED',
-
-  // Engagement
-  'MEETING_SCHEDULED',
-  'MEETING_UPDATED',
-  'MEETING_CANCELLED',
-  'CALL_LOGGED',
-  'EMAIL_SENT',
-  'NOTE_ADDED',
-
-  // Team Management
-  'TEAM_ASSIGNED',
-  'TEAM_REMOVED',
-
-  // Deal Management
-  'DEAL_CREATED',
-  'DEAL_UPDATED',
-  'DEAL_CLOSED',
-
-  // Payment
-  'PAYMENT_LINK_CLICKED',
-  'PAYMENT_COMPLETED',
-]);
-
-// Helper function to create contact activity
-const createContactActivityHelper = async (
-  ctx: any,
-  input: {
-    contactId: string;
-    type: z.infer<typeof activityTypeEnum>;
-    title: string;
-    description: string;
-    initiatorType?: 'user' | 'contact' | 'system';
-    metadata?: Record<string, any>;
-  }
-) => {
-  return ctx.db.insert(contactActivity).values({
-    contactId: input.contactId,
-    userId: ctx.session?.user.id,
-    type: input.type,
-    initiatorType: input.initiatorType || 'system',
-    initiatorId: ctx.session?.user.id,
-    title: input.title,
-    description: input.description,
-    metadata: input.metadata ? JSON.stringify(input.metadata) : null,
-  });
-};
 
 export const teamRouter = createTRPCRouter({
   getAllTeams: protectedProcedure.query(async ({ ctx }) => {
@@ -69,8 +17,14 @@ export const teamRouter = createTRPCRouter({
         createdAt: team.createdAt,
         createdBy: team.createdBy,
         contacts: sql<number>`(SELECT COUNT(*) FROM ${teamContact} WHERE ${teamContact.teamId} = ${team.id})`,
+        company: sql<{ id: string; name: string } | null>`
+          (SELECT row_to_json(c) 
+           FROM ${company} c 
+           WHERE c.id = ${team.companyId})`,
       })
-      .from(team);
+      .from(team)
+      .leftJoin(teamContact, eq(teamContact.teamId, team.id))
+      .groupBy(team.id, team.name, team.description, team.createdAt, team.createdBy, team.companyId);
   }),
 
   getContactTeams: protectedProcedure.input(z.object({ contactId: z.string() })).query(({ ctx, input }) => {
@@ -92,6 +46,7 @@ export const teamRouter = createTRPCRouter({
       z.object({
         name: z.string(),
         description: z.string().optional(),
+        companyId: z.string().optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -101,9 +56,20 @@ export const teamRouter = createTRPCRouter({
           name: input.name,
           description: input.description,
           createdBy: ctx.session.user.id,
+          companyId: input.companyId,
         })
         .returning();
 
+      await createTeamActivityHelper(ctx, {
+        teamId: newTeam.id,
+        type: 'TEAM',
+        subType: 'TEAM_CREATED',
+        metadata: {
+          team: newTeam,
+        },
+        initiatorType: 'user',
+        initiatorId: ctx.session.user.id,
+      });
       return newTeam;
     }),
 
@@ -133,6 +99,12 @@ export const teamRouter = createTRPCRouter({
         .where(eq(team.id, input.teamId))
         .then((rows) => rows[0]);
 
+      const thisContact = await ctx.db
+        .select()
+        .from(contact)
+        .where(eq(contact.id, input.contactId))
+        .then((rows) => rows[0]);
+
       const result = await ctx.db
         .insert(teamContact)
         .values({
@@ -144,12 +116,25 @@ export const teamRouter = createTRPCRouter({
       // Log team assignment activity
       await createContactActivityHelper(ctx, {
         contactId: input.contactId,
-        type: 'TEAM_ASSIGNED',
-        title: 'Assigned to Team',
-        description: `Contact was assigned to team "${teamDetails.name}"`,
+        type: 'TEAM',
+        subType: 'TEAM_CONTACT_ASSIGNED',
+        initiatorType: 'user',
+        initiatorId: ctx.session?.user.id,
         metadata: {
-          teamId: input.teamId,
-          teamName: teamDetails.name,
+          contact: thisContact,
+          team: teamDetails,
+        },
+      });
+
+      await createTeamActivityHelper(ctx, {
+        teamId: input.teamId,
+        type: 'TEAM',
+        subType: 'TEAM_CONTACT_ASSIGNED',
+        initiatorType: 'user',
+        initiatorId: ctx.session?.user.id,
+        metadata: {
+          contact: thisContact,
+          team: teamDetails,
         },
       });
 
@@ -181,12 +166,25 @@ export const teamRouter = createTRPCRouter({
       // Log team removal activity
       await createContactActivityHelper(ctx, {
         contactId: input.contactId,
-        type: 'TEAM_REMOVED',
-        title: 'Removed from Team',
-        description: `Contact was removed from team "${teamDetails.name}"`,
+        type: 'TEAM',
+        subType: 'TEAM_CONTACT_REMOVED',
+        initiatorType: 'user',
+        initiatorId: ctx.session?.user.id,
         metadata: {
-          teamId: input.teamId,
-          teamName: teamDetails.name,
+          contact: result,
+          team: teamDetails,
+        },
+      });
+
+      await createTeamActivityHelper(ctx, {
+        teamId: input.teamId,
+        type: 'TEAM',
+        subType: 'TEAM_CONTACT_REMOVED',
+        initiatorType: 'user',
+        initiatorId: ctx.session?.user.id,
+        metadata: {
+          team: teamDetails,
+          contact: result,
         },
       });
 
@@ -207,6 +205,11 @@ export const teamRouter = createTRPCRouter({
         referralId: team.referralId,
         campaignCode: team.campaignCode,
         remarks: team.remarks,
+        companyId: team.companyId,
+        company: sql<{ id: string; name: string } | null>`
+          (SELECT row_to_json(c) 
+           FROM ${company} c 
+           WHERE c.id = ${team.companyId})`,
         leader: sql<{ id: string; firstName: string; lastName: string } | null>`
           (SELECT row_to_json(c) 
            FROM ${contact} c 
@@ -234,85 +237,150 @@ export const teamRouter = createTRPCRouter({
         leaderId: z.string().optional(),
         subLeaderId: z.string().optional(),
         referralId: z.string().optional(),
-        campaignCode: z
-          .string()
-          .optional()
-          .transform((val) => val?.toUpperCase()),
+        campaignCode: z.string().optional(),
         remarks: z.string().optional(),
+        company: z.object({ id: z.string(), name: z.string() }).optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
-      const [updated] = await ctx.db
+      let campaignCodeToSet: string | undefined = input.campaignCode;
+      let companyIdToSet: string | null | undefined = input.company?.id;
+
+      if (input.campaignCode) {
+        // Verify campaign exists
+        const campaign = await ctx.db
+          .select()
+          .from(marketingCampaign)
+          .where(eq(marketingCampaign.campaignCode, input.campaignCode))
+          .then((rows) => rows[0]);
+
+        if (!campaign) {
+          campaignCodeToSet = undefined;
+        }
+      }
+
+      if (input.company?.id) {
+        // Verify company exists
+        const companyRecord = await ctx.db
+          .select()
+          .from(company)
+          .where(eq(company.id, input.company?.id))
+          .then((rows) => rows[0]);
+
+        if (!companyRecord) {
+          companyIdToSet = undefined;
+        }
+      } else {
+        // If companyId is explicitly set to undefined in the input, we want to remove the company association
+        companyIdToSet = null;
+      }
+
+      const thisTeam = await ctx.db
+        .select()
+        .from(team)
+        .where(eq(team.id, input.id))
+        .then((rows) => rows[0]);
+
+      await ctx.db
         .update(team)
         .set({
-          name: input.name,
-          description: input.description,
-          leaderId: input.leaderId,
-          subLeaderId: input.subLeaderId,
-          referralId: input.referralId,
-          campaignCode: input.campaignCode,
-          remarks: input.remarks,
-          updatedAt: new Date(),
+          ...(input.name && { name: input.name }),
+          ...(input.description && { description: input.description }),
+          ...(input.leaderId && { leaderId: input.leaderId }),
+          ...(input.subLeaderId && { subLeaderId: input.subLeaderId }),
+          ...(input.referralId && { referralId: input.referralId }),
+          ...(campaignCodeToSet !== undefined && { campaignCode: campaignCodeToSet }),
+          ...(companyIdToSet !== undefined && { companyId: companyIdToSet }),
+          ...(input.remarks && { remarks: input.remarks }),
         })
-        .where(eq(team.id, input.id))
-        .returning();
+        .where(eq(team.id, input.id));
 
-      return updated;
+      await createTeamActivityHelper(ctx, {
+        teamId: input.id,
+        type: 'TEAM',
+        subType: 'TEAM_UPDATED',
+        initiatorType: 'user',
+        initiatorId: ctx.session?.user.id,
+        metadata: {
+          team: thisTeam,
+        },
+      });
     }),
 
   updateTeamRemarks: protectedProcedure.input(z.object({ id: z.string(), remarks: z.string() })).mutation(async ({ ctx, input }) => {
-    return await ctx.db.update(team).set({ remarks: input.remarks }).where(eq(team.id, input.id));
+    const teamDetails = await ctx.db
+      .select({
+        name: team.name,
+      })
+      .from(team)
+      .where(eq(team.id, input.id))
+      .then((rows) => rows[0]);
+
+    await ctx.db.update(team).set({ remarks: input.remarks }).where(eq(team.id, input.id));
+
+    await createTeamActivityHelper(ctx, {
+      teamId: input.id,
+      type: 'TEAM',
+      subType: 'TEAM_UPDATED',
+      initiatorType: 'user',
+      initiatorId: ctx.session?.user.id,
+      metadata: {
+        team: teamDetails,
+      },
+    });
   }),
 
-  getTeamActivities: protectedProcedure.input(z.object({ teamId: z.string() })).query(async ({ ctx, input }) => {
-    return await ctx.db
-      .select({
-        id: teamActivity.id,
-        type: teamActivity.type,
-        title: teamActivity.title,
-        description: teamActivity.description,
-        metadata: teamActivity.metadata,
-        createdAt: teamActivity.createdAt,
-        user: {
-          id: contact.id,
-          firstName: contact.firstName,
-          lastName: contact.lastName,
-        },
-      })
-      .from(teamActivity)
-      .leftJoin(contact, eq(teamActivity.userId, contact.id))
-      .where(eq(teamActivity.teamId, input.teamId))
-      .orderBy(teamActivity.createdAt);
+  getTeamActivities: protectedProcedure.input(z.object({ id: z.string() })).query(async ({ ctx, input }) => {
+    return await ctx.db.select().from(teamActivity).where(eq(teamActivity.teamId, input.id)).orderBy(asc(teamActivity.createdAt));
   }),
 
   createTeamActivity: protectedProcedure
     .input(
       z.object({
         teamId: z.string(),
-        type: z.string(),
-        title: z.string(),
-        description: z.string().optional(),
-        metadata: z.string().optional(),
-        initiatorType: z.enum(['user', 'system']).default('user'),
-        initiatorId: z.string().optional(),
+        type: activityTypeSchema,
+        subType: activitySubTypeSchema,
+        description: z.string(),
+        initiatorType: z.enum(['user', 'system', 'team']).default('user'),
+        initiatorId: z.string(),
+        metadata: z.record(z.any()).optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
-      const [newActivity] = await ctx.db
-        .insert(teamActivity)
-        .values({
-          teamId: input.teamId,
-          userId: ctx.session.user.id,
-          type: input.type,
-          title: input.title,
-          description: input.description,
-          metadata: input.metadata,
-          initiatorType: input.initiatorType,
-          initiatorId: input.initiatorId,
-        })
-        .returning();
+      await ctx.db.insert(teamActivity).values({
+        teamId: input.teamId,
+        userId: ctx.session?.user.id,
+        type: input.type,
+        subType: input.subType,
+        initiatorType: input.initiatorType,
+        initiatorId: input.initiatorId,
+        description: input.description,
+        metadata: input.metadata ? JSON.stringify(input.metadata) : null,
+      });
 
-      return newActivity;
+      const mentionRegex = /@(\w+)/g;
+      const mentions = input.description.match(mentionRegex)?.map((m) => m.slice(1)) || [];
+
+      if (mentions.length > 0) {
+        // Get all mentioned users
+        const mentionedUsers = await ctx.db.select().from(user).where(inArray(user.username, mentions));
+
+        // Create notifications for mentioned users
+        for (const mentionedUser of mentionedUsers) {
+          await ctx.db.insert(userNotifications).values({
+            userId: mentionedUser.id,
+            type: 'MESSAGE',
+            subType: 'MENTIONED',
+            initiatorId: ctx.session?.user.id,
+            initiatorType: 'user',
+            message: input.description,
+            metadata: JSON.stringify({
+              type: 'team',
+              id: input.teamId,
+            }),
+          });
+        }
+      }
     }),
 
   getTeamMeetings: protectedProcedure.input(z.object({ teamId: z.string() })).query(async ({ ctx, input }) => {
@@ -355,6 +423,12 @@ export const teamRouter = createTRPCRouter({
       return await ctx.db.transaction(async (tx) => {
         // Set initial status based on meeting date
         const status = input.meetingDate < new Date() ? 'completed' : 'upcoming';
+
+        const teamDetails = await tx
+          .select()
+          .from(team)
+          .where(eq(team.id, input.teamId))
+          .then((rows) => rows[0]);
 
         const [newMeeting] = await tx
           .insert(teamMeeting)
@@ -409,6 +483,21 @@ export const teamRouter = createTRPCRouter({
           );
         }
 
+        await createTeamActivityHelper(ctx, {
+          teamId: input.teamId,
+          type: 'TEAM',
+          subType: 'MEETING_SCHEDULED',
+          initiatorType: 'user',
+          initiatorId: ctx.session?.user.id,
+          metadata: {
+            team: teamDetails,
+            event: calendarEvt,
+            startAt: input.meetingDate,
+            endAt: new Date(input.meetingDate.getTime() + 60 * 60 * 1000),
+            description: input.description,
+          },
+        });
+
         return newMeeting;
       });
     }),
@@ -440,13 +529,32 @@ export const teamRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      return await ctx.db.transaction(async (tx) => {
+      await ctx.db.transaction(async (tx) => {
         await tx.delete(calendarEvent).where(eq(calendarEvent.metadata, JSON.stringify({ teamMeetingId: input.id })));
 
         const [deletedMeeting] = await tx
           .delete(teamMeeting)
           .where(and(eq(teamMeeting.id, input.id), eq(teamMeeting.teamId, input.teamId)))
           .returning();
+
+        const teamDetails = await tx
+          .select()
+          .from(team)
+          .where(eq(team.id, input.teamId))
+          .then((rows) => rows[0]);
+
+        await createTeamActivityHelper(ctx, {
+          teamId: input.teamId,
+          type: 'TEAM',
+          subType: 'MEETING_CANCELLED',
+          initiatorType: 'user',
+          initiatorId: ctx.session?.user.id,
+          metadata: {
+            team: teamDetails,
+            event: deletedMeeting,
+            startAt: deletedMeeting.meetingDate,
+          },
+        });
 
         return deletedMeeting;
       });
@@ -460,10 +568,10 @@ export const teamRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      return await ctx.db.delete(teamActivity).where(eq(teamActivity.id, input.id));
+      await ctx.db.delete(teamActivity).where(eq(teamActivity.id, input.id));
     }),
 
-  addTeamMember: protectedProcedure
+  addTeamContact: protectedProcedure
     .input(
       z.object({
         teamId: z.string(),
@@ -478,8 +586,56 @@ export const teamRouter = createTRPCRouter({
         .then((rows) => rows[0]);
 
       if (existingMember) {
-        throw new Error('Contact is already a member of this team');
+        throw new TRPCError({ code: 'CONFLICT', message: 'Contact is already a member of this team' });
       }
+
+      // Get team details first
+      const teamDetails = await ctx.db
+        .select({
+          id: team.id,
+          name: team.name,
+        })
+        .from(team)
+        .where(eq(team.id, input.teamId))
+        .then((rows) => rows[0]);
+
+      const contactDetails = await ctx.db
+        .select({
+          firstName: contact.firstName,
+          lastName: contact.lastName,
+          email: contact.email,
+        })
+        .from(contact)
+        .where(eq(contact.id, input.contactId))
+        .then((rows) => rows[0]);
+
+      if (!teamDetails) {
+        throw new TRPCError({ code: 'NOT_FOUND', message: 'Team not found' });
+      }
+
+      await createContactActivityHelper(ctx, {
+        contactId: input.contactId,
+        type: 'TEAM',
+        subType: 'TEAM_CONTACT_ASSIGNED',
+        initiatorType: 'user',
+        initiatorId: ctx.session?.user.id,
+        metadata: {
+          contact: contactDetails,
+          team: teamDetails,
+        },
+      });
+
+      await createTeamActivityHelper(ctx, {
+        teamId: input.teamId,
+        type: 'TEAM',
+        subType: 'TEAM_CONTACT_ASSIGNED',
+        initiatorType: 'user',
+        initiatorId: ctx.session?.user.id,
+        metadata: {
+          contact: contactDetails,
+          team: teamDetails,
+        },
+      });
 
       const [newMember] = await ctx.db
         .insert(teamContact)

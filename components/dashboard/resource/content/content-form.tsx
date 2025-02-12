@@ -1,12 +1,16 @@
+import { Combobox } from '@/components/shared/combobox';
 import { TipTapEditor } from '@/components/shared/tiptap-editor';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
+import { contentTags } from '@/data/data';
+import type { ResourceContent } from '@/lib/schema';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useState } from 'react';
+import { X } from 'lucide-react';
+import { useTranslations } from 'next-intl';
+import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
@@ -14,19 +18,21 @@ const formSchema = z.object({
   title: z.string().min(1, 'Title is required'),
   description: z.string().optional(),
   content: z.string().min(1, 'Content is required'),
-  tags: z.array(z.string()).optional(),
+  tags: z.string().optional(),
   visibility: z.enum(['PUBLIC', 'SHARED', 'PRIVATE']),
 });
 
 type FormValues = z.infer<typeof formSchema>;
 
 interface ContentFormProps {
+  content?: ResourceContent | null;
+  onSuccess?: () => void;
   onSubmit: (data: FormValues) => void;
   isSubmitting?: boolean;
 }
 
-export function ContentForm({ onSubmit, isSubmitting }: ContentFormProps) {
-  const [keepCreating, setKeepCreating] = useState(false);
+export function ContentForm({ content, onSuccess, onSubmit, isSubmitting }: ContentFormProps) {
+  const t = useTranslations();
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -34,33 +40,65 @@ export function ContentForm({ onSubmit, isSubmitting }: ContentFormProps) {
       title: '',
       description: '',
       content: '',
-      tags: [],
+      tags: '',
       visibility: 'PRIVATE',
     },
   });
 
-  const handleSubmit = (data: FormValues) => {
+  useEffect(() => {
+    if (content) {
+      form.reset({
+        title: content.title,
+        description: content.description || '',
+        content: content.content,
+        tags: content.tags || '',
+        visibility: content.visibility,
+      });
+    }
+  }, [content, form]);
+
+  const onSubmitForm = (data: FormValues) => {
     onSubmit(data);
-    if (!keepCreating) {
-      form.reset();
+    if (!content) {
+      form.reset({
+        title: '',
+        description: '',
+        content: '',
+        tags: '',
+        visibility: 'PRIVATE',
+      });
+    }
+    onSuccess?.();
+  };
+
+  const handleAddTag = (value: string) => {
+    const tags = form.getValues('tags');
+    const currentTags = tags ? (JSON.parse(tags) as string[]) : [];
+    if (value && !currentTags.includes(value.toLowerCase())) {
+      const newTags = [...currentTags, value.toLowerCase()];
+      form.setValue('tags', JSON.stringify(newTags));
     }
   };
 
+  const handleRemoveTag = (tagToRemove: string) => {
+    const tags = form.getValues('tags');
+    const currentTags = tags ? (JSON.parse(tags) as string[]) : [];
+    const newTags = currentTags.filter((tag) => tag !== tagToRemove);
+    form.setValue('tags', newTags.length > 0 ? JSON.stringify(newTags) : '');
+  };
+
   return (
-    <div className='h-full'>
-      <div className='mb-4'>
-        <h2 className='font-medium text-xl'>New Content</h2>
-      </div>
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(handleSubmit)} className='space-y-4'>
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmitForm)} className='flex h-full flex-col'>
+        <div className='space-y-4 border-b bg-background p-4'>
           <FormField
             control={form.control}
             name='title'
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Title</FormLabel>
+                <FormLabel className='text-muted-foreground text-sm'>{t('title')}</FormLabel>
                 <FormControl>
-                  <Input {...field} />
+                  <Input {...field} className='h-9 font-medium text-lg' />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -71,9 +109,9 @@ export function ContentForm({ onSubmit, isSubmitting }: ContentFormProps) {
             name='description'
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Description</FormLabel>
+                <FormLabel className='text-muted-foreground text-sm'>{t('description')}</FormLabel>
                 <FormControl>
-                  <Input {...field} />
+                  <Input {...field} value={field.value || ''} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -81,12 +119,33 @@ export function ContentForm({ onSubmit, isSubmitting }: ContentFormProps) {
           />
           <FormField
             control={form.control}
-            name='content'
+            name='tags'
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Content</FormLabel>
+                <FormLabel className='text-muted-foreground text-sm'>{t('tags')}</FormLabel>
                 <FormControl>
-                  <TipTapEditor content={field.value} onChange={field.onChange} className='min-h-[400px]' />
+                  <div className='space-y-2'>
+                    <Combobox
+                      value=''
+                      onChange={handleAddTag}
+                      items={contentTags}
+                      placeholder={t('add_tags')}
+                      searchPlaceholder={t('tags_search_placeholder')}
+                      emptyText={t('no_matching_tags')}
+                      groupHeading={t('existing_tags')}
+                      allowCustom
+                    />
+                    <div className='flex flex-wrap gap-1.5'>
+                      {(field.value ? (JSON.parse(field.value) as string[]) : []).map((tag: string) => (
+                        <Badge key={tag} variant='secondary' className='gap-1'>
+                          {tag}
+                          <button type='button' onClick={() => handleRemoveTag(tag)} className='ml-1 rounded-full outline-none hover:text-destructive'>
+                            <X className='size-3' />
+                          </button>
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -96,35 +155,35 @@ export function ContentForm({ onSubmit, isSubmitting }: ContentFormProps) {
             control={form.control}
             name='visibility'
             render={({ field }) => (
-              <FormItem>
-                <FormLabel>Visibility</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder='Select visibility' />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    <SelectItem value='PRIVATE'>Private</SelectItem>
-                    <SelectItem value='SHARED'>Shared</SelectItem>
-                    <SelectItem value='PUBLIC'>Public</SelectItem>
-                  </SelectContent>
-                </Select>
+              <FormItem className='flex flex-row items-center space-x-2'>
+                <FormControl>
+                  <Switch checked={field.value === 'PUBLIC'} onCheckedChange={(checked) => field.onChange(checked ? 'PUBLIC' : 'PRIVATE')} />
+                </FormControl>
+                <FormLabel className='text-sm'>{t('public_description')}</FormLabel>
+              </FormItem>
+            )}
+          />
+        </div>
+        <div className='flex-1'>
+          <FormField
+            control={form.control}
+            name='content'
+            render={({ field }) => (
+              <FormItem className='h-full'>
+                <FormControl>
+                  <TipTapEditor content={field.value} onChange={field.onChange} className='h-full' />
+                </FormControl>
                 <FormMessage />
               </FormItem>
             )}
           />
-          <div className='flex items-center justify-between'>
-            <div className='flex items-center space-x-2'>
-              <Switch id='keep-creating' checked={keepCreating} onCheckedChange={setKeepCreating} />
-              <Label htmlFor='keep-creating'>Keep creating</Label>
-            </div>
-            <Button type='submit' disabled={isSubmitting}>
-              Create
-            </Button>
-          </div>
-        </form>
-      </Form>
-    </div>
+        </div>
+        <div className='border-t bg-background p-4'>
+          <Button type='submit' disabled={isSubmitting} className='w-full'>
+            {content ? t('update') : t('create')}
+          </Button>
+        </div>
+      </form>
+    </Form>
   );
 }

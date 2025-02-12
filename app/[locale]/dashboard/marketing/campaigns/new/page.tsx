@@ -2,27 +2,25 @@
 
 import { PageHeader } from '@/components/shared/page-header';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { campaignTypes } from '@/data/data';
 import { api } from '@/utils/trpc/client';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
 const campaignFormSchema = z.object({
   name: z.string().min(1, 'Name is required'),
+  campaignCode: z.string().min(1, 'Campaign code is required'),
   description: z.string().optional(),
   type: z.enum(['email', 'social', 'event', 'referral', 'other']),
   status: z.enum(['draft', 'scheduled', 'active', 'paused', 'completed', 'cancelled']).default('draft'),
-  startDate: z.string().optional(),
-  endDate: z.string().optional(),
-  budget: z.string().default(''),
-  targetAudience: z.string().optional(),
-  goals: z.string().optional(),
+  metrics: z.string().optional(),
 });
 
 type CampaignFormValues = z.infer<typeof campaignFormSchema>;
@@ -30,11 +28,16 @@ type CampaignFormValues = z.infer<typeof campaignFormSchema>;
 const defaultValues: Partial<CampaignFormValues> = {
   status: 'draft',
   type: 'email',
-  budget: '',
+  campaignCode: '',
+  name: '',
+  description: '',
+  metrics: '',
 };
 
 export default function NewCampaignPage() {
   const router = useRouter();
+  const t = useTranslations();
+
   const utils = api.useUtils();
 
   const form = useForm<CampaignFormValues>({
@@ -50,206 +53,140 @@ export default function NewCampaignPage() {
   });
 
   const onSubmit = (data: CampaignFormValues) => {
-    // Format JSON fields
-    const formattedData = {
-      ...data,
-      startDate: data.startDate ? new Date(data.startDate) : undefined,
-      endDate: data.endDate ? new Date(data.endDate) : undefined,
-      budget: data.budget ? Number(data.budget) * 100 : undefined, // Convert to cents
-      targetAudience: data.targetAudience
-        ? JSON.stringify({
-            summary: data.targetAudience,
-            criteria: {},
-          })
-        : undefined,
-      goals: data.goals
-        ? JSON.stringify({
-            main: data.goals,
-            metrics: {},
-          })
-        : undefined,
-    };
-
-    createCampaign(formattedData);
+    createCampaign(data);
   };
 
   return (
     <div className='space-y-4 p-4'>
       <PageHeader
-        title='New Campaign'
-        description='Create a new marketing campaign'
+        title={t('new_campaign')}
+        description={t('new_campaign_description')}
         right={
           <div className='space-x-2'>
             <Button variant='outline' onClick={() => router.back()}>
-              Cancel
+              {t('cancel')}
             </Button>
             <Button onClick={form.handleSubmit(onSubmit)} disabled={isPending}>
-              {isPending ? 'Creating...' : 'Create Campaign'}
+              {isPending ? t('creating') : t('create_campaign')}
             </Button>
           </div>
         }
       />
 
-      <Card>
-        <CardContent className='pt-6'>
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-6'>
-              <div className='grid grid-cols-1 gap-6 md:grid-cols-2'>
-                <FormField
-                  control={form.control}
-                  name='name'
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Campaign Name</FormLabel>
-                      <FormControl>
-                        <Input placeholder='Enter campaign name' {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-6'>
+          <div className='grid grid-cols-1 gap-6 md:grid-cols-2'>
+            <FormField
+              control={form.control}
+              name='name'
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t('campaign_name')}</FormLabel>
+                  <FormControl>
+                    <Input placeholder='Enter campaign name' {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-                <FormField
-                  control={form.control}
-                  name='type'
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Campaign Type</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder='Select campaign type' />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value='email'>Email Campaign</SelectItem>
-                          <SelectItem value='social'>Social Media Campaign</SelectItem>
-                          <SelectItem value='event'>Event Campaign</SelectItem>
-                          <SelectItem value='referral'>Referral Campaign</SelectItem>
-                          <SelectItem value='other'>Other</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+            <FormField
+              control={form.control}
+              name='campaignCode'
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t('campaign_code')}</FormLabel>
+                  <FormControl>
+                    <Input placeholder='Enter unique campaign code' {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-                <FormField
-                  control={form.control}
-                  name='startDate'
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Start Date</FormLabel>
-                      <FormControl>
-                        <Input type='date' {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+            <FormField
+              control={form.control}
+              name='type'
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t('campaign_type')}</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder='Select campaign type' />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {campaignTypes.map((type) => (
+                        <SelectItem key={type} value={type}>
+                          {type}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-                <FormField
-                  control={form.control}
-                  name='endDate'
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>End Date</FormLabel>
-                      <FormControl>
-                        <Input type='date' {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+            <FormField
+              control={form.control}
+              name='status'
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t('status')}</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder='Select status' />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value='draft'>{t('draft')}</SelectItem>
+                      <SelectItem value='scheduled'>{t('scheduled')}</SelectItem>
+                      <SelectItem value='active'>{t('active')}</SelectItem>
+                      <SelectItem value='paused'>{t('paused')}</SelectItem>
+                      <SelectItem value='completed'>{t('completed')}</SelectItem>
+                      <SelectItem value='cancelled'>{t('cancelled')}</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
 
-                <FormField
-                  control={form.control}
-                  name='budget'
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Budget (USD)</FormLabel>
-                      <FormControl>
-                        <Input type='number' placeholder='Enter budget' {...field} value={field.value === undefined ? '' : field.value} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+          <div className='grid grid-cols-1 gap-6'>
+            <FormField
+              control={form.control}
+              name='description'
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t('description')}</FormLabel>
+                  <FormControl>
+                    <Textarea placeholder='Enter campaign description' className='h-24' {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-                <FormField
-                  control={form.control}
-                  name='status'
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Status</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder='Select status' />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value='draft'>Draft</SelectItem>
-                          <SelectItem value='scheduled'>Scheduled</SelectItem>
-                          <SelectItem value='active'>Active</SelectItem>
-                          <SelectItem value='paused'>Paused</SelectItem>
-                          <SelectItem value='completed'>Completed</SelectItem>
-                          <SelectItem value='cancelled'>Cancelled</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-
-              <div className='grid grid-cols-1 gap-6'>
-                <FormField
-                  control={form.control}
-                  name='description'
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Description</FormLabel>
-                      <FormControl>
-                        <Textarea placeholder='Enter campaign description' className='h-24' {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name='targetAudience'
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Target Audience</FormLabel>
-                      <FormControl>
-                        <Textarea placeholder='Describe your target audience' className='h-24' {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name='goals'
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Campaign Goals</FormLabel>
-                      <FormControl>
-                        <Textarea placeholder='Describe your campaign goals' className='h-24' {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-            </form>
-          </Form>
-        </CardContent>
-      </Card>
+            <FormField
+              control={form.control}
+              name='metrics'
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t('metrics')}</FormLabel>
+                  <FormControl>
+                    <Textarea placeholder='Enter campaign metrics (optional)' className='h-24' {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+        </form>
+      </Form>
     </div>
   );
 }

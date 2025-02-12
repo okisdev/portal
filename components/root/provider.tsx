@@ -1,6 +1,8 @@
 'use client';
 
 import { Toaster } from '@/components/ui/sonner';
+import { Analytics } from '@vercel/analytics/react';
+import { SpeedInsights } from '@vercel/speed-insights/next';
 import { AppProgressBar as ProgressBar } from 'next-nprogress-bar';
 import { ThemeProvider } from 'next-themes';
 import { Monitoring } from 'react-scan/monitoring/next';
@@ -16,14 +18,19 @@ export default function BodyProvider({
 
       <Toaster richColors />
 
-      <ProgressBar height='2px' color='#000' options={{ showSpinner: false }} shallowRouting />
+      <ProgressBar height='2px' color='hsl(var(--foreground))' options={{ showSpinner: false }} shallowRouting />
 
       <Monitoring
-        apiKey='--MU9ty2MGH89Zw9QvNvP-VVc41VepvG' // Safe to expose publically
         url='https://monitoring.react-scan.com/api/v1/ingest'
-        commit={process.env.NEXT_PUBLIC_VERCEL_GIT_COMMIT_SHA} // optional but recommended
-        branch={process.env.NEXT_PUBLIC_VERCEL_GIT_COMMIT_REF} // optional but recommended
+        // biome-ignore lint/style/noNonNullAssertion: <explanation>
+        apiKey={process.env.NEXT_PUBLIC_REACT_SCAN_API_KEY!}
+        commit={process.env.NEXT_PUBLIC_VERCEL_GIT_COMMIT_SHA}
+        branch={process.env.NEXT_PUBLIC_VERCEL_GIT_COMMIT_REF}
       />
+
+      <SpeedInsights />
+
+      <Analytics />
     </ThemeProvider>
   );
 }
