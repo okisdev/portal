@@ -923,7 +923,7 @@ export const siteConfig = pgTable('portal_siteConfig', {
     .notNull()
     .$defaultFn(() => crypto.randomUUID()),
   key: text('key', {
-    enum: ['name', 'description', 'domain'],
+    enum: ['name', 'description', 'domain', 'supportEmailDomain'],
   })
     .notNull()
     .unique(), // Unique key for the config

@@ -41,8 +41,15 @@ export default function RegisterPage() {
   const password = watch('password');
 
   const registerAccount = api.auth.register.useMutation();
+  const { data: isValidDomain } = api.auth.validateEmailDomain.useQuery({ email: email || '' }, { enabled: !!email && email.includes('@') });
 
   const onSubmit = async (data: RegisterFormValues) => {
+    if (!isValidDomain) {
+      setError(t('registration_not_allowed_support_only'));
+      toast.error(t('registration_not_allowed_support_only'));
+      return;
+    }
+
     setLoading(true);
     setError('');
 

@@ -443,6 +443,8 @@
   "recipient": "接收者",
   "referral": "推薦",
   "registration_successful": "註冊成功！",
+  "registration_not_allowed_support_only": "僅允許支援團隊郵箱地址註冊",
+  "login_not_allowed_support_only": "僅允許支援團隊郵箱地址登錄",
   "remark": "備註",
   "remark_updated_successfully": "備註更新成功",
   "remarks": "備註",
@@ -529,6 +531,8 @@
   "site_configuration_description": "管理您的網站設定",
   "site_description": "管理您的站點成員和設定",
   "site_domain": "站點域名",
+  "support_email_domain": "支援郵箱域名",
+  "support_email_domains_description": "輸入多個域名，用逗號分隔（例如：support.portal.com, help.portal.com）",
   "site_name": "站點名稱",
   "size": "大小",
   "social": "社交",
@@ -631,5 +635,7 @@
   "will_renew_at": "將在 {date} 續訂",
   "workspace": "工作區",
   "write_a_reply": "寫回覆...使用 @ 提及他人",
-  "you": "您"
+  "you": "您",
+  "close_menu": "關閉菜單",
+  "login": "登入"
 }

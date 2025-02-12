@@ -44,13 +44,13 @@ export default function Header() {
         </div>
         <div className='hidden items-center lg:flex lg:flex-1 lg:justify-end lg:gap-x-4'>
           <Link href='/login' className='font-semibold text-neutral-900 text-sm leading-6 hover:text-neutral-600 dark:text-neutral-300 dark:hover:text-white'>
-            Log in
+            {t('sign_in')}
           </Link>
           <Link
             href='/register'
             className='rounded-md bg-neutral-900 px-3 py-2 font-semibold text-sm text-white shadow-sm hover:bg-neutral-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-neutral-900 focus-visible:outline-offset-2 dark:bg-neutral-700 dark:hover:bg-neutral-600'
           >
-            Sign up
+            {t('sign_up')}
           </Link>
         </div>
       </nav>
@@ -97,7 +97,7 @@ export default function Header() {
                   className='block rounded-lg px-3 py-2.5 font-semibold text-base text-neutral-900 leading-7 hover:bg-neutral-50 dark:text-neutral-300 dark:hover:bg-neutral-800'
                   onClick={() => setMobileMenuOpen(false)}
                 >
-                  {t('login')}
+                  {t('sign_in')}
                 </Link>
                 <Link
                   href='/register'

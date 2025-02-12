@@ -2,6 +2,7 @@
 
 import { Banner } from '@/components/shared/banner';
 import { Label } from '@/components/ui/label';
+import { api } from '@/utils/trpc/client';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { AnimatePresence, motion } from 'framer-motion';
 import { CheckCircle2, Loader2 } from 'lucide-react';
@@ -46,7 +47,15 @@ export default function LoginPage() {
   const email = watch('email');
   const password = watch('password');
 
+  const { data: isValidDomain } = api.auth.validateEmailDomain.useQuery({ email: email || '' }, { enabled: !!email && email.includes('@') });
+
   const onSubmit = async (data: LoginFormValues) => {
+    if (!isValidDomain) {
+      setError(t('login_not_allowed_support_only'));
+      toast.error(t('login_not_allowed_support_only'));
+      return;
+    }
+
     if (isPasswordLogin) {
       await handlePasswordLogin(data);
     } else {
@@ -67,8 +76,6 @@ export default function LoginPage() {
 
       if (result?.error) {
         let errorMessage = t('unexpected_error');
-
-        console.log(result);
 
         switch (result.code) {
           case 'user_not_found':

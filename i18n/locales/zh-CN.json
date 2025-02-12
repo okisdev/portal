@@ -443,6 +443,8 @@
   "recipient": "接收者",
   "referral": "推荐",
   "registration_successful": "注册成功！",
+  "registration_not_allowed_support_only": "仅允许支持团队邮箱地址注册",
+  "login_not_allowed_support_only": "仅允许支持团队邮箱地址登录",
   "remark": "备注",
   "remark_updated_successfully": "备注更新成功",
   "remarks": "备注",
@@ -529,6 +531,8 @@
   "site_configuration_description": "管理您的站点配置",
   "site_description": "管理您的站点成员和设置",
   "site_domain": "站点域名",
+  "support_email_domain": "支持邮箱域名",
+  "support_email_domains_description": "输入多个域名，用逗号分隔（例如：support.portal.com, help.portal.com）",
   "site_name": "站点名称",
   "size": "大小",
   "social": "社交",
@@ -631,5 +635,7 @@
   "will_renew_at": "将在 {date} 续订",
   "workspace": "工作区",
   "write_a_reply": "写回复...使用 @ 提及他人",
-  "you": "你"
+  "you": "你",
+  "close_menu": "关闭菜单",
+  "login": "登录"
 }

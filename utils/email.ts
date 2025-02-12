@@ -1,3 +1,4 @@
+import { api } from '@/utils/trpc/client';
 import { Resend } from 'resend';
 
 const resend = new Resend(process.env.AUTH_RESEND_KEY);
@@ -35,5 +36,21 @@ export async function sendEmail({ from, to, subject, content, cc, bcc, attachmen
   } catch (error) {
     console.error('Error sending email:', error);
     throw error;
+  }
+}
+
+export async function isAllowedEmailDomain(email: string): Promise<boolean> {
+  try {
+    const domain = email.split('@')[1];
+    if (!domain) return false;
+
+    const { data: supportEmailDomainConfig } = await api.site.getConfig.useQuery({ key: 'supportEmailDomain' });
+    if (!supportEmailDomainConfig?.value) return false;
+
+    const allowedDomains = supportEmailDomainConfig.value.split(',').map((d) => d.trim());
+    return allowedDomains.includes(domain);
+  } catch (error) {
+    console.error('Error checking email domain:', error);
+    return false;
   }
 }
