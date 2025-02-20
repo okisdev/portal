@@ -70,7 +70,7 @@
     "drizzle-orm": "^0.39.3",
     "drizzle-zod": "^0.7.0",
     "framer-motion": "^12.4.2",
-    "jspdf": "^2.5.2",
+    "jspdf": "^3.0.0",
     "jszip": "^3.10.1",
     "ky": "^1.7.4",
     "libphonenumber-js": "^1.11.19",
