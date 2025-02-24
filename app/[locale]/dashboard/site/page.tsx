@@ -18,14 +18,14 @@ export default function SitePage() {
 
   const [siteName, setSiteName] = useState('');
   const [siteDomain, setSiteDomain] = useState('');
-  const [supportEmailDomain, setSupportEmailDomain] = useState('');
+  const [supportEmailDomains, setSupportEmailDomains] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
   const utils = api.useUtils();
 
   const { data: siteNameConfig } = api.site.getConfig.useQuery({ key: 'name' });
   const { data: siteDomainConfig } = api.site.getConfig.useQuery({ key: 'domain' });
-  const { data: supportEmailDomainConfig } = api.site.getConfig.useQuery({ key: 'supportEmailDomain' });
+  const { data: supportEmailDomainConfig } = api.site.getConfig.useQuery({ key: 'supportEmailDomains' });
 
   useEffect(() => {
     if (siteNameConfig) {
@@ -41,7 +41,7 @@ export default function SitePage() {
 
   useEffect(() => {
     if (supportEmailDomainConfig) {
-      setSupportEmailDomain(supportEmailDomainConfig.value);
+      setSupportEmailDomains(supportEmailDomainConfig.value);
     }
   }, [supportEmailDomainConfig]);
 
@@ -51,7 +51,7 @@ export default function SitePage() {
       .split(',')
       .map((domain) => domain.trim())
       .filter(Boolean);
-    setSupportEmailDomain(domains.join(','));
+    setSupportEmailDomains(domains.join(','));
   };
 
   const { mutate: updateSiteConfig } = api.site.updateConfig.useMutation({
@@ -89,10 +89,10 @@ export default function SitePage() {
     }
 
     // Update support email domain if changed
-    if (supportEmailDomainConfig?.value !== supportEmailDomain) {
+    if (supportEmailDomainConfig?.value !== supportEmailDomains) {
       updateSiteConfig({
-        key: 'supportEmailDomain',
-        value: supportEmailDomain,
+        key: 'supportEmailDomains',
+        value: supportEmailDomains,
         type: 'string',
         isPublic: true,
       });
@@ -129,8 +129,8 @@ export default function SitePage() {
                 <Input id='siteDomain' placeholder='portal' value={siteDomain} onChange={(e) => setSiteDomain(e.target.value)} />
               </div>
               <div className='space-y-2'>
-                <Label htmlFor='supportEmailDomain'>{t('support_email_domains')}</Label>
-                <Input id='supportEmailDomain' placeholder='support.portal.com, help.portal.com' value={supportEmailDomain} onChange={handleSupportEmailDomainChange} />
+                <Label htmlFor='supportEmailDomains'>{t('support_email_domains')}</Label>
+                <Input id='supportEmailDomains' placeholder='support.portal.com, help.portal.com' value={supportEmailDomains} onChange={handleSupportEmailDomainChange} />
                 <p className='text-muted-foreground text-sm'>{t('support_email_domains_description')}</p>
               </div>
               <Button onClick={handleSaveChanges} disabled={isLoading}>
