@@ -44,7 +44,7 @@ export const adminRouter = createTRPCRouter({
       z.object({
         email: z.string().email(),
         name: z.string(),
-        role: z.enum(['ADMIN', 'SALES', 'MANAGER', 'USER']),
+        role: z.enum(['ADMIN', 'SALES_MANAGER', 'SALES_ASSISTANT', 'MANAGER', 'USER']),
         username: z.string().optional(),
       })
     )
@@ -62,7 +62,7 @@ export const adminRouter = createTRPCRouter({
     .input(
       z.object({
         id: z.string(),
-        role: z.enum(['ADMIN', 'SALES', 'MANAGER', 'USER']).nullish(),
+        role: z.enum(['ADMIN', 'SALES_MANAGER', 'SALES_ASSISTANT', 'MANAGER', 'USER']).nullish(),
         email: z.string().email().optional(),
         firstName: z.string().optional(),
         lastName: z.string().optional(),

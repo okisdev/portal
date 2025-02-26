@@ -17,7 +17,7 @@ export const user = pgTable(
     emailVerified: timestamp({ mode: 'string' }),
     password: text(),
     image: text(),
-    role: text('role', { enum: ['ADMIN', 'SALES', 'MANAGER', 'USER'] }).default('USER'),
+    role: text('role', { enum: ['ADMIN', 'SALES_MANAGER', 'SALES_ASSISTANT', 'MANAGER', 'USER'] }).default('USER'),
     timezone: text('timezone', {
       enum: [
         // Africa

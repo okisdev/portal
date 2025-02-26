@@ -22,6 +22,15 @@ export function PhoneInput({ className, value, onChange, onValidityChange, ...pr
   const [phoneNumber, setPhoneNumber] = useState('');
   const [isValid, setIsValid] = useState(false);
 
+  const finalRecommendedCountries = [
+    { value: 'hk', label: '🇭🇰 Hong Kong', code: '+852' },
+    { value: 'cn', label: '🇨🇳 China', code: '+86' },
+    { value: 'mo', label: '🇲🇴 Macau', code: '+853' },
+  ];
+
+  // Ensure all recommended countries exist in the phoneCountries list
+  const validRecommendedCountries = finalRecommendedCountries.filter((country) => phoneCountries.some((c) => c.label === country.label));
+
   const validateAndNotify = (number: string, shouldNotify = false) => {
     if (!selectedCountry) {
       setIsValid(false);
@@ -120,9 +129,11 @@ export function PhoneInput({ className, value, onChange, onValidityChange, ...pr
         value={selectedCountry?.label ?? ''}
         onChange={handleCountryChange}
         items={phoneCountries.map((country) => country.label)}
+        recommendedItems={validRecommendedCountries.map((country) => country.label)}
         placeholder={t('select_country')}
         searchPlaceholder={t('search_country')}
         groupHeading={t('countries')}
+        recommendedHeading={t('recommended_countries')}
         className='w-[180px]'
         allowCustom={false}
       />

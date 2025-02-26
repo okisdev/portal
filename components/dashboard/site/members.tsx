@@ -217,7 +217,8 @@ export function SiteMembers() {
                 <SelectContent>
                   <SelectItem value='USER'>{t('user')}</SelectItem>
                   <SelectItem value='ADMIN'>{t('admin')}</SelectItem>
-                  <SelectItem value='SALES'>{t('sales')}</SelectItem>
+                  <SelectItem value='SALES_MANAGER'>{t('sales_manager')}</SelectItem>
+                  <SelectItem value='SALES_ASSISTANT'>{t('sales_assistant')}</SelectItem>
                   <SelectItem value='MANAGER'>{t('manager')}</SelectItem>
                 </SelectContent>
               </Select>

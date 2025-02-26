@@ -105,7 +105,7 @@ export const sourceSchema = z.enum(['Pitching', 'Referral', 'Website', 'Email', 
 
 export type Source = z.infer<typeof sourceSchema>;
 
-export const userRoleSchema = z.enum(['ADMIN', 'SALES', 'MANAGER', 'USER']);
+export const userRoleSchema = z.enum(['ADMIN', 'SALES_MANAGER', 'SALES_ASSISTANT', 'MANAGER', 'USER']);
 
 export type UserRole = z.infer<typeof userRoleSchema>;
 

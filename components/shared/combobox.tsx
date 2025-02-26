@@ -12,10 +12,12 @@ interface ComboboxProps {
   value: string;
   onChange: (value: string) => void;
   items?: string[];
+  recommendedItems?: string[];
   placeholder?: string;
   searchPlaceholder?: string;
   emptyText?: string;
   groupHeading?: string;
+  recommendedHeading?: string;
   allowCustom?: boolean;
   renderItem?: (item: string) => React.ReactNode;
   className?: string;
@@ -30,23 +32,40 @@ interface ComboboxCommandProps {
   onChange: (value: string) => void;
   setOpen: (value: boolean) => void;
   items: string[];
+  recommendedItems?: string[];
   searchPlaceholder: string;
   emptyText: string;
   groupHeading: string;
+  recommendedHeading: string;
   allowCustom: boolean;
   renderItem?: (item: string) => React.ReactNode;
 }
 
-function ComboboxCommand({ query, setQuery, value, onChange, setOpen, items, searchPlaceholder, emptyText, groupHeading, allowCustom, renderItem }: ComboboxCommandProps) {
+function ComboboxCommand({
+  query,
+  setQuery,
+  value,
+  onChange,
+  setOpen,
+  items,
+  recommendedItems = [],
+  searchPlaceholder,
+  emptyText,
+  groupHeading,
+  recommendedHeading,
+  allowCustom,
+  renderItem,
+}: ComboboxCommandProps) {
   const t = useTranslations();
 
   const filteredItems = items.filter((item) => item.toLowerCase().includes(query.toLowerCase()));
+  const filteredRecommendedItems = recommendedItems.filter((item) => item.toLowerCase().includes(query.toLowerCase()));
 
   return (
     <Command>
       <CommandInput placeholder={searchPlaceholder} value={query} onValueChange={setQuery} />
       <CommandEmpty>{emptyText}</CommandEmpty>
-      {allowCustom && query && !filteredItems.includes(query) && (
+      {allowCustom && query && !filteredItems.includes(query) && !filteredRecommendedItems.includes(query) && (
         <CommandGroup heading={t('custom')}>
           <CommandItem
             value={`custom-${query}`}
@@ -57,6 +76,30 @@ function ComboboxCommand({ query, setQuery, value, onChange, setOpen, items, sea
           >
             {t('use_query', { query })}
           </CommandItem>
+        </CommandGroup>
+      )}
+      {filteredRecommendedItems.length > 0 && (
+        <CommandGroup heading={recommendedHeading} className='max-h-[150px] overflow-y-auto'>
+          {filteredRecommendedItems.map((item) => (
+            <CommandItem
+              key={`recommended-${item}-${generateUUID()}`}
+              value={item}
+              onSelect={() => {
+                onChange(value === item ? '' : item);
+                setOpen(false);
+              }}
+              className='flex cursor-pointer items-center gap-2'
+            >
+              {renderItem ? (
+                renderItem(item)
+              ) : (
+                <>
+                  {item}
+                  {value === item && <Check className='ml-auto h-4 w-4' />}
+                </>
+              )}
+            </CommandItem>
+          ))}
         </CommandGroup>
       )}
       <CommandGroup heading={groupHeading} className='max-h-[300px] overflow-y-auto'>
@@ -89,10 +132,12 @@ function Combobox({
   value,
   onChange,
   items = [],
+  recommendedItems = [],
   placeholder = 'Select...',
   searchPlaceholder = 'Search...',
   emptyText = 'No results found',
   groupHeading = 'Items',
+  recommendedHeading = 'Recommended',
   allowCustom = true,
   renderItem,
   className,
@@ -109,10 +154,10 @@ function Combobox({
   }, [open]);
 
   useEffect(() => {
-    if (value && !items.includes(value) && !allowCustom) {
+    if (value && !items.includes(value) && !recommendedItems?.includes(value) && !allowCustom) {
       onChange('');
     }
-  }, [items, value, onChange, allowCustom]);
+  }, [items, recommendedItems, value, onChange, allowCustom]);
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -130,9 +175,11 @@ function Combobox({
           onChange={onChange}
           setOpen={setOpen}
           items={items}
+          recommendedItems={recommendedItems}
           searchPlaceholder={searchPlaceholder}
           emptyText={emptyText}
           groupHeading={groupHeading}
+          recommendedHeading={recommendedHeading}
           allowCustom={allowCustom}
           renderItem={renderItem}
         />

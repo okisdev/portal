@@ -48,6 +48,7 @@ export const phoneCountries = [
   { value: 'kz', label: '🇰🇿 Kazakhstan', code: '+7' },
   { value: 'kr', label: '🇰🇷 South Korea', code: '+82' },
   { value: 'kw', label: '🇰🇼 Kuwait', code: '+965' },
+  { value: 'mo', label: '🇲🇴 Macau', code: '+853' },
   { value: 'my', label: '🇲🇾 Malaysia', code: '+60' },
   { value: 'mx', label: '🇲🇽 Mexico', code: '+52' },
   { value: 'nl', label: '🇳🇱 Netherlands', code: '+31' },

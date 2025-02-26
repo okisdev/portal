@@ -444,6 +444,7 @@
   "read": "Read",
   "recent_transactions": "Recent Transactions",
   "recipient": "Recipient",
+  "recommended_countries": "Recommended countries",
   "referral": "Referral",
   "registration_not_allowed_support_only": "Registration is only allowed for support team email addresses",
   "registration_successful": "Registration successful!",
@@ -637,5 +638,7 @@
   "will_renew_at": "Will renew at {date}",
   "workspace": "Workspace",
   "write_a_reply": "Write a reply... Use @ to mention someone",
-  "you": "You"
+  "you": "You",
+  "sales_manager": "Sales Manager",
+  "sales_assistant": "Sales Assistant"
 }
