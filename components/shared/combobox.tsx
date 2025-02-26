@@ -32,11 +32,11 @@ interface ComboboxCommandProps {
   onChange: (value: string) => void;
   setOpen: (value: boolean) => void;
   items: string[];
-  recommendedItems?: string[];
   searchPlaceholder: string;
   emptyText: string;
   groupHeading: string;
-  recommendedHeading: string;
+  recommendedHeading?: string;
+  recommendedItems?: string[];
   allowCustom: boolean;
   renderItem?: (item: string) => React.ReactNode;
 }
@@ -48,11 +48,12 @@ function ComboboxCommand({
   onChange,
   setOpen,
   items,
-  recommendedItems = [],
+
   searchPlaceholder,
   emptyText,
   groupHeading,
   recommendedHeading,
+  recommendedItems = [],
   allowCustom,
   renderItem,
 }: ComboboxCommandProps) {
