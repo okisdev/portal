@@ -95,7 +95,7 @@ export const contactRouter = createTRPCRouter({
         name: z.string().optional(),
         firstName: z.string().optional(),
         lastName: z.string().optional(),
-        email: z.string(),
+        email: z.string().optional(),
         phone: z.string().optional(),
         company: z.string().optional(),
         companyId: z.string().nullable().optional(),
@@ -107,16 +107,18 @@ export const contactRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      const existingContact = await ctx.db
-        .select()
-        .from(contact)
-        .where(eq(contact.email, input.email))
-        .then((rows) => rows[0]);
+      const existingContact = input.email
+        ? await ctx.db
+            .select()
+            .from(contact)
+            .where(eq(contact.email, input.email))
+            .then((rows) => rows[0])
+        : null;
 
       if (existingContact) return existingContact;
 
-      // If campaignCode is an email, treat it as a referral
       let referralContact = null;
+
       if (typeof input.campaignCode === 'string' && input.campaignCode.includes('@')) {
         referralContact = await ctx.db
           .select()
@@ -155,7 +157,6 @@ export const contactRouter = createTRPCRouter({
           createdType: 'natural',
           contact: result,
           source: input.source,
-          campaignCode: input.campaignCode,
         },
         initiatorType: 'user',
         initiatorId: ctx.session?.user.id,
@@ -671,7 +672,7 @@ export const contactRouter = createTRPCRouter({
             name: z.string().optional(),
             firstName: z.string().optional(),
             lastName: z.string().optional(),
-            email: z.string(),
+            email: z.string().optional(),
             phone: z.string().optional(),
             company: z.string().optional(),
             companyId: z.string().nullable().optional(),
@@ -689,166 +690,103 @@ export const contactRouter = createTRPCRouter({
       const errors: Array<{ email: string; error: string }> = [];
 
       // Get all unique emails for existence check
-      const emails = [...new Set(input.contacts.map((contact) => contact.email))];
-      const existingContacts = await ctx.db
-        .select({
-          email: contact.email,
-        })
-        .from(contact)
-        .where(inArray(contact.email, emails));
+      const emails = [...new Set(input.contacts.map((contact) => contact.email).filter((email): email is string => typeof email === 'string' && email.length > 0))];
+      const existingContacts =
+        emails.length > 0
+          ? await ctx.db
+              .select({
+                email: contact.email,
+              })
+              .from(contact)
+              .where(inArray(contact.email, emails))
+          : [];
 
       const existingEmails = new Set(existingContacts.map((c) => c.email));
 
       // Process contacts that don't exist yet
-      const newContacts = input.contacts.filter((contact) => !existingEmails.has(contact.email));
+      const newContacts = input.contacts.filter((contact) => !contact.email || !existingEmails.has(contact.email));
 
       try {
-        // Create all contacts in a single transaction
-        const createdContacts = await ctx.db.transaction(async (tx) => {
-          const created = [];
+        // Create contacts one by one, reusing createContact logic
+        for (const contactData of newContacts) {
+          try {
+            const [result] = await ctx.db
+              .insert(contact)
+              .values({
+                name: contactData.name ?? `${contactData.firstName ?? ''} ${contactData.lastName ?? ''}`,
+                firstName: contactData.firstName ?? '',
+                lastName: contactData.lastName ?? '',
+                email: contactData.email,
+                phone: contactData.phone ?? '',
+                company: contactData.company ?? '',
+                companyId: contactData.companyId ?? null,
+                source: contactData.source ?? 'direct',
+                status: contactData.status ?? 'lead',
+                remark: contactData.remark ?? '',
+                createdBy: ctx.session?.user.id,
+                ...(contactData.createdAt && { createdAt: startOfDay(contactData.createdAt) }),
+              })
+              .returning();
 
-          for (const contactData of newContacts) {
-            try {
-              // If campaignCode is an email, treat it as a referral
-              let referralContact = null;
-              if (typeof contactData.campaignCode === 'string' && contactData.campaignCode.includes('@')) {
-                referralContact = await tx
-                  .select()
-                  .from(contact)
-                  .where(eq(contact.email, contactData.campaignCode))
-                  .then((rows) => rows[0]);
-              }
+            // Log contact creation activity
+            await createContactActivityHelper(ctx, {
+              contactId: result.id,
+              type: 'CONTACT',
+              subType: 'CONTACT_CREATED',
+              metadata: {
+                createdType: 'natural',
+                contact: result,
+                source: result.source,
+              },
+              initiatorType: 'user',
+              initiatorId: ctx.session?.user.id,
+            });
 
-              // Ensure createdAt is set to midnight if provided
-              const createdAt = contactData.createdAt ? startOfDay(contactData.createdAt) : undefined;
+            // Handle campaign assignments
+            const campaignCodes = typeof contactData.campaignCode === 'string' ? [contactData.campaignCode] : contactData.campaignCode || [];
 
-              const result = await tx
-                .insert(contact)
-                .values({
-                  name: contactData.name ?? `${contactData.firstName ?? ''} ${contactData.lastName ?? ''}`,
-                  firstName: contactData.firstName ?? '',
-                  lastName: contactData.lastName ?? '',
-                  email: contactData.email,
-                  phone: contactData.phone ?? '',
-                  company: contactData.company ?? '',
-                  companyId: contactData.companyId ?? null,
-                  source: contactData.source ?? (referralContact ? 'referral' : ''),
-                  status: contactData.status ?? 'lead',
-                  remark: contactData.remark ?? '',
-                  ...(createdAt && { createdAt }),
-                })
-                .returning();
+            for (const campaignCode of campaignCodes) {
+              const campaign = await ctx.db
+                .select()
+                .from(marketingCampaign)
+                .where(eq(marketingCampaign.campaignCode, campaignCode))
+                .then((rows) => rows[0]);
 
-              const newContact = result[0];
-              created.push(newContact);
+              if (!campaign) continue;
 
-              // Handle campaign assignments within the transaction
-              const campaignCodes = typeof contactData.campaignCode === 'string' ? (contactData.campaignCode.includes('@') ? [] : [contactData.campaignCode]) : contactData.campaignCode || [];
-
-              for (const campaignCode of campaignCodes) {
-                const campaign = await tx
-                  .select()
-                  .from(marketingCampaign)
-                  .where(eq(marketingCampaign.campaignCode, campaignCode))
-                  .then((rows) => rows[0]);
-
-                if (!campaign) continue;
-
-                await tx.insert(contactCampaign).values({
-                  contactId: newContact.id,
-                  campaignCode,
-                });
-              }
-            } catch (error) {
-              console.error('Error creating contact:', error);
-              errors.push({ email: contactData.email, error: error instanceof Error ? error.message : 'Unknown error' });
-            }
-          }
-
-          return created;
-        });
-
-        // After transaction commits, create activities for each contact
-        await Promise.all(
-          createdContacts.map(async (newContact) => {
-            try {
-              // Log contact creation activity
-              await createContactActivityHelper(ctx, {
-                contactId: newContact.id,
-                type: 'CONTACT',
-                subType: 'CONTACT_CREATED',
-                metadata: {
-                  createdType: newContact.source ? 'referral' : 'natural',
-                  contact: newContact,
-                  source: newContact.source,
-                },
-                initiatorType: 'user',
-                initiatorId: ctx.session?.user.id,
+              await ctx.db.insert(contactCampaign).values({
+                contactId: result.id,
+                campaignCode,
               });
 
-              // Handle referral case
-              if (newContact.source === 'referral') {
-                const referralContact = await ctx.db
-                  .select()
-                  .from(contact)
-                  .where(eq(contact.email, newContact.source))
-                  .then((rows) => rows[0]);
-
-                if (referralContact) {
-                  await createContactActivityHelper(ctx, {
-                    contactId: newContact.id,
-                    type: 'CONTACT',
-                    subType: 'CONTACT_CREATED',
-                    metadata: {
-                      createdType: 'referral',
-                      contact: newContact,
-                      referral: referralContact,
-                    },
-                    initiatorType: 'user',
-                    initiatorId: ctx.session?.user.id,
-                  });
-                }
-              }
-
-              // Log campaign assignments
-              const campaigns = await ctx.db
-                .select()
-                .from(contactCampaign)
-                .innerJoin(marketingCampaign, eq(contactCampaign.campaignCode, marketingCampaign.campaignCode))
-                .where(eq(contactCampaign.contactId, newContact.id));
-
-              await Promise.all(
-                campaigns.map(async ({ portal_marketingCampaign: campaign }) => {
-                  await createContactActivityHelper(ctx, {
-                    contactId: newContact.id,
-                    type: 'CAMPAIGN',
-                    subType: 'CAMPAIGN_ASSIGNED',
-                    initiatorType: 'user',
-                    initiatorId: ctx.session?.user.id,
-                    metadata: {
-                      contact: newContact,
-                      campaign,
-                    },
-                  });
-                })
-              );
-            } catch (error) {
-              console.error('Error creating contact activities:', error);
-              errors.push({ email: newContact.email, error: error instanceof Error ? error.message : 'Unknown error' });
+              // Log campaign assignment activity
+              await createContactActivityHelper(ctx, {
+                contactId: result.id,
+                type: 'CAMPAIGN',
+                subType: 'CAMPAIGN_ASSIGNED',
+                initiatorType: 'user',
+                initiatorId: ctx.session?.user.id,
+                metadata: {
+                  contact: result,
+                  campaign,
+                },
+              });
             }
-          })
-        );
 
-        results.push(...createdContacts);
+            results.push(result);
+          } catch (error) {
+            console.error('Error creating contact:', error);
+            errors.push({ email: contactData.email ?? '', error: error instanceof Error ? error.message : 'Unknown error' });
+          }
+        }
+
+        return {
+          created: results,
+          existing: existingContacts,
+          errors,
+        };
       } catch (error) {
-        console.error('Transaction error:', error);
         throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Failed to create contacts batch' });
       }
-
-      return {
-        created: results,
-        existing: existingContacts,
-        errors,
-      };
     }),
 });

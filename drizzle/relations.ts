@@ -53,6 +53,7 @@ export const userRelations = relations(user, ({ many }) => ({
   createdTeams: many(team, { relationName: 'teamCreator' }),
   tasks: many(userTask, { relationName: 'userTasks' }),
   assignedTasks: many(userTask, { relationName: 'assignedTasks' }),
+  createdContacts: many(contact, { relationName: 'contactCreator' }),
 }));
 
 export const authenticatorRelations = relations(authenticator, ({ one }) => ({
@@ -75,6 +76,10 @@ export const contactRelations = relations(contact, ({ many, one }) => ({
   payments: many(paymentTrack),
   assignedUser: one(user, {
     fields: [contact.assignedTo],
+    references: [user.id],
+  }),
+  creator: one(user, {
+    fields: [contact.createdBy],
     references: [user.id],
   }),
   company: one(company, {

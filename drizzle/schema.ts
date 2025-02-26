@@ -207,7 +207,7 @@ export const contact = pgTable('portal_contact', {
   name: text(),
   firstName: text().notNull(),
   lastName: text().notNull(),
-  email: text().notNull(),
+  email: text(),
   phone: text(),
   gender: text(),
   company: text(),

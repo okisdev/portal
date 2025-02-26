@@ -354,11 +354,25 @@ export default function ContactIdPage() {
                   )}
                   {contact?.createdAt && (
                     <span className='block pt-3 text-xs'>
-                      {t.rich('created_at_via_by', {
-                        date: formatDate(new Date(contact.createdAt)),
-                        source: contact.source,
-                        user: () => <NameTag id={contact.createdBy || ''} type='user' />,
-                      })}
+                      {contact.createdBy
+                        ? contact.source
+                          ? t.rich('created_at_via_by', {
+                              date: formatDate(new Date(contact.createdAt)),
+                              source: contact.source,
+                              user: () => (contact.createdBy ? <NameTag id={contact.createdBy} type='user' /> : null),
+                            })
+                          : t.rich('created_at_date_by', {
+                              date: formatDate(new Date(contact.createdAt)),
+                              user: () => (contact.createdBy ? <NameTag id={contact.createdBy} type='user' /> : null),
+                            })
+                        : contact.source
+                        ? t.rich('created_at_via', {
+                            date: formatDate(new Date(contact.createdAt)),
+                            source: contact.source,
+                          })
+                        : t.rich('created_at_date', {
+                            date: formatDate(new Date(contact.createdAt)),
+                          })}
                     </span>
                   )}
                 </div>

@@ -260,7 +260,7 @@ export default function CampaignDetailsPage() {
       if (debouncedSearch) {
         const searchTerm = debouncedSearch.toLowerCase();
         const name = contact.name?.toLowerCase();
-        const email = contact.email.toLowerCase();
+        const email = contact.email?.toLowerCase() ?? '';
         const company = (contact.company || '').toLowerCase();
         const status = contact.status.toLowerCase();
 
@@ -509,7 +509,7 @@ export default function CampaignDetailsPage() {
                         !campaignContacts?.some((c) => c.id === contact.id) &&
                         (contact.firstName.toLowerCase().includes(searchValue.toLowerCase()) ||
                           contact.lastName.toLowerCase().includes(searchValue.toLowerCase()) ||
-                          contact.email.toLowerCase().includes(searchValue.toLowerCase()))
+                          contact.email?.toLowerCase().includes(searchValue.toLowerCase()))
                     )
                     .map((contact) => contact.id) ?? []
                 }
