@@ -98,6 +98,11 @@ export function SendEmail({ open, onOpenChange, recipient }: SendEmailProps) {
       return;
     }
 
+    if (!recipient.email) {
+      toast.error(t('please_enter_a_valid_email'));
+      return;
+    }
+
     const emailData = {
       to: recipient.email,
       subject: formData.subject,

@@ -647,5 +647,6 @@
   "will_renew_at": "Will renew at {date}",
   "workspace": "Workspace",
   "write_a_reply": "Write a reply... Use @ to mention someone",
-  "you": "You"
+  "you": "You",
+  "please_enter_a_valid_email": "Please enter a valid email"
 }

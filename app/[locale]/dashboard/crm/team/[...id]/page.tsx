@@ -412,7 +412,7 @@ export default function TeamIdPage() {
                             !teamContacts?.some((c) => c.contact.id === contact.id) &&
                             (contact.firstName.toLowerCase().includes(searchValue.toLowerCase()) ||
                               contact.lastName.toLowerCase().includes(searchValue.toLowerCase()) ||
-                              contact.email.toLowerCase().includes(searchValue.toLowerCase()))
+                              contact.email?.toLowerCase().includes(searchValue.toLowerCase()))
                         )
                         .map((contact) => contact.id) ?? []
                     }
