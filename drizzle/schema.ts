@@ -17,7 +17,7 @@ export const user = pgTable(
     emailVerified: timestamp({ mode: 'string' }),
     password: text(),
     image: text(),
-    role: text('role', { enum: ['ADMIN', 'SALES', 'MANAGER', 'USER'] }).default('USER'),
+    role: text('role', { enum: ['ADMIN', 'SALES_MANAGER', 'SALES_ASSISTANT', 'MANAGER', 'USER'] }).default('USER'),
     timezone: text('timezone', {
       enum: [
         // Africa
@@ -428,7 +428,7 @@ export const userNotifications = pgTable('portal_userNotifications', {
   initiatorType: varchar('initiator_type', { enum: ['user', 'contact', 'team', 'system'] }),
   message: text('message').notNull(),
   read: boolean('read').default(false),
-  createdAt: timestamp('created_at').defaultNow(),
+  createdAt: timestamp('created_at_time').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow(),
   metadata: text(),
 });

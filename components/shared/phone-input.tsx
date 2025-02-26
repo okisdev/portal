@@ -22,6 +22,18 @@ export function PhoneInput({ className, value, onChange, onValidityChange, ...pr
   const [phoneNumber, setPhoneNumber] = useState('');
   const [isValid, setIsValid] = useState(false);
 
+  const finalRecommendedCountries = [
+    { value: 'hk', label: '🇭🇰 Hong Kong', code: '+852' },
+    { value: 'cn', label: '🇨🇳 China', code: '+86' },
+    { value: 'mo', label: '🇲🇴 Macau', code: '+853' },
+  ];
+
+  // Default country - Hong Kong
+  const defaultCountry = phoneCountries.find((c) => c.code === '+852');
+
+  // Ensure all recommended countries exist in the phoneCountries list
+  const validRecommendedCountries = finalRecommendedCountries.filter((country) => phoneCountries.some((c) => c.label === country.label));
+
   const validateAndNotify = (number: string, shouldNotify = false) => {
     if (!selectedCountry) {
       setIsValid(false);
@@ -65,12 +77,26 @@ export function PhoneInput({ className, value, onChange, onValidityChange, ...pr
       }
 
       // If no country code detected or not matched, just set the number
-      setSelectedCountry(null);
-      setPhoneNumber(value);
-      setIsValid(false);
-      onValidityChange?.(false);
+      // Default to Hong Kong if no country code is detected
+      if (!selectedCountry) {
+        setSelectedCountry(defaultCountry || null);
+        setPhoneNumber(value);
+        if (defaultCountry) {
+          const newValue = `${defaultCountry.code} ${value}`.trim();
+          onChange(newValue);
+          validateAndNotify(newValue, false);
+        } else {
+          setIsValid(false);
+          onValidityChange?.(false);
+        }
+      } else {
+        setPhoneNumber(value);
+        setIsValid(false);
+        onValidityChange?.(false);
+      }
     } else {
-      setSelectedCountry(null);
+      // Default to Hong Kong for empty values
+      setSelectedCountry(defaultCountry || null);
       setPhoneNumber('');
       setIsValid(false);
       onValidityChange?.(false);
@@ -96,8 +122,11 @@ export function PhoneInput({ className, value, onChange, onValidityChange, ...pr
     const newPhone = e.target.value;
     setPhoneNumber(newPhone);
 
-    if (selectedCountry) {
-      const newValue = `${selectedCountry.code} ${newPhone}`.trim();
+    // If no country is selected, default to Hong Kong
+    const countryToUse = selectedCountry || defaultCountry;
+
+    if (countryToUse) {
+      const newValue = `${countryToUse.code} ${newPhone}`.trim();
       onChange(newValue);
       validateAndNotify(newValue, false);
     } else {
@@ -117,12 +146,14 @@ export function PhoneInput({ className, value, onChange, onValidityChange, ...pr
   return (
     <div className={cn('flex gap-2', className)}>
       <Combobox
-        value={selectedCountry?.label ?? ''}
+        value={selectedCountry?.label ?? defaultCountry?.label ?? ''}
         onChange={handleCountryChange}
         items={phoneCountries.map((country) => country.label)}
+        recommendedItems={validRecommendedCountries.map((country) => country.label)}
         placeholder={t('select_country')}
         searchPlaceholder={t('search_country')}
         groupHeading={t('countries')}
+        recommendedHeading={t('recommended_countries')}
         className='w-[180px]'
         allowCustom={false}
       />
@@ -132,7 +163,7 @@ export function PhoneInput({ className, value, onChange, onValidityChange, ...pr
         onChange={handlePhoneChange}
         onBlur={handleBlur}
         className={cn('flex-1', isValid ? 'border-green-500 focus-visible:ring-green-500' : selectedCountry ? 'border-red-500 focus-visible:ring-red-500' : '')}
-        placeholder={selectedCountry ? undefined : t('enter_phone_number')}
+        placeholder={selectedCountry || defaultCountry ? undefined : t('enter_phone_number')}
         {...props}
       />
     </div>

@@ -4,13 +4,18 @@ import { Combobox } from '@/components/shared/combobox';
 import { EmailInput } from '@/components/shared/email-input';
 import { PhoneInput } from '@/components/shared/phone-input';
 import { Button } from '@/components/ui/button';
+import { Calendar } from '@/components/ui/calendar';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Textarea } from '@/components/ui/textarea';
 import { sources } from '@/data/data';
 import { statusSchema } from '@/lib/schema';
+import { cn } from '@/lib/utils';
 import { api } from '@/utils/trpc/client';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { format, isValid, parse, startOfDay } from 'date-fns';
+import { CalendarIcon } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
@@ -29,6 +34,7 @@ const formSchema = z.object({
   remark: z.string().optional(),
   status: statusSchema.optional(),
   campaignCode: z.string().optional(),
+  createdAt: z.date().optional(),
 });
 
 export default function ManualContactForm() {
@@ -53,6 +59,7 @@ export default function ManualContactForm() {
       remark: '',
       status: 'lead',
       campaignCode: '',
+      createdAt: undefined,
     },
   });
 
@@ -71,9 +78,13 @@ export default function ManualContactForm() {
     setIsLoading(true);
 
     try {
+      // Ensure createdAt is set to midnight if provided
+      const createdAt = values.createdAt ? startOfDay(values.createdAt) : undefined;
+
       const result = await createContact.mutateAsync({
         ...values,
         name: formatName(values.firstName, values.lastName),
+        createdAt,
       });
 
       toast.success(t('contact_created_successfully'));
@@ -85,6 +96,42 @@ export default function ManualContactForm() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  // Function to parse date from various formats
+  const parseDate = (dateString: string): Date | undefined => {
+    if (!dateString) return undefined;
+
+    // Try different date formats
+    const formats = [
+      'dd/MM/yyyy', // 16/2/2025
+      'MM/dd/yyyy', // 2/16/2025
+      'yyyy-MM-dd', // 2025-02-16
+      'yyyy/MM/dd', // 2025/02/16
+      'dd-MM-yyyy', // 16-02-2025
+      'MM-dd-yyyy', // 02-16-2025
+      'dd.MM.yyyy', // 16.02.2025
+      'MM.dd.yyyy', // 02.16.2025
+    ];
+
+    for (const formatString of formats) {
+      try {
+        const parsedDate = parse(dateString, formatString, new Date());
+        if (isValid(parsedDate)) {
+          return startOfDay(parsedDate); // Set time to midnight (00:00)
+        }
+      } catch (error) {
+        // Continue to next format if parsing fails
+      }
+    }
+
+    // If all parsing attempts fail, try native Date parsing as a fallback
+    const fallbackDate = new Date(dateString);
+    if (isValid(fallbackDate)) {
+      return startOfDay(fallbackDate);
+    }
+
+    return undefined;
   };
 
   return (
@@ -243,6 +290,42 @@ export default function ManualContactForm() {
               </FormItem>
             )}
           />
+        </div>
+
+        <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
+          <FormField
+            control={form.control}
+            name='createdAt'
+            render={({ field }) => (
+              <FormItem className='flex flex-col'>
+                <FormLabel>{t('created_at')}</FormLabel>
+                <div className='relative flex gap-2'>
+                  <FormControl>
+                    <Input
+                      placeholder='DD/MM/YYYY'
+                      value={field.value ? format(field.value, 'dd/MM/yyyy') : ''}
+                      onChange={(e) => {
+                        const parsedDate = parseDate(e.target.value);
+                        field.onChange(parsedDate);
+                      }}
+                    />
+                  </FormControl>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button type='button' variant={'outline'} className={cn('px-2')}>
+                        <CalendarIcon className='h-4 w-4' />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className='w-auto p-0' align='start'>
+                      <Calendar mode='single' selected={field.value} onSelect={field.onChange} disabled={(date) => date > new Date()} initialFocus />
+                    </PopoverContent>
+                  </Popover>
+                </div>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <div />
         </div>
 
         <FormField

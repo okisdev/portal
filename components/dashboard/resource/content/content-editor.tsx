@@ -229,7 +229,7 @@ export function ContentEditor({ content, onUpdate, onDelete, isLoading }: Conten
             <div className='flex flex-col items-start gap-0.5'>
               <div className='flex items-center gap-1.5 text-muted-foreground text-xs'>
                 <Clock className='size-3' />
-                {t('created_at', { time: formatDistanceToNow(new Date(content.createdAt), { addSuffix: true, locale: dateLocale }) })}
+                {t('created_at_time', { time: formatDistanceToNow(new Date(content.createdAt), { addSuffix: true, locale: dateLocale }) })}
               </div>
               <div className='flex items-center gap-1.5 text-muted-foreground text-xs'>
                 <Clock className='size-3' />
