@@ -225,6 +225,7 @@ export const contact = pgTable('portal_contact', {
   source: text(),
   assignedTo: text().references(() => user.id),
   stripeCustomerId: text(),
+  createdBy: text().references(() => user.id),
   joinedAt: timestamp({ mode: 'date' }),
   createdAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
   updatedAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
@@ -428,7 +429,7 @@ export const userNotifications = pgTable('portal_userNotifications', {
   initiatorType: varchar('initiator_type', { enum: ['user', 'contact', 'team', 'system'] }),
   message: text('message').notNull(),
   read: boolean('read').default(false),
-  createdAt: timestamp('created_at_time').defaultNow(),
+  createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow(),
   metadata: text(),
 });
