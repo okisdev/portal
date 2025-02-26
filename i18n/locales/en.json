@@ -430,6 +430,7 @@
   "pick_a_date_range": "Pick a date range",
   "please_enter_a_message": "Please enter a message",
   "please_enter_a_subject": "Please enter a subject",
+  "please_enter_a_valid_email": "Please enter a valid email",
   "please_login_to_continue": "Please login to continue",
   "please_select_a_schedule_date": "Please select a schedule date",
   "postal_code": "Postal Code",
@@ -647,6 +648,5 @@
   "will_renew_at": "Will renew at {date}",
   "workspace": "Workspace",
   "write_a_reply": "Write a reply... Use @ to mention someone",
-  "you": "You",
-  "please_enter_a_valid_email": "Please enter a valid email"
+  "you": "You"
 }
