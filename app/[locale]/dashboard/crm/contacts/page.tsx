@@ -26,7 +26,7 @@ import {
   getSortedRowModel,
   useReactTable,
 } from '@tanstack/react-table';
-import { Check, Eye, Filter, Import, MessageSquare, MoreHorizontal, Trash2, X } from 'lucide-react';
+import { Check, Eye, Filter, Import, MessageSquare, MoreHorizontal, Trash2, Upload, X } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { usePathname } from 'next/navigation';
@@ -260,7 +260,7 @@ export default function CRMContactsPage() {
         if (debouncedSearch) {
           const searchTerm = debouncedSearch.toLowerCase();
           const fullName = `${contact.firstName} ${contact.lastName}`.toLowerCase();
-          const email = contact.email.toLowerCase();
+          const email = contact.email?.toLowerCase() ?? '';
           const status = contact.status.toLowerCase();
           const source = (contact.source || '').toLowerCase();
 
@@ -600,9 +600,9 @@ export default function CRMContactsPage() {
                   <Import className='mr-2 h-4 w-4' />
                   {t('manual')}
                 </DropdownMenuItem>
-                <DropdownMenuItem className='cursor-pointer' onClick={() => router.push('/dashboard/crm/contacts/new?mode=import')}>
-                  <Import className='mr-2 h-4 w-4' />
-                  {t('import')}
+                <DropdownMenuItem className='cursor-pointer' onClick={() => router.push('/dashboard/crm/contacts/new?mode=upload')}>
+                  <Upload className='mr-2 h-4 w-4' />
+                  {t('upload')}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
