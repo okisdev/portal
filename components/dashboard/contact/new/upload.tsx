@@ -75,6 +75,10 @@ export default function ContactUpload() {
     return !row.firstName && !row.lastName && !row.email && !row.phone && !row.company;
   };
 
+  const isRowValid = (row: ContactFormData) => {
+    return (row.email || row.phone) && (row.firstName || row.lastName);
+  };
+
   const parseFullName = (fullName: string): { firstName: string; lastName: string } => {
     if (!fullName) return { firstName: '', lastName: '' };
 
@@ -160,7 +164,7 @@ export default function ContactUpload() {
         complete: async (results) => {
           try {
             const parsedData = (results.data as any[])
-              .filter((row) => row.name || row.firstName || row.email)
+              .filter((row) => row.name || row.firstName || row.email || row.phone)
               .map((row) => {
                 const campaignCodes: string[] = [];
                 if (row.campaignCode) {
@@ -209,7 +213,7 @@ export default function ContactUpload() {
                   createdAt,
                 };
               })
-              .filter((row) => !isRowEmpty(row));
+              .filter((row) => !isRowEmpty(row) && isRowValid(row));
 
             // Set the global campaign code if any row has a campaign code
             const firstCampaignCode = parsedData.find((row) => row.campaignCodes?.length)?.campaignCodes?.[0];
@@ -245,7 +249,7 @@ export default function ContactUpload() {
 
             if (existingContacts) {
               for (const email of existingContacts) {
-                const matchingRow = parsedData.findIndex((contact) => contact.email.toLowerCase() === email.toLowerCase());
+                const matchingRow = parsedData.findIndex((contact) => contact.email?.toLowerCase() === email?.toLowerCase());
                 if (matchingRow !== -1) {
                   allDuplicates.push({
                     ...parsedData[matchingRow],
@@ -313,7 +317,7 @@ export default function ContactUpload() {
     setProgressStatus('');
 
     try {
-      const nonDuplicateContacts = csvData.filter((contact) => !isRowEmpty(contact) && !duplicates.some((d) => d.email === contact.email));
+      const nonDuplicateContacts = csvData.filter((contact) => !isRowEmpty(contact) && isRowValid(contact) && !duplicates.some((d) => d.email === contact.email));
       const totalContacts = nonDuplicateContacts.length;
       const BATCH_SIZE = 25;
       let processedCount = 0;
@@ -446,6 +450,12 @@ export default function ContactUpload() {
         )}
         <input id='csvUpload' type='file' accept='.csv' className='hidden' onChange={handleCsvUpload} />
       </div>
+
+      {!showPreview && (
+        <p className='text-muted-foreground text-sm'>
+          {t('note')}: {t('either_email_or_phone_required')}
+        </p>
+      )}
 
       {hasDuplicates && (
         <Banner

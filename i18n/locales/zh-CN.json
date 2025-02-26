@@ -189,7 +189,10 @@
   "createdAt": "创建时间",
   "created_at": "创建在",
   "created_at_time": "在{time}创建",
-  "created_at_via_by": "由 {user} 于 {date} 通过 {source} 创建",
+  "created_at_via_by": "由 <user></user> 于 {date} 通过 {source} 创建",
+  "created_at_date_by": "由 <user></user> 于 {date} 创建",
+  "created_at_via": "创建在 {date} 通过 {source}",
+  "created_at_date": "创建在 {date}",
   "created_by": "创建者",
   "created_on": "创建于 {date}",
   "creating": "创建中...",
@@ -640,6 +643,8 @@
   "will_cancel_at": "将在 {date} 取消",
   "will_renew_at": "将在 {date} 续订",
   "workspace": "工作区",
-  "write_a_reply": "写回复...使用 @ 提及他人",
-  "you": "你"
+  "write_a_reply": "写回复... 使用 @ 提及某人",
+  "you": "你",
+  "either_email_or_phone_required": "电子邮件或电话号码至少需要一个",
+  "note": "笔记"
 }

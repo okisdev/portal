@@ -95,7 +95,7 @@ export const contactRouter = createTRPCRouter({
         name: z.string().optional(),
         firstName: z.string().optional(),
         lastName: z.string().optional(),
-        email: z.string(),
+        email: z.string().optional(),
         phone: z.string().optional(),
         company: z.string().optional(),
         companyId: z.string().nullable().optional(),
@@ -107,16 +107,18 @@ export const contactRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      const existingContact = await ctx.db
-        .select()
-        .from(contact)
-        .where(eq(contact.email, input.email))
-        .then((rows) => rows[0]);
+      const existingContact = input.email
+        ? await ctx.db
+            .select()
+            .from(contact)
+            .where(eq(contact.email, input.email))
+            .then((rows) => rows[0])
+        : null;
 
       if (existingContact) return existingContact;
 
-      // If campaignCode is an email, treat it as a referral
       let referralContact = null;
+
       if (typeof input.campaignCode === 'string' && input.campaignCode.includes('@')) {
         referralContact = await ctx.db
           .select()
@@ -671,7 +673,7 @@ export const contactRouter = createTRPCRouter({
             name: z.string().optional(),
             firstName: z.string().optional(),
             lastName: z.string().optional(),
-            email: z.string(),
+            email: z.string().optional(),
             phone: z.string().optional(),
             company: z.string().optional(),
             companyId: z.string().nullable().optional(),
@@ -689,18 +691,21 @@ export const contactRouter = createTRPCRouter({
       const errors: Array<{ email: string; error: string }> = [];
 
       // Get all unique emails for existence check
-      const emails = [...new Set(input.contacts.map((contact) => contact.email))];
-      const existingContacts = await ctx.db
-        .select({
-          email: contact.email,
-        })
-        .from(contact)
-        .where(inArray(contact.email, emails));
+      const emails = [...new Set(input.contacts.map((contact) => contact.email).filter((email): email is string => typeof email === 'string' && email.length > 0))];
+      const existingContacts =
+        emails.length > 0
+          ? await ctx.db
+              .select({
+                email: contact.email,
+              })
+              .from(contact)
+              .where(inArray(contact.email, emails))
+          : [];
 
       const existingEmails = new Set(existingContacts.map((c) => c.email));
 
       // Process contacts that don't exist yet
-      const newContacts = input.contacts.filter((contact) => !existingEmails.has(contact.email));
+      const newContacts = input.contacts.filter((contact) => !contact.email || !existingEmails.has(contact.email));
 
       try {
         // Create all contacts in a single transaction
@@ -761,7 +766,7 @@ export const contactRouter = createTRPCRouter({
               }
             } catch (error) {
               console.error('Error creating contact:', error);
-              errors.push({ email: contactData.email, error: error instanceof Error ? error.message : 'Unknown error' });
+              errors.push({ email: contactData.email ?? '', error: error instanceof Error ? error.message : 'Unknown error' });
             }
           }
 
@@ -834,14 +839,12 @@ export const contactRouter = createTRPCRouter({
               );
             } catch (error) {
               console.error('Error creating contact activities:', error);
-              errors.push({ email: newContact.email, error: error instanceof Error ? error.message : 'Unknown error' });
             }
           })
         );
 
         results.push(...createdContacts);
       } catch (error) {
-        console.error('Transaction error:', error);
         throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Failed to create contacts batch' });
       }
 
