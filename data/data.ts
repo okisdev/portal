@@ -1,6 +1,6 @@
 export const insuranceCompanies = ['AIA', 'AXA', 'BoC Life', 'China Life', 'Chubb', 'FWD', 'Manulife', 'YF Life', 'MetLife', 'Prudential', 'Sun Life', 'HSBC', 'Ping An', 'HANG SENG'];
 
-export const sources = ['Pitching', 'Referral', 'Website', 'Email', 'Instagram', 'LinkedIn', 'Facebook', 'Other'];
+export const sources = ['Pitching', 'Referral', 'Website', 'Email', 'Instagram', 'LinkedIn', 'WhatsApp', 'Facebook', 'Other'];
 
 export const campaignTypes = ['email', 'social', 'event', 'referral', 'other'];
 

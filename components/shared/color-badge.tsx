@@ -88,6 +88,8 @@ export function ColorBadge({ type, value, className, isActive }: ColorBadgeProps
         return 'bg-pink-100 text-pink-800 ring-pink-800';
       case 'LinkedIn':
         return 'bg-blue-100 text-blue-800 ring-blue-800';
+      case 'WhatsApp':
+        return 'bg-green-100 text-green-800 ring-green-800';
       case 'Facebook':
         return 'bg-orange-100 text-orange-800 ring-orange-800';
       case 'Other':

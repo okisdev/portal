@@ -187,7 +187,8 @@
   "create_team": "Create Team",
   "created": "Created",
   "createdAt": "Created At",
-  "created_at": "Created at {time}",
+  "created_at": "Created At",
+  "created_at_time": "Created at {time}",
   "created_at_via": "Created at {date} via {source}",
   "created_by": "Created By",
   "created_on": "Created on {date}",
@@ -464,6 +465,8 @@
   "rich_text": "Rich Text",
   "role": "Role",
   "sales": "Sales",
+  "sales_assistant": "Sales Assistant",
+  "sales_manager": "Sales Manager",
   "saturday": "Saturday",
   "save": "Save",
   "save_changes": "Save Changes",
@@ -638,7 +641,5 @@
   "will_renew_at": "Will renew at {date}",
   "workspace": "Workspace",
   "write_a_reply": "Write a reply... Use @ to mention someone",
-  "you": "You",
-  "sales_manager": "Sales Manager",
-  "sales_assistant": "Sales Assistant"
+  "you": "You"
 }

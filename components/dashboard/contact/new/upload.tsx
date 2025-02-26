@@ -13,6 +13,7 @@ import { sources } from '@/data/data';
 import { type Status, statusSchema } from '@/lib/schema';
 import { generateUUID } from '@/lib/utils';
 import { api } from '@/utils/trpc/client';
+import { format, isValid, parse, startOfDay } from 'date-fns';
 import { Download, Upload } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
@@ -34,6 +35,7 @@ interface ContactFormData {
   remark?: string;
   campaignCode?: string;
   campaignCodes?: string[];
+  createdAt?: Date;
 }
 
 interface DuplicateContact {
@@ -105,6 +107,48 @@ export default function ContactUpload() {
     };
   };
 
+  // Function to parse date from various formats
+  const parseDate = (dateString: string): Date | undefined => {
+    if (!dateString) return undefined;
+
+    // Try different date formats
+    const formats = [
+      'dd/MM/yyyy', // 16/2/2025
+      'MM/dd/yyyy', // 2/16/2025
+      'yyyy-MM-dd', // 2025-02-16
+      'yyyy/MM/dd', // 2025/02/16
+      'dd-MM-yyyy', // 16-02-2025
+      'MM-dd-yyyy', // 02-16-2025
+      'dd.MM.yyyy', // 16.02.2025
+      'MM.dd.yyyy', // 02.16.2025
+    ];
+
+    for (const formatString of formats) {
+      try {
+        const parsedDate = parse(dateString, formatString, new Date());
+        if (isValid(parsedDate)) {
+          return startOfDay(parsedDate); // Set time to midnight (00:00)
+        }
+      } catch (error) {
+        // Continue to next format if parsing fails
+      }
+    }
+
+    // If all parsing attempts fail, try native Date parsing as a fallback
+    const fallbackDate = new Date(dateString);
+    if (isValid(fallbackDate)) {
+      return startOfDay(fallbackDate);
+    }
+
+    return undefined;
+  };
+
+  // Function to format date for display
+  const formatDateForDisplay = (date: Date | undefined): string => {
+    if (!date) return '';
+    return format(date, 'dd/MM/yyyy');
+  };
+
   const handleCsvUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -128,6 +172,12 @@ export default function ContactUpload() {
                   }
                 }
 
+                // Parse createdAt if it exists
+                let createdAt: Date | undefined = undefined;
+                if (row.createdAt) {
+                  createdAt = parseDate(row.createdAt);
+                }
+
                 if (row.firstName || row.lastName) {
                   return {
                     firstName: row.firstName || '',
@@ -140,6 +190,7 @@ export default function ContactUpload() {
                     remark: row.remark || '',
                     campaignCodes,
                     campaignCode: campaignCodes.join(',') || '', // Store all campaign codes
+                    createdAt,
                   };
                 }
 
@@ -155,6 +206,7 @@ export default function ContactUpload() {
                   remark: row.remark || '',
                   campaignCodes,
                   campaignCode: campaignCodes.join(',') || '', // Store all campaign codes
+                  createdAt,
                 };
               })
               .filter((row) => !isRowEmpty(row));
@@ -363,6 +415,7 @@ export default function ContactUpload() {
         source: '',
         remark: '',
         campaignCode: 'CAMP1,CAMP2,CAMP3', // Example of multiple campaign codes
+        createdAt: '16/02/2025', // Example format: DD/MM/YYYY
       },
     ];
 
@@ -491,6 +544,7 @@ export default function ContactUpload() {
                   <TableHead>{t('source')}</TableHead>
                   <TableHead>{t('campaign')}</TableHead>
                   <TableHead>{t('remark')}</TableHead>
+                  <TableHead>{t('created_at')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -565,6 +619,34 @@ export default function ContactUpload() {
                       </TableCell>
                       <TableCell>
                         <Input value={row.remark} onChange={(e) => handleCsvEdit(index, 'remark', e.target.value)} />
+                      </TableCell>
+                      <TableCell>
+                        <div className='flex gap-2'>
+                          <Input
+                            placeholder='DD/MM/YYYY'
+                            value={row.createdAt ? formatDateForDisplay(row.createdAt) : ''}
+                            onChange={(e) => {
+                              const parsedDate = parseDate(e.target.value);
+                              setCsvData((prev) => {
+                                const newData = [...prev];
+                                newData[index] = { ...newData[index], createdAt: parsedDate };
+                                return newData;
+                              });
+                            }}
+                          />
+                          <Input
+                            type='date'
+                            className='absolute right-0 w-10 p-0 opacity-0'
+                            onChange={(e) => {
+                              const date = e.target.value ? startOfDay(new Date(e.target.value)) : undefined;
+                              setCsvData((prev) => {
+                                const newData = [...prev];
+                                newData[index] = { ...newData[index], createdAt: date };
+                                return newData;
+                              });
+                            }}
+                          />
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}

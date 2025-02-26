@@ -4,6 +4,7 @@ import { createContactActivityHelper } from '@/server/helper/contact';
 import { createTRPCRouter, protectedProcedure, publicProcedure } from '@/server/trpc';
 import { sendEmail } from '@/utils/email';
 import { TRPCError } from '@trpc/server';
+import { startOfDay } from 'date-fns';
 import { and, asc, desc, eq, inArray, sql } from 'drizzle-orm';
 import { z } from 'zod';
 
@@ -101,6 +102,7 @@ export const contactRouter = createTRPCRouter({
         remark: z.string().optional(),
         status: statusSchema.optional(),
         campaignCode: z.union([z.string(), z.array(z.string())]).optional(),
+        createdAt: z.date().optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -122,6 +124,9 @@ export const contactRouter = createTRPCRouter({
           .then((rows) => rows[0]);
       }
 
+      // Ensure createdAt is set to midnight if provided
+      const createdAt = input.createdAt ? startOfDay(input.createdAt) : undefined;
+
       const [result] = await ctx.db
         .insert(contact)
         .values({
@@ -135,6 +140,7 @@ export const contactRouter = createTRPCRouter({
           source: input.source ?? (referralContact ? 'referral' : ''),
           status: input.status ?? 'lead',
           remark: input.remark ?? '',
+          ...(createdAt && { createdAt }),
         })
         .returning();
 
@@ -671,6 +677,7 @@ export const contactRouter = createTRPCRouter({
             remark: z.string().optional(),
             status: statusSchema.optional(),
             campaignCode: z.union([z.string(), z.array(z.string())]).optional(),
+            createdAt: z.date().optional(),
           })
         ),
       })
@@ -710,6 +717,9 @@ export const contactRouter = createTRPCRouter({
                   .then((rows) => rows[0]);
               }
 
+              // Ensure createdAt is set to midnight if provided
+              const createdAt = contactData.createdAt ? startOfDay(contactData.createdAt) : undefined;
+
               const result = await tx
                 .insert(contact)
                 .values({
@@ -723,6 +733,7 @@ export const contactRouter = createTRPCRouter({
                   source: contactData.source ?? (referralContact ? 'referral' : ''),
                   status: contactData.status ?? 'lead',
                   remark: contactData.remark ?? '',
+                  ...(createdAt && { createdAt }),
                 })
                 .returning();
 

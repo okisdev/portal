@@ -428,7 +428,7 @@ export const userNotifications = pgTable('portal_userNotifications', {
   initiatorType: varchar('initiator_type', { enum: ['user', 'contact', 'team', 'system'] }),
   message: text('message').notNull(),
   read: boolean('read').default(false),
-  createdAt: timestamp('created_at').defaultNow(),
+  createdAt: timestamp('created_at_time').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow(),
   metadata: text(),
 });
