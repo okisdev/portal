@@ -189,7 +189,7 @@
   "createdAt": "Created At",
   "created_at": "Created At",
   "created_at_time": "Created at {time}",
-  "created_at_via": "Created at {date} via {source}",
+  "created_at_via_by": "Created by {user} at {date} via {source}",
   "created_by": "Created By",
   "created_on": "Created on {date}",
   "creating": "Creating...",

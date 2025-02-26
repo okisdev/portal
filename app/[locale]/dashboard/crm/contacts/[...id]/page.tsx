@@ -11,6 +11,7 @@ import { DateTimePicker } from '@/components/shared/date-time-picker';
 import { EventDialog } from '@/components/shared/event-dialog';
 import type { EventFormData } from '@/components/shared/event-dialog';
 import { EventSection } from '@/components/shared/event-section';
+import { NameTag } from '@/components/shared/name-tag';
 import { PageLoading } from '@/components/shared/page-loading';
 import { PhoneInput } from '@/components/shared/phone-input';
 import { TabSwitcher } from '@/components/shared/tab-switcher';
@@ -353,9 +354,10 @@ export default function ContactIdPage() {
                   )}
                   {contact?.createdAt && (
                     <span className='block pt-3 text-xs'>
-                      {t('created_at_via', {
+                      {t.rich('created_at_via_by', {
                         date: formatDate(new Date(contact.createdAt)),
                         source: contact.source,
+                        user: () => <NameTag id={contact.createdBy || ''} type='user' />,
                       })}
                     </span>
                   )}

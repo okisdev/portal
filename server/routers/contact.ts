@@ -82,6 +82,7 @@ export const contactRouter = createTRPCRouter({
            WHERE t."referralId" = ${input.id})`,
         createdAt: contact.createdAt,
         updatedAt: contact.updatedAt,
+        createdBy: contact.createdBy,
       })
       .from(contact)
       .where(eq(contact.id, input.id))
@@ -140,6 +141,7 @@ export const contactRouter = createTRPCRouter({
           source: input.source ?? (referralContact ? 'referral' : ''),
           status: input.status ?? 'lead',
           remark: input.remark ?? '',
+          createdBy: ctx.session?.user.id,
           ...(createdAt && { createdAt }),
         })
         .returning();
