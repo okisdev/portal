@@ -575,7 +575,24 @@ export const contactRouter = createTRPCRouter({
       return result;
     }),
 
-  checkExistingContacts: publicProcedure
+  checkExistingContactsWithPhones: publicProcedure
+    .input(
+      z.object({
+        phones: z.array(z.string()),
+      })
+    )
+    .query(async ({ ctx, input }) => {
+      const existingContacts = await ctx.db
+        .select({
+          phone: contact.phone,
+        })
+        .from(contact)
+        .where(inArray(contact.phone, input.phones));
+
+      return existingContacts.map((contact) => contact.phone);
+    }),
+
+  checkExistingContactsWithEmails: publicProcedure
     .input(
       z.object({
         emails: z.array(z.string()),

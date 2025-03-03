@@ -62,7 +62,20 @@ export default function ContactUpload() {
   const [progress, setProgress] = useState(0);
   const [progressStatus, setProgressStatus] = useState('');
 
-  const checkExistingContacts = api.contact.checkExistingContacts.useQuery({ emails: csvData.map((contact) => contact.email) }, { enabled: false });
+  const checkExistingContactsWithEmails = api.contact.checkExistingContactsWithEmails.useQuery(
+    {
+      emails: csvData.map((contact) => contact.email).filter((email) => email !== null) as string[],
+    },
+    { enabled: false }
+  );
+
+  const checkExistingContactsWithPhones = api.contact.checkExistingContactsWithPhones.useQuery(
+    {
+      phones: csvData.map((contact) => contact.phone).filter((phone) => phone !== null) as string[],
+    },
+    { enabled: false }
+  );
+
   const { data: campaigns } = api.marketing.getActiveCampaigns.useQuery();
   const { data: companies } = api.company.getAllCompanies.useQuery();
 
@@ -174,7 +187,8 @@ export default function ContactUpload() {
               }
             }
 
-            const { data: existingContacts } = await checkExistingContacts.refetch();
+            const { data: existingEmails } = await checkExistingContactsWithEmails.refetch();
+            const { data: existingPhones } = await checkExistingContactsWithPhones.refetch();
             const allDuplicates: DuplicateContact[] = [];
 
             for (const [, dupes] of duplicatesMap) {
@@ -183,11 +197,26 @@ export default function ContactUpload() {
               }
             }
 
-            if (existingContacts) {
-              for (const email of existingContacts) {
-                // Only check for duplicates if email exists
-                if (email) {
-                  const matchingRow = parsedData.findIndex((contact) => contact.email?.toLowerCase() === email.toLowerCase());
+            if (existingEmails) {
+              for (const item of existingEmails) {
+                // Only check for duplicates if email exists in the item
+                if (item) {
+                  const matchingRow = parsedData.findIndex((contact) => contact.email?.toLowerCase() === item.toLowerCase());
+                  if (matchingRow !== -1) {
+                    allDuplicates.push({
+                      ...parsedData[matchingRow],
+                      existingRecord: true,
+                      rowIndex: matchingRow,
+                    });
+                  }
+                }
+              }
+            }
+
+            if (existingPhones) {
+              for (const item of existingPhones) {
+                if (item) {
+                  const matchingRow = parsedData.findIndex((contact) => contact.phone?.toLowerCase() === item.toLowerCase());
                   if (matchingRow !== -1) {
                     allDuplicates.push({
                       ...parsedData[matchingRow],

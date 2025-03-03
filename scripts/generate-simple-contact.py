@@ -550,7 +550,11 @@ def generate_contacts(
                 email = f"{email_name}@{email_domain}"
             else:
                 email = None
-            country_code = random.choice(["+1", "+44", "+61", "+33", "+49"]) if use_country_code else None
+            country_code = (
+                random.choice(["+1", "+44", "+61", "+33", "+49"])
+                if use_country_code
+                else None
+            )
 
         elif name_type == "chinese":
             surname = random.choice(CN_SURNAMES)
@@ -789,6 +793,12 @@ def main():
         action="store_true",
         help="Generate contacts without email addresses",
     )
+    parser.add_argument(
+        "--output",
+        type=str,
+        default="contacts.csv",
+        help="Specify the output CSV filename (default: contacts.csv)",
+    )
 
     args = parser.parse_args()
 
@@ -798,10 +808,11 @@ def main():
 
     # Generate contacts
     generated_contacts = generate_contacts(
-        args.num_records, 
-        args.duplicate, 
+        args.num_records,
+        args.duplicate,
         not args.no_country_code,
-        not args.no_email
+        not args.no_email,
+        args.output,
     )
 
     # Count types of names and duplicates for reporting
@@ -810,7 +821,7 @@ def main():
     num_western, num_cn, num_hk = count_name_types(generated_contacts)
 
     print(
-        f"Successfully generated {args.num_records} contacts and saved to 'contacts.csv'"
+        f"Successfully generated {args.num_records} contacts and saved to '{args.output}'"
     )
     print(f"Distribution:")
     print(f"- Western names: {num_western}")
