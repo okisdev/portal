@@ -3,6 +3,7 @@ import { activitySubTypeSchema, activityTypeSchema, prioritySchema, statusSchema
 import { createContactActivityHelper } from '@/server/helper/contact';
 import { createTRPCRouter, protectedProcedure, publicProcedure } from '@/server/trpc';
 import { sendEmail } from '@/utils/email';
+import { stringifyPhone } from '@/utils/phone';
 import { TRPCError } from '@trpc/server';
 import { startOfDay } from 'date-fns';
 import { and, asc, desc, eq, inArray, sql } from 'drizzle-orm';
@@ -137,7 +138,7 @@ export const contactRouter = createTRPCRouter({
           firstName: input.firstName ?? '',
           lastName: input.lastName ?? '',
           email: input.email,
-          phone: input.phone ?? '',
+          phone: stringifyPhone(input.phone ?? ''),
           company: input.company ?? '',
           companyId: input.companyId ?? null,
           source: input.source ?? (referralContact ? 'referral' : ''),
@@ -587,7 +588,7 @@ export const contactRouter = createTRPCRouter({
           phone: contact.phone,
         })
         .from(contact)
-        .where(inArray(contact.phone, input.phones));
+        .where(inArray(contact.phone, input.phones.map(stringifyPhone)));
 
       return existingContacts.map((contact) => contact.phone);
     }),
@@ -724,7 +725,7 @@ export const contactRouter = createTRPCRouter({
       const newContacts = input.contacts.filter((contact) => !contact.email || !existingEmails.has(contact.email));
 
       try {
-        // Create contacts one by one, reusing createContact logic
+        // Create contacts one by one, reusing createCon  tact logic
         for (const contactData of newContacts) {
           try {
             const [result] = await ctx.db
@@ -734,7 +735,7 @@ export const contactRouter = createTRPCRouter({
                 firstName: contactData.firstName ?? '',
                 lastName: contactData.lastName ?? '',
                 email: contactData.email,
-                phone: contactData.phone ?? '',
+                phone: stringifyPhone(contactData.phone ?? ''),
                 company: contactData.company ?? '',
                 companyId: contactData.companyId ?? null,
                 source: contactData.source ?? 'direct',

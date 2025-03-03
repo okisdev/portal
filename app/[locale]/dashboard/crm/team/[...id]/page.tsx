@@ -21,6 +21,7 @@ import { Label } from '@/components/ui/label';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Textarea } from '@/components/ui/textarea';
 import { formatDate } from '@/utils/date';
+import { parsePhone } from '@/utils/phone';
 import { api } from '@/utils/trpc/client';
 import { CaretSortIcon } from '@radix-ui/react-icons';
 import {
@@ -242,7 +243,7 @@ export default function TeamIdPage() {
           {t('phone')} {column.getIsSorted() && <CaretSortIcon className='ml-2 inline' />}
         </Button>
       ),
-      cell: ({ row }) => row.original.contact.phone || '-',
+      cell: ({ row }) => parsePhone(row.original.contact.phone) || '-',
     },
     {
       accessorKey: 'company',

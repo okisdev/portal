@@ -2,7 +2,7 @@ import { contact } from '@/drizzle/schema';
 import { sendWhatsAppMessage } from '@/lib/whatsapp';
 import { createContactActivityHelper } from '@/server/helper/contact';
 import { createTRPCRouter, protectedProcedure, publicProcedure } from '@/server/trpc';
-import { formatPhoneNumber, normalizePhoneNumber } from '@/utils/number';
+import { stringifyPhone } from '@/utils/phone';
 import { TRPCError } from '@trpc/server';
 import { eq } from 'drizzle-orm';
 import z from 'zod';
@@ -43,7 +43,7 @@ export const externalRouter = createTRPCRouter({
         const contactRecord = await ctx.db
           .select()
           .from(contact)
-          .where(eq(contact.phone, normalizePhoneNumber(input.recipientId)))
+          .where(eq(contact.phone, stringifyPhone(input.recipientId)))
           .then((rows) => rows[0]);
 
         if (!contactRecord) {
@@ -96,7 +96,7 @@ export const externalRouter = createTRPCRouter({
         const contactRecord = await ctx.db
           .select()
           .from(contact)
-          .where(eq(contact.phone, formatPhoneNumber(input.from)))
+          .where(eq(contact.phone, stringifyPhone(input.from)))
           .then((rows) => rows[0]);
 
         if (!contactRecord) {

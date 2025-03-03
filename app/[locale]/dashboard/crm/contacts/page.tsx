@@ -14,6 +14,7 @@ import { Input } from '@/components/ui/input';
 import { useDebounce } from '@/hooks/use-debounce';
 import { type Contact, sourceSchema, statusSchema } from '@/lib/schema';
 import { formatDate } from '@/utils/date';
+import { parsePhone } from '@/utils/phone';
 import { api } from '@/utils/trpc/client';
 import {
   type ColumnDef,
@@ -59,7 +60,7 @@ function WhatsAppButton({ contact, onClick }: { contact: Contact; onClick: (cont
       onClick={(e) => onClick(contact, e)}
     >
       <MessageSquare className='h-4 w-4 text-muted-foreground' />
-      {contact.phone || '—'}
+      {parsePhone(contact.phone || '') || '—'}
     </Button>
   );
 }
