@@ -225,17 +225,20 @@ export default function ContactUpload() {
 
             const duplicatesMap = new Map<string, DuplicateContact[]>();
             for (const [index, contact] of parsedData.entries()) {
-              const key = `${contact.email}`.toLowerCase();
-              if (!duplicatesMap.has(key)) {
-                duplicatesMap.set(key, []);
+              // Only check for duplicates if email exists
+              if (contact.email) {
+                const key = contact.email.toLowerCase();
+                if (!duplicatesMap.has(key)) {
+                  duplicatesMap.set(key, []);
+                }
+                duplicatesMap.get(key)?.push({
+                  firstName: contact.firstName,
+                  lastName: contact.lastName,
+                  email: contact.email,
+                  existingRecord: false,
+                  rowIndex: index,
+                });
               }
-              duplicatesMap.get(key)?.push({
-                firstName: contact.firstName,
-                lastName: contact.lastName,
-                email: contact.email,
-                existingRecord: false,
-                rowIndex: index,
-              });
             }
 
             const { data: existingContacts } = await checkExistingContacts.refetch();
@@ -249,13 +252,16 @@ export default function ContactUpload() {
 
             if (existingContacts) {
               for (const email of existingContacts) {
-                const matchingRow = parsedData.findIndex((contact) => contact.email?.toLowerCase() === email?.toLowerCase());
-                if (matchingRow !== -1) {
-                  allDuplicates.push({
-                    ...parsedData[matchingRow],
-                    existingRecord: true,
-                    rowIndex: matchingRow,
-                  });
+                // Only check for duplicates if email exists
+                if (email) {
+                  const matchingRow = parsedData.findIndex((contact) => contact.email?.toLowerCase() === email.toLowerCase());
+                  if (matchingRow !== -1) {
+                    allDuplicates.push({
+                      ...parsedData[matchingRow],
+                      existingRecord: true,
+                      rowIndex: matchingRow,
+                    });
+                  }
                 }
               }
             }

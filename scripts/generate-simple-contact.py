@@ -448,6 +448,8 @@ HK_GIVEN_NAMES = [
 def generate_contacts(
     num_records: int,
     allow_duplicates: Union[bool, int] = False,
+    use_country_code: bool = True,
+    use_email: bool = True,
     output_file: str = "contacts.csv",
 ) -> List[Dict]:
     """
@@ -456,6 +458,8 @@ def generate_contacts(
     Args:
         num_records: Number of records to generate
         allow_duplicates: If True, randomly include duplicates. If int, generate exactly that many duplicates
+        use_country_code: If True, include country code in phone numbers. If False, use HK format without country code
+        use_email: If True, generate email addresses. If False, email will be None
         output_file: Path to output CSV file
     """
     # Email domains
@@ -535,113 +539,121 @@ def generate_contacts(
             first_name = random.choice(WESTERN_FIRST_NAMES)
             last_name = random.choice(WESTERN_LAST_NAMES)
             full_name = f"{first_name} {last_name}"
-            email_name = f"{first_name.lower()}.{last_name.lower()}"
-            # 20% chance of using a business email
-            email_domain = random.choice(
-                email_domains["business"]
-                if random.random() < 0.2
-                else email_domains["international"]
-            )
-            country_code = random.choice(["+1", "+44", "+61", "+33", "+49"])
+            if use_email:
+                email_name = f"{first_name.lower()}.{last_name.lower()}"
+                # 20% chance of using a business email
+                email_domain = random.choice(
+                    email_domains["business"]
+                    if random.random() < 0.2
+                    else email_domains["international"]
+                )
+                email = f"{email_name}@{email_domain}"
+            else:
+                email = None
+            country_code = random.choice(["+1", "+44", "+61", "+33", "+49"]) if use_country_code else None
 
         elif name_type == "chinese":
             surname = random.choice(CN_SURNAMES)
             given_name = random.choice(CN_GIVEN_CHARS)
             full_name = f"{surname}{given_name}"
-            pinyin_mapping = {
-                "王": "wang",
-                "李": "li",
-                "张": "zhang",
-                "刘": "liu",
-                "陈": "chen",
-                "杨": "yang",
-                "黄": "huang",
-                "赵": "zhao",
-                "吴": "wu",
-                "周": "zhou",
-                "林": "lin",
-                "徐": "xu",
-                "孙": "sun",
-                "马": "ma",
-                "胡": "hu",
-                "郭": "guo",
-                "何": "he",
-                "高": "gao",
-                "罗": "luo",
-                "郑": "zheng",
-                "梁": "liang",
-                "谢": "xie",
-                "宋": "song",
-                "唐": "tang",
-                "许": "xu",
-                "韩": "han",
-                "冯": "feng",
-                "邓": "deng",
-                "曹": "cao",
-                "彭": "peng",
-                "曾": "zeng",
-                "萧": "xiao",
-                "田": "tian",
-                "董": "dong",
-                "潘": "pan",
-                "袁": "yuan",
-                "于": "yu",
-                "蒋": "jiang",
-                "蔡": "cai",
-                "余": "yu",
-                "杜": "du",
-                "叶": "ye",
-                "程": "cheng",
-                "苏": "su",
-                "魏": "wei",
-                "吕": "lv",
-                "丁": "ding",
-                "任": "ren",
-                "沈": "shen",
-                "姚": "yao",
-                "卢": "lu",
-                "姜": "jiang",
-                "崔": "cui",
-                "钟": "zhong",
-                "谭": "tan",
-                "陆": "lu",
-                "汪": "wang",
-                "范": "fan",
-                "金": "jin",
-                "石": "shi",
-                "廖": "liao",
-                "贾": "jia",
-                "夏": "xia",
-                "韦": "wei",
-                "付": "fu",
-                "方": "fang",
-                "白": "bai",
-                "邹": "zou",
-                "孟": "meng",
-                "熊": "xiong",
-                "秦": "qin",
-                "邱": "qiu",
-                "江": "jiang",
-                "尹": "yin",
-                "薛": "xue",
-            }
+            if use_email:
+                pinyin_mapping = {
+                    "王": "wang",
+                    "李": "li",
+                    "张": "zhang",
+                    "刘": "liu",
+                    "陈": "chen",
+                    "杨": "yang",
+                    "黄": "huang",
+                    "赵": "zhao",
+                    "吴": "wu",
+                    "周": "zhou",
+                    "林": "lin",
+                    "徐": "xu",
+                    "孙": "sun",
+                    "马": "ma",
+                    "胡": "hu",
+                    "郭": "guo",
+                    "何": "he",
+                    "高": "gao",
+                    "罗": "luo",
+                    "郑": "zheng",
+                    "梁": "liang",
+                    "谢": "xie",
+                    "宋": "song",
+                    "唐": "tang",
+                    "许": "xu",
+                    "韩": "han",
+                    "冯": "feng",
+                    "邓": "deng",
+                    "曹": "cao",
+                    "彭": "peng",
+                    "曾": "zeng",
+                    "萧": "xiao",
+                    "田": "tian",
+                    "董": "dong",
+                    "潘": "pan",
+                    "袁": "yuan",
+                    "于": "yu",
+                    "蒋": "jiang",
+                    "蔡": "cai",
+                    "余": "yu",
+                    "杜": "du",
+                    "叶": "ye",
+                    "程": "cheng",
+                    "苏": "su",
+                    "魏": "wei",
+                    "吕": "lv",
+                    "丁": "ding",
+                    "任": "ren",
+                    "沈": "shen",
+                    "姚": "yao",
+                    "卢": "lu",
+                    "姜": "jiang",
+                    "崔": "cui",
+                    "钟": "zhong",
+                    "谭": "tan",
+                    "陆": "lu",
+                    "汪": "wang",
+                    "范": "fan",
+                    "金": "jin",
+                    "石": "shi",
+                    "廖": "liao",
+                    "贾": "jia",
+                    "夏": "xia",
+                    "韦": "wei",
+                    "付": "fu",
+                    "方": "fang",
+                    "白": "bai",
+                    "邹": "zou",
+                    "孟": "meng",
+                    "熊": "xiong",
+                    "秦": "qin",
+                    "邱": "qiu",
+                    "江": "jiang",
+                    "尹": "yin",
+                    "薛": "xue",
+                }
 
-            # Different email name formats for Chinese contacts
-            email_format = random.choice(
-                [
-                    f"{pinyin_mapping.get(surname, 'user')}{random.randint(100, 999)}",
-                    f"{pinyin_mapping.get(surname, 'user')}.{random.randint(1960, 2000)}",
-                    f"{pinyin_mapping.get(surname, 'user')}_{random.randint(1, 99)}",
-                ]
-            )
-            email_name = email_format.lower()
-            # 20% chance of using a business email
-            email_domain = random.choice(
-                email_domains["business"]
-                if random.random() < 0.2
-                else email_domains["china"]
-            )
-            country_code = "+86"
+                # Different email name formats for Chinese contacts
+                email_format = random.choice(
+                    [
+                        f"{pinyin_mapping.get(surname, 'user')}{random.randint(100, 999)}",
+                        f"{pinyin_mapping.get(surname, 'user')}.{random.randint(1960, 2000)}",
+                        f"{pinyin_mapping.get(surname, 'user')}_{random.randint(1, 99)}",
+                    ]
+                )
+                email_name = email_format.lower()
+                # 20% chance of using a business email
+                email_domain = random.choice(
+                    email_domains["business"]
+                    if random.random() < 0.2
+                    else email_domains["china"]
+                )
+                email = f"{email_name}@{email_domain}"
+            else:
+                email = None
+            country_code = "+86" if use_country_code else None
 
         else:  # hongkong
             surname_tuple = random.choice(HK_SURNAMES)
@@ -659,18 +671,22 @@ def generate_contacts(
                 ]
             )
 
-            # For Hong Kong names, always use English name format for email
-            email_name = f"{given_tuple[2].lower()}.{surname_tuple[2].lower()}"
-            email_domain = random.choice(
-                email_domains["hk"] + email_domains["international"]
-            )
-            country_code = "+852"
-
-        # Generate email
-        email = f"{email_name}@{email_domain}"
+            if use_email:
+                # For Hong Kong names, always use English name format for email
+                email_name = f"{given_tuple[2].lower()}.{surname_tuple[2].lower()}"
+                email_domain = random.choice(
+                    email_domains["hk"] + email_domains["international"]
+                )
+                email = f"{email_name}@{email_domain}"
+            else:
+                email = None
+            country_code = "+852" if use_country_code else None
 
         # Generate phone number based on country code
-        if country_code == "+86":  # China format
+        if not use_country_code:
+            # Default to Hong Kong format without country code
+            phone = f"{random.choice([2,3,5,6,9])}{random.randint(1000000, 9999999)}"
+        elif country_code == "+86":  # China format
             phone = f"{country_code} {random.randint(130, 199)}{random.randint(10000000, 99999999)}"
         elif country_code == "+852":  # Hong Kong format
             phone = f"{country_code} {random.choice([2,3,5,6,9])}{random.randint(1000000, 9999999)}"
@@ -763,6 +779,16 @@ def main():
         metavar="N",
         help="Allow duplicate records. If N is specified, exactly N duplicates will be generated",
     )
+    parser.add_argument(
+        "--no-country-code",
+        action="store_true",
+        help="Generate phone numbers without country code (defaults to HK format)",
+    )
+    parser.add_argument(
+        "--no-email",
+        action="store_true",
+        help="Generate contacts without email addresses",
+    )
 
     args = parser.parse_args()
 
@@ -771,7 +797,12 @@ def main():
         sys.exit(1)
 
     # Generate contacts
-    generated_contacts = generate_contacts(args.num_records, args.duplicate)
+    generated_contacts = generate_contacts(
+        args.num_records, 
+        args.duplicate, 
+        not args.no_country_code,
+        not args.no_email
+    )
 
     # Count types of names and duplicates for reporting
     unique_contacts = {(c["name"], c["email"], c["phone"]) for c in generated_contacts}
