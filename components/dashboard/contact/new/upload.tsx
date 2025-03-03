@@ -169,15 +169,29 @@ export default function ContactUpload() {
 
             setCsvData(parsedData);
 
+            // Track duplicates within CSV first
             const duplicatesMap = new Map<string, DuplicateContact[]>();
             for (const [index, contact] of parsedData.entries()) {
-              // Only check for duplicates if email exists
+              // Create keys for both email and phone if they exist
               if (contact.email) {
-                const key = contact.email.toLowerCase();
-                if (!duplicatesMap.has(key)) {
-                  duplicatesMap.set(key, []);
+                const emailKey = `email:${contact.email.toLowerCase().trim()}`;
+                if (!duplicatesMap.has(emailKey)) {
+                  duplicatesMap.set(emailKey, []);
                 }
-                duplicatesMap.get(key)?.push({
+                duplicatesMap.get(emailKey)?.push({
+                  firstName: contact.firstName,
+                  lastName: contact.lastName,
+                  email: contact.email,
+                  existingRecord: false,
+                  rowIndex: index,
+                });
+              }
+              if (contact.phone) {
+                const phoneKey = `phone:${contact.phone.toLowerCase().trim()}`;
+                if (!duplicatesMap.has(phoneKey)) {
+                  duplicatesMap.set(phoneKey, []);
+                }
+                duplicatesMap.get(phoneKey)?.push({
                   firstName: contact.firstName,
                   lastName: contact.lastName,
                   email: contact.email,
@@ -187,44 +201,45 @@ export default function ContactUpload() {
               }
             }
 
+            // Get existing contacts from database
+            const emailsToCheck = parsedData.filter((contact) => contact.email).map((contact) => contact.email.toLowerCase().trim());
+            const phonesToCheck = parsedData.filter((contact) => contact.phone).map((contact) => contact.phone.toLowerCase().trim());
+
             const { data: existingEmails } = await checkExistingContactsWithEmails.refetch();
             const { data: existingPhones } = await checkExistingContactsWithPhones.refetch();
+
             const allDuplicates: DuplicateContact[] = [];
+            const processedIndices = new Set<number>();
 
-            for (const [, dupes] of duplicatesMap) {
+            // Process duplicates within CSV
+            for (const [key, dupes] of duplicatesMap.entries()) {
               if (dupes.length > 1) {
-                allDuplicates.push(...dupes);
-              }
-            }
-
-            if (existingEmails) {
-              for (const item of existingEmails) {
-                // Only check for duplicates if email exists in the item
-                if (item) {
-                  const matchingRow = parsedData.findIndex((contact) => contact.email?.toLowerCase() === item.toLowerCase());
-                  if (matchingRow !== -1) {
-                    allDuplicates.push({
-                      ...parsedData[matchingRow],
-                      existingRecord: true,
-                      rowIndex: matchingRow,
-                    });
+                // For internal duplicates, add all instances
+                for (const dupe of dupes) {
+                  if (!processedIndices.has(dupe.rowIndex)) {
+                    allDuplicates.push(dupe);
+                    processedIndices.add(dupe.rowIndex);
                   }
                 }
               }
             }
 
-            if (existingPhones) {
-              for (const item of existingPhones) {
-                if (item) {
-                  const matchingRow = parsedData.findIndex((contact) => contact.phone?.toLowerCase() === item.toLowerCase());
-                  if (matchingRow !== -1) {
-                    allDuplicates.push({
-                      ...parsedData[matchingRow],
-                      existingRecord: true,
-                      rowIndex: matchingRow,
-                    });
-                  }
-                }
+            // Process database duplicates
+            for (const [index, contact] of parsedData.entries()) {
+              if (processedIndices.has(index)) continue;
+
+              const hasEmailDuplicate = contact.email && existingEmails?.includes(contact.email.toLowerCase().trim());
+              const hasPhoneDuplicate = contact.phone && existingPhones?.includes(contact.phone.toLowerCase().trim());
+
+              if (hasEmailDuplicate || hasPhoneDuplicate) {
+                allDuplicates.push({
+                  firstName: contact.firstName,
+                  lastName: contact.lastName,
+                  email: contact.email,
+                  existingRecord: true,
+                  rowIndex: index,
+                });
+                processedIndices.add(index);
               }
             }
 
@@ -522,107 +537,113 @@ export default function ContactUpload() {
               </TableHeader>
               <TableBody>
                 {csvData
-                  .filter((row) => !isRowEmpty(row) && !duplicates.some((d) => d.email === row.email))
-                  .map((row, index) => (
-                    <TableRow key={generateUUID()}>
-                      <TableCell>
-                        <Input value={row.firstName} onChange={(e) => handleCsvEdit(index, 'firstName', e.target.value)} />
-                      </TableCell>
-                      <TableCell>
-                        <Input value={row.lastName} onChange={(e) => handleCsvEdit(index, 'lastName', e.target.value)} />
-                      </TableCell>
-                      <TableCell>
-                        <Input value={row.email} onChange={(e) => handleCsvEdit(index, 'email', e.target.value)} />
-                      </TableCell>
-                      <TableCell>
-                        <Input value={row.phone} onChange={(e) => handleCsvEdit(index, 'phone', e.target.value)} />
-                      </TableCell>
-                      <TableCell>
-                        <Combobox
-                          value={row.company ?? ''}
-                          onChange={(value) => {
-                            const selectedCompany = companies?.find((c) => c.name === value);
-                            handleCsvEdit(index, 'company', selectedCompany ? selectedCompany.name : value);
-                          }}
-                          items={companies?.map((c) => c.name) || []}
-                          placeholder={t('select_company')}
-                          searchPlaceholder={t('search_company')}
-                          groupHeading={t('companies')}
-                          allowCustom={true}
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <Select value={row.status} onValueChange={(value) => handleCsvEdit(index, 'status', value)}>
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {statusSchema.options.map((status) => (
-                              <SelectItem key={status} value={status}>
-                                <ColorBadge type='contactStatus' value={status} />
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </TableCell>
-                      <TableCell>
-                        <Combobox
-                          value={row.source ?? ''}
-                          onChange={(value) => handleCsvEdit(index, 'source', value)}
-                          items={sources}
-                          placeholder={t('select_source')}
-                          searchPlaceholder={t('search_source')}
-                          groupHeading={t('sources')}
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <Combobox
-                          value={row.campaignCode ?? ''}
-                          onChange={(value) => handleCsvEdit(index, 'campaignCode', value)}
-                          items={campaigns?.map((c) => c.campaignCode) ?? []}
-                          placeholder={t('select_campaign')}
-                          searchPlaceholder={t('search_campaigns')}
-                          groupHeading={t('campaigns')}
-                          allowCustom={false}
-                          renderItem={(code) => {
-                            const campaign = campaigns?.find((c) => c.campaignCode === code);
-                            return campaign?.name ?? code;
-                          }}
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <Input value={row.remark} onChange={(e) => handleCsvEdit(index, 'remark', e.target.value)} />
-                      </TableCell>
-                      <TableCell>
-                        <div className='flex gap-2'>
-                          <Input
-                            placeholder='DD/MM/YYYY'
-                            value={row.createdAt ? formatDateForDisplay(row.createdAt) : ''}
-                            onChange={(e) => {
-                              const parsedDate = parseDate(e.target.value);
-                              setCsvData((prev) => {
-                                const newData = [...prev];
-                                newData[index] = { ...newData[index], createdAt: parsedDate };
-                                return newData;
-                              });
+                  .filter((row) => !isRowEmpty(row))
+                  .map((row, index) => {
+                    const isDuplicate = duplicates.some((d) => d.rowIndex === index);
+                    if (isDuplicate) {
+                      return null;
+                    }
+                    return (
+                      <TableRow key={generateUUID()}>
+                        <TableCell>
+                          <Input value={row.firstName} onChange={(e) => handleCsvEdit(index, 'firstName', e.target.value)} />
+                        </TableCell>
+                        <TableCell>
+                          <Input value={row.lastName} onChange={(e) => handleCsvEdit(index, 'lastName', e.target.value)} />
+                        </TableCell>
+                        <TableCell>
+                          <Input value={row.email} onChange={(e) => handleCsvEdit(index, 'email', e.target.value)} />
+                        </TableCell>
+                        <TableCell>
+                          <Input value={row.phone} onChange={(e) => handleCsvEdit(index, 'phone', e.target.value)} />
+                        </TableCell>
+                        <TableCell>
+                          <Combobox
+                            value={row.company ?? ''}
+                            onChange={(value) => {
+                              const selectedCompany = companies?.find((c) => c.name === value);
+                              handleCsvEdit(index, 'company', selectedCompany ? selectedCompany.name : value);
+                            }}
+                            items={companies?.map((c) => c.name) || []}
+                            placeholder={t('select_company')}
+                            searchPlaceholder={t('search_company')}
+                            groupHeading={t('companies')}
+                            allowCustom={true}
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Select value={row.status} onValueChange={(value) => handleCsvEdit(index, 'status', value)}>
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {statusSchema.options.map((status) => (
+                                <SelectItem key={status} value={status}>
+                                  <ColorBadge type='contactStatus' value={status} />
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </TableCell>
+                        <TableCell>
+                          <Combobox
+                            value={row.source ?? ''}
+                            onChange={(value) => handleCsvEdit(index, 'source', value)}
+                            items={sources}
+                            placeholder={t('select_source')}
+                            searchPlaceholder={t('search_source')}
+                            groupHeading={t('sources')}
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Combobox
+                            value={row.campaignCode ?? ''}
+                            onChange={(value) => handleCsvEdit(index, 'campaignCode', value)}
+                            items={campaigns?.map((c) => c.campaignCode) ?? []}
+                            placeholder={t('select_campaign')}
+                            searchPlaceholder={t('search_campaigns')}
+                            groupHeading={t('campaigns')}
+                            allowCustom={false}
+                            renderItem={(code) => {
+                              const campaign = campaigns?.find((c) => c.campaignCode === code);
+                              return campaign?.name ?? code;
                             }}
                           />
-                          <Input
-                            type='date'
-                            className='absolute right-0 w-10 p-0 opacity-0'
-                            onChange={(e) => {
-                              const date = e.target.value ? startOfDay(new Date(e.target.value)) : undefined;
-                              setCsvData((prev) => {
-                                const newData = [...prev];
-                                newData[index] = { ...newData[index], createdAt: date };
-                                return newData;
-                              });
-                            }}
-                          />
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                        </TableCell>
+                        <TableCell>
+                          <Input value={row.remark} onChange={(e) => handleCsvEdit(index, 'remark', e.target.value)} />
+                        </TableCell>
+                        <TableCell>
+                          <div className='flex gap-2'>
+                            <Input
+                              placeholder='DD/MM/YYYY'
+                              value={row.createdAt ? formatDateForDisplay(row.createdAt) : ''}
+                              onChange={(e) => {
+                                const parsedDate = parseDate(e.target.value);
+                                setCsvData((prev) => {
+                                  const newData = [...prev];
+                                  newData[index] = { ...newData[index], createdAt: parsedDate };
+                                  return newData;
+                                });
+                              }}
+                            />
+                            <Input
+                              type='date'
+                              className='absolute right-0 w-10 p-0 opacity-0'
+                              onChange={(e) => {
+                                const date = e.target.value ? startOfDay(new Date(e.target.value)) : undefined;
+                                setCsvData((prev) => {
+                                  const newData = [...prev];
+                                  newData[index] = { ...newData[index], createdAt: date };
+                                  return newData;
+                                });
+                              }}
+                            />
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
               </TableBody>
             </Table>
           </div>
