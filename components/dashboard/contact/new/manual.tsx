@@ -39,7 +39,7 @@ const formSchema = z
   })
   .refine((data) => data.email || data.phone, {
     message: 'Either email or phone number is required',
-    path: ['email'],
+    path: ['email', 'phone'],
   });
 
 export default function ManualContactForm() {
