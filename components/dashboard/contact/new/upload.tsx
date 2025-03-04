@@ -3,15 +3,14 @@
 import { Banner } from '@/components/shared/banner';
 import { ColorBadge } from '@/components/shared/color-badge';
 import { Combobox } from '@/components/shared/combobox';
+import { TableLoading } from '@/components/shared/table-loading';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { sources } from '@/data/data';
 import { type Status, statusSchema } from '@/lib/schema';
-import { generateUUID } from '@/lib/utils';
 import { parseDate, parseFullName } from '@/utils/format';
 import { stringifyPhone } from '@/utils/phone';
 import { api } from '@/utils/trpc/client';
@@ -198,7 +197,7 @@ export default function ContactUpload() {
   };
 
   const handleCsvEdit = (index: number, field: keyof ContactFormData, value: string) => {
-    setCsvData((prev) => {
+    const updateData = (prev: ContactFormData[]) => {
       const newData = [...prev];
       if (field === 'company') {
         const selectedCompany = companies?.find((c) => c.name === value);
@@ -211,7 +210,10 @@ export default function ContactUpload() {
         newData[index] = { ...newData[index], [field]: value };
       }
       return newData;
-    });
+    };
+
+    setCsvData((prev) => updateData(prev));
+    setNonDuplicates((prev) => updateData(prev));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -367,18 +369,7 @@ export default function ContactUpload() {
         />
       )}
 
-      {isProcessingCsv && (
-        <div className='space-y-4'>
-          <Skeleton className='h-10 w-full' />
-          <Skeleton className='h-10 w-full' />
-          <Skeleton className='h-10 w-full' />
-          <Skeleton className='h-10 w-full' />
-          <Skeleton className='h-10 w-full' />
-          <Skeleton className='h-10 w-full' />
-          <Skeleton className='h-10 w-full' />
-          <Skeleton className='h-10 w-full' />
-        </div>
-      )}
+      {isProcessingCsv && <TableLoading />}
 
       {showPreview && (
         <div className='mb-6 space-y-4'>
@@ -456,7 +447,7 @@ export default function ContactUpload() {
               </TableHeader>
               <TableBody>
                 {nonDuplicates.map((row, index) => (
-                  <TableRow key={generateUUID()}>
+                  <TableRow key={row.email + row.phone}>
                     <TableCell>
                       <Input value={row.firstName} onChange={(e) => handleCsvEdit(index, 'firstName', e.target.value)} />
                     </TableCell>
@@ -532,11 +523,13 @@ export default function ContactUpload() {
                           value={row.createdAt ? formatDateForDisplay(row.createdAt) : ''}
                           onChange={(e) => {
                             const parsedDate = parseDate(e.target.value);
-                            setCsvData((prev) => {
+                            const updateData = (prev: ContactFormData[]) => {
                               const newData = [...prev];
                               newData[index] = { ...newData[index], createdAt: parsedDate };
                               return newData;
-                            });
+                            };
+                            setCsvData((prev) => updateData(prev));
+                            setNonDuplicates((prev) => updateData(prev));
                           }}
                         />
                         <Input
@@ -544,11 +537,13 @@ export default function ContactUpload() {
                           className='absolute right-0 w-10 p-0 opacity-0'
                           onChange={(e) => {
                             const date = e.target.value ? startOfDay(new Date(e.target.value)) : undefined;
-                            setCsvData((prev) => {
+                            const updateData = (prev: ContactFormData[]) => {
                               const newData = [...prev];
                               newData[index] = { ...newData[index], createdAt: date };
                               return newData;
-                            });
+                            };
+                            setCsvData((prev) => updateData(prev));
+                            setNonDuplicates((prev) => updateData(prev));
                           }}
                         />
                       </div>
