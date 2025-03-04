@@ -600,11 +600,7 @@ export const teamRouter = createTRPCRouter({
         .then((rows) => rows[0]);
 
       const contactDetails = await ctx.db
-        .select({
-          firstName: contact.firstName,
-          lastName: contact.lastName,
-          email: contact.email,
-        })
+        .select()
         .from(contact)
         .where(eq(contact.id, input.contactId))
         .then((rows) => rows[0]);

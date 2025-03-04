@@ -244,6 +244,12 @@ export const calendarRouter = createTRPCRouter({
       .where(and(eq(calendarEventParticipant.eventId, input.id), eq(calendarEventParticipant.participantType, 'contact')))
       .then((rows) => rows[0]);
 
+    const whichContact = await ctx.db
+      .select()
+      .from(contact)
+      .where(eq(contact.id, participant?.participantId ?? ''))
+      .then((rows) => rows[0]);
+
     if (participant?.participantId) {
       // Log meeting cancellation activity
       await createContactActivityHelper(ctx, {
@@ -253,7 +259,7 @@ export const calendarRouter = createTRPCRouter({
         initiatorType: 'user',
         initiatorId: ctx.session?.user.id,
         metadata: {
-          contact: participant,
+          contact: whichContact,
           event: event,
           startAt: event.startAt,
           endAt: event.endAt,
