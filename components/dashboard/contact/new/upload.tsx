@@ -22,6 +22,19 @@ import Papa from 'papaparse';
 import { useRef, useState } from 'react';
 import { toast } from 'sonner';
 
+// Add this new function to handle phone number formatting
+const formatPhoneNumber = (phone: string): string => {
+  // Remove all non-digit characters
+  const cleanPhone = phone.replace(/\D/g, '');
+
+  // If it's exactly 8 digits and doesn't start with any country code
+  if (cleanPhone.length === 8 && !cleanPhone.startsWith('852')) {
+    return `852${cleanPhone}`;
+  }
+
+  return cleanPhone;
+};
+
 interface ContactFormData {
   firstName: string;
   lastName: string;
@@ -114,7 +127,7 @@ export default function ContactUpload() {
                     firstName: row.firstName || '',
                     lastName: row.lastName || '',
                     email: row.email || '',
-                    phone: row.phone || '',
+                    phone: row.phone ? formatPhoneNumber(row.phone) : '',
                     company: row.company || '',
                     status: row.status || 'lead',
                     source: row.source || '',
@@ -130,7 +143,7 @@ export default function ContactUpload() {
                   firstName,
                   lastName,
                   email: row.email || '',
-                  phone: row.phone || '',
+                  phone: row.phone ? formatPhoneNumber(row.phone) : '',
                   company: row.company || '',
                   status: row.status || 'lead',
                   source: row.source || '',

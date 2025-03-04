@@ -84,37 +84,37 @@ export function ActivitySection({ activities, onCreateActivity, isLoading }: Act
       case 'CONTACT_CREATED':
         if (JSON.parse(activity.metadata as string).createdType === 'referral') {
           return t('activity_contact_created_from_referral', {
-            contact: `${JSON.parse(activity.metadata as string).contact?.name} (${JSON.parse(activity.metadata as string).contact?.email})`,
+            contact: `${JSON.parse(activity.metadata as string).contact?.name}`,
             referral: `${JSON.parse(activity.metadata as string).referral?.name} (${JSON.parse(activity.metadata as string).referral?.email})`,
           });
         }
         return t('activity_contact_created_from_naturally', {
-          contact: `${JSON.parse(activity.metadata as string).contact?.name} (${JSON.parse(activity.metadata as string).contact?.email})`,
+          contact: `${JSON.parse(activity.metadata as string).contact?.name}`,
           source: `${JSON.parse(activity.metadata as string).source}`,
         });
       case 'CAMPAIGN_ASSIGNED':
         return t('activity_contact_assigned_to_campaign', {
-          contact: `${JSON.parse(activity.metadata as string).contact?.name} (${JSON.parse(activity.metadata as string).contact?.email})`,
+          contact: `${JSON.parse(activity.metadata as string).contact?.name}`,
           campaign: `${JSON.parse(activity.metadata as string).campaign?.name} (${JSON.parse(activity.metadata as string).campaign?.campaignCode})`,
         });
       case 'CONTACT_UPDATED':
         return t('activity_contact_updated', {
-          contact: `${JSON.parse(activity.metadata as string).contact?.name} (${JSON.parse(activity.metadata as string).contact?.email})`,
+          contact: `${JSON.parse(activity.metadata as string).contact?.name}`,
           fields: JSON.parse(activity.metadata as string).changedFields.join(', '),
         });
       case 'CONTACT_DELETED':
         return t('activity_contact_deleted', {
-          contact: `${JSON.parse(activity.metadata as string).contact?.name} (${JSON.parse(activity.metadata as string).contact?.email})`,
+          contact: `${JSON.parse(activity.metadata as string).contact?.name}`,
         });
       case 'STATUS_CHANGED':
         return t('activity_contact_status_changed', {
-          contact: `${JSON.parse(activity.metadata as string).contact?.name} (${JSON.parse(activity.metadata as string).contact?.email})`,
+          contact: `${JSON.parse(activity.metadata as string).contact?.name}`,
           oldStatus: JSON.parse(activity.metadata as string).oldStatus,
           newStatus: JSON.parse(activity.metadata as string).newStatus,
         });
       case 'PRIORITY_CHANGED':
         return t('activity_contact_priority_changed', {
-          contact: `${JSON.parse(activity.metadata as string).contact?.name} (${JSON.parse(activity.metadata as string).contact?.email})`,
+          contact: `${JSON.parse(activity.metadata as string).contact?.name}`,
           oldPriority: JSON.parse(activity.metadata as string).oldPriority,
           newPriority: JSON.parse(activity.metadata as string).newPriority,
         });
@@ -130,48 +130,35 @@ export function ActivitySection({ activities, onCreateActivity, isLoading }: Act
         if (activity.type === 'TEAM' && activity.subType === 'MEETING_SCHEDULED') {
           return t('activity_team_meeting_scheduled', {
             team: `${JSON.parse(activity.metadata as string).team?.name} (${JSON.parse(activity.metadata as string).team?.id})`,
-            title: `${JSON.parse(activity.metadata as string).event?.title}`,
             startAt: formatDate(new Date(JSON.parse(activity.metadata as string).startAt), locale),
             endAt: formatDate(new Date(JSON.parse(activity.metadata as string).endAt), locale),
-            description: JSON.parse(activity.metadata as string).description,
           });
         }
         return t('activity_meeting_scheduled', {
-          contact: `${JSON.parse(activity.metadata as string).contact?.name} (${JSON.parse(activity.metadata as string).contact?.email})`,
-          title: `${JSON.parse(activity.metadata as string).event?.title}`,
+          contact: `${JSON.parse(activity.metadata as string).contact?.name}`,
           startAt: formatDate(new Date(JSON.parse(activity.metadata as string).startAt), locale),
           endAt: formatDate(new Date(JSON.parse(activity.metadata as string).endAt), locale),
-          description: JSON.parse(activity.metadata as string).description,
         });
       case 'MEETING_UPDATED':
         return t('activity_meeting_updated', {
-          contact: `${JSON.parse(activity.metadata as string).contact?.name} (${JSON.parse(activity.metadata as string).contact?.email})`,
-          title: `${JSON.parse(activity.metadata as string).event?.title}`,
+          contact: `${JSON.parse(activity.metadata as string).contact?.name}`,
           newStartAt: formatDate(new Date(JSON.parse(activity.metadata as string).newStartAt), locale),
-          oldStartAt: formatDate(new Date(JSON.parse(activity.metadata as string).oldStartAt), locale),
           newEndAt: formatDate(new Date(JSON.parse(activity.metadata as string).newEndAt), locale),
-          oldEndAt: formatDate(new Date(JSON.parse(activity.metadata as string).oldEndAt), locale),
-          newDescription: JSON.parse(activity.metadata as string).newDescription,
-          oldDescription: JSON.parse(activity.metadata as string).oldDescription,
         });
       case 'MEETING_CANCELLED':
         if (activity.type === 'TEAM') {
           return t('activity_team_meeting_cancelled', {
             team: `${JSON.parse(activity.metadata as string).team?.name} (${JSON.parse(activity.metadata as string).team?.id})`,
-            title: `${JSON.parse(activity.metadata as string).event?.title}`,
             startAt: formatDate(new Date(JSON.parse(activity.metadata as string).startAt), locale),
-            endAt: formatDate(new Date(JSON.parse(activity.metadata as string).endAt), locale),
           });
         }
         return t('activity_meeting_cancelled', {
-          contact: `${JSON.parse(activity.metadata as string).contact?.name} (${JSON.parse(activity.metadata as string).contact?.email})`,
-          title: `${JSON.parse(activity.metadata as string).event?.title}`,
+          contact: `${JSON.parse(activity.metadata as string).contact?.name}`,
           startAt: formatDate(new Date(JSON.parse(activity.metadata as string).startAt), locale),
-          endAt: formatDate(new Date(JSON.parse(activity.metadata as string).endAt), locale),
         });
       case 'REMARK_UPDATED':
         return t('activity_contact_remark_updated', {
-          contact: `${JSON.parse(activity.metadata as string).contact?.name} (${JSON.parse(activity.metadata as string).contact?.email})`,
+          contact: `${JSON.parse(activity.metadata as string).contact?.name}`,
           oldRemark: JSON.parse(activity.metadata as string).oldRemark,
           newRemark: JSON.parse(activity.metadata as string).newRemark,
         });
@@ -181,12 +168,12 @@ export function ActivitySection({ activities, onCreateActivity, isLoading }: Act
         });
       case 'TEAM_CONTACT_ASSIGNED':
         return t('activity_team_assigned', {
-          contact: `${JSON.parse(activity.metadata as string).contact?.name} (${JSON.parse(activity.metadata as string).contact?.email})`,
+          contact: `${JSON.parse(activity.metadata as string).contact?.name}`,
           team: `${JSON.parse(activity.metadata as string).team?.name}`,
         });
       case 'TEAM_CONTACT_REMOVED':
         return t('activity_team_contact_removed', {
-          contact: `${JSON.parse(activity.metadata as string).contact?.name} (${JSON.parse(activity.metadata as string).contact?.email})`,
+          contact: `${JSON.parse(activity.metadata as string).contact?.name}`,
           team: `${JSON.parse(activity.metadata as string).team?.name}`,
         });
       case 'TEAM_UPDATED':
