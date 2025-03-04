@@ -1,7 +1,7 @@
 import { contact, contactActivity, contactCampaign, marketingCampaign, team, teamContact, user, userNotifications } from '@/drizzle/schema';
 import { activitySubTypeSchema, activityTypeSchema, prioritySchema, statusSchema } from '@/lib/schema';
 import { createContactActivityHelper } from '@/server/helper/contact';
-import { createTRPCRouter, protectedProcedure, publicProcedure } from '@/server/trpc';
+import { createTRPCRouter, protectedProcedure } from '@/server/trpc';
 import { sendEmail } from '@/utils/email';
 import { stringifyPhone } from '@/utils/phone';
 import { TRPCError } from '@trpc/server';
@@ -574,40 +574,6 @@ export const contactRouter = createTRPCRouter({
       }
 
       return result;
-    }),
-
-  checkExistingContactsWithPhones: publicProcedure
-    .input(
-      z.object({
-        phones: z.array(z.string()),
-      })
-    )
-    .query(async ({ ctx, input }) => {
-      const existingContacts = await ctx.db
-        .select({
-          phone: contact.phone,
-        })
-        .from(contact)
-        .where(inArray(contact.phone, input.phones.map(stringifyPhone)));
-
-      return existingContacts.map((contact) => contact.phone);
-    }),
-
-  checkExistingContactsWithEmails: publicProcedure
-    .input(
-      z.object({
-        emails: z.array(z.string()),
-      })
-    )
-    .query(async ({ ctx, input }) => {
-      const existingContacts = await ctx.db
-        .select({
-          email: contact.email,
-        })
-        .from(contact)
-        .where(inArray(contact.email, input.emails));
-
-      return existingContacts.map((contact) => contact.email);
     }),
 
   checkDuplicateContacts: protectedProcedure

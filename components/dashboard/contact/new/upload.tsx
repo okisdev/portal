@@ -40,14 +40,6 @@ interface ContactFormData {
   createdAt?: Date;
 }
 
-interface DuplicateContact {
-  firstName: string;
-  lastName: string;
-  email: string;
-  existingRecord: boolean;
-  rowIndex: number;
-}
-
 export default function ContactUpload() {
   const router = useRouter();
   const t = useTranslations();
@@ -65,20 +57,6 @@ export default function ContactUpload() {
   const [progressStatus, setProgressStatus] = useState('');
 
   const checkDuplicates = api.contact.checkDuplicateContacts.useMutation();
-
-  const checkExistingContactsWithEmails = api.contact.checkExistingContactsWithEmails.useQuery(
-    {
-      emails: csvData.map((contact) => contact.email).filter((email) => email !== null) as string[],
-    },
-    { enabled: false }
-  );
-
-  const checkExistingContactsWithPhones = api.contact.checkExistingContactsWithPhones.useQuery(
-    {
-      phones: csvData.map((contact) => contact.phone).filter((phone) => phone !== null) as string[],
-    },
-    { enabled: false }
-  );
 
   const { data: campaigns } = api.marketing.getActiveCampaigns.useQuery();
   const { data: companies } = api.company.getAllCompanies.useQuery();
