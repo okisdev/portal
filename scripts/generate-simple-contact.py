@@ -450,6 +450,7 @@ def generate_contacts(
     allow_duplicates: Union[bool, int] = False,
     use_country_code: bool = True,
     use_email: bool = True,
+    use_phone: bool = True,
     output_file: str = "contacts.csv",
 ) -> List[Dict]:
     """
@@ -460,6 +461,7 @@ def generate_contacts(
         allow_duplicates: If True, randomly include duplicates. If int, generate exactly that many duplicates
         use_country_code: If True, include country code in phone numbers. If False, use HK format without country code
         use_email: If True, generate email addresses. If False, email will be None
+        use_phone: If True, generate phone numbers. If False, phone will be None
         output_file: Path to output CSV file
     """
     # Email domains
@@ -550,7 +552,11 @@ def generate_contacts(
                 email = f"{email_name}@{email_domain}"
             else:
                 email = None
-            country_code = random.choice(["+1", "+44", "+61", "+33", "+49"]) if use_country_code else None
+            country_code = (
+                random.choice(["+1", "+44", "+61", "+33", "+49"])
+                if use_country_code
+                else None
+            )
 
         elif name_type == "chinese":
             surname = random.choice(CN_SURNAMES)
@@ -683,7 +689,9 @@ def generate_contacts(
             country_code = "+852" if use_country_code else None
 
         # Generate phone number based on country code
-        if not use_country_code:
+        if not use_phone:
+            phone = None
+        elif not use_country_code:
             # Default to Hong Kong format without country code
             phone = f"{random.choice([2,3,5,6,9])}{random.randint(1000000, 9999999)}"
         elif country_code == "+86":  # China format
@@ -789,6 +797,17 @@ def main():
         action="store_true",
         help="Generate contacts without email addresses",
     )
+    parser.add_argument(
+        "--no-phone",
+        action="store_true",
+        help="Generate contacts without phone numbers",
+    )
+    parser.add_argument(
+        "--output",
+        type=str,
+        default="contacts.csv",
+        help="Specify the output CSV filename (default: contacts.csv)",
+    )
 
     args = parser.parse_args()
 
@@ -798,10 +817,12 @@ def main():
 
     # Generate contacts
     generated_contacts = generate_contacts(
-        args.num_records, 
-        args.duplicate, 
+        args.num_records,
+        args.duplicate,
         not args.no_country_code,
-        not args.no_email
+        not args.no_email,
+        not args.no_phone,
+        args.output,
     )
 
     # Count types of names and duplicates for reporting
@@ -810,7 +831,7 @@ def main():
     num_western, num_cn, num_hk = count_name_types(generated_contacts)
 
     print(
-        f"Successfully generated {args.num_records} contacts and saved to 'contacts.csv'"
+        f"Successfully generated {args.num_records} contacts and saved to '{args.output}'"
     )
     print(f"Distribution:")
     print(f"- Western names: {num_western}")

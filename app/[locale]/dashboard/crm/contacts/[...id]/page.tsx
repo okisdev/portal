@@ -35,6 +35,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { sources } from '@/data/data';
 import { type Priority, type Status, statusSchema } from '@/lib/schema';
 import { formatDate } from '@/utils/date';
+import { parsePhone } from '@/utils/phone';
 import { api } from '@/utils/trpc/client';
 import { Building2, Edit2, Mail, MessageSquare, MoreHorizontal, Phone, Save, Send, Users, X } from 'lucide-react';
 import { useTranslations } from 'next-intl';
@@ -349,7 +350,7 @@ export default function ContactIdPage() {
                   {contact?.phone && (
                     <Link href={`https://wa.me/${contact.phone.replace(/\D/g, '')}`} target='_blank' rel='noopener noreferrer' className='flex items-center gap-2 hover:text-primary'>
                       <Phone className='size-4 shrink-0' />
-                      <span>{contact.phone}</span>
+                      <span>{parsePhone(contact.phone)}</span>
                     </Link>
                   )}
                   {contact?.createdAt && (

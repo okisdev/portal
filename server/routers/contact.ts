@@ -1,8 +1,9 @@
 import { contact, contactActivity, contactCampaign, marketingCampaign, team, teamContact, user, userNotifications } from '@/drizzle/schema';
 import { activitySubTypeSchema, activityTypeSchema, prioritySchema, statusSchema } from '@/lib/schema';
 import { createContactActivityHelper } from '@/server/helper/contact';
-import { createTRPCRouter, protectedProcedure, publicProcedure } from '@/server/trpc';
+import { createTRPCRouter, protectedProcedure } from '@/server/trpc';
 import { sendEmail } from '@/utils/email';
+import { stringifyPhone } from '@/utils/phone';
 import { TRPCError } from '@trpc/server';
 import { startOfDay } from 'date-fns';
 import { and, asc, desc, eq, inArray, sql } from 'drizzle-orm';
@@ -137,7 +138,7 @@ export const contactRouter = createTRPCRouter({
           firstName: input.firstName ?? '',
           lastName: input.lastName ?? '',
           email: input.email,
-          phone: input.phone ?? '',
+          phone: stringifyPhone(input.phone ?? ''),
           company: input.company ?? '',
           companyId: input.companyId ?? null,
           source: input.source ?? (referralContact ? 'referral' : ''),
@@ -575,21 +576,33 @@ export const contactRouter = createTRPCRouter({
       return result;
     }),
 
-  checkExistingContacts: publicProcedure
+  checkDuplicateContacts: protectedProcedure
     .input(
       z.object({
-        emails: z.array(z.string()),
+        contacts: z.array(
+          z.object({
+            email: z.string().optional(),
+            phone: z.string().optional(),
+          })
+        ),
       })
     )
-    .query(async ({ ctx, input }) => {
-      const existingContacts = await ctx.db
-        .select({
-          email: contact.email,
-        })
-        .from(contact)
-        .where(inArray(contact.email, input.emails));
+    .mutation(async ({ ctx, input }) => {
+      const emails = input.contacts.map((c) => c.email).filter((e): e is string => !!e);
+      const phones = input.contacts
+        .map((c) => c.phone)
+        .filter((p): p is string => !!p)
+        .map(stringifyPhone);
 
-      return existingContacts.map((contact) => contact.email);
+      const [existingEmails, existingPhones] = await Promise.all([
+        emails.length > 0 ? ctx.db.select({ email: contact.email }).from(contact).where(inArray(contact.email, emails)) : Promise.resolve([]),
+        phones.length > 0 ? ctx.db.select({ phone: contact.phone }).from(contact).where(inArray(contact.phone, phones)) : Promise.resolve([]),
+      ]);
+
+      return {
+        existingEmails: existingEmails.map((c) => c.email),
+        existingPhones: existingPhones.map((c) => c.phone),
+      };
     }),
 
   getContactsByCampaignId: protectedProcedure.input(z.object({ campaignCode: z.string() })).query(async ({ ctx, input }) => {
@@ -707,7 +720,7 @@ export const contactRouter = createTRPCRouter({
       const newContacts = input.contacts.filter((contact) => !contact.email || !existingEmails.has(contact.email));
 
       try {
-        // Create contacts one by one, reusing createContact logic
+        // Create contacts one by one, reusing createCon  tact logic
         for (const contactData of newContacts) {
           try {
             const [result] = await ctx.db
@@ -717,7 +730,7 @@ export const contactRouter = createTRPCRouter({
                 firstName: contactData.firstName ?? '',
                 lastName: contactData.lastName ?? '',
                 email: contactData.email,
-                phone: contactData.phone ?? '',
+                phone: stringifyPhone(contactData.phone ?? ''),
                 company: contactData.company ?? '',
                 companyId: contactData.companyId ?? null,
                 source: contactData.source ?? 'direct',
