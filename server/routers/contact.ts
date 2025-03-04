@@ -610,6 +610,35 @@ export const contactRouter = createTRPCRouter({
       return existingContacts.map((contact) => contact.email);
     }),
 
+  checkDuplicateContacts: protectedProcedure
+    .input(
+      z.object({
+        contacts: z.array(
+          z.object({
+            email: z.string().optional(),
+            phone: z.string().optional(),
+          })
+        ),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const emails = input.contacts.map((c) => c.email).filter((e): e is string => !!e);
+      const phones = input.contacts
+        .map((c) => c.phone)
+        .filter((p): p is string => !!p)
+        .map(stringifyPhone);
+
+      const [existingEmails, existingPhones] = await Promise.all([
+        emails.length > 0 ? ctx.db.select({ email: contact.email }).from(contact).where(inArray(contact.email, emails)) : Promise.resolve([]),
+        phones.length > 0 ? ctx.db.select({ phone: contact.phone }).from(contact).where(inArray(contact.phone, phones)) : Promise.resolve([]),
+      ]);
+
+      return {
+        existingEmails: existingEmails.map((c) => c.email),
+        existingPhones: existingPhones.map((c) => c.phone),
+      };
+    }),
+
   getContactsByCampaignId: protectedProcedure.input(z.object({ campaignCode: z.string() })).query(async ({ ctx, input }) => {
     return ctx.db
       .select({
