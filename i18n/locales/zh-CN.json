@@ -64,14 +64,14 @@
   "activity_contact_status_changed": "联系人 {contact} 的状态从 {oldStatus} 更改为 {newStatus}。",
   "activity_contact_updated": "已更新联系人 {contact} 的字段：{fields}。",
   "activity_created_successfully": "活动创建成功",
-  "activity_meeting_cancelled": "已取消原定于 {startAt} 与 {contact} 的会议 {title}。",
-  "activity_meeting_scheduled": "已安排会议 {title}，时间为 {startAt} 至 {endAt}",
-  "activity_meeting_updated": "会议 {title} 已更新为 {newStartAt} 至 {newEndAt}",
+  "activity_meeting_cancelled": "已取消原定于 {startAt} 与 {contact} 的会议。",
+  "activity_meeting_scheduled": "已安排与 {contact} 的会议，时间为 {startAt} 至 {endAt}",
+  "activity_meeting_updated": "与 {contact} 的会议已更新为 {newStartAt} 至 {newEndAt}",
   "activity_team_assigned": "联系人 {contact} 已分配至团队 {team}。",
   "activity_team_contact_removed": "已将联系人 {contact} 从团队 {team} 中移除。",
   "activity_team_created": "已创建团队 {team}。",
-  "activity_team_meeting_cancelled": "已取消原定于 {startAt} 的团队 {team} 会议 {title}。",
-  "activity_team_meeting_scheduled": "已安排团队会议 {title}，时间为 {startAt} 至 {endAt}。",
+  "activity_team_meeting_cancelled": "已取消原定于 {startAt} 的团队 {team} 会议。",
+  "activity_team_meeting_scheduled": "已安排团队会议，时间为 {startAt} 至 {endAt}。",
   "activity_team_updated": "团队 {team} 已更新。",
   "add": "添加",
   "add_a_description": "添加描述",
@@ -648,5 +648,6 @@
   "will_renew_at": "将在 {date} 续订",
   "workspace": "工作区",
   "write_a_reply": "写回复... 使用 @ 提及某人",
-  "you": "你"
+  "you": "你",
+  "member": "成员"
 }

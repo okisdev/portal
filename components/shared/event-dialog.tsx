@@ -121,6 +121,24 @@ export function EventDialog({ open, onOpenChange, onSubmit, isEditMode = false, 
     return () => subscription.unsubscribe();
   }, [form]);
 
+  // Watch for changes to startAt and adjust endAt if needed
+  useEffect(() => {
+    const subscription = form.watch((value, { name }) => {
+      if (name === 'startAt') {
+        const startAt = value.startAt as Date;
+        const endAt = form.getValues('endAt') as Date;
+
+        if (endAt < startAt) {
+          const newEndAt = new Date(startAt);
+          newEndAt.setMinutes(newEndAt.getMinutes() + 30);
+          form.setValue('endAt', newEndAt);
+        }
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [form]);
+
   const handleCalendarSelect = async (value: string) => {
     if (onCreateFolder && !folders?.some((folder) => folder.name === value)) {
       await onCreateFolder(value);

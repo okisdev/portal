@@ -1,6 +1,4 @@
 'use client';
-
-import { Payment } from '@/components/dashboard/contact/payment';
 import { SendEmail } from '@/components/dashboard/contact/send-email';
 import { SendWhatsAppMessage } from '@/components/dashboard/contact/send-whatsapp-message';
 import { ActivitySection } from '@/components/shared/activity-section';
@@ -41,6 +39,7 @@ import { Building2, Edit2, Mail, MessageSquare, MoreHorizontal, Phone, Save, Sen
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { notFound, useParams, useRouter, useSearchParams } from 'next/navigation';
+import React from 'react';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -333,10 +332,13 @@ export default function ContactIdPage() {
                     <div className='flex items-center gap-2'>
                       <Users className='size-4 shrink-0' />
                       <div className='flex flex-wrap gap-1'>
-                        {contact?.teams?.map((team) => (
-                          <Link key={team.id} href={`/dashboard/crm/team/${team.id}`} className='hover:text-primary'>
-                            {team.name}
-                          </Link>
+                        {contact?.teams?.map((team, index) => (
+                          <React.Fragment key={team.id}>
+                            <Link href={`/dashboard/crm/team/${team.id}`} className='hover:text-primary'>
+                              {team.name}
+                            </Link>
+                            {index < contact.teams.length - 1 && ', '}
+                          </React.Fragment>
                         ))}
                       </div>
                     </div>
@@ -588,11 +590,11 @@ export default function ContactIdPage() {
                 />
               </div>
 
-              <Payment contact={contact || {}} />
+              {/* <Payment contact={contact || {}} /> */}
 
               <div className='p-6'>
                 <h2 className='mb-4 font-medium'>{t('team_roles')}</h2>
-                {contact?.leadingTeams?.length === 0 && contact?.subLeadingTeams?.length === 0 && contact?.referralTeams?.length === 0 ? (
+                {!contact?.teams || contact.teams.length === 0 ? (
                   <p className='text-muted-foreground text-sm'>{t('no_team_roles_found')}</p>
                 ) : (
                   <>
@@ -614,12 +616,25 @@ export default function ContactIdPage() {
                     ))}
                     {contact?.referralTeams?.map((team) => (
                       <div key={team.id} className='mb-3 flex items-center justify-between'>
-                        <Link href={`/dashboard/crm/team/${team.id}`} className='text-sm hover:text-primary'>
+                        <Link href={`/dashboard/crm/team/${team.id}`} className='text-sm transition-colors duration-200 hover:text-primary hover:underline'>
                           {team.name}
                         </Link>
                         <span className='text-muted-foreground text-xs'>{t('referral')}</span>
                       </div>
                     ))}
+                    {contact?.teams
+                      ?.filter(
+                        (team) =>
+                          !contact.leadingTeams?.some((lt) => lt.id === team.id) && !contact.subLeadingTeams?.some((st) => st.id === team.id) && !contact.referralTeams?.some((rt) => rt.id === team.id)
+                      )
+                      .map((team) => (
+                        <div key={team.id} className='mb-3 flex items-center justify-between'>
+                          <Link href={`/dashboard/crm/team/${team.id}`} className='text-sm transition-colors duration-200 hover:text-primary hover:underline'>
+                            {team.name}
+                          </Link>
+                          <span className='text-muted-foreground text-xs'>{t('member')}</span>
+                        </div>
+                      ))}
                   </>
                 )}
               </div>
