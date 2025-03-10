@@ -265,7 +265,7 @@ export default function ContactIdPage() {
       id: contactId[0],
       firstName: editForm.firstName,
       lastName: editForm.lastName,
-      email: editForm.email,
+      email: editForm.email || undefined,
       phone: editForm.phone,
       company: editForm.company,
       companyId: editForm.companyId,
