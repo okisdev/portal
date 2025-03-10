@@ -42,6 +42,7 @@ export function ActivitySection({ activities, onCreateActivity, isLoading }: Act
   const locale = useLocale() as Locale;
   const { data: session } = useSession();
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const [isComposing, setIsComposing] = useState(false);
 
   const [newActivity, setNewActivity] = useState('');
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
@@ -293,7 +294,12 @@ export function ActivitySection({ activities, onCreateActivity, isLoading }: Act
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>, isReply = false) => {
-    if (e.key === 'Enter' && e.shiftKey) {
+    if (e.key === 'Enter') {
+      if (e.shiftKey || isComposing) {
+        // Allow Shift+Enter for new line or when using IME
+        return;
+      }
+
       e.preventDefault();
       if (isReply) {
         if (replyText.trim() && replyingTo) {
@@ -496,6 +502,8 @@ export function ActivitySection({ activities, onCreateActivity, isLoading }: Act
                     value={newActivity}
                     onChange={(e) => handleInputChange(e)}
                     onKeyDown={(e) => handleKeyDown(e)}
+                    onCompositionStart={() => setIsComposing(true)}
+                    onCompositionEnd={() => setIsComposing(false)}
                     placeholder={t('add_a_note')}
                     className='min-h-[60px] resize-none'
                   />

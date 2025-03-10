@@ -52,6 +52,7 @@
   "activity": "Activity",
   "activity_campaign_removed": "Contact {contact} was removed from campaign: {campaign}.",
   "activity_contact_assigned_to_campaign": "Contact {contact} was assigned to campaign: {campaign}.",
+  "activity_contact_created": "Contact {contact} was created.",
   "activity_contact_created_from_naturally": "Contact {contact} was created from {source}.",
   "activity_contact_created_from_referral": "Contact {contact} was referred by {referral}.",
   "activity_contact_deleted": "Contact {contact} was deleted.",
@@ -348,6 +349,7 @@
   "meeting_deleted_successfully": "Meeting deleted successfully",
   "meeting_with": "{who} meeting with {name}",
   "meetings": "Meetings",
+  "member": "Member",
   "members": "Members",
   "message": "Message",
   "message_will_be_sent_via_whatsapp": "Message will be sent via WhatsApp",
@@ -648,7 +650,5 @@
   "will_renew_at": "Will renew at {date}",
   "workspace": "Workspace",
   "write_a_reply": "Write a reply... Use @ to mention someone",
-  "you": "You",
-  "member": "Member",
-  "activity_contact_created": "Contact {contact} was created."
+  "you": "You"
 }

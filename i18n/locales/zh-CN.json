@@ -52,6 +52,7 @@
   "activity": "活动",
   "activity_campaign_removed": "联系{contact}从广告系列中删除：{campaign}。",
   "activity_contact_assigned_to_campaign": "联系{contact}被分配给广告系列：{campaign}。",
+  "activity_contact_created": "创建了联系 {contact}。",
   "activity_contact_created_from_naturally": "从 {source} 创建了联系人 {contact}",
   "activity_contact_created_from_referral": "联系人 {contact} 由 {referral} 推荐",
   "activity_contact_deleted": "联系人 {contact} 已删除。",
@@ -348,6 +349,7 @@
   "meeting_deleted_successfully": "会议成功删除了",
   "meeting_with": "{who} 与 {name} 的会议",
   "meetings": "会议",
+  "member": "成员",
   "members": "成员",
   "message": "消息",
   "message_will_be_sent_via_whatsapp": "消息将通过 WhatsApp 发送",
@@ -648,7 +650,5 @@
   "will_renew_at": "将在 {date} 续订",
   "workspace": "工作区",
   "write_a_reply": "写回复... 使用 @ 提及某人",
-  "you": "你",
-  "member": "成员",
-  "activity_contact_created": "创建了联系{联系人}。"
+  "you": "你"
 }
