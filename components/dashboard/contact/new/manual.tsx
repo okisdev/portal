@@ -25,8 +25,8 @@ import { z } from 'zod';
 
 const formSchema = z
   .object({
-    firstName: z.string().min(1, 'First name is required'),
-    lastName: z.string().min(1, 'Last name is required'),
+    firstName: z.string().optional(),
+    lastName: z.string().optional(),
     email: z.string().optional(),
     phone: z.string().optional(),
     company: z.string().optional(),
@@ -74,9 +74,10 @@ export default function ManualContactForm() {
     },
   });
 
-  const formatName = (firstName: string, lastName?: string) => {
+  const formatName = (firstName?: string, lastName?: string) => {
+    if (!firstName && !lastName) return 'N/A';
     if (firstName && lastName) return `${firstName} ${lastName}`;
-    return firstName || '';
+    return firstName || lastName || 'N/A';
   };
 
   const handleSubmit = async (values: z.infer<typeof formSchema>) => {

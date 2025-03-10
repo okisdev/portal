@@ -26,7 +26,12 @@ export const parseDate = (dateString: string): Date | undefined => {
     try {
       const parsedDate = parse(dateString, formatString, new Date());
       if (isValid(parsedDate)) {
-        return startOfDay(parsedDate); // Set time to midnight (00:00)
+        // Convert to HKT by adjusting for the timezone offset
+        const hktOffset = 8; // HKT is UTC+8
+        const utcDate = startOfDay(parsedDate);
+        const userOffset = utcDate.getTimezoneOffset();
+        const hktAdjustment = (hktOffset * 60 + userOffset) * 60 * 1000;
+        return new Date(utcDate.getTime() + hktAdjustment);
       }
     } catch (error) {
       // Continue to next format if parsing fails
@@ -34,16 +39,25 @@ export const parseDate = (dateString: string): Date | undefined => {
   }
 
   // If all parsing attempts fail, try native Date parsing as a fallback
-  const fallbackDate = new Date(dateString);
-  if (isValid(fallbackDate)) {
-    return startOfDay(fallbackDate);
+  try {
+    const fallbackDate = new Date(dateString);
+    if (isValid(fallbackDate)) {
+      // Apply the same HKT adjustment
+      const hktOffset = 8;
+      const utcDate = startOfDay(fallbackDate);
+      const userOffset = utcDate.getTimezoneOffset();
+      const hktAdjustment = (hktOffset * 60 + userOffset) * 60 * 1000;
+      return new Date(utcDate.getTime() + hktAdjustment);
+    }
+  } catch (error) {
+    // Ignore fallback errors
   }
 
   return undefined;
 };
 
 export const parseFullName = (fullName: string): { firstName: string; lastName: string } => {
-  if (!fullName) return { firstName: '', lastName: '' };
+  if (!fullName) return { firstName: 'N/A', lastName: '' };
 
   // Trim and remove extra spaces
   const cleanName = fullName.trim().replace(/\s+/g, ' ');
@@ -53,7 +67,7 @@ export const parseFullName = (fullName: string): { firstName: string; lastName: 
     // For Chinese names, first character is lastName, rest is firstName
     return {
       lastName: cleanName.charAt(0),
-      firstName: cleanName.slice(1),
+      firstName: cleanName.slice(1) || 'N/A',
     };
   }
 
@@ -62,14 +76,14 @@ export const parseFullName = (fullName: string): { firstName: string; lastName: 
   if (parts.length >= 2) {
     // If there are multiple parts, treat last part as lastName
     return {
-      firstName: parts.slice(0, -1).join(' '),
+      firstName: parts.slice(0, -1).join(' ') || 'N/A',
       lastName: parts[parts.length - 1],
     };
   }
 
   // If single word or unsure, use it as firstName
   return {
-    firstName: cleanName,
+    firstName: cleanName || 'N/A',
     lastName: '',
   };
 };

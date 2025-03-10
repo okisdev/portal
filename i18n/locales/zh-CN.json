@@ -649,5 +649,6 @@
   "workspace": "工作区",
   "write_a_reply": "写回复... 使用 @ 提及某人",
   "you": "你",
-  "member": "成员"
+  "member": "成员",
+  "activity_contact_created": "创建了联系{联系人}。"
 }

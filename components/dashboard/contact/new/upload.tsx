@@ -84,7 +84,7 @@ export default function ContactUpload() {
   };
 
   const isRowValid = (row: ContactFormData) => {
-    return (row.email || row.phone) && (row.firstName || row.lastName);
+    return row.email || row.phone;
   };
 
   // Function to format date for display
@@ -124,7 +124,7 @@ export default function ContactUpload() {
 
                 if (row.firstName || row.lastName) {
                   return {
-                    firstName: row.firstName || '',
+                    firstName: row.firstName || 'N/A',
                     lastName: row.lastName || '',
                     email: row.email || '',
                     phone: row.phone ? formatPhoneNumber(row.phone) : '',
@@ -140,8 +140,8 @@ export default function ContactUpload() {
 
                 const { firstName, lastName } = parseFullName(row.name || '');
                 return {
-                  firstName,
-                  lastName,
+                  firstName: firstName || 'N/A',
+                  lastName: lastName || '',
                   email: row.email || '',
                   phone: row.phone ? formatPhoneNumber(row.phone) : '',
                   company: row.company || '',
