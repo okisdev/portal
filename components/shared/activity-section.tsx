@@ -88,9 +88,14 @@ export function ActivitySection({ activities, onCreateActivity, isLoading }: Act
             referral: `${JSON.parse(activity.metadata as string).referral?.name} (${JSON.parse(activity.metadata as string).referral?.email})`,
           });
         }
-        return t('activity_contact_created_from_naturally', {
+        if (JSON.parse(activity.metadata as string).source) {
+          return t('activity_contact_created_from_naturally', {
+            contact: `${JSON.parse(activity.metadata as string).contact?.name}`,
+            source: `${JSON.parse(activity.metadata as string).source}`,
+          });
+        }
+        return t('activity_contact_created', {
           contact: `${JSON.parse(activity.metadata as string).contact?.name}`,
-          source: `${JSON.parse(activity.metadata as string).source}`,
         });
       case 'CAMPAIGN_ASSIGNED':
         return t('activity_contact_assigned_to_campaign', {

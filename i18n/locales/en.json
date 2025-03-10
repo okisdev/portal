@@ -649,5 +649,6 @@
   "workspace": "Workspace",
   "write_a_reply": "Write a reply... Use @ to mention someone",
   "you": "You",
-  "member": "Member"
+  "member": "Member",
+  "activity_contact_created": "Contact {contact} was created."
 }

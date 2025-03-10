@@ -344,6 +344,27 @@ export const calendarRouter = createTRPCRouter({
       .where(eq(contact.id, contactId))
       .then((rows) => rows[0]);
 
+    // Get or create default calendar folder
+    let folder = await ctx.db
+      .select()
+      .from(calendarFolder)
+      .where(eq(calendarFolder.userId, ctx.session.user.id))
+      .limit(1)
+      .then((rows) => rows[0]);
+
+    if (!folder) {
+      [folder] = await ctx.db
+        .insert(calendarFolder)
+        .values({
+          userId: ctx.session.user.id,
+          name: 'My Calendar',
+          color: '#4f46e5',
+          isDefault: true,
+          visibility: 'PRIVATE',
+        })
+        .returning();
+    }
+
     // Create the calendar event
     const [event] = await ctx.db
       .insert(calendarEvent)
@@ -355,15 +376,7 @@ export const calendarRouter = createTRPCRouter({
         endAt,
         isAllDay: false,
         isPublic: false,
-        folderId:
-          (
-            await ctx.db
-              .select()
-              .from(calendarFolder)
-              .where(eq(calendarFolder.userId, ctx.session.user.id))
-              .limit(1)
-              .then((rows) => rows[0])
-          )?.id ?? '',
+        folderId: folder.id,
       })
       .returning();
 
