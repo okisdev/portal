@@ -6,7 +6,6 @@ import { ColorBadge } from '@/components/shared/color-badge';
 import { Combobox } from '@/components/shared/combobox';
 import { PageHeader } from '@/components/shared/page-header';
 import { PaginationTable } from '@/components/shared/pagination-table';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -368,83 +367,62 @@ export default function CRMContactsPage() {
       ),
       cell: ({ row }) => <Checkbox checked={row.getIsSelected()} onCheckedChange={(value) => row.toggleSelected(!!value)} aria-label='Select row' />,
       enableSorting: false,
-      enableHiding: false,
     },
     {
       accessorKey: 'name',
       header: t('name'),
-      cell: ({ row }) => (
-        <div className='flex items-center gap-2'>
-          <Avatar className='size-8'>
-            <AvatarFallback>{row.original.firstName?.[0] ?? row.original.name?.[0] ?? row.original.email?.[0] ?? ''}</AvatarFallback>
-          </Avatar>
-          <div>
-            <div className='font-medium'>{row.original.name}</div>
-            <div className='text-neutral-500 text-xs'>{row.original.email}</div>
-          </div>
-        </div>
-      ),
+      enableSorting: true,
+    },
+    {
+      accessorKey: 'email',
+      header: t('email'),
+      enableSorting: true,
     },
     {
       accessorKey: 'phone',
       header: t('phone'),
       cell: ({ row }) => <WhatsAppButton contact={row.original} onClick={handleWhatsAppClick} />,
+      enableSorting: true,
     },
     {
       accessorKey: 'company',
       header: t('company'),
-      cell: ({ row }) => <span className='capitalize'>{row.original.company || '—'}</span>,
+      enableSorting: true,
     },
     {
       accessorKey: 'status',
       header: t('status'),
       cell: ({ row }) => <ColorBadge type='contactStatus' value={row.original.status} />,
-    },
-    {
-      accessorKey: 'priority',
-      header: t('priority'),
-      cell: ({ row }) => <ColorBadge type='priority' value={row.original.priority ?? 'medium'} />,
+      enableSorting: true,
     },
     {
       accessorKey: 'source',
       header: t('source'),
-      cell: ({ row }) => <span className='capitalize'>{row.original.source?.replace('_', ' ') || '—'}</span>,
-    },
-    {
-      accessorKey: 'remark',
-      header: t('remark'),
-      cell: ({ row }) => <span className='capitalize'>{row.original.remark || '—'}</span>,
-    },
-    {
-      accessorKey: 'lastContactedAt',
-      header: t('last_contacted'),
-      cell: ({ row }) => <span className='capitalize'>{row.original.lastContactedAt ? formatDate(new Date(row.original.lastContactedAt)) : '—'}</span>,
-    },
-    {
-      accessorKey: 'nextFollowUpAt',
-      header: t('next_follow_up'),
-      cell: ({ row }) => <span className='capitalize'>{row.original.nextFollowUpAt ? formatDate(new Date(row.original.nextFollowUpAt)) : '—'}</span>,
+      cell: ({ row }) => <ColorBadge type='source' value={row.original.source || 'Other'} />,
+      enableSorting: true,
     },
     {
       accessorKey: 'createdAt',
-      header: t('created'),
-      cell: ({ row }) => formatDate(new Date(row.original.createdAt)),
+      header: t('created_at'),
+      cell: ({ row }) => formatDate(row.original.createdAt),
+      enableSorting: true,
     },
     {
       id: 'actions',
       cell: ({ row }) => (
         <DropdownMenu>
-          <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+          <DropdownMenuTrigger asChild>
             <Button variant='ghost' className='h-8 w-8 p-0'>
+              <span className='sr-only'>{t('open_menu')}</span>
               <MoreHorizontal className='h-4 w-4' />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align='end'>
-            <DropdownMenuItem className='cursor-pointer' onClick={(e) => handleView(row.original.id, e)}>
+            <DropdownMenuItem onClick={(e) => handleView(row.original.id, e)}>
               <Eye className='mr-2 h-4 w-4' />
               {t('view')}
             </DropdownMenuItem>
-            <DropdownMenuItem className='cursor-pointer text-destructive' onClick={(e) => handleDeleteClick(row.original.id, e)}>
+            <DropdownMenuItem onClick={(e) => handleDeleteClick(row.original.id, e)} className='text-destructive'>
               <Trash2 className='mr-2 h-4 w-4' />
               {t('delete')}
             </DropdownMenuItem>
@@ -455,27 +433,23 @@ export default function CRMContactsPage() {
   ];
 
   const table = useReactTable({
-    data: filteredContacts,
+    data: contacts ?? [],
     columns: tableColumns,
-    onSortingChange: setSorting,
-    onColumnFiltersChange: setColumnFilters,
-    getCoreRowModel: getCoreRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-    onColumnVisibilityChange: setColumnVisibility,
-    onRowSelectionChange: setRowSelection,
-    initialState: {
-      pagination: {
-        pageSize: 13,
-      },
-    },
     state: {
       sorting,
       columnFilters,
       columnVisibility,
       rowSelection,
     },
+    enableRowSelection: true,
+    onSortingChange: setSorting,
+    onColumnFiltersChange: setColumnFilters,
+    onColumnVisibilityChange: setColumnVisibility,
+    onRowSelectionChange: setRowSelection,
+    getCoreRowModel: getCoreRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
   });
 
   return (

@@ -14,7 +14,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import type { User, UserRole } from '@/lib/schema';
 import { api } from '@/utils/trpc/client';
-import { type ColumnDef, getCoreRowModel, getPaginationRowModel, useReactTable } from '@tanstack/react-table';
+import { type ColumnDef, getCoreRowModel, getPaginationRowModel, getSortedRowModel, useReactTable } from '@tanstack/react-table';
 import { MoreHorizontal, Pencil, Trash } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
@@ -90,18 +90,22 @@ export function SiteMembers() {
     {
       accessorKey: 'name',
       header: t('name'),
+      enableSorting: true,
     },
     {
       accessorKey: 'username',
       header: t('username'),
+      enableSorting: true,
     },
     {
       accessorKey: 'email',
       header: t('email'),
+      enableSorting: true,
     },
     {
       accessorKey: 'role',
       header: t('role'),
+      enableSorting: true,
     },
     {
       id: 'actions',
@@ -134,6 +138,7 @@ export function SiteMembers() {
     columns,
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
+    getSortedRowModel: getSortedRowModel(),
     initialState: {
       pagination: {
         pageSize: 10,

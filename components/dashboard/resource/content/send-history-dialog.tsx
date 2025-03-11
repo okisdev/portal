@@ -4,10 +4,10 @@ import { PaginationTable } from '@/components/shared/pagination-table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import type { ResourceContent } from '@/lib/schema';
 import { api } from '@/utils/trpc/client';
-import { type ColumnDef, getCoreRowModel, getPaginationRowModel, useReactTable } from '@tanstack/react-table';
+import { type ColumnDef, type SortingState, getCoreRowModel, getPaginationRowModel, getSortedRowModel, useReactTable } from '@tanstack/react-table';
 import { formatDistanceToNow } from 'date-fns';
 import { useTranslations } from 'next-intl';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 
 interface SendHistoryDialogProps {
   open: boolean;
@@ -33,6 +33,7 @@ type SendHistoryRecord = {
 
 export function SendHistoryDialog({ open, onOpenChange, content }: SendHistoryDialogProps) {
   const t = useTranslations();
+  const [sorting, setSorting] = useState<SortingState>([]);
 
   const { data: sendHistory, isLoading } = api.resource.getContentSendHistory.useQuery(
     { resourceId: content.id },
@@ -46,24 +47,29 @@ export function SendHistoryDialog({ open, onOpenChange, content }: SendHistoryDi
       {
         accessorFn: (row) => row.contact?.name || '',
         header: t('recipient'),
+        enableSorting: true,
       },
       {
         accessorFn: (row) => row.contact?.email || '',
         header: t('email'),
+        enableSorting: true,
       },
       {
         accessorKey: 'sentAt',
         header: t('sent_at'),
         cell: ({ row }) => formatDistanceToNow(new Date(row.original.sentAt), { addSuffix: true }),
+        enableSorting: true,
       },
       {
         accessorFn: (row) => row.sentBy?.name || '',
         header: t('sent_by'),
+        enableSorting: true,
       },
       {
         accessorKey: 'status',
         header: t('status'),
         cell: ({ row }) => <span>{t(row.original.status)}</span>,
+        enableSorting: true,
       },
     ],
     [t]
@@ -72,8 +78,13 @@ export function SendHistoryDialog({ open, onOpenChange, content }: SendHistoryDi
   const table = useReactTable({
     data: (sendHistory || []) as SendHistoryRecord[],
     columns,
+    state: {
+      sorting,
+    },
+    onSortingChange: setSorting,
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
+    getSortedRowModel: getSortedRowModel(),
   });
 
   return (
