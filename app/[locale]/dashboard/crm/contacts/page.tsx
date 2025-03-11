@@ -6,6 +6,7 @@ import { ColorBadge } from '@/components/shared/color-badge';
 import { Combobox } from '@/components/shared/combobox';
 import { PageHeader } from '@/components/shared/page-header';
 import { PaginationTable } from '@/components/shared/pagination-table';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -371,11 +372,17 @@ export default function CRMContactsPage() {
     {
       accessorKey: 'name',
       header: t('name'),
-      enableSorting: true,
-    },
-    {
-      accessorKey: 'email',
-      header: t('email'),
+      cell: ({ row }) => (
+        <div className='flex items-center gap-2'>
+          <Avatar className='size-8'>
+            <AvatarFallback>{row.original.firstName?.[0] ?? row.original.name?.[0] ?? row.original.email?.[0] ?? ''}</AvatarFallback>
+          </Avatar>
+          <div className='w-16'>
+            <div className='truncate font-medium'>{row.original.name}</div>
+            <div className='truncate text-neutral-500 text-xs'>{row.original.email}</div>
+          </div>
+        </div>
+      ),
       enableSorting: true,
     },
     {
@@ -387,6 +394,7 @@ export default function CRMContactsPage() {
     {
       accessorKey: 'company',
       header: t('company'),
+      cell: ({ row }) => <span className='capitalize'>{row.original.company || '—'}</span>,
       enableSorting: true,
     },
     {
@@ -433,7 +441,7 @@ export default function CRMContactsPage() {
   ];
 
   const table = useReactTable({
-    data: contacts ?? [],
+    data: filteredContacts,
     columns: tableColumns,
     state: {
       sorting,

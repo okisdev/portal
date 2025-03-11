@@ -129,7 +129,7 @@ export default function CRMTeamsPage() {
       accessorKey: 'company',
       header: t('company'),
       cell: ({ row }) => {
-        const company = row.original.company;
+        const { company } = row.original;
         return company ? company.name : '-';
       },
     },

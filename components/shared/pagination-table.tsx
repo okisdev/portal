@@ -4,7 +4,7 @@ import { TableLoading } from '@/components/shared/table-loading';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { type ColumnDef, type Table as TableType, flexRender } from '@tanstack/react-table';
-import { ChevronDown, ChevronUp } from 'lucide-react';
+import { ChevronDown, ChevronUp, ChevronsUpDown } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 
 interface PaginationTableProps<TData> {
@@ -53,10 +53,16 @@ export function PaginationTable<TData>({ table, columns, loading, onRowClick, ro
                             role={header.column.getCanSort() ? 'button' : undefined}
                           >
                             {flexRender(header.column.columnDef.header, header.getContext())}
-                            {{
-                              asc: <ChevronUp className='ml-2 h-4 w-4 inline' />,
-                              desc: <ChevronDown className='ml-2 h-4 w-4 inline' />,
-                            }[header.column.getIsSorted() as string] ?? null}
+                            {header.column.getCanSort() ? (
+                              header.column.getIsSorted() ? (
+                                {
+                                  asc: <ChevronUp className='ml-2 inline h-4 w-4' />,
+                                  desc: <ChevronDown className='ml-2 inline h-4 w-4' />,
+                                }[header.column.getIsSorted() as string]
+                              ) : (
+                                <ChevronsUpDown className='ml-2 inline h-4 w-4' />
+                              )
+                            ) : null}
                           </div>
                         )}
                       </TableHead>
