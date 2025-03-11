@@ -4,6 +4,7 @@ import { TableLoading } from '@/components/shared/table-loading';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { type ColumnDef, type Table as TableType, flexRender } from '@tanstack/react-table';
+import { ChevronDown, ChevronUp } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 
 interface PaginationTableProps<TData> {
@@ -37,7 +38,28 @@ export function PaginationTable<TData>({ table, columns, loading, onRowClick, ro
                 {table.getHeaderGroups().map((headerGroup) => (
                   <TableRow key={headerGroup.id}>
                     {headerGroup.headers.map((header) => (
-                      <TableHead key={header.id}>{header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}</TableHead>
+                      <TableHead key={header.id}>
+                        {header.isPlaceholder ? null : (
+                          <div
+                            className={header.column.getCanSort() ? 'cursor-pointer select-none' : ''}
+                            onClick={header.column.getToggleSortingHandler()}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter' || e.key === ' ') {
+                                e.preventDefault();
+                                header.column.toggleSorting();
+                              }
+                            }}
+                            tabIndex={header.column.getCanSort() ? 0 : undefined}
+                            role={header.column.getCanSort() ? 'button' : undefined}
+                          >
+                            {flexRender(header.column.columnDef.header, header.getContext())}
+                            {{
+                              asc: <ChevronUp className='ml-2 h-4 w-4 inline' />,
+                              desc: <ChevronDown className='ml-2 h-4 w-4 inline' />,
+                            }[header.column.getIsSorted() as string] ?? null}
+                          </div>
+                        )}
+                      </TableHead>
                     ))}
                   </TableRow>
                 ))}

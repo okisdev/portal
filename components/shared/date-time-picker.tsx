@@ -3,7 +3,6 @@
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 import { CalendarIcon } from '@radix-ui/react-icons';
 import { format } from 'date-fns';
@@ -72,7 +71,7 @@ export function DateTimePicker({
           <Calendar mode='single' selected={value === null ? undefined : value} onSelect={handleDateSelect} initialFocus />
           {showTimePicker && value && (
             <div className='flex flex-col divide-y sm:h-[300px] sm:flex-row sm:divide-x sm:divide-y-0'>
-              <ScrollArea className='w-64 sm:w-auto'>
+              <div className='overflow-y-auto'>
                 <div className='flex p-2 sm:flex-col'>
                   {Array.from({ length: 24 }, (_, i) => i)
                     .reverse()
@@ -89,9 +88,8 @@ export function DateTimePicker({
                       </Button>
                     ))}
                 </div>
-                <ScrollBar orientation='horizontal' className='sm:hidden' />
-              </ScrollArea>
-              <ScrollArea className='w-64 sm:w-auto'>
+              </div>
+              <div className='overflow-y-auto'>
                 <div className='flex p-2 sm:flex-col'>
                   {Array.from({ length: 12 }, (_, i) => i * 5).map((minute) => (
                     <Button
@@ -106,8 +104,7 @@ export function DateTimePicker({
                     </Button>
                   ))}
                 </div>
-                <ScrollBar orientation='horizontal' className='sm:hidden' />
-              </ScrollArea>
+              </div>
             </div>
           )}
         </div>
