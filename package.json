@@ -90,7 +90,7 @@
     "react-day-picker": "8.10.1",
     "react-dom": "^19.0.0",
     "react-hook-form": "^7.54.2",
-    "react-scan": "^0.2.8",
+    "react-scan": "^0.3.0",
     "recharts": "^2.15.1",
     "resend": "^4.1.2",
     "server-only": "^0.0.1",
