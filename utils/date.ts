@@ -8,7 +8,7 @@ export const dateLocaleMap: Record<Locale, DateFnsLocale> = {
   'zh-CN': zhCN,
 } as const;
 
-export function formatDate(date: Date, locale: Locale = (typeof window !== 'undefined' ? window.navigator.language : 'en') as Locale) {
+export function formatDate(date: Date, locale: Locale = (typeof window !== 'undefined' ? window.navigator.language : 'en') as Locale, noTime = false) {
   const dateLocale = dateLocaleMap[locale] || enUS;
 
   // Convert to HKT for display
@@ -17,7 +17,11 @@ export function formatDate(date: Date, locale: Locale = (typeof window !== 'unde
   const hktAdjustment = (hktOffset * 60 + userOffset) * 60 * 1000;
   const hktDate = new Date(date.getTime() + hktAdjustment);
 
-  return format(hktDate, 'PP HH:mm', {
+  return format(hktDate, noTime ? 'PP' : 'PP HH:mm', {
     locale: dateLocale,
   });
+}
+
+export function formatDateWithoutTime(date: Date, locale: Locale = (typeof window !== 'undefined' ? window.navigator.language : 'en') as Locale) {
+  return formatDate(date, locale, true);
 }

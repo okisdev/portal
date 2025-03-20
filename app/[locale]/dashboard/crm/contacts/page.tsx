@@ -11,10 +11,10 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useDebounce } from '@/hooks/use-debounce';
-import { type Contact, sourceSchema, statusSchema } from '@/lib/schema';
-import { formatDate } from '@/utils/date';
-import { parsePhone } from '@/utils/phone';
+import { type Contact, type Priority, type Status, sourceSchema, statusSchema } from '@/lib/schema';
+import { formatDateWithoutTime } from '@/utils/date';
 import { api } from '@/utils/trpc/client';
 import {
   type ColumnDef,
@@ -27,11 +27,12 @@ import {
   getSortedRowModel,
   useReactTable,
 } from '@tanstack/react-table';
-import { Check, Eye, Filter, Import, MessageSquare, MoreHorizontal, Trash2, Upload, X } from 'lucide-react';
+import { Check, Eye, Filter, Import, MoreHorizontal, Trash2, Upload, X } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { usePathname } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
+import { toast } from 'sonner';
 
 type SortConfig = {
   column: string;
@@ -51,20 +52,6 @@ type FilterConfig = {
   matchAll: boolean;
 };
 
-function WhatsAppButton({ contact, onClick }: { contact: Contact; onClick: (contact: Contact, e: React.MouseEvent) => void }) {
-  return (
-    <Button
-      variant='ghost'
-      className='flex h-auto items-center gap-2 px-2 py-1 font-normal hover:bg-neutral-200 dark:hover:bg-neutral-700'
-      disabled={!contact.phone}
-      onClick={(e) => onClick(contact, e)}
-    >
-      <MessageSquare className='h-4 w-4 text-muted-foreground' />
-      {parsePhone(contact.phone || '') || '—'}
-    </Button>
-  );
-}
-
 export default function CRMContactsPage() {
   const router = useRouter();
   const pathname = usePathname();
@@ -78,6 +65,13 @@ export default function CRMContactsPage() {
   const deleteContact = api.contact.deleteContact.useMutation({
     onSuccess: () => {
       utils.contact.getAllContacts.invalidate();
+    },
+  });
+
+  const updateContact = api.contact.updateContact.useMutation({
+    onSuccess: () => {
+      utils.contact.getAllContacts.invalidate();
+      toast.success(t('contact_updated_successfully'));
     },
   });
 
@@ -356,6 +350,20 @@ export default function CRMContactsPage() {
     setWhatsappDialogOpen(true);
   };
 
+  const handleStatusChange = (id: string, value: Status) => {
+    updateContact.mutate({
+      id,
+      status: value,
+    });
+  };
+
+  const handlePriorityChange = (id: string, value: Priority) => {
+    updateContact.mutate({
+      id,
+      priority: value,
+    });
+  };
+
   const tableColumns: ColumnDef<Contact>[] = [
     {
       id: 'select',
@@ -388,7 +396,7 @@ export default function CRMContactsPage() {
     {
       accessorKey: 'phone',
       header: t('phone'),
-      cell: ({ row }) => <WhatsAppButton contact={row.original} onClick={handleWhatsAppClick} />,
+      cell: ({ row }) => <span>{row.original.phone || '—'}</span>,
       enableSorting: true,
     },
     {
@@ -400,19 +408,59 @@ export default function CRMContactsPage() {
     {
       accessorKey: 'status',
       header: t('status'),
-      cell: ({ row }) => <ColorBadge type='contactStatus' value={row.original.status} />,
+      cell: ({ row }) => (
+        <Select value={row.original.status} onValueChange={(value) => handleStatusChange(row.original.id, value as Status)} disabled={updateContact.isPending}>
+          <SelectTrigger className='h-8 w-[130px]'>
+            <SelectValue>
+              <ColorBadge type='contactStatus' value={row.original.status} />
+            </SelectValue>
+          </SelectTrigger>
+          <SelectContent>
+            {statusSchema.options.map((status) => (
+              <SelectItem key={status} value={status}>
+                <ColorBadge type='contactStatus' value={status} />
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      ),
       enableSorting: true,
     },
     {
-      accessorKey: 'source',
-      header: t('source'),
-      cell: ({ row }) => <ColorBadge type='source' value={row.original.source || 'Other'} />,
+      accessorKey: 'priority',
+      header: t('priority'),
+      cell: ({ row }) => (
+        <Select value={row.original.priority || 'medium'} onValueChange={(value) => handlePriorityChange(row.original.id, value as Priority)} disabled={updateContact.isPending}>
+          <SelectTrigger className='h-8 w-[130px]'>
+            <SelectValue>
+              <ColorBadge type='priority' value={row.original.priority || 'medium'} />
+            </SelectValue>
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value='high'>{t('high')}</SelectItem>
+            <SelectItem value='medium'>{t('medium')}</SelectItem>
+            <SelectItem value='low'>{t('low')}</SelectItem>
+          </SelectContent>
+        </Select>
+      ),
       enableSorting: true,
     },
     {
       accessorKey: 'createdAt',
       header: t('created_at'),
-      cell: ({ row }) => formatDate(row.original.createdAt),
+      cell: ({ row }) => formatDateWithoutTime(row.original.createdAt),
+      enableSorting: true,
+    },
+    {
+      accessorKey: 'next_follow_up',
+      header: t('next_follow_up'),
+      cell: ({ row }) => (row.original.nextFollowUpAt ? formatDateWithoutTime(row.original.nextFollowUpAt) : '—'),
+      enableSorting: true,
+    },
+    {
+      accessorKey: 'last_activity',
+      header: t('last_activity'),
+      cell: ({ row }) => '—',
       enableSorting: true,
     },
     {

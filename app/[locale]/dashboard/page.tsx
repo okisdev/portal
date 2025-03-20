@@ -16,7 +16,7 @@ export default function Dashboard() {
 
   return (
     <div className='space-y-4 p-4'>
-      <PageHeader title={t('welcome_back', { name: session?.user?.name })} description={t('welcome_description')} />
+      <PageHeader title={t('welcome_back', { name: session?.user?.name || '' })} description={t('welcome_description')} />
     </div>
   );
 }

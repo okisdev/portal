@@ -115,7 +115,7 @@ export function EventPopover({ event, folder, onEventEdit, onEventDelete, onEven
                             </span>
                           )}
                         </span>
-                        <span className='text-muted-foreground text-xs capitalize'>{t(participant.status)}</span>
+                        <span className='text-muted-foreground text-xs capitalize'>{t(participant.status || '')}</span>
                       </div>
                     ))}
                   </div>

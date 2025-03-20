@@ -29,8 +29,16 @@ export function ColorBadge({ type, value, className, isActive }: ColorBadgeProps
         return 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200 hover:text-yellow-900 ring-yellow-800';
       case 'appointment':
         return 'bg-blue-100 text-blue-800 hover:bg-blue-200 hover:text-blue-900 ring-blue-800';
-      case 'pitch':
+      case 'follow_up':
         return 'bg-green-100 text-green-800 hover:bg-green-200 hover:text-green-900 ring-green-800';
+      case 'called':
+        return 'bg-blue-100 text-blue-800 hover:bg-blue-200 hover:text-blue-900 ring-blue-800';
+      case 'called_no_answer':
+        return 'bg-red-100 text-red-800 hover:bg-red-200 hover:text-red-900 ring-red-800';
+      case 'after_pitching':
+        return 'bg-purple-100 text-purple-800 hover:bg-purple-200 hover:text-purple-900 ring-purple-800';
+      case 'key_person':
+        return 'bg-purple-100 text-purple-800 hover:bg-purple-200 hover:text-purple-900 ring-purple-800';
       case 'trial':
         return 'bg-red-100 text-red-800 hover:bg-red-200 hover:text-red-900 ring-red-800';
       case 'final':
@@ -115,7 +123,14 @@ export function ColorBadge({ type, value, className, isActive }: ColorBadgeProps
   };
 
   const colorClass = getColorClass();
-  const displayValue = value.charAt(0).toUpperCase() + value.slice(1);
+  const displayValue = () => {
+    switch (type) {
+      case 'contactStatus':
+        return value.replaceAll('_', ' ').replace(/\b\w/g, (char) => char.toUpperCase());
+      default:
+        return value.charAt(0).toUpperCase() + value.slice(1);
+    }
+  };
 
-  return <span className={cn('inline-block rounded-full px-1.5 py-0.5 font-medium text-xs', colorClass, className, isActive && 'ring-2 ring-offset-2 ring-offset-background')}>{displayValue}</span>;
+  return <span className={cn('inline-block rounded-full px-1.5 py-0.5 font-medium text-xs', colorClass, className, isActive && 'ring-2 ring-offset-2 ring-offset-background')}>{displayValue()}</span>;
 }
