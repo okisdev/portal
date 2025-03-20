@@ -93,7 +93,7 @@ export const activitySubTypeSchema = z.enum([
 export type ActivityType = z.infer<typeof activityTypeSchema>;
 export type ActivitySubType = z.infer<typeof activitySubTypeSchema>;
 
-export const statusSchema = z.enum(['lead', 'appointment', 'follow_up', 'called_no_answer', 'after_pitching', 'key_person', 'trial', 'final', 'closed', 'junk']);
+export const statusSchema = z.enum(['lead', 'appointment', 'follow_up', 'called', 'called_no_answer', 'after_pitching', 'key_person', 'trial', 'final', 'closed', 'junk']);
 
 export type Status = z.infer<typeof statusSchema>;
 

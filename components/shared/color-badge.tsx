@@ -31,6 +31,8 @@ export function ColorBadge({ type, value, className, isActive }: ColorBadgeProps
         return 'bg-blue-100 text-blue-800 hover:bg-blue-200 hover:text-blue-900 ring-blue-800';
       case 'follow_up':
         return 'bg-green-100 text-green-800 hover:bg-green-200 hover:text-green-900 ring-green-800';
+      case 'called':
+        return 'bg-blue-100 text-blue-800 hover:bg-blue-200 hover:text-blue-900 ring-blue-800';
       case 'called_no_answer':
         return 'bg-red-100 text-red-800 hover:bg-red-200 hover:text-red-900 ring-red-800';
       case 'after_pitching':

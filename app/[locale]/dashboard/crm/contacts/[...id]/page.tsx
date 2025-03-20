@@ -586,7 +586,7 @@ export default function ContactIdPage() {
                   onCreateAppointment={handleBookAppointment}
                   onUpdateAppointment={(data) => updateAppointment.mutate(data)}
                   onDeleteAppointment={(id) => deleteAppointment.mutate({ id })}
-                  defaultTitle={t('meeting_with', { who: me?.name, name: contact?.name })}
+                  defaultTitle={t('meeting_with', { who: me?.name || '', name: contact?.name || '' })}
                 />
               </div>
 
@@ -832,7 +832,7 @@ export default function ContactIdPage() {
         onOpenChange={setIsBookingModalOpen}
         onSubmit={handleBookAppointment}
         defaultValues={{
-          title: t('meeting_with', { who: me?.name, name: contact?.name }),
+          title: t('meeting_with', { who: me?.name || '', name: contact?.name || '' }),
           startAt: new Date(),
           endAt: new Date(Date.now() + 30 * 60000),
           folderId: 'default',

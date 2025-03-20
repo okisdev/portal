@@ -219,7 +219,7 @@ export const contact = pgTable('portal_contact', {
   country: text(),
   postalCode: text(),
   remark: text(),
-  status: text('status', { enum: ['lead', 'appointment', 'follow_up', 'called_no_answer', 'after_pitching', 'key_person', 'trial', 'final', 'closed', 'junk'] })
+  status: text('status', { enum: ['lead', 'appointment', 'follow_up', 'called', 'called_no_answer', 'after_pitching', 'key_person', 'trial', 'final', 'closed', 'junk'] })
     .notNull()
     .default('lead'),
   source: text(),
