@@ -14,7 +14,6 @@ import { Input } from '@/components/ui/input';
 import { useDebounce } from '@/hooks/use-debounce';
 import { type Contact, sourceSchema, statusSchema } from '@/lib/schema';
 import { formatDateWithoutTime } from '@/utils/date';
-import { parsePhone } from '@/utils/phone';
 import { api } from '@/utils/trpc/client';
 import {
   type ColumnDef,
@@ -27,7 +26,7 @@ import {
   getSortedRowModel,
   useReactTable,
 } from '@tanstack/react-table';
-import { Check, Eye, Filter, Import, MessageSquare, MoreHorizontal, Trash2, Upload, X } from 'lucide-react';
+import { Check, Eye, Filter, Import, MoreHorizontal, Trash2, Upload, X } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { usePathname } from 'next/navigation';
@@ -50,20 +49,6 @@ type FilterConfig = {
   conditions: FilterCondition[];
   matchAll: boolean;
 };
-
-function WhatsAppButton({ contact, onClick }: { contact: Contact; onClick: (contact: Contact, e: React.MouseEvent) => void }) {
-  return (
-    <Button
-      variant='ghost'
-      className='flex h-auto items-center gap-2 px-2 py-1 font-normal hover:bg-neutral-200 dark:hover:bg-neutral-700'
-      disabled={!contact.phone}
-      onClick={(e) => onClick(contact, e)}
-    >
-      <MessageSquare className='h-4 w-4 text-muted-foreground' />
-      {parsePhone(contact.phone || '') || '—'}
-    </Button>
-  );
-}
 
 export default function CRMContactsPage() {
   const router = useRouter();
@@ -388,7 +373,7 @@ export default function CRMContactsPage() {
     {
       accessorKey: 'phone',
       header: t('phone'),
-      cell: ({ row }) => <WhatsAppButton contact={row.original} onClick={handleWhatsAppClick} />,
+      cell: ({ row }) => <span>{row.original.phone || '—'}</span>,
       enableSorting: true,
     },
     {
