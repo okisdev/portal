@@ -13,8 +13,9 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useDebounce } from '@/hooks/use-debounce';
-import { type Contact, type Priority, type Status, sourceSchema, statusSchema } from '@/lib/schema';
+import { type Contact, type Priority, type Status, prioritySchema, sourceSchema, statusSchema } from '@/lib/schema';
 import { formatDateWithoutTime } from '@/utils/date';
+import { parsePhoneWithoutCountryCode } from '@/utils/phone';
 import { api } from '@/utils/trpc/client';
 import {
   type ColumnDef,
@@ -396,7 +397,7 @@ export default function CRMContactsPage() {
     {
       accessorKey: 'phone',
       header: t('phone'),
-      cell: ({ row }) => <span>{row.original.phone || '—'}</span>,
+      cell: ({ row }) => <span>{row.original.phone ? parsePhoneWithoutCountryCode(row.original.phone) : '—'}</span>,
       enableSorting: true,
     },
     {
@@ -437,9 +438,11 @@ export default function CRMContactsPage() {
             </SelectValue>
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value='high'>{t('high')}</SelectItem>
-            <SelectItem value='medium'>{t('medium')}</SelectItem>
-            <SelectItem value='low'>{t('low')}</SelectItem>
+            {prioritySchema.options.map((priority) => (
+              <SelectItem key={priority} value={priority}>
+                <ColorBadge type='priority' value={priority} />
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
       ),
@@ -457,12 +460,12 @@ export default function CRMContactsPage() {
       cell: ({ row }) => (row.original.nextFollowUpAt ? formatDateWithoutTime(row.original.nextFollowUpAt) : '—'),
       enableSorting: true,
     },
-    {
-      accessorKey: 'last_activity',
-      header: t('last_activity'),
-      cell: ({ row }) => '—',
-      enableSorting: true,
-    },
+    // {
+    //   accessorKey: 'last_activity',
+    //   header: t('last_activity'),
+    //   cell: ({ row }) => '—',
+    //   enableSorting: true,
+    // },
     {
       id: 'actions',
       cell: ({ row }) => (
@@ -672,8 +675,8 @@ export default function CRMContactsPage() {
         open={deleteDialogOpen}
         onOpenChange={setDeleteDialogOpen}
         onConfirm={handleDeleteConfirm}
-        title='Delete Contact'
-        description='This action cannot be undone. This will permanently delete the contact and remove their data from our servers.'
+        title={t('delete_contact')}
+        description={t('delete_contact_description')}
         confirmText={t('delete')}
         cancelText={t('cancel')}
       />
