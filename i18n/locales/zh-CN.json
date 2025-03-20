@@ -655,5 +655,6 @@
   "delete_company_description": "您确定要删除这家公司吗？\n该动作不能撤消。",
   "delete_selected": "删除选择",
   "delete_selected_companies": "删除选定的公司",
-  "delete_selected_companies_description": "您确定要删除{Count}公司吗？\n该动作不能撤消。"
+  "delete_selected_companies_description": "您确定要删除{Count}公司吗？\n该动作不能撤消。",
+  "last_activity": "最后一个活动"
 }

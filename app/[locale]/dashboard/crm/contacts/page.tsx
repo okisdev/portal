@@ -404,9 +404,9 @@ export default function CRMContactsPage() {
       enableSorting: true,
     },
     {
-      accessorKey: 'source',
-      header: t('source'),
-      cell: ({ row }) => <ColorBadge type='source' value={row.original.source || 'Other'} />,
+      accessorKey: 'priority',
+      header: t('priority'),
+      cell: ({ row }) => <ColorBadge type='priority' value={row.original.priority || '—'} />,
       enableSorting: true,
     },
     {
@@ -419,6 +419,12 @@ export default function CRMContactsPage() {
       accessorKey: 'next_follow_up',
       header: t('next_follow_up'),
       cell: ({ row }) => (row.original.nextFollowUpAt ? formatDateWithoutTime(row.original.nextFollowUpAt) : '—'),
+      enableSorting: true,
+    },
+    {
+      accessorKey: 'last_activity',
+      header: t('last_activity'),
+      cell: ({ row }) => '—',
       enableSorting: true,
     },
     {

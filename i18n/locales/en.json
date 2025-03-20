@@ -655,5 +655,6 @@
   "delete_selected_companies": "Delete Selected Companies",
   "delete_selected_companies_description": "Are you sure you want to delete {count} companies? This action cannot be undone.",
   "delete_company": "Delete Company",
-  "delete_company_description": "Are you sure you want to delete this company? This action cannot be undone."
+  "delete_company_description": "Are you sure you want to delete this company? This action cannot be undone.",
+  "last_activity": "Last Activity"
 }
