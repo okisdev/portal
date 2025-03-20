@@ -650,5 +650,10 @@
   "will_renew_at": "Will renew at {date}",
   "workspace": "Workspace",
   "write_a_reply": "Write a reply... Use @ to mention someone",
-  "you": "You"
+  "you": "You",
+  "delete_selected": "Delete Selected",
+  "delete_selected_companies": "Delete Selected Companies",
+  "delete_selected_companies_description": "Are you sure you want to delete {count} companies? This action cannot be undone.",
+  "delete_company": "Delete Company",
+  "delete_company_description": "Are you sure you want to delete this company? This action cannot be undone."
 }

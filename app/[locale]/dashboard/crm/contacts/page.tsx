@@ -13,7 +13,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Input } from '@/components/ui/input';
 import { useDebounce } from '@/hooks/use-debounce';
 import { type Contact, sourceSchema, statusSchema } from '@/lib/schema';
-import { formatDate } from '@/utils/date';
+import { formatDateWithoutTime } from '@/utils/date';
 import { parsePhone } from '@/utils/phone';
 import { api } from '@/utils/trpc/client';
 import {
@@ -412,7 +412,13 @@ export default function CRMContactsPage() {
     {
       accessorKey: 'createdAt',
       header: t('created_at'),
-      cell: ({ row }) => formatDate(row.original.createdAt),
+      cell: ({ row }) => formatDateWithoutTime(row.original.createdAt),
+      enableSorting: true,
+    },
+    {
+      accessorKey: 'next_follow_up',
+      header: t('next_follow_up'),
+      cell: ({ row }) => (row.original.nextFollowUpAt ? formatDateWithoutTime(row.original.nextFollowUpAt) : '—'),
       enableSorting: true,
     },
     {

@@ -650,5 +650,10 @@
   "will_renew_at": "将在 {date} 续订",
   "workspace": "工作区",
   "write_a_reply": "写回复... 使用 @ 提及某人",
-  "you": "你"
+  "you": "你",
+  "delete_company": "删除公司",
+  "delete_company_description": "您确定要删除这家公司吗？\n该动作不能撤消。",
+  "delete_selected": "删除选择",
+  "delete_selected_companies": "删除选定的公司",
+  "delete_selected_companies_description": "您确定要删除{Count}公司吗？\n该动作不能撤消。"
 }
