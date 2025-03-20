@@ -1,6 +1,7 @@
 'use client';
 import { SendEmail } from '@/components/dashboard/contact/send-email';
 import { SendWhatsAppMessage } from '@/components/dashboard/contact/send-whatsapp-message';
+import { ActionAlertDialog } from '@/components/shared/action-alert-dialog';
 import { ActivitySection } from '@/components/shared/activity-section';
 import { ColorBadge } from '@/components/shared/color-badge';
 import { Combobox } from '@/components/shared/combobox';
@@ -35,7 +36,7 @@ import { type Priority, type Status, statusSchema } from '@/lib/schema';
 import { formatDate } from '@/utils/date';
 import { parsePhone } from '@/utils/phone';
 import { api } from '@/utils/trpc/client';
-import { Building2, Edit2, Mail, MessageSquare, MoreHorizontal, Phone, Save, Send, Users, X } from 'lucide-react';
+import { Building2, Edit2, Mail, MessageSquare, MoreHorizontal, Phone, Save, Send, Trash2, Users, X } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { notFound, useParams, useRouter, useSearchParams } from 'next/navigation';
@@ -94,6 +95,8 @@ export default function ContactIdPage() {
   const [isMessageModalOpen, setIsMessageModalOpen] = useState(false);
   const [lastContactDate, setLastContactDate] = useState<Date | null>(contact?.lastContactedAt ? new Date(contact.lastContactedAt) : null);
   const [nextFollowUpDate, setNextFollowUpDate] = useState<Date | null>(contact?.nextFollowUpAt ? new Date(contact.nextFollowUpAt) : null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [contactToDelete, setContactToDelete] = useState<string | null>(null);
 
   const assignToTeam = api.team.assignContactToTeam.useMutation({
     onSuccess: () => {
@@ -161,6 +164,16 @@ export default function ContactIdPage() {
       utils.calendar.getAppointmentsByContactId.invalidate({ contactId: contactId[0] });
       utils.contact.getContactActivities.invalidate({ id: contactId[0] });
       toast.success(t('appointment_updated_successfully'));
+    },
+    onError: (error) => {
+      toast.error(error.message);
+    },
+  });
+
+  const deleteContact = api.contact.deleteContact.useMutation({
+    onSuccess: () => {
+      router.push('/dashboard/crm/contacts');
+      toast.success(t('contact_deleted_successfully'));
     },
     onError: (error) => {
       toast.error(error.message);
@@ -307,6 +320,19 @@ export default function ContactIdPage() {
     router.replace(newUrl);
   };
 
+  const handleDeleteClick = () => {
+    setContactToDelete(contactId[0]);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = () => {
+    if (contactToDelete) {
+      deleteContact.mutate({ id: contactToDelete });
+      setDeleteDialogOpen(false);
+      setContactToDelete(null);
+    }
+  };
+
   return (
     <div className='container mx-auto min-h-[calc(100vh-4rem)] space-y-6 p-4 sm:p-6'>
       <div className='grid min-h-[calc(100vh-6rem)] grid-cols-1 gap-4 lg:grid-cols-3 lg:gap-6'>
@@ -408,6 +434,10 @@ export default function ContactIdPage() {
                         </DropdownMenuSubContent>
                       </DropdownMenuPortal>
                     </DropdownMenuSub>
+                    <DropdownMenuItem onClick={handleDeleteClick} className='cursor-pointer text-destructive'>
+                      <Trash2 className='mr-2 size-4' />
+                      {t('delete')}
+                    </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
               </div>
@@ -873,6 +903,15 @@ export default function ContactIdPage() {
 
       <SendEmail open={isEmailModalOpen} onOpenChange={setIsEmailModalOpen} recipient={contact as any} />
       <SendWhatsAppMessage open={isMessageModalOpen} onOpenChange={setIsMessageModalOpen} recipient={contact as any} />
+      <ActionAlertDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        onConfirm={handleDeleteConfirm}
+        title={t('delete_contact')}
+        description={t('delete_contact_description')}
+        confirmText={t('delete')}
+        cancelText={t('cancel')}
+      />
     </div>
   );
 }

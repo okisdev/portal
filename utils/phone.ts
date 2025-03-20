@@ -37,3 +37,25 @@ export const stringifyPhone = (phone: string): string => {
     return phone.replace(/[^0-9]/g, '');
   }
 };
+
+export const parsePhoneWithoutCountryCode = (phone: string): string => {
+  try {
+    // Add a '+' prefix if not present to help with parsing
+    const phoneWithPlus = phone.startsWith('+') ? phone : `+${phone}`;
+    const phoneNumber = parsePhoneNumberWithError(phoneWithPlus);
+
+    if (!phoneNumber) return phone;
+
+    // Return only the national number without the country code
+    return phoneNumber.nationalNumber;
+  } catch (error) {
+    // If parsing fails, try to remove the country code manually
+    // This is a fallback for cases where the phone number might not be in a standard format
+    const digits = phone.replace(/\D/g, '');
+    // Most country codes are 1-3 digits, so we'll try to remove them
+    if (digits.length > 10) {
+      return digits.slice(-10);
+    }
+    return phone;
+  }
+};
