@@ -230,6 +230,7 @@ export const contact = pgTable('portal_contact', {
   createdAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
   updatedAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
   lastContactedAt: timestamp({ mode: 'date' }),
+  lastActivity: text('lastActivity'),
   nextFollowUpAt: timestamp({ mode: 'date' }),
   priority: text('priority', { enum: ['urgent', 'high', 'medium', 'low'] }).default('medium'),
   workExperience: text(),

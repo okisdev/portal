@@ -460,12 +460,12 @@ export default function CRMContactsPage() {
       cell: ({ row }) => (row.original.nextFollowUpAt ? formatDateWithoutTime(row.original.nextFollowUpAt) : '—'),
       enableSorting: true,
     },
-    // {
-    //   accessorKey: 'last_activity',
-    //   header: t('last_activity'),
-    //   cell: ({ row }) => '—',
-    //   enableSorting: true,
-    // },
+    {
+      accessorKey: 'last_activity',
+      header: t('last_activity'),
+      cell: ({ row }) => row.original.lastActivity || '—',
+      enableSorting: true,
+    },
     {
       id: 'actions',
       cell: ({ row }) => (
