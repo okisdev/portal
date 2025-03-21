@@ -219,7 +219,7 @@ export const contact = pgTable('portal_contact', {
   country: text(),
   postalCode: text(),
   remark: text(),
-  status: text('status', { enum: ['lead', 'appointment', 'follow_up', 'called', 'called_no_answer', 'after_pitching', 'key_person', 'trial', 'final', 'closed', 'junk'] })
+  status: text('status', { enum: ['lead', 'appointment', 'follow_up', 'called', 'called_no_answer', 'after_pitching', 'key_person', 'special', 'trial', 'final', 'closed', 'junk'] })
     .notNull()
     .default('lead'),
   source: text(),
@@ -230,6 +230,7 @@ export const contact = pgTable('portal_contact', {
   createdAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
   updatedAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
   lastContactedAt: timestamp({ mode: 'date' }),
+  lastActivity: text('lastActivity'),
   nextFollowUpAt: timestamp({ mode: 'date' }),
   priority: text('priority', { enum: ['urgent', 'high', 'medium', 'low'] }).default('medium'),
   workExperience: text(),

@@ -1,5 +1,6 @@
-import { contactActivity } from '@/drizzle/schema';
+import { contact, contactActivity } from '@/drizzle/schema';
 import type { ActivitySubType, ActivityType } from '@/lib/schema';
+import { eq } from 'drizzle-orm';
 
 export const createContactActivityHelper = async (
   ctx: any,
@@ -13,7 +14,7 @@ export const createContactActivityHelper = async (
     metadata?: Record<string, any>;
   }
 ) => {
-  return ctx.db.insert(contactActivity).values({
+  const activity = {
     contactId: input.contactId,
     userId: ctx.session?.user.id,
     type: input.type,
@@ -22,5 +23,10 @@ export const createContactActivityHelper = async (
     initiatorId: input.initiatorId || ctx.session?.user.id,
     description: input.description || null,
     metadata: input.metadata ? JSON.stringify(input.metadata) : null,
-  });
+  };
+  // Create the activity
+  await ctx.db.insert(contactActivity).values(activity);
+
+  // Update the contact's lastActivity field
+  return ctx.db.update(contact).set({ lastActivity: activity }).where(eq(contact.id, input.contactId));
 };

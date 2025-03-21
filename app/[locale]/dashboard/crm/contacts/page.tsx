@@ -14,6 +14,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useDebounce } from '@/hooks/use-debounce';
 import { type Contact, type Priority, type Status, prioritySchema, sourceSchema, statusSchema } from '@/lib/schema';
+import type { Locale } from '@/types/i18n';
 import { formatDateWithoutTime } from '@/utils/date';
 import { parsePhoneWithoutCountryCode } from '@/utils/phone';
 import { api } from '@/utils/trpc/client';
@@ -29,7 +30,7 @@ import {
   useReactTable,
 } from '@tanstack/react-table';
 import { Check, Eye, Filter, Import, MoreHorizontal, Trash2, Upload, X } from 'lucide-react';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { usePathname } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
@@ -58,6 +59,7 @@ export default function CRMContactsPage() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const t = useTranslations();
+  const locale = useLocale() as Locale;
 
   const { data: contacts, isLoading } = api.contact.getAllContacts.useQuery();
 
@@ -345,12 +347,6 @@ export default function CRMContactsPage() {
     router.push(`/dashboard/crm/contacts/${id}`);
   };
 
-  const handleWhatsAppClick = (contact: Contact, e: React.MouseEvent) => {
-    e.stopPropagation();
-    setSelectedContact(contact);
-    setWhatsappDialogOpen(true);
-  };
-
   const handleStatusChange = (id: string, value: Status) => {
     updateContact.mutate({
       id,
@@ -463,7 +459,7 @@ export default function CRMContactsPage() {
     // {
     //   accessorKey: 'last_activity',
     //   header: t('last_activity'),
-    //   cell: ({ row }) => '—',
+    //   cell: ({ row }) => (row.original.lastActivity ? renderDescription(JSON.parse(row.original.lastActivity), t, locale) : '—'),
     //   enableSorting: true,
     // },
     {
