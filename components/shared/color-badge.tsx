@@ -39,6 +39,8 @@ export function ColorBadge({ type, value, className, isActive }: ColorBadgeProps
         return 'bg-purple-100 text-purple-800 hover:bg-purple-200 hover:text-purple-900 ring-purple-800';
       case 'key_person':
         return 'bg-purple-100 text-purple-800 hover:bg-purple-200 hover:text-purple-900 ring-purple-800';
+      case 'special':
+        return 'bg-orange-100 text-orange-800 hover:bg-orange-200 hover:text-orange-900 ring-orange-800';
       case 'trial':
         return 'bg-red-100 text-red-800 hover:bg-red-200 hover:text-red-900 ring-red-800';
       case 'final':
