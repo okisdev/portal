@@ -94,7 +94,7 @@ export function ColorBadge({ type, value, className, isActive }: ColorBadgeProps
         return 'bg-yellow-100 text-yellow-800 ring-yellow-800';
       case 'Email':
         return 'bg-purple-100 text-purple-800 ring-purple-800';
-      case 'IG':
+      case 'Instagram':
         return 'bg-pink-100 text-pink-800 ring-pink-800';
       case 'LinkedIn':
         return 'bg-blue-100 text-blue-800 ring-blue-800';
@@ -102,6 +102,10 @@ export function ColorBadge({ type, value, className, isActive }: ColorBadgeProps
         return 'bg-green-100 text-green-800 ring-green-800';
       case 'Facebook':
         return 'bg-orange-100 text-orange-800 ring-orange-800';
+      case 'BNI':
+        return 'bg-purple-100 text-purple-800 ring-purple-800';
+      case 'No Planner':
+        return 'bg-red-100 text-red-800 ring-red-800';
       case 'Other':
         return 'bg-neutral-100 text-neutral-800 ring-neutral-800';
     }
