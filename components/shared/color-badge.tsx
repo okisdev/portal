@@ -106,6 +106,8 @@ export function ColorBadge({ type, value, className, isActive }: ColorBadgeProps
         return 'bg-purple-100 text-purple-800 ring-purple-800';
       case 'No Planner':
         return 'bg-red-100 text-red-800 ring-red-800';
+      case 'Pay Trial':
+        return 'bg-purple-100 text-purple-800 ring-purple-800';
       case 'Other':
         return 'bg-neutral-100 text-neutral-800 ring-neutral-800';
     }
