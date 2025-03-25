@@ -476,7 +476,7 @@ export const contactRouter = createTRPCRouter({
       if (input.priority && input.priority !== currentContact.priority) {
         await createContactActivityHelper(ctx, {
           contactId: id,
-          type: 'STATUS',
+          type: 'PRIORITY',
           subType: 'PRIORITY_CHANGED',
           initiatorType: 'user',
           initiatorId: ctx.session?.user.id,
@@ -484,6 +484,22 @@ export const contactRouter = createTRPCRouter({
             contact: currentContact,
             oldPriority: currentContact.priority,
             newPriority: input.priority,
+          },
+        });
+      }
+
+      // Log source change if source was updated
+      if (input.source && input.source !== currentContact.source) {
+        await createContactActivityHelper(ctx, {
+          contactId: id,
+          type: 'SOURCE',
+          subType: 'SOURCE_CHANGED',
+          initiatorType: 'user',
+          initiatorId: ctx.session?.user.id,
+          metadata: {
+            contact: currentContact,
+            oldSource: currentContact.source,
+            newSource: input.source,
           },
         });
       }

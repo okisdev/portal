@@ -14,7 +14,6 @@ export interface Activity {
 }
 
 export const renderDescription = (activity: Activity, t: (key: string, params?: Record<string, string>) => string, locale: Locale) => {
-  console.log(activity);
   switch (activity.subType) {
     case 'CONTACT_CREATED':
       if (JSON.parse(activity.metadata as string).createdType === 'referral') {
@@ -123,6 +122,12 @@ export const renderDescription = (activity: Activity, t: (key: string, params?: 
     case 'CAMPAIGN_REMOVED':
       return t('activity_campaign_removed', {
         campaign: `${JSON.parse(activity.metadata as string).campaign?.name} (${JSON.parse(activity.metadata as string).campaign?.campaignCode})`,
+      });
+    case 'SOURCE_CHANGED':
+      return t('activity_contact_source_changed', {
+        contact: `${JSON.parse(activity.metadata as string).contact?.name}`,
+        oldSource: JSON.parse(activity.metadata as string).oldSource,
+        newSource: JSON.parse(activity.metadata as string).newSource,
       });
     default:
       return activity.description;

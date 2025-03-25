@@ -659,5 +659,6 @@
   "workspace": "Workspace",
   "write_a_reply": "Write a reply... Use @ to mention someone",
   "you": "You",
-  "select": "Select"
+  "select": "Select",
+  "activity_contact_source_changed": "{contact} source changed from {oldSource} to {newSource}"
 }

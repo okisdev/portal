@@ -659,5 +659,6 @@
   "workspace": "工作區",
   "write_a_reply": "寫回覆... 使用 @ 提及某人",
   "you": "你",
-  "select": "選擇"
+  "select": "選擇",
+  "activity_contact_source_changed": "{contact} 來源從 {oldSource} 更改为 {newSource}"
 }
