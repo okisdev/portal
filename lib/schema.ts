@@ -104,7 +104,7 @@ export const prioritySchema = z.enum(['urgent', 'high', 'medium', 'low']);
 
 export type Priority = z.infer<typeof prioritySchema>;
 
-export const sourceSchema = z.enum(['Pitching', 'Referral', 'Website', 'Email', 'Instagram', 'LinkedIn', 'WhatsApp', 'Facebook', 'BNI', 'No Planner', 'Other']);
+export const sourceSchema = z.enum(['Pitching', 'Referral', 'Website', 'Email', 'Instagram', 'LinkedIn', 'WhatsApp', 'Facebook', 'BNI', 'No Planner', 'Pay Trial', 'Other']);
 
 export type Source = z.infer<typeof sourceSchema>;
 
