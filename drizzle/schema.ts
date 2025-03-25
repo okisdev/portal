@@ -687,6 +687,8 @@ export const teamActivity = pgTable('portal_teamActivity', {
     enum: [
       'CONTACT', // Contact-related activities
       'STATUS', // Status changes
+      'PRIORITY', // Priority changes
+      'SOURCE', // Source changes
       'DATE', // Date-related activities
       'TEAM', // Team-related activities
       'CAMPAIGN', // Campaign-related activities
@@ -705,6 +707,7 @@ export const teamActivity = pgTable('portal_teamActivity', {
       // Status Changes
       'STATUS_CHANGED',
       'PRIORITY_CHANGED',
+      'SOURCE_CHANGED',
 
       // Date Related
       'LAST_CONTACTED_UPDATED',
