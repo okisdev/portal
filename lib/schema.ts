@@ -32,6 +32,8 @@ export const credentialSchema = z.object({
 export const activityTypeSchema = z.enum([
   'CONTACT', // Contact-related activities
   'STATUS', // Status changes
+  'PRIORITY', // Priority changes
+  'SOURCE', // Source changes
   'DATE', // Date-related activities
   'TEAM', // Team-related activities
   'CAMPAIGN', // Campaign-related activities
@@ -46,9 +48,10 @@ export const activitySubTypeSchema = z.enum([
   'CONTACT_UPDATED',
   'CONTACT_DELETED',
 
-  // Status Changes
+  // Changes
   'STATUS_CHANGED',
   'PRIORITY_CHANGED',
+  'SOURCE_CHANGED',
 
   // Date Related
   'LAST_CONTACTED_UPDATED',

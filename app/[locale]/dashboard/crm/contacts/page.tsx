@@ -1,6 +1,5 @@
 'use client';
 
-import { SendWhatsAppMessage } from '@/components/dashboard/contact/send-whatsapp-message';
 import { ActionAlertDialog } from '@/components/shared/action-alert-dialog';
 import { ColorBadge } from '@/components/shared/color-badge';
 import { Combobox } from '@/components/shared/combobox';
@@ -13,8 +12,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useDebounce } from '@/hooks/use-debounce';
-import { type Contact, type Priority, type Status, prioritySchema, sourceSchema, statusSchema } from '@/lib/schema';
-import type { Locale } from '@/types/i18n';
+import { type Contact, type Priority, type Source, type Status, prioritySchema, sourceSchema, statusSchema } from '@/lib/schema';
 import { formatDateWithoutTime } from '@/utils/date';
 import { parsePhoneWithoutCountryCode } from '@/utils/phone';
 import { api } from '@/utils/trpc/client';
@@ -29,8 +27,8 @@ import {
   getSortedRowModel,
   useReactTable,
 } from '@tanstack/react-table';
-import { Check, Eye, Filter, Import, MoreHorizontal, Trash2, Upload, X } from 'lucide-react';
-import { useLocale, useTranslations } from 'next-intl';
+import { Check, Eye, Import, MoreHorizontal, Trash2, Upload, X } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { usePathname } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
@@ -59,7 +57,6 @@ export default function CRMContactsPage() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const t = useTranslations();
-  const locale = useLocale() as Locale;
 
   const { data: contacts, isLoading } = api.contact.getAllContacts.useQuery();
 
@@ -102,20 +99,10 @@ export default function CRMContactsPage() {
     { label: t('source'), value: 'source' },
   ];
 
-  const filterOperators: { label: string; value: FilterOperator }[] = [
-    { label: t('equals'), value: '=' },
-    { label: t('not_equals'), value: '!=' },
-    { label: t('contains'), value: 'contains' },
-    { label: t('starts_with'), value: 'startsWith' },
-    { label: t('ends_with'), value: 'endsWith' },
-  ];
-
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [contactToDelete, setContactToDelete] = useState<string | null>(null);
 
   const [selectedColumn, setSelectedColumn] = useState<string>('');
-  const [selectedContact, setSelectedContact] = useState<Contact | undefined>(undefined);
-  const [whatsappDialogOpen, setWhatsappDialogOpen] = useState(false);
 
   const handleStatusFilter = (status: string | null) => {
     if (status === null) {
@@ -222,33 +209,6 @@ export default function CRMContactsPage() {
     const newUrl = params.toString() ? `${pathname}?${params.toString()}` : pathname;
     router.replace(newUrl, { scroll: false });
   }, [filters, search, sortConfig, pathname]);
-
-  const handleFilterChange = (index: number, field: string, operator: FilterOperator, value: string) => {
-    const newConditions = [...filters.conditions];
-
-    const existingIndex = newConditions.findIndex((c) => c.field === field);
-    if (existingIndex !== -1 && existingIndex !== index) {
-      newConditions.splice(existingIndex, 1);
-    }
-
-    if (index >= newConditions.length) {
-      newConditions.push({ field, operator, value });
-    } else {
-      newConditions[index] = { field, operator, value };
-    }
-
-    setFilters((prev) => ({
-      ...prev,
-      conditions: newConditions,
-    }));
-  };
-
-  const handleRemoveFilter = (index: number) => {
-    setFilters((prev) => ({
-      ...prev,
-      conditions: prev.conditions.filter((_, i) => i !== index),
-    }));
-  };
 
   const filteredContacts = useMemo(() => {
     if (!contacts) return [];
@@ -361,6 +321,13 @@ export default function CRMContactsPage() {
     });
   };
 
+  const handleSourceChange = (id: string, value: Source) => {
+    updateContact.mutate({
+      id,
+      source: value,
+    });
+  };
+
   const tableColumns: ColumnDef<Contact>[] = [
     {
       id: 'select',
@@ -445,6 +412,27 @@ export default function CRMContactsPage() {
       enableSorting: true,
     },
     {
+      accessorKey: 'source',
+      header: t('source'),
+      cell: ({ row }) => (
+        <Select value={row.original.source || 'N/A'} onValueChange={(value) => handleSourceChange(row.original.id, value as Source)} disabled={updateContact.isPending}>
+          <SelectTrigger className='h-8 w-[130px]'>
+            <SelectValue>
+              <ColorBadge type='source' value={row.original.source || 'N/A'} />
+            </SelectValue>
+          </SelectTrigger>
+          <SelectContent>
+            {sourceSchema.options.map((source) => (
+              <SelectItem key={source} value={source}>
+                <ColorBadge type='source' value={source} />
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      ),
+      enableSorting: true,
+    },
+    {
       accessorKey: 'createdAt',
       header: t('created_at'),
       cell: ({ row }) => formatDateWithoutTime(row.original.createdAt),
@@ -515,68 +503,6 @@ export default function CRMContactsPage() {
         <div className='flex items-center justify-between gap-4'>
           <div className='flex flex-row gap-2'>
             <Input placeholder={t('search_contacts')} value={search} onChange={(e) => setSearch(e.target.value)} className='h-8 w-72 max-w-sm' disabled={isLoading} />
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant='outline' size='sm' disabled={isLoading}>
-                  <Filter className='mr-2 h-4 w-4' />
-                  {t('filters')} ({filters.conditions.length})
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className='w-[350px] p-4'>
-                <div className='space-y-4'>
-                  <div className='flex items-center gap-2'>
-                    <span className='font-medium text-sm'>{t('match')}:</span>
-                    <Button variant='ghost' size='sm' onClick={() => setFilters((f) => ({ ...f, matchAll: !f.matchAll }))}>
-                      {filters.matchAll ? t('all_conditions') : t('any_condition')}
-                    </Button>
-                  </div>
-
-                  {filters.conditions.map((condition, index) => (
-                    <div key={`${condition.field}-${index}`} className='flex items-center gap-2'>
-                      <select className='h-8 rounded-md border px-2 text-sm' value={condition.field} onChange={(e) => handleFilterChange(index, e.target.value, condition.operator, condition.value)}>
-                        {filterFields.map((field) => (
-                          <option key={field.value} value={field.value}>
-                            {field.label}
-                          </option>
-                        ))}
-                      </select>
-
-                      <select
-                        className='h-8 rounded-md border px-2 text-sm'
-                        value={condition.operator}
-                        onChange={(e) => handleFilterChange(index, condition.field, e.target.value as FilterOperator, condition.value)}
-                      >
-                        {filterOperators.map((op) => (
-                          <option key={op.value} value={op.value}>
-                            {op.label}
-                          </option>
-                        ))}
-                      </select>
-
-                      <Input className='h-8' value={condition.value} onChange={(e) => handleFilterChange(index, condition.field, condition.operator, e.target.value)} />
-
-                      <button type='button' className='size-4 p-0' onClick={() => handleRemoveFilter(index)}>
-                        <X className='h-4 w-4' />
-                      </button>
-                    </div>
-                  ))}
-
-                  <Button
-                    variant='outline'
-                    size='sm'
-                    className='w-full'
-                    onClick={() => {
-                      setFilters((f) => ({
-                        ...f,
-                        conditions: [...f.conditions, { field: filterFields[0].value, operator: '=', value: '' }],
-                      }));
-                    }}
-                  >
-                    {t('add_condition')}
-                  </Button>
-                </div>
-              </DropdownMenuContent>
-            </DropdownMenu>
 
             <Combobox
               value={selectedColumn}
@@ -676,8 +602,6 @@ export default function CRMContactsPage() {
         confirmText={t('delete')}
         cancelText={t('cancel')}
       />
-
-      <SendWhatsAppMessage open={whatsappDialogOpen} onOpenChange={setWhatsappDialogOpen} recipient={selectedContact} />
     </div>
   );
 }

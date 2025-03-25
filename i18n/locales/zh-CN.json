@@ -658,5 +658,11 @@
   "will_renew_at": "将在 {date} 续订",
   "workspace": "工作区",
   "write_a_reply": "写回复... 使用 @ 提及某人",
-  "you": "你"
+  "you": "你",
+  "select": "选择",
+  "activity_contact_source_changed": "{contact} 来源从 {oldSource} 更改为 {newSource}",
+  "SOURCE_CHANGED": "来源更改",
+  "contact_deleted_successfully": "联系成功删除",
+  "activity_notes": "活动笔记",
+  "all_activities": "所有活动"
 }

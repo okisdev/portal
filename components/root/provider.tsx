@@ -16,7 +16,7 @@ export default function BodyProvider({
     <ThemeProvider attribute='class' defaultTheme='system' value={{ light: 'light', dark: 'dark' }} disableTransitionOnChange>
       {children}
 
-      <Toaster richColors />
+      <Toaster richColors position='top-right' />
 
       <ProgressBar height='2px' color='hsl(var(--foreground))' options={{ showSpinner: false }} shallowRouting />
 
