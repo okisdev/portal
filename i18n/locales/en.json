@@ -660,5 +660,9 @@
   "write_a_reply": "Write a reply... Use @ to mention someone",
   "you": "You",
   "select": "Select",
-  "activity_contact_source_changed": "{contact} source changed from {oldSource} to {newSource}"
+  "activity_contact_source_changed": "{contact} source changed from {oldSource} to {newSource}",
+  "SOURCE_CHANGED": "Source Changed",
+  "contact_deleted_successfully": "Contact deleted successfully",
+  "activity_notes": "Activity Notes",
+  "all_activities": "All Activities"
 }

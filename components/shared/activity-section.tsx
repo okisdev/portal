@@ -7,6 +7,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Textarea } from '@/components/ui/textarea';
+import type { ActivitySubType } from '@/lib/schema';
 import { cn } from '@/lib/utils';
 import type { Locale } from '@/types/i18n';
 import type { Activity } from '@/utils/activity';
@@ -25,9 +26,10 @@ interface ActivitySectionProps {
   activities?: Activity[];
   onCreateActivity: (data: { type: string; subType: string; description: string; initiatorType: 'user' | 'system'; initiatorId: string; metadata?: string }) => void;
   isLoading?: boolean;
+  filterTypes?: ActivitySubType[];
 }
 
-export function ActivitySection({ activities, onCreateActivity, isLoading }: ActivitySectionProps) {
+export function ActivitySection({ activities, onCreateActivity, isLoading, filterTypes }: ActivitySectionProps) {
   const t = useTranslations();
   const locale = useLocale() as Locale;
   const { data: session } = useSession();
@@ -218,152 +220,152 @@ export function ActivitySection({ activities, onCreateActivity, isLoading }: Act
     }
   }, [activities]);
 
+  const filteredActivities = activities?.filter((activity) => !filterTypes || filterTypes.includes(activity.subType));
+
   return (
     <div className='flex h-full flex-col'>
       <div id='activities-container' className='flex-1 overflow-y-auto'>
         <div className='pointer-events-none sticky top-0 z-10 h-4 bg-gradient-to-b from-background to-transparent' />
         <div className='space-y-1'>
-          {activities?.length === 0 && <p className='text-muted-foreground text-sm'>{t('no_activities_found')}</p>}
-          {activities
-            ?.filter((activity) => activity.subType !== 'CONTACT_UPDATED')
-            .map((activity, index) => {
-              const currentDate = format(new Date(activity.createdAt), 'PP', { locale: dateLocaleMap[locale] || enUS });
-              const prevDate = index > 0 ? format(new Date(activities[index - 1].createdAt), 'PP', { locale: dateLocaleMap[locale] || enUS }) : null;
-              const showDateDivider = currentDate !== prevDate;
+          {filteredActivities?.length === 0 && <p className='text-muted-foreground text-sm'>{t('no_activities_found')}</p>}
+          {filteredActivities?.map((activity, index) => {
+            const currentDate = format(new Date(activity.createdAt), 'PP', { locale: dateLocaleMap[locale] || enUS });
+            const prevDate = index > 0 ? format(new Date(filteredActivities[index - 1].createdAt), 'PP', { locale: dateLocaleMap[locale] || enUS }) : null;
+            const showDateDivider = currentDate !== prevDate;
 
-              return (
-                <div key={activity.id} id={`note-${activity.id}`}>
-                  {showDateDivider && (
-                    <div className='sticky top-0 bg-background/95 py-2 backdrop-blur supports-[backdrop-filter]:bg-background/60'>
-                      <p className='font-medium text-muted-foreground text-sm'>{currentDate}</p>
-                    </div>
+            return (
+              <div key={activity.id} id={`note-${activity.id}`}>
+                {showDateDivider && (
+                  <div className='sticky top-0 bg-background/95 py-2 backdrop-blur supports-[backdrop-filter]:bg-background/60'>
+                    <p className='font-medium text-muted-foreground text-sm'>{currentDate}</p>
+                  </div>
+                )}
+                <div
+                  className={cn(
+                    'flex items-start gap-3 border-l-2 py-3 pr-2 pl-4 hover:bg-muted/30',
+                    highlightedNote === activity.id && 'bg-neutral-500/20 dark:bg-neutral-500/50',
+                    activity.metadata && JSON.parse(activity.metadata).replyTo && 'ml-4'
                   )}
-                  <div
-                    className={cn(
-                      'flex items-start gap-3 border-l-2 py-3 pr-2 pl-4 hover:bg-muted/30',
-                      highlightedNote === activity.id && 'bg-neutral-500/20 dark:bg-neutral-500/50',
-                      activity.metadata && JSON.parse(activity.metadata).replyTo && 'ml-4'
-                    )}
-                    style={{
-                      borderLeftColor:
-                        activity.type === 'ENGAGEMENT'
-                          ? 'rgb(59 130 246)'
-                          : activity.type === 'DATE'
-                          ? 'rgb(249 115 22)'
-                          : activity.type === 'STATUS'
-                          ? 'rgb(34 197 94)'
-                          : activity.type === 'TEAM'
-                          ? 'rgb(234 179 8)'
-                          : activity.type === 'DEAL'
-                          ? 'rgb(236 72 153)'
-                          : activity.type === 'PAYMENT'
-                          ? 'rgb(16 185 129)'
-                          : activity.type === 'CAMPAIGN'
-                          ? 'rgb(239 68 68)'
-                          : activity.type === 'CONTACT'
-                          ? 'rgb(250 204 21)'
-                          : 'rgb(156 163 175)',
-                    }}
-                  >
-                    <div className='flex-1 space-y-1'>
-                      <div className='flex w-full items-center justify-between'>
-                        <div className='flex items-center gap-2 text-sm'>
-                          <span className='font-medium'>{activity.subType && t(activity.subType)}</span>
-                          <span className='text-muted-foreground text-xs'>•</span>
-                          {activity.initiatorType === 'system' ? (
-                            <span className='text-muted-foreground text-xs'>{t('by_system')}</span>
-                          ) : (
-                            <span className='flex items-center gap-1 text-muted-foreground text-xs'>
-                              {t.rich('by_who', {
-                                name: () => <NameTag id={activity.userId || ''} type='user' />,
-                              })}
-                            </span>
-                          )}
-                          <span className='text-muted-foreground text-xs'>•</span>
-                          <span className='text-muted-foreground text-xs'>{formatDate(new Date(activity.createdAt), locale as any)}</span>
-                        </div>
-                        <div className='flex items-center gap-2'>
-                          {activity.metadata && (
-                            <MetadataPopover title={t('view_details')}>
-                              <pre className='whitespace-pre-wrap font-mono text-xs'>{JSON.stringify(JSON.parse(activity.metadata), null, 2)}</pre>
-                            </MetadataPopover>
-                          )}
-                          {activity.type === 'ENGAGEMENT' && activity.subType === 'NOTE_ADDED' && (
-                            <button type='button' onClick={() => setReplyingTo(activity.id)} className='rounded-md bg-muted/50 px-1 py-0.5 text-muted-foreground text-xs hover:bg-muted'>
-                              {t('reply')}
-                            </button>
-                          )}
-                        </div>
+                  style={{
+                    borderLeftColor:
+                      activity.type === 'ENGAGEMENT'
+                        ? 'rgb(59 130 246)'
+                        : activity.type === 'DATE'
+                        ? 'rgb(249 115 22)'
+                        : activity.type === 'STATUS'
+                        ? 'rgb(34 197 94)'
+                        : activity.type === 'TEAM'
+                        ? 'rgb(234 179 8)'
+                        : activity.type === 'DEAL'
+                        ? 'rgb(236 72 153)'
+                        : activity.type === 'PAYMENT'
+                        ? 'rgb(16 185 129)'
+                        : activity.type === 'CAMPAIGN'
+                        ? 'rgb(239 68 68)'
+                        : activity.type === 'CONTACT'
+                        ? 'rgb(250 204 21)'
+                        : 'rgb(156 163 175)',
+                  }}
+                >
+                  <div className='flex-1 space-y-1'>
+                    <div className='flex w-full items-center justify-between'>
+                      <div className='flex items-center gap-2 text-sm'>
+                        <span className='font-medium'>{activity.subType && t(activity.subType)}</span>
+                        <span className='text-muted-foreground text-xs'>•</span>
+                        {activity.initiatorType === 'system' ? (
+                          <span className='text-muted-foreground text-xs'>{t('by_system')}</span>
+                        ) : (
+                          <span className='flex items-center gap-1 text-muted-foreground text-xs'>
+                            {t.rich('by_who', {
+                              name: () => <NameTag id={activity.userId || ''} type='user' />,
+                            })}
+                          </span>
+                        )}
+                        <span className='text-muted-foreground text-xs'>•</span>
+                        <span className='text-muted-foreground text-xs'>{formatDate(new Date(activity.createdAt), locale as any)}</span>
                       </div>
-                      <div className={cn('text-sm', activity.type === 'ENGAGEMENT' && activity.subType === 'NOTE_ADDED' ? 'rounded-md bg-blue-50 p-3 dark:bg-blue-950/50' : '')}>
-                        {renderDescription(activity, t, locale)}
+                      <div className='flex items-center gap-2'>
+                        {activity.metadata && (
+                          <MetadataPopover title={t('view_details')}>
+                            <pre className='whitespace-pre-wrap font-mono text-xs'>{JSON.stringify(JSON.parse(activity.metadata), null, 2)}</pre>
+                          </MetadataPopover>
+                        )}
+                        {activity.type === 'ENGAGEMENT' && activity.subType === 'NOTE_ADDED' && (
+                          <button type='button' onClick={() => setReplyingTo(activity.id)} className='rounded-md bg-muted/50 px-1 py-0.5 text-muted-foreground text-xs hover:bg-muted'>
+                            {t('reply')}
+                          </button>
+                        )}
                       </div>
-                      {replyingTo === activity.id && (
-                        <form onSubmit={handleReplySubmit} className='mt-2 flex items-start gap-2'>
-                          <div className='relative flex-1'>
-                            <Popover open={showMentions}>
-                              <PopoverTrigger asChild>
-                                <div className='relative w-full'>
-                                  <Textarea
-                                    id='replyInput'
-                                    value={replyText}
-                                    onChange={(e) => handleInputChange(e, true)}
-                                    onKeyDown={(e) => handleKeyDown(e, true)}
-                                    placeholder={t('write_a_reply')}
-                                    className='min-h-[60px] resize-none'
-                                  />
-                                </div>
-                              </PopoverTrigger>
-                              <PopoverContent className='w-64 p-0' align='start'>
-                                <ComboboxCommand
-                                  query={mentionSearch}
-                                  setQuery={setMentionSearch}
-                                  value=''
-                                  onChange={(username) => handleMention(username, true)}
-                                  setOpen={setShowMentions}
-                                  items={userMentionItems}
-                                  searchPlaceholder={t('search_users')}
-                                  emptyText={t('no_users_found')}
-                                  groupHeading={t('users')}
-                                  allowCustom={false}
-                                  renderItem={renderMentionItem}
-                                />
-                              </PopoverContent>
-                            </Popover>
-                          </div>
-                          <div className='flex gap-1'>
-                            <Button type='submit' size='sm' disabled={isLoading}>
-                              {t('reply')}
-                            </Button>
-                            <Button
-                              type='button'
-                              size='sm'
-                              variant='outline'
-                              onClick={() => {
-                                setReplyingTo(null);
-                                setReplyText('');
-                              }}
-                            >
-                              {t('cancel')}
-                            </Button>
-                          </div>
-                        </form>
-                      )}
-                      {activity.metadata && JSON.parse(activity.metadata).replyTo && (
-                        <button
-                          type='button'
-                          onClick={() => scrollToNote(JSON.parse(activity.metadata as string).replyTo)}
-                          className='mt-1 flex items-center gap-1 text-muted-foreground text-xs hover:text-foreground'
-                        >
-                          <ArrowUpRight className='size-3' />
-                          {t('jump_to_original_note')}
-                        </button>
-                      )}
                     </div>
+                    <div className={cn('text-sm', activity.type === 'ENGAGEMENT' && activity.subType === 'NOTE_ADDED' ? 'rounded-md bg-blue-50 p-3 dark:bg-blue-950/50' : '')}>
+                      {renderDescription(activity, t, locale)}
+                    </div>
+                    {replyingTo === activity.id && (
+                      <form onSubmit={handleReplySubmit} className='mt-2 flex items-start gap-2'>
+                        <div className='relative flex-1'>
+                          <Popover open={showMentions}>
+                            <PopoverTrigger asChild>
+                              <div className='relative w-full'>
+                                <Textarea
+                                  id='replyInput'
+                                  value={replyText}
+                                  onChange={(e) => handleInputChange(e, true)}
+                                  onKeyDown={(e) => handleKeyDown(e, true)}
+                                  placeholder={t('write_a_reply')}
+                                  className='min-h-[60px] resize-none'
+                                />
+                              </div>
+                            </PopoverTrigger>
+                            <PopoverContent className='w-64 p-0' align='start'>
+                              <ComboboxCommand
+                                query={mentionSearch}
+                                setQuery={setMentionSearch}
+                                value=''
+                                onChange={(username) => handleMention(username, true)}
+                                setOpen={setShowMentions}
+                                items={userMentionItems}
+                                searchPlaceholder={t('search_users')}
+                                emptyText={t('no_users_found')}
+                                groupHeading={t('users')}
+                                allowCustom={false}
+                                renderItem={renderMentionItem}
+                              />
+                            </PopoverContent>
+                          </Popover>
+                        </div>
+                        <div className='flex gap-1'>
+                          <Button type='submit' size='sm' disabled={isLoading}>
+                            {t('reply')}
+                          </Button>
+                          <Button
+                            type='button'
+                            size='sm'
+                            variant='outline'
+                            onClick={() => {
+                              setReplyingTo(null);
+                              setReplyText('');
+                            }}
+                          >
+                            {t('cancel')}
+                          </Button>
+                        </div>
+                      </form>
+                    )}
+                    {activity.metadata && JSON.parse(activity.metadata).replyTo && (
+                      <button
+                        type='button'
+                        onClick={() => scrollToNote(JSON.parse(activity.metadata as string).replyTo)}
+                        className='mt-1 flex items-center gap-1 text-muted-foreground text-xs hover:text-foreground'
+                      >
+                        <ArrowUpRight className='size-3' />
+                        {t('jump_to_original_note')}
+                      </button>
+                    )}
                   </div>
                 </div>
-              );
-            })}
+              </div>
+            );
+          })}
         </div>
       </div>
       <div className='mt-auto bg-background pt-4'>

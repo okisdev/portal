@@ -1,11 +1,9 @@
 'use client';
-import { SendEmail } from '@/components/dashboard/contact/send-email';
-import { SendWhatsAppMessage } from '@/components/dashboard/contact/send-whatsapp-message';
+
 import { ActionAlertDialog } from '@/components/shared/action-alert-dialog';
 import { ActivitySection } from '@/components/shared/activity-section';
 import { ColorBadge } from '@/components/shared/color-badge';
 import { Combobox } from '@/components/shared/combobox';
-import { ConversationSection } from '@/components/shared/conversation-section';
 import { DateTimePicker } from '@/components/shared/date-time-picker';
 import { EventDialog } from '@/components/shared/event-dialog';
 import type { EventFormData } from '@/components/shared/event-dialog';
@@ -17,16 +15,7 @@ import { TabSwitcher } from '@/components/shared/tab-switcher';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuPortal,
-  DropdownMenuSub,
-  DropdownMenuSubContent,
-  DropdownMenuSubTrigger,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -36,7 +25,7 @@ import { type Priority, type Status, statusSchema } from '@/lib/schema';
 import { formatDate } from '@/utils/date';
 import { parsePhone } from '@/utils/phone';
 import { api } from '@/utils/trpc/client';
-import { Building2, Edit2, Mail, MessageSquare, MoreHorizontal, Phone, Save, Send, Trash2, Users, X } from 'lucide-react';
+import { Building2, Edit2, Mail, MoreHorizontal, Phone, Save, Trash2, Users, X } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { notFound, useParams, useRouter, useSearchParams } from 'next/navigation';
@@ -91,8 +80,6 @@ export default function ContactIdPage() {
   } | null>(null);
   const [isNotesEditing, setIsNotesEditing] = useState(false);
   const [editableRemark, setEditableRemark] = useState('');
-  const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
-  const [isMessageModalOpen, setIsMessageModalOpen] = useState(false);
   const [lastContactDate, setLastContactDate] = useState<Date | null>(contact?.lastContactedAt ? new Date(contact.lastContactedAt) : null);
   const [nextFollowUpDate, setNextFollowUpDate] = useState<Date | null>(contact?.nextFollowUpAt ? new Date(contact.nextFollowUpAt) : null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -416,24 +403,7 @@ export default function ContactIdPage() {
                       <Edit2 className='mr-2 size-4' />
                       {t('edit')}
                     </DropdownMenuItem>
-                    <DropdownMenuSub>
-                      <DropdownMenuSubTrigger className='cursor-pointer'>
-                        <Send className='mr-2 size-4' />
-                        {t('send')}
-                      </DropdownMenuSubTrigger>
-                      <DropdownMenuPortal>
-                        <DropdownMenuSubContent>
-                          <DropdownMenuItem onClick={() => setIsEmailModalOpen(true)} className='cursor-pointer'>
-                            <Mail className='mr-2 size-4' />
-                            {t('email')}
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => setIsMessageModalOpen(true)} className='cursor-pointer'>
-                            <MessageSquare className='mr-2 size-4' />
-                            {t('whatsapp')}
-                          </DropdownMenuItem>
-                        </DropdownMenuSubContent>
-                      </DropdownMenuPortal>
-                    </DropdownMenuSub>
+
                     <DropdownMenuItem onClick={handleDeleteClick} className='cursor-pointer text-destructive'>
                       <Trash2 className='mr-2 size-4' />
                       {t('delete')}
@@ -677,7 +647,37 @@ export default function ContactIdPage() {
             <TabSwitcher
               config={[
                 {
-                  label: t('activity'),
+                  label: t('activity_notes'),
+                  value: (
+                    <ActivitySection
+                      activities={activities?.map((activity) => ({
+                        id: activity.id,
+                        type: activity.type,
+                        subType: activity.subType || 'NOTE_ADDED',
+                        description: activity.description || '',
+                        initiatorType: 'user',
+                        userId: activity.userId,
+                        metadata: activity.metadata,
+                        createdAt: activity.createdAt,
+                      }))}
+                      onCreateActivity={(data) => {
+                        createContactActivity.mutate({
+                          contactId: contactId[0],
+                          type: 'ENGAGEMENT',
+                          subType: 'NOTE_ADDED',
+                          description: data.description,
+                          initiatorType: data.initiatorType,
+                          initiatorId: data.initiatorId,
+                          metadata: data.metadata as any,
+                        });
+                      }}
+                      isLoading={createContactActivity.isPending}
+                      filterTypes={['NOTE_ADDED']}
+                    />
+                  ),
+                },
+                {
+                  label: t('all_activities'),
                   value: (
                     <ActivitySection
                       activities={activities?.map((activity) => ({
@@ -705,38 +705,6 @@ export default function ContactIdPage() {
                     />
                   ),
                 },
-                {
-                  label: t('conversation'),
-                  value: (
-                    <ConversationSection
-                      activities={activities?.map((activity) => ({
-                        id: activity.id,
-                        type: activity.type as 'ENGAGEMENT',
-                        subType: (activity.subType || 'NOTE_ADDED') as 'MESSAGE_SENT' | 'MESSAGE_RECEIVED' | 'NOTE_ADDED',
-                        description: activity.description || '',
-                        initiatorType: activity.initiatorType || 'user',
-                        userId: activity.userId,
-                        metadata: activity.metadata ? (typeof activity.metadata === 'string' ? JSON.parse(activity.metadata) : activity.metadata) : null,
-                        createdAt: activity.createdAt,
-                      }))}
-                      onCreateActivity={(data) => {
-                        createContactActivity.mutate({
-                          contactId: contactId[0],
-                          type: 'ENGAGEMENT',
-                          subType: data.subType as 'MESSAGE_SENT' | 'MESSAGE_RECEIVED' | 'NOTE_ADDED',
-                          description: data.description,
-                          initiatorType: data.initiatorType,
-                          initiatorId: data.initiatorId,
-                          metadata: data.metadata,
-                        });
-                      }}
-                      isLoading={createContactActivity.isPending}
-                      contactId={contact?.phone || ''}
-                    />
-                  ),
-                },
-                { label: t('subscription'), value: <p>{t('subscription')}</p> },
-                { label: t('management'), value: <p>{t('management')}</p> },
               ]}
             />
           </div>
@@ -901,8 +869,6 @@ export default function ContactIdPage() {
         </DialogContent>
       </Dialog>
 
-      <SendEmail open={isEmailModalOpen} onOpenChange={setIsEmailModalOpen} recipient={contact as any} />
-      <SendWhatsAppMessage open={isMessageModalOpen} onOpenChange={setIsMessageModalOpen} recipient={contact as any} />
       <ActionAlertDialog
         open={deleteDialogOpen}
         onOpenChange={setDeleteDialogOpen}
