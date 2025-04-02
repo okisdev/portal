@@ -18,12 +18,12 @@ import {
   SidebarMenuItem,
 } from '@/components/ui/sidebar';
 import { Skeleton } from '@/components/ui/skeleton';
-import { crmItems, languageItems, marketingItems, resourcesItems, siteItems, toolsItems, workspaceItems } from '@/config/dashboard';
-import { usePathname, useRouter } from '@/i18n/routing';
+import { usePathname, useRouter } from '@/i18n/navigation';
 import packageInfo from '@/package.json';
 import { copyToClipboard } from '@/utils/clipboard';
 import { api } from '@/utils/trpc/client';
-import { Bell, ChevronDown, ChevronRight, ChevronUp, Globe, Laptop, LogOut, Moon, Plus, Settings, Sparkle, Sun, Verified } from 'lucide-react';
+import { Building, Contact, FileIcon, QrCode, Users } from 'lucide-react';
+import { Bell, Calendar, ChevronDown, ChevronRight, ChevronUp, Gift, Globe, Laptop, LogOut, Moon, Plus, Settings, Sparkle, Sun, Verified } from 'lucide-react';
 import { signOut } from 'next-auth/react';
 import { useLocale, useTranslations } from 'next-intl';
 import { useTheme } from 'next-themes';
@@ -38,9 +38,9 @@ type SidebarGroupSectionProps = {
     title: string;
     url: string;
     icon: React.ComponentType;
+    action?: React.ReactNode;
   }>;
   defaultOpen?: boolean;
-  onItemAction?: (title: string) => void;
 };
 
 export function DashboardSidebar() {
@@ -81,12 +81,92 @@ export function DashboardSidebar() {
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
-        <SidebarGroupSection title={t('workspace')} items={workspaceItems} />
-        <SidebarGroupSection title={t('crm')} items={crmItems} onItemAction={() => router.push('/dashboard/crm/contacts/new')} />
-        <SidebarGroupSection title={t('marketing')} items={marketingItems} />
-        <SidebarGroupSection title={t('resources')} items={resourcesItems} />
-        <SidebarGroupSection title={t('tools')} items={toolsItems} />
-        {me?.role === 'ADMIN' && <SidebarGroupSection title={t('site')} items={siteItems} />}
+        <SidebarGroupSection
+          title={t('workspace')}
+          items={[
+            {
+              id: 'calendar',
+              title: t('calendar'),
+              url: '/dashboard/workspace/calendar',
+              icon: Calendar,
+            },
+          ]}
+        />
+        <SidebarGroupSection
+          title={t('crm')}
+          items={[
+            {
+              id: 'contacts',
+              title: t('contacts'),
+              url: '/dashboard/crm/contacts',
+              icon: Contact,
+              action: (
+                <Link href='/dashboard/crm/contacts/new'>
+                  <Plus />
+                  <span className='sr-only'>{t('add_contact')}</span>
+                </Link>
+              ),
+            },
+            {
+              id: 'teams',
+              title: t('teams'),
+              url: '/dashboard/crm/team',
+              icon: Users,
+            },
+            {
+              id: 'company',
+              title: t('company'),
+              url: '/dashboard/crm/company',
+              icon: Building,
+            },
+          ]}
+        />
+        <SidebarGroupSection
+          title={t('marketing')}
+          items={[
+            {
+              id: 'campaigns',
+              title: t('campaigns'),
+              url: '/dashboard/marketing/campaigns',
+              icon: Gift,
+            },
+          ]}
+        />
+        <SidebarGroupSection
+          title={t('resources')}
+          items={[
+            {
+              id: 'content',
+              title: t('content'),
+              url: '/dashboard/resource/content',
+              icon: FileIcon,
+            },
+          ]}
+        />
+        <SidebarGroupSection
+          title={t('tools')}
+          items={[
+            {
+              id: 'qrcode',
+              title: t('qr_code'),
+              url: '/dashboard/tools/qrcode',
+              icon: QrCode,
+            },
+          ]}
+        />
+        {me?.role === 'ADMIN' && (
+          <SidebarGroupSection
+            title={t('site')}
+            items={[
+              {
+                id: 'overview',
+                title: t('overview'),
+                url: '/dashboard/site',
+                icon: Users,
+              },
+            ]}
+          />
+        )}
       </SidebarContent>
       <SidebarFooter>
         <SidebarMenu>
@@ -175,7 +255,26 @@ export function DashboardSidebar() {
                   </DropdownMenuTrigger>
                   <DropdownMenuContent side='right'>
                     <DropdownMenuRadioGroup value={locale} onValueChange={handleChangeLocale}>
-                      {languageItems.map((item) => (
+                      {[
+                        {
+                          id: 'en',
+                          title: 'English',
+                          value: 'en',
+                          flag: '🇺🇸',
+                        },
+                        {
+                          id: 'zh-CN',
+                          title: '简体中文',
+                          value: 'zh-CN',
+                          flag: '🇨🇳',
+                        },
+                        {
+                          id: 'zh-HK',
+                          title: '繁体中文',
+                          value: 'zh-HK',
+                          flag: '🇭🇰',
+                        },
+                      ].map((item) => (
                         <DropdownMenuRadioItem key={item.value} value={item.value} className='flex cursor-pointer items-center gap-2'>
                           <span>{item.flag}</span>
                           <span>{item.title}</span>
@@ -207,9 +306,7 @@ export function DashboardSidebar() {
   );
 }
 
-function SidebarGroupSection({ title, items, defaultOpen = true, onItemAction }: SidebarGroupSectionProps) {
-  const t = useTranslations();
-
+function SidebarGroupSection({ title, items, defaultOpen = true }: SidebarGroupSectionProps) {
   return (
     <Collapsible defaultOpen={defaultOpen} className='group/collapsible' data-collapsible='icon'>
       <SidebarGroup>
@@ -223,18 +320,14 @@ function SidebarGroupSection({ title, items, defaultOpen = true, onItemAction }:
           <SidebarGroupContent>
             <SidebarMenu>
               {items.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton tooltip={t(item.id)} asChild>
+                <SidebarMenuItem key={item.id}>
+                  <SidebarMenuButton tooltip={item.title} asChild>
                     <Link href={item.url}>
                       <item.icon />
-                      <span>{t(item.id)}</span>
+                      <span>{item.title}</span>
                     </Link>
                   </SidebarMenuButton>
-                  {onItemAction && item.id === 'contacts' && (
-                    <SidebarMenuAction onClick={() => onItemAction(item.title)}>
-                      <Plus /> <span className='sr-only'>{t('add_contact')}</span>
-                    </SidebarMenuAction>
-                  )}
+                  {item.action && <SidebarMenuAction asChild>{item.action}</SidebarMenuAction>}
                 </SidebarMenuItem>
               ))}
             </SidebarMenu>

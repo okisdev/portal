@@ -23,11 +23,10 @@ export default function ImportContacts() {
   };
 
   return (
-    <div className='space-y-4 p-4'>
-      <Tabs defaultValue={activeTab} onValueChange={handleTabChange} className='w-full'>
+    <div className='p-4'>
+      <Tabs defaultValue={activeTab} onValueChange={handleTabChange} className='w-full space-y-8'>
         <PageHeader
           title={t('create_contact')}
-          description={t('create_a_new_contact')}
           right={
             <TabsList>
               <TabsTrigger value='manual'>{t('manual_create')}</TabsTrigger>
