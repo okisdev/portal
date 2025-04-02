@@ -1,7 +1,7 @@
 import { user } from '@/drizzle/schema';
-import { generateUUID } from '@/lib/utils';
 import { TRPCError } from '@trpc/server';
 import { eq } from 'drizzle-orm';
+import { v4 as uuidv4 } from 'uuid';
 import { z } from 'zod';
 import { createTRPCRouter, protectedProcedure } from '../../trpc';
 
@@ -52,7 +52,7 @@ export const adminRouter = createTRPCRouter({
       return ctx.db
         .insert(user)
         .values({
-          id: generateUUID(),
+          id: uuidv4(),
           ...input,
         })
         .execute();

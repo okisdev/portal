@@ -7,10 +7,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { generateShortUUID } from '@/lib/utils';
 import jsPDF from 'jspdf';
 import JSZip from 'jszip';
 import { ChevronDown, Eye } from 'lucide-react';
+import { nanoid } from 'nanoid';
 import { QRCodeCanvas, QRCodeSVG } from 'qrcode.react';
 import { useEffect, useState } from 'react';
 import ReactDOMServer from 'react-dom/server';
@@ -213,7 +213,7 @@ export default function QRCodePage() {
     const zip = new JSZip();
 
     for (const item of qrData) {
-      const fileName = item.remark + generateShortUUID(5) || item.content + generateShortUUID(5);
+      const fileName = item.remark + nanoid(5) || item.content + nanoid(5);
 
       if (type === 'png') {
         const canvas = document.querySelector(`#qr-${item.id}`) as HTMLCanvasElement;

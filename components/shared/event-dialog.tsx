@@ -9,9 +9,9 @@ import { Form, FormControl, FormField, FormItem, FormLabel } from '@/components/
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { generateUUID } from '@/lib/utils';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { PlusIcon, X } from 'lucide-react';
+import { nanoid } from 'nanoid';
 import { useTranslations } from 'next-intl';
 import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
@@ -324,7 +324,7 @@ export function EventDialog({ open, onOpenChange, onSubmit, isEditMode = false, 
                 </div>
 
                 {(form.watch('participants') || []).map((participant, index) => (
-                  <div key={participant.id + generateUUID()} className='flex items-start gap-2'>
+                  <div key={participant.id + nanoid()} className='flex items-start gap-2'>
                     <FormField
                       control={form.control}
                       name={`participants.${index}.type`}

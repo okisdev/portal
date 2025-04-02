@@ -1,8 +1,8 @@
 import { siteConfig, user } from '@/drizzle/schema';
-import { generateUUID } from '@/lib/utils';
 import { createTRPCRouter, publicProcedure } from '@/server/trpc';
 import { TRPCError } from '@trpc/server';
 import { eq } from 'drizzle-orm';
+import { v4 as uuidv4 } from 'uuid';
 import z from 'zod';
 
 export const authRouter = createTRPCRouter({
@@ -35,7 +35,7 @@ export const authRouter = createTRPCRouter({
       if (!supportEmailDomainConfig?.value || supportEmailDomainConfig.value.trim() === '') {
         // Create user since there are no domain restrictions
         return ctx.db.insert(user).values({
-          id: generateUUID(),
+          id: uuidv4(),
           email,
           password,
           firstName,
@@ -56,7 +56,7 @@ export const authRouter = createTRPCRouter({
 
       // Create user
       return ctx.db.insert(user).values({
-        id: generateUUID(),
+        id: uuidv4(),
         email,
         password,
         firstName,

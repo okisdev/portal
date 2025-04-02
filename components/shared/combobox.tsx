@@ -3,8 +3,9 @@
 import { Button } from '@/components/ui/button';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from '@/components/ui/command';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { cn, generateUUID } from '@/lib/utils';
+import { cn } from '@/lib/utils';
 import { Check, ChevronsUpDown } from 'lucide-react';
+import { nanoid } from 'nanoid';
 import { useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
 
@@ -83,7 +84,7 @@ function ComboboxCommand({
         <CommandGroup heading={recommendedHeading} className='max-h-[150px] overflow-y-auto'>
           {filteredRecommendedItems.map((item) => (
             <CommandItem
-              key={`recommended-${item}-${generateUUID()}`}
+              key={`recommended-${item}-${nanoid()}`}
               value={item}
               onSelect={() => {
                 onChange(value === item ? '' : item);
@@ -106,7 +107,7 @@ function ComboboxCommand({
       <CommandGroup heading={groupHeading} className='max-h-[300px] overflow-y-auto'>
         {filteredItems.map((item) => (
           <CommandItem
-            key={item + generateUUID()}
+            key={item + nanoid()}
             value={item}
             onSelect={() => {
               onChange(value === item ? '' : item);

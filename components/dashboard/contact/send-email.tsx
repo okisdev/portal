@@ -6,9 +6,9 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import type { Contact } from '@/lib/schema';
-import { generateUUID } from '@/lib/utils';
 import { api } from '@/utils/trpc/client';
 import { Calendar, File, Send, Trash2, X } from 'lucide-react';
+import { nanoid } from 'nanoid';
 import { useSession } from 'next-auth/react';
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
@@ -208,7 +208,7 @@ export function SendEmail({ open, onOpenChange, recipient }: SendEmailProps) {
             </div>
             <div className='grid grid-cols-1 gap-4 sm:grid-cols-3'>
               {formData.attachments.map((file, index) => (
-                <div key={file.name + generateUUID()} className='flex items-center gap-3 rounded-lg border p-3'>
+                <div key={file.name + nanoid()} className='flex items-center gap-3 rounded-lg border p-3'>
                   <div className='flex size-10 items-center justify-center rounded-lg bg-muted'>
                     <File className='size-5 text-blue-600' />
                   </div>
