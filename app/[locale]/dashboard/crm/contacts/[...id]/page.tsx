@@ -382,13 +382,13 @@ export default function ContactIdPage() {
                               user: () => (contact.createdBy ? <NameTag id={contact.createdBy} type='user' /> : null),
                             })
                         : contact.source
-                        ? t.rich('created_at_via', {
-                            date: formatDate(new Date(contact.createdAt)),
-                            source: contact.source,
-                          })
-                        : t.rich('created_at_date', {
-                            date: formatDate(new Date(contact.createdAt)),
-                          })}
+                          ? t.rich('created_at_via', {
+                              date: formatDate(new Date(contact.createdAt)),
+                              source: contact.source,
+                            })
+                          : t.rich('created_at_date', {
+                              date: formatDate(new Date(contact.createdAt)),
+                            })}
                     </span>
                   )}
                 </div>
