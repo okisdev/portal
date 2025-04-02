@@ -51,7 +51,7 @@ export default function ManualContactForm() {
   const { data: campaigns } = api.marketing.getActiveCampaigns.useQuery();
   const { data: companies } = api.company.getAllCompanies.useQuery();
 
-  const form = useForm<z.infer<typeof formSchema>>({
+  const form = useForm({
     resolver: zodResolver(formSchema),
     defaultValues: {
       firstName: '',

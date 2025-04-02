@@ -68,8 +68,8 @@ export function EventDialog({ open, onOpenChange, onSubmit, isEditMode = false, 
     return newDate;
   };
 
-  const form = useForm<EventFormData>({
-    resolver: zodResolver(eventFormSchema) as any,
+  const form = useForm({
+    resolver: zodResolver(eventFormSchema),
     defaultValues: {
       title: defaultValues?.title || '',
       description: defaultValues?.description || '',
@@ -314,7 +314,7 @@ export function EventDialog({ open, onOpenChange, onSubmit, isEditMode = false, 
                   <button
                     type='button'
                     onClick={() => {
-                      const participants = form.getValues('participants');
+                      const participants = form.getValues('participants') || [];
                       form.setValue('participants', [...participants, { type: 'external', email: '', name: '', role: 'required' }]);
                     }}
                     className='flex items-center justify-center rounded-full bg-neutral-100 p-1 transition-colors hover:bg-neutral-200'
@@ -323,7 +323,7 @@ export function EventDialog({ open, onOpenChange, onSubmit, isEditMode = false, 
                   </button>
                 </div>
 
-                {form.watch('participants').map((participant, index) => (
+                {(form.watch('participants') || []).map((participant, index) => (
                   <div key={participant.id + generateUUID()} className='flex items-start gap-2'>
                     <FormField
                       control={form.control}
@@ -446,7 +446,7 @@ export function EventDialog({ open, onOpenChange, onSubmit, isEditMode = false, 
                       variant='ghost'
                       size='icon'
                       onClick={() => {
-                        const participants = form.getValues('participants');
+                        const participants = form.getValues('participants') || [];
                         form.setValue(
                           'participants',
                           participants.filter((_, i) => i !== index)

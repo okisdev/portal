@@ -25,7 +25,7 @@ const campaignFormSchema = z.object({
 
 type CampaignFormValues = z.infer<typeof campaignFormSchema>;
 
-const defaultValues: Partial<CampaignFormValues> = {
+const defaultValues: CampaignFormValues = {
   status: 'draft',
   type: 'email',
   campaignCode: '',
@@ -40,8 +40,8 @@ export default function NewCampaignPage() {
 
   const utils = api.useUtils();
 
-  const form = useForm<CampaignFormValues>({
-    resolver: zodResolver(campaignFormSchema) as any,
+  const form = useForm({
+    resolver: zodResolver(campaignFormSchema),
     defaultValues,
   });
 

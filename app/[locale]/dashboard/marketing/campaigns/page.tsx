@@ -87,7 +87,7 @@ export default function MarketingCampaignsPage() {
     },
   });
 
-  const form = useForm<CampaignFormValues>({
+  const form = useForm({
     resolver: zodResolver(campaignFormSchema),
     defaultValues: editingCampaign?.data || {
       name: '',

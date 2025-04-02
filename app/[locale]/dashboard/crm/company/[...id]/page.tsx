@@ -56,8 +56,8 @@ export default function CompanyIdPage() {
   const [meetingToDelete, setMeetingToDelete] = useState<string | null>(null);
   const [contactToDelete, setContactToDelete] = useState<string | null>(null);
 
-  const editCompanyForm = useForm<CreateCompanySchema>({
-    resolver: zodResolver(createCompanySchema) as any,
+  const editCompanyForm = useForm({
+    resolver: zodResolver(createCompanySchema),
     defaultValues: {
       name: '',
       description: '',

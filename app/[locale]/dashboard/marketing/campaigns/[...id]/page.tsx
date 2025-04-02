@@ -342,7 +342,7 @@ export default function CampaignDetailsPage() {
     },
   });
 
-  const form = useForm<CampaignFormValues>({
+  const form = useForm({
     resolver: zodResolver(campaignFormSchema),
     defaultValues: {
       name: campaign?.name || '',

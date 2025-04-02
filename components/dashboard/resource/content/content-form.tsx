@@ -34,7 +34,7 @@ interface ContentFormProps {
 export function ContentForm({ content, onSuccess, onSubmit, isSubmitting }: ContentFormProps) {
   const t = useTranslations();
 
-  const form = useForm<FormValues>({
+  const form = useForm({
     resolver: zodResolver(formSchema),
     defaultValues: {
       title: '',

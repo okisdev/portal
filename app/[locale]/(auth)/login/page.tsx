@@ -40,7 +40,7 @@ export default function LoginPage() {
     handleSubmit,
     formState: { errors },
     watch,
-  } = useForm<LoginFormValues>({
+  } = useForm({
     resolver: zodResolver(loginSchema),
   });
 

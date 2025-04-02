@@ -105,8 +105,8 @@ export default function CompanyPage() {
 
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
 
-  const createCompanyForm = useForm<CreateCompanySchema>({
-    resolver: zodResolver(createCompanySchema) as any,
+  const createCompanyForm = useForm({
+    resolver: zodResolver(createCompanySchema),
     defaultValues: {
       name: '',
       description: '',
@@ -157,8 +157,8 @@ export default function CompanyPage() {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [selectedCompany, setSelectedCompany] = useState<any>(null);
 
-  const editCompanyForm = useForm<CreateCompanySchema>({
-    resolver: zodResolver(createCompanySchema) as any,
+  const editCompanyForm = useForm({
+    resolver: zodResolver(createCompanySchema),
     defaultValues: {
       name: '',
       description: '',
