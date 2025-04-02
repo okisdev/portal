@@ -141,7 +141,7 @@ export default function EmailsPage() {
                   key={template.id}
                   className={cn(
                     'w-full cursor-pointer rounded-md border border-neutral-200 px-3 py-2 text-left transition-colors dark:border-neutral-800',
-                    selectedTemplate?.id === template.id ? 'bg-white shadow-sm ring-1 ring-neutral-200 dark:ring-neutral-800' : 'hover:bg-white/60 dark:hover:bg-neutral-900/60'
+                    selectedTemplate?.id === template.id ? 'bg-white shadow-xs ring-1 ring-neutral-200 dark:ring-neutral-800' : 'hover:bg-white/60 dark:hover:bg-neutral-900/60'
                   )}
                   onClick={() => handleSelectTemplate(template)}
                 >

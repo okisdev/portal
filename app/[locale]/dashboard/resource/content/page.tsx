@@ -125,7 +125,7 @@ export default function ContentPage() {
               <button
                 type='button'
                 onClick={handleNewContent}
-                className='inline-flex h-9 items-center justify-center rounded-md bg-primary px-3 font-medium text-primary-foreground text-sm ring-offset-background transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50'
+                className='inline-flex h-9 items-center justify-center rounded-md bg-primary px-3 font-medium text-primary-foreground text-sm ring-offset-background transition-colors hover:bg-primary/90 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50'
               >
                 {t('new')}
               </button>
@@ -152,8 +152,8 @@ export default function ContentPage() {
                   key={item.resourceContent.id}
                   type='button'
                   onClick={() => router.push(`/dashboard/resource/content?id=${item.resourceContent.id}`)}
-                  className={`group w-full space-y-2 rounded-lg border bg-background p-3 text-left transition-all hover:border-primary/20 hover:shadow-sm ${
-                    currentContent?.id === item.resourceContent.id ? 'border-primary/40 shadow-sm' : ''
+                  className={`group w-full space-y-2 rounded-lg border bg-background p-3 text-left transition-all hover:border-primary/20 hover:shadow-xs ${
+                    currentContent?.id === item.resourceContent.id ? 'border-primary/40 shadow-xs' : ''
                   }`}
                 >
                   <div>

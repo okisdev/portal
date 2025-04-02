@@ -99,7 +99,7 @@ export default function RegisterPage() {
             type='email'
             {...register('email')}
             onBlur={handleEmailBlur}
-            className='w-full rounded-lg border bg-background p-2 focus:outline-none focus:ring-2 focus:ring-ring'
+            className='w-full rounded-lg border bg-background p-2 focus:outline-hidden focus:ring-2 focus:ring-ring'
             placeholder={t('email_placeholder')}
           />
           {errors.email && <p className='mt-1 text-destructive text-sm'>{errors.email.message}</p>}
@@ -110,7 +110,7 @@ export default function RegisterPage() {
           <input
             type='password'
             {...register('password')}
-            className='w-full rounded-lg border bg-background p-2 focus:outline-none focus:ring-2 focus:ring-ring'
+            className='w-full rounded-lg border bg-background p-2 focus:outline-hidden focus:ring-2 focus:ring-ring'
             placeholder={t('create_a_password')}
           />
           {errors.password && <p className='mt-1 text-destructive text-sm'>{errors.password.message}</p>}

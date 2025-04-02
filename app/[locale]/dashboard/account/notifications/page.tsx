@@ -96,7 +96,7 @@ export default function NotificationsPage() {
             Array(3)
               .fill(0)
               .map((_, i) => (
-                <div key={generateUUID()} className='flex animate-pulse flex-col gap-2 rounded-lg border bg-white p-4 shadow-sm dark:border-neutral-800 dark:bg-neutral-900'>
+                <div key={generateUUID()} className='flex animate-pulse flex-col gap-2 rounded-lg border bg-white p-4 shadow-xs dark:border-neutral-800 dark:bg-neutral-900'>
                   <div className='flex items-center gap-3'>
                     <Skeleton className='h-8 w-8 rounded-full' />
                     <div className='flex-1 space-y-2'>
@@ -118,7 +118,7 @@ export default function NotificationsPage() {
             <div
               key={notification.id}
               className={cn(
-                'group flex items-start gap-4 rounded-lg border p-4 shadow-sm transition-all duration-200',
+                'group flex items-start gap-4 rounded-lg border p-4 shadow-xs transition-all duration-200',
                 notification.read
                   ? 'bg-white hover:bg-neutral-50 dark:border-neutral-800 dark:bg-neutral-900 dark:hover:bg-neutral-800'
                   : 'bg-blue-50 hover:bg-blue-100/80 dark:bg-blue-950/50 dark:hover:bg-blue-900/30'

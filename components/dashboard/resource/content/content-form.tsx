@@ -139,7 +139,7 @@ export function ContentForm({ content, onSuccess, onSubmit, isSubmitting }: Cont
                       {(field.value ? (JSON.parse(field.value) as string[]) : []).map((tag: string) => (
                         <Badge key={tag} variant='secondary' className='gap-1'>
                           {tag}
-                          <button type='button' onClick={() => handleRemoveTag(tag)} className='ml-1 rounded-full outline-none hover:text-destructive'>
+                          <button type='button' onClick={() => handleRemoveTag(tag)} className='ml-1 rounded-full outline-hidden hover:text-destructive'>
                             <X className='size-3' />
                           </button>
                         </Badge>

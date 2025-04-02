@@ -72,7 +72,7 @@ function TagManager({ tags, onTagsChange, disabled }: TagManagerProps) {
                         e.stopPropagation();
                         handleRemoveTag(tag);
                       }}
-                      className='ml-1 cursor-pointer rounded-full outline-none hover:text-destructive'
+                      className='ml-1 cursor-pointer rounded-full outline-hidden hover:text-destructive'
                     >
                       <X className='size-2.5' />
                     </div>

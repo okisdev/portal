@@ -18,7 +18,7 @@ export default function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
-    <header className='fixed inset-x-0 top-0 z-50 bg-white/80 backdrop-blur-sm dark:bg-neutral-900/80'>
+    <header className='fixed inset-x-0 top-0 z-50 bg-white/80 backdrop-blur-xs dark:bg-neutral-900/80'>
       <nav className='flex items-center justify-between p-4 lg:px-8' aria-label='Global'>
         <div className='flex lg:flex-1'>
           <Link href='/' className='-m-1.5 p-1.5'>
@@ -48,7 +48,7 @@ export default function Header() {
           </Link>
           <Link
             href='/register'
-            className='rounded-md bg-neutral-900 px-3 py-2 font-semibold text-sm text-white shadow-sm hover:bg-neutral-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-neutral-900 focus-visible:outline-offset-2 dark:bg-neutral-700 dark:hover:bg-neutral-600'
+            className='rounded-md bg-neutral-900 px-3 py-2 font-semibold text-sm text-white shadow-xs hover:bg-neutral-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-neutral-900 focus-visible:outline-offset-2 dark:bg-neutral-700 dark:hover:bg-neutral-600'
           >
             {t('sign_up')}
           </Link>
@@ -58,7 +58,7 @@ export default function Header() {
       {mobileMenuOpen && (
         <div className='fixed inset-0 z-50 lg:hidden'>
           {/* biome-ignore lint/a11y/useKeyWithClickEvents: <explanation> */}
-          <div className='fixed inset-0 bg-black/20 backdrop-blur-sm dark:bg-neutral-900/80' aria-hidden='true' onClick={() => setMobileMenuOpen(false)} />
+          <div className='fixed inset-0 bg-black/20 backdrop-blur-xs dark:bg-neutral-900/80' aria-hidden='true' onClick={() => setMobileMenuOpen(false)} />
 
           <div className='fixed inset-y-0 right-0 z-50 w-full bg-white sm:max-w-sm sm:ring-1 sm:ring-neutral-900/10 dark:bg-neutral-900 dark:sm:ring-neutral-800'>
             <div className='flex items-center justify-between px-4 py-4'>

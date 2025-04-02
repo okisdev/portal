@@ -4,7 +4,7 @@ import Link from 'next/link';
 
 export default function Home() {
   return (
-    <div className='min-h-screen bg-gradient-to-b from-neutral-50 to-white dark:from-neutral-900 dark:to-neutral-800'>
+    <div className='min-h-screen bg-linear-to-b from-neutral-50 to-white dark:from-neutral-900 dark:to-neutral-800'>
       <div className='relative isolate px-6 pt-14 lg:px-8'>
         <div className='mx-auto max-w-2xl py-32 sm:py-48 lg:py-56'>
           <div className='text-center'>
@@ -15,7 +15,7 @@ export default function Home() {
             <div className='mt-10 flex items-center justify-center gap-x-6'>
               <Link
                 href='/dashboard'
-                className='rounded-md bg-neutral-900 px-3.5 py-2.5 font-semibold text-sm text-white shadow-sm hover:bg-neutral-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-neutral-900 focus-visible:outline-offset-2 dark:bg-neutral-700 dark:hover:bg-neutral-600'
+                className='rounded-md bg-neutral-900 px-3.5 py-2.5 font-semibold text-sm text-white shadow-xs hover:bg-neutral-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-neutral-900 focus-visible:outline-offset-2 dark:bg-neutral-700 dark:hover:bg-neutral-600'
               >
                 Open Dashboard
               </Link>
@@ -90,7 +90,7 @@ export default function Home() {
                   role: 'Sales Manager',
                 },
               ].map((testimonial) => (
-                <div key={testimonial.author} className='rounded-2xl bg-white p-8 text-sm leading-6 shadow-sm dark:bg-neutral-800'>
+                <div key={testimonial.author} className='rounded-2xl bg-white p-8 text-sm leading-6 shadow-xs dark:bg-neutral-800'>
                   <p className='text-neutral-900 dark:text-white'>"{testimonial.quote}"</p>
                   <div className='mt-6 flex items-center gap-x-4'>
                     <div className='font-semibold text-neutral-900 dark:text-white'>{testimonial.author}</div>
@@ -110,7 +110,7 @@ export default function Home() {
           <div className='mt-10 flex items-center justify-center gap-x-6'>
             <Link
               href='/register'
-              className='rounded-md bg-neutral-900 px-3.5 py-2.5 font-semibold text-sm text-white shadow-sm hover:bg-neutral-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-neutral-900 focus-visible:outline-offset-2 dark:bg-neutral-700 dark:hover:bg-neutral-600'
+              className='rounded-md bg-neutral-900 px-3.5 py-2.5 font-semibold text-sm text-white shadow-xs hover:bg-neutral-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-neutral-900 focus-visible:outline-offset-2 dark:bg-neutral-700 dark:hover:bg-neutral-600'
             >
               Start Free Trial
             </Link>
