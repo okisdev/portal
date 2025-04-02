@@ -99,7 +99,7 @@ export default function DashboardPersonalCalendar() {
   });
 
   const form = useForm<z.infer<typeof eventFormSchema>>({
-    resolver: zodResolver(eventFormSchema),
+    resolver: zodResolver(eventFormSchema) as any,
     defaultValues: {
       title: '',
       description: '',

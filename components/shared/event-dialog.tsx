@@ -69,7 +69,7 @@ export function EventDialog({ open, onOpenChange, onSubmit, isEditMode = false, 
   };
 
   const form = useForm<EventFormData>({
-    resolver: zodResolver(eventFormSchema),
+    resolver: zodResolver(eventFormSchema) as any,
     defaultValues: {
       title: defaultValues?.title || '',
       description: defaultValues?.description || '',

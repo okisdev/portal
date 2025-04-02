@@ -41,7 +41,7 @@ export default function NewCampaignPage() {
   const utils = api.useUtils();
 
   const form = useForm<CampaignFormValues>({
-    resolver: zodResolver(campaignFormSchema),
+    resolver: zodResolver(campaignFormSchema) as any,
     defaultValues,
   });
 
