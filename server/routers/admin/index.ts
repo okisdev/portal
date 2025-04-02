@@ -3,7 +3,7 @@ import { generateUUID } from '@/lib/utils';
 import { TRPCError } from '@trpc/server';
 import { eq } from 'drizzle-orm';
 import { z } from 'zod';
-import { createTRPCRouter, protectedProcedure } from '../trpc';
+import { createTRPCRouter, protectedProcedure } from '../../trpc';
 
 const adminProcedure = protectedProcedure.use(async ({ ctx, next }) => {
   const currentUser = await ctx.db
