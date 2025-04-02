@@ -5,18 +5,32 @@ import type {
   calendarEventParticipant,
   calendarEventShare,
   calendarFolder,
+  company,
+  companyContact,
+  companyCustomField,
+  companyCustomValue,
   contact,
   contactActivity,
+  contactCampaign,
+  contactCustomField,
+  contactCustomValue,
   contactDeal,
   marketingCampaign,
   paymentTrack,
   resourceContent,
   resourceContentSendTrack,
+  resourceContentShare,
+  resourceEmails,
   session,
+  siteConfig,
   subscriptionCoupon,
   subscriptionPlan,
   team,
   teamActivity,
+  teamContact,
+  teamCustomField,
+  teamCustomValue,
+  teamMeeting,
   user,
   userNotifications,
   userTask,
@@ -185,12 +199,6 @@ export type Timezone = z.infer<typeof timezoneSchema>;
 
 export type User = InferSelectModel<typeof user>;
 
-export type UserTask = InferSelectModel<typeof userTask>;
-
-export type Team = InferSelectModel<typeof team>;
-
-export type TeamActivity = InferSelectModel<typeof teamActivity>;
-
 export type Account = InferSelectModel<typeof account>;
 
 export type Authenticator = InferSelectModel<typeof authenticator>;
@@ -198,6 +206,8 @@ export type Authenticator = InferSelectModel<typeof authenticator>;
 export type Session = InferSelectModel<typeof session>;
 
 export type Contact = InferSelectModel<typeof contact>;
+
+export type CompanyContact = InferSelectModel<typeof companyContact>;
 
 export type ContactDeal = InferSelectModel<typeof contactDeal>;
 
@@ -219,15 +229,49 @@ export type CalendarEventShare = InferSelectModel<typeof calendarEventShare>;
 
 export type CalendarEventParticipant = InferSelectModel<typeof calendarEventParticipant>;
 
-export type CalendarEventWithParticipants = CalendarEvent & {
-  participants: CalendarEventParticipant[];
-};
-
 export type ResourceContent = InferSelectModel<typeof resourceContent>;
+
+export type ResourceContentShare = InferSelectModel<typeof resourceContentShare>;
+
+export type ResourceContentSendTrack = InferSelectModel<typeof resourceContentSendTrack>;
+
+export type ResourceEmails = InferSelectModel<typeof resourceEmails>;
 
 export type MarketingCampaign = InferSelectModel<typeof marketingCampaign> & {
   contactCount?: number;
   convertedCount?: number;
 };
 
-export type ResourceContentSendTrack = InferSelectModel<typeof resourceContentSendTrack>;
+export type Company = InferSelectModel<typeof company> & {
+  teams?: number;
+};
+
+export type Team = InferSelectModel<typeof team>;
+
+export type TeamContact = InferSelectModel<typeof teamContact>;
+
+export type TeamActivity = InferSelectModel<typeof teamActivity>;
+
+export type UserTask = InferSelectModel<typeof userTask>;
+
+export type TeamMeeting = InferSelectModel<typeof teamMeeting>;
+
+export type ContactCampaign = InferSelectModel<typeof contactCampaign>;
+
+export type ContactCustomField = InferSelectModel<typeof contactCustomField>;
+
+export type ContactCustomValue = InferSelectModel<typeof contactCustomValue>;
+
+export type TeamCustomField = InferSelectModel<typeof teamCustomField>;
+
+export type TeamCustomValue = InferSelectModel<typeof teamCustomValue>;
+
+export type CompanyCustomField = InferSelectModel<typeof companyCustomField>;
+
+export type CompanyCustomValue = InferSelectModel<typeof companyCustomValue>;
+
+export type SiteConfig = InferSelectModel<typeof siteConfig>;
+
+export type CalendarEventWithParticipants = CalendarEvent & {
+  participants: CalendarEventParticipant[];
+};

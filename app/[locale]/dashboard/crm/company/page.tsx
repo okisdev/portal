@@ -460,7 +460,7 @@ export default function CompanyPage() {
     {
       accessorKey: 'status',
       header: ({ column }) => <DataTableHeader column={column} title={t('status')} />,
-      cell: ({ row }) => <ColorBadge type='companyStatus' value={row.original.status} />,
+      cell: ({ row }) => <ColorBadge type='companyStatus' value={row.original.status || ''} />,
     },
     {
       accessorKey: 'phone',
@@ -472,7 +472,7 @@ export default function CompanyPage() {
       header: ({ column }) => <DataTableHeader column={column} title={t('website')} />,
       cell: ({ row }) => (
         <Button variant='ghost' size='sm' disabled={!row.original.website} asChild onClick={(e) => e.stopPropagation()}>
-          <Link href={row.original.website} target='_blank' rel='noopener noreferrer'>
+          <Link href={row.original.website || ''} target='_blank' rel='noopener noreferrer'>
             {row.original.website ? t('visit') : '—'}
             {row.original.website && <ExternalLink className='h-4 w-4' />}
           </Link>
