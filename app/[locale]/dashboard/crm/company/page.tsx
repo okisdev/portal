@@ -6,6 +6,7 @@ import { Combobox } from '@/components/shared/combobox';
 import { PageHeader } from '@/components/shared/page-header';
 import { PhoneInput } from '@/components/shared/phone-input';
 import { DataTable } from '@/components/shared/table';
+import { DataTableHeader } from '@/components/shared/table/header';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -22,6 +23,8 @@ import {
   type SortingState,
   type VisibilityState,
   getCoreRowModel,
+  getFacetedRowModel,
+  getFacetedUniqueValues,
   getFilteredRowModel,
   getPaginationRowModel,
   getSortedRowModel,
@@ -424,7 +427,7 @@ export default function CompanyPage() {
     },
     {
       accessorKey: 'name',
-      header: t('name'),
+      header: ({ column }) => <DataTableHeader column={column} title={t('name')} />,
       cell: ({ row }) => (
         <div className='flex items-center gap-2'>
           <div>
@@ -436,17 +439,17 @@ export default function CompanyPage() {
     },
     {
       accessorKey: 'industry',
-      header: t('industry'),
+      header: ({ column }) => <DataTableHeader column={column} title={t('industry')} />,
       cell: ({ row }) => <span className='capitalize'>{row.original.industry || '—'}</span>,
     },
     {
       accessorKey: 'size',
-      header: t('size'),
+      header: ({ column }) => <DataTableHeader column={column} title={t('size')} />,
       cell: ({ row }) => <span className='capitalize'>{row.original.size || '—'}</span>,
     },
     {
       accessorKey: 'teams',
-      header: t('teams'),
+      header: ({ column }) => <DataTableHeader column={column} title={t('teams')} />,
       cell: ({ row }) => <span>{row.original.teams || 0}</span>,
     },
     // {
@@ -456,17 +459,17 @@ export default function CompanyPage() {
     // },
     {
       accessorKey: 'status',
-      header: t('status'),
+      header: ({ column }) => <DataTableHeader column={column} title={t('status')} />,
       cell: ({ row }) => <ColorBadge type='companyStatus' value={row.original.status} />,
     },
     {
       accessorKey: 'phone',
-      header: t('phone'),
+      header: ({ column }) => <DataTableHeader column={column} title={t('phone')} />,
       cell: ({ row }) => <span>{row.original.phone || '—'}</span>,
     },
     {
       accessorKey: 'website',
-      header: t('website'),
+      header: ({ column }) => <DataTableHeader column={column} title={t('website')} />,
       cell: ({ row }) => (
         <Button variant='ghost' size='sm' disabled={!row.original.website} asChild onClick={(e) => e.stopPropagation()}>
           <Link href={row.original.website} target='_blank' rel='noopener noreferrer'>
@@ -478,7 +481,7 @@ export default function CompanyPage() {
     },
     {
       accessorKey: 'createdAt',
-      header: t('created'),
+      header: ({ column }) => <DataTableHeader column={column} title={t('created')} />,
       cell: ({ row }) => new Date(row.original.createdAt).toLocaleDateString(),
     },
     {
@@ -508,25 +511,23 @@ export default function CompanyPage() {
   const table = useReactTable({
     data: filteredCompanies,
     columns: tableColumns,
-    onSortingChange: setSorting,
-    onColumnFiltersChange: setColumnFilters,
-    getCoreRowModel: getCoreRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-    onColumnVisibilityChange: setColumnVisibility,
-    onRowSelectionChange: setRowSelection,
-    initialState: {
-      pagination: {
-        pageSize: 13,
-      },
-    },
     state: {
       sorting,
-      columnFilters,
       columnVisibility,
       rowSelection,
+      columnFilters,
     },
+    enableRowSelection: true,
+    onRowSelectionChange: setRowSelection,
+    onSortingChange: setSorting,
+    onColumnFiltersChange: setColumnFilters,
+    onColumnVisibilityChange: setColumnVisibility,
+    getCoreRowModel: getCoreRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    getFacetedRowModel: getFacetedRowModel(),
+    getFacetedUniqueValues: getFacetedUniqueValues(),
   });
 
   return (

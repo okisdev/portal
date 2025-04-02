@@ -5,6 +5,7 @@ import { ColorBadge } from '@/components/shared/color-badge';
 import { Combobox } from '@/components/shared/combobox';
 import { PageHeader } from '@/components/shared/page-header';
 import { DataTable } from '@/components/shared/table';
+import { DataTableHeader } from '@/components/shared/table/header';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -22,6 +23,8 @@ import {
   type SortingState,
   type VisibilityState,
   getCoreRowModel,
+  getFacetedRowModel,
+  getFacetedUniqueValues,
   getFilteredRowModel,
   getPaginationRowModel,
   getSortedRowModel,
@@ -346,7 +349,7 @@ export default function CRMContactsPage() {
     },
     {
       accessorKey: 'name',
-      header: t('name'),
+      header: ({ column }) => <DataTableHeader column={column} title={t('name')} />,
       cell: ({ row }) => (
         <div className='flex items-center gap-2'>
           <Avatar className='size-8'>
@@ -362,19 +365,19 @@ export default function CRMContactsPage() {
     },
     {
       accessorKey: 'phone',
-      header: t('phone'),
+      header: ({ column }) => <DataTableHeader column={column} title={t('phone')} />,
       cell: ({ row }) => <span>{row.original.phone ? parsePhoneWithoutCountryCode(row.original.phone) : '—'}</span>,
       enableSorting: true,
     },
     {
       accessorKey: 'company',
-      header: t('company'),
+      header: ({ column }) => <DataTableHeader column={column} title={t('company')} />,
       cell: ({ row }) => <span className='capitalize'>{row.original.company || '—'}</span>,
       enableSorting: true,
     },
     {
       accessorKey: 'status',
-      header: t('status'),
+      header: ({ column }) => <DataTableHeader column={column} title={t('status')} />,
       cell: ({ row }) => (
         <Select value={row.original.status} onValueChange={(value) => handleStatusChange(row.original.id, value as Status)} disabled={updateContact.isPending}>
           <SelectTrigger className='h-8 w-[130px]'>
@@ -395,7 +398,7 @@ export default function CRMContactsPage() {
     },
     {
       accessorKey: 'priority',
-      header: t('priority'),
+      header: ({ column }) => <DataTableHeader column={column} title={t('priority')} />,
       cell: ({ row }) => (
         <Select value={row.original.priority || 'medium'} onValueChange={(value) => handlePriorityChange(row.original.id, value as Priority)} disabled={updateContact.isPending}>
           <SelectTrigger className='h-8 w-[130px]'>
@@ -416,7 +419,7 @@ export default function CRMContactsPage() {
     },
     {
       accessorKey: 'source',
-      header: t('source'),
+      header: ({ column }) => <DataTableHeader column={column} title={t('source')} />,
       cell: ({ row }) => (
         <Select value={row.original.source || 'N/A'} onValueChange={(value) => handleSourceChange(row.original.id, value as Source)} disabled={updateContact.isPending}>
           <SelectTrigger className='h-8 w-[130px]'>
@@ -437,13 +440,13 @@ export default function CRMContactsPage() {
     },
     {
       accessorKey: 'createdAt',
-      header: t('created_at'),
+      header: ({ column }) => <DataTableHeader column={column} title={t('created_at')} />,
       cell: ({ row }) => formatDateWithoutTime(row.original.createdAt),
       enableSorting: true,
     },
     {
       accessorKey: 'next_follow_up',
-      header: t('next_follow_up'),
+      header: ({ column }) => <DataTableHeader column={column} title={t('next_follow_up')} />,
       cell: ({ row }) => (row.original.nextFollowUpAt ? formatDateWithoutTime(row.original.nextFollowUpAt) : '—'),
       enableSorting: true,
     },
@@ -475,6 +478,8 @@ export default function CRMContactsPage() {
           </DropdownMenuContent>
         </DropdownMenu>
       ),
+      enableSorting: false,
+      enableHiding: false,
     },
   ];
 
@@ -483,19 +488,21 @@ export default function CRMContactsPage() {
     columns: tableColumns,
     state: {
       sorting,
-      columnFilters,
       columnVisibility,
       rowSelection,
+      columnFilters,
     },
     enableRowSelection: true,
+    onRowSelectionChange: setRowSelection,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     onColumnVisibilityChange: setColumnVisibility,
-    onRowSelectionChange: setRowSelection,
     getCoreRowModel: getCoreRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     getSortedRowModel: getSortedRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
+    getFacetedRowModel: getFacetedRowModel(),
+    getFacetedUniqueValues: getFacetedUniqueValues(),
   });
 
   return (

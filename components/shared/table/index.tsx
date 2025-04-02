@@ -4,7 +4,6 @@ import { TableLoading } from '@/components/shared/table/loading';
 import { DataTablePagination } from '@/components/shared/table/pagination';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { type ColumnDef, type Table as TableType, flexRender } from '@tanstack/react-table';
-import { ChevronDown, ChevronUp, ChevronsUpDown } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 
 interface PaginationTableProps<TData> {
@@ -37,33 +36,8 @@ export function DataTable<TData>({ table, columns, loading, onRowClick }: Pagina
                 {table.getHeaderGroups().map((headerGroup) => (
                   <TableRow key={headerGroup.id}>
                     {headerGroup.headers.map((header) => (
-                      <TableHead key={header.id}>
-                        {header.isPlaceholder ? null : (
-                          <div
-                            className={header.column.getCanSort() ? 'cursor-pointer select-none' : ''}
-                            onClick={header.column.getToggleSortingHandler()}
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter' || e.key === ' ') {
-                                e.preventDefault();
-                                header.column.toggleSorting();
-                              }
-                            }}
-                            tabIndex={header.column.getCanSort() ? 0 : undefined}
-                            role={header.column.getCanSort() ? 'button' : undefined}
-                          >
-                            {flexRender(header.column.columnDef.header, header.getContext())}
-                            {header.column.getCanSort() ? (
-                              header.column.getIsSorted() ? (
-                                {
-                                  asc: <ChevronUp className='ml-2 inline h-4 w-4' />,
-                                  desc: <ChevronDown className='ml-2 inline h-4 w-4' />,
-                                }[header.column.getIsSorted() as string]
-                              ) : (
-                                <ChevronsUpDown className='ml-2 inline h-4 w-4' />
-                              )
-                            ) : null}
-                          </div>
-                        )}
+                      <TableHead key={header.id} colSpan={header.colSpan}>
+                        {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
                       </TableHead>
                     ))}
                   </TableRow>

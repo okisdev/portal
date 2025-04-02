@@ -4,6 +4,7 @@ import { ActionAlertDialog } from '@/components/shared/action-alert-dialog';
 import { Combobox } from '@/components/shared/combobox';
 import { PageHeader } from '@/components/shared/page-header';
 import { DataTable } from '@/components/shared/table';
+import { DataTableHeader } from '@/components/shared/table/header';
 import { TableLoading } from '@/components/shared/table/loading';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -19,6 +20,8 @@ import {
   type SortingState,
   type VisibilityState,
   getCoreRowModel,
+  getFacetedRowModel,
+  getFacetedUniqueValues,
   getFilteredRowModel,
   getPaginationRowModel,
   getSortedRowModel,
@@ -109,7 +112,7 @@ export default function CRMTeamsPage() {
     },
     {
       accessorKey: 'name',
-      header: t('team_name'),
+      header: ({ column }) => <DataTableHeader column={column} title={t('team_name')} />,
       cell: ({ row }) => (
         <div className='flex items-center gap-2'>
           <Users className='size-4 text-muted-foreground' />
@@ -119,15 +122,15 @@ export default function CRMTeamsPage() {
     },
     {
       accessorKey: 'description',
-      header: t('description'),
+      header: ({ column }) => <DataTableHeader column={column} title={t('description')} />,
     },
     {
       accessorKey: 'contacts',
-      header: t('contacts'),
+      header: ({ column }) => <DataTableHeader column={column} title={t('contacts')} />,
     },
     {
       accessorKey: 'company',
-      header: t('company'),
+      header: ({ column }) => <DataTableHeader column={column} title={t('company')} />,
       cell: ({ row }) => {
         const { company } = row.original;
         return company ? company.name : '-';
@@ -135,7 +138,7 @@ export default function CRMTeamsPage() {
     },
     {
       accessorKey: 'createdAt',
-      header: t('created'),
+      header: ({ column }) => <DataTableHeader column={column} title={t('created')} />,
       cell: ({ row }) => formatDate(new Date(row.getValue('createdAt'))),
     },
     {
@@ -172,31 +175,31 @@ export default function CRMTeamsPage() {
           </DropdownMenuContent>
         </DropdownMenu>
       ),
+      enableSorting: false,
+      enableHiding: false,
     },
   ];
 
   const table = useReactTable({
     data: teams ?? [],
     columns: tableColumns,
-    onSortingChange: setSorting,
-    onColumnFiltersChange: setColumnFilters,
-    getCoreRowModel: getCoreRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-    onColumnVisibilityChange: setColumnVisibility,
-    onRowSelectionChange: setRowSelection,
-    initialState: {
-      pagination: {
-        pageSize: 13,
-      },
-    },
     state: {
       sorting,
-      columnFilters,
       columnVisibility,
       rowSelection,
+      columnFilters,
     },
+    enableRowSelection: true,
+    onRowSelectionChange: setRowSelection,
+    onSortingChange: setSorting,
+    onColumnFiltersChange: setColumnFilters,
+    onColumnVisibilityChange: setColumnVisibility,
+    getCoreRowModel: getCoreRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    getFacetedRowModel: getFacetedRowModel(),
+    getFacetedUniqueValues: getFacetedUniqueValues(),
   });
 
   if (isLoading) {

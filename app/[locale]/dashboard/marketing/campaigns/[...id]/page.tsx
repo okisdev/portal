@@ -6,6 +6,7 @@ import { ComboboxCommand } from '@/components/shared/combobox';
 import { PageHeader } from '@/components/shared/page-header';
 import { PageLoading } from '@/components/shared/page-loading';
 import { DataTable } from '@/components/shared/table';
+import { DataTableHeader } from '@/components/shared/table/header';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -22,13 +23,14 @@ import { useDebounce } from '@/hooks/use-debounce';
 import { formatDate } from '@/utils/date';
 import { api } from '@/utils/trpc/client';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { CaretSortIcon } from '@radix-ui/react-icons';
 import {
   type ColumnDef,
   type ColumnFiltersState,
   type SortingState,
   type VisibilityState,
   getCoreRowModel,
+  getFacetedRowModel,
+  getFacetedUniqueValues,
   getFilteredRowModel,
   getPaginationRowModel,
   getSortedRowModel,
@@ -179,11 +181,7 @@ export default function CampaignDetailsPage() {
     },
     {
       accessorKey: 'name',
-      header: ({ column }) => (
-        <button type='button' onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
-          {t('name')} {column.getIsSorted() && <CaretSortIcon className='ml-2 inline' />}
-        </button>
-      ),
+      header: ({ column }) => <DataTableHeader column={column} title={t('name')} />,
       cell: ({ row }) => (
         <div className='flex items-center gap-2'>
           <Avatar className='h-8 w-8'>
@@ -195,36 +193,20 @@ export default function CampaignDetailsPage() {
     },
     {
       accessorKey: 'email',
-      header: ({ column }) => (
-        <button type='button' onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
-          {t('email')} {column.getIsSorted() && <CaretSortIcon className='ml-2 inline' />}
-        </button>
-      ),
+      header: ({ column }) => <DataTableHeader column={column} title={t('email')} />,
     },
     {
       accessorKey: 'company',
-      header: ({ column }) => (
-        <button type='button' onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
-          {t('company')} {column.getIsSorted() && <CaretSortIcon className='ml-2 inline' />}
-        </button>
-      ),
+      header: ({ column }) => <DataTableHeader column={column} title={t('company')} />,
     },
     {
       accessorKey: 'status',
-      header: ({ column }) => (
-        <button type='button' onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
-          {t('status')} {column.getIsSorted() && <CaretSortIcon className='ml-2 inline' />}
-        </button>
-      ),
+      header: ({ column }) => <DataTableHeader column={column} title={t('status')} />,
       cell: ({ row }) => <ColorBadge type='contactStatus' value={row.original.status} />,
     },
     {
       accessorKey: 'joinedAt',
-      header: ({ column }) => (
-        <button type='button' onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
-          {t('joined_date')} {column.getIsSorted() && <CaretSortIcon className='ml-2 inline' />}
-        </button>
-      ),
+      header: ({ column }) => <DataTableHeader column={column} title={t('joined_date')} />,
       cell: ({ row }) => formatDate(new Date(row.original.joinedAt)),
     },
     {
@@ -250,6 +232,8 @@ export default function CampaignDetailsPage() {
           </DropdownMenu>
         </div>
       ),
+      enableSorting: false,
+      enableHiding: false,
     },
   ];
 
@@ -294,25 +278,23 @@ export default function CampaignDetailsPage() {
   const table = useReactTable({
     data: filteredContacts,
     columns,
-    onSortingChange: setSorting,
-    onColumnFiltersChange: setColumnFilters,
-    getCoreRowModel: getCoreRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-    onColumnVisibilityChange: setColumnVisibility,
-    onRowSelectionChange: setRowSelection,
-    initialState: {
-      pagination: {
-        pageSize: 13,
-      },
-    },
     state: {
       sorting,
-      columnFilters,
       columnVisibility,
       rowSelection,
+      columnFilters,
     },
+    enableRowSelection: true,
+    onRowSelectionChange: setRowSelection,
+    onSortingChange: setSorting,
+    onColumnFiltersChange: setColumnFilters,
+    onColumnVisibilityChange: setColumnVisibility,
+    getCoreRowModel: getCoreRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    getFacetedRowModel: getFacetedRowModel(),
+    getFacetedUniqueValues: getFacetedUniqueValues(),
   });
 
   const handleDeleteClick = (contactId: string, e: React.MouseEvent) => {

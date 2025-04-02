@@ -3,6 +3,7 @@
 import { ColorBadge } from '@/components/shared/color-badge';
 import { PageHeader } from '@/components/shared/page-header';
 import { DataTable } from '@/components/shared/table';
+import { DataTableHeader } from '@/components/shared/table/header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -16,13 +17,14 @@ import { campaignTypes } from '@/data/data';
 import type { MarketingCampaign } from '@/lib/schema';
 import { api } from '@/utils/trpc/client';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { CaretSortIcon } from '@radix-ui/react-icons';
 import {
   type ColumnDef,
   type ColumnFiltersState,
   type SortingState,
   type VisibilityState,
   getCoreRowModel,
+  getFacetedRowModel,
+  getFacetedUniqueValues,
   getFilteredRowModel,
   getPaginationRowModel,
   getSortedRowModel,
@@ -147,55 +149,31 @@ export default function MarketingCampaignsPage() {
     },
     {
       accessorKey: 'name',
-      header: ({ column }) => (
-        <button type='button' onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
-          {t('campaign_name')} {column.getIsSorted() && <CaretSortIcon className='ml-2 inline' />}
-        </button>
-      ),
+      header: ({ column }) => <DataTableHeader column={column} title={t('campaign_name')} />,
     },
     {
       accessorKey: 'campaignCode',
-      header: ({ column }) => (
-        <button type='button' onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
-          {t('code')} {column.getIsSorted() && <CaretSortIcon className='ml-2 inline' />}
-        </button>
-      ),
+      header: ({ column }) => <DataTableHeader column={column} title={t('code')} />,
       cell: ({ row }) => row.original.campaignCode || '-',
     },
     {
       accessorKey: 'status',
-      header: ({ column }) => (
-        <button type='button' onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
-          {t('status')} {column.getIsSorted() && <CaretSortIcon className='ml-2 inline' />}
-        </button>
-      ),
+      header: ({ column }) => <DataTableHeader column={column} title={t('status')} />,
       cell: ({ row }) => <ColorBadge type='campaignStatus' value={row.original.status} />,
     },
     {
       accessorKey: 'type',
-      header: ({ column }) => (
-        <button type='button' onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
-          {t('type')} {column.getIsSorted() && <CaretSortIcon className='ml-2 inline' />}
-        </button>
-      ),
+      header: ({ column }) => <DataTableHeader column={column} title={t('type')} />,
       cell: ({ row }) => <span className='capitalize'>{row.original.type}</span>,
     },
     {
       accessorKey: 'contactCount',
-      header: ({ column }) => (
-        <button type='button' onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
-          {t('contacts')} {column.getIsSorted() && <CaretSortIcon className='ml-2 inline' />}
-        </button>
-      ),
+      header: ({ column }) => <DataTableHeader column={column} title={t('contacts')} />,
       cell: ({ row }) => row.original.contactCount || 0,
     },
     {
       accessorKey: 'createdAt',
-      header: ({ column }) => (
-        <button type='button' onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
-          {t('created')} {column.getIsSorted() && <CaretSortIcon className='ml-2 inline' />}
-        </button>
-      ),
+      header: ({ column }) => <DataTableHeader column={column} title={t('created')} />,
       cell: ({ row }) => new Date(row.original.createdAt).toLocaleDateString(),
     },
     {
@@ -216,31 +194,31 @@ export default function MarketingCampaignsPage() {
           </DropdownMenu>
         </div>
       ),
+      enableSorting: false,
+      enableHiding: false,
     },
   ];
 
   const table = useReactTable({
     data: filteredCampaigns,
     columns,
-    onSortingChange: setSorting,
-    onColumnFiltersChange: setColumnFilters,
-    getCoreRowModel: getCoreRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-    onColumnVisibilityChange: setColumnVisibility,
-    onRowSelectionChange: setRowSelection,
-    initialState: {
-      pagination: {
-        pageSize: 13,
-      },
-    },
     state: {
       sorting,
-      columnFilters,
       columnVisibility,
       rowSelection,
+      columnFilters,
     },
+    enableRowSelection: true,
+    onRowSelectionChange: setRowSelection,
+    onSortingChange: setSorting,
+    onColumnFiltersChange: setColumnFilters,
+    onColumnVisibilityChange: setColumnVisibility,
+    getCoreRowModel: getCoreRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    getFacetedRowModel: getFacetedRowModel(),
+    getFacetedUniqueValues: getFacetedUniqueValues(),
   });
 
   return (

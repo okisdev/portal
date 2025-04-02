@@ -10,6 +10,7 @@ import { EventSection } from '@/components/shared/event-section';
 import { PageLoading } from '@/components/shared/page-loading';
 import { TabSwitcher } from '@/components/shared/tab-switcher';
 import { DataTable } from '@/components/shared/table';
+import { DataTableHeader } from '@/components/shared/table/header';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -22,13 +23,14 @@ import { Textarea } from '@/components/ui/textarea';
 import { formatDate } from '@/utils/date';
 import { parsePhone } from '@/utils/phone';
 import { api } from '@/utils/trpc/client';
-import { CaretSortIcon } from '@radix-ui/react-icons';
 import {
   type ColumnDef,
   type ColumnFiltersState,
   type SortingState,
   type VisibilityState,
   getCoreRowModel,
+  getFacetedRowModel,
+  getFacetedUniqueValues,
   getFilteredRowModel,
   getPaginationRowModel,
   getSortedRowModel,
@@ -203,11 +205,7 @@ export default function TeamIdPage() {
     },
     {
       accessorKey: 'name',
-      header: ({ column }) => (
-        <Button variant='ghost' onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
-          {t('name')} {column.getIsSorted() && <CaretSortIcon className='ml-2 inline' />}
-        </Button>
-      ),
+      header: ({ column }) => <DataTableHeader column={column} title={t('name')} />,
       cell: ({ row }) => (
         <div className='flex items-center gap-2'>
           <Avatar className='size-8'>
@@ -224,11 +222,7 @@ export default function TeamIdPage() {
     },
     {
       accessorKey: 'role',
-      header: ({ column }) => (
-        <Button variant='ghost' onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
-          {t('role')} {column.getIsSorted() && <CaretSortIcon className='ml-2 inline' />}
-        </Button>
-      ),
+      header: ({ column }) => <DataTableHeader column={column} title={t('role')} />,
       cell: ({ row }) => {
         const isLeader = team?.leaderId === row.original.contact.id;
         const isSubLeader = team?.subLeaderId === row.original.contact.id;
@@ -237,29 +231,17 @@ export default function TeamIdPage() {
     },
     {
       accessorKey: 'phone',
-      header: ({ column }) => (
-        <Button variant='ghost' onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
-          {t('phone')} {column.getIsSorted() && <CaretSortIcon className='ml-2 inline' />}
-        </Button>
-      ),
+      header: ({ column }) => <DataTableHeader column={column} title={t('phone')} />,
       cell: ({ row }) => parsePhone(row.original.contact.phone) || '-',
     },
     {
       accessorKey: 'company',
-      header: ({ column }) => (
-        <Button variant='ghost' onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
-          {t('company')} {column.getIsSorted() && <CaretSortIcon className='ml-2 inline' />}
-        </Button>
-      ),
+      header: ({ column }) => <DataTableHeader column={column} title={t('company')} />,
       cell: ({ row }) => row.original.contact.company || '-',
     },
     {
       accessorKey: 'status',
-      header: ({ column }) => (
-        <Button variant='ghost' onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
-          {t('status')} {column.getIsSorted() && <CaretSortIcon className='ml-2 inline' />}
-        </Button>
-      ),
+      header: ({ column }) => <DataTableHeader column={column} title={t('status')} />,
       cell: ({ row }) => <ColorBadge type='contactStatus' value={row.original.contact.status} />,
     },
     {
@@ -298,31 +280,31 @@ export default function TeamIdPage() {
           </DropdownMenu>
         </div>
       ),
+      enableSorting: false,
+      enableHiding: false,
     },
   ];
 
   const table = useReactTable({
-    data: teamContacts || [],
+    data: teamContacts ?? [],
     columns,
-    onSortingChange: setSorting,
-    onColumnFiltersChange: setColumnFilters,
-    getCoreRowModel: getCoreRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-    onColumnVisibilityChange: setColumnVisibility,
-    onRowSelectionChange: setRowSelection,
-    initialState: {
-      pagination: {
-        pageSize: 8,
-      },
-    },
     state: {
       sorting,
-      columnFilters,
       columnVisibility,
       rowSelection,
+      columnFilters,
     },
+    enableRowSelection: true,
+    onRowSelectionChange: setRowSelection,
+    onSortingChange: setSorting,
+    onColumnFiltersChange: setColumnFilters,
+    onColumnVisibilityChange: setColumnVisibility,
+    getCoreRowModel: getCoreRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    getFacetedRowModel: getFacetedRowModel(),
+    getFacetedUniqueValues: getFacetedUniqueValues(),
   });
 
   if (isLoading) return <PageLoading />;

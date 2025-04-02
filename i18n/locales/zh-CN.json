@@ -586,5 +586,8 @@
   "go_to_last_page": "转到最后一页",
   "go_to_next_page": "转到下一页",
   "go_to_previous_page": "转到上一页",
-  "rows_per_page": "每页行"
+  "rows_per_page": "每页行",
+  "asc": "ASC",
+  "desc": "desc",
+  "cancel_sorting": "取消排序"
 }
