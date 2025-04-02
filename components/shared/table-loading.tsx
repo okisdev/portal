@@ -8,7 +8,7 @@ interface TableLoadingProps {
   showActions?: boolean;
 }
 
-export function TableLoading({ columnCount = 5, rowCount = 5, showActions = true }: TableLoadingProps) {
+export function TableLoading({ columnCount = 5, rowCount = 10, showActions = true }: TableLoadingProps) {
   return (
     <Table>
       <TableHeader>

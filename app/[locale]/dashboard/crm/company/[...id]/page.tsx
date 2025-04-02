@@ -3,7 +3,6 @@
 import { ActionAlertDialog } from '@/components/shared/action-alert-dialog';
 import { ColorBadge } from '@/components/shared/color-badge';
 import { EventDialog } from '@/components/shared/event-dialog';
-import { PageHeader } from '@/components/shared/page-header';
 import { PageLoading } from '@/components/shared/page-loading';
 import { PhoneInput } from '@/components/shared/phone-input';
 import { Button } from '@/components/ui/button';
@@ -200,113 +199,123 @@ export default function CompanyIdPage() {
   };
 
   return (
-    <div className='space-y-4 p-4'>
-      <PageHeader
-        title={company.name}
-        description={company.description || ''}
-        right={
-          <div className='flex items-center gap-2'>
-            <Button variant='outline' size='sm' className='h-8' onClick={handleEditClick}>
-              <Edit2 className='mr-1 size-4' /> {t('edit_company')}
-            </Button>
-          </div>
-        }
-      />
-
-      <div className='grid grid-cols-3 gap-4'>
-        <div className='col-span-2 space-y-4'>
-          <div className='rounded-lg border bg-card p-4'>
-            <div className='flex items-center justify-between'>
-              <p className='font-medium'>{t('company_teams')}</p>
-              <Button variant='outline' size='sm' className='h-8' onClick={() => router.push(`/dashboard/crm/team/new?companyId=${companyId[0]}`)}>
-                <Plus className='mr-1 size-4' /> {t('add_team')}
-              </Button>
+    <div className='container mx-auto h-[calc(100vh-4rem)] p-0 sm:p-6'>
+      <div className='flex h-full flex-col lg:flex-row'>
+        <div className='w-full lg:w-2/3'>
+          <div className='flex h-full flex-col rounded-none border bg-card text-card-foreground shadow-xs sm:rounded-l-lg'>
+            <div className='flex-none border-b p-4 sm:p-6'>
+              <div className='flex items-center justify-between'>
+                <div>
+                  <h1 className='font-semibold text-xl'>{company.name}</h1>
+                  <p className='text-muted-foreground text-sm'>{company.description || ''}</p>
+                </div>
+                <div className='flex items-center gap-2'>
+                  <Button variant='outline' size='sm' className='h-8' onClick={handleEditClick}>
+                    <Edit2 className='mr-1 size-4' /> {t('edit_company')}
+                  </Button>
+                </div>
+              </div>
             </div>
-            <div className='mt-4 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3'>
-              {teams && teams?.length === 0 && <p className='text-muted-foreground text-sm'>{t('no_company_teams_found')}</p>}
-              {teams?.map((team) => (
-                <Link key={team.id} href={`/dashboard/crm/team/${team.id}`} className='rounded-lg border bg-card p-4 transition-colors hover:bg-muted/50'>
-                  <div className='flex items-start justify-between'>
-                    <div>
-                      <p className='font-medium'>{team.name}</p>
-                      <p className='text-muted-foreground text-sm'>{team.description || 'N/A'}</p>
-                    </div>
-                    <div className='flex items-center gap-2'>
-                      <div className='flex items-center gap-1'>
-                        <Users className='size-4' />
-                        <span className='text-sm'>{team.contacts}</span>
+
+            <div className='flex-1 overflow-y-auto'>
+              <div className='border-b p-4 sm:p-6'>
+                <div className='flex items-center justify-between'>
+                  <p className='font-medium'>{t('company_teams')}</p>
+                  <Button variant='outline' size='sm' className='h-8' onClick={() => router.push(`/dashboard/crm/team/new?companyId=${companyId[0]}`)}>
+                    <Plus className='mr-1 size-4' /> {t('add_team')}
+                  </Button>
+                </div>
+                <div className='mt-4 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3'>
+                  {teams && teams?.length === 0 && <p className='text-muted-foreground text-sm'>{t('no_company_teams_found')}</p>}
+                  {teams?.map((team) => (
+                    <Link key={team.id} href={`/dashboard/crm/team/${team.id}`} className='rounded-lg border bg-card p-4 transition-colors hover:bg-muted/50'>
+                      <div className='flex items-start justify-between'>
+                        <div>
+                          <p className='font-medium'>{team.name}</p>
+                          <p className='text-muted-foreground text-sm'>{team.description || 'N/A'}</p>
+                        </div>
+                        <div className='flex items-center gap-2'>
+                          <div className='flex items-center gap-1'>
+                            <Users className='size-4' />
+                            <span className='text-sm'>{team.contacts}</span>
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                  </div>
-                </Link>
-              ))}
+                    </Link>
+                  ))}
+                </div>
+              </div>
             </div>
           </div>
         </div>
 
-        <div className='space-y-4'>
-          <div className='rounded-lg border bg-card p-4'>
-            <h2 className='mb-3 font-medium'>{t('company_information')}</h2>
-            <div className='space-y-1'>
+        <div className='w-full lg:w-1/3'>
+          <div className='h-full overflow-y-auto rounded-none border border-t-0 border-l-0 p-4 sm:rounded-r-lg sm:border-t-1 sm:p-6'>
+            <div className='space-y-6'>
               <div>
-                <Label className='text-muted-foreground text-xs'>{t('industry')}</Label>
-                <p className='text-sm'>{company.industry || 'N/A'}</p>
+                <h2 className='mb-4 font-medium'>{t('company_information')}</h2>
+                <div className='space-y-4'>
+                  <div>
+                    <Label className='text-muted-foreground text-xs'>{t('industry')}</Label>
+                    <p className='text-sm'>{company.industry || 'N/A'}</p>
+                  </div>
+                  <div>
+                    <Label className='text-muted-foreground text-xs'>{t('size')}</Label>
+                    <p className='text-sm'>{company.size || 'N/A'}</p>
+                  </div>
+                  <div>
+                    <Label className='text-muted-foreground text-xs'>{t('website')}</Label>
+                    <p className='text-sm'>
+                      {(company.website && (
+                        <Link href={company.website} target='_blank' rel='noopener noreferrer' className='text-primary hover:underline'>
+                          {company.website}
+                        </Link>
+                      )) ||
+                        'N/A'}
+                    </p>
+                  </div>
+                  <div>
+                    <Label className='text-muted-foreground text-xs'>{t('email')}</Label>
+                    <p className='text-sm'>{company.email || 'N/A'}</p>
+                  </div>
+                  <div>
+                    <Label className='text-muted-foreground text-xs'>{t('phone')}</Label>
+                    <p className='text-sm'>{company.phone || 'N/A'}</p>
+                  </div>
+                  <div>
+                    <Label className='text-muted-foreground text-xs'>{t('address')}</Label>
+                    <p className='text-sm'>{[company.address, company.city, company.state, company.country, company.postalCode].filter(Boolean).join(', ') || 'N/A'}</p>
+                  </div>
+                  <div>
+                    <Label className='text-muted-foreground text-xs'>{t('status')}</Label>
+                    <p className='text-sm'>
+                      <ColorBadge type='status' value={company.status || ''} />
+                    </p>
+                  </div>
+                  <div className='flex justify-end'>
+                    <p className='text-muted-foreground text-xs'>{t('created_on', { date: formatDate(new Date(company.createdAt)) })}</p>
+                  </div>
+                </div>
               </div>
-              <div>
-                <Label className='text-muted-foreground text-xs'>{t('size')}</Label>
-                <p className='text-sm'>{company.size || 'N/A'}</p>
-              </div>
-              <div>
-                <Label className='text-muted-foreground text-xs'>{t('website')}</Label>
-                <p className='text-sm'>
-                  {(company.website && (
-                    <Link href={company.website} target='_blank' rel='noopener noreferrer' className='text-primary hover:underline'>
-                      {company.website}
-                    </Link>
-                  )) ||
-                    'N/A'}
-                </p>
-              </div>
-              <div>
-                <Label className='text-muted-foreground text-xs'>{t('email')}</Label>
-                <p className='text-sm'>{company.email || 'N/A'}</p>
-              </div>
-              <div>
-                <Label className='text-muted-foreground text-xs'>{t('phone')}</Label>
-                <p className='text-sm'>{company.phone || 'N/A'}</p>
-              </div>
-              <div>
-                <Label className='text-muted-foreground text-xs'>{t('address')}</Label>
-                <p className='text-sm'>{[company.address, company.city, company.state, company.country, company.postalCode].filter(Boolean).join(', ') || 'N/A'}</p>
-              </div>
-              <div>
-                <Label className='text-muted-foreground text-xs'>{t('status')}</Label>
-                <p className='text-sm'>
-                  <ColorBadge type='status' value={company.status || ''} />
-                </p>
-              </div>
-              <div className='items-cen flex justify-end'>
-                <p className='text-muted-foreground text-xs'>{t('created_on', { date: formatDate(new Date(company.createdAt)) })}</p>
-              </div>
-            </div>
-          </div>
 
-          <div className='rounded-lg border bg-card p-4'>
-            <h2 className='mb-3 font-medium'>{t('company_stats')}</h2>
-            <div className='grid grid-cols-2 gap-4'>
-              <div className='rounded-lg border bg-background p-4'>
-                <div className='flex items-center gap-2'>
-                  <Users className='size-5' />
-                  <p className='font-medium text-sm'>{t('contacts')}</p>
+              <div>
+                <h2 className='mb-4 font-medium'>{t('company_stats')}</h2>
+                <div className='grid grid-cols-2 gap-4'>
+                  <div className='rounded-lg border bg-background p-4'>
+                    <div className='flex items-center gap-2'>
+                      <Users className='size-5' />
+                      <p className='font-medium text-sm'>{t('contacts')}</p>
+                    </div>
+                    <p className='mt-2 font-bold text-2xl'>{company.contactCount}</p>
+                  </div>
+                  <div className='rounded-lg border bg-background p-4'>
+                    <div className='flex items-center gap-2'>
+                      <Users className='size-5' />
+                      <p className='font-medium text-sm'>{t('teams')}</p>
+                    </div>
+                    <p className='mt-2 font-bold text-2xl'>{company.teamCount}</p>
+                  </div>
                 </div>
-                <p className='mt-2 font-bold text-2xl'>{company.contactCount}</p>
-              </div>
-              <div className='rounded-lg border bg-background p-4'>
-                <div className='flex items-center gap-2'>
-                  <Users className='size-5' />
-                  <p className='font-medium text-sm'>{t('teams')}</p>
-                </div>
-                <p className='mt-2 font-bold text-2xl'>{company.teamCount}</p>
               </div>
             </div>
           </div>

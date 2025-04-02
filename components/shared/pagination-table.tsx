@@ -30,7 +30,7 @@ export function PaginationTable<TData>({ table, columns, loading, onRowClick, ro
     <div className='space-y-4'>
       <div className='rounded-md border'>
         {loading ? (
-          <TableLoading columnCount={columns.length} rowCount={13} />
+          <TableLoading columnCount={columns.length} />
         ) : (
           <div className='relative max-h-[800px] overflow-auto'>
             <Table>

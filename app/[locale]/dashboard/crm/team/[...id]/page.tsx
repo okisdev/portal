@@ -7,7 +7,6 @@ import { Combobox } from '@/components/shared/combobox';
 import { ComboboxCommand } from '@/components/shared/combobox';
 import { EventDialog } from '@/components/shared/event-dialog';
 import { EventSection } from '@/components/shared/event-section';
-import { PageHeader } from '@/components/shared/page-header';
 import { PageLoading } from '@/components/shared/page-loading';
 import { PaginationTable } from '@/components/shared/pagination-table';
 import { TabSwitcher } from '@/components/shared/tab-switcher';
@@ -372,192 +371,203 @@ export default function TeamIdPage() {
   };
 
   return (
-    <div className='space-y-4 p-4'>
-      <PageHeader
-        title={team.name}
-        description={team.description || ''}
-        right={
-          <div className='flex items-center gap-2'>
-            <Button variant='outline' size='sm' className='h-8' onClick={() => setIsNewMeetingModalOpen(true)}>
-              <Calendar className='mr-1 size-4' /> {t('add_meeting')}
-            </Button>
-            <Button variant='outline' size='sm' className='h-8' onClick={handleEditClick}>
-              <Edit2 className='mr-1 size-4' /> {t('edit_team')}
-            </Button>
-          </div>
-        }
-      />
-
-      <div className='grid grid-cols-3 gap-4'>
-        <div className='col-span-2 space-y-4'>
-          <div className='space-y-2 rounded-lg border bg-card p-4'>
-            <div className='flex items-center justify-between'>
-              <p className='font-medium'>{t('team_members')}</p>
-              <Popover open={isAddMemberOpen} onOpenChange={setIsAddMemberOpen}>
-                <PopoverTrigger asChild>
-                  <Button variant='outline' size='sm' className='h-8'>
-                    <Plus className='mr-1 size-4' /> {t('add_contact')}
+    <div className='container mx-auto h-[calc(100vh-4rem)] p-0 sm:p-6'>
+      <div className='flex h-full flex-col lg:flex-row'>
+        <div className='w-full lg:w-2/3'>
+          <div className='flex h-full flex-col rounded-none border bg-card text-card-foreground shadow-xs sm:rounded-l-lg'>
+            <div className='flex-none border-b p-4 sm:p-6'>
+              <div className='flex items-center justify-between'>
+                <div>
+                  <h1 className='font-semibold text-xl'>{team.name}</h1>
+                  <p className='text-muted-foreground text-sm'>{team.description || ''}</p>
+                </div>
+                <div className='flex items-center gap-2'>
+                  <Button variant='outline' size='sm' className='h-8' onClick={() => setIsNewMeetingModalOpen(true)}>
+                    <Calendar className='mr-1 size-4' /> {t('add_meeting')}
                   </Button>
-                </PopoverTrigger>
-                <PopoverContent className='w-[300px] p-0' align='end'>
-                  <ComboboxCommand
-                    query={searchValue}
-                    setQuery={setSearchValue}
-                    value=''
-                    onChange={handleAddMember}
-                    setOpen={setIsAddMemberOpen}
-                    items={
-                      contacts
-                        ?.filter(
-                          (contact) =>
-                            !teamContacts?.some((c) => c.contact.id === contact.id) &&
-                            (contact.firstName.toLowerCase().includes(searchValue.toLowerCase()) ||
-                              contact.lastName.toLowerCase().includes(searchValue.toLowerCase()) ||
-                              contact.email?.toLowerCase().includes(searchValue.toLowerCase()))
-                        )
-                        .map((contact) => contact.id) ?? []
-                    }
-                    searchPlaceholder={t('search_contacts')}
-                    emptyText='No contacts found.'
-                    groupHeading='Contacts'
-                    allowCustom={false}
-                    renderItem={(contactId) => {
-                      const contact = contacts?.find((c) => c.id === contactId);
-                      if (!contact) return null;
-                      return (
-                        <>
-                          <Avatar className='size-6'>
-                            <AvatarFallback>{contact.firstName.charAt(0)}</AvatarFallback>
-                          </Avatar>
-                          <div className='flex-1'>
-                            <p className='text-sm'>
-                              {contact.firstName} {contact.lastName}
-                            </p>
-                            <p className='text-muted-foreground text-xs'>{contact.email}</p>
-                          </div>
-                        </>
-                      );
-                    }}
-                  />
-                </PopoverContent>
-              </Popover>
+                  <Button variant='outline' size='sm' className='h-8' onClick={handleEditClick}>
+                    <Edit2 className='mr-1 size-4' /> {t('edit_team')}
+                  </Button>
+                </div>
+              </div>
             </div>
-            {teamContacts && teamContacts.length === 0 && <p className='text-muted-foreground text-sm'>{t('no_team_contacts_found')}</p>}
-            {teamContacts && teamContacts?.length > 0 && (
-              <PaginationTable
-                table={table}
-                columns={columns}
-                loading={isLoading}
-                onRowClick={(row) => router.push(`/dashboard/crm/contacts/${row.contact.id}`)}
-                rowClassName='cursor-pointer hover:bg-muted/50'
-              />
-            )}
-          </div>
 
-          <div className='rounded-lg border bg-card p-4'>
-            <TabSwitcher
-              config={[
-                {
-                  label: t('activity'),
-                  value: (
-                    <ActivitySection
-                      activities={teamActivities?.map((activity) => ({
-                        id: activity.id,
-                        type: activity.type,
-                        subType: activity.subType || 'NOTE_ADDED',
-                        description: activity.description || '',
-                        initiatorType: 'user',
-                        userId: activity.userId,
-                        metadata: activity.metadata,
-                        createdAt: activity.createdAt,
-                      }))}
-                      onCreateActivity={(data) => {
-                        createTeamActivity.mutate({
-                          teamId: teamId[0],
-                          type: 'ENGAGEMENT',
-                          subType: 'NOTE_ADDED',
-                          description: data.description,
-                          initiatorType: data.initiatorType,
-                          initiatorId: data.initiatorId,
-                          metadata: data.metadata as any,
-                        });
-                      }}
-                      isLoading={createTeamActivity.isPending}
-                    />
-                  ),
-                },
-              ]}
-            />
+            <div className='flex-1 overflow-y-auto'>
+              <div className='space-y-2 border-b p-4 sm:p-6'>
+                <div className='flex items-start justify-between'>
+                  <p className='font-medium'>{t('team_members')}</p>
+                  <Popover open={isAddMemberOpen} onOpenChange={setIsAddMemberOpen}>
+                    <PopoverTrigger asChild>
+                      <Button variant='outline' size='sm' className='h-8'>
+                        <Plus className='mr-1 size-4' /> {t('add_contact')}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className='w-[300px] p-0' align='end'>
+                      <ComboboxCommand
+                        query={searchValue}
+                        setQuery={setSearchValue}
+                        value=''
+                        onChange={handleAddMember}
+                        setOpen={setIsAddMemberOpen}
+                        items={
+                          contacts
+                            ?.filter(
+                              (contact) =>
+                                !teamContacts?.some((c) => c.contact.id === contact.id) &&
+                                (contact.firstName.toLowerCase().includes(searchValue.toLowerCase()) ||
+                                  contact.lastName.toLowerCase().includes(searchValue.toLowerCase()) ||
+                                  contact.email?.toLowerCase().includes(searchValue.toLowerCase()))
+                            )
+                            .map((contact) => contact.id) ?? []
+                        }
+                        searchPlaceholder={t('search_contacts')}
+                        emptyText='No contacts found.'
+                        groupHeading='Contacts'
+                        allowCustom={false}
+                        renderItem={(contactId) => {
+                          const contact = contacts?.find((c) => c.id === contactId);
+                          if (!contact) return null;
+                          return (
+                            <>
+                              <Avatar className='size-6'>
+                                <AvatarFallback>{contact.firstName.charAt(0)}</AvatarFallback>
+                              </Avatar>
+                              <div className='flex-1'>
+                                <p className='text-sm'>
+                                  {contact.firstName} {contact.lastName}
+                                </p>
+                                <p className='text-muted-foreground text-xs'>{contact.email}</p>
+                              </div>
+                            </>
+                          );
+                        }}
+                      />
+                    </PopoverContent>
+                  </Popover>
+                </div>
+                {teamContacts && teamContacts.length === 0 && <p className='text-muted-foreground text-sm'>{t('no_team_contacts_found')}</p>}
+                {teamContacts && teamContacts?.length > 0 && (
+                  <PaginationTable
+                    table={table}
+                    columns={columns}
+                    loading={isLoading}
+                    onRowClick={(row) => router.push(`/dashboard/crm/contacts/${row.contact.id}`)}
+                    rowClassName='cursor-pointer hover:bg-muted/50'
+                  />
+                )}
+              </div>
+
+              <div className='p-4 sm:p-6'>
+                <TabSwitcher
+                  config={[
+                    {
+                      label: t('activity'),
+                      value: (
+                        <ActivitySection
+                          activities={teamActivities?.map((activity) => ({
+                            id: activity.id,
+                            type: activity.type,
+                            subType: activity.subType || 'NOTE_ADDED',
+                            description: activity.description || '',
+                            initiatorType: 'user',
+                            userId: activity.userId,
+                            metadata: activity.metadata,
+                            createdAt: activity.createdAt,
+                          }))}
+                          onCreateActivity={(data) => {
+                            createTeamActivity.mutate({
+                              teamId: teamId[0],
+                              type: 'ENGAGEMENT',
+                              subType: 'NOTE_ADDED',
+                              description: data.description,
+                              initiatorType: data.initiatorType,
+                              initiatorId: data.initiatorId,
+                              metadata: data.metadata as any,
+                            });
+                          }}
+                          isLoading={createTeamActivity.isPending}
+                        />
+                      ),
+                    },
+                  ]}
+                />
+              </div>
+            </div>
           </div>
         </div>
 
-        <div className='space-y-4'>
-          <div className='rounded-lg border bg-card p-4'>
-            <h2 className='mb-3 font-medium'>{t('team_information')}</h2>
-            <div className='space-y-1'>
+        <div className='w-full lg:w-1/3'>
+          <div className='h-full overflow-y-auto rounded-none border border-t-0 border-l-0 p-4 sm:rounded-r-lg sm:border-t-1 sm:p-6'>
+            <div className='h-full space-y-6'>
               <div>
-                <Label className='text-muted-foreground text-xs'>{t('team_leader')}</Label>
-                <p className='text-sm'>
-                  <Link href={team.leaderId ? `/dashboard/crm/contacts/${team.leaderId}` : ''}>{team.leaderId ? `${team.leader?.firstName} ${team.leader?.lastName}` : 'N/A'}</Link>
-                </p>
+                <h2 className='mb-4 font-medium'>{t('team_information')}</h2>
+                <div className='space-y-4'>
+                  <div>
+                    <Label className='text-muted-foreground text-xs'>{t('team_leader')}</Label>
+                    <p className='text-sm'>
+                      <Link href={team.leaderId ? `/dashboard/crm/contacts/${team.leaderId}` : ''}>{team.leaderId ? `${team.leader?.firstName} ${team.leader?.lastName}` : 'N/A'}</Link>
+                    </p>
+                  </div>
+                  <div>
+                    <Label className='text-muted-foreground text-xs'>{t('sub_leader')}</Label>
+                    <p className='text-sm'>
+                      <Link href={team.subLeaderId ? `/dashboard/crm/contacts/${team.subLeaderId}` : ''}>{team.subLeaderId ? `${team.subLeader?.firstName} ${team.subLeader?.lastName}` : 'N/A'}</Link>
+                    </p>
+                  </div>
+                  <div>
+                    <Label className='text-muted-foreground text-xs'>{t('referral')}</Label>
+                    <p className='text-sm'>
+                      <Link href={team.referralId ? `/dashboard/crm/contacts/${team.referralId}` : ''}>{team.referralId ? `${team.referral?.firstName} ${team.referral?.lastName}` : 'N/A'}</Link>
+                    </p>
+                  </div>
+                  <div>
+                    <Label className='text-muted-foreground text-xs'>{t('company')}</Label>
+                    <p className='text-sm'>
+                      <Link href={team.company ? `/dashboard/crm/company/${team.company?.id}` : ''}>{team.company?.name || 'N/A'}</Link>
+                    </p>
+                  </div>
+                  <div>
+                    <Label className='text-muted-foreground text-xs'>{t('campaign_code')}</Label>
+                    <p className='text-sm'>{team.campaignCode || 'N/A'}</p>
+                  </div>
+                  <div>
+                    <Label className='text-muted-foreground text-xs'>{t('remarks')}</Label>
+                    <p className='text-sm'>{team.remarks || t('no_remark_added')}</p>
+                  </div>
+                  <div className='flex justify-end'>
+                    <p className='text-muted-foreground text-xs'>{t('created_on', { date: formatDate(new Date(team.createdAt)) })}</p>
+                  </div>
+                </div>
               </div>
+
               <div>
-                <Label className='text-muted-foreground text-xs'>{t('sub_leader')}</Label>
-                <p className='text-sm'>
-                  <Link href={team.subLeaderId ? `/dashboard/crm/contacts/${team.subLeaderId}` : ''}>{team.subLeaderId ? `${team.subLeader?.firstName} ${team.subLeader?.lastName}` : 'N/A'}</Link>
-                </p>
-              </div>
-              <div>
-                <Label className='text-muted-foreground text-xs'>{t('referral')}</Label>
-                <p className='text-sm'>
-                  <Link href={team.referralId ? `/dashboard/crm/contacts/${team.referralId}` : ''}>{team.referralId ? `${team.referral?.firstName} ${team.referral?.lastName}` : 'N/A'}</Link>
-                </p>
-              </div>
-              <div>
-                <Label className='text-muted-foreground text-xs'>{t('company')}</Label>
-                <p className='text-sm'>
-                  <Link href={team.company ? `/dashboard/crm/company/${team.company?.id}` : ''}>{team.company?.name || 'N/A'}</Link>
-                </p>
-              </div>
-              <div>
-                <Label className='text-muted-foreground text-xs'>{t('campaign_code')}</Label>
-                <p className='text-sm'>{team.campaignCode || 'N/A'}</p>
-              </div>
-              <div>
-                <Label className='text-muted-foreground text-xs'>{t('remarks')}</Label>
-                <p className='text-sm'>{team.remarks || t('no_remark_added')}</p>
-              </div>
-              <div className='items-cen flex justify-end'>
-                <p className='text-muted-foreground text-xs'>{t('created_on', { date: formatDate(new Date(team.createdAt)) })}</p>
+                <h2 className='mb-4 font-medium'>{t('team_meetings')}</h2>
+                <EventSection
+                  appointments={
+                    teamMeetings?.map((meeting) => ({
+                      id: meeting.id,
+                      title: meeting.title,
+                      description: meeting.description,
+                      startAt: new Date(meeting.meetingDate),
+                      endAt: new Date(meeting.meetingDate),
+                    })) || []
+                  }
+                  calendarFolders={folders}
+                  onCreateAppointment={handleCreateMeeting}
+                  onUpdateAppointment={(data) => {
+                    // TODO: Add update meeting functionality
+                    toast.error('Update meeting functionality not implemented yet');
+                  }}
+                  onDeleteAppointment={(id) => {
+                    deleteTeamMeeting.mutate({
+                      id,
+                      teamId: teamId[0],
+                    });
+                  }}
+                  defaultTitle={t('team_meeting_title', { name: team.name })}
+                />
               </div>
             </div>
-          </div>
-
-          <div className='rounded-lg border bg-card p-4'>
-            <EventSection
-              appointments={
-                teamMeetings?.map((meeting) => ({
-                  id: meeting.id,
-                  title: meeting.title,
-                  description: meeting.description,
-                  startAt: new Date(meeting.meetingDate),
-                  endAt: new Date(meeting.meetingDate),
-                })) || []
-              }
-              calendarFolders={folders}
-              onCreateAppointment={handleCreateMeeting}
-              onUpdateAppointment={(data) => {
-                // TODO: Add update meeting functionality
-                toast.error('Update meeting functionality not implemented yet');
-              }}
-              onDeleteAppointment={(id) => {
-                deleteTeamMeeting.mutate({
-                  id,
-                  teamId: teamId[0],
-                });
-              }}
-              defaultTitle={t('team_meeting_title', { name: team.name })}
-            />
           </div>
         </div>
       </div>

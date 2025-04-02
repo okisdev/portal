@@ -578,5 +578,8 @@
   "september": "September",
   "october": "October",
   "november": "November",
-  "december": "December"
+  "december": "December",
+  "team": "Team",
+  "team_meetings": "Team Meetings",
+  "resource": "Resource"
 }
