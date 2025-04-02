@@ -8,8 +8,8 @@ import { ComboboxCommand } from '@/components/shared/combobox';
 import { EventDialog } from '@/components/shared/event-dialog';
 import { EventSection } from '@/components/shared/event-section';
 import { PageLoading } from '@/components/shared/page-loading';
-import { PaginationTable } from '@/components/shared/pagination-table';
 import { TabSwitcher } from '@/components/shared/tab-switcher';
+import { DataTable } from '@/components/shared/table';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -447,13 +447,7 @@ export default function TeamIdPage() {
                 </div>
                 {teamContacts && teamContacts.length === 0 && <p className='text-muted-foreground text-sm'>{t('no_team_contacts_found')}</p>}
                 {teamContacts && teamContacts?.length > 0 && (
-                  <PaginationTable
-                    table={table}
-                    columns={columns}
-                    loading={isLoading}
-                    onRowClick={(row) => router.push(`/dashboard/crm/contacts/${row.contact.id}`)}
-                    rowClassName='cursor-pointer hover:bg-muted/50'
-                  />
+                  <DataTable table={table} columns={columns} loading={isLoading} onRowClick={(row) => router.push(`/dashboard/crm/contacts/${row.contact.id}`)} />
                 )}
               </div>
 

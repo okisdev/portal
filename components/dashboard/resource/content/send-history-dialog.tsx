@@ -1,6 +1,6 @@
 'use client';
 
-import { PaginationTable } from '@/components/shared/pagination-table';
+import { DataTable } from '@/components/shared/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import type { ResourceContent } from '@/lib/schema';
 import { api } from '@/utils/trpc/client';
@@ -101,7 +101,7 @@ export function SendHistoryDialog({ open, onOpenChange, content }: SendHistoryDi
             </div>
           </div>
 
-          <PaginationTable table={table} columns={columns} loading={isLoading} />
+          <DataTable table={table} columns={columns} loading={isLoading} />
         </div>
       </DialogContent>
     </Dialog>

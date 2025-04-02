@@ -4,8 +4,8 @@ import { ActionAlertDialog } from '@/components/shared/action-alert-dialog';
 import { ColorBadge } from '@/components/shared/color-badge';
 import { Combobox } from '@/components/shared/combobox';
 import { PageHeader } from '@/components/shared/page-header';
-import { PaginationTable } from '@/components/shared/pagination-table';
 import { PhoneInput } from '@/components/shared/phone-input';
+import { DataTable } from '@/components/shared/table';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -661,7 +661,7 @@ export default function CompanyPage() {
         </div>
       </div>
 
-      <PaginationTable table={table} columns={tableColumns} loading={isLoading} onRowClick={(row) => router.push(`/dashboard/crm/company/${row.id}`)} rowClassName='cursor-pointer' />
+      <DataTable table={table} columns={tableColumns} loading={isLoading} onRowClick={(row) => router.push(`/dashboard/crm/company/${row.id}`)} />
 
       <ActionAlertDialog
         open={deleteDialogOpen}

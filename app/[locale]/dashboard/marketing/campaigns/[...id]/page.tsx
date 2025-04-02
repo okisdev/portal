@@ -5,7 +5,7 @@ import { ColorBadge } from '@/components/shared/color-badge';
 import { ComboboxCommand } from '@/components/shared/combobox';
 import { PageHeader } from '@/components/shared/page-header';
 import { PageLoading } from '@/components/shared/page-loading';
-import { PaginationTable } from '@/components/shared/pagination-table';
+import { DataTable } from '@/components/shared/table';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -540,13 +540,7 @@ export default function CampaignDetailsPage() {
         </div>
       </div>
 
-      <PaginationTable
-        table={table}
-        columns={columns}
-        loading={contactsLoading}
-        onRowClick={(row) => router.push(`/dashboard/crm/contacts/${row.id}`)}
-        rowClassName='cursor-pointer hover:bg-muted/50'
-      />
+      <DataTable table={table} columns={columns} loading={contactsLoading} onRowClick={(row) => router.push(`/dashboard/crm/contacts/${row.id}`)} />
 
       <ActionAlertDialog
         open={deleteDialogOpen}

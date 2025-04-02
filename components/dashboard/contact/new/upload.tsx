@@ -3,7 +3,7 @@
 import { Banner } from '@/components/shared/banner';
 import { ColorBadge } from '@/components/shared/color-badge';
 import { Combobox } from '@/components/shared/combobox';
-import { TableLoading } from '@/components/shared/table-loading';
+import { TableLoading } from '@/components/shared/table/loading';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';

@@ -581,5 +581,10 @@
   "september": "九月",
   "team": "团队",
   "team_meetings": "团队会议",
-  "resource": "资源"
+  "resource": "资源",
+  "go_to_first_page": "转到第一页",
+  "go_to_last_page": "转到最后一页",
+  "go_to_next_page": "转到下一页",
+  "go_to_previous_page": "转到上一页",
+  "rows_per_page": "每页行"
 }

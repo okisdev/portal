@@ -2,7 +2,7 @@
 
 import { ColorBadge } from '@/components/shared/color-badge';
 import { PageHeader } from '@/components/shared/page-header';
-import { PaginationTable } from '@/components/shared/pagination-table';
+import { DataTable } from '@/components/shared/table';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -283,13 +283,7 @@ export default function MarketingCampaignsPage() {
         <Input placeholder={t('search_campaigns')} className='pl-10' value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
       </div>
 
-      <PaginationTable
-        table={table}
-        columns={columns}
-        loading={isLoading}
-        onRowClick={(row) => router.push(`/dashboard/marketing/campaigns/${row.id}`)}
-        rowClassName='cursor-pointer hover:bg-muted/50'
-      />
+      <DataTable table={table} columns={columns} loading={isLoading} onRowClick={(row) => router.push(`/dashboard/marketing/campaigns/${row.id}`)} />
 
       <Dialog open={!!editingCampaign} onOpenChange={(open) => !open && setEditingCampaign(null)}>
         <DialogContent className='max-h-[90vh] max-w-xl overflow-y-auto'>
