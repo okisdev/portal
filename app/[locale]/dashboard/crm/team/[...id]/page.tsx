@@ -22,6 +22,7 @@ import { Label } from '@/components/ui/label';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Textarea } from '@/components/ui/textarea';
 import type { Status } from '@/lib/schema';
+import { cn } from '@/lib/utils';
 import { formatDate } from '@/utils/date';
 import { parsePhone } from '@/utils/phone';
 import { api } from '@/utils/trpc/client';
@@ -358,30 +359,16 @@ export default function TeamIdPage() {
         <div className='w-full lg:w-2/3'>
           <div className='flex h-full flex-col rounded-none border bg-card text-card-foreground shadow-xs sm:rounded-l-lg'>
             <div className='flex-none border-b p-4 sm:p-6'>
-              <div className='flex items-center justify-between'>
+              <div className={cn(team.description ? 'flex items-start justify-between' : 'flex items-center justify-between')}>
                 <div>
                   <h1 className='font-semibold text-xl'>{team.name}</h1>
-                  <p className='text-muted-foreground text-sm'>{team.description || ''}</p>
+                  {team.description && <p className='text-muted-foreground text-sm'>{team.description}</p>}
                 </div>
                 <div className='flex items-center gap-2'>
-                  <Button variant='outline' size='sm' className='h-8' onClick={() => setIsNewMeetingModalOpen(true)}>
-                    <Calendar className='mr-1 size-4' /> {t('add_meeting')}
-                  </Button>
-                  <Button variant='outline' size='sm' className='h-8' onClick={handleEditClick}>
-                    <Edit2 className='mr-1 size-4' /> {t('edit_team')}
-                  </Button>
-                </div>
-              </div>
-            </div>
-
-            <div className='flex-1 overflow-y-auto'>
-              <div className='space-y-2 border-b p-4 sm:p-6'>
-                <div className='flex items-start justify-between'>
-                  <p className='font-medium'>{t('team_members')}</p>
                   <Popover open={isAddMemberOpen} onOpenChange={setIsAddMemberOpen}>
                     <PopoverTrigger asChild>
                       <Button variant='outline' size='sm' className='h-8'>
-                        <Plus className='mr-1 size-4' /> {t('add_contact')}
+                        <Plus className='mr-1 size-4' /> {t('add_team_member')}
                       </Button>
                     </PopoverTrigger>
                     <PopoverContent className='w-[300px] p-0' align='end'>
@@ -426,6 +413,20 @@ export default function TeamIdPage() {
                       />
                     </PopoverContent>
                   </Popover>
+                  <Button variant='outline' size='sm' className='h-8' onClick={() => setIsNewMeetingModalOpen(true)}>
+                    <Calendar className='mr-1 size-4' /> {t('add_meeting')}
+                  </Button>
+                  <Button variant='outline' size='sm' className='h-8' onClick={handleEditClick}>
+                    <Edit2 className='mr-1 size-4' /> {t('edit_team')}
+                  </Button>
+                </div>
+              </div>
+            </div>
+
+            <div className='flex-1 overflow-y-auto'>
+              <div className='space-y-3 border-b p-4 sm:p-6'>
+                <div className='flex items-center justify-between'>
+                  <p className='font-medium'>{t('team_members')}</p>
                 </div>
                 {teamContacts && teamContacts.length === 0 && <p className='text-muted-foreground text-sm'>{t('no_team_contacts_found')}</p>}
                 {teamContacts && teamContacts?.length > 0 && (

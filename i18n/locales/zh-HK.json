@@ -629,5 +629,7 @@
   "source_value": "源值",
   "status_added_successfully": "狀態成功添加",
   "status_removed_successfully": "狀態成功刪除",
-  "status_value": "狀態值"
+  "status_value": "狀態值",
+  "add_team_contact": "添加團隊聯繫人",
+  "add_team_member": "添加團隊成員"
 }

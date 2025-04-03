@@ -537,27 +537,6 @@ export const resourceEmails = pgTable('portal_resource_emails', {
   updatedAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
 });
 
-export const marketingCampaign = pgTable('portal_marketing_campaign', {
-  id: text()
-    .primaryKey()
-    .notNull()
-    .$defaultFn(() => crypto.randomUUID()),
-  name: text().notNull(),
-  campaignCode: text().unique(),
-  description: text(),
-  type: text('type', { enum: ['email', 'social', 'event', 'referral', 'other'] }).notNull(),
-  status: text('status', { enum: ['draft', 'scheduled', 'active', 'paused', 'completed', 'cancelled'] })
-    .notNull()
-    .default('draft'),
-  metrics: text(),
-  createdBy: text()
-    .notNull()
-    .references(() => user.id),
-  updatedBy: text().references(() => user.id),
-  createdAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
-  updatedAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
-});
-
 export const company = pgTable('portal_company', {
   id: text()
     .primaryKey()
@@ -592,7 +571,6 @@ export const team = pgTable('portal_team', {
   leaderId: text().references(() => contact.id),
   subLeaderId: text().references(() => contact.id),
   referralId: text().references(() => contact.id),
-  campaignCode: text(),
   remarks: text(),
   createdBy: text()
     .notNull()

@@ -203,7 +203,6 @@ export const teamRouter = createTRPCRouter({
         leaderId: team.leaderId,
         subLeaderId: team.subLeaderId,
         referralId: team.referralId,
-        campaignCode: team.campaignCode,
         remarks: team.remarks,
         companyId: team.companyId,
         company: sql<{ id: string; name: string } | null>`

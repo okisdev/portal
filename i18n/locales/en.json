@@ -629,5 +629,7 @@
   "enter_status_value": "Enter status value",
   "add": "Add",
   "enter_priority_value": "Enter priority value",
-  "enter_source_value": "Enter source value"
+  "enter_source_value": "Enter source value",
+  "add_team_contact": "Add Team Contact",
+  "add_team_member": "Add Team Member"
 }

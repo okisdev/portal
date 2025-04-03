@@ -98,7 +98,6 @@ export const contactRouter = createTRPCRouter({
         source: z.string().optional(),
         remark: z.string().optional(),
         status: z.string().optional(),
-        campaignCode: z.union([z.string(), z.array(z.string())]).optional(),
         createdAt: z.date().optional(),
       })
     )
@@ -113,16 +112,6 @@ export const contactRouter = createTRPCRouter({
 
       if (existingContact) return existingContact;
 
-      let referralContact = null;
-
-      if (typeof input.campaignCode === 'string' && input.campaignCode.includes('@')) {
-        referralContact = await ctx.db
-          .select()
-          .from(contact)
-          .where(eq(contact.email, input.campaignCode))
-          .then((rows) => rows[0]);
-      }
-
       // Ensure createdAt is set to midnight if provided
       const createdAt = input.createdAt ? startOfDay(input.createdAt) : undefined;
 
@@ -136,7 +125,7 @@ export const contactRouter = createTRPCRouter({
           phone: stringifyPhone(input.phone ?? ''),
           company: input.company ?? '',
           companyId: input.companyId ?? null,
-          source: input.source ?? (referralContact ? 'Referral' : ''),
+          source: input.source ?? 'Direct',
           status: input.status ?? 'Lead',
           remark: input.remark ?? '',
           createdBy: ctx.session?.user.id,
@@ -157,22 +146,6 @@ export const contactRouter = createTRPCRouter({
         initiatorType: 'user',
         initiatorId: ctx.session?.user.id,
       });
-
-      // Handle referral case
-      if (referralContact) {
-        await createContactActivityHelper(ctx, {
-          contactId: result.id,
-          type: 'CONTACT',
-          subType: 'CONTACT_CREATED',
-          metadata: {
-            createdType: 'referral',
-            contact: result,
-            referral: referralContact,
-          },
-          initiatorType: 'user',
-          initiatorId: ctx.session?.user.id,
-        });
-      }
 
       return result;
     }),
@@ -567,7 +540,6 @@ export const contactRouter = createTRPCRouter({
             source: z.string().optional(),
             remark: z.string().optional(),
             status: z.string().optional(),
-            campaignCode: z.union([z.string(), z.array(z.string())]).optional(),
             createdAt: z.date().optional(),
           })
         ),

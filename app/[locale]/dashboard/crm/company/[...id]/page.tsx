@@ -11,6 +11,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { cn } from '@/lib/utils';
 import { formatDate } from '@/utils/date';
 import { api } from '@/utils/trpc/client';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -204,10 +205,10 @@ export default function CompanyIdPage() {
         <div className='w-full lg:w-2/3'>
           <div className='flex h-full flex-col rounded-none border bg-card text-card-foreground shadow-xs sm:rounded-l-lg'>
             <div className='flex-none border-b p-4 sm:p-6'>
-              <div className='flex items-center justify-between'>
+              <div className={cn(company.description ? 'flex items-start justify-between' : 'flex items-center justify-between')}>
                 <div>
                   <h1 className='font-semibold text-xl'>{company.name}</h1>
-                  <p className='text-muted-foreground text-sm'>{company.description || ''}</p>
+                  {company.description && <p className='text-muted-foreground text-sm'>{company.description}</p>}
                 </div>
                 <div className='flex items-center gap-2'>
                   <Button variant='outline' size='sm' className='h-8' onClick={handleEditClick}>
@@ -229,7 +230,7 @@ export default function CompanyIdPage() {
                   {teams && teams?.length === 0 && <p className='text-muted-foreground text-sm'>{t('no_company_teams_found')}</p>}
                   {teams?.map((team) => (
                     <Link key={team.id} href={`/dashboard/crm/team/${team.id}`} className='rounded-lg border bg-card p-4 transition-colors hover:bg-muted/50'>
-                      <div className='flex items-start justify-between'>
+                      <div className='flex items-center justify-between'>
                         <div>
                           <p className='font-medium'>{team.name}</p>
                           <p className='text-muted-foreground text-sm'>{team.description || 'N/A'}</p>

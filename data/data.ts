@@ -2,8 +2,6 @@ export const insuranceCompanies = ['AIA', 'AXA', 'BoC Life', 'China Life', 'Chub
 
 export const sources = ['Pitching', 'Referral', 'Website', 'Email', 'Instagram', 'LinkedIn', 'WhatsApp', 'Facebook', 'BNI', 'No Planner', 'Pay Trial', 'Other'];
 
-export const campaignTypes = ['email', 'social', 'event', 'referral', 'other'];
-
 export const contentTags = ['whatsapp', 'message', 'email', 'social media', 'event', 'referral', 'other'];
 
 export const phoneCountries = [

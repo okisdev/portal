@@ -129,7 +129,7 @@ export default function NotificationsPage() {
                 <NotificationIcon type={notification.type} />
               </div>
               <div className='min-w-0 flex-1'>
-                <div className='flex items-start justify-between gap-4'>
+                <div className='flex items-center justify-between gap-4'>
                   <p className={cn('font-medium text-sm', notification.read ? 'text-neutral-700 dark:text-neutral-300' : 'text-neutral-900 dark:text-neutral-50')}>
                     {renderNotificationType(notification)}
                   </p>
