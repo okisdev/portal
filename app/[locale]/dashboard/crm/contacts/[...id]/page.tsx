@@ -55,6 +55,10 @@ export default function ContactIdPage() {
   const { data: activities } = api.contact.getContactActivities.useQuery({
     id: contactId[0],
   });
+  const { data: statuses } = api.site.getStatus.useQuery();
+  const { data: priorities } = api.site.getPriority.useQuery();
+
+  console.log(statuses, priorities);
 
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editForm, setEditForm] = useState({
@@ -64,9 +68,9 @@ export default function ContactIdPage() {
     phone: '',
     company: '',
     companyId: null as string | null,
-    status: 'lead' as Status,
+    status: 'lead',
     source: '',
-    priority: 'medium' as Priority,
+    priority: 'medium',
   });
 
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);

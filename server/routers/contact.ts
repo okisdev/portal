@@ -1,5 +1,5 @@
 import { contact, contactActivity, contactCampaign, marketingCampaign, team, teamContact, user, userNotifications } from '@/drizzle/schema';
-import { activitySubTypeSchema, activityTypeSchema, prioritySchema, statusSchema } from '@/lib/schema';
+import { activitySubTypeSchema, activityTypeSchema } from '@/lib/schema';
 import { createContactActivityHelper } from '@/server/helper/contact';
 import { createTRPCRouter, protectedProcedure } from '@/server/trpc';
 import { sendEmail } from '@/utils/email';
@@ -102,7 +102,7 @@ export const contactRouter = createTRPCRouter({
         companyId: z.string().nullable().optional(),
         source: z.string().optional(),
         remark: z.string().optional(),
-        status: statusSchema.optional(),
+        status: z.string().optional(),
         campaignCode: z.union([z.string(), z.array(z.string())]).optional(),
         createdAt: z.date().optional(),
       })
@@ -424,12 +424,12 @@ export const contactRouter = createTRPCRouter({
         phone: z.string().optional(),
         company: z.string().optional(),
         companyId: z.string().nullable().optional(),
-        priority: prioritySchema.optional(),
+        priority: z.string().optional(),
         workExperience: z.string().optional(),
         currentRole: z.string().optional(),
         industry: z.string().optional(),
         skills: z.string().optional(),
-        status: statusSchema.optional(),
+        status: z.string().optional(),
         source: z.string().optional(),
         lastContactedAt: z.date().optional().nullable(),
         nextFollowUpAt: z.date().optional().nullable(),
@@ -707,7 +707,7 @@ export const contactRouter = createTRPCRouter({
             companyId: z.string().nullable().optional(),
             source: z.string().optional(),
             remark: z.string().optional(),
-            status: statusSchema.optional(),
+            status: z.string().optional(),
             campaignCode: z.union([z.string(), z.array(z.string())]).optional(),
             createdAt: z.date().optional(),
           })
