@@ -369,42 +369,6 @@ export const paymentTrack = pgTable('portal_payment_track', {
   updatedAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
 });
 
-export const subscriptionCoupon = pgTable('portal_subscription_coupon', {
-  id: text()
-    .primaryKey()
-    .notNull()
-    .$defaultFn(() => crypto.randomUUID()),
-  code: text().notNull().unique(),
-  discountPercent: integer().notNull(),
-  maxUses: integer(),
-  usedCount: integer().default(0),
-  expiresAt: timestamp({ mode: 'date' }),
-  createdBy: text().references(() => user.id),
-  createdAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
-  updatedAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
-  isActive: boolean().default(true),
-  company: text(),
-  source: text(),
-  planId: text('plan_id').notNull(),
-  stripeId: text('stripe_id'),
-});
-
-export const subscriptionPlan = pgTable('portal_subscription_plan', {
-  id: text()
-    .primaryKey()
-    .notNull()
-    .$defaultFn(() => crypto.randomUUID()),
-  name: text().notNull(),
-  description: text(),
-  stripePriceId: text().notNull(),
-  price: integer().notNull(), // in cents
-  interval: text('interval', { enum: ['month', 'year'] }).notNull(),
-  features: text(), // JSON string of features
-  isActive: boolean().default(true),
-  createdAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
-  updatedAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
-});
-
 export const userNotifications = pgTable('portal_user_notifications', {
   id: serial('id').primaryKey(),
   userId: varchar('user_id').notNull(),
@@ -579,7 +543,7 @@ export const marketingCampaign = pgTable('portal_marketing_campaign', {
     .notNull()
     .$defaultFn(() => crypto.randomUUID()),
   name: text().notNull(),
-  campaignCode: text().notNull().unique(),
+  campaignCode: text().unique(),
   description: text(),
   type: text('type', { enum: ['email', 'social', 'event', 'referral', 'other'] }).notNull(),
   status: text('status', { enum: ['draft', 'scheduled', 'active', 'paused', 'completed', 'cancelled'] })
@@ -781,22 +745,6 @@ export const teamMeeting = pgTable('portal_team_meeting', {
   createdBy: text()
     .notNull()
     .references(() => user.id),
-  createdAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
-  updatedAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
-});
-
-export const contactCampaign = pgTable('portal_contact_campaign', {
-  id: text()
-    .primaryKey()
-    .notNull()
-    .$defaultFn(() => crypto.randomUUID()),
-  contactId: text()
-    .notNull()
-    .references(() => contact.id, { onDelete: 'cascade' }),
-  campaignCode: text()
-    .notNull()
-    .references(() => marketingCampaign.campaignCode, { onDelete: 'cascade' }),
-  joinedAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
   createdAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
   updatedAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
 });

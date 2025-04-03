@@ -67,7 +67,6 @@ export default function TeamIdPage() {
     leaderId: '',
     subLeaderId: '',
     referralId: '',
-    campaignCode: '',
     remarks: '',
     company: { id: '', name: '' },
   });
@@ -94,7 +93,6 @@ export default function TeamIdPage() {
   const { data: teamActivities } = api.team.getTeamActivities.useQuery({
     id: teamId[0],
   });
-  const { data: campaigns } = api.marketing.getActiveCampaigns.useQuery();
   const { data: companies } = api.company.getAllCompanies.useQuery();
   const { data: statuses } = api.site.getStatus.useQuery();
 
@@ -182,7 +180,6 @@ export default function TeamIdPage() {
         leaderId: team.leaderId || '',
         subLeaderId: team.subLeaderId || '',
         referralId: team.referralId || '',
-        campaignCode: team.campaignCode || '',
         remarks: team.remarks || '',
         company: team.company || { id: '', name: '' },
       });
@@ -506,10 +503,6 @@ export default function TeamIdPage() {
                     </p>
                   </div>
                   <div>
-                    <Label className='text-muted-foreground text-xs'>{t('campaign_code')}</Label>
-                    <p className='text-sm'>{team.campaignCode || 'N/A'}</p>
-                  </div>
-                  <div>
                     <Label className='text-muted-foreground text-xs'>{t('remarks')}</Label>
                     <p className='text-sm'>{team.remarks || t('no_remark_added')}</p>
                   </div>
@@ -622,22 +615,6 @@ export default function TeamIdPage() {
                 searchPlaceholder={t('search_referral')}
                 allowCustom={false}
                 groupHeading={t('contacts')}
-              />
-            </div>
-            <div className='space-y-2'>
-              <Label>{t('campaign_code')}</Label>
-              <Combobox
-                value={editForm.campaignCode}
-                onChange={(value) => setEditForm({ ...editForm, campaignCode: value })}
-                items={campaigns?.map((campaign) => campaign.campaignCode || '') || []}
-                placeholder={t('select_campaign_code')}
-                searchPlaceholder={t('search_campaign_code')}
-                allowCustom={false}
-                groupHeading={t('campaigns')}
-                renderItem={(campaignCode) => {
-                  const campaign = campaigns?.find((c) => c.campaignCode === campaignCode);
-                  return campaign ? `${campaign.name} (${campaign.campaignCode})` : null;
-                }}
               />
             </div>
             <div className='space-y-2'>

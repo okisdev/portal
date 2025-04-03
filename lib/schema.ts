@@ -11,10 +11,8 @@ import type {
   companyCustomValue,
   contact,
   contactActivity,
-  contactCampaign,
   contactCustomField,
   contactCustomValue,
-  marketingCampaign,
   paymentTrack,
   resourceContent,
   resourceContentSendTrack,
@@ -22,8 +20,6 @@ import type {
   resourceEmails,
   session,
   siteConfig,
-  subscriptionCoupon,
-  subscriptionPlan,
   team,
   teamActivity,
   teamContact,
@@ -211,10 +207,6 @@ export type ContactActivity = InferSelectModel<typeof contactActivity>;
 
 export type PaymentTrack = InferSelectModel<typeof paymentTrack>;
 
-export type SubscriptionCoupon = InferSelectModel<typeof subscriptionCoupon>;
-
-export type SubscriptionPlan = InferSelectModel<typeof subscriptionPlan>;
-
 export type Notifications = InferSelectModel<typeof userNotifications>;
 
 export type CalendarFolder = InferSelectModel<typeof calendarFolder>;
@@ -233,11 +225,6 @@ export type ResourceContentSendTrack = InferSelectModel<typeof resourceContentSe
 
 export type ResourceEmails = InferSelectModel<typeof resourceEmails>;
 
-export type MarketingCampaign = InferSelectModel<typeof marketingCampaign> & {
-  contactCount?: number;
-  convertedCount?: number;
-};
-
 export type Company = InferSelectModel<typeof company> & {
   teams?: number;
 };
@@ -251,8 +238,6 @@ export type TeamActivity = InferSelectModel<typeof teamActivity>;
 export type UserTask = InferSelectModel<typeof userTask>;
 
 export type TeamMeeting = InferSelectModel<typeof teamMeeting>;
-
-export type ContactCampaign = InferSelectModel<typeof contactCampaign>;
 
 export type ContactCustomField = InferSelectModel<typeof contactCustomField>;
 

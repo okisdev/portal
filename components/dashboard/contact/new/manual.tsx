@@ -34,7 +34,6 @@ const formSchema = z
     source: z.string().optional(),
     remark: z.string().optional(),
     status: z.string().optional(),
-    campaignCode: z.string().optional(),
     createdAt: z.date().optional(),
   })
   .refine((data) => data.email || data.phone, {
@@ -48,7 +47,6 @@ export default function ManualContactForm() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
 
-  const { data: campaigns } = api.marketing.getActiveCampaigns.useQuery();
   const { data: companies } = api.company.getAllCompanies.useQuery();
 
   const { data: statuses } = api.site.getStatus.useQuery();
@@ -65,7 +63,6 @@ export default function ManualContactForm() {
       source: 'N/A',
       remark: '',
       status: 'Lead',
-      campaignCode: '',
       createdAt: undefined,
     },
   });
@@ -268,31 +265,6 @@ export default function ManualContactForm() {
                     renderItem={(id) => {
                       const status = statuses?.find((s: Status) => s.value === id);
                       return status?.value ?? id;
-                    }}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name='campaignCode'
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>{t('campaign')}</FormLabel>
-                <FormControl>
-                  <Combobox
-                    value={field.value ?? ''}
-                    onChange={field.onChange}
-                    items={campaigns?.map((c) => c.campaignCode) ?? []}
-                    placeholder={t('select_campaign')}
-                    searchPlaceholder={t('search_campaigns')}
-                    groupHeading={t('campaigns')}
-                    allowCustom={false}
-                    renderItem={(code) => {
-                      const campaign = campaigns?.find((c) => c.campaignCode === code);
-                      return campaign?.name ?? code;
                     }}
                   />
                 </FormControl>

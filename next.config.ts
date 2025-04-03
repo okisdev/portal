@@ -23,11 +23,6 @@ const nextConfig: NextConfig = {
         permanent: false,
       },
       {
-        source: '/dashboard/marketing',
-        destination: '/dashboard/marketing/campaigns',
-        permanent: false,
-      },
-      {
         source: '/dashboard/resource',
         destination: '/dashboard/resource/content',
         permanent: false,

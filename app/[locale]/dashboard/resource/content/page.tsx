@@ -111,7 +111,7 @@ export default function ContentPage() {
 
   useEffect(() => {
     if (content) {
-      setCurrentContent(content.portal_resourceContent);
+      setCurrentContent(content.portal_resource_content);
     }
   }, [content]);
 

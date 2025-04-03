@@ -4,7 +4,6 @@ import { authRouter } from '@/server/routers/auth';
 import { calendarRouter } from '@/server/routers/calendar';
 import { companyRouter } from '@/server/routers/company';
 import { contactRouter } from '@/server/routers/contact';
-import { marketingRouter } from '@/server/routers/marketing';
 import { resourceRouter } from '@/server/routers/resource';
 import { siteRouter } from '@/server/routers/site';
 import { taskRouter } from '@/server/routers/task';
@@ -29,7 +28,6 @@ export const appRouter = createTRPCRouter({
   user: userRouter,
   task: taskRouter,
   resource: resourceRouter,
-  marketing: marketingRouter,
   site: siteRouter,
 });
 

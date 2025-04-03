@@ -1,4 +1,4 @@
-import { contact, contactActivity, contactCampaign, marketingCampaign, team, teamContact, user, userNotifications } from '@/drizzle/schema';
+import { contact, contactActivity, team, teamContact, user, userNotifications } from '@/drizzle/schema';
 import { activitySubTypeSchema, activityTypeSchema } from '@/lib/schema';
 import { createContactActivityHelper } from '@/server/helper/contact';
 import { createTRPCRouter, protectedProcedure } from '@/server/trpc';
@@ -6,7 +6,7 @@ import { sendEmail } from '@/utils/email';
 import { stringifyPhone } from '@/utils/phone';
 import { TRPCError } from '@trpc/server';
 import { startOfDay } from 'date-fns';
-import { and, asc, desc, eq, inArray, sql } from 'drizzle-orm';
+import { asc, desc, eq, inArray, sql } from 'drizzle-orm';
 import { z } from 'zod';
 
 export const contactRouter = createTRPCRouter({
@@ -59,11 +59,6 @@ export const contactRouter = createTRPCRouter({
         lastContactedAt: contact.lastContactedAt,
         nextFollowUpAt: contact.nextFollowUpAt,
         remark: contact.remark,
-        campaigns: sql<Array<{ code: string; name: string }>>`
-          (SELECT json_agg(json_build_object('code', mc."campaignCode", 'name', mc.name))
-           FROM ${marketingCampaign} mc 
-           INNER JOIN ${contactCampaign} cc ON cc."campaignCode" = mc."campaignCode"
-           WHERE cc."contactId" = ${input.id})`,
         teams: sql<Array<{ id: string; name: string }>>`
           (SELECT json_agg(json_build_object('id', t.id, 'name', t.name))
            FROM ${team} t 
@@ -179,37 +174,6 @@ export const contactRouter = createTRPCRouter({
         });
       }
 
-      // Handle campaign assignments
-      const campaignCodes = typeof input.campaignCode === 'string' ? (input.campaignCode.includes('@') ? [] : [input.campaignCode]) : input.campaignCode || [];
-
-      for (const campaignCode of campaignCodes) {
-        const campaign = await ctx.db
-          .select()
-          .from(marketingCampaign)
-          .where(eq(marketingCampaign.campaignCode, campaignCode))
-          .then((rows) => rows[0]);
-
-        if (!campaign) continue;
-
-        await ctx.db.insert(contactCampaign).values({
-          contactId: result.id,
-          campaignCode,
-        });
-
-        // Log campaign assignment activity
-        await createContactActivityHelper(ctx, {
-          contactId: result.id,
-          type: 'CAMPAIGN',
-          subType: 'CAMPAIGN_ASSIGNED',
-          initiatorType: 'user',
-          initiatorId: ctx.session?.user.id,
-          metadata: {
-            contact: result,
-            campaign,
-          },
-        });
-      }
-
       return result;
     }),
 
@@ -236,93 +200,6 @@ export const contactRouter = createTRPCRouter({
       },
     });
   }),
-
-  addContactToCampaign: protectedProcedure
-    .input(
-      z.object({
-        contactId: z.string(),
-        campaignCode: z.string(),
-      })
-    )
-    .mutation(async ({ ctx, input }) => {
-      // Check if already in campaign
-      const existing = await ctx.db
-        .select()
-        .from(contactCampaign)
-        .where(and(eq(contactCampaign.contactId, input.contactId), eq(contactCampaign.campaignCode, input.campaignCode)))
-        .then((rows) => rows[0]);
-
-      if (existing) return existing;
-
-      const campaign = await ctx.db
-        .select()
-        .from(marketingCampaign)
-        .where(eq(marketingCampaign.campaignCode, input.campaignCode))
-        .then((rows) => rows[0]);
-
-      const thisContact = await ctx.db
-        .select()
-        .from(contact)
-        .where(eq(contact.id, input.contactId))
-        .then((rows) => rows[0]);
-
-      await createContactActivityHelper(ctx, {
-        contactId: input.contactId,
-        type: 'CAMPAIGN',
-        subType: 'CAMPAIGN_ASSIGNED',
-        initiatorType: 'user',
-        initiatorId: ctx.session?.user.id,
-        metadata: {
-          contact: thisContact,
-          campaign,
-        },
-      });
-
-      return ctx.db
-        .insert(contactCampaign)
-        .values({
-          contactId: input.contactId,
-          campaignCode: input.campaignCode,
-        })
-        .returning();
-    }),
-
-  removeContactFromCampaign: protectedProcedure
-    .input(
-      z.object({
-        contactId: z.string(),
-        campaignCode: z.string(),
-      })
-    )
-    .mutation(async ({ ctx, input }) => {
-      const campaign = await ctx.db
-        .select()
-        .from(marketingCampaign)
-        .where(eq(marketingCampaign.campaignCode, input.campaignCode))
-        .then((rows) => rows[0]);
-
-      const thisContact = await ctx.db
-        .select()
-        .from(contact)
-        .where(eq(contact.id, input.contactId))
-        .then((rows) => rows[0]);
-
-      const result = await ctx.db.delete(contactCampaign).where(and(eq(contactCampaign.contactId, input.contactId), eq(contactCampaign.campaignCode, input.campaignCode)));
-
-      await createContactActivityHelper(ctx, {
-        contactId: input.contactId,
-        type: 'CAMPAIGN',
-        subType: 'CAMPAIGN_REMOVED',
-        initiatorType: 'user',
-        initiatorId: ctx.session?.user.id,
-        metadata: {
-          contact: thisContact,
-          campaign,
-        },
-      });
-
-      return result;
-    }),
 
   deleteContact: protectedProcedure.input(z.object({ id: z.string() })).mutation(async ({ ctx, input }) => {
     // Get contact details before deletion for activity log
@@ -621,24 +498,6 @@ export const contactRouter = createTRPCRouter({
       };
     }),
 
-  getContactsByCampaignId: protectedProcedure.input(z.object({ campaignCode: z.string() })).query(async ({ ctx, input }) => {
-    return ctx.db
-      .select({
-        id: contact.id,
-        name: contact.name,
-        firstName: contact.firstName,
-        lastName: contact.lastName,
-        email: contact.email,
-        phone: contact.phone,
-        company: contact.company,
-        status: contact.status,
-        joinedAt: contactCampaign.joinedAt,
-      })
-      .from(contactCampaign)
-      .innerJoin(contact, eq(contactCampaign.contactId, contact.id))
-      .where(eq(contactCampaign.campaignCode, input.campaignCode));
-  }),
-
   sendEmail: protectedProcedure
     .input(
       z.object({
@@ -770,37 +629,6 @@ export const contactRouter = createTRPCRouter({
               initiatorType: 'user',
               initiatorId: ctx.session?.user.id,
             });
-
-            // Handle campaign assignments
-            const campaignCodes = typeof contactData.campaignCode === 'string' ? [contactData.campaignCode] : contactData.campaignCode || [];
-
-            for (const campaignCode of campaignCodes) {
-              const campaign = await ctx.db
-                .select()
-                .from(marketingCampaign)
-                .where(eq(marketingCampaign.campaignCode, campaignCode))
-                .then((rows) => rows[0]);
-
-              if (!campaign) continue;
-
-              await ctx.db.insert(contactCampaign).values({
-                contactId: result.id,
-                campaignCode,
-              });
-
-              // Log campaign assignment activity
-              await createContactActivityHelper(ctx, {
-                contactId: result.id,
-                type: 'CAMPAIGN',
-                subType: 'CAMPAIGN_ASSIGNED',
-                initiatorType: 'user',
-                initiatorId: ctx.session?.user.id,
-                metadata: {
-                  contact: result,
-                  campaign,
-                },
-              });
-            }
 
             results.push(result);
           } catch (error) {

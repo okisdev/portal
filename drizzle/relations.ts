@@ -12,17 +12,14 @@ import {
   companyCustomValue,
   contact,
   contactActivity,
-  contactCampaign,
   contactCustomField,
   contactCustomValue,
-  marketingCampaign,
   paymentTrack,
   resourceContent,
   resourceContentSendTrack,
   resourceContentShare,
   resourceEmails,
   session,
-  subscriptionCoupon,
   team,
   teamActivity,
   teamContact,
@@ -85,7 +82,6 @@ export const contactRelations = relations(contact, ({ many, one }) => ({
     references: [company.id],
   }),
   companies: many(companyContact),
-  campaigns: many(contactCampaign),
   eventParticipations: many(calendarEventParticipant),
   teams: many(teamContact),
   leadingTeams: many(team, { relationName: 'teamLeader' }),
@@ -113,13 +109,6 @@ export const paymentTrackRelations = relations(paymentTrack, ({ one }) => ({
   }),
   user: one(user, {
     fields: [paymentTrack.userId],
-    references: [user.id],
-  }),
-}));
-
-export const subscriptionCouponRelations = relations(subscriptionCoupon, ({ one }) => ({
-  creator: one(user, {
-    fields: [subscriptionCoupon.createdBy],
     references: [user.id],
   }),
 }));
@@ -210,29 +199,6 @@ export const resourceEmailsRelations = relations(resourceEmails, ({ one }) => ({
   updater: one(user, {
     fields: [resourceEmails.updatedBy],
     references: [user.id],
-  }),
-}));
-
-export const marketingCampaignRelations = relations(marketingCampaign, ({ one, many }) => ({
-  creator: one(user, {
-    fields: [marketingCampaign.createdBy],
-    references: [user.id],
-  }),
-  updater: one(user, {
-    fields: [marketingCampaign.updatedBy],
-    references: [user.id],
-  }),
-  contacts: many(contactCampaign),
-}));
-
-export const contactCampaignRelations = relations(contactCampaign, ({ one }) => ({
-  contact: one(contact, {
-    fields: [contactCampaign.contactId],
-    references: [contact.id],
-  }),
-  campaign: one(marketingCampaign, {
-    fields: [contactCampaign.campaignCode],
-    references: [marketingCampaign.campaignCode],
   }),
 }));
 

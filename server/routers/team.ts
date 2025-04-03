@@ -1,4 +1,4 @@
-import { calendarEvent, calendarEventParticipant, calendarFolder, company, contact, marketingCampaign, team, teamActivity, teamContact, teamMeeting, user, userNotifications } from '@/drizzle/schema';
+import { calendarEvent, calendarEventParticipant, calendarFolder, company, contact, team, teamActivity, teamContact, teamMeeting, user, userNotifications } from '@/drizzle/schema';
 import { activitySubTypeSchema, activityTypeSchema } from '@/lib/schema';
 import { createContactActivityHelper } from '@/server/helper/contact';
 import { createTeamActivityHelper } from '@/server/helper/team';
@@ -237,27 +237,12 @@ export const teamRouter = createTRPCRouter({
         leaderId: z.string().optional(),
         subLeaderId: z.string().optional(),
         referralId: z.string().optional(),
-        campaignCode: z.string().optional(),
         remarks: z.string().optional(),
         company: z.object({ id: z.string(), name: z.string() }).optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
-      let campaignCodeToSet: string | undefined = input.campaignCode;
       let companyIdToSet: string | null | undefined = input.company?.id;
-
-      if (input.campaignCode) {
-        // Verify campaign exists
-        const campaign = await ctx.db
-          .select()
-          .from(marketingCampaign)
-          .where(eq(marketingCampaign.campaignCode, input.campaignCode))
-          .then((rows) => rows[0]);
-
-        if (!campaign) {
-          campaignCodeToSet = undefined;
-        }
-      }
 
       if (input.company?.id) {
         // Verify company exists
@@ -289,7 +274,6 @@ export const teamRouter = createTRPCRouter({
           ...(input.leaderId && { leaderId: input.leaderId }),
           ...(input.subLeaderId && { subLeaderId: input.subLeaderId }),
           ...(input.referralId && { referralId: input.referralId }),
-          ...(campaignCodeToSet !== undefined && { campaignCode: campaignCodeToSet }),
           ...(companyIdToSet !== undefined && { companyId: companyIdToSet }),
           ...(input.remarks && { remarks: input.remarks }),
         })

@@ -122,17 +122,6 @@ export function DashboardSidebar() {
           ]}
         />
         {/* <SidebarGroupSection
-          title={t('marketing')}
-          items={[
-            {
-              id: 'campaigns',
-              title: t('campaigns'),
-              url: '/dashboard/marketing/campaigns',
-              icon: Gift,
-            },
-          ]}
-        /> */}
-        {/* <SidebarGroupSection
           title={t('resources')}
           items={[
             {

@@ -47,8 +47,6 @@ interface ContactFormData {
   status: Status;
   source?: string;
   remark?: string;
-  campaignCode?: string;
-  campaignCodes?: string[];
   createdAt?: Date;
 }
 
@@ -64,13 +62,11 @@ export default function ContactUpload() {
   const [hasDuplicates, setHasDuplicates] = useState(false);
   const [isCancelling, setIsCancelling] = useState(false);
   const cancelUploadRef = useRef(false);
-  const [selectedCampaignCode, setSelectedCampaignCode] = useState<string | undefined>(undefined);
   const [progress, setProgress] = useState(0);
   const [progressStatus, setProgressStatus] = useState('');
 
   const checkDuplicates = api.contact.checkDuplicateContacts.useMutation();
 
-  const { data: campaigns } = api.marketing.getActiveCampaigns.useQuery();
   const { data: companies } = api.company.getAllCompanies.useQuery();
   const { data: statuses } = api.site.getStatus.useQuery();
 
@@ -107,16 +103,6 @@ export default function ContactUpload() {
             const parsedData = (results.data as any[])
               .filter((row) => row.name || row.firstName || row.email || row.phone)
               .map((row) => {
-                const campaignCodes: string[] = [];
-                if (row.campaignCode) {
-                  const codes = row.campaignCode.split(',').map((code: string) => code.trim());
-                  for (const code of codes) {
-                    if (campaigns?.some((c) => c.campaignCode === code) && !campaignCodes.includes(code)) {
-                      campaignCodes.push(code);
-                    }
-                  }
-                }
-
                 // Parse createdAt if it exists
                 let createdAt: Date | undefined = undefined;
                 if (row.createdAt) {
@@ -133,8 +119,6 @@ export default function ContactUpload() {
                     status: row.status || 'Lead',
                     source: row.source || '',
                     remark: row.remark || '',
-                    campaignCodes,
-                    campaignCode: campaignCodes.join(',') || '',
                     createdAt,
                   };
                 }
@@ -149,18 +133,10 @@ export default function ContactUpload() {
                   status: row.status || 'Lead',
                   source: row.source || '',
                   remark: row.remark || '',
-                  campaignCodes,
-                  campaignCode: campaignCodes.join(',') || '',
                   createdAt,
                 };
               })
               .filter((row) => !isRowEmpty(row) && isRowValid(row));
-
-            // Set the global campaign code if any row has a campaign code
-            const firstCampaignCode = parsedData.find((row) => row.campaignCodes?.length)?.campaignCodes?.[0];
-            if (firstCampaignCode) {
-              setSelectedCampaignCode(firstCampaignCode);
-            }
 
             setCsvData(parsedData);
 
@@ -334,7 +310,6 @@ export default function ContactUpload() {
         status: 'Lead',
         source: 'N/A',
         remark: '',
-        campaignCode: 'CAMP1,CAMP2,CAMP3', // Example of multiple campaign codes
         createdAt: '16/02/2025', // Example format: DD/MM/YYYY
       },
     ];
@@ -406,21 +381,6 @@ export default function ContactUpload() {
             ) : (
               <>
                 <div className='flex flex-1 items-center gap-4'>
-                  <div className='w-64'>
-                    <Combobox
-                      value={selectedCampaignCode ?? ''}
-                      onChange={(value) => setSelectedCampaignCode(value)}
-                      items={campaigns?.map((c) => c.campaignCode) ?? []}
-                      placeholder={t('select_campaign_optional')}
-                      searchPlaceholder={t('search_campaigns')}
-                      groupHeading={t('campaigns')}
-                      allowCustom={false}
-                      renderItem={(code) => {
-                        const campaign = campaigns?.find((c) => c.campaignCode === code);
-                        return campaign?.name ?? code;
-                      }}
-                    />
-                  </div>
                   <Button type='submit' size='sm' disabled={isLoading} onClick={handleSubmit}>
                     {t('import_contacts')}
                   </Button>
@@ -433,7 +393,6 @@ export default function ContactUpload() {
                       setCsvData([]);
                       setDuplicates([]);
                       setHasDuplicates(false);
-                      setSelectedCampaignCode(undefined);
                       // Reset the file input
                       const fileInput = document.getElementById('csvUpload') as HTMLInputElement;
                       if (fileInput) fileInput.value = '';
@@ -457,7 +416,6 @@ export default function ContactUpload() {
                   <TableHead>{t('company')}</TableHead>
                   <TableHead>{t('status')}</TableHead>
                   <TableHead>{t('source')}</TableHead>
-                  <TableHead>{t('campaign')}</TableHead>
                   <TableHead>{t('remark')}</TableHead>
                   <TableHead>{t('created_at')}</TableHead>
                 </TableRow>
@@ -513,21 +471,6 @@ export default function ContactUpload() {
                         placeholder={t('select_source')}
                         searchPlaceholder={t('search_source')}
                         groupHeading={t('sources')}
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <Combobox
-                        value={row.campaignCode ?? ''}
-                        onChange={(value) => handleCsvEdit(index, 'campaignCode', value)}
-                        items={campaigns?.map((c) => c.campaignCode) ?? []}
-                        placeholder={t('select_campaign')}
-                        searchPlaceholder={t('search_campaigns')}
-                        groupHeading={t('campaigns')}
-                        allowCustom={false}
-                        renderItem={(code) => {
-                          const campaign = campaigns?.find((c) => c.campaignCode === code);
-                          return campaign?.name ?? code;
-                        }}
                       />
                     </TableCell>
                     <TableCell>
