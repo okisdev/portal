@@ -245,50 +245,49 @@ export default function CRMTeamsPage() {
 
   return (
     <div className='space-y-4 p-4'>
-      <PageHeader
-        title={t('teams')}
-        subtitle={!isLoading ? `(${t('total_number_teams', { count: filteredTeams.length })})` : undefined}
-        description={t('teams_description')}
-        right={
-          <Button variant='outline' className='h-8' onClick={() => setIsCreateModalOpen(true)}>
-            <Plus className='mr-2 size-4' /> {t('create_team')}
-          </Button>
-        }
-      />
+      <PageHeader title={t('teams')} subtitle={!isLoading ? `(${t('total_number_teams', { count: filteredTeams.length })})` : undefined} description={t('teams_description')} />
 
-      <div className='flex items-center'>
-        <Input placeholder={t('filter_teams')} value={search} onChange={(e) => setSearch(e.target.value)} className='h-8 max-w-sm' />
-        <Combobox
-          value={selectedColumn}
-          onChange={(value) => {
-            setSelectedColumn(value);
-            const column = table.getAllColumns().find((col) => col.id === value);
-            if (column) {
-              column.toggleVisibility(!column.getIsVisible());
-            }
-          }}
-          items={table
-            .getAllColumns()
-            .filter((column) => column.getCanHide())
-            .map((column) => column.id)}
-          placeholder={t('visible_columns')}
-          searchPlaceholder={t('search_columns')}
-          emptyText={t('no_columns_found')}
-          groupHeading={t('visible_columns')}
-          allowCustom={false}
-          renderItem={(item) => {
-            const column = table.getAllColumns().find((col) => col.id === item);
-            return (
-              <div className='flex w-full items-center justify-between'>
-                <span>{t(item)}</span>
-                {column?.getIsVisible() && <Check className='h-4 w-4' />}
-              </div>
-            );
-          }}
-          className='ml-2 w-48'
-          size='sm'
-          alwaysPlaceHolder={true}
-        />
+      <div className='flex items-center justify-between'>
+        <div className='flex items-center'>
+          <Input placeholder={t('filter_teams')} disabled={isLoading} value={search} onChange={(e) => setSearch(e.target.value)} className='h-8 w-72 max-w-sm' />
+          <Combobox
+            value={selectedColumn}
+            onChange={(value) => {
+              setSelectedColumn(value);
+              const column = table.getAllColumns().find((col) => col.id === value);
+              if (column) {
+                column.toggleVisibility(!column.getIsVisible());
+              }
+            }}
+            items={table
+              .getAllColumns()
+              .filter((column) => column.getCanHide())
+              .map((column) => column.id)}
+            placeholder={t('visible_columns')}
+            searchPlaceholder={t('search_columns')}
+            emptyText={t('no_columns_found')}
+            groupHeading={t('visible_columns')}
+            allowCustom={false}
+            renderItem={(item) => {
+              const column = table.getAllColumns().find((col) => col.id === item);
+              return (
+                <div className='flex w-full items-center justify-between'>
+                  <span>{t(item)}</span>
+                  {column?.getIsVisible() && <Check className='h-4 w-4' />}
+                </div>
+              );
+            }}
+            className='ml-2 w-48'
+            size='sm'
+            alwaysPlaceHolder={true}
+          />
+        </div>
+
+        <div className='flex flex-row gap-2'>
+          <Button variant='outline' className='h-8' onClick={() => setIsCreateModalOpen(true)}>
+            <Plus className='size-4' /> {t('create_team')}
+          </Button>
+        </div>
       </div>
 
       <DataTable table={table} columns={tableColumns} loading={isLoading} onRowClick={(row) => router.push(`/dashboard/crm/team/${row.id}`)} />

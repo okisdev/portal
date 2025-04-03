@@ -30,7 +30,7 @@ import {
   getSortedRowModel,
   useReactTable,
 } from '@tanstack/react-table';
-import { Check, ExternalLink, MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
+import { Check, ExternalLink, MoreHorizontal, Pencil, Plus, Trash2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -393,7 +393,7 @@ export default function CompanyPage() {
       <PageHeader title={t('companies')} subtitle={!isLoading ? `(${t('total_number_companies', { count: filteredCompanies.length })})` : undefined} description={t('companies_description')} />
 
       <div className='flex flex-col gap-4'>
-        <div className='flex items-center justify-between gap-4'>
+        <div className='flex items-center justify-between'>
           <div className='flex flex-row gap-2'>
             <Input placeholder={t('search_companies')} value={search} onChange={(e) => setSearch(e.target.value)} className='h-8 w-72 max-w-sm' disabled={isLoading} />
 
@@ -432,7 +432,7 @@ export default function CompanyPage() {
 
           <div className='flex flex-row gap-2'>
             <Button variant='outline' size='sm' className='h-8' disabled={isLoading} onClick={() => setCreateDialogOpen(true)}>
-              {t('add_company')}
+              <Plus className='size-4' /> {t('add_company')}
             </Button>
           </div>
         </div>

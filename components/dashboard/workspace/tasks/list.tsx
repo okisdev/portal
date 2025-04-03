@@ -57,7 +57,7 @@ export default function TaskList({ tasks, visibleStatuses, onEdit, onDelete, onC
               <div className='grid gap-4'>
                 {tasksInStatus.map((task) => (
                   <div key={task.id} className='group rounded-lg border bg-card p-4 shadow-xs transition-all hover:shadow-md'>
-                    <div className='flex items-center justify-between gap-4'>
+                    <div className='flex items-center justify-between'>
                       <div className='flex flex-1 flex-col gap-1'>
                         <div className='flex items-center gap-2'>
                           <span className='font-medium text-foreground'>{task.title}</span>
