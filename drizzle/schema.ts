@@ -219,9 +219,7 @@ export const contact = pgTable('portal_contact', {
   country: text(),
   postalCode: text(),
   remark: text(),
-  status: text('status', { enum: ['lead', 'appointment', 'follow_up', 'called', 'called_no_answer', 'after_pitching', 'key_person', 'special', 'trial', 'final', 'closed', 'junk'] })
-    .notNull()
-    .default('lead'),
+  status: text('status').notNull().default('lead'),
   source: text(),
   assignedTo: text().references(() => user.id),
   stripeCustomerId: text(),
@@ -232,7 +230,7 @@ export const contact = pgTable('portal_contact', {
   lastContactedAt: timestamp({ mode: 'date' }),
   lastActivity: text('lastActivity'),
   nextFollowUpAt: timestamp({ mode: 'date' }),
-  priority: text('priority', { enum: ['urgent', 'high', 'medium', 'low'] }).default('medium'),
+  priority: text('priority').default('medium'),
   workExperience: text(),
   currentRole: text(),
   industry: text(),
@@ -931,7 +929,7 @@ export const siteConfig = pgTable('portal_siteConfig', {
     .notNull()
     .$defaultFn(() => crypto.randomUUID()),
   key: text('key', {
-    enum: ['name', 'description', 'domain', 'supportEmailDomains'],
+    enum: ['name', 'description', 'domain', 'supportEmailDomains', 'status', 'priority', 'source'],
   })
     .notNull()
     .unique(), // Unique key for the config

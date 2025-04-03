@@ -4,7 +4,7 @@ import { eq } from 'drizzle-orm';
 import { z } from 'zod';
 
 export const siteRouter = createTRPCRouter({
-  getConfig: protectedProcedure.input(z.object({ key: z.enum(['name', 'description', 'domain', 'supportEmailDomains']) })).query(async ({ ctx, input }) => {
+  getConfig: protectedProcedure.input(z.object({ key: z.enum(['name', 'description', 'domain', 'supportEmailDomains', 'status', 'priority', 'source']) })).query(async ({ ctx, input }) => {
     const config = await ctx.db
       .select()
       .from(siteConfig)
@@ -15,9 +15,18 @@ export const siteRouter = createTRPCRouter({
       return {
         id: crypto.randomUUID(),
         key: input.key,
-        value: input.key === 'name' ? 'My Site' : '',
+        value:
+          input.key === 'name'
+            ? 'My Site'
+            : input.key === 'status'
+              ? JSON.stringify(['lead', 'appointment', 'follow_up', 'called', 'called_no_answer', 'after_pitching', 'key_person', 'special', 'trial', 'final', 'closed', 'junk'])
+              : input.key === 'priority'
+                ? JSON.stringify(['urgent', 'high', 'medium', 'low'])
+                : input.key === 'source'
+                  ? JSON.stringify(['Pitching', 'Referral', 'Website', 'Email', 'Instagram', 'LinkedIn', 'WhatsApp', 'Facebook', 'BNI', 'No Planner', 'Pay Trial', 'Other'])
+                  : '',
         description: null,
-        type: 'string',
+        type: input.key === 'status' || input.key === 'priority' || input.key === 'source' ? 'array' : 'string',
         isPublic: true,
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -34,7 +43,7 @@ export const siteRouter = createTRPCRouter({
   updateConfig: protectedProcedure
     .input(
       z.object({
-        key: z.enum(['name', 'description', 'domain', 'supportEmailDomains']),
+        key: z.enum(['name', 'description', 'domain', 'supportEmailDomains', 'status', 'priority', 'source']),
         value: z.string(),
         description: z.string().optional(),
         type: z.enum(['string', 'number', 'boolean', 'json', 'array']).default('string'),
@@ -74,7 +83,7 @@ export const siteRouter = createTRPCRouter({
         .returning();
     }),
 
-  deleteConfig: protectedProcedure.input(z.object({ key: z.enum(['name', 'description', 'domain', 'supportEmailDomains']) })).mutation(async ({ ctx, input }) => {
+  deleteConfig: protectedProcedure.input(z.object({ key: z.enum(['name', 'description', 'domain', 'supportEmailDomains', 'status', 'priority', 'source']) })).mutation(async ({ ctx, input }) => {
     return ctx.db.delete(siteConfig).where(eq(siteConfig.key, input.key));
   }),
 });

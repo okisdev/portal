@@ -22,8 +22,8 @@ import { usePathname, useRouter } from '@/i18n/navigation';
 import packageInfo from '@/package.json';
 import { copyToClipboard } from '@/utils/clipboard';
 import { api } from '@/utils/trpc/client';
-import { Building, Contact, FileIcon, QrCode, Users } from 'lucide-react';
-import { Bell, Calendar, ChevronDown, ChevronRight, ChevronUp, Gift, Globe, Laptop, LogOut, Moon, Plus, Settings, Sparkle, Sun, Verified } from 'lucide-react';
+import { Building, Contact, QrCode, Users } from 'lucide-react';
+import { Bell, Calendar, ChevronDown, ChevronRight, ChevronUp, Globe, Laptop, LogOut, Moon, Plus, Settings, Sparkle, Sun, Verified } from 'lucide-react';
 import { signOut } from 'next-auth/react';
 import { useLocale, useTranslations } from 'next-intl';
 import { useTheme } from 'next-themes';
@@ -121,7 +121,7 @@ export function DashboardSidebar() {
             },
           ]}
         />
-        <SidebarGroupSection
+        {/* <SidebarGroupSection
           title={t('marketing')}
           items={[
             {
@@ -131,8 +131,8 @@ export function DashboardSidebar() {
               icon: Gift,
             },
           ]}
-        />
-        <SidebarGroupSection
+        /> */}
+        {/* <SidebarGroupSection
           title={t('resources')}
           items={[
             {
@@ -142,7 +142,7 @@ export function DashboardSidebar() {
               icon: FileIcon,
             },
           ]}
-        />
+        /> */}
         <SidebarGroupSection
           title={t('tools')}
           items={[
@@ -154,19 +154,23 @@ export function DashboardSidebar() {
             },
           ]}
         />
-        {me?.role === 'ADMIN' && (
-          <SidebarGroupSection
-            title={t('site')}
-            items={[
-              {
-                id: 'overview',
-                title: t('overview'),
-                url: '/dashboard/site',
-                icon: Users,
-              },
-            ]}
-          />
-        )}
+        <SidebarGroupSection
+          title={t('site')}
+          items={[
+            {
+              id: 'overview',
+              title: t('overview'),
+              url: '/dashboard/site',
+              icon: Users,
+            },
+            {
+              id: 'management',
+              title: t('management'),
+              url: '/dashboard/site/management',
+              icon: Settings,
+            },
+          ]}
+        />
       </SidebarContent>
       <SidebarFooter>
         <SidebarMenu>
