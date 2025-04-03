@@ -19,7 +19,7 @@
   "LAST_CONTACTED_UPDATED": "最后一次联系的日期更新",
   "MEETING_CANCELLED": "已取消会议",
   "MEETING_SCHEDULED": "已安排会议 {title}，时间为 {startAt} 至 {endAt}",
-  "MEETING_UPDATED": "已更新会议 {title} 已更新为 {newStartAt} 至 {newEndAt}",
+  "MEETING_UPDATED": "已更新会议 {title} 为 {newStartAt} 至 {newEndAt}",
   "MESSAGE_RECEIVED": "已收到消息",
   "MESSAGE_SENT": "已发送消息",
   "NEXT_FOLLOW_UP": "下次跟进",
