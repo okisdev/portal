@@ -15,7 +15,6 @@ import {
   contactCampaign,
   contactCustomField,
   contactCustomValue,
-  contactDeal,
   marketingCampaign,
   paymentTrack,
   resourceContent,
@@ -71,7 +70,6 @@ export const sessionRelations = relations(session, ({ one }) => ({
 }));
 
 export const contactRelations = relations(contact, ({ many, one }) => ({
-  deals: many(contactDeal),
   activities: many(contactActivity),
   payments: many(paymentTrack),
   assignedUser: one(user, {
@@ -95,13 +93,6 @@ export const contactRelations = relations(contact, ({ many, one }) => ({
   referralTeams: many(team, { relationName: 'teamReferral' }),
   receivedContent: many(resourceContentSendTrack),
   customValues: many(contactCustomValue),
-}));
-
-export const contactDealRelations = relations(contactDeal, ({ one }) => ({
-  contact: one(contact, {
-    fields: [contactDeal.contactId],
-    references: [contact.id],
-  }),
 }));
 
 export const contactActivityRelations = relations(contactActivity, ({ one }) => ({

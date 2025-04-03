@@ -14,7 +14,6 @@ import type {
   contactCampaign,
   contactCustomField,
   contactCustomValue,
-  contactDeal,
   marketingCampaign,
   paymentTrack,
   resourceContent,
@@ -207,8 +206,6 @@ export type Session = InferSelectModel<typeof session>;
 export type Contact = InferSelectModel<typeof contact>;
 
 export type CompanyContact = InferSelectModel<typeof companyContact>;
-
-export type ContactDeal = InferSelectModel<typeof contactDeal>;
 
 export type ContactActivity = InferSelectModel<typeof contactActivity>;
 
