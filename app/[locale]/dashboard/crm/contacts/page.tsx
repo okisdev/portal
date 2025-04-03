@@ -14,6 +14,8 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useDebounce } from '@/hooks/use-debounce';
 import type { Contact, Priority, Source, Status } from '@/lib/schema';
+import type { Locale } from '@/types/i18n';
+import { renderDescription } from '@/utils/activity';
 import { formatDateWithoutTime } from '@/utils/date';
 import { parsePhoneWithoutCountryCode } from '@/utils/phone';
 import { api } from '@/utils/trpc/client';
@@ -32,6 +34,7 @@ import {
 } from '@tanstack/react-table';
 import { Check, Eye, Import, MoreHorizontal, Trash2, Upload } from 'lucide-react';
 import { useTranslations } from 'next-intl';
+import { useLocale } from 'next-intl';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { usePathname } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
@@ -42,6 +45,7 @@ export default function CRMContactsPage() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const t = useTranslations();
+  const locale = useLocale() as Locale;
 
   const { data: contacts, isLoading } = api.contact.getAllContacts.useQuery();
   const { data: statuses } = api.site.getStatus.useQuery();
@@ -53,6 +57,7 @@ export default function CRMContactsPage() {
   const deleteContact = api.contact.deleteContact.useMutation({
     onSuccess: () => {
       utils.contact.getAllContacts.invalidate();
+      toast.success(t('contact_deleted_successfully'));
     },
   });
 
@@ -158,7 +163,7 @@ export default function CRMContactsPage() {
       id: 'select',
       header: ({ table }) => (
         <Checkbox
-          checked={table.getIsAllPageRowsSelected() || (table.getIsSomePageRowsSelected() && 'indeterminate')}
+          checked={table.getIsAllPageRowsSelected() || (table.getIsAllPageRowsSelected() && 'indeterminate')}
           onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
           aria-label='Select all'
         />
@@ -267,6 +272,21 @@ export default function CRMContactsPage() {
       accessorKey: 'next_follow_up',
       header: ({ column }) => <DataTableHeader column={column} title={t('next_follow_up')} />,
       cell: ({ row }) => (row.original.nextFollowUpAt ? formatDateWithoutTime(row.original.nextFollowUpAt) : '—'),
+      enableSorting: true,
+    },
+    {
+      accessorKey: 'lastActivity',
+      header: ({ column }) => <DataTableHeader column={column} title={t('last_activity')} />,
+      cell: ({ row }) => {
+        const lastActivity = row.original.lastActivity ? JSON.parse(row.original.lastActivity) : null;
+        if (!lastActivity) return '—';
+
+        return (
+          <div className='w-32'>
+            <p className='truncate whitespace-nowrap text-sm'>{renderDescription(lastActivity, t, locale)}</p>
+          </div>
+        );
+      },
       enableSorting: true,
     },
     {
