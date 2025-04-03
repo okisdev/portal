@@ -23,23 +23,18 @@ import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
 
-const formSchema = z
-  .object({
-    firstName: z.string().optional(),
-    lastName: z.string().optional(),
-    email: z.string().optional(),
-    phone: z.string().optional(),
-    company: z.string().optional(),
-    companyId: z.string().nullable().optional(),
-    source: z.string().optional(),
-    remark: z.string().optional(),
-    status: z.string().optional(),
-    createdAt: z.date().optional(),
-  })
-  .refine((data) => data.email || data.phone, {
-    message: 'Either email or phone number is required',
-    path: ['email', 'phone'],
-  });
+const formSchema = z.object({
+  firstName: z.string().optional(),
+  lastName: z.string().optional(),
+  email: z.string().optional(),
+  phone: z.string().optional(),
+  company: z.string().optional(),
+  companyId: z.string().nullable().optional(),
+  source: z.string().optional(),
+  remark: z.string().optional(),
+  status: z.string().optional(),
+  createdAt: z.date().optional(),
+});
 
 export default function ManualContactForm() {
   const t = useTranslations();
@@ -183,7 +178,6 @@ export default function ManualContactForm() {
                   <EmailInput value={field.value || ''} onChange={field.onChange} />
                 </FormControl>
                 <FormMessage />
-                {!form.getValues('phone') && !form.formState.errors.email && <p className='text-muted-foreground text-xs'>{t('either_email_or_phone_required')}</p>}
               </FormItem>
             )}
           />
@@ -198,7 +192,6 @@ export default function ManualContactForm() {
                   <PhoneInput value={field.value || ''} onChange={field.onChange} />
                 </FormControl>
                 <FormMessage />
-                {!form.getValues('email') && !form.formState.errors.phone && <p className='text-muted-foreground text-xs'>{t('either_email_or_phone_required')}</p>}
               </FormItem>
             )}
           />
@@ -284,8 +277,8 @@ export default function ManualContactForm() {
                 <div className='relative flex gap-2'>
                   <FormControl>
                     <Input
-                      placeholder='DD/MM/YYYY'
-                      value={field.value ? format(field.value, 'dd/MM/yyyy') : ''}
+                      placeholder='YYYY/MM/DD'
+                      value={field.value ? format(field.value, 'yyyy/MM/dd') : ''}
                       onChange={(e) => {
                         const parsedDate = parseDate(e.target.value);
                         field.onChange(parsedDate);

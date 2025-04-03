@@ -25,7 +25,7 @@ export const contactRouter = createTRPCRouter({
     return ctx.db
       .select()
       .from(contact)
-      .orderBy(desc(contact.id))
+      .orderBy(desc(contact.createdAt))
       .offset(input.page * input.limit)
       .limit(input.limit);
   }),
@@ -583,9 +583,12 @@ export const contactRouter = createTRPCRouter({
       const newContacts = input.contacts.filter((contact) => !contact.email || !existingEmails.has(contact.email));
 
       try {
-        // Create contacts one by one, reusing createCon  tact logic
+        // Create contacts one by one, reusing createContact logic
         for (const contactData of newContacts) {
           try {
+            // Ensure createdAt is set to midnight if provided
+            const createdAt = contactData.createdAt ? startOfDay(contactData.createdAt) : undefined;
+
             const [result] = await ctx.db
               .insert(contact)
               .values({
@@ -600,7 +603,7 @@ export const contactRouter = createTRPCRouter({
                 status: contactData.status ?? 'Lead',
                 remark: contactData.remark ?? '',
                 createdBy: ctx.session?.user.id,
-                ...(contactData.createdAt && { createdAt: startOfDay(contactData.createdAt) }),
+                ...(createdAt && { createdAt }),
               })
               .returning();
 

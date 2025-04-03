@@ -87,7 +87,17 @@ export default function ContactUpload() {
   // Function to format date for display
   const formatDateForDisplay = (date: Date | undefined): string => {
     if (!date) return '';
-    return format(date, 'dd/MM/yyyy');
+    return format(date, 'yyyy/MM/dd');
+  };
+
+  // Add this new function to validate date format
+  const validateDateFormat = (dateStr: string): boolean => {
+    const regex = /^\d{4}\/\d{2}\/\d{2}$/;
+    if (!regex.test(dateStr)) return false;
+
+    const [year, month, day] = dateStr.split('/').map(Number);
+    const date = new Date(year, month - 1, day);
+    return date.getFullYear() === year && date.getMonth() === month - 1 && date.getDate() === day;
   };
 
   const handleCsvUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -106,27 +116,16 @@ export default function ContactUpload() {
                 // Parse createdAt if it exists
                 let createdAt: Date | undefined = undefined;
                 if (row.createdAt) {
+                  if (!validateDateFormat(row.createdAt)) {
+                    toast.error(`Invalid date format for row: ${row.firstName || row.name}. Please use YYYY/MM/DD format.`);
+                    return null;
+                  }
                   createdAt = parseDate(row.createdAt);
                 }
 
-                if (row.firstName || row.lastName) {
-                  return {
-                    firstName: row.firstName || 'N/A',
-                    lastName: row.lastName || '',
-                    email: row.email || '',
-                    phone: row.phone ? formatPhoneNumber(row.phone) : '',
-                    company: row.company || '',
-                    status: row.status || 'Lead',
-                    source: row.source || '',
-                    remark: row.remark || '',
-                    createdAt,
-                  };
-                }
-
-                const { firstName, lastName } = parseFullName(row.name || '');
-                return {
-                  firstName: firstName || 'N/A',
-                  lastName: lastName || '',
+                const contactData: ContactFormData = {
+                  firstName: row.firstName || 'N/A',
+                  lastName: row.lastName || '',
                   email: row.email || '',
                   phone: row.phone ? formatPhoneNumber(row.phone) : '',
                   company: row.company || '',
@@ -135,14 +134,30 @@ export default function ContactUpload() {
                   remark: row.remark || '',
                   createdAt,
                 };
+
+                if (row.firstName || row.lastName) {
+                  return contactData;
+                }
+
+                const { firstName, lastName } = parseFullName(row.name || '');
+                return {
+                  ...contactData,
+                  firstName: firstName || 'N/A',
+                  lastName: lastName || '',
+                };
               })
-              .filter((row) => !isRowEmpty(row) && isRowValid(row));
+              .filter((row): row is ContactFormData => {
+                if (!row) return false;
+                const isEmpty = Boolean(isRowEmpty(row));
+                const isValid = Boolean(isRowValid(row));
+                return !isEmpty && isValid;
+              });
 
             setCsvData(parsedData);
 
             // Check for duplicates using the new API endpoint
             const duplicateResults = await checkDuplicates.mutateAsync({
-              contacts: parsedData.map((contact: ContactFormData) => ({
+              contacts: parsedData.map((contact) => ({
                 email: contact.email || undefined,
                 phone: contact.phone || undefined,
               })),
@@ -310,7 +325,7 @@ export default function ContactUpload() {
         status: 'Lead',
         source: 'N/A',
         remark: '',
-        createdAt: '16/02/2025', // Example format: DD/MM/YYYY
+        createdAt: '2024/02/16', // Example format: YYYY/MM/DD
       },
     ];
 
@@ -479,10 +494,15 @@ export default function ContactUpload() {
                     <TableCell>
                       <div className='flex gap-2'>
                         <Input
-                          placeholder='DD/MM/YYYY'
+                          placeholder='YYYY/MM/DD'
                           value={row.createdAt ? formatDateForDisplay(row.createdAt) : ''}
                           onChange={(e) => {
-                            const parsedDate = parseDate(e.target.value);
+                            const dateStr = e.target.value;
+                            if (dateStr && !validateDateFormat(dateStr)) {
+                              toast.error('Please use YYYY/MM/DD format');
+                              return;
+                            }
+                            const parsedDate = dateStr ? parseDate(dateStr) : undefined;
                             const updateData = (prev: ContactFormData[]) => {
                               const newData = [...prev];
                               newData[index] = { ...newData[index], createdAt: parsedDate };
