@@ -592,5 +592,6 @@
   "cancel_sorting": "Cancel Sorting",
   "dashboard": "Dashboard",
   "createdAt": "Created at",
-  "actions": "Actions"
+  "actions": "Actions",
+  "visible_columns": "Visible Columns"
 }

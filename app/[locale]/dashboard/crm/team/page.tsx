@@ -271,16 +271,16 @@ export default function CRMTeamsPage() {
             .getAllColumns()
             .filter((column) => column.getCanHide())
             .map((column) => column.id)}
-          placeholder={t('columns')}
+          placeholder={t('visible_columns')}
           searchPlaceholder={t('search_columns')}
           emptyText={t('no_columns_found')}
-          groupHeading={t('available_columns')}
+          groupHeading={t('visible_columns')}
           allowCustom={false}
           renderItem={(item) => {
             const column = table.getAllColumns().find((col) => col.id === item);
             return (
               <div className='flex w-full items-center justify-between'>
-                <span className='capitalize'>{item}</span>
+                <span>{t(item)}</span>
                 {column?.getIsVisible() && <Check className='h-4 w-4' />}
               </div>
             );

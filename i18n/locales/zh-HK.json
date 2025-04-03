@@ -592,5 +592,6 @@
   "cancel_sorting": "取消排序",
   "dashboard": "儀表板",
   "createdAt": "創建在",
-  "actions": "動作"
+  "actions": "動作",
+  "visible_columns": "可見列"
 }
