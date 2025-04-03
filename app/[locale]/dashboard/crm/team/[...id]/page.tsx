@@ -8,6 +8,7 @@ import { ComboboxCommand } from '@/components/shared/combobox';
 import { EventDialog } from '@/components/shared/event-dialog';
 import { EventSection } from '@/components/shared/event-section';
 import { PageLoading } from '@/components/shared/page-loading';
+import { SmartColorBadge } from '@/components/shared/smart-color-badge';
 import { TabSwitcher } from '@/components/shared/tab-switcher';
 import { DataTable } from '@/components/shared/table';
 import { DataTableHeader } from '@/components/shared/table/header';
@@ -20,6 +21,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Textarea } from '@/components/ui/textarea';
+import type { Status } from '@/lib/schema';
 import { formatDate } from '@/utils/date';
 import { parsePhone } from '@/utils/phone';
 import { api } from '@/utils/trpc/client';
@@ -94,6 +96,7 @@ export default function TeamIdPage() {
   });
   const { data: campaigns } = api.marketing.getActiveCampaigns.useQuery();
   const { data: companies } = api.company.getAllCompanies.useQuery();
+  const { data: statuses } = api.site.getStatus.useQuery();
 
   const updateTeam = api.team.updateTeam.useMutation({
     onSuccess: () => {
@@ -226,7 +229,7 @@ export default function TeamIdPage() {
       cell: ({ row }) => {
         const isLeader = team?.leaderId === row.original.contact.id;
         const isSubLeader = team?.subLeaderId === row.original.contact.id;
-        return <div>{isLeader ? <ColorBadge type='status' value='leader' /> : isSubLeader ? <ColorBadge type='status' value='sub-leader' /> : <ColorBadge type='status' value='member' />}</div>;
+        return <div>{isLeader ? <ColorBadge type='default' value='Leader' /> : isSubLeader ? <ColorBadge type='default' value='Sub Leader' /> : <ColorBadge type='default' value='Member' />}</div>;
       },
     },
     {
@@ -242,7 +245,7 @@ export default function TeamIdPage() {
     {
       accessorKey: 'status',
       header: ({ column }) => <DataTableHeader column={column} title={t('status')} />,
-      cell: ({ row }) => <ColorBadge type='contactStatus' value={row.original.contact.status} />,
+      cell: ({ row }) => <SmartColorBadge value={row.original.contact.status} color={statuses?.find((s: Status) => s.value === (row.original.contact.status || 'Lead'))?.color || '#6b7280'} />,
     },
     {
       id: 'actions',

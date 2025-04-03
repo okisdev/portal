@@ -380,8 +380,8 @@ export const calendarRouter = createTRPCRouter({
       })
       .returning();
 
-    if (thisContact.status === 'lead') {
-      await ctx.db.update(contact).set({ status: 'appointment' }).where(eq(contact.id, contactId));
+    if (thisContact.status === 'Lead') {
+      await ctx.db.update(contact).set({ status: 'Appointment' }).where(eq(contact.id, contactId));
     }
 
     // Add the contact as a participant

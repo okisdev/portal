@@ -2,7 +2,6 @@
 
 import { ActionAlertDialog } from '@/components/shared/action-alert-dialog';
 import { ActivitySection } from '@/components/shared/activity-section';
-import { ColorBadge } from '@/components/shared/color-badge';
 import { Combobox } from '@/components/shared/combobox';
 import { DateTimePicker } from '@/components/shared/date-time-picker';
 import { EventDialog } from '@/components/shared/event-dialog';
@@ -11,6 +10,7 @@ import { EventSection } from '@/components/shared/event-section';
 import { NameTag } from '@/components/shared/name-tag';
 import { PageLoading } from '@/components/shared/page-loading';
 import { PhoneInput } from '@/components/shared/phone-input';
+import { SmartColorBadge } from '@/components/shared/smart-color-badge';
 import { TabSwitcher } from '@/components/shared/tab-switcher';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -66,9 +66,9 @@ export default function ContactIdPage() {
     phone: '',
     company: '',
     companyId: null as string | null,
-    status: 'lead',
-    source: '',
-    priority: 'medium',
+    status: 'Lead',
+    source: 'N/A',
+    priority: 'Medium',
   });
 
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
@@ -199,9 +199,9 @@ export default function ContactIdPage() {
         phone: contact.phone || '',
         company: contact.company || '',
         companyId: contact.companyId || null,
-        status: contact.status || 'lead',
-        source: contact.source || '',
-        priority: contact.priority || 'low',
+        status: contact.status || 'Lead',
+        source: contact.source || 'N/A',
+        priority: contact.priority || 'Medium',
       });
       setIsEditModalOpen(true);
     }
@@ -245,9 +245,9 @@ export default function ContactIdPage() {
       phone: contact?.phone || '',
       company: contact?.company || '',
       companyId: contact?.companyId || null,
-      status: contact?.status || 'lead',
-      source: contact?.source || '',
-      priority: contact?.priority || 'low',
+      status: contact?.status || 'Lead',
+      source: contact?.source || 'N/A',
+      priority: contact?.priority || 'Medium',
     });
     setIsEditModalOpen(true);
   };
@@ -509,16 +509,16 @@ export default function ContactIdPage() {
                 </div>
                 <div className='space-y-1.5'>
                   <span className='text-muted-foreground text-xs'>{t('priority')}</span>
-                  <Select value={contact?.priority || 'medium'} onValueChange={handlePriorityChange}>
+                  <Select value={contact?.priority || 'Medium'} onValueChange={handlePriorityChange}>
                     <SelectTrigger className='w-full'>
                       <SelectValue>
-                        <ColorBadge type='priority' value={contact?.priority || 'medium'} />
+                        <SmartColorBadge value={contact?.priority || 'Medium'} color={priorities?.find((p: Priority) => p.value === (contact?.priority || 'Medium'))?.color || '#6b7280'} />
                       </SelectValue>
                     </SelectTrigger>
                     <SelectContent className='bg-popover text-popover-foreground'>
                       {priorities?.map((priority: Priority) => (
                         <SelectItem key={priority.value} value={priority.value}>
-                          <ColorBadge type='priority' value={priority.value} />
+                          <SmartColorBadge value={priority.value} color={priority.color} />
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -526,16 +526,16 @@ export default function ContactIdPage() {
                 </div>
                 <div className='space-y-1.5'>
                   <span className='text-muted-foreground text-xs'>{t('status')}</span>
-                  <Select value={contact?.status || 'lead'} onValueChange={handleStatusChange}>
+                  <Select value={contact?.status || 'Lead'} onValueChange={handleStatusChange}>
                     <SelectTrigger className='w-full'>
                       <SelectValue>
-                        <ColorBadge type='contactStatus' value={contact?.status || 'lead'} />
+                        <SmartColorBadge value={contact?.status || 'Lead'} color={statuses?.find((s: Status) => s.value === (contact?.status || 'Lead'))?.color || '#6b7280'} />
                       </SelectValue>
                     </SelectTrigger>
                     <SelectContent className='bg-popover text-popover-foreground'>
                       {statuses?.map((status: Status) => (
                         <SelectItem key={status.value} value={status.value}>
-                          <ColorBadge type='contactStatus' value={status.value} />
+                          <SmartColorBadge value={status.value} color={status.color} />
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -764,7 +764,7 @@ export default function ContactIdPage() {
                 <SelectContent>
                   {statuses?.map((status: Status) => (
                     <SelectItem key={status.value} value={status.value}>
-                      <ColorBadge type='contactStatus' value={status.value} />
+                      <SmartColorBadge value={status.value} color={status.color} />
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -788,9 +788,11 @@ export default function ContactIdPage() {
                   <SelectValue placeholder='Select priority' />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value='high'>{t('high')}</SelectItem>
-                  <SelectItem value='medium'>{t('medium')}</SelectItem>
-                  <SelectItem value='low'>{t('low')}</SelectItem>
+                  {priorities?.map((priority: Priority) => (
+                    <SelectItem key={priority.value} value={priority.value}>
+                      <SmartColorBadge value={priority.value} color={priority.color} />
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>

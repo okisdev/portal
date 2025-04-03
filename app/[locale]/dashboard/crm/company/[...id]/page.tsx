@@ -289,7 +289,7 @@ export default function CompanyIdPage() {
                   <div>
                     <Label className='text-muted-foreground text-xs'>{t('status')}</Label>
                     <p className='text-sm'>
-                      <ColorBadge type='status' value={company.status || ''} />
+                      <ColorBadge type='companyStatus' value={company.status || ''} />
                     </p>
                   </div>
                   <div className='flex justify-end'>

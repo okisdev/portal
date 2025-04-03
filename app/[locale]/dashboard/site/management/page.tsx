@@ -256,7 +256,7 @@ export default function ManagementPage() {
   };
 
   return (
-    <div className='container mx-auto space-y-6 p-6'>
+    <div className='container mx-auto space-y-4 p-4'>
       <PageHeader title={t('management')} description={t('management_description')} />
 
       <Tabs defaultValue='status' className='space-y-6'>

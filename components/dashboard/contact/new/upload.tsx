@@ -1,8 +1,8 @@
 'use client';
 
 import { Banner } from '@/components/shared/banner';
-import { ColorBadge } from '@/components/shared/color-badge';
 import { Combobox } from '@/components/shared/combobox';
+import { SmartColorBadge } from '@/components/shared/smart-color-badge';
 import { TableLoading } from '@/components/shared/table/loading';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -130,7 +130,7 @@ export default function ContactUpload() {
                     email: row.email || '',
                     phone: row.phone ? formatPhoneNumber(row.phone) : '',
                     company: row.company || '',
-                    status: row.status || 'lead',
+                    status: row.status || 'Lead',
                     source: row.source || '',
                     remark: row.remark || '',
                     campaignCodes,
@@ -146,7 +146,7 @@ export default function ContactUpload() {
                   email: row.email || '',
                   phone: row.phone ? formatPhoneNumber(row.phone) : '',
                   company: row.company || '',
-                  status: row.status || 'lead',
+                  status: row.status || 'Lead',
                   source: row.source || '',
                   remark: row.remark || '',
                   campaignCodes,
@@ -331,8 +331,8 @@ export default function ContactUpload() {
         email: '',
         phone: '',
         company: '',
-        status: 'lead',
-        source: '',
+        status: 'Lead',
+        source: 'N/A',
         remark: '',
         campaignCode: 'CAMP1,CAMP2,CAMP3', // Example of multiple campaign codes
         createdAt: '16/02/2025', // Example format: DD/MM/YYYY
@@ -499,7 +499,7 @@ export default function ContactUpload() {
                         <SelectContent>
                           {statuses?.map((status: Status) => (
                             <SelectItem key={status.value} value={status.value}>
-                              <ColorBadge type='contactStatus' value={status.value} />
+                              <SmartColorBadge value={status.value} color={status.color} />
                             </SelectItem>
                           ))}
                         </SelectContent>

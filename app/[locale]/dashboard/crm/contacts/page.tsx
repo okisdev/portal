@@ -1,7 +1,6 @@
 'use client';
 
 import { ActionAlertDialog } from '@/components/shared/action-alert-dialog';
-import { ColorBadge } from '@/components/shared/color-badge';
 import { Combobox } from '@/components/shared/combobox';
 import { PageHeader } from '@/components/shared/page-header';
 import { SmartColorBadge } from '@/components/shared/smart-color-badge';
@@ -202,7 +201,7 @@ export default function CRMContactsPage() {
         <Select value={row.original.status} onValueChange={(value) => handleStatusChange(row.original.id, value)} disabled={updateContact.isPending}>
           <SelectTrigger className='h-8 w-[130px]'>
             <SelectValue>
-              <ColorBadge type='contactStatus' value={row.original.status} />
+              <SmartColorBadge value={row.original.status} color={statuses?.find((s: Status) => s.value === (row.original.status || 'Lead'))?.color || '#6b7280'} />
             </SelectValue>
           </SelectTrigger>
           <SelectContent>
@@ -220,10 +219,10 @@ export default function CRMContactsPage() {
       accessorKey: 'priority',
       header: ({ column }) => <DataTableHeader column={column} title={t('priority')} />,
       cell: ({ row }) => (
-        <Select value={row.original.priority || 'medium'} onValueChange={(value) => handlePriorityChange(row.original.id, value)} disabled={updateContact.isPending}>
+        <Select value={row.original.priority || 'Medium'} onValueChange={(value) => handlePriorityChange(row.original.id, value)} disabled={updateContact.isPending}>
           <SelectTrigger className='h-8 w-[130px]'>
             <SelectValue>
-              <ColorBadge type='priority' value={row.original.priority || 'medium'} />
+              <SmartColorBadge value={row.original.priority || 'Medium'} color={priorities?.find((p: Priority) => p.value === (row.original.priority || 'Medium'))?.color || '#6b7280'} />
             </SelectValue>
           </SelectTrigger>
           <SelectContent>
@@ -244,7 +243,7 @@ export default function CRMContactsPage() {
         <Select value={row.original.source || 'N/A'} onValueChange={(value) => handleSourceChange(row.original.id, value)} disabled={updateContact.isPending}>
           <SelectTrigger className='h-8 w-[130px]'>
             <SelectValue>
-              <ColorBadge type='source' value={row.original.source || 'N/A'} />
+              <SmartColorBadge value={row.original.source || 'N/A'} color={sources?.find((s: Source) => s.value === (row.original.source || 'N/A'))?.color || '#6b7280'} />
             </SelectValue>
           </SelectTrigger>
           <SelectContent>
