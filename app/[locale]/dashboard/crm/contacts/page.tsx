@@ -30,30 +30,12 @@ import {
   getSortedRowModel,
   useReactTable,
 } from '@tanstack/react-table';
-import { Check, Eye, Import, MoreHorizontal, Trash2, Upload, X } from 'lucide-react';
+import { Check, Eye, Import, MoreHorizontal, Trash2, Upload } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { usePathname } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
-
-type SortConfig = {
-  column: string;
-  direction: 'asc' | 'desc';
-};
-
-type FilterOperator = '=' | '!=' | 'contains' | 'startsWith' | 'endsWith';
-
-type FilterCondition = {
-  field: string;
-  operator: FilterOperator;
-  value: string;
-};
-
-type FilterConfig = {
-  conditions: FilterCondition[];
-  matchAll: boolean;
-};
 
 export default function CRMContactsPage() {
   const router = useRouter();
@@ -86,213 +68,47 @@ export default function CRMContactsPage() {
   const [search, setSearch] = useState('');
   const debouncedSearch = useDebounce(search, 300);
 
-  const [sortConfig, setSortConfig] = useState<SortConfig>({ column: '', direction: 'asc' });
-
-  const [filters, setFilters] = useState<FilterConfig>({
-    conditions: [],
-    matchAll: true,
-  });
-
-  const filterFields = [
-    { label: t('name'), value: 'name' },
-    { label: t('email'), value: 'email' },
-    { label: t('company'), value: 'company' },
-    { label: t('status'), value: 'status' },
-    { label: t('priority'), value: 'priority' },
-    { label: t('source'), value: 'source' },
-  ];
-
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [contactToDelete, setContactToDelete] = useState<string | null>(null);
 
   const [selectedColumn, setSelectedColumn] = useState<string>('');
 
-  const handleStatusFilter = (status: string | null) => {
-    if (status === null) {
-      setFilters({
-        ...filters,
-        conditions: filters.conditions.filter((c) => c.field !== 'status'),
-      });
-      return;
-    }
-
-    const isActive = filters.conditions.some((c) => c.field === 'status' && c.value === status);
-    if (isActive) {
-      setFilters({
-        ...filters,
-        conditions: filters.conditions.filter((c) => !(c.field === 'status' && c.value === status)),
-      });
-      return;
-    }
-
-    setFilters({
-      ...filters,
-      conditions: [...filters.conditions, { field: 'status', operator: '=', value: status }],
-    });
-  };
-
-  const handleSourceFilter = (source: string | null) => {
-    if (source === null) {
-      setFilters({
-        ...filters,
-        conditions: filters.conditions.filter((c) => c.field !== 'source'),
-      });
-      return;
-    }
-
-    const isActive = filters.conditions.some((c) => c.field === 'source' && c.value === source);
-    if (isActive) {
-      setFilters({
-        ...filters,
-        conditions: filters.conditions.filter((c) => !(c.field === 'source' && c.value === source)),
-      });
-      return;
-    }
-
-    setFilters({
-      ...filters,
-      conditions: [...filters.conditions, { field: 'source', operator: '=', value: source }],
-    });
-  };
-
   useEffect(() => {
-    const newConditions: FilterCondition[] = [];
-
-    for (const field of filterFields) {
-      const values = searchParams.getAll(field.value);
-      for (const value of values) {
-        newConditions.push({
-          field: field.value,
-          operator: '=',
-          value: value,
-        });
-      }
-    }
-
-    setFilters({
-      conditions: newConditions,
-      matchAll: true,
-    });
-
     const searchParam = searchParams.get('search');
     if (searchParam) {
       setSearch(searchParam);
     } else {
       setSearch('');
     }
-
-    const sortParam = searchParams.get('sort');
-    if (sortParam) {
-      try {
-        const [column, direction] = sortParam.split(':');
-        setSortConfig({ column, direction: direction as 'asc' | 'desc' });
-      } catch (e) {
-        console.error('Failed to parse sort from URL:', e);
-      }
-    } else {
-      setSortConfig({ column: '', direction: 'asc' });
-    }
   }, [searchParams]);
 
   useEffect(() => {
     const params = new URLSearchParams();
 
-    for (const condition of filters.conditions) {
-      params.append(condition.field, condition.value);
-    }
-
     if (search) {
       params.set('search', search);
     }
 
-    if (sortConfig.column) {
-      params.set('sort', `${sortConfig.column}:${sortConfig.direction}`);
-    }
-
     const newUrl = params.toString() ? `${pathname}?${params.toString()}` : pathname;
     router.replace(newUrl, { scroll: false });
-  }, [filters, search, sortConfig, pathname]);
+  }, [search, pathname]);
 
   const filteredContacts = useMemo(() => {
     if (!contacts) return [];
 
-    return contacts
-      .filter((contact) => {
-        if (debouncedSearch) {
-          const searchTerm = debouncedSearch.toLowerCase();
-          const fullName = `${contact.firstName} ${contact.lastName}`.toLowerCase();
-          const email = contact.email?.toLowerCase() ?? '';
-          const status = contact.status.toLowerCase();
-          const source = (contact.source || '').toLowerCase();
+    return contacts.filter((contact) => {
+      if (debouncedSearch) {
+        const searchTerm = debouncedSearch.toLowerCase();
+        const fullName = `${contact.firstName} ${contact.lastName}`.toLowerCase();
+        const email = contact.email?.toLowerCase() ?? '';
+        const status = contact.status.toLowerCase();
+        const source = (contact.source || '').toLowerCase();
 
-          return fullName.includes(searchTerm) || email.includes(searchTerm) || status.includes(searchTerm) || source.includes(searchTerm);
-        }
-
-        if (filters.conditions.length === 0) return true;
-
-        const groupedConditions = filters.conditions.reduce(
-          (acc, condition) => {
-            if (!acc[condition.field]) {
-              acc[condition.field] = [];
-            }
-            acc[condition.field].push(condition);
-            return acc;
-          },
-          {} as Record<string, FilterCondition[]>
-        );
-
-        return Object.entries(groupedConditions).every(([field, conditions]) => {
-          return conditions.some((condition) => {
-            let fieldValue = '';
-
-            if (condition.field === 'name') {
-              fieldValue = `${contact.firstName} ${contact.lastName}`;
-            } else {
-              fieldValue = String(contact[condition.field as keyof typeof contact] || '');
-            }
-
-            fieldValue = fieldValue.toLowerCase();
-            const compareValue = condition.value.toLowerCase();
-
-            switch (condition.operator) {
-              case '=':
-                return fieldValue === compareValue;
-              case '!=':
-                return fieldValue !== compareValue;
-              case 'contains':
-                return fieldValue.includes(compareValue);
-              case 'startsWith':
-                return fieldValue.startsWith(compareValue);
-              case 'endsWith':
-                return fieldValue.endsWith(compareValue);
-              default:
-                return false;
-            }
-          });
-        });
-      })
-      .sort((a, b) => {
-        if (!sortConfig.column) return 0;
-
-        let aValue: string | Date;
-        let bValue: string | Date;
-
-        if (sortConfig.column === 'name') {
-          aValue = `${a.firstName} ${a.lastName}`;
-          bValue = `${b.firstName} ${b.lastName}`;
-        } else if (sortConfig.column === 'createdAt') {
-          aValue = new Date(a.createdAt);
-          bValue = new Date(b.createdAt);
-        } else {
-          aValue = String(a[sortConfig.column as keyof typeof a] ?? '');
-          bValue = String(b[sortConfig.column as keyof typeof b] ?? '');
-        }
-
-        if (aValue < bValue) return sortConfig.direction === 'asc' ? -1 : 1;
-        if (aValue > bValue) return sortConfig.direction === 'asc' ? 1 : -1;
-        return 0;
-      });
-  }, [contacts, filters, sortConfig, debouncedSearch]);
+        return fullName.includes(searchTerm) || email.includes(searchTerm) || status.includes(searchTerm) || source.includes(searchTerm);
+      }
+      return true;
+    });
+  }, [contacts, debouncedSearch]);
 
   const handleDeleteClick = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -450,12 +266,6 @@ export default function CRMContactsPage() {
       cell: ({ row }) => (row.original.nextFollowUpAt ? formatDateWithoutTime(row.original.nextFollowUpAt) : '—'),
       enableSorting: true,
     },
-    // {
-    //   accessorKey: 'last_activity',
-    //   header: t('last_activity'),
-    //   cell: ({ row }) => (row.original.lastActivity ? renderDescription(JSON.parse(row.original.lastActivity), t, locale) : '—'),
-    //   enableSorting: true,
-    // },
     {
       id: 'actions',
       cell: ({ row }) => (
@@ -545,12 +355,6 @@ export default function CRMContactsPage() {
               size='sm'
               alwaysPlaceHolder={true}
             />
-            {filters.conditions.length > 0 && (
-              <Button variant='outline' size='sm' onClick={() => setFilters({ conditions: [], matchAll: true })}>
-                <X className='h-4 w-4' />
-                {t('clear')}
-              </Button>
-            )}
           </div>
 
           <div className='flex flex-row gap-2'>
@@ -573,31 +377,6 @@ export default function CRMContactsPage() {
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
-        </div>
-      </div>
-
-      <div className='flex flex-col gap-2'>
-        <div className='flex flex-wrap items-center gap-2'>
-          <p className='text-muted-foreground text-sm'>{t('status')}</p>
-          {statusSchema.options.map((status) => {
-            const isActive = filters.conditions.some((c) => c.field === 'status' && c.value === status);
-            return (
-              <button type='button' key={status} onClick={() => handleStatusFilter(status)}>
-                <ColorBadge type='contactStatus' value={status} className='capitalize' isActive={isActive} />
-              </button>
-            );
-          })}
-        </div>
-        <div className='flex flex-wrap items-center gap-2'>
-          <p className='text-muted-foreground text-sm'>{t('source')}</p>
-          {sourceSchema.options.map((source) => {
-            const isActive = filters.conditions.some((c) => c.field === 'source' && c.value === source);
-            return (
-              <button type='button' key={source} onClick={() => handleSourceFilter(source)}>
-                <ColorBadge type='source' value={source} className='capitalize' isActive={isActive} />
-              </button>
-            );
-          })}
         </div>
       </div>
 

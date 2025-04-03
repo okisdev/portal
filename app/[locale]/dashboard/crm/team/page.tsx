@@ -5,13 +5,13 @@ import { Combobox } from '@/components/shared/combobox';
 import { PageHeader } from '@/components/shared/page-header';
 import { DataTable } from '@/components/shared/table';
 import { DataTableHeader } from '@/components/shared/table/header';
-import { TableLoading } from '@/components/shared/table/loading';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { useDebounce } from '@/hooks/use-debounce';
 import { formatDate } from '@/utils/date';
 import { api } from '@/utils/trpc/client';
 import {
@@ -30,8 +30,8 @@ import {
 import { MoreHorizontal, Pencil, Plus, Trash, Users } from 'lucide-react';
 import { Check } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
 type TeamWithCount = {
@@ -46,6 +46,8 @@ type TeamWithCount = {
 
 export default function CRMTeamsPage() {
   const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const t = useTranslations();
 
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -58,6 +60,9 @@ export default function CRMTeamsPage() {
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = useState({});
   const [selectedColumn, setSelectedColumn] = useState('');
+
+  const [search, setSearch] = useState('');
+  const debouncedSearch = useDebounce(search, 300);
 
   const utils = api.useUtils();
   const { data: teams, isLoading } = api.team.getAllTeams.useQuery();
@@ -80,6 +85,42 @@ export default function CRMTeamsPage() {
       toast.error(error.message);
     },
   });
+
+  useEffect(() => {
+    const searchParam = searchParams.get('search');
+    if (searchParam) {
+      setSearch(searchParam);
+    } else {
+      setSearch('');
+    }
+  }, [searchParams]);
+
+  useEffect(() => {
+    const params = new URLSearchParams();
+
+    if (search) {
+      params.set('search', search);
+    }
+
+    const newUrl = params.toString() ? `${pathname}?${params.toString()}` : pathname;
+    router.replace(newUrl, { scroll: false });
+  }, [search, pathname]);
+
+  const filteredTeams = useMemo(() => {
+    if (!teams) return [];
+
+    return teams.filter((team) => {
+      if (debouncedSearch) {
+        const searchTerm = debouncedSearch.toLowerCase();
+        const name = team.name.toLowerCase();
+        const description = (team.description || '').toLowerCase();
+        const company = (team.company?.name || '').toLowerCase();
+
+        return name.includes(searchTerm) || description.includes(searchTerm) || company.includes(searchTerm);
+      }
+      return true;
+    });
+  }, [teams, debouncedSearch]);
 
   const handleCreateTeam = (e: React.FormEvent) => {
     e.preventDefault();
@@ -181,7 +222,7 @@ export default function CRMTeamsPage() {
   ];
 
   const table = useReactTable({
-    data: teams ?? [],
+    data: filteredTeams,
     columns: tableColumns,
     state: {
       sorting,
@@ -202,28 +243,11 @@ export default function CRMTeamsPage() {
     getFacetedUniqueValues: getFacetedUniqueValues(),
   });
 
-  if (isLoading) {
-    return (
-      <div className='space-y-4 p-4'>
-        <PageHeader
-          title={t('teams')}
-          description={t('teams_description')}
-          right={
-            <Button variant='outline' className='h-8' disabled>
-              <Plus className='mr-2 size-4' /> {t('create_team')}
-            </Button>
-          }
-        />
-        <TableLoading columnCount={5} rowCount={5} />
-      </div>
-    );
-  }
-
   return (
     <div className='space-y-4 p-4'>
       <PageHeader
         title={t('teams')}
-        subtitle={!isLoading ? `(${t('total_number_teams', { count: teams?.length ?? 0 })})` : undefined}
+        subtitle={!isLoading ? `(${t('total_number_teams', { count: filteredTeams.length })})` : undefined}
         description={t('teams_description')}
         right={
           <Button variant='outline' className='h-8' onClick={() => setIsCreateModalOpen(true)}>
@@ -232,13 +256,8 @@ export default function CRMTeamsPage() {
         }
       />
 
-      <div className='flex items-center py-4'>
-        <Input
-          placeholder={t('filter_teams')}
-          value={(table.getColumn('name')?.getFilterValue() as string) ?? ''}
-          onChange={(event) => table.getColumn('name')?.setFilterValue(event.target.value)}
-          className='h-8 max-w-sm'
-        />
+      <div className='flex items-center'>
+        <Input placeholder={t('filter_teams')} value={search} onChange={(e) => setSearch(e.target.value)} className='h-8 max-w-sm' />
         <Combobox
           value={selectedColumn}
           onChange={(value) => {
