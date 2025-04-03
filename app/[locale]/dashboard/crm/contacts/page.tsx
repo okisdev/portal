@@ -13,7 +13,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useDebounce } from '@/hooks/use-debounce';
-import { type Contact, type Priority, type Source, type Status, prioritySchema, sourceSchema, statusSchema } from '@/lib/schema';
+import type { Contact, Priority, Source, Status } from '@/lib/schema';
 import { formatDateWithoutTime } from '@/utils/date';
 import { parsePhoneWithoutCountryCode } from '@/utils/phone';
 import { api } from '@/utils/trpc/client';
@@ -44,6 +44,9 @@ export default function CRMContactsPage() {
   const t = useTranslations();
 
   const { data: contacts, isLoading } = api.contact.getAllContacts.useQuery();
+  const { data: statuses } = api.site.getStatus.useQuery();
+  const { data: priorities } = api.site.getPriority.useQuery();
+  const { data: sources } = api.site.getSource.useQuery();
 
   const utils = api.useUtils();
 
@@ -129,21 +132,21 @@ export default function CRMContactsPage() {
     router.push(`/dashboard/crm/contacts/${id}`);
   };
 
-  const handleStatusChange = (id: string, value: Status) => {
+  const handleStatusChange = (id: string, value: string) => {
     updateContact.mutate({
       id,
       status: value,
     });
   };
 
-  const handlePriorityChange = (id: string, value: Priority) => {
+  const handlePriorityChange = (id: string, value: string) => {
     updateContact.mutate({
       id,
       priority: value,
     });
   };
 
-  const handleSourceChange = (id: string, value: Source) => {
+  const handleSourceChange = (id: string, value: string) => {
     updateContact.mutate({
       id,
       source: value,
@@ -195,16 +198,16 @@ export default function CRMContactsPage() {
       accessorKey: 'status',
       header: ({ column }) => <DataTableHeader column={column} title={t('status')} />,
       cell: ({ row }) => (
-        <Select value={row.original.status} onValueChange={(value) => handleStatusChange(row.original.id, value as Status)} disabled={updateContact.isPending}>
+        <Select value={row.original.status} onValueChange={(value) => handleStatusChange(row.original.id, value)} disabled={updateContact.isPending}>
           <SelectTrigger className='h-8 w-[130px]'>
             <SelectValue>
               <ColorBadge type='contactStatus' value={row.original.status} />
             </SelectValue>
           </SelectTrigger>
           <SelectContent>
-            {statusSchema.options.map((status) => (
-              <SelectItem key={status} value={status}>
-                <ColorBadge type='contactStatus' value={status} />
+            {statuses?.map((status: Status) => (
+              <SelectItem key={status.value} value={status.value}>
+                <ColorBadge type='contactStatus' value={status.value} />
               </SelectItem>
             ))}
           </SelectContent>
@@ -216,16 +219,16 @@ export default function CRMContactsPage() {
       accessorKey: 'priority',
       header: ({ column }) => <DataTableHeader column={column} title={t('priority')} />,
       cell: ({ row }) => (
-        <Select value={row.original.priority || 'medium'} onValueChange={(value) => handlePriorityChange(row.original.id, value as Priority)} disabled={updateContact.isPending}>
+        <Select value={row.original.priority || 'medium'} onValueChange={(value) => handlePriorityChange(row.original.id, value)} disabled={updateContact.isPending}>
           <SelectTrigger className='h-8 w-[130px]'>
             <SelectValue>
               <ColorBadge type='priority' value={row.original.priority || 'medium'} />
             </SelectValue>
           </SelectTrigger>
           <SelectContent>
-            {prioritySchema.options.map((priority) => (
-              <SelectItem key={priority} value={priority}>
-                <ColorBadge type='priority' value={priority} />
+            {priorities?.map((priority: Priority) => (
+              <SelectItem key={priority.value} value={priority.value}>
+                <ColorBadge type='priority' value={priority.value} />
               </SelectItem>
             ))}
           </SelectContent>
@@ -237,16 +240,16 @@ export default function CRMContactsPage() {
       accessorKey: 'source',
       header: ({ column }) => <DataTableHeader column={column} title={t('source')} />,
       cell: ({ row }) => (
-        <Select value={row.original.source || 'N/A'} onValueChange={(value) => handleSourceChange(row.original.id, value as Source)} disabled={updateContact.isPending}>
+        <Select value={row.original.source || 'N/A'} onValueChange={(value) => handleSourceChange(row.original.id, value)} disabled={updateContact.isPending}>
           <SelectTrigger className='h-8 w-[130px]'>
             <SelectValue>
               <ColorBadge type='source' value={row.original.source || 'N/A'} />
             </SelectValue>
           </SelectTrigger>
           <SelectContent>
-            {sourceSchema.options.map((source) => (
-              <SelectItem key={source} value={source}>
-                <ColorBadge type='source' value={source} />
+            {sources?.map((source: Source) => (
+              <SelectItem key={source.value} value={source.value}>
+                <ColorBadge type='source' value={source.value} />
               </SelectItem>
             ))}
           </SelectContent>

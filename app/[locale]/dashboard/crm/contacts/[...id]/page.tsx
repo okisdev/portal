@@ -21,7 +21,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { sources } from '@/data/data';
-import { type Priority, type Status, prioritySchema, statusSchema } from '@/lib/schema';
+import type { Priority, Status } from '@/lib/schema';
 import { formatDate } from '@/utils/date';
 import { parsePhone } from '@/utils/phone';
 import { api } from '@/utils/trpc/client';
@@ -57,8 +57,6 @@ export default function ContactIdPage() {
   });
   const { data: statuses } = api.site.getStatus.useQuery();
   const { data: priorities } = api.site.getPriority.useQuery();
-
-  console.log(statuses, priorities);
 
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editForm, setEditForm] = useState({
@@ -279,14 +277,14 @@ export default function ContactIdPage() {
     });
   };
 
-  const handleStatusChange = (value: Status) => {
+  const handleStatusChange = (value: string) => {
     updateContact.mutate({
       id: contactId[0],
       status: value,
     });
   };
 
-  const handlePriorityChange = (value: Priority) => {
+  const handlePriorityChange = (value: string) => {
     updateContact.mutate({
       id: contactId[0],
       priority: value,
@@ -518,9 +516,9 @@ export default function ContactIdPage() {
                       </SelectValue>
                     </SelectTrigger>
                     <SelectContent className='bg-popover text-popover-foreground'>
-                      {prioritySchema.options.map((priority) => (
-                        <SelectItem key={priority} value={priority}>
-                          <ColorBadge type='priority' value={priority} />
+                      {priorities?.map((priority: Priority) => (
+                        <SelectItem key={priority.value} value={priority.value}>
+                          <ColorBadge type='priority' value={priority.value} />
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -535,9 +533,9 @@ export default function ContactIdPage() {
                       </SelectValue>
                     </SelectTrigger>
                     <SelectContent className='bg-popover text-popover-foreground'>
-                      {statusSchema.options.map((status) => (
-                        <SelectItem key={status} value={status}>
-                          <ColorBadge type='contactStatus' value={status} />
+                      {statuses?.map((status: Status) => (
+                        <SelectItem key={status.value} value={status.value}>
+                          <ColorBadge type='contactStatus' value={status.value} />
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -759,14 +757,14 @@ export default function ContactIdPage() {
             <div className='space-y-2'>
               <Label htmlFor='status'>{t('status')}</Label>
 
-              <Select value={editForm.status} onValueChange={(value) => setEditForm({ ...editForm, status: value as Status })}>
+              <Select value={editForm.status} onValueChange={(value) => setEditForm({ ...editForm, status: value })}>
                 <SelectTrigger>
                   <SelectValue placeholder='Select status' />
                 </SelectTrigger>
                 <SelectContent>
-                  {statusSchema.options.map((status) => (
-                    <SelectItem key={status} value={status}>
-                      <ColorBadge type='contactStatus' value={status} />
+                  {statuses?.map((status: Status) => (
+                    <SelectItem key={status.value} value={status.value}>
+                      <ColorBadge type='contactStatus' value={status.value} />
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -785,7 +783,7 @@ export default function ContactIdPage() {
             </div>
             <div className='space-y-2'>
               <Label htmlFor='priority'>{t('priority')}</Label>
-              <Select value={editForm.priority} onValueChange={(value) => setEditForm({ ...editForm, priority: value as Priority })}>
+              <Select value={editForm.priority} onValueChange={(value) => setEditForm({ ...editForm, priority: value })}>
                 <SelectTrigger>
                   <SelectValue placeholder='Select priority' />
                 </SelectTrigger>

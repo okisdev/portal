@@ -28,7 +28,13 @@ export const siteRouter = createTRPCRouter({
   }),
 
   getStatus: protectedProcedure.query(async ({ ctx }) => {
-    return ctx.db.select().from(siteConfig).where(eq(siteConfig.key, 'status'));
+    const response = await ctx.db
+      .select()
+      .from(siteConfig)
+      .where(eq(siteConfig.key, 'status'))
+      .then((rows) => rows[0]);
+
+    return JSON.parse(response?.value || '[]');
   }),
 
   addStatus: protectedProcedure.input(z.object({ value: z.string(), color: z.string() })).mutation(async ({ ctx, input }) => {
@@ -81,7 +87,13 @@ export const siteRouter = createTRPCRouter({
   }),
 
   getPriority: protectedProcedure.query(async ({ ctx }) => {
-    return ctx.db.select().from(siteConfig).where(eq(siteConfig.key, 'priority'));
+    const response = await ctx.db
+      .select()
+      .from(siteConfig)
+      .where(eq(siteConfig.key, 'priority'))
+      .then((rows) => rows[0]);
+
+    return JSON.parse(response?.value || '[]');
   }),
 
   addPriority: protectedProcedure.input(z.object({ value: z.string(), color: z.string() })).mutation(async ({ ctx, input }) => {
@@ -134,7 +146,13 @@ export const siteRouter = createTRPCRouter({
   }),
 
   getSource: protectedProcedure.query(async ({ ctx }) => {
-    return ctx.db.select().from(siteConfig).where(eq(siteConfig.key, 'source'));
+    const response = await ctx.db
+      .select()
+      .from(siteConfig)
+      .where(eq(siteConfig.key, 'source'))
+      .then((rows) => rows[0]);
+
+    return JSON.parse(response?.value || '[]');
   }),
 
   addSource: protectedProcedure.input(z.object({ value: z.string(), color: z.string() })).mutation(async ({ ctx, input }) => {

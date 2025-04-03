@@ -112,17 +112,14 @@ export const activitySubTypeSchema = z.enum([
 export type ActivityType = z.infer<typeof activityTypeSchema>;
 export type ActivitySubType = z.infer<typeof activitySubTypeSchema>;
 
-export const statusSchema = z.enum(['lead', 'appointment', 'follow_up', 'called', 'called_no_answer', 'after_pitching', 'key_person', 'special', 'trial', 'final', 'closed', 'junk']);
+export const basicSchema = z.object({
+  value: z.string(),
+  color: z.string(),
+});
 
-export type Status = z.infer<typeof statusSchema>;
-
-export const prioritySchema = z.enum(['urgent', 'high', 'medium', 'low']);
-
-export type Priority = z.infer<typeof prioritySchema>;
-
-export const sourceSchema = z.enum(['Pitching', 'Referral', 'Website', 'Email', 'Instagram', 'LinkedIn', 'WhatsApp', 'Facebook', 'BNI', 'No Planner', 'Pay Trial', 'Other']);
-
-export type Source = z.infer<typeof sourceSchema>;
+export type Status = z.infer<typeof basicSchema>;
+export type Source = z.infer<typeof basicSchema>;
+export type Priority = z.infer<typeof basicSchema>;
 
 export const userRoleSchema = z.enum(['ADMIN', 'SALES_MANAGER', 'SALES_ASSISTANT', 'MANAGER', 'USER']);
 

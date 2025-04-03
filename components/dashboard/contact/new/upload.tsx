@@ -10,7 +10,7 @@ import { Progress } from '@/components/ui/progress';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { sources } from '@/data/data';
-import { type Status, statusSchema } from '@/lib/schema';
+import type { Status } from '@/lib/schema';
 import { parseDate, parseFullName } from '@/utils/format';
 import { stringifyPhone } from '@/utils/phone';
 import { api } from '@/utils/trpc/client';
@@ -72,6 +72,7 @@ export default function ContactUpload() {
 
   const { data: campaigns } = api.marketing.getActiveCampaigns.useQuery();
   const { data: companies } = api.company.getAllCompanies.useQuery();
+  const { data: statuses } = api.site.getStatus.useQuery();
 
   const createContacts = api.contact.createContacts.useMutation({
     onError: (error) => {
@@ -488,14 +489,14 @@ export default function ContactUpload() {
                       />
                     </TableCell>
                     <TableCell>
-                      <Select value={row.status} onValueChange={(value) => handleCsvEdit(index, 'status', value)}>
+                      <Select value={row.status.value} onValueChange={(value) => handleCsvEdit(index, 'status', value)}>
                         <SelectTrigger>
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          {statusSchema.options.map((status) => (
-                            <SelectItem key={status} value={status}>
-                              <ColorBadge type='contactStatus' value={status} />
+                          {statuses?.map((status: Status) => (
+                            <SelectItem key={status.value} value={status.value}>
+                              <ColorBadge type='contactStatus' value={status.value} />
                             </SelectItem>
                           ))}
                         </SelectContent>

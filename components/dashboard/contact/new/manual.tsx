@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Textarea } from '@/components/ui/textarea';
 import { sources } from '@/data/data';
-import { statusSchema } from '@/lib/schema';
+import type { Status } from '@/lib/schema';
 import { cn } from '@/lib/utils';
 import { api } from '@/utils/trpc/client';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -33,7 +33,7 @@ const formSchema = z
     companyId: z.string().nullable().optional(),
     source: z.string().optional(),
     remark: z.string().optional(),
-    status: statusSchema.optional(),
+    status: z.string().optional(),
     campaignCode: z.string().optional(),
     createdAt: z.date().optional(),
   })
@@ -50,6 +50,8 @@ export default function ManualContactForm() {
 
   const { data: campaigns } = api.marketing.getActiveCampaigns.useQuery();
   const { data: companies } = api.company.getAllCompanies.useQuery();
+
+  const { data: statuses } = api.site.getStatus.useQuery();
 
   const form = useForm({
     resolver: zodResolver(formSchema),
@@ -258,14 +260,14 @@ export default function ManualContactForm() {
                   <Combobox
                     value={field.value ?? ''}
                     onChange={field.onChange}
-                    items={statusSchema.options}
+                    items={statuses?.map((s: Status) => s.value) ?? []}
                     placeholder={t('select_status')}
                     searchPlaceholder={t('search_status')}
                     groupHeading={t('statuses')}
                     allowCustom={false}
                     renderItem={(id) => {
-                      const status = statusSchema.options.find((s) => s === id);
-                      return status ?? id;
+                      const status = statuses?.find((s: Status) => s.value === id);
+                      return status?.value ?? id;
                     }}
                   />
                 </FormControl>
