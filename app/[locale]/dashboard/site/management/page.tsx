@@ -269,7 +269,7 @@ export default function ManagementPage() {
         <TabsContent value='status'>
           <Card>
             <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
-              <CardTitle className='text-xl font-semibold'>{t('status_management')}</CardTitle>
+              <CardTitle className='font-semibold text-xl'>{t('status_management')}</CardTitle>
               <Button onClick={() => setIsStatusDialogOpen(true)} size='sm'>
                 <Plus className='mr-2 h-4 w-4' />
                 {t('add_status')}
@@ -282,7 +282,7 @@ export default function ManagementPage() {
         <TabsContent value='priority'>
           <Card>
             <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
-              <CardTitle className='text-xl font-semibold'>{t('priority_management')}</CardTitle>
+              <CardTitle className='font-semibold text-xl'>{t('priority_management')}</CardTitle>
               <Button onClick={() => setIsPriorityDialogOpen(true)} size='sm'>
                 <Plus className='mr-2 h-4 w-4' />
                 {t('add_priority')}
@@ -295,7 +295,7 @@ export default function ManagementPage() {
         <TabsContent value='source'>
           <Card>
             <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
-              <CardTitle className='text-xl font-semibold'>{t('source_management')}</CardTitle>
+              <CardTitle className='font-semibold text-xl'>{t('source_management')}</CardTitle>
               <Button onClick={() => setIsSourceDialogOpen(true)} size='sm'>
                 <Plus className='mr-2 h-4 w-4' />
                 {t('add_source')}

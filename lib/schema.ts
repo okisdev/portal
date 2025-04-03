@@ -112,14 +112,16 @@ export const activitySubTypeSchema = z.enum([
 export type ActivityType = z.infer<typeof activityTypeSchema>;
 export type ActivitySubType = z.infer<typeof activitySubTypeSchema>;
 
-export const basicSchema = z.object({
+export const basicTagSchema = z.object({
   value: z.string(),
   color: z.string(),
 });
 
-export type Status = z.infer<typeof basicSchema>;
-export type Source = z.infer<typeof basicSchema>;
-export type Priority = z.infer<typeof basicSchema>;
+export type BasicTag = z.infer<typeof basicTagSchema>;
+
+export type Status = BasicTag;
+export type Source = BasicTag;
+export type Priority = BasicTag;
 
 export const userRoleSchema = z.enum(['ADMIN', 'SALES_MANAGER', 'SALES_ASSISTANT', 'MANAGER', 'USER']);
 

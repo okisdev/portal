@@ -4,6 +4,7 @@ import { ActionAlertDialog } from '@/components/shared/action-alert-dialog';
 import { ColorBadge } from '@/components/shared/color-badge';
 import { Combobox } from '@/components/shared/combobox';
 import { PageHeader } from '@/components/shared/page-header';
+import { SmartColorBadge } from '@/components/shared/smart-color-badge';
 import { DataTable } from '@/components/shared/table';
 import { DataTableHeader } from '@/components/shared/table/header';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -207,7 +208,7 @@ export default function CRMContactsPage() {
           <SelectContent>
             {statuses?.map((status: Status) => (
               <SelectItem key={status.value} value={status.value}>
-                <ColorBadge type='contactStatus' value={status.value} />
+                <SmartColorBadge value={status.value} color={status.color} />
               </SelectItem>
             ))}
           </SelectContent>
@@ -228,7 +229,7 @@ export default function CRMContactsPage() {
           <SelectContent>
             {priorities?.map((priority: Priority) => (
               <SelectItem key={priority.value} value={priority.value}>
-                <ColorBadge type='priority' value={priority.value} />
+                <SmartColorBadge value={priority.value} color={priority.color} />
               </SelectItem>
             ))}
           </SelectContent>
@@ -249,7 +250,7 @@ export default function CRMContactsPage() {
           <SelectContent>
             {sources?.map((source: Source) => (
               <SelectItem key={source.value} value={source.value}>
-                <ColorBadge type='source' value={source.value} />
+                <SmartColorBadge value={source.value} color={source.color} />
               </SelectItem>
             ))}
           </SelectContent>

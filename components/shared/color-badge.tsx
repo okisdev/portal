@@ -3,11 +3,12 @@ import { cn } from '@/lib/utils';
 type ColorBadgeProps = {
   type: 'status' | 'contactStatus' | 'priority' | 'campaignStatus' | 'source' | 'default' | 'companyStatus';
   value: string;
+  color?: string;
   className?: string;
   isActive?: boolean;
 };
 
-export function ColorBadge({ type, value, className, isActive }: ColorBadgeProps) {
+export function ColorBadge({ type, value, color, className, isActive }: ColorBadgeProps) {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'upcoming':
@@ -18,50 +19,6 @@ export function ColorBadge({ type, value, className, isActive }: ColorBadgeProps
         return 'bg-red-100 text-red-800 hover:bg-red-200 hover:text-red-900 ring-red-800';
       case 'no_show':
         return 'bg-neutral-100 text-neutral-800 hover:bg-neutral-200 hover:text-neutral-900 ring-neutral-800';
-      default:
-        return 'bg-neutral-100 text-neutral-800 hover:bg-neutral-200 hover:text-neutral-900 ring-neutral-800';
-    }
-  };
-
-  const getContactStatusColor = (contactStatus: string) => {
-    switch (contactStatus) {
-      case 'lead':
-        return 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200 hover:text-yellow-900 ring-yellow-800';
-      case 'appointment':
-        return 'bg-blue-100 text-blue-800 hover:bg-blue-200 hover:text-blue-900 ring-blue-800';
-      case 'follow_up':
-        return 'bg-green-100 text-green-800 hover:bg-green-200 hover:text-green-900 ring-green-800';
-      case 'called':
-        return 'bg-blue-100 text-blue-800 hover:bg-blue-200 hover:text-blue-900 ring-blue-800';
-      case 'called_no_answer':
-        return 'bg-red-100 text-red-800 hover:bg-red-200 hover:text-red-900 ring-red-800';
-      case 'after_pitching':
-        return 'bg-purple-100 text-purple-800 hover:bg-purple-200 hover:text-purple-900 ring-purple-800';
-      case 'key_person':
-        return 'bg-purple-100 text-purple-800 hover:bg-purple-200 hover:text-purple-900 ring-purple-800';
-      case 'special':
-        return 'bg-orange-100 text-orange-800 hover:bg-orange-200 hover:text-orange-900 ring-orange-800';
-      case 'trial':
-        return 'bg-red-100 text-red-800 hover:bg-red-200 hover:text-red-900 ring-red-800';
-      case 'final':
-        return 'bg-purple-100 text-purple-800 hover:bg-purple-200 hover:text-purple-900 ring-purple-800';
-      case 'closed':
-        return 'bg-orange-100 text-orange-800 hover:bg-orange-200 hover:text-orange-900 ring-orange-800';
-      case 'junk':
-        return 'bg-red-100 text-red-800 hover:bg-red-200 hover:text-red-900 ring-red-800';
-      default:
-        return 'bg-neutral-100 text-neutral-800 hover:bg-neutral-200 hover:text-neutral-900 ring-neutral-800';
-    }
-  };
-
-  const getPriorityColor = (priority: string) => {
-    switch (priority) {
-      case 'high':
-        return 'bg-red-100 text-red-800 hover:bg-red-200 hover:text-red-900 ring-red-800';
-      case 'medium':
-        return 'bg-orange-100 text-orange-800 hover:bg-orange-200 hover:text-orange-900 ring-orange-800';
-      case 'low':
-        return 'bg-green-100 text-green-800 hover:bg-green-200 hover:text-green-900 ring-green-800';
       default:
         return 'bg-neutral-100 text-neutral-800 hover:bg-neutral-200 hover:text-neutral-900 ring-neutral-800';
     }
@@ -81,50 +38,36 @@ export function ColorBadge({ type, value, className, isActive }: ColorBadgeProps
         return 'bg-orange-100 text-orange-800 ring-orange-800';
       case 'cancelled':
         return 'bg-red-100 text-red-800 ring-red-800';
-    }
-  };
-
-  const getSourceColor = (source: string) => {
-    switch (source) {
-      case 'Pitching':
-        return 'bg-blue-100 text-blue-800 ring-blue-800';
-      case 'Referral':
-        return 'bg-green-100 text-green-800 ring-green-800';
-      case 'Website':
-        return 'bg-yellow-100 text-yellow-800 ring-yellow-800';
-      case 'Email':
-        return 'bg-purple-100 text-purple-800 ring-purple-800';
-      case 'Instagram':
-        return 'bg-pink-100 text-pink-800 ring-pink-800';
-      case 'LinkedIn':
-        return 'bg-blue-100 text-blue-800 ring-blue-800';
-      case 'WhatsApp':
-        return 'bg-green-100 text-green-800 ring-green-800';
-      case 'Facebook':
-        return 'bg-orange-100 text-orange-800 ring-orange-800';
-      case 'BNI':
-        return 'bg-purple-100 text-purple-800 ring-purple-800';
-      case 'No Planner':
-        return 'bg-red-100 text-red-800 ring-red-800';
-      case 'Pay Trial':
-        return 'bg-purple-100 text-purple-800 ring-purple-800';
-      case 'Other':
+      default:
         return 'bg-neutral-100 text-neutral-800 ring-neutral-800';
     }
   };
 
+  const getCompanyStatusColor = (status: string) => {
+    switch (status) {
+      case 'active':
+        return 'bg-green-100 text-green-800 hover:bg-green-200 hover:text-green-900 ring-green-800';
+      case 'inactive':
+        return 'bg-red-100 text-red-800 hover:bg-red-200 hover:text-red-900 ring-red-800';
+      default:
+        return 'bg-neutral-100 text-neutral-800 hover:bg-neutral-200 hover:text-neutral-900 ring-neutral-800';
+    }
+  };
+
   const getColorClass = () => {
+    // If color is provided, use it directly
+    if (color) {
+      return `bg-[${color}]-100 text-[${color}]-800 hover:bg-[${color}]-200 hover:text-[${color}]-900 ring-[${color}]-800`;
+    }
+
+    // Fallback to switch cases for status types that don't have color in database
     switch (type) {
       case 'status':
         return getStatusColor(value);
-      case 'contactStatus':
-        return getContactStatusColor(value);
-      case 'priority':
-        return getPriorityColor(value);
       case 'campaignStatus':
         return getCampaignStatusColor(value);
-      case 'source':
-        return getSourceColor(value);
+      case 'companyStatus':
+        return getCompanyStatusColor(value);
       default:
         return 'bg-neutral-100 text-neutral-800 hover:bg-neutral-200 hover:text-neutral-900 ring-neutral-800';
     }

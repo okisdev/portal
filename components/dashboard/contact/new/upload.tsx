@@ -259,7 +259,10 @@ export default function ContactUpload() {
           return;
         }
 
-        const batch = nonDuplicateContacts.slice(i, i + BATCH_SIZE);
+        const batch = nonDuplicateContacts.slice(i, i + BATCH_SIZE).map((contact) => ({
+          ...contact,
+          status: contact.status.value,
+        }));
         const result = await createContacts.mutateAsync({
           contacts: batch,
         });
