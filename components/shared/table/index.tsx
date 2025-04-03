@@ -30,7 +30,7 @@ export function DataTable<TData>({ table, columns, loading, onRowClick }: Pagina
         {loading ? (
           <TableLoading columnCount={columns.length} />
         ) : (
-          <div className='relative max-h-[800px] overflow-auto'>
+          <div className='relative overflow-auto'>
             <Table>
               <TableHeader>
                 {table.getHeaderGroups().map((headerGroup) => (
@@ -66,7 +66,6 @@ export function DataTable<TData>({ table, columns, loading, onRowClick }: Pagina
           </div>
         )}
       </div>
-
       <DataTablePagination table={table} />
     </div>
   );

@@ -37,7 +37,7 @@ export function DataTablePagination<TData>({ table }: DataTablePaginationProps<T
             </SelectContent>
           </Select>
         </div>
-        <div className='flex w-[100px] items-center justify-center font-medium text-sm'>{t('page_of_number', { page: table.getState().pagination.pageIndex + 1, total: table.getPageCount() })}</div>
+        <div className='flex w-auto items-center justify-center font-medium text-sm'>{t('page_of_number', { page: table.getState().pagination.pageIndex + 1, total: table.getPageCount() })}</div>
         <div className='flex items-center space-x-2'>
           <Button variant='outline' className='hidden h-8 w-8 p-0 lg:flex' onClick={() => table.setPageIndex(0)} disabled={!table.getCanPreviousPage()}>
             <span className='sr-only'>{t('go_to_first_page')}</span>
