@@ -6,12 +6,28 @@ import { sendEmail } from '@/utils/email';
 import { stringifyPhone } from '@/utils/phone';
 import { TRPCError } from '@trpc/server';
 import { startOfDay } from 'date-fns';
-import { asc, desc, eq, inArray, sql } from 'drizzle-orm';
+import { asc, count, desc, eq, inArray, sql } from 'drizzle-orm';
 import { z } from 'zod';
 
 export const contactRouter = createTRPCRouter({
   getAllContacts: protectedProcedure.query(({ ctx }) => {
     return ctx.db.select().from(contact).orderBy(desc(contact.createdAt));
+  }),
+
+  getAllContactsCount: protectedProcedure.query(({ ctx }) => {
+    return ctx.db
+      .select({ count: count() })
+      .from(contact)
+      .then((rows) => rows[0]);
+  }),
+
+  getContactsByPagination: protectedProcedure.input(z.object({ page: z.number(), limit: z.number() })).query(({ ctx, input }) => {
+    return ctx.db
+      .select()
+      .from(contact)
+      .orderBy(desc(contact.id))
+      .offset(input.page * input.limit)
+      .limit(input.limit);
   }),
 
   getContactByQuery: protectedProcedure

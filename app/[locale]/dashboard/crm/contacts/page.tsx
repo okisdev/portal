@@ -47,7 +47,41 @@ export default function CRMContactsPage() {
   const t = useTranslations();
   const locale = useLocale() as Locale;
 
-  const { data: contacts, isLoading } = api.contact.getAllContacts.useQuery();
+  const [pageIndex, setPageIndex] = useState(0);
+  const pageSize = 10;
+
+  // Handle initial page load and URL changes
+  useEffect(() => {
+    const pageParam = searchParams.get('page');
+    if (pageParam) {
+      const page = Number.parseInt(pageParam, 10);
+      if (!Number.isNaN(page) && page > 0) {
+        // Convert 1-based page to 0-based index
+        setPageIndex(page - 1);
+      } else {
+        // If invalid page number, redirect to page 1
+        const params = new URLSearchParams(searchParams.toString());
+        params.set('page', '1');
+        const newUrl = `${pathname}?${params.toString()}`;
+        router.replace(newUrl, { scroll: false });
+      }
+    } else {
+      // If no page parameter, set it to 1
+      const params = new URLSearchParams(searchParams.toString());
+      params.set('page', '1');
+      const newUrl = `${pathname}?${params.toString()}`;
+      router.replace(newUrl, { scroll: false });
+    }
+  }, [searchParams, pathname, router]);
+
+  const { data: contactsData, isLoading } = api.contact.getContactsByPagination.useQuery({
+    page: pageIndex,
+    limit: pageSize,
+  });
+
+  const { data: totalCount } = api.contact.getAllContactsCount.useQuery();
+
+  const contacts = contactsData || [];
   const { data: statuses } = api.site.getStatus.useQuery();
   const { data: priorities } = api.site.getPriority.useQuery();
   const { data: sources } = api.site.getSource.useQuery();
@@ -56,14 +90,15 @@ export default function CRMContactsPage() {
 
   const deleteContact = api.contact.deleteContact.useMutation({
     onSuccess: () => {
-      utils.contact.getAllContacts.invalidate();
+      utils.contact.getContactsByPagination.invalidate();
+      utils.contact.getAllContactsCount.invalidate();
       toast.success(t('contact_deleted_successfully'));
     },
   });
 
   const updateContact = api.contact.updateContact.useMutation({
     onSuccess: () => {
-      utils.contact.getAllContacts.invalidate();
+      utils.contact.getContactsByPagination.invalidate();
       toast.success(t('contact_updated_successfully'));
     },
   });
@@ -96,10 +131,17 @@ export default function CRMContactsPage() {
     if (search) {
       params.set('search', search);
     }
+    // Always include page parameter
+    params.set('page', (pageIndex + 1).toString());
 
-    const newUrl = params.toString() ? `${pathname}?${params.toString()}` : pathname;
+    const newUrl = `${pathname}?${params.toString()}`;
     router.replace(newUrl, { scroll: false });
-  }, [search, pathname]);
+  }, [search, pageIndex, pathname]);
+
+  // Reset to first page when search changes
+  useEffect(() => {
+    setPageIndex(0);
+  }, [search]);
 
   const filteredContacts = useMemo(() => {
     if (!contacts) return [];
@@ -325,23 +367,37 @@ export default function CRMContactsPage() {
       columnVisibility,
       rowSelection,
       columnFilters,
+      pagination: {
+        pageIndex,
+        pageSize,
+      },
     },
     enableRowSelection: true,
     onRowSelectionChange: setRowSelection,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     onColumnVisibilityChange: setColumnVisibility,
+    onPaginationChange: (updater) => {
+      if (typeof updater === 'function') {
+        const newState = updater({ pageIndex, pageSize });
+        setPageIndex(newState.pageIndex);
+      } else {
+        setPageIndex(updater.pageIndex);
+      }
+    },
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getFacetedRowModel: getFacetedRowModel(),
     getFacetedUniqueValues: getFacetedUniqueValues(),
+    pageCount: totalCount ? Math.ceil(totalCount.count / pageSize) : 0,
+    manualPagination: true,
   });
 
   return (
     <div className='space-y-4 p-4'>
-      <PageHeader title={t('contacts')} subtitle={!isLoading ? `(${t('total_number_contacts', { count: filteredContacts.length })})` : undefined} description={t('contacts_description')} />
+      <PageHeader title={t('contacts')} subtitle={!isLoading ? `(${t('total_number_contacts', { count: totalCount?.count || 0 })})` : undefined} description={t('contacts_description')} />
 
       <div className='flex flex-col gap-4'>
         <div className='flex items-center justify-between'>
