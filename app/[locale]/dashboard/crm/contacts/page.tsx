@@ -185,19 +185,19 @@ export default function CRMContactsPage() {
           </div>
         </div>
       ),
-      enableSorting: true,
+      enableSorting: false,
     },
     {
       accessorKey: 'phone',
       header: ({ column }) => <DataTableHeader column={column} title={t('phone')} />,
       cell: ({ row }) => <span>{row.original.phone ? parsePhoneWithoutCountryCode(row.original.phone) : '—'}</span>,
-      enableSorting: true,
+      enableSorting: false,
     },
     {
       accessorKey: 'company',
       header: ({ column }) => <DataTableHeader column={column} title={t('company')} />,
       cell: ({ row }) => <span className='capitalize'>{row.original.company || '—'}</span>,
-      enableSorting: true,
+      enableSorting: false,
     },
     {
       accessorKey: 'status',
@@ -218,7 +218,7 @@ export default function CRMContactsPage() {
           </SelectContent>
         </Select>
       ),
-      enableSorting: true,
+      enableSorting: false,
     },
     {
       accessorKey: 'priority',
@@ -260,7 +260,7 @@ export default function CRMContactsPage() {
           </SelectContent>
         </Select>
       ),
-      enableSorting: true,
+      enableSorting: false,
     },
     {
       accessorKey: 'createdAt',
@@ -279,6 +279,7 @@ export default function CRMContactsPage() {
       header: ({ column }) => <DataTableHeader column={column} title={t('last_activity')} />,
       cell: ({ row }) => {
         const lastActivity = row.original.lastActivity ? JSON.parse(row.original.lastActivity) : null;
+
         if (!lastActivity) return '—';
 
         return (
@@ -287,7 +288,7 @@ export default function CRMContactsPage() {
           </div>
         );
       },
-      enableSorting: true,
+      enableSorting: false,
     },
     {
       id: 'actions',

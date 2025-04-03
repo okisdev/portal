@@ -414,30 +414,30 @@ export const contactRouter = createTRPCRouter({
       }
 
       // Log general update for other field changes
-      const changedFields = Object.keys(updateData).filter((key) => updateData[key as keyof typeof updateData] !== currentContact[key as keyof typeof currentContact]);
+      // const changedFields = Object.keys(updateData).filter((key) => updateData[key as keyof typeof updateData] !== currentContact[key as keyof typeof currentContact]);
 
-      if (changedFields.length > 0) {
-        await createContactActivityHelper(ctx, {
-          contactId: id,
-          type: 'CONTACT',
-          subType: 'CONTACT_UPDATED',
-          metadata: {
-            contact: currentContact,
-            fields: changedFields.reduce(
-              (acc, field) =>
-                Object.assign(acc, {
-                  [field]: {
-                    old: currentContact[field as keyof typeof currentContact],
-                    new: updateData[field as keyof typeof updateData],
-                  },
-                }),
-              {} as Record<string, { old: any; new: any }>
-            ),
-          },
-          initiatorType: 'user',
-          initiatorId: ctx.session?.user.id,
-        });
-      }
+      // if (changedFields.length > 0) {
+      //   await createContactActivityHelper(ctx, {
+      //     contactId: id,
+      //     type: 'CONTACT',
+      //     subType: 'CONTACT_UPDATED',
+      //     metadata: {
+      //       contact: currentContact,
+      //       fields: changedFields.reduce(
+      //         (acc, field) =>
+      //           Object.assign(acc, {
+      //             [field]: {
+      //               old: currentContact[field as keyof typeof currentContact],
+      //               new: updateData[field as keyof typeof updateData],
+      //             },
+      //           }),
+      //         {} as Record<string, { old: any; new: any }>
+      //       ),
+      //     },
+      //     initiatorType: 'user',
+      //     initiatorId: ctx.session?.user.id,
+      //   });
+      // }
 
       return result;
     }),
