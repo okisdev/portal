@@ -1,6 +1,6 @@
 'use client';
 
-import { PaginationTable } from '@/components/shared/pagination-table';
+import { DataTable } from '@/components/shared/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import type { ResourceContent } from '@/lib/schema';
 import { api } from '@/utils/trpc/client';
@@ -48,28 +48,33 @@ export function SendHistoryDialog({ open, onOpenChange, content }: SendHistoryDi
         accessorFn: (row) => row.contact?.name || '',
         header: t('recipient'),
         enableSorting: true,
+        enableHiding: false,
       },
       {
         accessorFn: (row) => row.contact?.email || '',
         header: t('email'),
         enableSorting: true,
+        enableHiding: false,
       },
       {
         accessorKey: 'sentAt',
         header: t('sent_at'),
         cell: ({ row }) => formatDistanceToNow(new Date(row.original.sentAt), { addSuffix: true }),
         enableSorting: true,
+        enableHiding: false,
       },
       {
         accessorFn: (row) => row.sentBy?.name || '',
         header: t('sent_by'),
         enableSorting: true,
+        enableHiding: false,
       },
       {
         accessorKey: 'status',
         header: t('status'),
         cell: ({ row }) => <span>{t(row.original.status)}</span>,
         enableSorting: true,
+        enableHiding: false,
       },
     ],
     [t]
@@ -101,7 +106,7 @@ export function SendHistoryDialog({ open, onOpenChange, content }: SendHistoryDi
             </div>
           </div>
 
-          <PaginationTable table={table} columns={columns} loading={isLoading} />
+          <DataTable table={table} columns={columns} loading={isLoading} />
         </div>
       </DialogContent>
     </Dialog>

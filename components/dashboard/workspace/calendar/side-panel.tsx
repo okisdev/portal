@@ -94,7 +94,7 @@ export function CalendarSidePanel({
               <ChevronsUpDown className='h-4 w-4' />
             </Button>
           </PopoverTrigger>
-          <PopoverContent className='w-[--radix-popper-anchor-width] p-0' align='start'>
+          <PopoverContent className='w-(--radix-popper-anchor-width) p-0' align='start'>
             <YearMonthPicker
               value={currentDate}
               onChange={(date) => {
@@ -152,7 +152,7 @@ export function CalendarSidePanel({
                 <Checkbox checked={!hiddenCalendars.has(folder.id)} onCheckedChange={(checked) => onToggleCalendar(folder.id)} />
                 <Button variant='ghost' className='h-8 min-w-0 flex-1 justify-start px-2' onClick={() => onToggleCalendar(folder.id)}>
                   <div className='flex min-w-0 flex-1 items-center'>
-                    <div className='mr-1 h-4 w-4 flex-shrink-0 rounded-full' style={{ backgroundColor: folder.color ?? 'transparent' }} />
+                    <div className='mr-1 h-4 w-4 shrink-0 rounded-full' style={{ backgroundColor: folder.color ?? 'transparent' }} />
                     <span className='truncate'>{folder.name}</span>
                   </div>
                 </Button>

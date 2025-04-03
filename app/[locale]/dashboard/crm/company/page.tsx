@@ -4,8 +4,9 @@ import { ActionAlertDialog } from '@/components/shared/action-alert-dialog';
 import { ColorBadge } from '@/components/shared/color-badge';
 import { Combobox } from '@/components/shared/combobox';
 import { PageHeader } from '@/components/shared/page-header';
-import { PaginationTable } from '@/components/shared/pagination-table';
 import { PhoneInput } from '@/components/shared/phone-input';
+import { DataTable } from '@/components/shared/table';
+import { DataTableHeader } from '@/components/shared/table/header';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -22,12 +23,14 @@ import {
   type SortingState,
   type VisibilityState,
   getCoreRowModel,
+  getFacetedRowModel,
+  getFacetedUniqueValues,
   getFilteredRowModel,
   getPaginationRowModel,
   getSortedRowModel,
   useReactTable,
 } from '@tanstack/react-table';
-import { Check, ExternalLink, Filter, MoreHorizontal, Pencil, Trash2, X } from 'lucide-react';
+import { Check, ExternalLink, MoreHorizontal, Pencil, Plus, Trash2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -39,19 +42,6 @@ import { z } from 'zod';
 type SortConfig = {
   column: string;
   direction: 'asc' | 'desc';
-};
-
-type FilterOperator = '=' | '!=' | 'contains' | 'startsWith' | 'endsWith';
-
-type FilterCondition = {
-  field: string;
-  operator: FilterOperator;
-  value: string;
-};
-
-type FilterConfig = {
-  conditions: FilterCondition[];
-  matchAll: boolean;
 };
 
 const createCompanySchema = z.object({
@@ -98,14 +88,9 @@ export default function CompanyPage() {
 
   const [sortConfig, setSortConfig] = useState<SortConfig>({ column: '', direction: 'asc' });
 
-  const [filters, setFilters] = useState<FilterConfig>({
-    conditions: [],
-    matchAll: true,
-  });
-
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
 
-  const createCompanyForm = useForm<CreateCompanySchema>({
+  const createCompanyForm = useForm({
     resolver: zodResolver(createCompanySchema),
     defaultValues: {
       name: '',
@@ -132,23 +117,6 @@ export default function CompanyPage() {
     },
   });
 
-  const filterFields = [
-    { label: t('name'), value: 'name' },
-    { label: t('industry'), value: 'industry' },
-    { label: t('size'), value: 'size' },
-    { label: t('status'), value: 'status' },
-    { label: t('email'), value: 'email' },
-    { label: t('phone'), value: 'phone' },
-  ];
-
-  const filterOperators: { label: string; value: FilterOperator }[] = [
-    { label: t('equals'), value: '=' },
-    { label: t('not_equals'), value: '!=' },
-    { label: t('contains'), value: 'contains' },
-    { label: t('starts_with'), value: 'startsWith' },
-    { label: t('ends_with'), value: 'endsWith' },
-  ];
-
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [companyToDelete, setCompanyToDelete] = useState<string | null>(null);
 
@@ -157,7 +125,7 @@ export default function CompanyPage() {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [selectedCompany, setSelectedCompany] = useState<any>(null);
 
-  const editCompanyForm = useForm<CreateCompanySchema>({
+  const editCompanyForm = useForm({
     resolver: zodResolver(createCompanySchema),
     defaultValues: {
       name: '',
@@ -185,49 +153,7 @@ export default function CompanyPage() {
     },
   });
 
-  const handleStatusFilter = (status: string | null) => {
-    if (status === null) {
-      setFilters({
-        ...filters,
-        conditions: filters.conditions.filter((c) => c.field !== 'status'),
-      });
-      return;
-    }
-
-    const isActive = filters.conditions.some((c) => c.field === 'status' && c.value === status);
-    if (isActive) {
-      setFilters({
-        ...filters,
-        conditions: filters.conditions.filter((c) => !(c.field === 'status' && c.value === status)),
-      });
-      return;
-    }
-
-    setFilters({
-      ...filters,
-      conditions: [...filters.conditions, { field: 'status', operator: '=', value: status }],
-    });
-  };
-
   useEffect(() => {
-    const newConditions: FilterCondition[] = [];
-
-    for (const field of filterFields) {
-      const values = searchParams.getAll(field.value);
-      for (const value of values) {
-        newConditions.push({
-          field: field.value,
-          operator: '=',
-          value: value,
-        });
-      }
-    }
-
-    setFilters({
-      conditions: newConditions,
-      matchAll: true,
-    });
-
     const searchParam = searchParams.get('search');
     if (searchParam) {
       setSearch(searchParam);
@@ -251,10 +177,6 @@ export default function CompanyPage() {
   useEffect(() => {
     const params = new URLSearchParams();
 
-    for (const condition of filters.conditions) {
-      params.append(condition.field, condition.value);
-    }
-
     if (search) {
       params.set('search', search);
     }
@@ -265,34 +187,7 @@ export default function CompanyPage() {
 
     const newUrl = params.toString() ? `${pathname}?${params.toString()}` : pathname;
     router.replace(newUrl, { scroll: false });
-  }, [filters, search, sortConfig, pathname]);
-
-  const handleFilterChange = (index: number, field: string, operator: FilterOperator, value: string) => {
-    const newConditions = [...filters.conditions];
-
-    const existingIndex = newConditions.findIndex((c) => c.field === field);
-    if (existingIndex !== -1 && existingIndex !== index) {
-      newConditions.splice(existingIndex, 1);
-    }
-
-    if (index >= newConditions.length) {
-      newConditions.push({ field, operator, value });
-    } else {
-      newConditions[index] = { field, operator, value };
-    }
-
-    setFilters((prev) => ({
-      ...prev,
-      conditions: newConditions,
-    }));
-  };
-
-  const handleRemoveFilter = (index: number) => {
-    setFilters((prev) => ({
-      ...prev,
-      conditions: prev.conditions.filter((_, i) => i !== index),
-    }));
-  };
+  }, [search, sortConfig, pathname]);
 
   const filteredCompanies = useMemo(() => {
     if (!companies) return [];
@@ -308,38 +203,7 @@ export default function CompanyPage() {
 
           return name.includes(searchTerm) || industry.includes(searchTerm) || email.includes(searchTerm) || status?.includes(searchTerm);
         }
-
-        if (filters.conditions.length === 0) return true;
-
-        const groupedConditions = filters.conditions.reduce((acc, condition) => {
-          if (!acc[condition.field]) {
-            acc[condition.field] = [];
-          }
-          acc[condition.field].push(condition);
-          return acc;
-        }, {} as Record<string, FilterCondition[]>);
-
-        return Object.entries(groupedConditions).every(([field, conditions]) => {
-          return conditions.some((condition) => {
-            const fieldValue = String(company[condition.field as keyof typeof company] || '').toLowerCase();
-            const compareValue = condition.value.toLowerCase();
-
-            switch (condition.operator) {
-              case '=':
-                return fieldValue === compareValue;
-              case '!=':
-                return fieldValue !== compareValue;
-              case 'contains':
-                return fieldValue.includes(compareValue);
-              case 'startsWith':
-                return fieldValue.startsWith(compareValue);
-              case 'endsWith':
-                return fieldValue.endsWith(compareValue);
-              default:
-                return false;
-            }
-          });
-        });
+        return true;
       })
       .sort((a, b) => {
         if (!sortConfig.column) return 0;
@@ -356,7 +220,7 @@ export default function CompanyPage() {
         if (aValue > bValue) return sortConfig.direction === 'asc' ? 1 : -1;
         return 0;
       });
-  }, [companies, filters, sortConfig, debouncedSearch]);
+  }, [companies, sortConfig, debouncedSearch]);
 
   const handleDeleteClick = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -421,7 +285,7 @@ export default function CompanyPage() {
     },
     {
       accessorKey: 'name',
-      header: t('name'),
+      header: ({ column }) => <DataTableHeader column={column} title={t('name')} />,
       cell: ({ row }) => (
         <div className='flex items-center gap-2'>
           <div>
@@ -433,17 +297,17 @@ export default function CompanyPage() {
     },
     {
       accessorKey: 'industry',
-      header: t('industry'),
+      header: ({ column }) => <DataTableHeader column={column} title={t('industry')} />,
       cell: ({ row }) => <span className='capitalize'>{row.original.industry || '—'}</span>,
     },
     {
       accessorKey: 'size',
-      header: t('size'),
+      header: ({ column }) => <DataTableHeader column={column} title={t('size')} />,
       cell: ({ row }) => <span className='capitalize'>{row.original.size || '—'}</span>,
     },
     {
       accessorKey: 'teams',
-      header: t('teams'),
+      header: ({ column }) => <DataTableHeader column={column} title={t('teams')} />,
       cell: ({ row }) => <span>{row.original.teams || 0}</span>,
     },
     // {
@@ -453,20 +317,20 @@ export default function CompanyPage() {
     // },
     {
       accessorKey: 'status',
-      header: t('status'),
-      cell: ({ row }) => <ColorBadge type='companyStatus' value={row.original.status} />,
+      header: ({ column }) => <DataTableHeader column={column} title={t('status')} />,
+      cell: ({ row }) => <ColorBadge type='companyStatus' value={row.original.status || ''} />,
     },
     {
       accessorKey: 'phone',
-      header: t('phone'),
+      header: ({ column }) => <DataTableHeader column={column} title={t('phone')} />,
       cell: ({ row }) => <span>{row.original.phone || '—'}</span>,
     },
     {
       accessorKey: 'website',
-      header: t('website'),
+      header: ({ column }) => <DataTableHeader column={column} title={t('website')} />,
       cell: ({ row }) => (
         <Button variant='ghost' size='sm' disabled={!row.original.website} asChild onClick={(e) => e.stopPropagation()}>
-          <Link href={row.original.website} target='_blank' rel='noopener noreferrer'>
+          <Link href={row.original.website || ''} target='_blank' rel='noopener noreferrer'>
             {row.original.website ? t('visit') : '—'}
             {row.original.website && <ExternalLink className='h-4 w-4' />}
           </Link>
@@ -475,7 +339,7 @@ export default function CompanyPage() {
     },
     {
       accessorKey: 'createdAt',
-      header: t('created'),
+      header: ({ column }) => <DataTableHeader column={column} title={t('created')} />,
       cell: ({ row }) => new Date(row.original.createdAt).toLocaleDateString(),
     },
     {
@@ -505,25 +369,23 @@ export default function CompanyPage() {
   const table = useReactTable({
     data: filteredCompanies,
     columns: tableColumns,
-    onSortingChange: setSorting,
-    onColumnFiltersChange: setColumnFilters,
-    getCoreRowModel: getCoreRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-    onColumnVisibilityChange: setColumnVisibility,
-    onRowSelectionChange: setRowSelection,
-    initialState: {
-      pagination: {
-        pageSize: 13,
-      },
-    },
     state: {
       sorting,
-      columnFilters,
       columnVisibility,
       rowSelection,
+      columnFilters,
     },
+    enableRowSelection: true,
+    onRowSelectionChange: setRowSelection,
+    onSortingChange: setSorting,
+    onColumnFiltersChange: setColumnFilters,
+    onColumnVisibilityChange: setColumnVisibility,
+    getCoreRowModel: getCoreRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    getFacetedRowModel: getFacetedRowModel(),
+    getFacetedUniqueValues: getFacetedUniqueValues(),
   });
 
   return (
@@ -531,71 +393,9 @@ export default function CompanyPage() {
       <PageHeader title={t('companies')} subtitle={!isLoading ? `(${t('total_number_companies', { count: filteredCompanies.length })})` : undefined} description={t('companies_description')} />
 
       <div className='flex flex-col gap-4'>
-        <div className='flex items-center justify-between gap-4'>
+        <div className='flex items-center justify-between'>
           <div className='flex flex-row gap-2'>
             <Input placeholder={t('search_companies')} value={search} onChange={(e) => setSearch(e.target.value)} className='h-8 w-72 max-w-sm' disabled={isLoading} />
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant='outline' size='sm' disabled={isLoading}>
-                  <Filter className='mr-2 h-4 w-4' />
-                  {t('filters')} ({filters.conditions.length})
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className='w-[350px] p-4'>
-                <div className='space-y-4'>
-                  <div className='flex items-center gap-2'>
-                    <span className='font-medium text-sm'>{t('match')}:</span>
-                    <Button variant='ghost' size='sm' onClick={() => setFilters((f) => ({ ...f, matchAll: !f.matchAll }))}>
-                      {filters.matchAll ? t('all_conditions') : t('any_condition')}
-                    </Button>
-                  </div>
-
-                  {filters.conditions.map((condition, index) => (
-                    <div key={`${condition.field}-${index}`} className='flex items-center gap-2'>
-                      <select className='h-8 rounded-md border px-2 text-sm' value={condition.field} onChange={(e) => handleFilterChange(index, e.target.value, condition.operator, condition.value)}>
-                        {filterFields.map((field) => (
-                          <option key={field.value} value={field.value}>
-                            {field.label}
-                          </option>
-                        ))}
-                      </select>
-
-                      <select
-                        className='h-8 rounded-md border px-2 text-sm'
-                        value={condition.operator}
-                        onChange={(e) => handleFilterChange(index, condition.field, e.target.value as FilterOperator, condition.value)}
-                      >
-                        {filterOperators.map((op) => (
-                          <option key={op.value} value={op.value}>
-                            {op.label}
-                          </option>
-                        ))}
-                      </select>
-
-                      <Input className='h-8' value={condition.value} onChange={(e) => handleFilterChange(index, condition.field, condition.operator, e.target.value)} />
-
-                      <button type='button' className='size-4 p-0' onClick={() => handleRemoveFilter(index)}>
-                        <X className='h-4 w-4' />
-                      </button>
-                    </div>
-                  ))}
-
-                  <Button
-                    variant='outline'
-                    size='sm'
-                    className='w-full'
-                    onClick={() => {
-                      setFilters((f) => ({
-                        ...f,
-                        conditions: [...f.conditions, { field: filterFields[0].value, operator: '=', value: '' }],
-                      }));
-                    }}
-                  >
-                    {t('add_condition')}
-                  </Button>
-                </div>
-              </DropdownMenuContent>
-            </DropdownMenu>
 
             <Combobox
               value={selectedColumn}
@@ -610,16 +410,16 @@ export default function CompanyPage() {
                 .getAllColumns()
                 .filter((column) => column.getCanHide())
                 .map((column) => column.id)}
-              placeholder={t('columns')}
+              placeholder={t('visible_columns')}
               searchPlaceholder={t('search_columns')}
               emptyText={t('no_columns_found')}
-              groupHeading={t('available_columns')}
+              groupHeading={t('visible_columns')}
               allowCustom={false}
               renderItem={(item) => {
                 const column = table.getAllColumns().find((col) => col.id === item);
                 return (
                   <div className='flex w-full items-center justify-between'>
-                    <span className='capitalize'>{t(item)}</span>
+                    <span>{t(item)}</span>
                     {column?.getIsVisible() && <Check className='h-4 w-4' />}
                   </div>
                 );
@@ -628,37 +428,17 @@ export default function CompanyPage() {
               size='sm'
               alwaysPlaceHolder={true}
             />
-            {filters.conditions.length > 0 && (
-              <Button variant='outline' size='sm' onClick={() => setFilters({ conditions: [], matchAll: true })}>
-                <X className='h-4 w-4' />
-                {t('clear')}
-              </Button>
-            )}
           </div>
 
           <div className='flex flex-row gap-2'>
             <Button variant='outline' size='sm' className='h-8' disabled={isLoading} onClick={() => setCreateDialogOpen(true)}>
-              {t('add_company')}
+              <Plus className='size-4' /> {t('add_company')}
             </Button>
           </div>
         </div>
       </div>
 
-      <div className='flex flex-col gap-2'>
-        <div className='flex flex-wrap items-center gap-2'>
-          <p className='text-muted-foreground text-sm'>{t('status')}</p>
-          {['active', 'inactive'].map((status) => {
-            const isActive = filters.conditions.some((c) => c.field === 'status' && c.value === status);
-            return (
-              <button type='button' key={status} onClick={() => handleStatusFilter(status)}>
-                <ColorBadge type='companyStatus' value={status} className='capitalize' isActive={isActive} />
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      <PaginationTable table={table} columns={tableColumns} loading={isLoading} onRowClick={(row) => router.push(`/dashboard/crm/company/${row.id}`)} rowClassName='cursor-pointer' />
+      <DataTable table={table} columns={tableColumns} loading={isLoading} onRowClick={(row) => router.push(`/dashboard/crm/company/${row.id}`)} />
 
       <ActionAlertDialog
         open={deleteDialogOpen}

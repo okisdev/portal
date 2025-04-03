@@ -3,14 +3,15 @@
 import { ActionAlertDialog } from '@/components/shared/action-alert-dialog';
 import { Combobox } from '@/components/shared/combobox';
 import { PageHeader } from '@/components/shared/page-header';
-import { PaginationTable } from '@/components/shared/pagination-table';
-import { TableLoading } from '@/components/shared/table-loading';
+import { DataTable } from '@/components/shared/table';
+import { DataTableHeader } from '@/components/shared/table/header';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { useDebounce } from '@/hooks/use-debounce';
 import { formatDate } from '@/utils/date';
 import { api } from '@/utils/trpc/client';
 import {
@@ -19,6 +20,8 @@ import {
   type SortingState,
   type VisibilityState,
   getCoreRowModel,
+  getFacetedRowModel,
+  getFacetedUniqueValues,
   getFilteredRowModel,
   getPaginationRowModel,
   getSortedRowModel,
@@ -27,8 +30,8 @@ import {
 import { MoreHorizontal, Pencil, Plus, Trash, Users } from 'lucide-react';
 import { Check } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
 type TeamWithCount = {
@@ -43,6 +46,8 @@ type TeamWithCount = {
 
 export default function CRMTeamsPage() {
   const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const t = useTranslations();
 
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -55,6 +60,9 @@ export default function CRMTeamsPage() {
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = useState({});
   const [selectedColumn, setSelectedColumn] = useState('');
+
+  const [search, setSearch] = useState('');
+  const debouncedSearch = useDebounce(search, 300);
 
   const utils = api.useUtils();
   const { data: teams, isLoading } = api.team.getAllTeams.useQuery();
@@ -77,6 +85,42 @@ export default function CRMTeamsPage() {
       toast.error(error.message);
     },
   });
+
+  useEffect(() => {
+    const searchParam = searchParams.get('search');
+    if (searchParam) {
+      setSearch(searchParam);
+    } else {
+      setSearch('');
+    }
+  }, [searchParams]);
+
+  useEffect(() => {
+    const params = new URLSearchParams();
+
+    if (search) {
+      params.set('search', search);
+    }
+
+    const newUrl = params.toString() ? `${pathname}?${params.toString()}` : pathname;
+    router.replace(newUrl, { scroll: false });
+  }, [search, pathname]);
+
+  const filteredTeams = useMemo(() => {
+    if (!teams) return [];
+
+    return teams.filter((team) => {
+      if (debouncedSearch) {
+        const searchTerm = debouncedSearch.toLowerCase();
+        const name = team.name.toLowerCase();
+        const description = (team.description || '').toLowerCase();
+        const company = (team.company?.name || '').toLowerCase();
+
+        return name.includes(searchTerm) || description.includes(searchTerm) || company.includes(searchTerm);
+      }
+      return true;
+    });
+  }, [teams, debouncedSearch]);
 
   const handleCreateTeam = (e: React.FormEvent) => {
     e.preventDefault();
@@ -109,7 +153,7 @@ export default function CRMTeamsPage() {
     },
     {
       accessorKey: 'name',
-      header: t('team_name'),
+      header: ({ column }) => <DataTableHeader column={column} title={t('team_name')} />,
       cell: ({ row }) => (
         <div className='flex items-center gap-2'>
           <Users className='size-4 text-muted-foreground' />
@@ -119,15 +163,15 @@ export default function CRMTeamsPage() {
     },
     {
       accessorKey: 'description',
-      header: t('description'),
+      header: ({ column }) => <DataTableHeader column={column} title={t('description')} />,
     },
     {
       accessorKey: 'contacts',
-      header: t('contacts'),
+      header: ({ column }) => <DataTableHeader column={column} title={t('contacts')} />,
     },
     {
       accessorKey: 'company',
-      header: t('company'),
+      header: ({ column }) => <DataTableHeader column={column} title={t('company')} />,
       cell: ({ row }) => {
         const { company } = row.original;
         return company ? company.name : '-';
@@ -135,7 +179,7 @@ export default function CRMTeamsPage() {
     },
     {
       accessorKey: 'createdAt',
-      header: t('created'),
+      header: ({ column }) => <DataTableHeader column={column} title={t('created')} />,
       cell: ({ row }) => formatDate(new Date(row.getValue('createdAt'))),
     },
     {
@@ -172,104 +216,81 @@ export default function CRMTeamsPage() {
           </DropdownMenuContent>
         </DropdownMenu>
       ),
+      enableSorting: false,
+      enableHiding: false,
     },
   ];
 
   const table = useReactTable({
-    data: teams ?? [],
+    data: filteredTeams,
     columns: tableColumns,
-    onSortingChange: setSorting,
-    onColumnFiltersChange: setColumnFilters,
-    getCoreRowModel: getCoreRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-    onColumnVisibilityChange: setColumnVisibility,
-    onRowSelectionChange: setRowSelection,
-    initialState: {
-      pagination: {
-        pageSize: 13,
-      },
-    },
     state: {
       sorting,
-      columnFilters,
       columnVisibility,
       rowSelection,
+      columnFilters,
     },
+    enableRowSelection: true,
+    onRowSelectionChange: setRowSelection,
+    onSortingChange: setSorting,
+    onColumnFiltersChange: setColumnFilters,
+    onColumnVisibilityChange: setColumnVisibility,
+    getCoreRowModel: getCoreRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    getFacetedRowModel: getFacetedRowModel(),
+    getFacetedUniqueValues: getFacetedUniqueValues(),
   });
-
-  if (isLoading) {
-    return (
-      <div className='space-y-4 p-4'>
-        <PageHeader
-          title={t('teams')}
-          description={t('teams_description')}
-          right={
-            <Button variant='outline' className='h-8' disabled>
-              <Plus className='mr-2 size-4' /> {t('create_team')}
-            </Button>
-          }
-        />
-        <TableLoading columnCount={5} rowCount={5} />
-      </div>
-    );
-  }
 
   return (
     <div className='space-y-4 p-4'>
-      <PageHeader
-        title={t('teams')}
-        subtitle={!isLoading ? `(${t('total_number_teams', { count: teams?.length ?? 0 })})` : undefined}
-        description={t('teams_description')}
-        right={
-          <Button variant='outline' className='h-8' onClick={() => setIsCreateModalOpen(true)}>
-            <Plus className='mr-2 size-4' /> {t('create_team')}
-          </Button>
-        }
-      />
+      <PageHeader title={t('teams')} subtitle={!isLoading ? `(${t('total_number_teams', { count: filteredTeams.length })})` : undefined} description={t('teams_description')} />
 
-      <div className='flex items-center py-4'>
-        <Input
-          placeholder={t('filter_teams')}
-          value={(table.getColumn('name')?.getFilterValue() as string) ?? ''}
-          onChange={(event) => table.getColumn('name')?.setFilterValue(event.target.value)}
-          className='h-8 max-w-sm'
-        />
-        <Combobox
-          value={selectedColumn}
-          onChange={(value) => {
-            setSelectedColumn(value);
-            const column = table.getAllColumns().find((col) => col.id === value);
-            if (column) {
-              column.toggleVisibility(!column.getIsVisible());
-            }
-          }}
-          items={table
-            .getAllColumns()
-            .filter((column) => column.getCanHide())
-            .map((column) => column.id)}
-          placeholder={t('columns')}
-          searchPlaceholder={t('search_columns')}
-          emptyText={t('no_columns_found')}
-          groupHeading={t('available_columns')}
-          allowCustom={false}
-          renderItem={(item) => {
-            const column = table.getAllColumns().find((col) => col.id === item);
-            return (
-              <div className='flex w-full items-center justify-between'>
-                <span className='capitalize'>{item}</span>
-                {column?.getIsVisible() && <Check className='h-4 w-4' />}
-              </div>
-            );
-          }}
-          className='ml-2 w-48'
-          size='sm'
-          alwaysPlaceHolder={true}
-        />
+      <div className='flex items-center justify-between'>
+        <div className='flex items-center'>
+          <Input placeholder={t('filter_teams')} disabled={isLoading} value={search} onChange={(e) => setSearch(e.target.value)} className='h-8 w-72 max-w-sm' />
+          <Combobox
+            value={selectedColumn}
+            onChange={(value) => {
+              setSelectedColumn(value);
+              const column = table.getAllColumns().find((col) => col.id === value);
+              if (column) {
+                column.toggleVisibility(!column.getIsVisible());
+              }
+            }}
+            items={table
+              .getAllColumns()
+              .filter((column) => column.getCanHide())
+              .map((column) => column.id)}
+            placeholder={t('visible_columns')}
+            searchPlaceholder={t('search_columns')}
+            emptyText={t('no_columns_found')}
+            groupHeading={t('visible_columns')}
+            allowCustom={false}
+            renderItem={(item) => {
+              const column = table.getAllColumns().find((col) => col.id === item);
+              return (
+                <div className='flex w-full items-center justify-between'>
+                  <span>{t(item)}</span>
+                  {column?.getIsVisible() && <Check className='h-4 w-4' />}
+                </div>
+              );
+            }}
+            className='ml-2 w-48'
+            size='sm'
+            alwaysPlaceHolder={true}
+          />
+        </div>
+
+        <div className='flex flex-row gap-2'>
+          <Button variant='outline' className='h-8' onClick={() => setIsCreateModalOpen(true)}>
+            <Plus className='size-4' /> {t('create_team')}
+          </Button>
+        </div>
       </div>
 
-      <PaginationTable table={table} columns={tableColumns} loading={isLoading} onRowClick={(row) => router.push(`/dashboard/crm/team/${row.id}`)} rowClassName='cursor-pointer' />
+      <DataTable table={table} columns={tableColumns} loading={isLoading} onRowClick={(row) => router.push(`/dashboard/crm/team/${row.id}`)} />
 
       <ActionAlertDialog
         open={!!teamToDelete}

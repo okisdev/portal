@@ -12,18 +12,14 @@ import {
   companyCustomValue,
   contact,
   contactActivity,
-  contactCampaign,
   contactCustomField,
   contactCustomValue,
-  contactDeal,
-  marketingCampaign,
   paymentTrack,
   resourceContent,
   resourceContentSendTrack,
   resourceContentShare,
   resourceEmails,
   session,
-  subscriptionCoupon,
   team,
   teamActivity,
   teamContact,
@@ -71,7 +67,6 @@ export const sessionRelations = relations(session, ({ one }) => ({
 }));
 
 export const contactRelations = relations(contact, ({ many, one }) => ({
-  deals: many(contactDeal),
   activities: many(contactActivity),
   payments: many(paymentTrack),
   assignedUser: one(user, {
@@ -87,7 +82,6 @@ export const contactRelations = relations(contact, ({ many, one }) => ({
     references: [company.id],
   }),
   companies: many(companyContact),
-  campaigns: many(contactCampaign),
   eventParticipations: many(calendarEventParticipant),
   teams: many(teamContact),
   leadingTeams: many(team, { relationName: 'teamLeader' }),
@@ -95,13 +89,6 @@ export const contactRelations = relations(contact, ({ many, one }) => ({
   referralTeams: many(team, { relationName: 'teamReferral' }),
   receivedContent: many(resourceContentSendTrack),
   customValues: many(contactCustomValue),
-}));
-
-export const contactDealRelations = relations(contactDeal, ({ one }) => ({
-  contact: one(contact, {
-    fields: [contactDeal.contactId],
-    references: [contact.id],
-  }),
 }));
 
 export const contactActivityRelations = relations(contactActivity, ({ one }) => ({
@@ -122,13 +109,6 @@ export const paymentTrackRelations = relations(paymentTrack, ({ one }) => ({
   }),
   user: one(user, {
     fields: [paymentTrack.userId],
-    references: [user.id],
-  }),
-}));
-
-export const subscriptionCouponRelations = relations(subscriptionCoupon, ({ one }) => ({
-  creator: one(user, {
-    fields: [subscriptionCoupon.createdBy],
     references: [user.id],
   }),
 }));
@@ -219,29 +199,6 @@ export const resourceEmailsRelations = relations(resourceEmails, ({ one }) => ({
   updater: one(user, {
     fields: [resourceEmails.updatedBy],
     references: [user.id],
-  }),
-}));
-
-export const marketingCampaignRelations = relations(marketingCampaign, ({ one, many }) => ({
-  creator: one(user, {
-    fields: [marketingCampaign.createdBy],
-    references: [user.id],
-  }),
-  updater: one(user, {
-    fields: [marketingCampaign.updatedBy],
-    references: [user.id],
-  }),
-  contacts: many(contactCampaign),
-}));
-
-export const contactCampaignRelations = relations(contactCampaign, ({ one }) => ({
-  contact: one(contact, {
-    fields: [contactCampaign.contactId],
-    references: [contact.id],
-  }),
-  campaign: one(marketingCampaign, {
-    fields: [contactCampaign.campaignCode],
-    references: [marketingCampaign.campaignCode],
   }),
 }));
 

@@ -2,7 +2,6 @@
 
 import { ActionAlertDialog } from '@/components/shared/action-alert-dialog';
 import { ActivitySection } from '@/components/shared/activity-section';
-import { ColorBadge } from '@/components/shared/color-badge';
 import { Combobox } from '@/components/shared/combobox';
 import { DateTimePicker } from '@/components/shared/date-time-picker';
 import { EventDialog } from '@/components/shared/event-dialog';
@@ -11,6 +10,7 @@ import { EventSection } from '@/components/shared/event-section';
 import { NameTag } from '@/components/shared/name-tag';
 import { PageLoading } from '@/components/shared/page-loading';
 import { PhoneInput } from '@/components/shared/phone-input';
+import { SmartColorBadge } from '@/components/shared/smart-color-badge';
 import { TabSwitcher } from '@/components/shared/tab-switcher';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -21,7 +21,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { sources } from '@/data/data';
-import { type Priority, type Status, statusSchema } from '@/lib/schema';
+import type { Priority, Status } from '@/lib/schema';
 import { formatDate } from '@/utils/date';
 import { parsePhone } from '@/utils/phone';
 import { api } from '@/utils/trpc/client';
@@ -55,6 +55,8 @@ export default function ContactIdPage() {
   const { data: activities } = api.contact.getContactActivities.useQuery({
     id: contactId[0],
   });
+  const { data: statuses } = api.site.getStatus.useQuery();
+  const { data: priorities } = api.site.getPriority.useQuery();
 
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editForm, setEditForm] = useState({
@@ -64,9 +66,9 @@ export default function ContactIdPage() {
     phone: '',
     company: '',
     companyId: null as string | null,
-    status: 'lead' as Status,
-    source: '',
-    priority: 'medium' as Priority,
+    status: 'Lead',
+    source: 'N/A',
+    priority: 'Medium',
   });
 
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
@@ -197,9 +199,9 @@ export default function ContactIdPage() {
         phone: contact.phone || '',
         company: contact.company || '',
         companyId: contact.companyId || null,
-        status: contact.status || 'lead',
-        source: contact.source || '',
-        priority: contact.priority || 'low',
+        status: contact.status || 'Lead',
+        source: contact.source || 'N/A',
+        priority: contact.priority || 'Medium',
       });
       setIsEditModalOpen(true);
     }
@@ -243,9 +245,9 @@ export default function ContactIdPage() {
       phone: contact?.phone || '',
       company: contact?.company || '',
       companyId: contact?.companyId || null,
-      status: contact?.status || 'lead',
-      source: contact?.source || '',
-      priority: contact?.priority || 'low',
+      status: contact?.status || 'Lead',
+      source: contact?.source || 'N/A',
+      priority: contact?.priority || 'Medium',
     });
     setIsEditModalOpen(true);
   };
@@ -275,14 +277,14 @@ export default function ContactIdPage() {
     });
   };
 
-  const handleStatusChange = (value: Status) => {
+  const handleStatusChange = (value: string) => {
     updateContact.mutate({
       id: contactId[0],
       status: value,
     });
   };
 
-  const handlePriorityChange = (value: Priority) => {
+  const handlePriorityChange = (value: string) => {
     updateContact.mutate({
       id: contactId[0],
       priority: value,
@@ -321,11 +323,11 @@ export default function ContactIdPage() {
   };
 
   return (
-    <div className='container mx-auto min-h-[calc(100vh-4rem)] space-y-6 p-4 sm:p-6'>
-      <div className='grid min-h-[calc(100vh-6rem)] grid-cols-1 gap-4 lg:grid-cols-3 lg:gap-6'>
-        <div className='h-[calc(100vh-8rem)] lg:col-span-1'>
-          <div className='flex h-full flex-col rounded-lg border bg-card text-card-foreground shadow-sm'>
-            <div className='flex-none border-b p-6'>
+    <div className='container mx-auto h-[calc(100vh-4rem)] p-0 sm:p-6'>
+      <div className='flex h-full flex-col lg:flex-row'>
+        <div className='w-full lg:w-1/3'>
+          <div className='flex h-full flex-col rounded-none border bg-card text-card-foreground shadow-xs sm:rounded-l-lg'>
+            <div className='flex-none border-b p-4 sm:p-6'>
               <div className='flex items-start gap-4'>
                 <Avatar className='size-16'>
                   <AvatarImage src='' />
@@ -382,19 +384,19 @@ export default function ContactIdPage() {
                               user: () => (contact.createdBy ? <NameTag id={contact.createdBy} type='user' /> : null),
                             })
                         : contact.source
-                        ? t.rich('created_at_via', {
-                            date: formatDate(new Date(contact.createdAt)),
-                            source: contact.source,
-                          })
-                        : t.rich('created_at_date', {
-                            date: formatDate(new Date(contact.createdAt)),
-                          })}
+                          ? t.rich('created_at_via', {
+                              date: formatDate(new Date(contact.createdAt)),
+                              source: contact.source,
+                            })
+                          : t.rich('created_at_date', {
+                              date: formatDate(new Date(contact.createdAt)),
+                            })}
                     </span>
                   )}
                 </div>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <button type='button' className='my-1 text-muted-foreground outline-none hover:text-foreground'>
+                    <button type='button' className='my-1 text-muted-foreground outline-hidden hover:text-foreground'>
                       <MoreHorizontal className='size-4' />
                     </button>
                   </DropdownMenuTrigger>
@@ -507,16 +509,16 @@ export default function ContactIdPage() {
                 </div>
                 <div className='space-y-1.5'>
                   <span className='text-muted-foreground text-xs'>{t('priority')}</span>
-                  <Select value={contact?.priority || 'medium'} onValueChange={handlePriorityChange}>
-                    <SelectTrigger className='h-8'>
+                  <Select value={contact?.priority || 'Medium'} onValueChange={handlePriorityChange}>
+                    <SelectTrigger className='w-full'>
                       <SelectValue>
-                        <ColorBadge type='priority' value={contact?.priority || 'medium'} />
+                        <SmartColorBadge value={contact?.priority || 'Medium'} color={priorities?.find((p: Priority) => p.value === (contact?.priority || 'Medium'))?.color || '#6b7280'} />
                       </SelectValue>
                     </SelectTrigger>
                     <SelectContent className='bg-popover text-popover-foreground'>
-                      {['high', 'medium', 'low'].map((priority) => (
-                        <SelectItem key={priority} value={priority}>
-                          <ColorBadge type='priority' value={priority} />
+                      {priorities?.map((priority: Priority) => (
+                        <SelectItem key={priority.value} value={priority.value}>
+                          <SmartColorBadge value={priority.value} color={priority.color} />
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -524,16 +526,16 @@ export default function ContactIdPage() {
                 </div>
                 <div className='space-y-1.5'>
                   <span className='text-muted-foreground text-xs'>{t('status')}</span>
-                  <Select value={contact?.status || 'lead'} onValueChange={handleStatusChange}>
-                    <SelectTrigger className='h-8'>
+                  <Select value={contact?.status || 'Lead'} onValueChange={handleStatusChange}>
+                    <SelectTrigger className='w-full'>
                       <SelectValue>
-                        <ColorBadge type='contactStatus' value={contact?.status || 'lead'} />
+                        <SmartColorBadge value={contact?.status || 'Lead'} color={statuses?.find((s: Status) => s.value === (contact?.status || 'Lead'))?.color || '#6b7280'} />
                       </SelectValue>
                     </SelectTrigger>
                     <SelectContent className='bg-popover text-popover-foreground'>
-                      {statusSchema.options.map((status) => (
-                        <SelectItem key={status} value={status}>
-                          <ColorBadge type='contactStatus' value={status} />
+                      {statuses?.map((status: Status) => (
+                        <SelectItem key={status.value} value={status.value}>
+                          <SmartColorBadge value={status.value} color={status.color} />
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -590,8 +592,6 @@ export default function ContactIdPage() {
                 />
               </div>
 
-              {/* <Payment contact={contact || {}} /> */}
-
               <div className='p-6'>
                 <h2 className='mb-4 font-medium'>{t('team_roles')}</h2>
                 {!contact?.teams || contact.teams.length === 0 ? (
@@ -629,7 +629,7 @@ export default function ContactIdPage() {
                       )
                       .map((team) => (
                         <div key={team.id} className='mb-3 flex items-center justify-between'>
-                          <Link href={`/dashboard/crm/team/${team.id}`} className='text-sm transition-colors duration-200 hover:text-primary hover:underline'>
+                          <Link href={`/dashboard/crm/team/${team.id}`} className='text-sm hover:text-primary hover:underline'>
                             {team.name}
                           </Link>
                           <span className='text-muted-foreground text-xs'>{t('member')}</span>
@@ -642,8 +642,8 @@ export default function ContactIdPage() {
           </div>
         </div>
 
-        <div className='h-[calc(100vh-8rem)] overflow-hidden lg:col-span-2'>
-          <div className='h-full rounded-lg border p-6'>
+        <div className='w-full lg:w-2/3'>
+          <div className='h-full rounded-none border border-t-0 border-l-0 p-4 sm:rounded-r-lg sm:border-t-1 sm:p-6'>
             <TabSwitcher
               config={[
                 {
@@ -757,14 +757,14 @@ export default function ContactIdPage() {
             <div className='space-y-2'>
               <Label htmlFor='status'>{t('status')}</Label>
 
-              <Select value={editForm.status} onValueChange={(value) => setEditForm({ ...editForm, status: value as Status })}>
+              <Select value={editForm.status} onValueChange={(value) => setEditForm({ ...editForm, status: value })}>
                 <SelectTrigger>
                   <SelectValue placeholder='Select status' />
                 </SelectTrigger>
                 <SelectContent>
-                  {statusSchema.options.map((status) => (
-                    <SelectItem key={status} value={status}>
-                      <ColorBadge type='contactStatus' value={status} />
+                  {statuses?.map((status: Status) => (
+                    <SelectItem key={status.value} value={status.value}>
+                      <SmartColorBadge value={status.value} color={status.color} />
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -783,14 +783,16 @@ export default function ContactIdPage() {
             </div>
             <div className='space-y-2'>
               <Label htmlFor='priority'>{t('priority')}</Label>
-              <Select value={editForm.priority} onValueChange={(value) => setEditForm({ ...editForm, priority: value as Priority })}>
+              <Select value={editForm.priority} onValueChange={(value) => setEditForm({ ...editForm, priority: value })}>
                 <SelectTrigger>
                   <SelectValue placeholder='Select priority' />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value='high'>{t('high')}</SelectItem>
-                  <SelectItem value='medium'>{t('medium')}</SelectItem>
-                  <SelectItem value='low'>{t('low')}</SelectItem>
+                  {priorities?.map((priority: Priority) => (
+                    <SelectItem key={priority.value} value={priority.value}>
+                      <SmartColorBadge value={priority.value} color={priority.color} />
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>

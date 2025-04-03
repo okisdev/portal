@@ -4,9 +4,6 @@ import { authRouter } from '@/server/routers/auth';
 import { calendarRouter } from '@/server/routers/calendar';
 import { companyRouter } from '@/server/routers/company';
 import { contactRouter } from '@/server/routers/contact';
-import { externalRouter } from '@/server/routers/external';
-import { marketingRouter } from '@/server/routers/marketing';
-import { payRouter } from '@/server/routers/pay';
 import { resourceRouter } from '@/server/routers/resource';
 import { siteRouter } from '@/server/routers/site';
 import { taskRouter } from '@/server/routers/task';
@@ -27,14 +24,11 @@ export const appRouter = createTRPCRouter({
   calendar: calendarRouter,
   contact: contactRouter,
   company: companyRouter,
-  pay: payRouter,
   team: teamRouter,
   user: userRouter,
   task: taskRouter,
   resource: resourceRouter,
-  marketing: marketingRouter,
   site: siteRouter,
-  external: externalRouter,
 });
 
 // export type definition of API

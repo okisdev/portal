@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Textarea } from '@/components/ui/textarea';
 import { sources } from '@/data/data';
-import { statusSchema } from '@/lib/schema';
+import type { Status } from '@/lib/schema';
 import { cn } from '@/lib/utils';
 import { api } from '@/utils/trpc/client';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -23,24 +23,18 @@ import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
 
-const formSchema = z
-  .object({
-    firstName: z.string().optional(),
-    lastName: z.string().optional(),
-    email: z.string().optional(),
-    phone: z.string().optional(),
-    company: z.string().optional(),
-    companyId: z.string().nullable().optional(),
-    source: z.string().optional(),
-    remark: z.string().optional(),
-    status: statusSchema.optional(),
-    campaignCode: z.string().optional(),
-    createdAt: z.date().optional(),
-  })
-  .refine((data) => data.email || data.phone, {
-    message: 'Either email or phone number is required',
-    path: ['email', 'phone'],
-  });
+const formSchema = z.object({
+  firstName: z.string().optional(),
+  lastName: z.string().optional(),
+  email: z.string().optional(),
+  phone: z.string().optional(),
+  company: z.string().optional(),
+  companyId: z.string().nullable().optional(),
+  source: z.string().optional(),
+  remark: z.string().optional(),
+  status: z.string().optional(),
+  createdAt: z.date().optional(),
+});
 
 export default function ManualContactForm() {
   const t = useTranslations();
@@ -48,10 +42,11 @@ export default function ManualContactForm() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
 
-  const { data: campaigns } = api.marketing.getActiveCampaigns.useQuery();
   const { data: companies } = api.company.getAllCompanies.useQuery();
 
-  const form = useForm<z.infer<typeof formSchema>>({
+  const { data: statuses } = api.site.getStatus.useQuery();
+
+  const form = useForm({
     resolver: zodResolver(formSchema),
     defaultValues: {
       firstName: '',
@@ -60,10 +55,9 @@ export default function ManualContactForm() {
       phone: '',
       company: '',
       companyId: null,
-      source: '',
+      source: 'N/A',
       remark: '',
-      status: 'lead',
-      campaignCode: '',
+      status: 'Lead',
       createdAt: undefined,
     },
   });
@@ -184,7 +178,6 @@ export default function ManualContactForm() {
                   <EmailInput value={field.value || ''} onChange={field.onChange} />
                 </FormControl>
                 <FormMessage />
-                {!form.getValues('phone') && !form.formState.errors.email && <p className='text-muted-foreground text-xs'>{t('either_email_or_phone_required')}</p>}
               </FormItem>
             )}
           />
@@ -199,7 +192,6 @@ export default function ManualContactForm() {
                   <PhoneInput value={field.value || ''} onChange={field.onChange} />
                 </FormControl>
                 <FormMessage />
-                {!form.getValues('email') && !form.formState.errors.phone && <p className='text-muted-foreground text-xs'>{t('either_email_or_phone_required')}</p>}
               </FormItem>
             )}
           />
@@ -258,39 +250,14 @@ export default function ManualContactForm() {
                   <Combobox
                     value={field.value ?? ''}
                     onChange={field.onChange}
-                    items={statusSchema.options}
+                    items={statuses?.map((s: Status) => s.value) ?? []}
                     placeholder={t('select_status')}
                     searchPlaceholder={t('search_status')}
                     groupHeading={t('statuses')}
                     allowCustom={false}
                     renderItem={(id) => {
-                      const status = statusSchema.options.find((s) => s === id);
-                      return status ?? id;
-                    }}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name='campaignCode'
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>{t('campaign')}</FormLabel>
-                <FormControl>
-                  <Combobox
-                    value={field.value ?? ''}
-                    onChange={field.onChange}
-                    items={campaigns?.map((c) => c.campaignCode) ?? []}
-                    placeholder={t('select_campaign')}
-                    searchPlaceholder={t('search_campaigns')}
-                    groupHeading={t('campaigns')}
-                    allowCustom={false}
-                    renderItem={(code) => {
-                      const campaign = campaigns?.find((c) => c.campaignCode === code);
-                      return campaign?.name ?? code;
+                      const status = statuses?.find((s: Status) => s.value === id);
+                      return status?.value ?? id;
                     }}
                   />
                 </FormControl>
@@ -310,8 +277,8 @@ export default function ManualContactForm() {
                 <div className='relative flex gap-2'>
                   <FormControl>
                     <Input
-                      placeholder='DD/MM/YYYY'
-                      value={field.value ? format(field.value, 'dd/MM/yyyy') : ''}
+                      placeholder='YYYY/MM/DD'
+                      value={field.value ? format(field.value, 'yyyy/MM/dd') : ''}
                       onChange={(e) => {
                         const parsedDate = parseDate(e.target.value);
                         field.onChange(parsedDate);

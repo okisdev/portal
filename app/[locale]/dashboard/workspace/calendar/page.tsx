@@ -98,7 +98,7 @@ export default function DashboardPersonalCalendar() {
     enabled: isEventDialogOpen,
   });
 
-  const form = useForm<z.infer<typeof eventFormSchema>>({
+  const form = useForm({
     resolver: zodResolver(eventFormSchema),
     defaultValues: {
       title: '',
@@ -113,7 +113,11 @@ export default function DashboardPersonalCalendar() {
     },
   });
 
-  const calendarForm = useForm<{ name: string; color: string; visibility: 'PUBLIC' | 'SHARED' | 'PRIVATE' }>({
+  const calendarForm = useForm<{
+    name: string;
+    color: string;
+    visibility: 'PUBLIC' | 'SHARED' | 'PRIVATE';
+  }>({
     defaultValues: {
       name: '',
       color: '#000000',
@@ -121,7 +125,11 @@ export default function DashboardPersonalCalendar() {
     },
   });
 
-  const addCalendarForm = useForm<{ name: string; color: string; visibility: 'PUBLIC' | 'SHARED' | 'PRIVATE' }>({
+  const addCalendarForm = useForm<{
+    name: string;
+    color: string;
+    visibility: 'PUBLIC' | 'SHARED' | 'PRIVATE';
+  }>({
     defaultValues: {
       name: '',
       color: randomColor('hex'),

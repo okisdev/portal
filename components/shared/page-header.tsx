@@ -1,3 +1,5 @@
+import { cn } from '@/lib/utils';
+
 interface PageHeaderProps {
   title: string;
   subtitle?: string;
@@ -7,7 +9,7 @@ interface PageHeaderProps {
 
 export function PageHeader({ title, subtitle, description, right }: PageHeaderProps) {
   return (
-    <div className='flex items-start justify-between'>
+    <div className={cn('flex justify-between', !description && right ? 'items-center' : 'items-start')}>
       <div className='space-y-1'>
         <p className='font-medium text-xl'>
           {title} <span className='text-muted-foreground text-sm'>{subtitle}</span>

@@ -5,12 +5,13 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { Notifications } from '@/lib/schema';
-import { cn, generateUUID } from '@/lib/utils';
+import { cn } from '@/lib/utils';
 import type { Locale } from '@/types/i18n';
 import { dateLocaleMap } from '@/utils/date';
 import { api } from '@/utils/trpc/client';
 import { formatDistanceToNow } from 'date-fns';
 import { Bell, Mail, MessageSquare } from 'lucide-react';
+import { nanoid } from 'nanoid';
 import { useLocale, useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useState } from 'react';
@@ -96,7 +97,7 @@ export default function NotificationsPage() {
             Array(3)
               .fill(0)
               .map((_, i) => (
-                <div key={generateUUID()} className='flex animate-pulse flex-col gap-2 rounded-lg border bg-white p-4 shadow-sm dark:border-neutral-800 dark:bg-neutral-900'>
+                <div key={nanoid()} className='flex animate-pulse flex-col gap-2 rounded-lg border bg-white p-4 shadow-xs dark:border-neutral-800 dark:bg-neutral-900'>
                   <div className='flex items-center gap-3'>
                     <Skeleton className='h-8 w-8 rounded-full' />
                     <div className='flex-1 space-y-2'>
@@ -118,7 +119,7 @@ export default function NotificationsPage() {
             <div
               key={notification.id}
               className={cn(
-                'group flex items-start gap-4 rounded-lg border p-4 shadow-sm transition-all duration-200',
+                'group flex items-start gap-4 rounded-lg border p-4 shadow-xs transition-all duration-200',
                 notification.read
                   ? 'bg-white hover:bg-neutral-50 dark:border-neutral-800 dark:bg-neutral-900 dark:hover:bg-neutral-800'
                   : 'bg-blue-50 hover:bg-blue-100/80 dark:bg-blue-950/50 dark:hover:bg-blue-900/30'
@@ -128,7 +129,7 @@ export default function NotificationsPage() {
                 <NotificationIcon type={notification.type} />
               </div>
               <div className='min-w-0 flex-1'>
-                <div className='flex items-start justify-between gap-4'>
+                <div className='flex items-center justify-between gap-4'>
                   <p className={cn('font-medium text-sm', notification.read ? 'text-neutral-700 dark:text-neutral-300' : 'text-neutral-900 dark:text-neutral-50')}>
                     {renderNotificationType(notification)}
                   </p>

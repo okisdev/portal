@@ -44,10 +44,10 @@ function TaskCard({ task, onEdit, onDelete, onContentClick }: TaskCardProps) {
       style={style}
       {...listeners}
       {...attributes}
-      className={`group z-50 cursor-grab rounded-lg border bg-card p-4 shadow-sm transition-all hover:shadow-md active:cursor-grabbing ${isDragging ? 'scale-105 shadow-lg ring-2 ring-primary' : ''}`}
+      className={`group z-50 cursor-grab rounded-lg border bg-card p-4 shadow-xs transition-all hover:shadow-md active:cursor-grabbing ${isDragging ? 'scale-105 shadow-lg ring-2 ring-primary' : ''}`}
       data-task-id={task.id}
     >
-      <div className='flex items-center justify-between gap-4'>
+      <div className='flex items-center justify-between'>
         <div className='flex flex-1 flex-col gap-1'>
           <div className='flex items-center justify-between'>
             <div className='flex items-center gap-2'>
@@ -157,10 +157,13 @@ export default function KanbanBoard({ tasks, visibleStatuses, onEdit, onDelete, 
     onStatusChange(taskId, newStatus);
   };
 
-  const tasksByStatus = visibleStatuses.reduce((acc, status) => {
-    acc[status] = tasks.filter((task) => task.status === status);
-    return acc;
-  }, {} as Record<string, Task[]>);
+  const tasksByStatus = visibleStatuses.reduce(
+    (acc, status) => {
+      acc[status] = tasks.filter((task) => task.status === status);
+      return acc;
+    },
+    {} as Record<string, Task[]>
+  );
 
   return (
     <div className={`h-full ${isDragging ? 'cursor-grabbing' : ''}`}>

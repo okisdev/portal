@@ -3,7 +3,7 @@
 import { ActionAlertDialog } from '@/components/shared/action-alert-dialog';
 import { PageHeader } from '@/components/shared/page-header';
 import { PageLoading } from '@/components/shared/page-loading';
-import { PaginationTable } from '@/components/shared/pagination-table';
+import { DataTable } from '@/components/shared/table';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -139,11 +139,6 @@ export function SiteMembers() {
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     getSortedRowModel: getSortedRowModel(),
-    initialState: {
-      pagination: {
-        pageSize: 10,
-      },
-    },
   });
 
   if (isLoading) {
@@ -182,7 +177,7 @@ export function SiteMembers() {
           <CardDescription>{t('user_management_description')}</CardDescription>
         </CardHeader>
         <CardContent>
-          <PaginationTable table={table} columns={columns} loading={isLoading} />
+          <DataTable table={table} columns={columns} loading={isLoading} />
         </CardContent>
       </Card>
 

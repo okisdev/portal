@@ -1,28 +1,39 @@
-import {
+import type {
   account,
   authenticator,
   calendarEvent,
   calendarEventParticipant,
   calendarEventShare,
   calendarFolder,
+  company,
+  companyContact,
+  companyCustomField,
+  companyCustomValue,
   contact,
   contactActivity,
-  contactDeal,
-  marketingCampaign,
+  contactCustomField,
+  contactCustomValue,
   paymentTrack,
   resourceContent,
   resourceContentSendTrack,
+  resourceContentShare,
+  resourceEmails,
   session,
-  subscriptionCoupon,
-  subscriptionPlan,
+  siteConfig,
   team,
   teamActivity,
+  teamContact,
+  teamCustomField,
+  teamCustomValue,
+  teamMeeting,
   user,
   userNotifications,
   userTask,
 } from '@/drizzle/schema';
-import { createSelectSchema } from 'drizzle-zod';
+import type { InferSelectModel } from 'drizzle-orm';
 import { z } from 'zod';
+
+// Shared Schema
 
 export const credentialSchema = z.object({
   email: z.string().min(1, 'Email is required').email('Invalid email'),
@@ -96,112 +107,20 @@ export const activitySubTypeSchema = z.enum([
 export type ActivityType = z.infer<typeof activityTypeSchema>;
 export type ActivitySubType = z.infer<typeof activitySubTypeSchema>;
 
-export const statusSchema = z.enum(['lead', 'appointment', 'follow_up', 'called', 'called_no_answer', 'after_pitching', 'key_person', 'special', 'trial', 'final', 'closed', 'junk']);
+export const basicTagSchema = z.object({
+  value: z.string(),
+  color: z.string(),
+});
 
-export type Status = z.infer<typeof statusSchema>;
+export type BasicTag = z.infer<typeof basicTagSchema>;
 
-export const prioritySchema = z.enum(['urgent', 'high', 'medium', 'low']);
-
-export type Priority = z.infer<typeof prioritySchema>;
-
-export const sourceSchema = z.enum(['Pitching', 'Referral', 'Website', 'Email', 'Instagram', 'LinkedIn', 'WhatsApp', 'Facebook', 'BNI', 'No Planner', 'Pay Trial', 'Other']);
-
-export type Source = z.infer<typeof sourceSchema>;
+export type Status = BasicTag;
+export type Source = BasicTag;
+export type Priority = BasicTag;
 
 export const userRoleSchema = z.enum(['ADMIN', 'SALES_MANAGER', 'SALES_ASSISTANT', 'MANAGER', 'USER']);
 
 export type UserRole = z.infer<typeof userRoleSchema>;
-
-export const userSchema = createSelectSchema(user);
-
-export type User = z.infer<typeof userSchema>;
-
-export const userTaskSchema = createSelectSchema(userTask);
-
-export type UserTask = z.infer<typeof userTaskSchema>;
-
-export const teamSchema = createSelectSchema(team);
-
-export type Team = z.infer<typeof teamSchema>;
-
-export const teamActivitySchema = createSelectSchema(teamActivity);
-
-export type TeamActivity = z.infer<typeof teamActivitySchema>;
-
-export const accountSchema = createSelectSchema(account);
-
-export type Account = z.infer<typeof accountSchema>;
-
-export const authenticatorSchema = createSelectSchema(authenticator);
-
-export type Authenticator = z.infer<typeof authenticatorSchema>;
-
-export const sessionSchema = createSelectSchema(session);
-
-export type Session = z.infer<typeof sessionSchema>;
-
-export const contactSchema = createSelectSchema(contact);
-
-export type Contact = z.infer<typeof contactSchema>;
-
-export const contactDealSchema = createSelectSchema(contactDeal);
-
-export type ContactDeal = z.infer<typeof contactDealSchema>;
-
-export const contactActivitySchema = createSelectSchema(contactActivity);
-
-export type ContactActivity = z.infer<typeof contactActivitySchema>;
-
-export const paymentTrackSchema = createSelectSchema(paymentTrack);
-
-export type PaymentTrack = z.infer<typeof paymentTrackSchema>;
-
-export const subscriptionCouponSchema = createSelectSchema(subscriptionCoupon);
-
-export type SubscriptionCoupon = z.infer<typeof subscriptionCouponSchema>;
-
-export const subscriptionPlanSchema = createSelectSchema(subscriptionPlan);
-
-export type SubscriptionPlan = z.infer<typeof subscriptionPlanSchema>;
-
-export const notificationsSchema = createSelectSchema(userNotifications);
-
-export type Notifications = z.infer<typeof notificationsSchema>;
-
-export const calendarFolderSchema = createSelectSchema(calendarFolder);
-
-export type CalendarFolder = z.infer<typeof calendarFolderSchema>;
-
-export const calendarEventSchema = createSelectSchema(calendarEvent);
-
-export type CalendarEvent = z.infer<typeof calendarEventSchema>;
-
-export const calendarEventShareSchema = createSelectSchema(calendarEventShare);
-
-export type CalendarEventShare = z.infer<typeof calendarEventShareSchema>;
-
-export const calendarEventParticipantSchema = createSelectSchema(calendarEventParticipant);
-
-export type CalendarEventParticipant = z.infer<typeof calendarEventParticipantSchema>;
-
-export type CalendarEventWithParticipants = CalendarEvent & {
-  participants: CalendarEventParticipant[];
-};
-
-export const resourceContentSchema = createSelectSchema(resourceContent);
-
-export type ResourceContent = z.infer<typeof resourceContentSchema>;
-
-export const marketingCampaignSchema = createSelectSchema(marketingCampaign);
-
-export type MarketingCampaign = z.infer<typeof marketingCampaignSchema> & {
-  contactCount?: number;
-  convertedCount?: number;
-};
-
-export const resourceContentSendTrackSchema = createSelectSchema(resourceContentSendTrack);
-
-export type ResourceContentSendTrack = z.infer<typeof resourceContentSendTrackSchema>;
 
 export const appointmentSchema = z.object({
   title: z.string(),
@@ -269,3 +188,71 @@ export const timezoneSchema = z.enum([
 ]);
 
 export type Timezone = z.infer<typeof timezoneSchema>;
+
+// Database Schema
+
+export type User = InferSelectModel<typeof user>;
+
+export type Account = InferSelectModel<typeof account>;
+
+export type Authenticator = InferSelectModel<typeof authenticator>;
+
+export type Session = InferSelectModel<typeof session>;
+
+export type Contact = InferSelectModel<typeof contact>;
+
+export type CompanyContact = InferSelectModel<typeof companyContact>;
+
+export type ContactActivity = InferSelectModel<typeof contactActivity>;
+
+export type PaymentTrack = InferSelectModel<typeof paymentTrack>;
+
+export type Notifications = InferSelectModel<typeof userNotifications>;
+
+export type CalendarFolder = InferSelectModel<typeof calendarFolder>;
+
+export type CalendarEvent = InferSelectModel<typeof calendarEvent>;
+
+export type CalendarEventShare = InferSelectModel<typeof calendarEventShare>;
+
+export type CalendarEventParticipant = InferSelectModel<typeof calendarEventParticipant>;
+
+export type ResourceContent = InferSelectModel<typeof resourceContent>;
+
+export type ResourceContentShare = InferSelectModel<typeof resourceContentShare>;
+
+export type ResourceContentSendTrack = InferSelectModel<typeof resourceContentSendTrack>;
+
+export type ResourceEmails = InferSelectModel<typeof resourceEmails>;
+
+export type Company = InferSelectModel<typeof company> & {
+  teams?: number;
+};
+
+export type Team = InferSelectModel<typeof team>;
+
+export type TeamContact = InferSelectModel<typeof teamContact>;
+
+export type TeamActivity = InferSelectModel<typeof teamActivity>;
+
+export type UserTask = InferSelectModel<typeof userTask>;
+
+export type TeamMeeting = InferSelectModel<typeof teamMeeting>;
+
+export type ContactCustomField = InferSelectModel<typeof contactCustomField>;
+
+export type ContactCustomValue = InferSelectModel<typeof contactCustomValue>;
+
+export type TeamCustomField = InferSelectModel<typeof teamCustomField>;
+
+export type TeamCustomValue = InferSelectModel<typeof teamCustomValue>;
+
+export type CompanyCustomField = InferSelectModel<typeof companyCustomField>;
+
+export type CompanyCustomValue = InferSelectModel<typeof companyCustomValue>;
+
+export type SiteConfig = InferSelectModel<typeof siteConfig>;
+
+export type CalendarEventWithParticipants = CalendarEvent & {
+  participants: CalendarEventParticipant[];
+};

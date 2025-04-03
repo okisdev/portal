@@ -1,6 +1,6 @@
 import { boolean, foreignKey, integer, pgTable, serial, text, timestamp, unique, varchar } from 'drizzle-orm/pg-core';
 
-export const verificationToken = pgTable('portal_verificationToken', {
+export const verificationToken = pgTable('portal_verification_token', {
   identifier: text().notNull(),
   token: text().notNull(),
   expires: timestamp({ mode: 'string' }).notNull(),
@@ -219,9 +219,7 @@ export const contact = pgTable('portal_contact', {
   country: text(),
   postalCode: text(),
   remark: text(),
-  status: text('status', { enum: ['lead', 'appointment', 'follow_up', 'called', 'called_no_answer', 'after_pitching', 'key_person', 'special', 'trial', 'final', 'closed', 'junk'] })
-    .notNull()
-    .default('lead'),
+  status: text('status').notNull().default('Lead'),
   source: text(),
   assignedTo: text().references(() => user.id),
   stripeCustomerId: text(),
@@ -232,7 +230,7 @@ export const contact = pgTable('portal_contact', {
   lastContactedAt: timestamp({ mode: 'date' }),
   lastActivity: text('lastActivity'),
   nextFollowUpAt: timestamp({ mode: 'date' }),
-  priority: text('priority', { enum: ['urgent', 'high', 'medium', 'low'] }).default('medium'),
+  priority: text('priority').default('Medium'),
   workExperience: text(),
   currentRole: text(),
   industry: text(),
@@ -240,7 +238,7 @@ export const contact = pgTable('portal_contact', {
   externalId: text(),
 });
 
-export const companyContact = pgTable('portal_companyContact', {
+export const companyContact = pgTable('portal_company_contact', {
   id: text()
     .primaryKey()
     .notNull()
@@ -260,24 +258,7 @@ export const companyContact = pgTable('portal_companyContact', {
   updatedAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
 });
 
-export const contactDeal = pgTable('portal_contactDeal', {
-  id: text()
-    .primaryKey()
-    .notNull()
-    .$defaultFn(() => crypto.randomUUID()),
-  contactId: text()
-    .notNull()
-    .references(() => contact.id, { onDelete: 'cascade' }),
-  name: text().notNull(),
-  value: integer().notNull(), // in cents
-  status: text().notNull().default('open'), // 'open', 'won', 'lost'
-  expectedCloseDate: timestamp({ mode: 'date' }),
-  actualCloseDate: timestamp({ mode: 'date' }),
-  createdAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
-  updatedAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
-});
-
-export const contactActivity = pgTable('portal_contactActivity', {
+export const contactActivity = pgTable('portal_contact_activity', {
   id: text()
     .primaryKey()
     .notNull()
@@ -364,7 +345,7 @@ export const contactActivity = pgTable('portal_contactActivity', {
   updatedAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
 });
 
-export const paymentTrack = pgTable('portal_paymentTrack', {
+export const paymentTrack = pgTable('portal_payment_track', {
   id: text()
     .primaryKey()
     .notNull()
@@ -388,43 +369,7 @@ export const paymentTrack = pgTable('portal_paymentTrack', {
   updatedAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
 });
 
-export const subscriptionCoupon = pgTable('portal_subscriptionCoupon', {
-  id: text()
-    .primaryKey()
-    .notNull()
-    .$defaultFn(() => crypto.randomUUID()),
-  code: text().notNull().unique(),
-  discountPercent: integer().notNull(),
-  maxUses: integer(),
-  usedCount: integer().default(0),
-  expiresAt: timestamp({ mode: 'date' }),
-  createdBy: text().references(() => user.id),
-  createdAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
-  updatedAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
-  isActive: boolean().default(true),
-  company: text(),
-  source: text(),
-  planId: text('plan_id').notNull(),
-  stripeId: text('stripe_id'),
-});
-
-export const subscriptionPlan = pgTable('portal_subscriptionPlan', {
-  id: text()
-    .primaryKey()
-    .notNull()
-    .$defaultFn(() => crypto.randomUUID()),
-  name: text().notNull(),
-  description: text(),
-  stripePriceId: text().notNull(),
-  price: integer().notNull(), // in cents
-  interval: text('interval', { enum: ['month', 'year'] }).notNull(),
-  features: text(), // JSON string of features
-  isActive: boolean().default(true),
-  createdAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
-  updatedAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
-});
-
-export const userNotifications = pgTable('portal_userNotifications', {
+export const userNotifications = pgTable('portal_user_notifications', {
   id: serial('id').primaryKey(),
   userId: varchar('user_id').notNull(),
   type: varchar('type', { enum: ['MESSAGE'] }).notNull(),
@@ -438,7 +383,7 @@ export const userNotifications = pgTable('portal_userNotifications', {
   metadata: text(),
 });
 
-export const calendarFolder = pgTable('portal_calendarFolder', {
+export const calendarFolder = pgTable('portal_calendar_folder', {
   id: text()
     .primaryKey()
     .notNull()
@@ -456,7 +401,7 @@ export const calendarFolder = pgTable('portal_calendarFolder', {
   updatedAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
 });
 
-export const calendarEvent = pgTable('portal_calendarEvent', {
+export const calendarEvent = pgTable('portal_calendar_event', {
   id: text()
     .primaryKey()
     .notNull()
@@ -480,7 +425,7 @@ export const calendarEvent = pgTable('portal_calendarEvent', {
   updatedAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
 });
 
-export const calendarEventShare = pgTable('portal_calendarEventShare', {
+export const calendarEventShare = pgTable('portal_calendar_event_share', {
   id: text()
     .primaryKey()
     .notNull()
@@ -496,7 +441,7 @@ export const calendarEventShare = pgTable('portal_calendarEventShare', {
   updatedAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
 });
 
-export const calendarEventParticipant = pgTable('portal_calendarEventParticipant', {
+export const calendarEventParticipant = pgTable('portal_calendar_event_participant', {
   id: text()
     .primaryKey()
     .notNull()
@@ -514,7 +459,7 @@ export const calendarEventParticipant = pgTable('portal_calendarEventParticipant
   updatedAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
 });
 
-export const resourceContent = pgTable('portal_resourceContent', {
+export const resourceContent = pgTable('portal_resource_content', {
   id: text()
     .primaryKey()
     .notNull()
@@ -534,7 +479,7 @@ export const resourceContent = pgTable('portal_resourceContent', {
   updatedAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
 });
 
-export const resourceContentShare = pgTable('portal_resourceContentShare', {
+export const resourceContentShare = pgTable('portal_resource_content_share', {
   id: text()
     .primaryKey()
     .notNull()
@@ -550,7 +495,7 @@ export const resourceContentShare = pgTable('portal_resourceContentShare', {
   updatedAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
 });
 
-export const resourceContentSendTrack = pgTable('portal_resourceContentSendTrack', {
+export const resourceContentSendTrack = pgTable('portal_resource_content_send_track', {
   id: text()
     .primaryKey()
     .notNull()
@@ -571,7 +516,7 @@ export const resourceContentSendTrack = pgTable('portal_resourceContentSendTrack
   updatedAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
 });
 
-export const resourceEmails = pgTable('portal_resourceEmails', {
+export const resourceEmails = pgTable('portal_resource_emails', {
   id: text()
     .primaryKey()
     .notNull()
@@ -584,27 +529,6 @@ export const resourceEmails = pgTable('portal_resourceEmails', {
   visibility: text('visibility', { enum: ['PUBLIC', 'SHARED', 'PRIVATE'] })
     .notNull()
     .default('PRIVATE'),
-  createdBy: text()
-    .notNull()
-    .references(() => user.id),
-  updatedBy: text().references(() => user.id),
-  createdAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
-  updatedAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
-});
-
-export const marketingCampaign = pgTable('portal_marketingCampaign', {
-  id: text()
-    .primaryKey()
-    .notNull()
-    .$defaultFn(() => crypto.randomUUID()),
-  name: text().notNull(),
-  campaignCode: text().notNull().unique(),
-  description: text(),
-  type: text('type', { enum: ['email', 'social', 'event', 'referral', 'other'] }).notNull(),
-  status: text('status', { enum: ['draft', 'scheduled', 'active', 'paused', 'completed', 'cancelled'] })
-    .notNull()
-    .default('draft'),
-  metrics: text(),
   createdBy: text()
     .notNull()
     .references(() => user.id),
@@ -647,7 +571,6 @@ export const team = pgTable('portal_team', {
   leaderId: text().references(() => contact.id),
   subLeaderId: text().references(() => contact.id),
   referralId: text().references(() => contact.id),
-  campaignCode: text(),
   remarks: text(),
   createdBy: text()
     .notNull()
@@ -656,7 +579,7 @@ export const team = pgTable('portal_team', {
   updatedAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
 });
 
-export const teamContact = pgTable('portal_teamContact', {
+export const teamContact = pgTable('portal_team_contact', {
   id: text()
     .primaryKey()
     .notNull()
@@ -672,7 +595,7 @@ export const teamContact = pgTable('portal_teamContact', {
   updatedAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
 });
 
-export const teamActivity = pgTable('portal_teamActivity', {
+export const teamActivity = pgTable('portal_team_activity', {
   id: text()
     .primaryKey()
     .notNull()
@@ -760,7 +683,7 @@ export const teamActivity = pgTable('portal_teamActivity', {
 });
 
 // @ts-ignore - Self-referential table limitation
-export const userTask = pgTable('portal_userTask', {
+export const userTask = pgTable('portal_user_task', {
   id: text()
     .primaryKey()
     .notNull()
@@ -785,7 +708,7 @@ export const userTask = pgTable('portal_userTask', {
   updatedAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
 });
 
-export const teamMeeting = pgTable('portal_teamMeeting', {
+export const teamMeeting = pgTable('portal_team_meeting', {
   id: text()
     .primaryKey()
     .notNull()
@@ -804,23 +727,7 @@ export const teamMeeting = pgTable('portal_teamMeeting', {
   updatedAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
 });
 
-export const contactCampaign = pgTable('portal_contactCampaign', {
-  id: text()
-    .primaryKey()
-    .notNull()
-    .$defaultFn(() => crypto.randomUUID()),
-  contactId: text()
-    .notNull()
-    .references(() => contact.id, { onDelete: 'cascade' }),
-  campaignCode: text()
-    .notNull()
-    .references(() => marketingCampaign.campaignCode, { onDelete: 'cascade' }),
-  joinedAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
-  createdAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
-  updatedAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
-});
-
-export const contactCustomField = pgTable('portal_contactCustomField', {
+export const contactCustomField = pgTable('portal_contact_custom_field', {
   id: text()
     .primaryKey()
     .notNull()
@@ -839,7 +746,7 @@ export const contactCustomField = pgTable('portal_contactCustomField', {
   updatedAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
 });
 
-export const contactCustomValue = pgTable('portal_contactCustomValue', {
+export const contactCustomValue = pgTable('portal_contact_custom_value', {
   id: text()
     .primaryKey()
     .notNull()
@@ -855,7 +762,7 @@ export const contactCustomValue = pgTable('portal_contactCustomValue', {
   updatedAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
 });
 
-export const teamCustomField = pgTable('portal_teamCustomField', {
+export const teamCustomField = pgTable('portal_team_custom_field', {
   id: text()
     .primaryKey()
     .notNull()
@@ -874,7 +781,7 @@ export const teamCustomField = pgTable('portal_teamCustomField', {
   updatedAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
 });
 
-export const teamCustomValue = pgTable('portal_teamCustomValue', {
+export const teamCustomValue = pgTable('portal_team_custom_value', {
   id: text()
     .primaryKey()
     .notNull()
@@ -890,7 +797,7 @@ export const teamCustomValue = pgTable('portal_teamCustomValue', {
   updatedAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
 });
 
-export const companyCustomField = pgTable('portal_companyCustomField', {
+export const companyCustomField = pgTable('portal_company_custom_field', {
   id: text()
     .primaryKey()
     .notNull()
@@ -909,7 +816,7 @@ export const companyCustomField = pgTable('portal_companyCustomField', {
   updatedAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
 });
 
-export const companyCustomValue = pgTable('portal_companyCustomValue', {
+export const companyCustomValue = pgTable('portal_company_custom_value', {
   id: text()
     .primaryKey()
     .notNull()
@@ -925,13 +832,13 @@ export const companyCustomValue = pgTable('portal_companyCustomValue', {
   updatedAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
 });
 
-export const siteConfig = pgTable('portal_siteConfig', {
+export const siteConfig = pgTable('portal_site_config', {
   id: text()
     .primaryKey()
     .notNull()
     .$defaultFn(() => crypto.randomUUID()),
   key: text('key', {
-    enum: ['name', 'description', 'domain', 'supportEmailDomains'],
+    enum: ['name', 'description', 'domain', 'supportEmailDomains', 'status', 'priority', 'source'],
   })
     .notNull()
     .unique(), // Unique key for the config

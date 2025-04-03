@@ -113,7 +113,7 @@ export default function TasksPage() {
     },
   });
 
-  const form = useForm<TaskFormValues>({
+  const form = useForm({
     resolver: zodResolver(taskFormSchema),
     defaultValues: {
       title: '',
@@ -204,7 +204,7 @@ export default function TasksPage() {
       <div className='container mx-auto max-w-7xl space-y-8 px-6 py-6 pb-0 2xl:px-0'>
         <PageHeader title='Personal Tasks' description='Manage your personal tasks and stay organized' />
 
-        <div className='flex items-center justify-between gap-4'>
+        <div className='flex items-center justify-between'>
           <div className='flex items-center gap-2'>
             <Button variant='outline' className='h-8' onClick={() => setIsCreateOpen(true)}>
               <PlusIcon className='mr-2 h-4 w-4' />

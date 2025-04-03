@@ -225,7 +225,7 @@ export function ActivitySection({ activities, onCreateActivity, isLoading, filte
   return (
     <div className='flex h-full flex-col'>
       <div id='activities-container' className='flex-1 overflow-y-auto'>
-        <div className='pointer-events-none sticky top-0 z-10 h-4 bg-gradient-to-b from-background to-transparent' />
+        <div className='pointer-events-none sticky top-0 z-10 h-4 bg-linear-to-b from-background to-transparent' />
         <div className='space-y-1'>
           {filteredActivities?.length === 0 && <p className='text-muted-foreground text-sm'>{t('no_activities_found')}</p>}
           {filteredActivities?.map((activity, index) => {
@@ -236,7 +236,7 @@ export function ActivitySection({ activities, onCreateActivity, isLoading, filte
             return (
               <div key={activity.id} id={`note-${activity.id}`}>
                 {showDateDivider && (
-                  <div className='sticky top-0 bg-background/95 py-2 backdrop-blur supports-[backdrop-filter]:bg-background/60'>
+                  <div className='sticky top-0 bg-background/95 py-2 backdrop-blur-sm supports-backdrop-filter:bg-background/60'>
                     <p className='font-medium text-muted-foreground text-sm'>{currentDate}</p>
                   </div>
                 )}
@@ -251,20 +251,20 @@ export function ActivitySection({ activities, onCreateActivity, isLoading, filte
                       activity.type === 'ENGAGEMENT'
                         ? 'rgb(59 130 246)'
                         : activity.type === 'DATE'
-                        ? 'rgb(249 115 22)'
-                        : activity.type === 'STATUS'
-                        ? 'rgb(34 197 94)'
-                        : activity.type === 'TEAM'
-                        ? 'rgb(234 179 8)'
-                        : activity.type === 'DEAL'
-                        ? 'rgb(236 72 153)'
-                        : activity.type === 'PAYMENT'
-                        ? 'rgb(16 185 129)'
-                        : activity.type === 'CAMPAIGN'
-                        ? 'rgb(239 68 68)'
-                        : activity.type === 'CONTACT'
-                        ? 'rgb(250 204 21)'
-                        : 'rgb(156 163 175)',
+                          ? 'rgb(249 115 22)'
+                          : activity.type === 'STATUS'
+                            ? 'rgb(34 197 94)'
+                            : activity.type === 'TEAM'
+                              ? 'rgb(234 179 8)'
+                              : activity.type === 'DEAL'
+                                ? 'rgb(236 72 153)'
+                                : activity.type === 'PAYMENT'
+                                  ? 'rgb(16 185 129)'
+                                  : activity.type === 'CAMPAIGN'
+                                    ? 'rgb(239 68 68)'
+                                    : activity.type === 'CONTACT'
+                                      ? 'rgb(250 204 21)'
+                                      : 'rgb(156 163 175)',
                   }}
                 >
                   <div className='flex-1 space-y-1'>
