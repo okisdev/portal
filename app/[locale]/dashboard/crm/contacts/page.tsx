@@ -49,10 +49,21 @@ export default function CRMContactsPage() {
 
   const [pageIndex, setPageIndex] = useState(0);
   const pageSize = 10;
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
 
-  // Handle initial page load and URL changes
+  // Handle URL changes and page state
   useEffect(() => {
     const pageParam = searchParams.get('page');
+    const searchParam = searchParams.get('search');
+
+    // Handle search parameter
+    if (searchParam) {
+      setSearch(searchParam);
+    } else {
+      setSearch('');
+    }
+
+    // Handle page parameter
     if (pageParam) {
       const page = Number.parseInt(pageParam, 10);
       if (!Number.isNaN(page) && page > 0) {
@@ -65,14 +76,16 @@ export default function CRMContactsPage() {
         const newUrl = `${pathname}?${params.toString()}`;
         router.replace(newUrl, { scroll: false });
       }
-    } else {
-      // If no page parameter, set it to 1
+    } else if (!isInitialLoad) {
+      // Only set page=1 if it's not the initial load
       const params = new URLSearchParams(searchParams.toString());
       params.set('page', '1');
       const newUrl = `${pathname}?${params.toString()}`;
       router.replace(newUrl, { scroll: false });
     }
-  }, [searchParams, pathname, router]);
+
+    setIsInitialLoad(false);
+  }, [searchParams, pathname, router, isInitialLoad]);
 
   const { data: contactsData, isLoading } = api.contact.getContactsByPagination.useQuery({
     page: pageIndex,
@@ -116,16 +129,10 @@ export default function CRMContactsPage() {
 
   const [selectedColumn, setSelectedColumn] = useState<string>('');
 
+  // Update URL when page or search changes
   useEffect(() => {
-    const searchParam = searchParams.get('search');
-    if (searchParam) {
-      setSearch(searchParam);
-    } else {
-      setSearch('');
-    }
-  }, [searchParams]);
+    if (isInitialLoad) return;
 
-  useEffect(() => {
     const params = new URLSearchParams();
 
     if (search) {
@@ -136,7 +143,7 @@ export default function CRMContactsPage() {
 
     const newUrl = `${pathname}?${params.toString()}`;
     router.replace(newUrl, { scroll: false });
-  }, [search, pageIndex, pathname]);
+  }, [search, pageIndex, pathname, isInitialLoad]);
 
   // Reset to first page when search changes
   useEffect(() => {
