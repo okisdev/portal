@@ -459,6 +459,21 @@ export default function CRMContactsPage() {
               size='sm'
               alwaysPlaceHolder={true}
             />
+
+            {(statusFilter.length > 0 || sourceFilter.length > 0 || priorityFilter.length > 0) && (
+              <Button
+                variant='outline'
+                size='sm'
+                className='h-8'
+                onClick={() => {
+                  setStatusFilter([]);
+                  setSourceFilter([]);
+                  setPriorityFilter([]);
+                }}
+              >
+                {t('clear_all_filters')}
+              </Button>
+            )}
           </div>
 
           <div className='flex flex-row gap-2'>
@@ -485,68 +500,89 @@ export default function CRMContactsPage() {
       </div>
 
       <div className='flex flex-col gap-2'>
-        <div className='flex flex-wrap items-center gap-2'>
-          <p className='text-muted-foreground text-sm'>{t('status')}</p>
-          {statuses?.map((status: Status) => {
-            const isActive = statusFilter.includes(status.value);
-            return (
-              <button
-                type='button'
-                key={status.value}
-                onClick={() => {
-                  if (isActive) {
-                    setStatusFilter(statusFilter.filter((s) => s !== status.value));
-                  } else {
-                    setStatusFilter([...statusFilter, status.value]);
-                  }
-                }}
-              >
-                <SmartColorBadge value={status.value} color={status.color} isActive={isActive} />
-              </button>
-            );
-          })}
+        <div className='flex items-center justify-between'>
+          <div className='flex flex-wrap items-center gap-2'>
+            <p className='text-muted-foreground text-sm'>{t('status')}</p>
+            {statuses?.map((status: Status) => {
+              const isActive = statusFilter.includes(status.value);
+              return (
+                <button
+                  type='button'
+                  key={status.value}
+                  onClick={() => {
+                    if (isActive) {
+                      setStatusFilter(statusFilter.filter((s) => s !== status.value));
+                    } else {
+                      setStatusFilter([...statusFilter, status.value]);
+                    }
+                  }}
+                >
+                  <SmartColorBadge value={status.value} color={status.color} isActive={isActive} />
+                </button>
+              );
+            })}
+          </div>
+          {statusFilter.length > 0 && (
+            <Button variant='ghost' size='sm' className='h-6 px-2 text-xs' onClick={() => setStatusFilter([])}>
+              {t('clear')}
+            </Button>
+          )}
         </div>
-        <div className='flex flex-wrap items-center gap-2'>
-          <p className='text-muted-foreground text-sm'>{t('source')}</p>
-          {sources?.map((source: Source) => {
-            const isActive = sourceFilter.includes(source.value);
-            return (
-              <button
-                type='button'
-                key={source.value}
-                onClick={() => {
-                  if (isActive) {
-                    setSourceFilter(sourceFilter.filter((s) => s !== source.value));
-                  } else {
-                    setSourceFilter([...sourceFilter, source.value]);
-                  }
-                }}
-              >
-                <SmartColorBadge value={source.value} color={source.color} isActive={isActive} />
-              </button>
-            );
-          })}
+        <div className='flex items-center justify-between'>
+          <div className='flex flex-wrap items-center gap-2'>
+            <p className='text-muted-foreground text-sm'>{t('source')}</p>
+            {sources?.map((source: Source) => {
+              const isActive = sourceFilter.includes(source.value);
+              return (
+                <button
+                  type='button'
+                  key={source.value}
+                  onClick={() => {
+                    if (isActive) {
+                      setSourceFilter(sourceFilter.filter((s) => s !== source.value));
+                    } else {
+                      setSourceFilter([...sourceFilter, source.value]);
+                    }
+                  }}
+                >
+                  <SmartColorBadge value={source.value} color={source.color} isActive={isActive} />
+                </button>
+              );
+            })}
+          </div>
+          {sourceFilter.length > 0 && (
+            <Button variant='ghost' size='sm' className='h-6 px-2 text-xs' onClick={() => setSourceFilter([])}>
+              {t('clear')}
+            </Button>
+          )}
         </div>
-        <div className='flex flex-wrap items-center gap-2'>
-          <p className='text-muted-foreground text-sm'>{t('priority')}</p>
-          {priorities?.map((priority: Priority) => {
-            const isActive = priorityFilter.includes(priority.value);
-            return (
-              <button
-                type='button'
-                key={priority.value}
-                onClick={() => {
-                  if (isActive) {
-                    setPriorityFilter(priorityFilter.filter((p) => p !== priority.value));
-                  } else {
-                    setPriorityFilter([...priorityFilter, priority.value]);
-                  }
-                }}
-              >
-                <SmartColorBadge value={priority.value} color={priority.color} isActive={isActive} />
-              </button>
-            );
-          })}
+        <div className='flex items-center justify-between'>
+          <div className='flex flex-wrap items-center gap-2'>
+            <p className='text-muted-foreground text-sm'>{t('priority')}</p>
+            {priorities?.map((priority: Priority) => {
+              const isActive = priorityFilter.includes(priority.value);
+              return (
+                <button
+                  type='button'
+                  key={priority.value}
+                  onClick={() => {
+                    if (isActive) {
+                      setPriorityFilter(priorityFilter.filter((p) => p !== priority.value));
+                    } else {
+                      setPriorityFilter([...priorityFilter, priority.value]);
+                    }
+                  }}
+                >
+                  <SmartColorBadge value={priority.value} color={priority.color} isActive={isActive} />
+                </button>
+              );
+            })}
+          </div>
+          {priorityFilter.length > 0 && (
+            <Button variant='ghost' size='sm' className='h-6 px-2 text-xs' onClick={() => setPriorityFilter([])}>
+              {t('clear')}
+            </Button>
+          )}
         </div>
       </div>
 
