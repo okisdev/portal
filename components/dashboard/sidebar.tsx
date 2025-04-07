@@ -60,6 +60,8 @@ export function DashboardSidebar() {
 
   const locale = useLocale();
 
+  console.log(me);
+
   const handleChangeLocale = (locale: string) => {
     startTransition(() => {
       router.replace(pathname, { locale });
@@ -146,12 +148,16 @@ export function DashboardSidebar() {
         <SidebarGroupSection
           title={t('site')}
           items={[
-            {
-              id: 'overview',
-              title: t('overview'),
-              url: '/dashboard/site',
-              icon: Users,
-            },
+            ...(me?.role === 'ADMIN'
+              ? [
+                  {
+                    id: 'overview',
+                    title: t('overview'),
+                    url: '/dashboard/site',
+                    icon: Users,
+                  },
+                ]
+              : []),
             {
               id: 'management',
               title: t('management'),

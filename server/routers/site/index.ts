@@ -285,6 +285,28 @@ export const siteRouter = createTRPCRouter({
       }
     }),
 
+  reorderStatus: protectedProcedure
+    .input(
+      z.object({
+        values: z.array(z.object({ value: z.string(), color: z.string() })),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const existing = await ctx.db
+        .select()
+        .from(siteConfig)
+        .where(eq(siteConfig.key, 'status'))
+        .then((rows) => rows[0]);
+
+      if (existing) {
+        return ctx.db
+          .update(siteConfig)
+          .set({ value: JSON.stringify(input.values), updatedAt: new Date() })
+          .where(eq(siteConfig.key, 'status'))
+          .returning();
+      }
+    }),
+
   updatePriority: protectedProcedure
     .input(
       z.object({
@@ -315,6 +337,28 @@ export const siteRouter = createTRPCRouter({
       }
     }),
 
+  reorderPriority: protectedProcedure
+    .input(
+      z.object({
+        values: z.array(z.object({ value: z.string(), color: z.string() })),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const existing = await ctx.db
+        .select()
+        .from(siteConfig)
+        .where(eq(siteConfig.key, 'priority'))
+        .then((rows) => rows[0]);
+
+      if (existing) {
+        return ctx.db
+          .update(siteConfig)
+          .set({ value: JSON.stringify(input.values), updatedAt: new Date() })
+          .where(eq(siteConfig.key, 'priority'))
+          .returning();
+      }
+    }),
+
   updateSource: protectedProcedure
     .input(
       z.object({
@@ -340,6 +384,28 @@ export const siteRouter = createTRPCRouter({
         return ctx.db
           .update(siteConfig)
           .set({ value: JSON.stringify(values), updatedAt: new Date() })
+          .where(eq(siteConfig.key, 'source'))
+          .returning();
+      }
+    }),
+
+  reorderSource: protectedProcedure
+    .input(
+      z.object({
+        values: z.array(z.object({ value: z.string(), color: z.string() })),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const existing = await ctx.db
+        .select()
+        .from(siteConfig)
+        .where(eq(siteConfig.key, 'source'))
+        .then((rows) => rows[0]);
+
+      if (existing) {
+        return ctx.db
+          .update(siteConfig)
+          .set({ value: JSON.stringify(input.values), updatedAt: new Date() })
           .where(eq(siteConfig.key, 'source'))
           .returning();
       }

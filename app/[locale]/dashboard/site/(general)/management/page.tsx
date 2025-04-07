@@ -10,6 +10,9 @@ import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { randomColor } from '@/utils/color';
 import { api } from '@/utils/trpc/client';
+import { DndContext, type DragEndEvent, DragOverlay, type DragStartEvent, MouseSensor, TouchSensor, useSensor, useSensors } from '@dnd-kit/core';
+import { SortableContext, arrayMove, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { MoreHorizontal, Pencil, Plus, Trash } from 'lucide-react';
 import { useTranslations } from 'next-intl';
@@ -25,6 +28,89 @@ const addSchema = z.object({
 
 type AddFormValues = z.infer<typeof addSchema>;
 
+interface SortableItemProps {
+  item: { value: string; color: string };
+  type: 'status' | 'priority' | 'source';
+  onEdit: (item: { value: string; color: string }, type: 'status' | 'priority' | 'source') => void;
+  onRemove: (value: string) => void;
+}
+
+function SortableItem({ item, type, onEdit, onRemove, index }: SortableItemProps & { index: number }) {
+  const t = useTranslations();
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: item.value });
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.4 : 1,
+    zIndex: isDragging ? 10 : 1,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      {...attributes}
+      {...listeners}
+      className={`group flex items-center justify-between rounded-lg border bg-card p-3 text-sm shadow-sm cursor-grab active:cursor-grabbing transition-all duration-200 ${
+        isDragging ? 'shadow-md ring-1 ring-primary/50' : 'hover:shadow-md'
+      }`}
+    >
+      <div className='flex items-center gap-3'>
+        <div className='flex h-6 w-6 items-center justify-center rounded-full bg-muted text-muted-foreground text-xs font-medium'>{index + 1}</div>
+        <div className='flex items-center gap-2'>
+          <div className='h-3 w-3 rounded-full' style={{ backgroundColor: item.color }} />
+          <span>{item.value}</span>
+        </div>
+      </div>
+      <div className='flex items-center gap-2'>
+        <div className='flex -space-x-1 opacity-50 group-hover:opacity-100 transition-opacity'>
+          <div className='h-4 w-4 rounded-full bg-muted' />
+          <div className='h-4 w-4 rounded-full bg-muted' />
+          <div className='h-4 w-4 rounded-full bg-muted' />
+        </div>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant='ghost' size='icon' className='h-6 w-6 opacity-0 group-hover:opacity-100'>
+              <MoreHorizontal className='h-4 w-4' />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align='end'>
+            <DropdownMenuItem onClick={() => onEdit(item, type)}>
+              <Pencil className='mr-2 h-4 w-4' />
+              {t('edit')}
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => onRemove(item.value)} className='text-destructive'>
+              <Trash className='mr-2 h-4 w-4' />
+              {t('remove')}
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+    </div>
+  );
+}
+
+function DragOverlayItem({ item, index }: { item: { value: string; color: string }; index: number }) {
+  return (
+    <div className='flex items-center justify-between rounded-lg border bg-card p-3 text-sm shadow-md ring-1 ring-primary/50'>
+      <div className='flex items-center gap-3'>
+        <div className='flex h-6 w-6 items-center justify-center rounded-full bg-muted text-muted-foreground text-xs font-medium'>{index + 1}</div>
+        <div className='flex items-center gap-2'>
+          <div className='h-3 w-3 rounded-full' style={{ backgroundColor: item.color }} />
+          <span>{item.value}</span>
+        </div>
+      </div>
+      <div className='flex items-center gap-2'>
+        <div className='flex -space-x-1 opacity-50'>
+          <div className='h-4 w-4 rounded-full bg-muted' />
+          <div className='h-4 w-4 rounded-full bg-muted' />
+          <div className='h-4 w-4 rounded-full bg-muted' />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function ManagementPage() {
   const t = useTranslations();
   const utils = api.useUtils();
@@ -33,6 +119,8 @@ export default function ManagementPage() {
   const [isPriorityDialogOpen, setIsPriorityDialogOpen] = useState(false);
   const [isSourceDialogOpen, setIsSourceDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<{ value: string; color: string; type: 'status' | 'priority' | 'source' } | null>(null);
+  const [activeId, setActiveId] = useState<string | null>(null);
+  const [activeItem, setActiveItem] = useState<{ value: string; color: string } | null>(null);
 
   const { data: statusConfig, isLoading: isStatusLoading } = api.site.getConfig.useQuery({ key: 'status' });
   const { data: priorityConfig, isLoading: isPriorityLoading } = api.site.getConfig.useQuery({ key: 'priority' });
@@ -161,6 +249,36 @@ export default function ManagementPage() {
     },
   });
 
+  const reorderStatus = api.site.reorderStatus.useMutation({
+    onSuccess: () => {
+      utils.site.getConfig.invalidate({ key: 'status' });
+      toast.success(t('status_reordered_successfully'));
+    },
+    onError: (error) => {
+      toast.error(error.message);
+    },
+  });
+
+  const reorderPriority = api.site.reorderPriority.useMutation({
+    onSuccess: () => {
+      utils.site.getConfig.invalidate({ key: 'priority' });
+      toast.success(t('priority_reordered_successfully'));
+    },
+    onError: (error) => {
+      toast.error(error.message);
+    },
+  });
+
+  const reorderSource = api.site.reorderSource.useMutation({
+    onSuccess: () => {
+      utils.site.getConfig.invalidate({ key: 'source' });
+      toast.success(t('source_reordered_successfully'));
+    },
+    onError: (error) => {
+      toast.error(error.message);
+    },
+  });
+
   const onSubmitStatus = (data: AddFormValues) => {
     if (editingItem) {
       updateStatus.mutate({
@@ -215,6 +333,56 @@ export default function ManagementPage() {
     }
   };
 
+  const mouseSensor = useSensor(MouseSensor, {
+    activationConstraint: {
+      distance: 5,
+    },
+  });
+
+  const touchSensor = useSensor(TouchSensor, {
+    activationConstraint: {
+      delay: 100,
+      tolerance: 5,
+    },
+  });
+
+  const sensors = useSensors(mouseSensor, touchSensor);
+
+  const handleDragStart = (event: DragStartEvent, values: { value: string; color: string }[]) => {
+    const { active } = event;
+    setActiveId(active.id as string);
+    const draggedItem = values.find((item) => item.value === active.id);
+    if (draggedItem) {
+      setActiveItem(draggedItem);
+    }
+  };
+
+  const handleDragEnd = (event: DragEndEvent, type: 'status' | 'priority' | 'source', values: { value: string; color: string }[]) => {
+    const { active, over } = event;
+    setActiveId(null);
+    setActiveItem(null);
+
+    if (!over || active.id === over.id) return;
+
+    const oldIndex = values.findIndex((item) => item.value === active.id);
+    const newIndex = values.findIndex((item) => item.value === over.id);
+
+    const newValues = arrayMove(values, oldIndex, newIndex);
+
+    // Update the order in the database
+    switch (type) {
+      case 'status':
+        reorderStatus.mutate({ values: newValues });
+        break;
+      case 'priority':
+        reorderPriority.mutate({ values: newValues });
+        break;
+      case 'source':
+        reorderSource.mutate({ values: newValues });
+        break;
+    }
+  };
+
   const renderValues = (values: { value: string; color: string }[] | undefined, isLoading: boolean, onRemove: (value: string) => void, type: 'status' | 'priority' | 'source') => {
     if (isLoading) {
       return <div className='text-muted-foreground'>{t('loading')}</div>;
@@ -225,33 +393,22 @@ export default function ManagementPage() {
     }
 
     return (
-      <div className='grid grid-cols-1 gap-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4'>
-        {values.map((item) => (
-          <div key={item.value} className='flex items-center justify-between rounded-lg border bg-card p-3 text-sm shadow-sm'>
-            <div className='flex items-center gap-2'>
-              <div className='h-3 w-3 rounded-full' style={{ backgroundColor: item.color }} />
-              <span>{item.value}</span>
-            </div>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant='ghost' size='icon' className='h-6 w-6'>
-                  <MoreHorizontal className='h-4 w-4' />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align='end'>
-                <DropdownMenuItem onClick={() => handleEdit(item, type)}>
-                  <Pencil className='mr-2 h-4 w-4' />
-                  {t('edit')}
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => onRemove(item.value)} className='text-destructive'>
-                  <Trash className='mr-2 h-4 w-4' />
-                  {t('remove')}
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+      <DndContext sensors={sensors} onDragStart={(event) => handleDragStart(event, values)} onDragEnd={(event) => handleDragEnd(event, type, values)}>
+        <div className='space-y-4'>
+          <div className='flex items-center justify-between text-sm text-muted-foreground'>
+            <span>{t('drag_to_reorder')}</span>
+            <span>{t('total_items', { count: values.length })}</span>
           </div>
-        ))}
-      </div>
+          <SortableContext items={values.map((item) => item.value)} strategy={verticalListSortingStrategy}>
+            <div className='space-y-2'>
+              {values.map((item, index) => (
+                <SortableItem key={item.value} item={item} type={type} onEdit={handleEdit} onRemove={onRemove} index={index} />
+              ))}
+            </div>
+          </SortableContext>
+        </div>
+        <DragOverlay>{activeItem ? <DragOverlayItem item={activeItem} index={values.findIndex((item) => item.value === activeId)} /> : null}</DragOverlay>
+      </DndContext>
     );
   };
 
