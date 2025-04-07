@@ -35,13 +35,13 @@ interface SortableItemProps {
   onRemove: (value: string) => void;
 }
 
-function SortableItem({ item, type, onEdit, onRemove }: SortableItemProps) {
+function SortableItem({ item, type, onEdit, onRemove, index }: SortableItemProps & { index: number }) {
   const t = useTranslations();
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: item.value });
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
-    opacity: isDragging ? 0.5 : 1,
+    opacity: isDragging ? 0.4 : 1,
     zIndex: isDragging ? 10 : 1,
   };
 
@@ -51,39 +51,61 @@ function SortableItem({ item, type, onEdit, onRemove }: SortableItemProps) {
       style={style}
       {...attributes}
       {...listeners}
-      className={`flex items-center justify-between rounded-lg border bg-card p-3 text-sm shadow-sm cursor-grab active:cursor-grabbing transition-all duration-200 ${isDragging ? 'scale-105 shadow-lg ring-2 ring-primary' : 'hover:shadow-md'}`}
+      className={`group flex items-center justify-between rounded-lg border bg-card p-3 text-sm shadow-sm cursor-grab active:cursor-grabbing transition-all duration-200 ${
+        isDragging ? 'shadow-md ring-1 ring-primary/50' : 'hover:shadow-md'
+      }`}
     >
-      <div className='flex items-center gap-2'>
-        <div className='h-3 w-3 rounded-full' style={{ backgroundColor: item.color }} />
-        <span>{item.value}</span>
+      <div className='flex items-center gap-3'>
+        <div className='flex h-6 w-6 items-center justify-center rounded-full bg-muted text-muted-foreground text-xs font-medium'>{index + 1}</div>
+        <div className='flex items-center gap-2'>
+          <div className='h-3 w-3 rounded-full' style={{ backgroundColor: item.color }} />
+          <span>{item.value}</span>
+        </div>
       </div>
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant='ghost' size='icon' className='h-6 w-6'>
-            <MoreHorizontal className='h-4 w-4' />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align='end'>
-          <DropdownMenuItem onClick={() => onEdit(item, type)}>
-            <Pencil className='mr-2 h-4 w-4' />
-            {t('edit')}
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => onRemove(item.value)} className='text-destructive'>
-            <Trash className='mr-2 h-4 w-4' />
-            {t('remove')}
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
+      <div className='flex items-center gap-2'>
+        <div className='flex -space-x-1 opacity-50 group-hover:opacity-100 transition-opacity'>
+          <div className='h-4 w-4 rounded-full bg-muted' />
+          <div className='h-4 w-4 rounded-full bg-muted' />
+          <div className='h-4 w-4 rounded-full bg-muted' />
+        </div>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant='ghost' size='icon' className='h-6 w-6 opacity-0 group-hover:opacity-100'>
+              <MoreHorizontal className='h-4 w-4' />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align='end'>
+            <DropdownMenuItem onClick={() => onEdit(item, type)}>
+              <Pencil className='mr-2 h-4 w-4' />
+              {t('edit')}
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => onRemove(item.value)} className='text-destructive'>
+              <Trash className='mr-2 h-4 w-4' />
+              {t('remove')}
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
     </div>
   );
 }
 
-function DragOverlayItem({ item }: { item: { value: string; color: string } }) {
+function DragOverlayItem({ item, index }: { item: { value: string; color: string }; index: number }) {
   return (
-    <div className='flex items-center justify-between rounded-lg border bg-card p-3 text-sm shadow-lg ring-2 ring-primary scale-105'>
+    <div className='flex items-center justify-between rounded-lg border bg-card p-3 text-sm shadow-md ring-1 ring-primary/50'>
+      <div className='flex items-center gap-3'>
+        <div className='flex h-6 w-6 items-center justify-center rounded-full bg-muted text-muted-foreground text-xs font-medium'>{index + 1}</div>
+        <div className='flex items-center gap-2'>
+          <div className='h-3 w-3 rounded-full' style={{ backgroundColor: item.color }} />
+          <span>{item.value}</span>
+        </div>
+      </div>
       <div className='flex items-center gap-2'>
-        <div className='h-3 w-3 rounded-full' style={{ backgroundColor: item.color }} />
-        <span>{item.value}</span>
+        <div className='flex -space-x-1 opacity-50'>
+          <div className='h-4 w-4 rounded-full bg-muted' />
+          <div className='h-4 w-4 rounded-full bg-muted' />
+          <div className='h-4 w-4 rounded-full bg-muted' />
+        </div>
       </div>
     </div>
   );
@@ -372,14 +394,20 @@ export default function ManagementPage() {
 
     return (
       <DndContext sensors={sensors} onDragStart={(event) => handleDragStart(event, values)} onDragEnd={(event) => handleDragEnd(event, type, values)}>
-        <SortableContext items={values.map((item) => item.value)} strategy={verticalListSortingStrategy}>
-          <div className='grid grid-cols-1 gap-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4'>
-            {values.map((item) => (
-              <SortableItem key={item.value} item={item} type={type} onEdit={handleEdit} onRemove={onRemove} />
-            ))}
+        <div className='space-y-4'>
+          <div className='flex items-center justify-between text-sm text-muted-foreground'>
+            <span>{t('drag_to_reorder')}</span>
+            <span>{t('total_items', { count: values.length })}</span>
           </div>
-        </SortableContext>
-        <DragOverlay>{activeItem ? <DragOverlayItem item={activeItem} /> : null}</DragOverlay>
+          <SortableContext items={values.map((item) => item.value)} strategy={verticalListSortingStrategy}>
+            <div className='space-y-2'>
+              {values.map((item, index) => (
+                <SortableItem key={item.value} item={item} type={type} onEdit={handleEdit} onRemove={onRemove} index={index} />
+              ))}
+            </div>
+          </SortableContext>
+        </div>
+        <DragOverlay>{activeItem ? <DragOverlayItem item={activeItem} index={values.findIndex((item) => item.value === activeId)} /> : null}</DragOverlay>
       </DndContext>
     );
   };
