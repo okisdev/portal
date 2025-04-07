@@ -633,5 +633,8 @@
   "workspace": "Workspace",
   "write_a_reply": "Write a reply... Use @ to mention someone",
   "you": "You",
-  "all": "All"
+  "all": "All",
+  "status_reordered_successfully": "Status reordered successfully",
+  "priority_reordered_successfully": "Priority reordered successfully",
+  "source_reordered_successfully": "Source reordered successfully"
 }

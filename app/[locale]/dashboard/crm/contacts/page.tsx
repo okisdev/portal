@@ -501,7 +501,7 @@ export default function CRMContactsPage() {
                   }
                 }}
               >
-                <SmartColorBadge value={status.value} color={status.color} className='capitalize' isActive={isActive} />
+                <SmartColorBadge value={status.value} color={status.color} isActive={isActive} />
               </button>
             );
           })}
@@ -522,12 +522,11 @@ export default function CRMContactsPage() {
                   }
                 }}
               >
-                <SmartColorBadge value={source.value} color={source.color} className='capitalize' isActive={isActive} />
+                <SmartColorBadge value={source.value} color={source.color} isActive={isActive} />
               </button>
             );
           })}
         </div>
-
         <div className='flex flex-wrap items-center gap-2'>
           <p className='text-muted-foreground text-sm'>{t('priority')}</p>
           {priorities?.map((priority: Priority) => {
@@ -544,7 +543,7 @@ export default function CRMContactsPage() {
                   }
                 }}
               >
-                <SmartColorBadge value={priority.value} color={priority.color} className='capitalize' isActive={isActive} />
+                <SmartColorBadge value={priority.value} color={priority.color} isActive={isActive} />
               </button>
             );
           })}

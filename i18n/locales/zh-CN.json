@@ -633,5 +633,8 @@
   "workspace": "工作区",
   "write_a_reply": "写回复... 使用 @ 提及某人",
   "you": "你",
-  "all": "全部"
+  "all": "全部",
+  "priority_reordered_successfully": "优先重新排序",
+  "source_reordered_successfully": "来源成功地重新排序",
+  "status_reordered_successfully": "状态成功地重新排序"
 }

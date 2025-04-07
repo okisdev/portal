@@ -633,5 +633,8 @@
   "write_a_reply": "寫回覆... 使用 @ 提及某人",
   "you": "你",
   "lastActivity": "最後一個活動",
-  "all": "全部"
+  "all": "全部",
+  "priority_reordered_successfully": "優先重新排序",
+  "source_reordered_successfully": "來源成功地重新排序",
+  "status_reordered_successfully": "狀態成功地重新排序"
 }

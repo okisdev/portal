@@ -19,7 +19,7 @@ export function SmartColorBadge({ value, color, className, isActive, hoverEffect
         'inline-block rounded-full px-1.5 py-0.5 font-medium text-xs transition-colors duration-200',
         hoverEffect && 'hover:bg-opacity-90',
         className,
-        isActive && 'ring-2 ring-offset-2 ring-offset-background'
+        isActive && 'ring-2 ring-opacity-100 ring-offset-2 ring-offset-background'
       )}
       style={
         {
