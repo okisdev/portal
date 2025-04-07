@@ -632,5 +632,6 @@
   "workspace": "工作區",
   "write_a_reply": "寫回覆... 使用 @ 提及某人",
   "you": "你",
-  "lastActivity": "最後一個活動"
+  "lastActivity": "最後一個活動",
+  "all": "全部"
 }

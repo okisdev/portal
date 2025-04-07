@@ -47,14 +47,17 @@ export default function CRMContactsPage() {
   const t = useTranslations();
   const locale = useLocale() as Locale;
 
-  const [pageIndex, setPageIndex] = useState(0);
-  const pageSize = 10;
   const [isInitialLoad, setIsInitialLoad] = useState(true);
+  const [statusFilter, setStatusFilter] = useState<string[]>([]);
+  const [priorityFilter, setPriorityFilter] = useState<string[]>([]);
+  const [sourceFilter, setSourceFilter] = useState<string[]>([]);
 
   // Handle URL changes and page state
   useEffect(() => {
-    const pageParam = searchParams.get('page');
     const searchParam = searchParams.get('search');
+    const statusParam = searchParams.get('status');
+    const priorityParam = searchParams.get('priority');
+    const sourceParam = searchParams.get('source');
 
     // Handle search parameter
     if (searchParam) {
@@ -63,36 +66,31 @@ export default function CRMContactsPage() {
       setSearch('');
     }
 
-    // Handle page parameter
-    if (pageParam) {
-      const page = Number.parseInt(pageParam, 10);
-      if (!Number.isNaN(page) && page > 0) {
-        // Convert 1-based page to 0-based index
-        setPageIndex(page - 1);
-      } else {
-        // If invalid page number, redirect to page 1
-        const params = new URLSearchParams(searchParams.toString());
-        params.set('page', '1');
-        const newUrl = `${pathname}?${params.toString()}`;
-        router.replace(newUrl, { scroll: false });
-      }
-    } else if (!isInitialLoad) {
-      // Only set page=1 if it's not the initial load
-      const params = new URLSearchParams(searchParams.toString());
-      params.set('page', '1');
-      const newUrl = `${pathname}?${params.toString()}`;
-      router.replace(newUrl, { scroll: false });
+    // Handle status filter
+    if (statusParam) {
+      setStatusFilter(statusParam.split(','));
+    } else {
+      setStatusFilter([]);
+    }
+
+    // Handle priority filter
+    if (priorityParam) {
+      setPriorityFilter(priorityParam.split(','));
+    } else {
+      setPriorityFilter([]);
+    }
+
+    // Handle source filter
+    if (sourceParam) {
+      setSourceFilter(sourceParam.split(','));
+    } else {
+      setSourceFilter([]);
     }
 
     setIsInitialLoad(false);
   }, [searchParams, pathname, router, isInitialLoad]);
 
-  const { data: contactsData, isLoading } = api.contact.getContactsByPagination.useQuery({
-    page: pageIndex,
-    limit: pageSize,
-  });
-
-  const { data: totalCount } = api.contact.getAllContactsCount.useQuery();
+  const { data: contactsData, isLoading } = api.contact.getAllContacts.useQuery();
 
   const contacts = contactsData || [];
   const { data: statuses } = api.site.getStatus.useQuery();
@@ -103,15 +101,14 @@ export default function CRMContactsPage() {
 
   const deleteContact = api.contact.deleteContact.useMutation({
     onSuccess: () => {
-      utils.contact.getContactsByPagination.invalidate();
-      utils.contact.getAllContactsCount.invalidate();
+      utils.contact.getAllContacts.invalidate();
       toast.success(t('contact_deleted_successfully'));
     },
   });
 
   const updateContact = api.contact.updateContact.useMutation({
     onSuccess: () => {
-      utils.contact.getContactsByPagination.invalidate();
+      utils.contact.getAllContacts.invalidate();
       toast.success(t('contact_updated_successfully'));
     },
   });
@@ -129,7 +126,7 @@ export default function CRMContactsPage() {
 
   const [selectedColumn, setSelectedColumn] = useState<string>('');
 
-  // Update URL when page or search changes
+  // Update URL when search or filters change
   useEffect(() => {
     if (isInitialLoad) return;
 
@@ -138,22 +135,28 @@ export default function CRMContactsPage() {
     if (search) {
       params.set('search', search);
     }
-    // Always include page parameter
-    params.set('page', (pageIndex + 1).toString());
 
-    const newUrl = `${pathname}?${params.toString()}`;
+    if (statusFilter.length > 0) {
+      params.set('status', statusFilter.join(','));
+    }
+
+    if (priorityFilter.length > 0) {
+      params.set('priority', priorityFilter.join(','));
+    }
+
+    if (sourceFilter.length > 0) {
+      params.set('source', sourceFilter.join(','));
+    }
+
+    const newUrl = `${pathname}${params.toString() ? `?${params.toString()}` : ''}`;
     router.replace(newUrl, { scroll: false });
-  }, [search, pageIndex, pathname, isInitialLoad]);
-
-  // Reset to first page when search changes
-  useEffect(() => {
-    setPageIndex(0);
-  }, [search]);
+  }, [search, statusFilter, priorityFilter, sourceFilter, pathname, isInitialLoad]);
 
   const filteredContacts = useMemo(() => {
     if (!contacts) return [];
 
     return contacts.filter((contact) => {
+      // Apply search filter
       if (debouncedSearch) {
         const searchTerm = debouncedSearch.toLowerCase();
         const fullName = `${contact.firstName} ${contact.lastName}`.toLowerCase();
@@ -161,11 +164,31 @@ export default function CRMContactsPage() {
         const status = contact.status.toLowerCase();
         const source = (contact.source || '').toLowerCase();
 
-        return fullName.includes(searchTerm) || email.includes(searchTerm) || status.includes(searchTerm) || source.includes(searchTerm);
+        if (!fullName.includes(searchTerm) && !email.includes(searchTerm) && !status.includes(searchTerm) && !source.includes(searchTerm)) {
+          return false;
+        }
       }
+
+      // Apply status filter
+      if (statusFilter.length > 0 && contact.status && !statusFilter.includes(contact.status)) {
+        return false;
+      }
+
+      // Apply priority filter
+      if (priorityFilter.length > 0 && contact.priority && !priorityFilter.includes(contact.priority)) {
+        return false;
+      }
+
+      // Apply source filter
+      if (sourceFilter.length > 0 && contact.source && !sourceFilter.includes(contact.source)) {
+        return false;
+      }
+
       return true;
     });
-  }, [contacts, debouncedSearch]);
+  }, [contacts, debouncedSearch, statusFilter, priorityFilter, sourceFilter]);
+
+  const totalCount = filteredContacts.length;
 
   const handleDeleteClick = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -374,42 +397,36 @@ export default function CRMContactsPage() {
       columnVisibility,
       rowSelection,
       columnFilters,
-      pagination: {
-        pageIndex,
-        pageSize,
-      },
     },
     enableRowSelection: true,
     onRowSelectionChange: setRowSelection,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     onColumnVisibilityChange: setColumnVisibility,
-    onPaginationChange: (updater) => {
-      if (typeof updater === 'function') {
-        const newState = updater({ pageIndex, pageSize });
-        setPageIndex(newState.pageIndex);
-      } else {
-        setPageIndex(updater.pageIndex);
-      }
-    },
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getFacetedRowModel: getFacetedRowModel(),
     getFacetedUniqueValues: getFacetedUniqueValues(),
-    pageCount: totalCount ? Math.ceil(totalCount.count / pageSize) : 0,
-    manualPagination: true,
   });
 
   return (
     <div className='space-y-4 p-4'>
-      <PageHeader title={t('contacts')} subtitle={!isLoading ? `(${t('total_number_contacts', { count: totalCount?.count || 0 })})` : undefined} description={t('contacts_description')} />
+      <PageHeader title={t('contacts')} subtitle={!isLoading ? `(${t('total_number_contacts', { count: totalCount || 0 })})` : undefined} description={t('contacts_description')} />
 
       <div className='flex flex-col gap-4'>
         <div className='flex items-center justify-between'>
           <div className='flex flex-row gap-2'>
-            <Input placeholder={t('search_contacts')} value={search} onChange={(e) => setSearch(e.target.value)} className='h-8 w-72 max-w-sm' disabled={isLoading} />
+            <Input
+              placeholder={t('search_contacts')}
+              value={search}
+              onChange={(e) => {
+                setSearch(e.target.value);
+              }}
+              className='h-8 w-72 max-w-sm'
+              disabled={isLoading}
+            />
 
             <Combobox
               value={selectedColumn}
@@ -464,6 +481,73 @@ export default function CRMContactsPage() {
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
+        </div>
+      </div>
+
+      <div className='flex flex-col gap-2'>
+        <div className='flex flex-wrap items-center gap-2'>
+          <p className='text-muted-foreground text-sm'>{t('status')}</p>
+          {statuses?.map((status: Status) => {
+            const isActive = statusFilter.includes(status.value);
+            return (
+              <button
+                type='button'
+                key={status.value}
+                onClick={() => {
+                  if (isActive) {
+                    setStatusFilter(statusFilter.filter((s) => s !== status.value));
+                  } else {
+                    setStatusFilter([...statusFilter, status.value]);
+                  }
+                }}
+              >
+                <SmartColorBadge value={status.value} color={status.color} className='capitalize' isActive={isActive} />
+              </button>
+            );
+          })}
+        </div>
+        <div className='flex flex-wrap items-center gap-2'>
+          <p className='text-muted-foreground text-sm'>{t('source')}</p>
+          {sources?.map((source: Source) => {
+            const isActive = sourceFilter.includes(source.value);
+            return (
+              <button
+                type='button'
+                key={source.value}
+                onClick={() => {
+                  if (isActive) {
+                    setSourceFilter(sourceFilter.filter((s) => s !== source.value));
+                  } else {
+                    setSourceFilter([...sourceFilter, source.value]);
+                  }
+                }}
+              >
+                <SmartColorBadge value={source.value} color={source.color} className='capitalize' isActive={isActive} />
+              </button>
+            );
+          })}
+        </div>
+
+        <div className='flex flex-wrap items-center gap-2'>
+          <p className='text-muted-foreground text-sm'>{t('priority')}</p>
+          {priorities?.map((priority: Priority) => {
+            const isActive = priorityFilter.includes(priority.value);
+            return (
+              <button
+                type='button'
+                key={priority.value}
+                onClick={() => {
+                  if (isActive) {
+                    setPriorityFilter(priorityFilter.filter((p) => p !== priority.value));
+                  } else {
+                    setPriorityFilter([...priorityFilter, priority.value]);
+                  }
+                }}
+              >
+                <SmartColorBadge value={priority.value} color={priority.color} className='capitalize' isActive={isActive} />
+              </button>
+            );
+          })}
         </div>
       </div>
 
