@@ -41,11 +41,10 @@ export function useUpload(options: UseUploadOptions = {}) {
         throw new Error(`Upload failed with status: ${uploadResponse.status}`);
       }
 
-      const finalUrl = `${process.env.NEXT_PUBLIC_R2_PUBLIC_URL}/${key}`;
-      options.onProgress?.(`File uploaded to S3: ${finalUrl}`);
-      options.onSuccess?.(finalUrl);
+      options.onProgress?.(`File uploaded to S3: ${key}`);
+      options.onSuccess?.(key);
 
-      return finalUrl;
+      return key;
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown upload error';
       console.error('Upload error:', errorMessage);

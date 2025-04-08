@@ -25,7 +25,15 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 interface ActivitySectionProps {
   activities?: Activity[];
-  onCreateActivity: (data: { type: string; subType: string; description: string; initiatorType: 'user' | 'system'; initiatorId: string; metadata?: string }) => void;
+  onCreateActivity: (data: {
+    type: string;
+    subType: string;
+    description: string;
+    initiatorType: 'user' | 'system';
+    initiatorId: string;
+    metadata?: string;
+    attachments?: Array<{ url: string; name: string; type: string }>;
+  }) => void;
   isLoading?: boolean;
   filterTypes?: ActivitySubType[];
 }
@@ -47,6 +55,8 @@ export function ActivitySection({ activities, onCreateActivity, isLoading, filte
   const [cursorPosition, setCursorPosition] = useState(0);
   const [attachments, setAttachments] = useState<Array<{ url: string; name: string; type: string }>>([]);
   const [uploadProgress, setUploadProgress] = useState<string | null>(null);
+
+  console.log(activities);
 
   const { data: users } = api.user.getAllUsers.useQuery();
 
@@ -155,7 +165,7 @@ export function ActivitySection({ activities, onCreateActivity, isLoading, filte
       description: newActivity,
       initiatorType: 'user',
       initiatorId: session?.user.id || '',
-      metadata: attachments.length > 0 ? JSON.stringify({ attachments }) : undefined,
+      attachments: attachments.length > 0 ? attachments : undefined,
     });
 
     setNewActivity('');
@@ -174,6 +184,7 @@ export function ActivitySection({ activities, onCreateActivity, isLoading, filte
       initiatorType: 'user',
       initiatorId: session?.user.id || '',
       metadata: JSON.stringify({ replyTo: replyingTo }),
+      attachments: attachments.length > 0 ? attachments : undefined,
     });
 
     setReplyText('');

@@ -661,6 +661,7 @@ export default function ContactIdPage() {
                         createdAt: activity.createdAt,
                       }))}
                       onCreateActivity={(data) => {
+                        console.log('data', data);
                         createContactActivity.mutate({
                           contactId: contactId[0],
                           type: 'ENGAGEMENT',
@@ -668,7 +669,7 @@ export default function ContactIdPage() {
                           description: data.description,
                           initiatorType: data.initiatorType,
                           initiatorId: data.initiatorId,
-                          metadata: data.metadata as any,
+                          metadata: { ...(data.metadata as any), attachments: data.attachments },
                         });
                       }}
                       isLoading={createContactActivity.isPending}
@@ -698,7 +699,7 @@ export default function ContactIdPage() {
                           description: data.description,
                           initiatorType: data.initiatorType,
                           initiatorId: data.initiatorId,
-                          metadata: data.metadata as any,
+                          metadata: { ...(data.metadata as any), attachments: data.attachments },
                         });
                       }}
                       isLoading={createContactActivity.isPending}
