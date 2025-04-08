@@ -123,8 +123,10 @@ export default function CRMContactsPage() {
 
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [contactToDelete, setContactToDelete] = useState<string | null>(null);
+  const [bulkDeleteDialogOpen, setBulkDeleteDialogOpen] = useState(false);
 
   const [selectedColumn, setSelectedColumn] = useState<string>('');
+  const [pageIndex, setPageIndex] = useState(0);
 
   // Update URL when search or filters change
   useEffect(() => {
@@ -151,6 +153,13 @@ export default function CRMContactsPage() {
     const newUrl = `${pathname}${params.toString() ? `?${params.toString()}` : ''}`;
     router.replace(newUrl, { scroll: false });
   }, [search, statusFilter, priorityFilter, sourceFilter, pathname, isInitialLoad]);
+
+  // Reset pagination when filters change
+  useEffect(() => {
+    if (!isInitialLoad) {
+      setPageIndex(0);
+    }
+  }, [debouncedSearch, statusFilter, priorityFilter, sourceFilter, isInitialLoad]);
 
   const filteredContacts = useMemo(() => {
     if (!contacts) return [];
@@ -201,7 +210,17 @@ export default function CRMContactsPage() {
       deleteContact.mutate({ id: contactToDelete });
       setDeleteDialogOpen(false);
       setContactToDelete(null);
+      setRowSelection({}); // Clear selection after deletion
     }
+  };
+
+  const handleBulkDelete = () => {
+    const selectedRows = table.getFilteredSelectedRowModel().rows;
+    for (const row of selectedRows) {
+      deleteContact.mutate({ id: row.original.id });
+    }
+    setBulkDeleteDialogOpen(false);
+    setRowSelection({}); // Clear selection after bulk deletion
   };
 
   const handleView = (id: string, e: React.MouseEvent) => {
@@ -397,12 +416,24 @@ export default function CRMContactsPage() {
       columnVisibility,
       rowSelection,
       columnFilters,
+      pagination: {
+        pageIndex,
+        pageSize: 10,
+      },
     },
     enableRowSelection: true,
     onRowSelectionChange: setRowSelection,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     onColumnVisibilityChange: setColumnVisibility,
+    onPaginationChange: (updater) => {
+      if (typeof updater === 'function') {
+        const newState = updater({ pageIndex, pageSize: 10 });
+        setPageIndex(newState.pageIndex);
+      } else {
+        setPageIndex(updater.pageIndex);
+      }
+    },
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
@@ -477,6 +508,23 @@ export default function CRMContactsPage() {
           </div>
 
           <div className='flex flex-row gap-2'>
+            {table.getFilteredSelectedRowModel().rows.length > 0 && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant='outline' size='sm' className='flex h-8 items-center gap-2'>
+                    <MoreHorizontal className='mr-2 h-4 w-4' />
+                    {t('bulk_actions')}
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                  <DropdownMenuItem className='cursor-pointer text-destructive' onClick={() => setBulkDeleteDialogOpen(true)}>
+                    <Trash2 className='mr-2 h-4 w-4' />
+                    {t('delete_selected')}
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
+
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant='outline' size='sm' className='flex h-8 items-center gap-2' disabled={isLoading}>
@@ -594,6 +642,16 @@ export default function CRMContactsPage() {
         onConfirm={handleDeleteConfirm}
         title={t('delete_contact')}
         description={t('delete_contact_description')}
+        confirmText={t('delete')}
+        cancelText={t('cancel')}
+      />
+
+      <ActionAlertDialog
+        open={bulkDeleteDialogOpen}
+        onOpenChange={setBulkDeleteDialogOpen}
+        onConfirm={handleBulkDelete}
+        title={t('delete_selected_contacts')}
+        description={t('delete_selected_contacts_description', { count: table.getFilteredSelectedRowModel().rows.length })}
         confirmText={t('delete')}
         cancelText={t('cancel')}
       />

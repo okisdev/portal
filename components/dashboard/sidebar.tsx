@@ -60,8 +60,6 @@ export function DashboardSidebar() {
 
   const locale = useLocale();
 
-  console.log(me);
-
   const handleChangeLocale = (locale: string) => {
     startTransition(() => {
       router.replace(pathname, { locale });

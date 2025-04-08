@@ -57,8 +57,6 @@ export function ActivitySection({ activities, onCreateActivity, isLoading, filte
   const [attachments, setAttachments] = useState<Array<{ url: string; name: string; type: string }>>([]);
   const [uploadProgress, setUploadProgress] = useState<string | null>(null);
 
-  console.log(activities);
-
   const { data: users } = api.user.getAllUsers.useQuery();
 
   const userMentionData =
@@ -448,8 +446,8 @@ export function ActivitySection({ activities, onCreateActivity, isLoading, filte
         </div>
       </div>
       <div className='mt-auto bg-background pt-4'>
-        <form onSubmit={handleSubmitActivity} className='relative flex max-w-full flex-col gap-2 sm:flex-row'>
-          <div className='relative flex-1'>
+        <form onSubmit={handleSubmitActivity} className='relative'>
+          <div className='relative w-full'>
             <Popover open={showMentions}>
               <PopoverTrigger asChild>
                 <div className='relative w-full'>
@@ -461,9 +459,20 @@ export function ActivitySection({ activities, onCreateActivity, isLoading, filte
                     onCompositionStart={() => setIsComposing(true)}
                     onCompositionEnd={() => setIsComposing(false)}
                     placeholder={t('add_a_note')}
-                    className='min-h-[60px] resize-none'
+                    className='min-h-[60px] resize-none pr-24'
                   />
                   {uploadProgress && <div className='absolute bottom-2 left-2 text-xs text-muted-foreground'>{uploadProgress}</div>}
+
+                  {/* Action buttons */}
+                  <div className='absolute right-2 top-2 flex items-center gap-1'>
+                    <input type='file' ref={fileInputRef} onChange={handleFileUpload} className='hidden' accept='image/*,video/*,audio/*,.pdf,.doc,.docx,.xls,.xlsx,.txt' />
+                    <Button type='button' size='icon' variant='ghost' onClick={() => fileInputRef.current?.click()} disabled={isUploading} className='h-8 w-8' title={t('attach_file')}>
+                      <Paperclip className='h-4 w-4' />
+                    </Button>
+                    <Button type='submit' size='sm' disabled={isLoading || isUploading} className='h-8'>
+                      {t('add_note')}
+                    </Button>
+                  </div>
                 </div>
               </PopoverTrigger>
               <PopoverContent className='w-64 p-0' align='start'>
@@ -482,32 +491,24 @@ export function ActivitySection({ activities, onCreateActivity, isLoading, filte
                 />
               </PopoverContent>
             </Popover>
-            <div className='mt-2 flex items-center gap-2'>
-              <input type='file' ref={fileInputRef} onChange={handleFileUpload} className='hidden' accept='image/*,video/*,audio/*,.pdf,.doc,.docx,.xls,.xlsx,.txt' />
-              <Button type='button' size='sm' variant='outline' onClick={() => fileInputRef.current?.click()} disabled={isUploading} className='flex items-center gap-1'>
-                <Paperclip className='h-4 w-4' />
-                {t('attach_file')}
-              </Button>
-              {attachments.length > 0 && (
-                <div className='flex flex-wrap gap-1'>
-                  {attachments.map((attachment, index) => (
-                    <div key={attachment.url} className='flex items-center gap-1 rounded-md bg-muted px-2 py-1 text-xs'>
-                      {attachment.type === 'image' ? <ImageIcon className='h-3 w-3' /> : <FileIcon className='h-3 w-3' />}
-                      <span className='max-w-[150px] truncate' title={attachment.name}>
-                        {attachment.name}
-                      </span>
-                      <button type='button' onClick={() => handleRemoveFile(index)} className='ml-1 text-muted-foreground hover:text-foreground'>
-                        <X className='h-3 w-3' />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
+
+            {/* Attachments preview */}
+            {attachments.length > 0 && (
+              <div className='mt-2 flex flex-wrap gap-1'>
+                {attachments.map((attachment, index) => (
+                  <div key={attachment.url} className='flex items-center gap-1 rounded-md bg-muted px-2 py-1 text-xs'>
+                    {attachment.type === 'image' ? <ImageIcon className='h-3 w-3' /> : <FileIcon className='h-3 w-3' />}
+                    <span className='max-w-[150px] truncate' title={attachment.name}>
+                      {attachment.name}
+                    </span>
+                    <button type='button' onClick={() => handleRemoveFile(index)} className='ml-1 text-muted-foreground hover:text-foreground' title={t('remove')}>
+                      <X className='h-3 w-3' />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
-          <Button type='submit' size='sm' disabled={isLoading || isUploading} className='w-full sm:w-auto'>
-            {t('add_note')}
-          </Button>
         </form>
       </div>
     </div>

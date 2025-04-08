@@ -661,7 +661,6 @@ export default function ContactIdPage() {
                         createdAt: activity.createdAt,
                       }))}
                       onCreateActivity={(data) => {
-                        console.log('data', data);
                         createContactActivity.mutate({
                           contactId: contactId[0],
                           type: 'ENGAGEMENT',
