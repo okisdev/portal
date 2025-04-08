@@ -7,6 +7,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Textarea } from '@/components/ui/textarea';
+import { useUpload } from '@/hooks/use-upload';
 import type { ActivitySubType } from '@/lib/schema';
 import { cn } from '@/lib/utils';
 import type { Locale } from '@/types/i18n';
@@ -16,7 +17,7 @@ import { dateLocaleMap, formatDate } from '@/utils/date';
 import { api } from '@/utils/trpc/client';
 import { format } from 'date-fns';
 import { enUS } from 'date-fns/locale';
-import { ArrowUpRight } from 'lucide-react';
+import { ArrowUpRight, Download, FileIcon, ImageIcon, Paperclip, X } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import { useTranslations } from 'next-intl';
 import { useLocale } from 'next-intl';
@@ -34,6 +35,7 @@ export function ActivitySection({ activities, onCreateActivity, isLoading, filte
   const locale = useLocale() as Locale;
   const { data: session } = useSession();
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [isComposing, setIsComposing] = useState(false);
 
   const [newActivity, setNewActivity] = useState('');
@@ -43,6 +45,8 @@ export function ActivitySection({ activities, onCreateActivity, isLoading, filte
   const [showMentions, setShowMentions] = useState(false);
   const [mentionSearch, setMentionSearch] = useState('');
   const [cursorPosition, setCursorPosition] = useState(0);
+  const [attachments, setAttachments] = useState<Array<{ url: string; name: string; type: string }>>([]);
+  const [uploadProgress, setUploadProgress] = useState<string | null>(null);
 
   const { data: users } = api.user.getAllUsers.useQuery();
 
@@ -55,6 +59,19 @@ export function ActivitySection({ activities, onCreateActivity, isLoading, filte
     })) ?? [];
 
   const userMentionItems = userMentionData.map((user) => user.username);
+
+  const { uploadToR2, isUploading } = useUpload({
+    onSuccess: (url) => {
+      setUploadProgress(null);
+    },
+    onError: (error) => {
+      console.error('Upload error:', error);
+      setUploadProgress(`Upload error: ${error.message}`);
+    },
+    onProgress: (info) => {
+      setUploadProgress(info);
+    },
+  });
 
   const renderMentionItem = (username: string) => {
     const user = userMentionData.find((u) => u.username === username);
@@ -130,7 +147,7 @@ export function ActivitySection({ activities, onCreateActivity, isLoading, filte
   const handleSubmitActivity = (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!newActivity.trim()) return;
+    if (!newActivity.trim() && attachments.length === 0) return;
 
     onCreateActivity({
       type: 'ENGAGEMENT',
@@ -138,9 +155,11 @@ export function ActivitySection({ activities, onCreateActivity, isLoading, filte
       description: newActivity,
       initiatorType: 'user',
       initiatorId: session?.user.id || '',
+      metadata: attachments.length > 0 ? JSON.stringify({ attachments }) : undefined,
     });
 
     setNewActivity('');
+    setAttachments([]);
   };
 
   const handleReplySubmit = (e: React.FormEvent) => {
@@ -222,6 +241,59 @@ export function ActivitySection({ activities, onCreateActivity, isLoading, filte
 
   const filteredActivities = activities?.filter((activity) => !filterTypes || filterTypes.includes(activity.subType));
 
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const url = await uploadToR2(file);
+
+      // Add the file to attachments array
+      setAttachments((prev) => [
+        ...prev,
+        {
+          url,
+          name: file.name,
+          type: file.type.startsWith('image/') ? 'image' : file.type.startsWith('video/') ? 'video' : file.type.startsWith('audio/') ? 'audio' : 'file',
+        },
+      ]);
+    } catch (error) {
+      console.error('File upload error:', error);
+    }
+  };
+
+  const handleRemoveFile = (index: number) => {
+    setAttachments((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const renderAttachments = (metadata: string | null) => {
+    if (!metadata) return null;
+
+    try {
+      const parsedMetadata = JSON.parse(metadata);
+      if (!parsedMetadata.attachments || !Array.isArray(parsedMetadata.attachments)) return null;
+
+      return (
+        <div className='mt-2 flex flex-wrap gap-2'>
+          {parsedMetadata.attachments.map((attachment: { url: string; name: string; type: string }) => (
+            <div key={attachment.url} className='flex items-center gap-1 rounded-md bg-muted/50 px-2 py-1 text-xs'>
+              {attachment.type === 'image' ? <ImageIcon className='h-3 w-3' /> : <FileIcon className='h-3 w-3' />}
+              <a href={attachment.url} target='_blank' rel='noopener noreferrer' className='max-w-[150px] truncate hover:underline' title={attachment.name}>
+                {attachment.name}
+              </a>
+              <a href={attachment.url} download className='text-muted-foreground hover:text-foreground' title={t('download')}>
+                <Download className='h-3 w-3' />
+              </a>
+            </div>
+          ))}
+        </div>
+      );
+    } catch (error) {
+      console.error('Error parsing metadata:', error);
+      return null;
+    }
+  };
+
   return (
     <div className='flex h-full flex-col'>
       <div id='activities-container' className='flex-1 overflow-y-auto'>
@@ -299,6 +371,7 @@ export function ActivitySection({ activities, onCreateActivity, isLoading, filte
                     </div>
                     <div className={cn('text-sm', activity.type === 'ENGAGEMENT' && activity.subType === 'NOTE_ADDED' ? 'rounded-md bg-blue-50 p-3 dark:bg-blue-950/50' : '')}>
                       {renderDescription(activity, t, locale)}
+                      {renderAttachments(activity.metadata ?? null)}
                     </div>
                     {replyingTo === activity.id && (
                       <form onSubmit={handleReplySubmit} className='mt-2 flex items-start gap-2'>
@@ -384,6 +457,7 @@ export function ActivitySection({ activities, onCreateActivity, isLoading, filte
                     placeholder={t('add_a_note')}
                     className='min-h-[60px] resize-none'
                   />
+                  {uploadProgress && <div className='absolute bottom-2 left-2 text-xs text-muted-foreground'>{uploadProgress}</div>}
                 </div>
               </PopoverTrigger>
               <PopoverContent className='w-64 p-0' align='start'>
@@ -402,8 +476,30 @@ export function ActivitySection({ activities, onCreateActivity, isLoading, filte
                 />
               </PopoverContent>
             </Popover>
+            <div className='mt-2 flex items-center gap-2'>
+              <input type='file' ref={fileInputRef} onChange={handleFileUpload} className='hidden' accept='image/*,video/*,audio/*,.pdf,.doc,.docx,.xls,.xlsx,.txt' />
+              <Button type='button' size='sm' variant='outline' onClick={() => fileInputRef.current?.click()} disabled={isUploading} className='flex items-center gap-1'>
+                <Paperclip className='h-4 w-4' />
+                {t('attach_file')}
+              </Button>
+              {attachments.length > 0 && (
+                <div className='flex flex-wrap gap-1'>
+                  {attachments.map((attachment, index) => (
+                    <div key={attachment.url} className='flex items-center gap-1 rounded-md bg-muted px-2 py-1 text-xs'>
+                      {attachment.type === 'image' ? <ImageIcon className='h-3 w-3' /> : <FileIcon className='h-3 w-3' />}
+                      <span className='max-w-[150px] truncate' title={attachment.name}>
+                        {attachment.name}
+                      </span>
+                      <button type='button' onClick={() => handleRemoveFile(index)} className='ml-1 text-muted-foreground hover:text-foreground'>
+                        <X className='h-3 w-3' />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
-          <Button type='submit' size='sm' disabled={isLoading} className='w-full sm:w-auto'>
+          <Button type='submit' size='sm' disabled={isLoading || isUploading} className='w-full sm:w-auto'>
             {t('add_note')}
           </Button>
         </form>
