@@ -1,5 +1,7 @@
 import { env } from '@/lib/env';
 import { Download, FileIcon } from 'lucide-react';
+import Zoom from 'react-medium-image-zoom';
+import 'react-medium-image-zoom/dist/styles.css';
 
 export function AttachmentPreview({ url, name, type }: { url: string; name: string; type: string }) {
   const s3Url = `${env.NEXT_PUBLIC_S3_PUBLIC_URL}/${url}`;
@@ -7,7 +9,9 @@ export function AttachmentPreview({ url, name, type }: { url: string; name: stri
   if (type === 'image') {
     return (
       <div className='group relative overflow-hidden rounded-md border border-border'>
-        <img src={s3Url} alt={name} className='max-h-[300px] object-contain w-auto' />
+        <Zoom>
+          <img src={s3Url} alt={name} className='max-h-[300px] object-contain w-auto cursor-zoom-in' />
+        </Zoom>
         <div className='absolute top-2 right-2 opacity-0 transition-opacity group-hover:opacity-100'>
           <a
             href={s3Url}

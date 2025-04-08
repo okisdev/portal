@@ -103,6 +103,7 @@
     "react-day-picker": "8.10.1",
     "react-dom": "^19.1.0",
     "react-hook-form": "^7.55.0",
+    "react-medium-image-zoom": "^5.2.14",
     "react-resizable-panels": "^2.1.7",
     "react-scan": "^0.3.3",
     "recharts": "^2.15.2",

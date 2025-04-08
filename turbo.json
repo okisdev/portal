@@ -9,12 +9,6 @@
       "outputs": [
         ".next/**",
         "!.next/cache/**"
-      ],
-      "env": [
-        "AUTH_RESEND_KEY",
-        "AUTH_SECRET",
-        "DATABASE_URL",
-        "NEXT_PUBLIC_APP_URL"
       ]
     },
     "check-types": {
@@ -26,5 +20,18 @@
       "persistent": true,
       "cache": false
     }
-  }
+  },
+  "globalEnv": [
+    "DATABASE_URL",
+    "AUTH_RESEND_KEY",
+    "AUTH_SECRET",
+    "S3_ACCESS_KEY_ID",
+    "S3_SECRET_ACCESS_KEY",
+    "S3_BUCKET_NAME",
+    "S3_ENDPOINT",
+    "NEXT_PUBLIC_APP_URL",
+    "NEXT_PUBLIC_REACT_SCAN_API_KEY",
+    "NEXT_PUBLIC_UMAMI_WEBSITE_ID",
+    "NEXT_PUBLIC_S3_PUBLIC_URL"
+  ]
 }
