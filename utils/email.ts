@@ -1,6 +1,7 @@
+import { env } from '@/lib/env';
 import { Resend } from 'resend';
 
-const resend = new Resend(process.env.AUTH_RESEND_KEY);
+const resend = new Resend(env.AUTH_RESEND_KEY);
 
 interface SendEmailParams {
   from: string;

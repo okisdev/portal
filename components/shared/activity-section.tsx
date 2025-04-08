@@ -1,5 +1,6 @@
 'use client';
 
+import { AttachmentPreview } from '@/components/shared/attchment-preview';
 import { ComboboxCommand } from '@/components/shared/combobox';
 import { MetadataPopover } from '@/components/shared/metadata-popover';
 import { NameTag } from '@/components/shared/name-tag';
@@ -17,7 +18,7 @@ import { dateLocaleMap, formatDate } from '@/utils/date';
 import { api } from '@/utils/trpc/client';
 import { format } from 'date-fns';
 import { enUS } from 'date-fns/locale';
-import { ArrowUpRight, Download, FileIcon, ImageIcon, Paperclip, X } from 'lucide-react';
+import { ArrowUpRight, FileIcon, ImageIcon, Paperclip, X } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import { useTranslations } from 'next-intl';
 import { useLocale } from 'next-intl';
@@ -287,14 +288,8 @@ export function ActivitySection({ activities, onCreateActivity, isLoading, filte
       return (
         <div className='mt-2 flex flex-wrap gap-2'>
           {parsedMetadata.attachments.map((attachment: { url: string; name: string; type: string }) => (
-            <div key={attachment.url} className='flex items-center gap-1 rounded-md bg-muted/50 px-2 py-1 text-xs'>
-              {attachment.type === 'image' ? <ImageIcon className='h-3 w-3' /> : <FileIcon className='h-3 w-3' />}
-              <a href={attachment.url} target='_blank' rel='noopener noreferrer' className='max-w-[150px] truncate hover:underline' title={attachment.name}>
-                {attachment.name}
-              </a>
-              <a href={attachment.url} download className='text-muted-foreground hover:text-foreground' title={t('download')}>
-                <Download className='h-3 w-3' />
-              </a>
+            <div key={attachment.url} className='relative'>
+              <AttachmentPreview url={attachment.url} name={attachment.name} type={attachment.type} />
             </div>
           ))}
         </div>

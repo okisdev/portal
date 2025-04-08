@@ -1,6 +1,6 @@
+import { env } from '@/lib/env';
 import { drizzle } from 'drizzle-orm/neon-serverless';
 
-// biome-ignore lint/style/noNonNullAssertion: <explanation>
-const database = drizzle(process.env.DATABASE_URL!);
+const database = drizzle(env.DATABASE_URL);
 
 export { database };
