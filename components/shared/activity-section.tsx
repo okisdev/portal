@@ -1,5 +1,6 @@
 'use client';
 
+import { AttachmentPreview } from '@/components/shared/attchment-preview';
 import { ComboboxCommand } from '@/components/shared/combobox';
 import { MetadataPopover } from '@/components/shared/metadata-popover';
 import { NameTag } from '@/components/shared/name-tag';
@@ -7,6 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Textarea } from '@/components/ui/textarea';
+import { useUpload } from '@/hooks/use-upload';
 import type { ActivitySubType } from '@/lib/schema';
 import { cn } from '@/lib/utils';
 import type { Locale } from '@/types/i18n';
@@ -16,7 +18,7 @@ import { dateLocaleMap, formatDate } from '@/utils/date';
 import { api } from '@/utils/trpc/client';
 import { format } from 'date-fns';
 import { enUS } from 'date-fns/locale';
-import { ArrowUpRight } from 'lucide-react';
+import { ArrowUpRight, FileIcon, ImageIcon, Paperclip, X } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import { useTranslations } from 'next-intl';
 import { useLocale } from 'next-intl';
@@ -24,7 +26,15 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 interface ActivitySectionProps {
   activities?: Activity[];
-  onCreateActivity: (data: { type: string; subType: string; description: string; initiatorType: 'user' | 'system'; initiatorId: string; metadata?: string }) => void;
+  onCreateActivity: (data: {
+    type: string;
+    subType: string;
+    description: string;
+    initiatorType: 'user' | 'system';
+    initiatorId: string;
+    metadata?: string;
+    attachments?: Array<{ url: string; name: string; type: string }>;
+  }) => void;
   isLoading?: boolean;
   filterTypes?: ActivitySubType[];
 }
@@ -34,6 +44,7 @@ export function ActivitySection({ activities, onCreateActivity, isLoading, filte
   const locale = useLocale() as Locale;
   const { data: session } = useSession();
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [isComposing, setIsComposing] = useState(false);
 
   const [newActivity, setNewActivity] = useState('');
@@ -43,6 +54,8 @@ export function ActivitySection({ activities, onCreateActivity, isLoading, filte
   const [showMentions, setShowMentions] = useState(false);
   const [mentionSearch, setMentionSearch] = useState('');
   const [cursorPosition, setCursorPosition] = useState(0);
+  const [attachments, setAttachments] = useState<Array<{ url: string; name: string; type: string }>>([]);
+  const [uploadProgress, setUploadProgress] = useState<string | null>(null);
 
   const { data: users } = api.user.getAllUsers.useQuery();
 
@@ -55,6 +68,19 @@ export function ActivitySection({ activities, onCreateActivity, isLoading, filte
     })) ?? [];
 
   const userMentionItems = userMentionData.map((user) => user.username);
+
+  const { uploadToR2, isUploading } = useUpload({
+    onSuccess: (url) => {
+      setUploadProgress(null);
+    },
+    onError: (error) => {
+      console.error('Upload error:', error);
+      setUploadProgress(`Upload error: ${error.message}`);
+    },
+    onProgress: (info) => {
+      setUploadProgress(info);
+    },
+  });
 
   const renderMentionItem = (username: string) => {
     const user = userMentionData.find((u) => u.username === username);
@@ -130,7 +156,7 @@ export function ActivitySection({ activities, onCreateActivity, isLoading, filte
   const handleSubmitActivity = (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!newActivity.trim()) return;
+    if (!newActivity.trim() && attachments.length === 0) return;
 
     onCreateActivity({
       type: 'ENGAGEMENT',
@@ -138,9 +164,11 @@ export function ActivitySection({ activities, onCreateActivity, isLoading, filte
       description: newActivity,
       initiatorType: 'user',
       initiatorId: session?.user.id || '',
+      attachments: attachments.length > 0 ? attachments : undefined,
     });
 
     setNewActivity('');
+    setAttachments([]);
   };
 
   const handleReplySubmit = (e: React.FormEvent) => {
@@ -155,6 +183,7 @@ export function ActivitySection({ activities, onCreateActivity, isLoading, filte
       initiatorType: 'user',
       initiatorId: session?.user.id || '',
       metadata: JSON.stringify({ replyTo: replyingTo }),
+      attachments: attachments.length > 0 ? attachments : undefined,
     });
 
     setReplyText('');
@@ -221,6 +250,53 @@ export function ActivitySection({ activities, onCreateActivity, isLoading, filte
   }, [activities]);
 
   const filteredActivities = activities?.filter((activity) => !filterTypes || filterTypes.includes(activity.subType));
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const url = await uploadToR2(file);
+
+      // Add the file to attachments array
+      setAttachments((prev) => [
+        ...prev,
+        {
+          url,
+          name: file.name,
+          type: file.type.startsWith('image/') ? 'image' : file.type.startsWith('video/') ? 'video' : file.type.startsWith('audio/') ? 'audio' : 'file',
+        },
+      ]);
+    } catch (error) {
+      console.error('File upload error:', error);
+    }
+  };
+
+  const handleRemoveFile = (index: number) => {
+    setAttachments((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const renderAttachments = (metadata: string | null) => {
+    if (!metadata) return null;
+
+    try {
+      const parsedMetadata = JSON.parse(metadata);
+      if (!parsedMetadata.attachments || !Array.isArray(parsedMetadata.attachments)) return null;
+
+      return (
+        <div className='mt-2 flex flex-wrap gap-2'>
+          {parsedMetadata.attachments.map((attachment: { url: string; name: string; type: string }) => (
+            <div key={attachment.url} className='relative'>
+              <AttachmentPreview url={attachment.url} name={attachment.name} type={attachment.type} />
+            </div>
+          ))}
+        </div>
+      );
+    } catch (error) {
+      console.error('Error parsing metadata:', error);
+      return null;
+    }
+  };
 
   return (
     <div className='flex h-full flex-col'>
@@ -299,6 +375,7 @@ export function ActivitySection({ activities, onCreateActivity, isLoading, filte
                     </div>
                     <div className={cn('text-sm', activity.type === 'ENGAGEMENT' && activity.subType === 'NOTE_ADDED' ? 'rounded-md bg-blue-50 p-3 dark:bg-blue-950/50' : '')}>
                       {renderDescription(activity, t, locale)}
+                      {renderAttachments(activity.metadata ?? null)}
                     </div>
                     {replyingTo === activity.id && (
                       <form onSubmit={handleReplySubmit} className='mt-2 flex items-start gap-2'>
@@ -369,8 +446,8 @@ export function ActivitySection({ activities, onCreateActivity, isLoading, filte
         </div>
       </div>
       <div className='mt-auto bg-background pt-4'>
-        <form onSubmit={handleSubmitActivity} className='relative flex max-w-full flex-col gap-2 sm:flex-row'>
-          <div className='relative flex-1'>
+        <form onSubmit={handleSubmitActivity} className='relative'>
+          <div className='relative w-full'>
             <Popover open={showMentions}>
               <PopoverTrigger asChild>
                 <div className='relative w-full'>
@@ -382,8 +459,20 @@ export function ActivitySection({ activities, onCreateActivity, isLoading, filte
                     onCompositionStart={() => setIsComposing(true)}
                     onCompositionEnd={() => setIsComposing(false)}
                     placeholder={t('add_a_note')}
-                    className='min-h-[60px] resize-none'
+                    className='min-h-[60px] resize-none pr-24'
                   />
+                  {uploadProgress && <div className='absolute bottom-2 left-2 text-xs text-muted-foreground'>{uploadProgress}</div>}
+
+                  {/* Action buttons */}
+                  <div className='absolute right-2 top-2 flex items-center gap-1'>
+                    <input type='file' ref={fileInputRef} onChange={handleFileUpload} className='hidden' accept='image/*,video/*,audio/*,.pdf,.doc,.docx,.xls,.xlsx,.txt' />
+                    <Button type='button' size='icon' variant='ghost' onClick={() => fileInputRef.current?.click()} disabled={isUploading} className='h-8 w-8' title={t('attach_file')}>
+                      <Paperclip className='h-4 w-4' />
+                    </Button>
+                    <Button type='submit' size='sm' disabled={isLoading || isUploading} className='h-8'>
+                      {t('add_note')}
+                    </Button>
+                  </div>
                 </div>
               </PopoverTrigger>
               <PopoverContent className='w-64 p-0' align='start'>
@@ -402,10 +491,24 @@ export function ActivitySection({ activities, onCreateActivity, isLoading, filte
                 />
               </PopoverContent>
             </Popover>
+
+            {/* Attachments preview */}
+            {attachments.length > 0 && (
+              <div className='mt-2 flex flex-wrap gap-1'>
+                {attachments.map((attachment, index) => (
+                  <div key={attachment.url} className='flex items-center gap-1 rounded-md bg-muted px-2 py-1 text-xs'>
+                    {attachment.type === 'image' ? <ImageIcon className='h-3 w-3' /> : <FileIcon className='h-3 w-3' />}
+                    <span className='max-w-[150px] truncate' title={attachment.name}>
+                      {attachment.name}
+                    </span>
+                    <button type='button' onClick={() => handleRemoveFile(index)} className='ml-1 text-muted-foreground hover:text-foreground' title={t('remove')}>
+                      <X className='h-3 w-3' />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
-          <Button type='submit' size='sm' disabled={isLoading} className='w-full sm:w-auto'>
-            {t('add_note')}
-          </Button>
         </form>
       </div>
     </div>

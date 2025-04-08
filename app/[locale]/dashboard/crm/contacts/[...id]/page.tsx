@@ -668,7 +668,7 @@ export default function ContactIdPage() {
                           description: data.description,
                           initiatorType: data.initiatorType,
                           initiatorId: data.initiatorId,
-                          metadata: data.metadata as any,
+                          metadata: { ...(data.metadata as any), attachments: data.attachments },
                         });
                       }}
                       isLoading={createContactActivity.isPending}
@@ -698,7 +698,7 @@ export default function ContactIdPage() {
                           description: data.description,
                           initiatorType: data.initiatorType,
                           initiatorId: data.initiatorId,
-                          metadata: data.metadata as any,
+                          metadata: { ...(data.metadata as any), attachments: data.attachments },
                         });
                       }}
                       isLoading={createContactActivity.isPending}

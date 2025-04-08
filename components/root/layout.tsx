@@ -1,4 +1,5 @@
 import BodyProvider from '@/components/root/provider';
+import { env } from '@/lib/env';
 import { cn } from '@/lib/utils';
 import { geistSans } from '@/styles/font';
 import { ReactScan } from '@/utils/react-scan';
@@ -24,7 +25,7 @@ export default async function RootLayout(props: Props) {
         <meta name='apple-mobile-web-app-title' content='Portal' />
         <meta name='theme-color' media='(prefers-color-scheme: light)' content='white' />
         <meta name='theme-color' media='(prefers-color-scheme: dark)' content='black' />
-        <Script defer src='https://umami.harisfox.com/script.js' data-website-id={process.env.NEXT_PUBLIC_UMAMI_WEBSITE_ID} />
+        <Script defer src='https://umami.harisfox.com/script.js' data-website-id={env.NEXT_PUBLIC_UMAMI_WEBSITE_ID} />
       </head>
 
       <ReactScan />

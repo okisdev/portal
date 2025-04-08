@@ -231,16 +231,38 @@ export const contactRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      await ctx.db.insert(contactActivity).values({
-        contactId: input.contactId,
-        userId: ctx.session?.user.id,
-        type: input.type,
-        subType: input.subType,
-        initiatorType: input.initiatorType,
-        initiatorId: input.initiatorId,
-        description: input.description,
-        metadata: input.metadata ? JSON.stringify(input.metadata) : null,
-      });
+      // Handle attachments in metadata
+      const metadata = input.metadata;
+
+      // If metadata contains attachments, ensure it's properly formatted
+      if (metadata && typeof metadata === 'object' && 'attachments' in metadata) {
+        // Ensure attachments is an array
+        if (!Array.isArray(metadata.attachments)) {
+          metadata.attachments = [];
+        }
+
+        // Validate each attachment has required properties
+        metadata.attachments = metadata.attachments.map((attachment: any) => ({
+          url: attachment.url || '',
+          name: attachment.name || 'Unnamed file',
+          type: attachment.type || 'file',
+        }));
+      }
+
+      // Insert the activity with the properly formatted metadata
+      const [activity] = await ctx.db
+        .insert(contactActivity)
+        .values({
+          contactId: input.contactId,
+          userId: ctx.session?.user.id,
+          type: input.type,
+          subType: input.subType,
+          initiatorType: input.initiatorType,
+          initiatorId: input.initiatorId,
+          description: input.description,
+          metadata: metadata ? JSON.stringify(metadata) : null,
+        })
+        .returning();
 
       // Handle @mentions
       const mentionRegex = /@(\w+)/g;
@@ -273,6 +295,8 @@ export const contactRouter = createTRPCRouter({
           });
         }
       }
+
+      return activity;
     }),
 
   deleteContactActivity: protectedProcedure.input(z.object({ id: z.string() })).mutation(({ ctx, input }) => {
