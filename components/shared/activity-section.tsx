@@ -40,9 +40,10 @@ interface ActivitySectionProps {
   filterTypes?: ActivitySubType[];
   onDeleteNote: (id: string) => void;
   onUpdateNote: (id: string, description: string) => void;
+  onReplyNote: (id: string, description: string) => void;
 }
 
-export function ActivitySection({ activities, onCreateActivity, isLoading, filterTypes, onDeleteNote, onUpdateNote }: ActivitySectionProps) {
+export function ActivitySection({ activities, onCreateActivity, isLoading, filterTypes, onDeleteNote, onUpdateNote, onReplyNote }: ActivitySectionProps) {
   const t = useTranslations();
   const locale = useLocale() as Locale;
   const { data: session } = useSession();
@@ -196,15 +197,7 @@ export function ActivitySection({ activities, onCreateActivity, isLoading, filte
 
     if (!replyText.trim() || !replyingTo) return;
 
-    onCreateActivity({
-      type: 'ENGAGEMENT',
-      subType: 'NOTE_ADDED',
-      description: replyText,
-      initiatorType: 'user',
-      initiatorId: session?.user.id || '',
-      metadata: JSON.stringify({ replyTo: replyingTo }),
-      attachments: attachments.length > 0 ? attachments : undefined,
-    });
+    onReplyNote(replyingTo, replyText);
 
     setReplyText('');
     setReplyingTo(null);
@@ -225,6 +218,9 @@ export function ActivitySection({ activities, onCreateActivity, isLoading, filte
     if (!editText.trim() || !editingNoteId) return;
 
     onUpdateNote(editingNoteId, editText);
+
+    setEditingNoteId(null);
+    setEditText('');
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>, isReply = false, isEdit = false) => {
@@ -243,10 +239,8 @@ export function ActivitySection({ activities, onCreateActivity, isLoading, filte
         if (replyText.trim() && replyingTo) {
           handleReplySubmit(e);
         }
-      } else {
-        if (newActivity.trim()) {
-          handleSubmitActivity(e);
-        }
+      } else if (newActivity.trim()) {
+        handleSubmitActivity(e);
       }
     }
 
@@ -614,7 +608,6 @@ export function ActivitySection({ activities, onCreateActivity, isLoading, filte
               </PopoverContent>
             </Popover>
 
-            {/* Attachments preview */}
             {attachments.length > 0 && (
               <div className='mt-2 flex flex-wrap gap-1'>
                 {attachments.map((attachment, index) => (

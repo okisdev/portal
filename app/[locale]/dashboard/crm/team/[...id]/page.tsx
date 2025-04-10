@@ -97,6 +97,13 @@ export default function TeamIdPage() {
   const { data: companies } = api.company.getAllCompanies.useQuery();
   const { data: statuses } = api.site.getStatus.useQuery();
 
+  const replyNote = api.team.activity.replyNote.useMutation({
+    onSuccess: () => {
+      toast.success(t('note_replied'));
+      refetchTeamActivities();
+    },
+  });
+
   const deleteNote = api.team.activity.deleteNote.useMutation({
     onSuccess: () => {
       toast.success(t('note_deleted'));
@@ -480,6 +487,7 @@ export default function TeamIdPage() {
                           isLoading={createTeamActivity.isPending}
                           onDeleteNote={(id) => deleteNote.mutate({ id })}
                           onUpdateNote={(id, description) => updateNote.mutate({ id, description })}
+                          onReplyNote={(id, description) => replyNote.mutate({ id, description })}
                         />
                       ),
                     },
