@@ -39,14 +39,13 @@ interface ActivitySectionProps {
   }) => void;
   isLoading?: boolean;
   filterTypes?: ActivitySubType[];
-  refetch: () => void;
+  refetchActivities: () => void;
 }
 
-export function ActivitySection({ activities, onCreateActivity, isLoading, filterTypes, refetch }: ActivitySectionProps) {
+export function ActivitySection({ activities, onCreateActivity, isLoading, filterTypes, refetchActivities }: ActivitySectionProps) {
   const t = useTranslations();
   const locale = useLocale() as Locale;
   const { data: session } = useSession();
-  const utils = api.useUtils();
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isComposing, setIsComposing] = useState(false);
@@ -70,7 +69,7 @@ export function ActivitySection({ activities, onCreateActivity, isLoading, filte
     onSuccess: () => {
       toast.success(t('note_deleted'));
       setDeleteNoteId(null);
-      refetch();
+      refetchActivities();
     },
   });
 
@@ -79,6 +78,7 @@ export function ActivitySection({ activities, onCreateActivity, isLoading, filte
       toast.success(t('note_updated'));
       setEditingNoteId(null);
       setEditText('');
+      refetchActivities();
     },
   });
 

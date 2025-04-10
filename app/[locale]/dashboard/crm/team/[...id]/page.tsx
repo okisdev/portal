@@ -91,7 +91,7 @@ export default function TeamIdPage() {
   const { data: participantOptions } = api.calendar.getParticipantOptions.useQuery(undefined, {
     enabled: isNewMeetingModalOpen,
   });
-  const { data: teamActivities } = api.team.getTeamActivities.useQuery({
+  const { data: teamActivities, refetch: refetchTeamActivities } = api.team.getTeamActivities.useQuery({
     id: teamId[0],
   });
   const { data: companies } = api.company.getAllCompanies.useQuery();
@@ -462,8 +462,8 @@ export default function TeamIdPage() {
                               metadata: { ...(data.metadata as any), attachments: data.attachments },
                             });
                           }}
-                          refetch={() => utils.team.getTeamActivities.invalidate({ id: teamId[0] })}
                           isLoading={createTeamActivity.isPending}
+                          refetchActivities={refetchTeamActivities}
                         />
                       ),
                     },

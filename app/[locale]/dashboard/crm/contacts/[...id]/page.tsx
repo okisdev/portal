@@ -52,7 +52,7 @@ export default function ContactIdPage() {
   const { data: allTeams } = api.team.getAllTeams.useQuery();
   const { data: calendarFolders } = api.calendar.getMyFolders.useQuery();
   const { data: companies } = api.company.getAllCompanies.useQuery();
-  const { data: activities } = api.contact.getContactActivities.useQuery({
+  const { data: activities, refetch: refetchActivities } = api.contact.getContactActivities.useQuery({
     id: contactId[0],
   });
   const { data: statuses } = api.site.getStatus.useQuery();
@@ -673,7 +673,7 @@ export default function ContactIdPage() {
                       }}
                       isLoading={createContactActivity.isPending}
                       filterTypes={['NOTE_ADDED']}
-                      refetch={() => utils.contact.activity.invalidate()}
+                      refetchActivities={refetchActivities}
                     />
                   ),
                 },
@@ -703,7 +703,7 @@ export default function ContactIdPage() {
                         });
                       }}
                       isLoading={createContactActivity.isPending}
-                      refetch={() => utils.contact.activity.invalidate()}
+                      refetchActivities={refetchActivities}
                     />
                   ),
                 },
