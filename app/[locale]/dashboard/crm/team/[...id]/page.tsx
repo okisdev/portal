@@ -91,11 +91,33 @@ export default function TeamIdPage() {
   const { data: participantOptions } = api.calendar.getParticipantOptions.useQuery(undefined, {
     enabled: isNewMeetingModalOpen,
   });
-  const { data: teamActivities } = api.team.getTeamActivities.useQuery({
+  const { data: teamActivities, refetch: refetchTeamActivities } = api.team.getTeamActivities.useQuery({
     id: teamId[0],
   });
   const { data: companies } = api.company.getAllCompanies.useQuery();
   const { data: statuses } = api.site.getStatus.useQuery();
+
+  const replyNote = api.team.activity.replyNote.useMutation({
+    onSuccess: () => {
+      toast.success(t('note_replied'));
+      refetchTeamActivities();
+    },
+  });
+
+  const deleteNote = api.team.activity.deleteNote.useMutation({
+    onSuccess: () => {
+      toast.success(t('note_deleted'));
+      refetchTeamActivities();
+    },
+  });
+
+  const updateNote = api.team.activity.updateNote.useMutation({
+    onSuccess: () => {
+      toast.success(t('note_updated'));
+
+      refetchTeamActivities();
+    },
+  });
 
   const updateTeam = api.team.updateTeam.useMutation({
     onSuccess: () => {
@@ -463,6 +485,9 @@ export default function TeamIdPage() {
                             });
                           }}
                           isLoading={createTeamActivity.isPending}
+                          onDeleteNote={(id) => deleteNote.mutate({ id })}
+                          onUpdateNote={(id, description) => updateNote.mutate({ id, description })}
+                          onReplyNote={(id, description) => replyNote.mutate({ id, description })}
                         />
                       ),
                     },

@@ -215,6 +215,8 @@
   "delete_event_description": "确认删除此事件？",
   "delete_meeting": "删除会议",
   "delete_meeting_description": "您确定要删除此会议吗？此操作无法撤销。",
+  "delete_note": "删除注释",
+  "delete_note_confirmation": "您确定要删除此注释吗？",
   "delete_selected": "删除选择",
   "delete_selected_contacts": "删除选定的联系人",
   "delete_selected_contacts_description": "您确定要删除 {count} 个选定的联系人吗？",
@@ -242,6 +244,8 @@
   "edit_company_description": "编辑此公司",
   "edit_contact_information": "编辑联系人信息",
   "edit_event": "编辑活动",
+  "edit_note": "编辑注释",
+  "edit_note_confirmation": "您确定要编辑此注释吗？",
   "edit_priority": "编辑优先级",
   "edit_source": "编辑来源",
   "edit_status": "编辑状态",
@@ -392,6 +396,8 @@
   "not_equals": "不等于",
   "note": "笔记",
   "note_added_successfully": "备注添加成功",
+  "note_deleted": "注意已删除",
+  "note_updated": "注意已更新",
   "notification_message_mentioned": "{user} 在注释中提到了您。",
   "notifications": "通知",
   "notifications_description": "查看和管理您的通知",
@@ -645,5 +651,6 @@
   "welcome_description": "欢迎访问您的仪表板",
   "workspace": "工作区",
   "write_a_reply": "写回复... 使用 @ 提及某人",
-  "you": "你"
+  "you": "你",
+  "note_replied": "注意回答"
 }

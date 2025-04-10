@@ -215,6 +215,8 @@
   "delete_event_description": "Confirm to delete this event?",
   "delete_meeting": "Delete Meeting",
   "delete_meeting_description": "Are you sure you want to delete this meeting? This action cannot be undone.",
+  "delete_note": "Delete Note",
+  "delete_note_confirmation": "Are you sure you want to delete this note?",
   "delete_selected": "Delete Selected",
   "delete_selected_contacts": "Delete Selected Contacts",
   "delete_selected_contacts_description": "Are you sure you want to delete {count} selected contacts?",
@@ -242,6 +244,8 @@
   "edit_company_description": "Edit this company",
   "edit_contact_information": "Edit Contact Information",
   "edit_event": "Edit Event",
+  "edit_note": "Edit Note",
+  "edit_note_confirmation": "Are you sure you want to edit this note?",
   "edit_priority": "Edit Priority",
   "edit_source": "Edit Source",
   "edit_status": "Edit Status",
@@ -392,6 +396,8 @@
   "not_equals": "Not equals",
   "note": "Note",
   "note_added_successfully": "Note added successfully",
+  "note_deleted": "Note Deleted",
+  "note_updated": "Note Updated",
   "notification_message_mentioned": "{user} mentioned you in a note.",
   "notifications": "Notifications",
   "notifications_description": "View and manage your notifications",
@@ -645,5 +651,6 @@
   "welcome_description": "Welcome to your dashboard",
   "workspace": "Workspace",
   "write_a_reply": "Write a reply... Use @ to mention someone",
-  "you": "You"
+  "you": "You",
+  "note_replied": "Note Replied"
 }

@@ -52,7 +52,7 @@ export default function ContactIdPage() {
   const { data: allTeams } = api.team.getAllTeams.useQuery();
   const { data: calendarFolders } = api.calendar.getMyFolders.useQuery();
   const { data: companies } = api.company.getAllCompanies.useQuery();
-  const { data: activities } = api.contact.getContactActivities.useQuery({
+  const { data: activities, refetch: refetchActivities } = api.contact.getContactActivities.useQuery({
     id: contactId[0],
   });
   const { data: statuses } = api.site.getStatus.useQuery();
@@ -86,6 +86,27 @@ export default function ContactIdPage() {
   const [nextFollowUpDate, setNextFollowUpDate] = useState<Date | null>(contact?.nextFollowUpAt ? new Date(contact.nextFollowUpAt) : null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [contactToDelete, setContactToDelete] = useState<string | null>(null);
+
+  const replyNote = api.contact.activity.replyNote.useMutation({
+    onSuccess: () => {
+      toast.success(t('note_replied'));
+      refetchActivities();
+    },
+  });
+
+  const deleteNote = api.contact.activity.deleteNote.useMutation({
+    onSuccess: () => {
+      toast.success(t('note_deleted'));
+      refetchActivities();
+    },
+  });
+
+  const updateNote = api.contact.activity.updateNote.useMutation({
+    onSuccess: () => {
+      toast.success(t('note_updated'));
+      refetchActivities();
+    },
+  });
 
   const assignToTeam = api.team.assignContactToTeam.useMutation({
     onSuccess: () => {
@@ -673,6 +694,9 @@ export default function ContactIdPage() {
                       }}
                       isLoading={createContactActivity.isPending}
                       filterTypes={['NOTE_ADDED']}
+                      onDeleteNote={(id) => deleteNote.mutate({ id })}
+                      onUpdateNote={(id, description) => updateNote.mutate({ id, description })}
+                      onReplyNote={(id, description) => replyNote.mutate({ id, description, contactId: contactId[0] })}
                     />
                   ),
                 },
@@ -702,6 +726,9 @@ export default function ContactIdPage() {
                         });
                       }}
                       isLoading={createContactActivity.isPending}
+                      onDeleteNote={(id) => deleteNote.mutate({ id })}
+                      onUpdateNote={(id, description) => updateNote.mutate({ id, description })}
+                      onReplyNote={(id, description) => replyNote.mutate({ id, description, contactId: contactId[0] })}
                     />
                   ),
                 },

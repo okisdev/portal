@@ -1,5 +1,6 @@
 'use client';
 
+import { ActionAlertDialog } from '@/components/shared/action-alert-dialog';
 import { AttachmentPreview } from '@/components/shared/attchment-preview';
 import { ComboboxCommand } from '@/components/shared/combobox';
 import { MetadataPopover } from '@/components/shared/metadata-popover';
@@ -18,7 +19,7 @@ import { dateLocaleMap, formatDate } from '@/utils/date';
 import { api } from '@/utils/trpc/client';
 import { format } from 'date-fns';
 import { enUS } from 'date-fns/locale';
-import { ArrowUpRight, FileIcon, ImageIcon, Paperclip, X } from 'lucide-react';
+import { ArrowUpRight, Edit2, FileIcon, ImageIcon, MessageCircle, Paperclip, Trash, X } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import { useTranslations } from 'next-intl';
 import { useLocale } from 'next-intl';
@@ -37,15 +38,21 @@ interface ActivitySectionProps {
   }) => void;
   isLoading?: boolean;
   filterTypes?: ActivitySubType[];
+  onDeleteNote: (id: string) => void;
+  onUpdateNote: (id: string, description: string) => void;
+  onReplyNote: (id: string, description: string) => void;
 }
 
-export function ActivitySection({ activities, onCreateActivity, isLoading, filterTypes }: ActivitySectionProps) {
+export function ActivitySection({ activities, onCreateActivity, isLoading, filterTypes, onDeleteNote, onUpdateNote, onReplyNote }: ActivitySectionProps) {
   const t = useTranslations();
   const locale = useLocale() as Locale;
   const { data: session } = useSession();
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isComposing, setIsComposing] = useState(false);
+  const [deleteNoteId, setDeleteNoteId] = useState<string | null>(null);
+  const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
+  const [editText, setEditText] = useState('');
 
   const [newActivity, setNewActivity] = useState('');
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
@@ -98,9 +105,15 @@ export function ActivitySection({ activities, onCreateActivity, isLoading, filte
     );
   };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>, isReply = false) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>, isReply = false, isEdit = false) => {
     const value = e.target.value;
-    isReply ? setReplyText(value) : setNewActivity(value);
+    if (isEdit) {
+      setEditText(value);
+    } else if (isReply) {
+      setReplyText(value);
+    } else {
+      setNewActivity(value);
+    }
 
     const cursorPos = e.target.selectionStart || 0;
     setCursorPosition(cursorPos);
@@ -125,13 +138,21 @@ export function ActivitySection({ activities, onCreateActivity, isLoading, filte
   };
 
   const handleMention = useCallback(
-    (username: string, isReply = false) => {
-      const currentValue = isReply ? replyText : newActivity;
+    (username: string, isReply = false, isEdit = false) => {
+      const currentValue = isEdit ? editText : isReply ? replyText : newActivity;
       const beforeMention = currentValue.slice(0, currentValue.lastIndexOf('@'));
       const afterMention = currentValue.slice(cursorPosition);
       const newValue = `${beforeMention}@${username} ${afterMention}`;
 
-      if (isReply) {
+      if (isEdit) {
+        setEditText(newValue);
+        const editInput = document.getElementById('editInput') as HTMLInputElement;
+        if (editInput) {
+          editInput.focus();
+          const newCursorPos = beforeMention.length + username.length + 2;
+          editInput.setSelectionRange(newCursorPos, newCursorPos);
+        }
+      } else if (isReply) {
         setReplyText(newValue);
         const replyInput = document.getElementById('replyInput') as HTMLInputElement;
         if (replyInput) {
@@ -150,7 +171,7 @@ export function ActivitySection({ activities, onCreateActivity, isLoading, filte
 
       setShowMentions(false);
     },
-    [newActivity, replyText, cursorPosition]
+    [newActivity, replyText, editText, cursorPosition]
   );
 
   const handleSubmitActivity = (e: React.FormEvent) => {
@@ -176,15 +197,7 @@ export function ActivitySection({ activities, onCreateActivity, isLoading, filte
 
     if (!replyText.trim() || !replyingTo) return;
 
-    onCreateActivity({
-      type: 'ENGAGEMENT',
-      subType: 'NOTE_ADDED',
-      description: replyText,
-      initiatorType: 'user',
-      initiatorId: session?.user.id || '',
-      metadata: JSON.stringify({ replyTo: replyingTo }),
-      attachments: attachments.length > 0 ? attachments : undefined,
-    });
+    onReplyNote(replyingTo, replyText);
 
     setReplyText('');
     setReplyingTo(null);
@@ -199,22 +212,35 @@ export function ActivitySection({ activities, onCreateActivity, isLoading, filte
     }
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>, isReply = false) => {
+  const handleEditSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!editText.trim() || !editingNoteId) return;
+
+    onUpdateNote(editingNoteId, editText);
+
+    setEditingNoteId(null);
+    setEditText('');
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>, isReply = false, isEdit = false) => {
     if (e.key === 'Enter') {
       if (e.shiftKey || isComposing) {
-        // Allow Shift+Enter for new line or when using IME
+        // Allow Shift+Enter for new line or when using IME (like Chinese input)
         return;
       }
 
       e.preventDefault();
-      if (isReply) {
+      if (isEdit) {
+        if (editText.trim() && editingNoteId) {
+          handleEditSubmit(e);
+        }
+      } else if (isReply) {
         if (replyText.trim() && replyingTo) {
           handleReplySubmit(e);
         }
-      } else {
-        if (newActivity.trim()) {
-          handleSubmitActivity(e);
-        }
+      } else if (newActivity.trim()) {
+        handleSubmitActivity(e);
       }
     }
 
@@ -298,6 +324,21 @@ export function ActivitySection({ activities, onCreateActivity, isLoading, filte
     }
   };
 
+  const handleDeleteNote = (id: string) => {
+    setDeleteNoteId(id);
+  };
+
+  const confirmDeleteNote = () => {
+    if (deleteNoteId) {
+      onDeleteNote(deleteNoteId);
+    }
+  };
+
+  const handleEditNote = (id: string, description: string) => {
+    setEditingNoteId(id);
+    setEditText(description);
+  };
+
   return (
     <div className='flex h-full flex-col'>
       <div id='activities-container' className='flex-1 overflow-y-auto'>
@@ -367,8 +408,33 @@ export function ActivitySection({ activities, onCreateActivity, isLoading, filte
                           </MetadataPopover>
                         )}
                         {activity.type === 'ENGAGEMENT' && activity.subType === 'NOTE_ADDED' && (
-                          <button type='button' onClick={() => setReplyingTo(activity.id)} className='rounded-md bg-muted/50 px-1 py-0.5 text-muted-foreground text-xs hover:bg-muted'>
+                          <button
+                            type='button'
+                            onClick={() => setReplyingTo(activity.id)}
+                            className='flex cursor-pointer items-center gap-1 rounded bg-muted/50 px-1 py-0.5 text-muted-foreground text-xs transition-colors hover:bg-foreground/10 hover:text-foreground'
+                          >
+                            <MessageCircle className='size-3' />
                             {t('reply')}
+                          </button>
+                        )}
+                        {activity.type === 'ENGAGEMENT' && activity.subType === 'NOTE_ADDED' && (
+                          <button
+                            type='button'
+                            onClick={() => handleEditNote(activity.id, activity.description)}
+                            className='flex cursor-pointer items-center gap-1 rounded bg-muted/50 px-1 py-0.5 text-muted-foreground text-xs transition-colors hover:bg-foreground/10 hover:text-foreground'
+                          >
+                            <Edit2 className='size-3' />
+                            {t('edit')}
+                          </button>
+                        )}
+                        {activity.type === 'ENGAGEMENT' && activity.subType === 'NOTE_ADDED' && (
+                          <button
+                            type='button'
+                            onClick={() => handleDeleteNote(activity.id)}
+                            className='flex cursor-pointer items-center gap-1 rounded bg-muted/50 px-1 py-0.5 text-muted-foreground text-xs transition-colors hover:bg-foreground/10 hover:text-foreground'
+                          >
+                            <Trash className='size-3' />
+                            {t('delete')}
                           </button>
                         )}
                       </div>
@@ -377,6 +443,57 @@ export function ActivitySection({ activities, onCreateActivity, isLoading, filte
                       {renderDescription(activity, t, locale)}
                       {renderAttachments(activity.metadata ?? null)}
                     </div>
+                    {editingNoteId === activity.id && (
+                      <form onSubmit={handleEditSubmit} className='mt-2 flex items-start gap-2'>
+                        <div className='relative flex-1'>
+                          <Popover open={showMentions}>
+                            <PopoverTrigger asChild>
+                              <div className='relative w-full'>
+                                <Textarea
+                                  id='editInput'
+                                  value={editText}
+                                  onChange={(e) => handleInputChange(e, false, true)}
+                                  onKeyDown={(e) => handleKeyDown(e, false, true)}
+                                  placeholder={t('edit_note')}
+                                  className='min-h-[60px] resize-none'
+                                />
+                              </div>
+                            </PopoverTrigger>
+                            <PopoverContent className='w-64 p-0' align='start'>
+                              <ComboboxCommand
+                                query={mentionSearch}
+                                setQuery={setMentionSearch}
+                                value=''
+                                onChange={(username) => handleMention(username, false, true)}
+                                setOpen={setShowMentions}
+                                items={userMentionItems}
+                                searchPlaceholder={t('search_users')}
+                                emptyText={t('no_users_found')}
+                                groupHeading={t('users')}
+                                allowCustom={false}
+                                renderItem={renderMentionItem}
+                              />
+                            </PopoverContent>
+                          </Popover>
+                        </div>
+                        <div className='flex gap-1'>
+                          <Button type='submit' size='sm' disabled={isLoading}>
+                            {t('save')}
+                          </Button>
+                          <Button
+                            type='button'
+                            size='sm'
+                            variant='outline'
+                            onClick={() => {
+                              setEditingNoteId(null);
+                              setEditText('');
+                            }}
+                          >
+                            {t('cancel')}
+                          </Button>
+                        </div>
+                      </form>
+                    )}
                     {replyingTo === activity.id && (
                       <form onSubmit={handleReplySubmit} className='mt-2 flex items-start gap-2'>
                         <div className='relative flex-1'>
@@ -461,10 +578,9 @@ export function ActivitySection({ activities, onCreateActivity, isLoading, filte
                     placeholder={t('add_a_note')}
                     className='min-h-[60px] resize-none pr-24'
                   />
-                  {uploadProgress && <div className='absolute bottom-2 left-2 text-xs text-muted-foreground'>{uploadProgress}</div>}
+                  {uploadProgress && <div className='absolute bottom-2 left-2 text-muted-foreground text-xs'>{uploadProgress}</div>}
 
-                  {/* Action buttons */}
-                  <div className='absolute right-2 top-2 flex items-center gap-1'>
+                  <div className='absolute top-2 right-2 flex items-center gap-1'>
                     <input type='file' ref={fileInputRef} onChange={handleFileUpload} className='hidden' accept='image/*,video/*,audio/*,.pdf,.doc,.docx,.xls,.xlsx,.txt' />
                     <Button type='button' size='icon' variant='ghost' onClick={() => fileInputRef.current?.click()} disabled={isUploading} className='h-8 w-8' title={t('attach_file')}>
                       <Paperclip className='h-4 w-4' />
@@ -492,7 +608,6 @@ export function ActivitySection({ activities, onCreateActivity, isLoading, filte
               </PopoverContent>
             </Popover>
 
-            {/* Attachments preview */}
             {attachments.length > 0 && (
               <div className='mt-2 flex flex-wrap gap-1'>
                 {attachments.map((attachment, index) => (
@@ -511,6 +626,16 @@ export function ActivitySection({ activities, onCreateActivity, isLoading, filte
           </div>
         </form>
       </div>
+
+      <ActionAlertDialog
+        open={!!deleteNoteId}
+        onOpenChange={(open) => !open && setDeleteNoteId(null)}
+        onConfirm={confirmDeleteNote}
+        title={t('delete_note')}
+        description={t('delete_note_confirmation')}
+        cancelText={t('cancel')}
+        confirmText={t('delete')}
+      />
     </div>
   );
 }

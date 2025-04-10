@@ -20,7 +20,10 @@ export function MetadataPopover({ title, withTitle = true, trigger, children, cl
     <Popover>
       <PopoverTrigger asChild>
         {trigger || (
-          <button type='button' className='flex items-center rounded-md bg-muted/50 px-1 py-0.5 text-muted-foreground text-xs hover:bg-muted'>
+          <button
+            type='button'
+            className='flex cursor-pointer items-center rounded bg-muted/50 px-1 py-0.5 text-muted-foreground text-xs transition-colors hover:bg-foreground/10 hover:text-foreground'
+          >
             <Info className='mr-1 inline-block size-3' />
             <span>{withTitle ? title : t('view_details')}</span>
           </button>
