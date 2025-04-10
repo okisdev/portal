@@ -1,6 +1,7 @@
 import { contact, contactActivity, team, teamContact, user, userNotifications } from '@/drizzle/schema';
 import { activitySubTypeSchema, activityTypeSchema } from '@/lib/schema';
 import { createContactActivityHelper } from '@/server/helper/contact';
+import { activityRouter } from '@/server/routers/contact/activity';
 import { createTRPCRouter, protectedProcedure } from '@/server/trpc';
 import { sendEmail } from '@/utils/email';
 import { stringifyPhone } from '@/utils/phone';
@@ -10,6 +11,8 @@ import { asc, count, desc, eq, inArray, sql } from 'drizzle-orm';
 import { z } from 'zod';
 
 export const contactRouter = createTRPCRouter({
+  activity: activityRouter,
+
   getAllContacts: protectedProcedure.query(({ ctx }) => {
     return ctx.db.select().from(contact).orderBy(desc(contact.createdAt));
   }),

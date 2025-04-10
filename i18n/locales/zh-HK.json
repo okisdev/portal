@@ -645,5 +645,8 @@
   "welcome_description": "歡迎訪問您的儀表板",
   "workspace": "工作區",
   "write_a_reply": "寫回復... 使用 @ 提及某人",
-  "you": "你"
+  "you": "你",
+  "note_deleted": "注意已刪除",
+  "delete_note": "刪除註釋",
+  "delete_note_confirmation": "您確定要刪除此註釋嗎？"
 }

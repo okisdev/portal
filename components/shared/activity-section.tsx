@@ -1,5 +1,6 @@
 'use client';
 
+import { ActionAlertDialog } from '@/components/shared/action-alert-dialog';
 import { AttachmentPreview } from '@/components/shared/attchment-preview';
 import { ComboboxCommand } from '@/components/shared/combobox';
 import { MetadataPopover } from '@/components/shared/metadata-popover';
@@ -18,11 +19,12 @@ import { dateLocaleMap, formatDate } from '@/utils/date';
 import { api } from '@/utils/trpc/client';
 import { format } from 'date-fns';
 import { enUS } from 'date-fns/locale';
-import { ArrowUpRight, FileIcon, ImageIcon, Paperclip, X } from 'lucide-react';
+import { ArrowUpRight, FileIcon, ImageIcon, MessageCircle, Paperclip, Trash, X } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import { useTranslations } from 'next-intl';
 import { useLocale } from 'next-intl';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { toast } from 'sonner';
 
 interface ActivitySectionProps {
   activities?: Activity[];
@@ -46,6 +48,7 @@ export function ActivitySection({ activities, onCreateActivity, isLoading, filte
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isComposing, setIsComposing] = useState(false);
+  const [deleteNoteId, setDeleteNoteId] = useState<string | null>(null);
 
   const [newActivity, setNewActivity] = useState('');
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
@@ -58,6 +61,13 @@ export function ActivitySection({ activities, onCreateActivity, isLoading, filte
   const [uploadProgress, setUploadProgress] = useState<string | null>(null);
 
   const { data: users } = api.user.getAllUsers.useQuery();
+
+  const deleteNote = api.contact.activity.deleteNote.useMutation({
+    onSuccess: () => {
+      toast.success(t('note_deleted'));
+      setDeleteNoteId(null);
+    },
+  });
 
   const userMentionData =
     users?.map((user) => ({
@@ -202,7 +212,7 @@ export function ActivitySection({ activities, onCreateActivity, isLoading, filte
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>, isReply = false) => {
     if (e.key === 'Enter') {
       if (e.shiftKey || isComposing) {
-        // Allow Shift+Enter for new line or when using IME
+        // Allow Shift+Enter for new line or when using IME (like Chinese input)
         return;
       }
 
@@ -298,6 +308,16 @@ export function ActivitySection({ activities, onCreateActivity, isLoading, filte
     }
   };
 
+  const handleDeleteNote = (id: string) => {
+    setDeleteNoteId(id);
+  };
+
+  const confirmDeleteNote = () => {
+    if (deleteNoteId) {
+      deleteNote.mutate({ id: deleteNoteId });
+    }
+  };
+
   return (
     <div className='flex h-full flex-col'>
       <div id='activities-container' className='flex-1 overflow-y-auto'>
@@ -367,8 +387,23 @@ export function ActivitySection({ activities, onCreateActivity, isLoading, filte
                           </MetadataPopover>
                         )}
                         {activity.type === 'ENGAGEMENT' && activity.subType === 'NOTE_ADDED' && (
-                          <button type='button' onClick={() => setReplyingTo(activity.id)} className='rounded-md bg-muted/50 px-1 py-0.5 text-muted-foreground text-xs hover:bg-muted'>
+                          <button
+                            type='button'
+                            onClick={() => setReplyingTo(activity.id)}
+                            className='flex cursor-pointer items-center gap-1 rounded bg-muted/50 px-1 py-0.5 text-muted-foreground text-xs transition-colors hover:bg-foreground/10 hover:text-foreground'
+                          >
+                            <MessageCircle className='size-3' />
                             {t('reply')}
+                          </button>
+                        )}
+                        {activity.type === 'ENGAGEMENT' && activity.subType === 'NOTE_ADDED' && (
+                          <button
+                            type='button'
+                            onClick={() => handleDeleteNote(activity.id)}
+                            className='flex cursor-pointer items-center gap-1 rounded bg-muted/50 px-1 py-0.5 text-muted-foreground text-xs transition-colors hover:bg-foreground/10 hover:text-foreground'
+                          >
+                            <Trash className='size-3' />
+                            {t('delete')}
                           </button>
                         )}
                       </div>
@@ -461,10 +496,9 @@ export function ActivitySection({ activities, onCreateActivity, isLoading, filte
                     placeholder={t('add_a_note')}
                     className='min-h-[60px] resize-none pr-24'
                   />
-                  {uploadProgress && <div className='absolute bottom-2 left-2 text-xs text-muted-foreground'>{uploadProgress}</div>}
+                  {uploadProgress && <div className='absolute bottom-2 left-2 text-muted-foreground text-xs'>{uploadProgress}</div>}
 
-                  {/* Action buttons */}
-                  <div className='absolute right-2 top-2 flex items-center gap-1'>
+                  <div className='absolute top-2 right-2 flex items-center gap-1'>
                     <input type='file' ref={fileInputRef} onChange={handleFileUpload} className='hidden' accept='image/*,video/*,audio/*,.pdf,.doc,.docx,.xls,.xlsx,.txt' />
                     <Button type='button' size='icon' variant='ghost' onClick={() => fileInputRef.current?.click()} disabled={isUploading} className='h-8 w-8' title={t('attach_file')}>
                       <Paperclip className='h-4 w-4' />
@@ -511,6 +545,16 @@ export function ActivitySection({ activities, onCreateActivity, isLoading, filte
           </div>
         </form>
       </div>
+
+      <ActionAlertDialog
+        open={!!deleteNoteId}
+        onOpenChange={(open) => !open && setDeleteNoteId(null)}
+        onConfirm={confirmDeleteNote}
+        title={t('delete_note')}
+        description={t('delete_note_confirmation')}
+        cancelText={t('cancel')}
+        confirmText={t('delete')}
+      />
     </div>
   );
 }

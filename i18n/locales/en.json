@@ -645,5 +645,8 @@
   "welcome_description": "Welcome to your dashboard",
   "workspace": "Workspace",
   "write_a_reply": "Write a reply... Use @ to mention someone",
-  "you": "You"
+  "you": "You",
+  "note_deleted": "Note Deleted",
+  "delete_note": "Delete Note",
+  "delete_note_confirmation": "Are you sure you want to delete this note?"
 }
