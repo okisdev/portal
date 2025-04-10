@@ -17,4 +17,30 @@ export const activityRouter = createTRPCRouter({
       success: true,
     };
   }),
+
+  updateNote: protectedProcedure
+    .input(
+      z.object({
+        id: z.string(),
+        description: z.string(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const note = await ctx.db.select().from(contactActivity).where(eq(contactActivity.id, input.id));
+      if (!note || note.length === 0) {
+        throw new TRPCError({ code: 'NOT_FOUND', message: 'Note not found' });
+      }
+
+      await ctx.db
+        .update(contactActivity)
+        .set({
+          description: input.description,
+          updatedAt: new Date(),
+        })
+        .where(eq(contactActivity.id, input.id));
+
+      return {
+        success: true,
+      };
+    }),
 });

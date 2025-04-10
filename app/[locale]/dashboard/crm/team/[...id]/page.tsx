@@ -462,6 +462,7 @@ export default function TeamIdPage() {
                               metadata: { ...(data.metadata as any), attachments: data.attachments },
                             });
                           }}
+                          refetch={() => utils.team.getTeamActivities.invalidate({ id: teamId[0] })}
                           isLoading={createTeamActivity.isPending}
                         />
                       ),

@@ -673,6 +673,7 @@ export default function ContactIdPage() {
                       }}
                       isLoading={createContactActivity.isPending}
                       filterTypes={['NOTE_ADDED']}
+                      refetch={() => utils.contact.activity.invalidate()}
                     />
                   ),
                 },
@@ -702,6 +703,7 @@ export default function ContactIdPage() {
                         });
                       }}
                       isLoading={createContactActivity.isPending}
+                      refetch={() => utils.contact.activity.invalidate()}
                     />
                   ),
                 },
