@@ -10,7 +10,7 @@ import { signIn } from 'next-auth/react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
@@ -51,6 +51,12 @@ export default function LoginPage() {
 
   const { data: isValidDomain } = api.auth.validateEmailDomain.useQuery({ email: email || '' }, { enabled: shouldValidate && !!email && email.includes('@') });
 
+  useEffect(() => {
+    if (email?.includes('@')) {
+      setShouldValidate(true);
+    }
+  }, [email]);
+
   const handleEmailBlur = () => {
     if (email?.includes('@')) {
       setShouldValidate(true);
@@ -58,7 +64,7 @@ export default function LoginPage() {
   };
 
   const onSubmit = async (data: LoginFormValues) => {
-    if (!isValidDomain) {
+    if (shouldValidate && isValidDomain === false) {
       setError(t('login_not_allowed_support_only'));
       toast.error(t('login_not_allowed_support_only'));
       return;
