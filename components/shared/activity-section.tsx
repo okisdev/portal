@@ -24,7 +24,6 @@ import { useSession } from 'next-auth/react';
 import { useTranslations } from 'next-intl';
 import { useLocale } from 'next-intl';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { toast } from 'sonner';
 
 interface ActivitySectionProps {
   activities?: Activity[];
@@ -39,10 +38,11 @@ interface ActivitySectionProps {
   }) => void;
   isLoading?: boolean;
   filterTypes?: ActivitySubType[];
-  refetchActivities: () => void;
+  onDeleteNote: (id: string) => void;
+  onUpdateNote: (id: string, description: string) => void;
 }
 
-export function ActivitySection({ activities, onCreateActivity, isLoading, filterTypes, refetchActivities }: ActivitySectionProps) {
+export function ActivitySection({ activities, onCreateActivity, isLoading, filterTypes, onDeleteNote, onUpdateNote }: ActivitySectionProps) {
   const t = useTranslations();
   const locale = useLocale() as Locale;
   const { data: session } = useSession();
@@ -64,23 +64,6 @@ export function ActivitySection({ activities, onCreateActivity, isLoading, filte
   const [uploadProgress, setUploadProgress] = useState<string | null>(null);
 
   const { data: users } = api.user.getAllUsers.useQuery();
-
-  const deleteNote = api.contact.activity.deleteNote.useMutation({
-    onSuccess: () => {
-      toast.success(t('note_deleted'));
-      setDeleteNoteId(null);
-      refetchActivities();
-    },
-  });
-
-  const updateNote = api.contact.activity.updateNote.useMutation({
-    onSuccess: () => {
-      toast.success(t('note_updated'));
-      setEditingNoteId(null);
-      setEditText('');
-      refetchActivities();
-    },
-  });
 
   const userMentionData =
     users?.map((user) => ({
@@ -241,10 +224,7 @@ export function ActivitySection({ activities, onCreateActivity, isLoading, filte
 
     if (!editText.trim() || !editingNoteId) return;
 
-    updateNote.mutate({
-      id: editingNoteId,
-      description: editText,
-    });
+    onUpdateNote(editingNoteId, editText);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>, isReply = false, isEdit = false) => {
@@ -356,7 +336,7 @@ export function ActivitySection({ activities, onCreateActivity, isLoading, filte
 
   const confirmDeleteNote = () => {
     if (deleteNoteId) {
-      deleteNote.mutate({ id: deleteNoteId });
+      onDeleteNote(deleteNoteId);
     }
   };
 

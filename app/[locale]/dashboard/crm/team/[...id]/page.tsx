@@ -97,6 +97,21 @@ export default function TeamIdPage() {
   const { data: companies } = api.company.getAllCompanies.useQuery();
   const { data: statuses } = api.site.getStatus.useQuery();
 
+  const deleteNote = api.team.activity.deleteNote.useMutation({
+    onSuccess: () => {
+      toast.success(t('note_deleted'));
+      refetchTeamActivities();
+    },
+  });
+
+  const updateNote = api.team.activity.updateNote.useMutation({
+    onSuccess: () => {
+      toast.success(t('note_updated'));
+
+      refetchTeamActivities();
+    },
+  });
+
   const updateTeam = api.team.updateTeam.useMutation({
     onSuccess: () => {
       router.push(`/dashboard/crm/team/${teamId[0]}`);
@@ -463,7 +478,8 @@ export default function TeamIdPage() {
                             });
                           }}
                           isLoading={createTeamActivity.isPending}
-                          refetchActivities={refetchTeamActivities}
+                          onDeleteNote={(id) => deleteNote.mutate({ id })}
+                          onUpdateNote={(id, description) => updateNote.mutate({ id, description })}
                         />
                       ),
                     },
