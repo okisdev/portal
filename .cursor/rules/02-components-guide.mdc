@@ -1,0 +1,30 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# Components Guide
+
+The components directory contains reusable UI components organized by functionality:
+
+## UI Components
+- `components/ui/`: Contains base UI components like buttons, inputs, and cards
+- `components/layout/`: Layout-related components like headers, footers, and navigation
+- `components/forms/`: Form-related components and form building blocks
+
+## Best Practices
+1. Keep components small and focused on a single responsibility
+2. Use TypeScript for type safety
+3. Follow the component naming convention: PascalCase for component files
+4. Place component-specific types in the same directory as the component
+
+## Component Usage
+Components can be imported from their respective directories:
+
+```typescript
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+```
+
+## Shadcn UI Integration
+This project uses shadcn/ui components, configured in [components.json](mdc:components.json). New components should follow the same styling patterns and conventions.
