@@ -448,7 +448,7 @@ export default function CRMContactsTablePage() {
 
       <div className='flex flex-col gap-4'>
         <div className='flex items-center justify-between'>
-          <div className='flex flex-row gap-2'>
+          <div className='flex flex-row gap-4'>
             <Input
               placeholder={t('search_contacts')}
               value={search}
@@ -507,7 +507,7 @@ export default function CRMContactsTablePage() {
             )}
           </div>
 
-          <div className='flex flex-row gap-2'>
+          <div className='flex flex-row gap-4'>
             {table.getFilteredSelectedRowModel().rows.length > 0 && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>

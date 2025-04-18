@@ -229,7 +229,7 @@ export default function CRMContactsKanbanPage() {
     if (!over) return;
 
     const activeColumn = columns.find((col) => col.items.some((item) => item.id === active.id));
-    const overColumn = columns.find((col) => col.items.some((item) => item.id === over.id));
+    const overColumn = columns.find((col) => col.id === over.id);
 
     if (!activeColumn || !overColumn) return;
 
@@ -237,7 +237,7 @@ export default function CRMContactsKanbanPage() {
     const overItems = overColumn.items;
 
     const activeIndex = activeItems.findIndex((item) => item.id === active.id);
-    const overIndex = overItems.findIndex((item) => item.id === over.id);
+    const overIndex = overItems.length; // Place at the end of the target column
 
     if (activeColumn.id === overColumn.id) {
       const newItems = arrayMove(activeItems, activeIndex, overIndex);
