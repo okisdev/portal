@@ -652,5 +652,9 @@
   "workspace": "Workspace",
   "write_a_reply": "Write a reply... Use @ to mention someone",
   "you": "You",
-  "note_replied": "Note Replied"
+  "note_replied": "Note Replied",
+  "kanban": "Kanban",
+  "table": "Table",
+  "show_empty_columns": "Show empty columns",
+  "group_by": "Group By"
 }

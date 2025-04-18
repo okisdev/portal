@@ -652,5 +652,9 @@
   "workspace": "工作區",
   "write_a_reply": "寫回復... 使用 @ 提及某人",
   "you": "你",
-  "note_replied": "注意回答"
+  "note_replied": "注意回答",
+  "kanban": "看板",
+  "table": "桌子",
+  "show_empty_columns": "顯示空列",
+  "group_by": "組"
 }

@@ -40,7 +40,7 @@ import { usePathname } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
-export default function CRMContactsPage() {
+export default function CRMContactsTablePage() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();

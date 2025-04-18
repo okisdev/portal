@@ -16,13 +16,14 @@ import {
   SidebarMenuAction,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarMenuSub,
 } from '@/components/ui/sidebar';
 import { Skeleton } from '@/components/ui/skeleton';
 import { usePathname, useRouter } from '@/i18n/navigation';
 import packageInfo from '@/package.json';
 import { copyToClipboard } from '@/utils/clipboard';
 import { api } from '@/utils/trpc/client';
-import { Building, Contact, QrCode, Users } from 'lucide-react';
+import { Building, Contact, Kanban, QrCode, Table, Users } from 'lucide-react';
 import { Bell, Calendar, ChevronDown, ChevronRight, ChevronUp, Globe, Laptop, LogOut, Moon, Plus, Settings, Sparkle, Sun, Verified } from 'lucide-react';
 import { signOut } from 'next-auth/react';
 import { useLocale, useTranslations } from 'next-intl';
@@ -36,9 +37,15 @@ type SidebarGroupSectionProps = {
   items: Array<{
     id: string;
     title: string;
-    url: string;
+    url?: string;
     icon: React.ComponentType;
     action?: React.ReactNode;
+    items?: Array<{
+      id: string;
+      title: string;
+      url: string;
+      icon: React.ComponentType;
+    }>;
   }>;
   defaultOpen?: boolean;
 };
@@ -98,7 +105,6 @@ export function DashboardSidebar() {
             {
               id: 'contacts',
               title: t('contacts'),
-              url: '/dashboard/crm/contacts',
               icon: Contact,
               action: (
                 <Link href='/dashboard/crm/contacts/new'>
@@ -106,6 +112,20 @@ export function DashboardSidebar() {
                   <span className='sr-only'>{t('add_contact')}</span>
                 </Link>
               ),
+              items: [
+                {
+                  id: 'table',
+                  title: t('table'),
+                  url: '/dashboard/crm/contacts',
+                  icon: Table,
+                },
+                {
+                  id: 'kanban',
+                  title: t('kanban'),
+                  url: '/dashboard/crm/contacts/kanban',
+                  icon: Kanban,
+                },
+              ],
             },
             {
               id: 'teams',
@@ -319,12 +339,26 @@ function SidebarGroupSection({ title, items, defaultOpen = true }: SidebarGroupS
               {items.map((item) => (
                 <SidebarMenuItem key={item.id}>
                   <SidebarMenuButton tooltip={item.title} asChild>
-                    <Link href={item.url}>
+                    <Link href={item.url ?? ''}>
                       <item.icon />
                       <span>{item.title}</span>
                     </Link>
                   </SidebarMenuButton>
                   {item.action && <SidebarMenuAction asChild>{item.action}</SidebarMenuAction>}
+                  {item.items && (
+                    <SidebarMenuSub>
+                      {item.items.map((subItem) => (
+                        <SidebarMenuItem key={subItem.id}>
+                          <SidebarMenuButton tooltip={subItem.title} asChild>
+                            <Link href={subItem.url}>
+                              <subItem.icon />
+                              <span>{subItem.title}</span>
+                            </Link>
+                          </SidebarMenuButton>
+                        </SidebarMenuItem>
+                      ))}
+                    </SidebarMenuSub>
+                  )}
                 </SidebarMenuItem>
               ))}
             </SidebarMenu>
