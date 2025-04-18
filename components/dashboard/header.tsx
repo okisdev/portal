@@ -3,9 +3,9 @@
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
 import { Button } from '@/components/ui/button';
 import { CommandDialog, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
-import { Separator } from '@/components/ui/separator';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
 import { api } from '@/utils/trpc/client';
 import { Laptop, Moon, Sun } from 'lucide-react';
@@ -19,6 +19,8 @@ export function DashboardHeader() {
   const pathname = usePathname();
 
   const t = useTranslations();
+
+  const isMobile = useIsMobile();
 
   const paths = pathname.replace('/dashboard/', '').split('/');
 
@@ -120,7 +122,6 @@ export function DashboardHeader() {
     <header className='sticky top-0 z-10 flex h-12 shrink-0 items-center justify-between gap-2 border-b bg-background transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12'>
       <div className='flex items-center gap-2 px-4'>
         <SidebarTrigger className='-ml-1' />
-        <Separator orientation='vertical' className='mr-2 h-4' />
         <Breadcrumb>
           <BreadcrumbList>
             {paths.map((path, index) => (
@@ -138,40 +139,44 @@ export function DashboardHeader() {
           </BreadcrumbList>
         </Breadcrumb>
       </div>
-      <div className='flex items-center gap-2 px-4'>
-        <Button
-          variant='outline'
-          className={cn('relative h-8 w-full justify-start rounded-[0.5rem] bg-muted/50 font-normal text-muted-foreground text-sm shadow-none sm:pr-12 md:w-40 lg:w-56 xl:w-64')}
-          onClick={() => setOpen(true)}
-        >
-          <span className='hidden lg:inline-flex'>{t('search_placeholder')}</span>
-          <span className='inline-flex lg:hidden'>{t('search_placeholder')}</span>
-          <kbd className='pointer-events-none absolute top-[0.3rem] right-[0.3rem] hidden h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-medium font-mono text-[10px] opacity-100 sm:flex'>
-            <span className='text-xs'>⌘</span>K
-          </kbd>
-        </Button>
-        <CommandDialog open={open} onOpenChange={setOpen}>
-          <CommandInput placeholder={t('search_placeholder')} />
-          <CommandList>
-            <CommandEmpty>{t('no_results_found')}</CommandEmpty>
+      {isMobile ? (
+        <div />
+      ) : (
+        <div className='flex items-center gap-2 px-4'>
+          <Button
+            variant='outline'
+            className={cn('relative h-8 w-full justify-start rounded-[0.5rem] bg-muted/50 font-normal text-muted-foreground text-sm shadow-none sm:pr-12 md:w-40 lg:w-56 xl:w-64')}
+            onClick={() => setOpen(true)}
+          >
+            <span className='hidden lg:inline-flex'>{t('search_placeholder')}</span>
+            <span className='inline-flex lg:hidden'>{t('search_placeholder')}</span>
+            <kbd className='pointer-events-none absolute top-[0.3rem] right-[0.3rem] hidden h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-medium font-mono text-[10px] opacity-100 sm:flex'>
+              <span className='text-xs'>⌘</span>K
+            </kbd>
+          </Button>
+          <CommandDialog open={open} onOpenChange={setOpen}>
+            <CommandInput placeholder={t('search_placeholder')} />
+            <CommandList>
+              <CommandEmpty>{t('no_results_found')}</CommandEmpty>
 
-            <CommandGroup heading={t('theme')}>
-              <CommandItem onSelect={() => runCommand(() => setTheme('light'))}>
-                <Sun />
-                {t('light')}
-              </CommandItem>
-              <CommandItem onSelect={() => runCommand(() => setTheme('dark'))}>
-                <Moon />
-                {t('dark')}
-              </CommandItem>
-              <CommandItem onSelect={() => runCommand(() => setTheme('system'))}>
-                <Laptop />
-                {t('system')}
-              </CommandItem>
-            </CommandGroup>
-          </CommandList>
-        </CommandDialog>
-      </div>
+              <CommandGroup heading={t('theme')}>
+                <CommandItem onSelect={() => runCommand(() => setTheme('light'))}>
+                  <Sun />
+                  {t('light')}
+                </CommandItem>
+                <CommandItem onSelect={() => runCommand(() => setTheme('dark'))}>
+                  <Moon />
+                  {t('dark')}
+                </CommandItem>
+                <CommandItem onSelect={() => runCommand(() => setTheme('system'))}>
+                  <Laptop />
+                  {t('system')}
+                </CommandItem>
+              </CommandGroup>
+            </CommandList>
+          </CommandDialog>
+        </div>
+      )}
     </header>
   );
 }

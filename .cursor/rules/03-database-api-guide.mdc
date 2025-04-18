@@ -1,0 +1,38 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# Database and API Guide
+
+## Database Structure
+This project uses Drizzle ORM for database management:
+
+- Schema definitions are in the `drizzle` directory
+- Migrations are automatically generated and tracked
+- Database configuration is in [drizzle.config.ts](mdc:drizzle.config.ts)
+
+## API Routes
+API routes are organized in the `app/api` directory following Next.js App Router conventions:
+
+- Each route is a directory with a `route.ts` file
+- HTTP methods (GET, POST, etc.) are defined as exported functions
+- Authentication is handled through [auth.ts](mdc:auth.ts)
+
+## API Best Practices
+1. Use TypeScript for type safety
+2. Implement proper error handling
+3. Validate input data
+4. Use appropriate HTTP status codes
+5. Follow RESTful conventions
+
+## Database Operations
+Database operations should be performed using Drizzle's query builder:
+
+```typescript
+import { db } from "@/lib/db"
+import { users } from "@/drizzle/schema"
+
+// Example query
+const result = await db.select().from(users)
+```
