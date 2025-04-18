@@ -8,6 +8,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useDebounce } from '@/hooks/use-debounce';
+import { useIsMobile } from '@/hooks/use-mobile';
 import type { Contact, Priority, Source, Status } from '@/lib/schema';
 import type { Locale } from '@/types/i18n';
 import { parsePhoneWithoutCountryCode } from '@/utils/phone';
@@ -89,6 +90,7 @@ interface SortableColumnProps {
 
 function SortableColumn({ column, contacts, onClick, showEmptyColumns, groupBy }: SortableColumnProps) {
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: column.id });
+  const isMobile = useIsMobile();
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -117,7 +119,7 @@ function SortableColumn({ column, contacts, onClick, showEmptyColumns, groupBy }
   };
 
   return (
-    <div ref={setNodeRef} style={style} {...attributes} {...listeners} className='flex h-full w-[280px] shrink-0 flex-col'>
+    <div ref={setNodeRef} style={style} {...attributes} {...listeners} className='flex h-full w-[280px] shrink-0 flex-col sm:w-[280px]'>
       <div className='mb-2 flex items-center justify-between'>
         <SmartColorBadge value={column.title} color={getColumnColor()} />
         <span className='text-muted-foreground text-xs'>{column.items.length}</span>
@@ -137,6 +139,7 @@ export default function CRMContactsKanbanPage() {
   const router = useRouter();
   const t = useTranslations();
   const locale = useLocale() as Locale;
+  const isMobile = useIsMobile();
 
   const [search, setSearch] = useState('');
   const debouncedSearch = useDebounce(search, 300);
@@ -284,11 +287,11 @@ export default function CRMContactsKanbanPage() {
     <div className='space-y-4 p-4'>
       <PageHeader title={t('contacts')} subtitle={!isLoading ? `(${t('total_number_contacts', { count: filteredContacts.length || 0 })})` : undefined} description={t('contacts_description')} />
 
-      <div className='flex items-center justify-between'>
-        <div className='flex items-center gap-4'>
-          <Input placeholder={t('search_contacts')} value={search} onChange={(e) => setSearch(e.target.value)} className='h-8 w-72 max-w-sm' disabled={isLoading} />
+      <div className='flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between'>
+        <div className='flex flex-col gap-4 sm:flex-row sm:items-center'>
+          <Input placeholder={t('search_contacts')} value={search} onChange={(e) => setSearch(e.target.value)} className='h-8 w-full sm:w-72 max-w-sm' disabled={isLoading} />
           <Select value={groupBy} onValueChange={(value) => setGroupBy(value as 'status' | 'priority' | 'source')}>
-            <SelectTrigger size='sm' className='h-8 w-[120px]'>
+            <SelectTrigger size='sm' className='h-8 w-full sm:w-[120px]'>
               <SelectValue placeholder={t('group_by')} />
             </SelectTrigger>
             <SelectContent>

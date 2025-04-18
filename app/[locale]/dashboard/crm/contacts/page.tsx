@@ -13,6 +13,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useDebounce } from '@/hooks/use-debounce';
+import { useIsMobile } from '@/hooks/use-mobile';
 import type { Contact, Priority, Source, Status } from '@/lib/schema';
 import type { Locale } from '@/types/i18n';
 import { renderDescription } from '@/utils/activity';
@@ -46,6 +47,7 @@ export default function CRMContactsTablePage() {
   const searchParams = useSearchParams();
   const t = useTranslations();
   const locale = useLocale() as Locale;
+  const isMobile = useIsMobile();
 
   const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [statusFilter, setStatusFilter] = useState<string[]>([]);
@@ -283,12 +285,14 @@ export default function CRMContactsTablePage() {
       header: ({ column }) => <DataTableHeader column={column} title={t('phone')} />,
       cell: ({ row }) => <span>{row.original.phone ? parsePhoneWithoutCountryCode(row.original.phone) : '—'}</span>,
       enableSorting: false,
+      enableHiding: isMobile,
     },
     {
       accessorKey: 'company',
       header: ({ column }) => <DataTableHeader column={column} title={t('company')} />,
       cell: ({ row }) => <span className='capitalize'>{row.original.company || '—'}</span>,
       enableSorting: false,
+      enableHiding: isMobile,
     },
     {
       accessorKey: 'status',
@@ -331,6 +335,7 @@ export default function CRMContactsTablePage() {
         </Select>
       ),
       enableSorting: true,
+      enableHiding: isMobile,
     },
     {
       accessorKey: 'source',
@@ -352,18 +357,21 @@ export default function CRMContactsTablePage() {
         </Select>
       ),
       enableSorting: false,
+      enableHiding: isMobile,
     },
     {
       accessorKey: 'createdAt',
       header: ({ column }) => <DataTableHeader column={column} title={t('created_at')} />,
       cell: ({ row }) => formatDateWithoutTime(row.original.createdAt),
       enableSorting: true,
+      enableHiding: isMobile,
     },
     {
       accessorKey: 'next_follow_up',
       header: ({ column }) => <DataTableHeader column={column} title={t('next_follow_up')} />,
       cell: ({ row }) => (row.original.nextFollowUpAt ? formatDateWithoutTime(row.original.nextFollowUpAt) : '—'),
       enableSorting: true,
+      enableHiding: isMobile,
     },
     {
       accessorKey: 'lastActivity',
@@ -380,6 +388,7 @@ export default function CRMContactsTablePage() {
         );
       },
       enableSorting: false,
+      enableHiding: isMobile,
     },
     {
       id: 'actions',
@@ -447,15 +456,15 @@ export default function CRMContactsTablePage() {
       <PageHeader title={t('contacts')} subtitle={!isLoading ? `(${t('total_number_contacts', { count: totalCount || 0 })})` : undefined} description={t('contacts_description')} />
 
       <div className='flex flex-col gap-4'>
-        <div className='flex items-center justify-between'>
-          <div className='flex flex-row gap-4'>
+        <div className='flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between'>
+          <div className='flex flex-col gap-4 sm:flex-row'>
             <Input
               placeholder={t('search_contacts')}
               value={search}
               onChange={(e) => {
                 setSearch(e.target.value);
               }}
-              className='h-8 w-72 max-w-sm'
+              className='h-8 w-full sm:w-72 max-w-sm'
               disabled={isLoading}
             />
 
@@ -486,7 +495,7 @@ export default function CRMContactsTablePage() {
                   </div>
                 );
               }}
-              className='w-48'
+              className='w-full sm:w-48'
               size='sm'
               alwaysPlaceHolder={true}
             />
@@ -507,7 +516,7 @@ export default function CRMContactsTablePage() {
             )}
           </div>
 
-          <div className='flex flex-row gap-4'>
+          <div className='flex flex-col gap-4 sm:flex-row'>
             {table.getFilteredSelectedRowModel().rows.length > 0 && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -548,7 +557,7 @@ export default function CRMContactsTablePage() {
       </div>
 
       <div className='flex flex-col gap-2'>
-        <div className='flex items-center justify-between'>
+        <div className='flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between'>
           <div className='flex flex-wrap items-center gap-2'>
             <p className='text-muted-foreground text-sm'>{t('status')}</p>
             {statuses?.map((status: Status) => {
@@ -576,7 +585,7 @@ export default function CRMContactsTablePage() {
             </Button>
           )}
         </div>
-        <div className='flex items-center justify-between'>
+        <div className='flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between'>
           <div className='flex flex-wrap items-center gap-2'>
             <p className='text-muted-foreground text-sm'>{t('source')}</p>
             {sources?.map((source: Source) => {
@@ -604,7 +613,7 @@ export default function CRMContactsTablePage() {
             </Button>
           )}
         </div>
-        <div className='flex items-center justify-between'>
+        <div className='flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between'>
           <div className='flex flex-wrap items-center gap-2'>
             <p className='text-muted-foreground text-sm'>{t('priority')}</p>
             {priorities?.map((priority: Priority) => {
