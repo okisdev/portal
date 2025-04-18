@@ -1,6 +1,7 @@
 'use client';
 
 import { PageHeader } from '@/components/shared/page-header';
+import { SmartColorBadge } from '@/components/shared/smart-color-badge';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -30,15 +31,20 @@ interface KanbanColumn {
 interface SortableItemProps {
   contact: Contact;
   onClick: (id: string) => void;
+  groupBy: 'status' | 'priority' | 'source';
 }
 
-function SortableItem({ contact, onClick }: SortableItemProps) {
+function SortableItem({ contact, onClick, groupBy }: SortableItemProps) {
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: contact.id });
 
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
   };
+
+  const { data: statuses } = api.site.getStatus.useQuery();
+  const { data: priorities } = api.site.getPriority.useQuery();
+  const { data: sources } = api.site.getSource.useQuery();
 
   return (
     <div
@@ -53,7 +59,7 @@ function SortableItem({ contact, onClick }: SortableItemProps) {
         <Avatar className='size-8'>
           <AvatarFallback>{contact.firstName?.[0] ?? contact.name?.[0] ?? contact.email?.[0] ?? ''}</AvatarFallback>
         </Avatar>
-        <div className='flex-1 space-y-1'>
+        <div className='flex-1 space-y-1 overflow-hidden truncate'>
           <div className='flex items-center justify-between'>
             <h4 className='font-medium text-sm'>{contact.name}</h4>
           </div>
@@ -62,10 +68,10 @@ function SortableItem({ contact, onClick }: SortableItemProps) {
             {contact.phone && <span className='text-muted-foreground text-xs'>{parsePhoneWithoutCountryCode(contact.phone)}</span>}
             {contact.company && <span className='text-muted-foreground text-xs'>{contact.company}</span>}
           </div>
-          <div className='flex items-center gap-2 pt-1'>
-            {contact.status && <span className='inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium'>{contact.status}</span>}
-            {contact.priority && <span className='inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium'>{contact.priority}</span>}
-            {contact.source && <span className='inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium'>{contact.source}</span>}
+          <div className='flex flex-wrap gap-2 pt-1'>
+            {contact.status && groupBy !== 'status' && <SmartColorBadge value={contact.status} color={statuses?.find((s: Status) => s.value === contact.status)?.color || '#6b7280'} />}
+            {contact.priority && groupBy !== 'priority' && <SmartColorBadge value={contact.priority} color={priorities?.find((p: Priority) => p.value === contact.priority)?.color || '#6b7280'} />}
+            {contact.source && groupBy !== 'source' && <SmartColorBadge value={contact.source} color={sources?.find((s: Source) => s.value === contact.source)?.color || '#6b7280'} />}
           </div>
         </div>
       </div>
@@ -78,9 +84,10 @@ interface SortableColumnProps {
   contacts: Contact[];
   onClick: (id: string) => void;
   showEmptyColumns: boolean;
+  groupBy: 'status' | 'priority' | 'source';
 }
 
-function SortableColumn({ column, contacts, onClick, showEmptyColumns }: SortableColumnProps) {
+function SortableColumn({ column, contacts, onClick, showEmptyColumns, groupBy }: SortableColumnProps) {
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: column.id });
 
   const style = {
@@ -88,20 +95,37 @@ function SortableColumn({ column, contacts, onClick, showEmptyColumns }: Sortabl
     transition,
   };
 
+  const { data: statuses } = api.site.getStatus.useQuery();
+  const { data: priorities } = api.site.getPriority.useQuery();
+  const { data: sources } = api.site.getSource.useQuery();
+
   if (column.items.length === 0 && !showEmptyColumns) {
     return null;
   }
 
+  const getColumnColor = () => {
+    if (groupBy === 'status') {
+      return statuses?.find((s: Status) => s.value === column.title)?.color || '#6b7280';
+    }
+    if (groupBy === 'priority') {
+      return priorities?.find((p: Priority) => p.value === column.title)?.color || '#6b7280';
+    }
+    if (groupBy === 'source') {
+      return sources?.find((s: Source) => s.value === column.title)?.color || '#6b7280';
+    }
+    return '#6b7280';
+  };
+
   return (
     <div ref={setNodeRef} style={style} {...attributes} {...listeners} className='flex h-full w-[280px] shrink-0 flex-col'>
       <div className='mb-2 flex items-center justify-between'>
-        <h3 className='font-medium text-sm'>{column.title}</h3>
+        <SmartColorBadge value={column.title} color={getColumnColor()} />
         <span className='text-muted-foreground text-xs'>{column.items.length}</span>
       </div>
       <div className='flex-1 space-y-2 overflow-y-auto rounded-lg border bg-muted/50 p-2'>
         <SortableContext items={column.items.map((item) => item.id)} strategy={verticalListSortingStrategy}>
           {column.items.map((contact) => (
-            <SortableItem key={contact.id} contact={contact} onClick={onClick} />
+            <SortableItem key={contact.id} contact={contact} onClick={onClick} groupBy={groupBy} />
           ))}
         </SortableContext>
       </div>
@@ -302,7 +326,7 @@ export default function CRMContactsKanbanPage() {
           <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
             <SortableContext items={columns.map((col) => col.id)} strategy={horizontalListSortingStrategy}>
               {columns.map((column) => (
-                <SortableColumn key={column.id} column={column} contacts={filteredContacts} onClick={handleContactClick} showEmptyColumns={showEmptyColumns} />
+                <SortableColumn key={column.id} column={column} contacts={filteredContacts} onClick={handleContactClick} showEmptyColumns={showEmptyColumns} groupBy={groupBy} />
               ))}
             </SortableContext>
             <DragOverlay>
