@@ -200,11 +200,11 @@ export default function CompanyIdPage() {
   };
 
   return (
-    <div className='container mx-auto h-[calc(100vh-4rem)] p-0 sm:p-6'>
+    <div className='container mx-auto h-[calc(100vh-4rem)] p-0 sm:p-3'>
       <div className='flex h-full flex-col lg:flex-row'>
         <div className='w-full lg:w-2/3'>
           <div className='flex h-full flex-col rounded-none border bg-card text-card-foreground shadow-xs sm:rounded-l-lg'>
-            <div className='flex-none border-b p-4 sm:p-6'>
+            <div className='flex-none border-b p-6'>
               <div className={cn(company.description ? 'flex items-start justify-between' : 'flex items-center justify-between')}>
                 <div>
                   <h1 className='font-semibold text-xl'>{company.name}</h1>

@@ -549,7 +549,7 @@ export function ActivitySection({ activities, onCreateActivity, isLoading, filte
                       <button
                         type='button'
                         onClick={() => scrollToNote(JSON.parse(activity.metadata as string).replyTo)}
-                        className='mt-1 flex items-center gap-1 text-muted-foreground text-xs hover:text-foreground'
+                        className='mt-1 flex items-center gap-1 rounded bg-muted/50 px-1 py-0.5 text-muted-foreground text-xs transition-colors hover:bg-foreground/10 hover:text-foreground'
                       >
                         <ArrowUpRight className='size-3' />
                         {t('jump_to_original_note')}
