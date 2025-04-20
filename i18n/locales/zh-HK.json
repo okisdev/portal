@@ -578,7 +578,7 @@
   "support_email_domains": "支持郵箱域名",
   "support_email_domains_description": "輸入多個域名，用逗號分隔（例如：support.portal.com、help.portal.com）",
   "system": "系統",
-  "table": "桌子",
+  "table": "表格",
   "tags": "標籤",
   "tags_search_placeholder": "搜索或添加新標籤...",
   "task_created_successfully": "任務創建成功",
