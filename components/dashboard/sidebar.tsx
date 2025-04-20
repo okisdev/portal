@@ -58,6 +58,8 @@ export function DashboardSidebar() {
 
   const HASH = process.env.NEXT_PUBLIC_VERCEL_GIT_COMMIT_SHA;
 
+  const { data: workspaceName, isLoading: isWorkspaceNameLoading } = api.site.getConfig.useQuery({ key: 'name' });
+
   const { data: me, isLoading } = api.account.getMeFromDatabase.useQuery();
   const { data: unreadNotificationsCount } = api.user.getUnreadNotificationsCount.useQuery();
 
@@ -81,7 +83,7 @@ export function DashboardSidebar() {
             <SidebarMenuButton asChild>
               <Link href='/dashboard'>
                 <Sparkle className='h-4 w-4' />
-                Portal
+                {isWorkspaceNameLoading ? <Skeleton className='h-6 w-full' /> : (workspaceName?.value ?? 'Portal')}
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>

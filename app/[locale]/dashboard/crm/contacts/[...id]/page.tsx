@@ -344,11 +344,11 @@ export default function ContactIdPage() {
   };
 
   return (
-    <div className='container mx-auto h-[calc(100vh-4rem)] p-0 sm:p-6'>
+    <div className='container mx-auto h-[calc(100vh-4rem)] p-0 sm:p-3'>
       <div className='flex h-full flex-col lg:flex-row'>
         <div className='w-full lg:w-1/3'>
           <div className='flex h-full flex-col rounded-none border bg-card text-card-foreground shadow-xs sm:rounded-l-lg'>
-            <div className='flex-none border-b p-4 sm:p-6'>
+            <div className='flex-none border-b p-6'>
               <div className='flex items-start gap-4'>
                 <Avatar className='size-16'>
                   <AvatarImage src='' />
