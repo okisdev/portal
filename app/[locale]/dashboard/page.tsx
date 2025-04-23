@@ -2,15 +2,16 @@
 
 import { PageHeader } from '@/components/shared/page-header';
 import { PageLoading } from '@/components/shared/page-loading';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { type ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
+// import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { api } from '@/utils/trpc/client';
 import { format, startOfMonth, subMonths } from 'date-fns';
-import { CheckCircle, Flame, HelpCircle, Phone, Users } from 'lucide-react';
+import { BarChart2, CheckCircle, Flame, HelpCircle, Phone, PieChart, TrendingUp, Users } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import { useTranslations } from 'next-intl';
 import { useMemo, useState } from 'react';
-import { Bar, BarChart, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, XAxis, YAxis } from 'recharts';
+import { Area, AreaChart, CartesianGrid, XAxis } from 'recharts';
 
 export default function Dashboard() {
   const t = useTranslations();
@@ -59,13 +60,20 @@ export default function Dashboard() {
       const monthLeads = contacts.filter((contact) => new Date(contact.createdAt) >= monthStart && new Date(contact.createdAt) < (i === 0 ? new Date() : startOfMonth(subMonths(date, -1)))).length;
 
       return {
-        month: format(date, 'MMM'),
+        month: format(date, 'MMMM'),
         leads: monthLeads,
       };
     }).reverse();
 
     return last6Months;
   }, [contacts]);
+
+  const chartConfig = {
+    leads: {
+      label: t('leads'),
+      color: 'var(--chart-1)',
+    },
+  } satisfies ChartConfig;
 
   // Prepare data for status breakdown
   const statusData = useMemo(() => {
@@ -106,10 +114,9 @@ export default function Dashboard() {
   return (
     <div className='container mx-auto h-[calc(100vh-4rem)] p-4'>
       <div className='flex h-full flex-col'>
-        {/* Header Section */}
-        <div className='flex justify-between items-center mb-6'>
+        <div className='mb-6 flex items-center justify-between'>
           <PageHeader title={t('welcome_back', { name: session?.user?.name || '' })} description={t('welcome_description')} />
-          <Select value={timePeriod} onValueChange={setTimePeriod}>
+          {/* <Select value={timePeriod} onValueChange={setTimePeriod}>
             <SelectTrigger className='w-[180px]'>
               <SelectValue placeholder='Select period' />
             </SelectTrigger>
@@ -120,22 +127,22 @@ export default function Dashboard() {
               <SelectItem value='last-6-months'>{t('last_6_months')}</SelectItem>
               <SelectItem value='this-year'>{t('this_year')}</SelectItem>
             </SelectContent>
-          </Select>
+          </Select> */}
         </div>
 
         {/* Main Content */}
-        <div className='flex-1 flex flex-col lg:flex-row gap-6'>
+        <div className='flex flex-1 flex-col gap-6 lg:flex-row'>
           {/* Left Column - Metrics and Chart */}
-          <div className='w-full lg:w-2/3 space-y-6'>
+          <div className='w-full space-y-6 lg:w-2/3'>
             {/* Metrics Grid */}
-            <div className='grid grid-cols-2 lg:grid-cols-4 gap-6'>
-              <div className='relative flex items-start gap-3 p-4 rounded-lg border bg-card'>
-                <div className='flex items-center justify-center size-8 rounded-lg bg-primary/10'>
+            <div className='grid grid-cols-2 gap-6 lg:grid-cols-4'>
+              <div className='relative flex items-start gap-3 rounded-lg border bg-card p-4'>
+                <div className='flex size-8 items-center justify-center rounded-lg bg-primary/10'>
                   <Users className='size-4 text-primary' />
                 </div>
                 <div className='min-w-0 flex-1'>
                   <div className='flex items-center gap-1'>
-                    <p className='text-sm text-muted-foreground'>{t('total_leads')}</p>
+                    <p className='text-muted-foreground text-sm'>{t('total_leads')}</p>
                     <TooltipProvider>
                       <Tooltip>
                         <TooltipTrigger>
@@ -148,9 +155,9 @@ export default function Dashboard() {
                     </TooltipProvider>
                   </div>
                   <div className='mt-1'>
-                    <p className='text-2xl font-semibold truncate'>{metrics?.total || 0}</p>
+                    <p className='truncate font-semibold text-2xl'>{metrics?.total || 0}</p>
                     {metrics?.growth && (
-                      <p className='text-xs text-muted-foreground'>
+                      <p className='text-muted-foreground text-xs'>
                         <span className={Number(metrics.growth) > 0 ? 'text-green-500' : Number(metrics.growth) < 0 ? 'text-red-500' : ''}>
                           {Number(metrics.growth) > 0 ? '↑' : Number(metrics.growth) < 0 ? '↓' : ''} {Math.abs(Number(metrics.growth))}%
                         </span>
@@ -161,13 +168,13 @@ export default function Dashboard() {
                 </div>
               </div>
 
-              <div className='relative flex items-start gap-3 p-4 rounded-lg border bg-card'>
-                <div className='flex items-center justify-center size-8 rounded-lg bg-primary/10'>
+              <div className='relative flex items-start gap-3 rounded-lg border bg-card p-4'>
+                <div className='flex size-8 items-center justify-center rounded-lg bg-primary/10'>
                   <Phone className='size-4 text-primary' />
                 </div>
                 <div className='min-w-0 flex-1'>
                   <div className='flex items-center gap-1'>
-                    <p className='text-sm text-muted-foreground'>{t('contacted_leads')}</p>
+                    <p className='text-muted-foreground text-sm'>{t('contacted_leads')}</p>
                     <TooltipProvider>
                       <Tooltip>
                         <TooltipTrigger>
@@ -180,19 +187,19 @@ export default function Dashboard() {
                     </TooltipProvider>
                   </div>
                   <div className='mt-1'>
-                    <p className='text-2xl font-semibold truncate'>{metrics?.contacted || 0}</p>
-                    <p className='text-xs text-muted-foreground'>{(((metrics?.contacted || 0) / (metrics?.total || 1)) * 100).toFixed(0)}% of total</p>
+                    <p className='truncate font-semibold text-2xl'>{metrics?.contacted || 0}</p>
+                    <p className='text-muted-foreground text-xs'>{(((metrics?.contacted || 0) / (metrics?.total || 1)) * 100).toFixed(0)}% of total</p>
                   </div>
                 </div>
               </div>
 
-              <div className='relative flex items-start gap-3 p-4 rounded-lg border bg-card'>
-                <div className='flex items-center justify-center size-8 rounded-lg bg-primary/10'>
+              <div className='relative flex items-start gap-3 rounded-lg border bg-card p-4'>
+                <div className='flex size-8 items-center justify-center rounded-lg bg-primary/10'>
                   <CheckCircle className='size-4 text-primary' />
                 </div>
                 <div className='min-w-0 flex-1'>
                   <div className='flex items-center gap-1'>
-                    <p className='text-sm text-muted-foreground'>{t('qualified_leads')}</p>
+                    <p className='text-muted-foreground text-sm'>{t('qualified_leads')}</p>
                     <TooltipProvider>
                       <Tooltip>
                         <TooltipTrigger>
@@ -205,19 +212,19 @@ export default function Dashboard() {
                     </TooltipProvider>
                   </div>
                   <div className='mt-1'>
-                    <p className='text-2xl font-semibold truncate'>{metrics?.qualified || 0}</p>
-                    <p className='text-xs text-muted-foreground'>{(((metrics?.qualified || 0) / (metrics?.total || 1)) * 100).toFixed(0)}% of total</p>
+                    <p className='truncate font-semibold text-2xl'>{metrics?.qualified || 0}</p>
+                    <p className='text-muted-foreground text-xs'>{(((metrics?.qualified || 0) / (metrics?.total || 1)) * 100).toFixed(0)}% of total</p>
                   </div>
                 </div>
               </div>
 
-              <div className='relative flex items-start gap-3 p-4 rounded-lg border bg-card'>
-                <div className='flex items-center justify-center size-8 rounded-lg bg-primary/10'>
+              <div className='relative flex items-start gap-3 rounded-lg border bg-card p-4'>
+                <div className='flex size-8 items-center justify-center rounded-lg bg-primary/10'>
                   <Flame className='size-4 text-primary' />
                 </div>
                 <div className='min-w-0 flex-1'>
                   <div className='flex items-center gap-1'>
-                    <p className='text-sm text-muted-foreground'>{t('hot_leads')}</p>
+                    <p className='text-muted-foreground text-sm'>{t('hot_leads')}</p>
                     <TooltipProvider>
                       <Tooltip>
                         <TooltipTrigger>
@@ -230,8 +237,8 @@ export default function Dashboard() {
                     </TooltipProvider>
                   </div>
                   <div className='mt-1'>
-                    <p className='text-2xl font-semibold truncate'>{metrics?.hot || 0}</p>
-                    <p className='text-xs text-muted-foreground'>{(((metrics?.hot || 0) / (metrics?.total || 1)) * 100).toFixed(0)}% of total</p>
+                    <p className='truncate font-semibold text-2xl'>{metrics?.hot || 0}</p>
+                    <p className='text-muted-foreground text-xs'>{(((metrics?.hot || 0) / (metrics?.total || 1)) * 100).toFixed(0)}% of total</p>
                   </div>
                 </div>
               </div>
@@ -239,24 +246,44 @@ export default function Dashboard() {
 
             {/* Chart Section */}
             <div className='flex-1 rounded-lg border bg-card p-6'>
-              <h2 className='font-medium mb-4'>{t('monthly_lead_growth')}</h2>
-              <div className='h-[300px]'>
-                <ResponsiveContainer width='100%' height='100%'>
-                  <BarChart data={chartData}>
-                    <CartesianGrid strokeDasharray='3 3' />
-                    <XAxis dataKey='month' />
-                    <YAxis />
-                    <RechartsTooltip />
-                    <Bar dataKey='leads' fill='#4F46E5' radius={[4, 4, 0, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
+              <div className='mb-4 flex items-center gap-2'>
+                <BarChart2 className='size-5 text-primary' />
+                <h2 className='font-medium'>{t('monthly_lead_growth')}</h2>
+              </div>
+              <ChartContainer config={chartConfig}>
+                <AreaChart
+                  accessibilityLayer
+                  data={chartData}
+                  margin={{
+                    left: 12,
+                    right: 12,
+                  }}
+                >
+                  <CartesianGrid vertical={false} />
+                  <XAxis dataKey='month' tickLine={false} axisLine={false} tickMargin={8} tickFormatter={(value) => value.slice(0, 3)} />
+                  <ChartTooltip cursor={false} content={<ChartTooltipContent indicator='line' />} />
+                  <Area dataKey='leads' type='natural' fill='var(--color-leads)' fillOpacity={0.4} stroke='var(--color-leads)' />
+                </AreaChart>
+              </ChartContainer>
+              <div className='mt-4 flex w-full items-start gap-2 text-sm'>
+                <div className='grid gap-2'>
+                  <div className='flex items-center gap-2 font-medium leading-none'>
+                    {t('trending_up_by', { percentage: metrics?.growth || 0 })} <TrendingUp className='h-4 w-4' />
+                  </div>
+                  <div className='flex items-center gap-2 text-muted-foreground leading-none'>
+                    {format(subMonths(new Date(), 5), 'MMMM')} - {format(new Date(), 'MMMM yyyy')}
+                  </div>
+                </div>
               </div>
             </div>
           </div>
 
           {/* Right Column - Status Breakdown */}
-          <div className='w-full lg:w-1/3 rounded-lg border bg-card p-6'>
-            <h2 className='font-medium mb-4'>{t('leads_by_status')}</h2>
+          <div className='w-full rounded-lg border bg-card p-6 lg:w-1/3'>
+            <div className='mb-4 flex items-center gap-2'>
+              <PieChart className='size-5 text-primary' />
+              <h2 className='font-medium'>{t('leads_by_status')}</h2>
+            </div>
             <div className='space-y-4'>
               {statusData.map((status) => (
                 <div key={status.status} className='flex items-center justify-between'>
@@ -265,8 +292,8 @@ export default function Dashboard() {
                     <span className='text-sm'>{status.status}</span>
                   </div>
                   <div className='flex items-center gap-2'>
-                    <span className='text-sm font-medium'>{status.value}</span>
-                    <span className='text-xs text-muted-foreground'>{((status.value / (metrics?.total || 1)) * 100).toFixed(0)}%</span>
+                    <span className='font-medium text-sm'>{status.value}</span>
+                    <span className='text-muted-foreground text-xs'>{((status.value / (metrics?.total || 1)) * 100).toFixed(0)}%</span>
                   </div>
                 </div>
               ))}
