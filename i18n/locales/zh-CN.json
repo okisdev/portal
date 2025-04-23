@@ -342,7 +342,7 @@
   "last_name": "姓氏",
   "last_updated_at": "最后更新于 {time}",
   "leads": "线索",
-  "leads_by_status": "按地位领先",
+  "leads_breakdown": "线索分解",
   "light": "浅色",
   "loading": "加载中...",
   "location": "位置",
@@ -674,6 +674,5 @@
   "welcome_description": "欢迎访问您的仪表板",
   "workspace": "工作区",
   "write_a_reply": "写回复... 使用 @ 提及某人",
-  "you": "你",
-  "leads_breakdown": "引线分解"
+  "you": "你"
 }

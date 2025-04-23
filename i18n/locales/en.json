@@ -342,7 +342,7 @@
   "last_name": "Last Name",
   "last_updated_at": "Last updated at {time}",
   "leads": "Leads",
-  "leads_by_status": "Leads by Status",
+  "leads_breakdown": "Leads Breakdown",
   "light": "Light",
   "loading": "Loading...",
   "location": "Location",
@@ -674,6 +674,5 @@
   "welcome_description": "Welcome to your dashboard",
   "workspace": "Workspace",
   "write_a_reply": "Write a reply... Use @ to mention someone",
-  "you": "You",
-  "leads_breakdown": "Leads Breakdown"
+  "you": "You"
 }
