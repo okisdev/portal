@@ -342,7 +342,7 @@
   "last_name": "Last Name",
   "last_updated_at": "Last updated at {time}",
   "leads": "Leads",
-  "leads_by_status": "Leads by Status",
+  "leads_breakdown": "Leads Breakdown",
   "light": "Light",
   "loading": "Loading...",
   "location": "Location",

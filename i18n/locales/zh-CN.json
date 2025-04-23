@@ -342,7 +342,7 @@
   "last_name": "姓氏",
   "last_updated_at": "最后更新于 {time}",
   "leads": "线索",
-  "leads_by_status": "按地位领先",
+  "leads_breakdown": "线索分解",
   "light": "浅色",
   "loading": "加载中...",
   "location": "位置",

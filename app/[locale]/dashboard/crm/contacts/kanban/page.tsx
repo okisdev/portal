@@ -1,9 +1,9 @@
 'use client';
 
+import { AddContact } from '@/components/dashboard/contact/add-contact';
 import { PageHeader } from '@/components/shared/page-header';
 import { SmartColorBadge } from '@/components/shared/smart-color-badge';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -16,7 +16,6 @@ import { api } from '@/utils/trpc/client';
 import { DndContext, type DragEndEvent, DragOverlay, type DragStartEvent, MouseSensor, TouchSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { SortableContext, arrayMove, horizontalListSortingStrategy, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { Import } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useLocale } from 'next-intl';
 import { useRouter } from 'next/navigation';
@@ -317,10 +316,7 @@ export default function CRMContactsKanbanPage() {
         </div>
 
         <div className='flex items-center gap-2'>
-          <Button variant='outline' size='sm' className='flex h-8 items-center gap-2' disabled={isLoading}>
-            <Import className='mr-2 h-4 w-4' />
-            {t('add_contact')}
-          </Button>
+          <AddContact isLoading={isLoading} />
         </div>
       </div>
 
