@@ -2,7 +2,9 @@
 
 import { PageHeader } from '@/components/shared/page-header';
 import { PageLoading } from '@/components/shared/page-loading';
+import { SmartColorBadge } from '@/components/shared/smart-color-badge';
 import { type ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 // import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { api } from '@/utils/trpc/client';
@@ -18,8 +20,21 @@ export default function Dashboard() {
   const { data: session, status } = useSession();
   const [timePeriod, setTimePeriod] = useState('this-month');
 
-  // Fetch all contacts
+  // Fetch all contacts and configurations
   const { data: contacts, isLoading: isContactsLoading } = api.contact.getAllContacts.useQuery();
+  const { data: statusConfig } = api.site.getConfig.useQuery({ key: 'status' });
+  const { data: priorityConfig } = api.site.getConfig.useQuery({ key: 'priority' });
+  const { data: sourceConfig } = api.site.getConfig.useQuery({ key: 'source' });
+
+  // Parse configurations
+  const statusItems = useMemo(() => (statusConfig?.value ? JSON.parse(statusConfig.value) : []), [statusConfig]);
+  const priorityItems = useMemo(() => (priorityConfig?.value ? JSON.parse(priorityConfig.value) : []), [priorityConfig]);
+  const sourceItems = useMemo(() => (sourceConfig?.value ? JSON.parse(sourceConfig.value) : []), [sourceConfig]);
+
+  // Helper function to get color from config
+  const getColorFromConfig = (value: string, items: { value: string; color: string }[]) => {
+    return items.find((item) => item.value === value)?.color || '#6B7280';
+  };
 
   // Calculate metrics based on contacts data
   const metrics = useMemo(() => {
@@ -30,14 +45,12 @@ export default function Dashboard() {
     const lastMonthStart = startOfMonth(subMonths(now, 1));
 
     const thisMonthContacts = contacts.filter((contact) => new Date(contact.createdAt) >= monthStart);
-
     const lastMonthContacts = contacts.filter((contact) => new Date(contact.createdAt) >= lastMonthStart && new Date(contact.createdAt) < monthStart);
 
     const contactedLeads = contacts.filter((contact) => contact.lastContactedAt).length;
     const qualifiedLeads = contacts.filter((contact) => contact.status === 'Qualified').length;
     const hotLeads = contacts.filter((contact) => contact.priority === 'High').length;
 
-    // Calculate growth percentages
     const totalGrowth = lastMonthContacts.length > 0 ? ((thisMonthContacts.length - lastMonthContacts.length) / lastMonthContacts.length) * 100 : 0;
 
     return {
@@ -77,7 +90,7 @@ export default function Dashboard() {
 
   // Prepare data for status breakdown
   const statusData = useMemo(() => {
-    if (!contacts) return [];
+    if (!contacts || !statusItems.length) return [];
 
     const statusCounts = contacts.reduce(
       (acc, contact) => {
@@ -90,32 +103,59 @@ export default function Dashboard() {
     return Object.entries(statusCounts).map(([status, count]) => ({
       status,
       value: count,
-      color: getStatusColor(status),
+      color: getColorFromConfig(status, statusItems),
     }));
-  }, [contacts]);
+  }, [contacts, statusItems]);
+
+  // Prepare data for priority breakdown
+  const priorityData = useMemo(() => {
+    if (!contacts || !priorityItems.length) return [];
+
+    const priorityCounts = contacts.reduce(
+      (acc, contact) => {
+        const priority = contact.priority || 'Medium';
+        acc[priority] = (acc[priority] || 0) + 1;
+        return acc;
+      },
+      {} as Record<string, number>
+    );
+
+    return Object.entries(priorityCounts).map(([priority, count]) => ({
+      status: priority,
+      value: count,
+      color: getColorFromConfig(priority, priorityItems),
+    }));
+  }, [contacts, priorityItems]);
+
+  // Prepare data for resource breakdown
+  const resourceData = useMemo(() => {
+    if (!contacts || !sourceItems.length) return [];
+
+    const resourceCounts = contacts.reduce(
+      (acc, contact) => {
+        const source = contact.source || 'Other';
+        acc[source] = (acc[source] || 0) + 1;
+        return acc;
+      },
+      {} as Record<string, number>
+    );
+
+    return Object.entries(resourceCounts).map(([source, count]) => ({
+      status: source,
+      value: count,
+      color: getColorFromConfig(source, sourceItems),
+    }));
+  }, [contacts, sourceItems]);
 
   if (status === 'loading' || isContactsLoading) {
     return <PageLoading />;
-  }
-
-  // Helper function to get status colors
-  function getStatusColor(status: string) {
-    const colors: Record<string, string> = {
-      Lead: '#4F46E5',
-      Contacted: '#7C3AED',
-      Qualified: '#EC4899',
-      Negotiation: '#F59E0B',
-      Customer: '#10B981',
-      Lost: '#6B7280',
-    };
-    return colors[status] || '#6B7280';
   }
 
   return (
     <div className='container mx-auto h-[calc(100vh-4rem)] p-4'>
       <div className='flex h-full flex-col'>
         <div className='mb-6 flex items-center justify-between'>
-          <PageHeader title={t('welcome_back', { name: session?.user?.name || '' })} description={t('welcome_description')} />
+          <PageHeader title={t('welcome_back', { name: session?.user?.name || '' })} />
           {/* <Select value={timePeriod} onValueChange={setTimePeriod}>
             <SelectTrigger className='w-[180px]'>
               <SelectValue placeholder='Select period' />
@@ -278,26 +318,58 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* Right Column - Status Breakdown */}
+          {/* Right Column - Lead Breakdowns */}
           <div className='w-full rounded-lg border bg-card p-6 lg:w-1/3'>
             <div className='mb-4 flex items-center gap-2'>
               <PieChart className='size-5 text-primary' />
-              <h2 className='font-medium'>{t('leads_by_status')}</h2>
+              <h2 className='font-medium'>{t('leads_breakdown')}</h2>
             </div>
-            <div className='space-y-4'>
-              {statusData.map((status) => (
-                <div key={status.status} className='flex items-center justify-between'>
-                  <div className='flex items-center gap-2'>
-                    <div className='size-3 rounded-full' style={{ backgroundColor: status.color }} />
-                    <span className='text-sm'>{status.status}</span>
+            <Tabs defaultValue='status' className='w-full'>
+              <TabsList className='grid w-full grid-cols-3'>
+                <TabsTrigger value='status'>{t('status')}</TabsTrigger>
+                <TabsTrigger value='priority'>{t('priority')}</TabsTrigger>
+                <TabsTrigger value='resource'>{t('resource')}</TabsTrigger>
+              </TabsList>
+              <TabsContent value='status' className='mt-4 space-y-4'>
+                {statusData.map((item) => (
+                  <div key={item.status} className='flex items-center justify-between'>
+                    <div className='flex items-center gap-2'>
+                      <SmartColorBadge value={item.status} color={item.color} hoverEffect={false} />
+                    </div>
+                    <div className='flex items-center gap-2'>
+                      <span className='font-medium text-sm'>{item.value}</span>
+                      <span className='text-muted-foreground text-xs'>{((item.value / (metrics?.total || 1)) * 100).toFixed(0)}%</span>
+                    </div>
                   </div>
-                  <div className='flex items-center gap-2'>
-                    <span className='font-medium text-sm'>{status.value}</span>
-                    <span className='text-muted-foreground text-xs'>{((status.value / (metrics?.total || 1)) * 100).toFixed(0)}%</span>
+                ))}
+              </TabsContent>
+              <TabsContent value='priority' className='mt-4 space-y-4'>
+                {priorityData.map((item) => (
+                  <div key={item.status} className='flex items-center justify-between'>
+                    <div className='flex items-center gap-2'>
+                      <SmartColorBadge value={item.status} color={item.color} hoverEffect={false} />
+                    </div>
+                    <div className='flex items-center gap-2'>
+                      <span className='font-medium text-sm'>{item.value}</span>
+                      <span className='text-muted-foreground text-xs'>{((item.value / (metrics?.total || 1)) * 100).toFixed(0)}%</span>
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </TabsContent>
+              <TabsContent value='resource' className='mt-4 space-y-4'>
+                {resourceData.map((item) => (
+                  <div key={item.status} className='flex items-center justify-between'>
+                    <div className='flex items-center gap-2'>
+                      <SmartColorBadge value={item.status} color={item.color} hoverEffect={false} />
+                    </div>
+                    <div className='flex items-center gap-2'>
+                      <span className='font-medium text-sm'>{item.value}</span>
+                      <span className='text-muted-foreground text-xs'>{((item.value / (metrics?.total || 1)) * 100).toFixed(0)}%</span>
+                    </div>
+                  </div>
+                ))}
+              </TabsContent>
+            </Tabs>
           </div>
         </div>
       </div>

@@ -1,5 +1,6 @@
 'use client';
 
+import { AddContact } from '@/components/dashboard/contact/add-contact';
 import { ActionAlertDialog } from '@/components/shared/action-alert-dialog';
 import { Combobox } from '@/components/shared/combobox';
 import { PageHeader } from '@/components/shared/page-header';
@@ -33,7 +34,7 @@ import {
   getSortedRowModel,
   useReactTable,
 } from '@tanstack/react-table';
-import { Check, Eye, Import, MoreHorizontal, Trash2, Upload } from 'lucide-react';
+import { Check, Eye, MoreHorizontal, Trash2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useLocale } from 'next-intl';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -534,24 +535,7 @@ export default function CRMContactsTablePage() {
               </DropdownMenu>
             )}
 
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant='outline' size='sm' className='flex h-8 items-center gap-2' disabled={isLoading}>
-                  <Import className='mr-2 h-4 w-4' />
-                  {t('add_contact')}
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent>
-                <DropdownMenuItem className='cursor-pointer' onClick={() => router.push('/dashboard/crm/contacts/new?mode=manual')}>
-                  <Import className='mr-2 h-4 w-4' />
-                  {t('manual')}
-                </DropdownMenuItem>
-                <DropdownMenuItem className='cursor-pointer' onClick={() => router.push('/dashboard/crm/contacts/new?mode=upload')}>
-                  <Upload className='mr-2 h-4 w-4' />
-                  {t('upload')}
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <AddContact isLoading={isLoading} />
           </div>
         </div>
       </div>
