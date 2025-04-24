@@ -14,6 +14,7 @@ import type { Locale } from '@/types/i18n';
 import { parsePhoneWithoutCountryCode } from '@/utils/phone';
 import { api } from '@/utils/trpc/client';
 import { DndContext, type DragEndEvent, DragOverlay, type DragStartEvent, MouseSensor, TouchSensor, useDroppable, useSensor, useSensors } from '@dnd-kit/core';
+import { closestCenter } from '@dnd-kit/core';
 import { SortableContext, arrayMove, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { useTranslations } from 'next-intl';
@@ -40,9 +41,13 @@ interface SortableItemProps {
 }
 
 function SortableItem({ contact, onClick, groupBy }: SortableItemProps) {
-  const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: contact.id });
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: contact.id });
 
-  const style = { transform: CSS.Transform.toString(transform), transition };
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
 
   const { data: statuses } = api.site.getStatus.useQuery();
   const { data: priorities } = api.site.getPriority.useQuery();
@@ -266,12 +271,15 @@ export default function CRMContactsKanbanPage() {
     const activeContact = filteredContacts.find((c) => c.id === active.id);
     if (!activeContact) return;
 
+    // Find source column that contains the dragged item
     const sourceColumn = columns.find((column) => column.items.some((item) => item.id === active.id));
-
     if (!sourceColumn) return;
 
+    // Check if we're dropping onto a column
     const targetColumn = columns.find((column) => column.id === over.id);
+
     if (targetColumn) {
+      // We're dropping directly onto a column
       if (sourceColumn.id !== targetColumn.id) {
         const updatedColumns = columns.map((column) => {
           if (column.id === sourceColumn.id) {
@@ -286,24 +294,50 @@ export default function CRMContactsKanbanPage() {
         });
 
         setColumns(updatedColumns);
-
         updateContact.mutate({ id: activeContact.id, [groupBy]: targetColumn.id });
-
         return;
       }
     }
 
-    const overContactId = over.id as string;
-    const overItemIndex = sourceColumn.items.findIndex((item) => item.id === overContactId);
+    // Find the column containing the over item
+    const overItemId = over.id as string;
+    const overColumn = columns.find((column) => column.items.some((item) => item.id === overItemId));
 
-    if (overItemIndex >= 0) {
+    // If we couldn't find a column with the over ID as an item, it might be the column ID itself
+    // In that case, we already handled it above, so we can return
+    if (!overColumn) {
+      return;
+    }
+
+    // We're dropping onto an item in a column
+    if (sourceColumn.id !== overColumn.id) {
+      // Moving between columns
+      const updatedColumns = columns.map((column) => {
+        if (column.id === sourceColumn.id) {
+          return { ...column, items: column.items.filter((item) => item.id !== active.id) };
+        }
+
+        if (column.id === overColumn.id) {
+          const overItemIndex = column.items.findIndex((item) => item.id === overItemId);
+          const newItems = [...column.items];
+          newItems.splice(overItemIndex, 0, activeContact);
+          return { ...column, items: newItems };
+        }
+
+        return column;
+      });
+
+      setColumns(updatedColumns);
+      updateContact.mutate({ id: activeContact.id, [groupBy]: overColumn.id });
+    } else {
+      // Moving within the same column
       const activeItemIndex = sourceColumn.items.findIndex((item) => item.id === active.id);
+      const overItemIndex = sourceColumn.items.findIndex((item) => item.id === overItemId);
 
       if (activeItemIndex !== overItemIndex) {
-        const newItems = arrayMove(sourceColumn.items, activeItemIndex, overItemIndex);
-
         const updatedColumns = columns.map((column) => {
           if (column.id === sourceColumn.id) {
+            const newItems = arrayMove([...column.items], activeItemIndex, overItemIndex);
             return { ...column, items: newItems };
           }
           return column;
@@ -372,7 +406,7 @@ export default function CRMContactsKanbanPage() {
 
       <div className='h-[calc(100vh-200px)] overflow-hidden'>
         <div className='flex h-full gap-4 overflow-x-auto pb-4'>
-          <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+          <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd} collisionDetection={closestCenter}>
             {columns.map((column) => (
               <DroppableColumn key={column.id} column={column} contacts={filteredContacts} onClick={handleContactClick} showEmptyColumns={showEmptyColumns} groupBy={groupBy} />
             ))}
