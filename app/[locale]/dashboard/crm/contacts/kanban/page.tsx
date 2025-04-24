@@ -13,8 +13,8 @@ import type { Contact, Priority, Source, Status } from '@/lib/schema';
 import type { Locale } from '@/types/i18n';
 import { parsePhoneWithoutCountryCode } from '@/utils/phone';
 import { api } from '@/utils/trpc/client';
-import { DndContext, type DragEndEvent, DragOverlay, type DragStartEvent, MouseSensor, TouchSensor, useSensor, useSensors } from '@dnd-kit/core';
-import { SortableContext, arrayMove, horizontalListSortingStrategy, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import { DndContext, type DragEndEvent, DragOverlay, type DragStartEvent, MouseSensor, TouchSensor, useDroppable, useSensor, useSensors } from '@dnd-kit/core';
+import { SortableContext, arrayMove, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { useTranslations } from 'next-intl';
 import { useLocale } from 'next-intl';
@@ -37,10 +37,7 @@ interface SortableItemProps {
 function SortableItem({ contact, onClick, groupBy }: SortableItemProps) {
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: contact.id });
 
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-  };
+  const style = { transform: CSS.Transform.toString(transform), transition };
 
   const { data: statuses } = api.site.getStatus.useQuery();
   const { data: priorities } = api.site.getPriority.useQuery();
@@ -87,14 +84,11 @@ interface SortableColumnProps {
   groupBy: 'status' | 'priority' | 'source';
 }
 
-function SortableColumn({ column, contacts, onClick, showEmptyColumns, groupBy }: SortableColumnProps) {
-  const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: column.id });
+function DroppableColumn({ column, contacts, onClick, showEmptyColumns, groupBy }: SortableColumnProps) {
   const isMobile = useIsMobile();
+  const t = useTranslations();
 
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-  };
+  const { setNodeRef, isOver } = useDroppable({ id: column.id, data: { type: 'column', column } });
 
   const { data: statuses } = api.site.getStatus.useQuery();
   const { data: priorities } = api.site.getPriority.useQuery();
@@ -118,17 +112,18 @@ function SortableColumn({ column, contacts, onClick, showEmptyColumns, groupBy }
   };
 
   return (
-    <div ref={setNodeRef} style={style} {...attributes} {...listeners} className='flex h-full w-[280px] shrink-0 flex-col sm:w-[280px]'>
+    <div className='flex h-full w-[280px] shrink-0 flex-col sm:w-[280px]'>
       <div className='mb-2 flex items-center justify-between'>
         <SmartColorBadge value={column.title} color={getColumnColor()} />
         <span className='text-muted-foreground text-xs'>{column.items.length}</span>
       </div>
-      <div className='flex-1 space-y-2 overflow-y-auto rounded-lg border bg-muted/50 p-2'>
+      <div ref={setNodeRef} className={`flex-1 space-y-2 overflow-y-auto rounded-lg border p-2 ${isOver ? 'bg-accent/20' : 'bg-muted/50'}`}>
         <SortableContext items={column.items.map((item) => item.id)} strategy={verticalListSortingStrategy}>
           {column.items.map((contact) => (
             <SortableItem key={contact.id} contact={contact} onClick={onClick} groupBy={groupBy} />
           ))}
         </SortableContext>
+        {column.items.length === 0 && <div className='h-20 flex items-center justify-center text-muted-foreground text-sm'>{t('drop_items_here')}</div>}
       </div>
     </div>
   );
@@ -161,19 +156,7 @@ export default function CRMContactsKanbanPage() {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [columns, setColumns] = useState<KanbanColumn[]>([]);
 
-  const sensors = useSensors(
-    useSensor(MouseSensor, {
-      activationConstraint: {
-        distance: 8,
-      },
-    }),
-    useSensor(TouchSensor, {
-      activationConstraint: {
-        delay: 300,
-        tolerance: 5,
-      },
-    })
-  );
+  const sensors = useSensors(useSensor(MouseSensor, { activationConstraint: { distance: 8 } }), useSensor(TouchSensor, { activationConstraint: { delay: 300, tolerance: 5 } }));
 
   const filteredContacts = useMemo(() => {
     if (!contactsData) return [];
@@ -199,23 +182,11 @@ export default function CRMContactsKanbanPage() {
 
     let newColumns: KanbanColumn[] = [];
     if (groupBy === 'status' && statuses) {
-      newColumns = statuses.map((status: Status) => ({
-        id: status.value,
-        title: status.value,
-        items: filteredContacts.filter((contact) => contact.status === status.value),
-      }));
+      newColumns = statuses.map((status: Status) => ({ id: status.value, title: status.value, items: filteredContacts.filter((contact) => contact.status === status.value) }));
     } else if (groupBy === 'priority' && priorities) {
-      newColumns = priorities.map((priority: Priority) => ({
-        id: priority.value,
-        title: priority.value,
-        items: filteredContacts.filter((contact) => contact.priority === priority.value),
-      }));
+      newColumns = priorities.map((priority: Priority) => ({ id: priority.value, title: priority.value, items: filteredContacts.filter((contact) => contact.priority === priority.value) }));
     } else if (groupBy === 'source' && sources) {
-      newColumns = sources.map((source: Source) => ({
-        id: source.value,
-        title: source.value,
-        items: filteredContacts.filter((contact) => contact.source === source.value),
-      }));
+      newColumns = sources.map((source: Source) => ({ id: source.value, title: source.value, items: filteredContacts.filter((contact) => contact.source === source.value) }));
     }
 
     setColumns(newColumns);
@@ -230,48 +201,53 @@ export default function CRMContactsKanbanPage() {
 
     if (!over) return;
 
-    const activeColumn = columns.find((col) => col.items.some((item) => item.id === active.id));
-    const overColumn = columns.find((col) => col.id === over.id);
+    const activeContact = filteredContacts.find((c) => c.id === active.id);
+    if (!activeContact) return;
 
-    if (!activeColumn || !overColumn) return;
+    const sourceColumn = columns.find((column) => column.items.some((item) => item.id === active.id));
 
-    const activeItems = activeColumn.items;
-    const overItems = overColumn.items;
+    if (!sourceColumn) return;
 
-    const activeIndex = activeItems.findIndex((item) => item.id === active.id);
-    const overIndex = overItems.length; // Place at the end of the target column
+    const targetColumn = columns.find((column) => column.id === over.id);
+    if (targetColumn) {
+      if (sourceColumn.id !== targetColumn.id) {
+        const updatedColumns = columns.map((column) => {
+          if (column.id === sourceColumn.id) {
+            return { ...column, items: column.items.filter((item) => item.id !== active.id) };
+          }
 
-    if (activeColumn.id === overColumn.id) {
-      const newItems = arrayMove(activeItems, activeIndex, overIndex);
-      const newColumns = columns.map((col) => {
-        if (col.id === activeColumn.id) {
-          return { ...col, items: newItems };
-        }
-        return col;
-      });
-      setColumns(newColumns);
-    } else {
-      const [removed] = activeItems.splice(activeIndex, 1);
-      overItems.splice(overIndex, 0, removed);
+          if (column.id === targetColumn.id) {
+            return { ...column, items: [...column.items, activeContact] };
+          }
 
-      const newColumns = columns.map((col) => {
-        if (col.id === activeColumn.id) {
-          return { ...col, items: activeItems };
-        }
-        if (col.id === overColumn.id) {
-          return { ...col, items: overItems };
-        }
-        return col;
-      });
-      setColumns(newColumns);
-
-      // Update the contact's status
-      const contact = filteredContacts.find((c) => c.id === active.id);
-      if (contact) {
-        updateContact.mutate({
-          id: contact.id,
-          status: overColumn.id,
+          return column;
         });
+
+        setColumns(updatedColumns);
+
+        updateContact.mutate({ id: activeContact.id, [groupBy]: targetColumn.id });
+
+        return;
+      }
+    }
+
+    const overContactId = over.id as string;
+    const overItemIndex = sourceColumn.items.findIndex((item) => item.id === overContactId);
+
+    if (overItemIndex >= 0) {
+      const activeItemIndex = sourceColumn.items.findIndex((item) => item.id === active.id);
+
+      if (activeItemIndex !== overItemIndex) {
+        const newItems = arrayMove(sourceColumn.items, activeItemIndex, overItemIndex);
+
+        const updatedColumns = columns.map((column) => {
+          if (column.id === sourceColumn.id) {
+            return { ...column, items: newItems };
+          }
+          return column;
+        });
+
+        setColumns(updatedColumns);
       }
     }
 
@@ -323,11 +299,9 @@ export default function CRMContactsKanbanPage() {
       <div className='h-[calc(100vh-200px)] overflow-hidden'>
         <div className='flex h-full gap-4 overflow-x-auto pb-4'>
           <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
-            <SortableContext items={columns.map((col) => col.id)} strategy={horizontalListSortingStrategy}>
-              {columns.map((column) => (
-                <SortableColumn key={column.id} column={column} contacts={filteredContacts} onClick={handleContactClick} showEmptyColumns={showEmptyColumns} groupBy={groupBy} />
-              ))}
-            </SortableContext>
+            {columns.map((column) => (
+              <DroppableColumn key={column.id} column={column} contacts={filteredContacts} onClick={handleContactClick} showEmptyColumns={showEmptyColumns} groupBy={groupBy} />
+            ))}
             <DragOverlay>
               {activeId ? (
                 <div className='rounded-lg border bg-card p-4 shadow-sm'>

@@ -674,5 +674,6 @@
   "welcome_description": "歡迎訪問您的儀表板",
   "workspace": "工作區",
   "write_a_reply": "寫回復... 使用 @ 提及某人",
-  "you": "你"
+  "you": "你",
+  "drop_items_here": "將項目拖到此處"
 }
