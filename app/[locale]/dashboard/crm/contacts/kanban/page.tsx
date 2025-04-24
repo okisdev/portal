@@ -183,7 +183,9 @@ function DroppableColumn({ column, contacts, onClick, showEmptyColumns, groupBy 
               })}
             </div>
           ) : (
-            <div className='flex items-center justify-center p-2 text-muted-foreground text-sm'>{t('drop_items_here')}</div>
+            <div className='flex h-full items-center justify-center p-2 text-muted-foreground text-sm' data-column-id={column.id}>
+              {t('drop_items_here')}
+            </div>
           )}
         </SortableContext>
       </div>
@@ -206,7 +208,7 @@ const LoadingSkeleton = memo(function LoadingSkeleton() {
             <Skeleton className='h-6 w-20' />
             <Skeleton className='h-4 w-4' />
           </div>
-          <div className='flex-1 space-y-2 overflow-y-auto rounded-lg border p-2 bg-muted/50'>
+          <div className='flex-1 space-y-2 overflow-y-auto rounded-lg border bg-muted/50 p-2'>
             {itemSkeletons.map((item) => (
               <div key={`${column.id}-${item.id}`} className='rounded-lg border bg-card p-4 shadow-sm'>
                 <div className='flex items-start gap-3'>
@@ -418,13 +420,13 @@ export default function CRMContactsKanbanPage() {
       return;
     }
 
-    // Check if we're dropping onto a column
-    const targetColumn = columns.find((column) => column.id === over.id);
-
-    if (targetColumn) {
+    // First, check if we're dropping onto a column or its empty message
+    // Get column data from over
+    if (over.data.current && over.data.current.type === 'column') {
       // We're dropping directly onto a column
+      const targetColumn = over.data.current.column;
+
       if (sourceColumn.id !== targetColumn.id) {
-        // Optimized column update - only update the affected columns
         const updatedColumns = columns.map((column) => {
           if (column.id === sourceColumn.id) {
             return { ...column, items: column.items.filter((item) => item.id !== active.id) };
@@ -443,9 +445,36 @@ export default function CRMContactsKanbanPage() {
         setActiveId(null);
         return;
       }
+    } else {
+      // Check if we're dropping onto a column (by ID)
+      const targetColumn = columns.find((column) => column.id === over.id);
+
+      if (targetColumn) {
+        // We're dropping directly onto a column
+        if (sourceColumn.id !== targetColumn.id) {
+          // Optimized column update - only update the affected columns
+          const updatedColumns = columns.map((column) => {
+            if (column.id === sourceColumn.id) {
+              return { ...column, items: column.items.filter((item) => item.id !== active.id) };
+            }
+
+            if (column.id === targetColumn.id) {
+              return { ...column, items: [...column.items, activeContact] };
+            }
+
+            return column;
+          });
+
+          setColumns(updatedColumns);
+          updateContact.mutate({ id: activeContact.id, [groupBy]: targetColumn.id });
+          setIsDragging(false);
+          setActiveId(null);
+          return;
+        }
+      }
     }
 
-    // Find the column containing the over item
+    // Find the column containing the over item (if it's an item and not a column)
     const overItemId = over.id as string;
     const overColumn = columns.find((column) => column.items.some((item) => item.id === overItemId));
 
