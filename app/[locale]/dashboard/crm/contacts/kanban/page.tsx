@@ -7,6 +7,7 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useDebounce } from '@/hooks/use-debounce';
 import { useIsMobile } from '@/hooks/use-mobile';
 import type { Contact, Priority, Source, Status } from '@/lib/schema';
@@ -135,6 +136,44 @@ function DroppableColumn({ column, contacts, onClick, showEmptyColumns, groupBy 
         </SortableContext>
         {column.items.length === 0 && <div className='h-20 flex items-center justify-center text-muted-foreground text-sm'>{t('drop_items_here')}</div>}
       </div>
+    </div>
+  );
+}
+
+function LoadingSkeleton() {
+  // Create fixed data arrays with predefined IDs instead of using indices
+  const columnSkeletons = [{ id: 'column-skeleton-1' }, { id: 'column-skeleton-2' }, { id: 'column-skeleton-3' }];
+
+  const itemSkeletons = [{ id: 'item-skeleton-1' }, { id: 'item-skeleton-2' }, { id: 'item-skeleton-3' }, { id: 'item-skeleton-4' }, { id: 'item-skeleton-5' }];
+
+  return (
+    <div className='flex h-full gap-4 overflow-x-auto pb-4'>
+      {columnSkeletons.map((column) => (
+        <div key={column.id} className='flex h-full w-[280px] shrink-0 flex-col sm:w-[280px]'>
+          <div className='mb-2 flex items-center justify-between'>
+            <Skeleton className='h-6 w-20' />
+            <Skeleton className='h-4 w-4' />
+          </div>
+          <div className='flex-1 space-y-2 overflow-y-auto rounded-lg border p-2 bg-muted/50'>
+            {itemSkeletons.map((item) => (
+              <div key={`${column.id}-${item.id}`} className='rounded-lg border bg-card p-4 shadow-sm'>
+                <div className='flex items-start gap-3'>
+                  <Skeleton className='size-8 rounded-full' />
+                  <div className='flex-1 space-y-2'>
+                    <Skeleton className='h-4 w-3/4' />
+                    <Skeleton className='h-3 w-1/2' />
+                    <Skeleton className='h-3 w-1/3' />
+                    <div className='flex gap-2 pt-1'>
+                      <Skeleton className='h-5 w-16' />
+                      <Skeleton className='h-5 w-16' />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
     </div>
   );
 }
@@ -405,35 +444,39 @@ export default function CRMContactsKanbanPage() {
       </div>
 
       <div className='h-[calc(100vh-200px)] overflow-hidden'>
-        <div className='flex h-full gap-4 overflow-x-auto pb-4'>
-          <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd} collisionDetection={closestCenter}>
-            {columns.map((column) => (
-              <DroppableColumn key={column.id} column={column} contacts={filteredContacts} onClick={handleContactClick} showEmptyColumns={showEmptyColumns} groupBy={groupBy} />
-            ))}
-            <DragOverlay>
-              {activeId ? (
-                <div className='rounded-lg border bg-card p-4 shadow-sm'>
-                  <div className='flex items-start gap-3'>
-                    <Avatar className='size-8'>
-                      <AvatarFallback>
-                        {filteredContacts.find((c) => c.id === activeId)?.firstName?.[0] ??
-                          filteredContacts.find((c) => c.id === activeId)?.name?.[0] ??
-                          filteredContacts.find((c) => c.id === activeId)?.email?.[0] ??
-                          ''}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className='flex-1 space-y-1'>
-                      <div className='flex items-center justify-between'>
-                        <h4 className='font-medium text-sm'>{filteredContacts.find((c) => c.id === activeId)?.name}</h4>
+        {isLoading ? (
+          <LoadingSkeleton />
+        ) : (
+          <div className='flex h-full gap-4 overflow-x-auto pb-4'>
+            <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd} collisionDetection={closestCenter}>
+              {columns.map((column) => (
+                <DroppableColumn key={column.id} column={column} contacts={filteredContacts} onClick={handleContactClick} showEmptyColumns={showEmptyColumns} groupBy={groupBy} />
+              ))}
+              <DragOverlay>
+                {activeId ? (
+                  <div className='rounded-lg border bg-card p-4 shadow-sm'>
+                    <div className='flex items-start gap-3'>
+                      <Avatar className='size-8'>
+                        <AvatarFallback>
+                          {filteredContacts.find((c) => c.id === activeId)?.firstName?.[0] ??
+                            filteredContacts.find((c) => c.id === activeId)?.name?.[0] ??
+                            filteredContacts.find((c) => c.id === activeId)?.email?.[0] ??
+                            ''}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className='flex-1 space-y-1'>
+                        <div className='flex items-center justify-between'>
+                          <h4 className='font-medium text-sm'>{filteredContacts.find((c) => c.id === activeId)?.name}</h4>
+                        </div>
+                        <p className='text-muted-foreground text-xs'>{filteredContacts.find((c) => c.id === activeId)?.email}</p>
                       </div>
-                      <p className='text-muted-foreground text-xs'>{filteredContacts.find((c) => c.id === activeId)?.email}</p>
                     </div>
                   </div>
-                </div>
-              ) : null}
-            </DragOverlay>
-          </DndContext>
-        </div>
+                ) : null}
+              </DragOverlay>
+            </DndContext>
+          </div>
+        )}
       </div>
     </div>
   );
