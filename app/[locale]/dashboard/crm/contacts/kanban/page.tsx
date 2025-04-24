@@ -28,6 +28,11 @@ interface KanbanColumn {
   items: Contact[];
 }
 
+interface SortOption {
+  value: string;
+  label: string;
+}
+
 interface SortableItemProps {
   contact: Contact;
   onClick: (id: string) => void;
@@ -139,6 +144,7 @@ export default function CRMContactsKanbanPage() {
   const debouncedSearch = useDebounce(search, 300);
   const [showEmptyColumns, setShowEmptyColumns] = useState(true);
   const [groupBy, setGroupBy] = useState<'status' | 'priority' | 'source'>('status');
+  const [sortBy, setSortBy] = useState<string>('priority');
 
   const { data: contactsData, isLoading } = api.contact.getAllContacts.useQuery();
   const { data: statuses } = api.site.getStatus.useQuery();
@@ -157,6 +163,24 @@ export default function CRMContactsKanbanPage() {
   const [columns, setColumns] = useState<KanbanColumn[]>([]);
 
   const sensors = useSensors(useSensor(MouseSensor, { activationConstraint: { distance: 8 } }), useSensor(TouchSensor, { activationConstraint: { delay: 300, tolerance: 5 } }));
+
+  const sortOptions = useMemo(() => {
+    const options: SortOption[] = [];
+
+    options.push({ value: 'name', label: t('name') });
+
+    if (groupBy !== 'status') options.push({ value: 'status', label: t('status') });
+    if (groupBy !== 'priority') options.push({ value: 'priority', label: t('priority') });
+    if (groupBy !== 'source') options.push({ value: 'source', label: t('source') });
+
+    return options;
+  }, [groupBy, t]);
+
+  useEffect(() => {
+    if (sortBy === groupBy) {
+      setSortBy(groupBy !== 'priority' ? 'priority' : 'name');
+    }
+  }, [groupBy, sortBy]);
 
   const filteredContacts = useMemo(() => {
     if (!contactsData) return [];
@@ -177,20 +201,58 @@ export default function CRMContactsKanbanPage() {
     });
   }, [contactsData, debouncedSearch]);
 
+  const sortContacts = (contacts: Contact[]) => {
+    return [...contacts].sort((a, b) => {
+      if (sortBy === 'name') {
+        return (a.name || '').localeCompare(b.name || '');
+      }
+
+      if (sortBy === 'status') {
+        if (statuses) {
+          const statusOrder = statuses.map((s: Status) => s.value);
+          return statusOrder.indexOf(a.status) - statusOrder.indexOf(b.status);
+        }
+        return (a.status || '').localeCompare(b.status || '');
+      }
+
+      if (sortBy === 'priority') {
+        if (priorities) {
+          const priorityOrder = priorities.map((p: Priority) => p.value);
+          return priorityOrder.indexOf(a.priority || 'Medium') - priorityOrder.indexOf(b.priority || 'Medium');
+        }
+        return (a.priority || 'Medium').localeCompare(b.priority || 'Medium');
+      }
+
+      if (sortBy === 'source') {
+        if (sources) {
+          const sourceOrder = sources.map((s: Source) => s.value);
+          return sourceOrder.indexOf(a.source || '') - sourceOrder.indexOf(b.source || '');
+        }
+        return (a.source || '').localeCompare(b.source || '');
+      }
+
+      return 0;
+    });
+  };
+
   useEffect(() => {
     if (!filteredContacts) return;
 
     let newColumns: KanbanColumn[] = [];
     if (groupBy === 'status' && statuses) {
-      newColumns = statuses.map((status: Status) => ({ id: status.value, title: status.value, items: filteredContacts.filter((contact) => contact.status === status.value) }));
+      newColumns = statuses.map((status: Status) => ({ id: status.value, title: status.value, items: sortContacts(filteredContacts.filter((contact) => contact.status === status.value)) }));
     } else if (groupBy === 'priority' && priorities) {
-      newColumns = priorities.map((priority: Priority) => ({ id: priority.value, title: priority.value, items: filteredContacts.filter((contact) => contact.priority === priority.value) }));
+      newColumns = priorities.map((priority: Priority) => ({
+        id: priority.value,
+        title: priority.value,
+        items: sortContacts(filteredContacts.filter((contact) => contact.priority === priority.value)),
+      }));
     } else if (groupBy === 'source' && sources) {
-      newColumns = sources.map((source: Source) => ({ id: source.value, title: source.value, items: filteredContacts.filter((contact) => contact.source === source.value) }));
+      newColumns = sources.map((source: Source) => ({ id: source.value, title: source.value, items: sortContacts(filteredContacts.filter((contact) => contact.source === source.value)) }));
     }
 
     setColumns(newColumns);
-  }, [filteredContacts, statuses, priorities, sources, groupBy]);
+  }, [filteredContacts, statuses, priorities, sources, groupBy, sortBy]);
 
   const handleDragStart = (event: DragStartEvent) => {
     setActiveId(event.active.id as string);
@@ -273,6 +335,18 @@ export default function CRMContactsKanbanPage() {
               <SelectItem value='status'>{t('status')}</SelectItem>
               <SelectItem value='priority'>{t('priority')}</SelectItem>
               <SelectItem value='source'>{t('source')}</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={sortBy} onValueChange={setSortBy}>
+            <SelectTrigger size='sm' className='h-8 w-full sm:w-[120px]'>
+              <SelectValue placeholder={t('sort_by')} />
+            </SelectTrigger>
+            <SelectContent>
+              {sortOptions.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
           <div className='flex items-center gap-2'>
