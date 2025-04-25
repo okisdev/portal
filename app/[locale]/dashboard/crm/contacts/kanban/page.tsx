@@ -4,14 +4,14 @@ import { AddContact } from '@/components/dashboard/contact/add-contact';
 import { PageHeader } from '@/components/shared/page-header';
 import { SmartColorBadge } from '@/components/shared/smart-color-badge';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useDebounce } from '@/hooks/use-debounce';
-import { useIsMobile } from '@/hooks/use-mobile';
 import type { Contact, Priority, Source, Status } from '@/lib/schema';
-import type { Locale } from '@/types/i18n';
 import { parsePhoneWithoutCountryCode } from '@/utils/phone';
 import { api } from '@/utils/trpc/client';
 import { DndContext, type DragEndEvent, DragOverlay, type DragStartEvent, MouseSensor, TouchSensor, useDroppable, useSensor, useSensors } from '@dnd-kit/core';
@@ -19,8 +19,9 @@ import { closestCenter } from '@dnd-kit/core';
 import { SortableContext, arrayMove, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { useVirtualizer } from '@tanstack/react-virtual';
+import { format } from 'date-fns';
+import { ArrowUpRight, Calendar, CalendarClock, Clock, Eye, EyeOff, MoreHorizontal } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { useLocale } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
@@ -31,10 +32,101 @@ interface KanbanColumn {
   items: Contact[];
 }
 
-interface SortOption {
-  value: string;
-  label: string;
+// Shared ContactCard component for consistent UI
+interface ContactCardProps {
+  contact: Contact;
+  onClickView?: (id: string) => void;
+  groupBy?: 'status' | 'priority' | 'source';
+  simplified?: boolean;
 }
+
+const ContactCard = memo(function ContactCard({ contact, onClickView, groupBy, simplified = false }: ContactCardProps) {
+  const t = useTranslations();
+  const { data: statuses } = api.site.getStatus.useQuery();
+  const { data: priorities } = api.site.getPriority.useQuery();
+  const { data: sources } = api.site.getSource.useQuery();
+
+  const handleClick = useCallback(
+    (e: React.MouseEvent<HTMLButtonElement>) => {
+      if (onClickView) {
+        // Stop propagation to prevent triggering drag events
+        e.stopPropagation();
+        e.preventDefault();
+        e.nativeEvent.stopImmediatePropagation();
+
+        // Call the click handler
+        onClickView(contact.id);
+      }
+    },
+    [onClickView, contact.id]
+  );
+
+  const formatDate = (date: Date | null | undefined) => {
+    if (!date) return null;
+    return format(new Date(date), 'MMM d, yyyy');
+  };
+
+  const lastContacted = formatDate(contact.lastContactedAt);
+  const nextFollowUp = formatDate(contact.nextFollowUpAt);
+  const createdAt = formatDate(contact.createdAt);
+
+  return (
+    <div className={`rounded-lg border bg-card p-4 shadow-sm ${!simplified ? 'group relative' : ''}`}>
+      <div className='flex items-start gap-3'>
+        <Avatar className='size-8'>
+          <AvatarFallback>{contact.firstName?.[0] ?? contact.name?.[0] ?? contact.email?.[0] ?? ''}</AvatarFallback>
+        </Avatar>
+        <div className='flex-1 space-y-1 overflow-hidden truncate'>
+          <div className='flex items-center justify-between'>
+            <h4 className='font-medium text-sm'>{contact.name}</h4>
+            {onClickView && (
+              <Button variant='outline' size='icon' className='size-7 cursor-pointer' onClick={handleClick} title={t('view_contact_details')} data-no-dnd='true'>
+                <ArrowUpRight className='size-4' />
+              </Button>
+            )}
+          </div>
+          <p className='text-muted-foreground text-xs'>{contact.email}</p>
+
+          {!simplified && (
+            <>
+              <div className='flex items-center gap-2'>
+                {contact.phone && <span className='text-muted-foreground text-xs'>{parsePhoneWithoutCountryCode(contact.phone)}</span>}
+                {contact.company && <span className='text-muted-foreground text-xs'>{contact.company}</span>}
+              </div>
+
+              <div className='flex flex-wrap gap-2 pt-1'>
+                {contact.status && groupBy !== 'status' && <SmartColorBadge value={contact.status} color={statuses?.find((s: Status) => s.value === contact.status)?.color || '#6b7280'} />}
+                {contact.priority && groupBy !== 'priority' && <SmartColorBadge value={contact.priority} color={priorities?.find((p: Priority) => p.value === contact.priority)?.color || '#6b7280'} />}
+                {contact.source && groupBy !== 'source' && <SmartColorBadge value={contact.source} color={sources?.find((s: Source) => s.value === contact.source)?.color || '#6b7280'} />}
+              </div>
+
+              <div className='flex flex-col gap-1 pt-1'>
+                {createdAt && (
+                  <div className='flex items-center gap-1'>
+                    <Calendar className='h-3 w-3 text-muted-foreground' />
+                    <span className='text-muted-foreground text-xs'>{t('created_at_date', { date: createdAt })}</span>
+                  </div>
+                )}
+                {lastContacted && (
+                  <div className='flex items-center gap-1'>
+                    <Clock className='h-3 w-3 text-muted-foreground' />
+                    <span className='text-muted-foreground text-xs'>{t('last_contacted_date', { date: lastContacted })}</span>
+                  </div>
+                )}
+                {nextFollowUp && (
+                  <div className='flex items-center gap-1'>
+                    <CalendarClock className='h-3 w-3 text-muted-foreground' />
+                    <span className='text-muted-foreground text-xs'>{t('next_follow_up_date', { date: nextFollowUp })}</span>
+                  </div>
+                )}
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+});
 
 interface SortableItemProps {
   contact: Contact;
@@ -44,7 +136,9 @@ interface SortableItemProps {
 
 // Memoize SortableItem to prevent unnecessary re-renders
 const SortableItem = memo(function SortableItem({ contact, onClick, groupBy }: SortableItemProps) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: contact.id });
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: contact.id,
+  });
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -52,56 +146,38 @@ const SortableItem = memo(function SortableItem({ contact, onClick, groupBy }: S
     opacity: isDragging ? 0.5 : 1,
   };
 
-  const { data: statuses } = api.site.getStatus.useQuery();
-  const { data: priorities } = api.site.getPriority.useQuery();
-  const { data: sources } = api.site.getSource.useQuery();
-
-  const handleClick = useCallback(() => onClick(contact.id), [onClick, contact.id]);
+  const handleItemClick = useCallback(
+    (id: string) => {
+      // Only handle clicks if not currently dragging
+      if (!isDragging) {
+        onClick(id);
+      }
+    },
+    [isDragging, onClick]
+  );
 
   return (
-    <div
-      ref={setNodeRef}
-      style={style}
-      {...attributes}
-      {...listeners}
-      onClick={handleClick}
-      className='group relative cursor-pointer rounded-lg border bg-card p-4 shadow-sm transition-colors hover:bg-accent'
-    >
-      <div className='flex items-start gap-3'>
-        <Avatar className='size-8'>
-          <AvatarFallback>{contact.firstName?.[0] ?? contact.name?.[0] ?? contact.email?.[0] ?? ''}</AvatarFallback>
-        </Avatar>
-        <div className='flex-1 space-y-1 overflow-hidden truncate'>
-          <div className='flex items-center justify-between'>
-            <h4 className='font-medium text-sm'>{contact.name}</h4>
-          </div>
-          <p className='text-muted-foreground text-xs'>{contact.email}</p>
-          <div className='flex items-center gap-2'>
-            {contact.phone && <span className='text-muted-foreground text-xs'>{parsePhoneWithoutCountryCode(contact.phone)}</span>}
-            {contact.company && <span className='text-muted-foreground text-xs'>{contact.company}</span>}
-          </div>
-          <div className='flex flex-wrap gap-2 pt-1'>
-            {contact.status && groupBy !== 'status' && <SmartColorBadge value={contact.status} color={statuses?.find((s: Status) => s.value === contact.status)?.color || '#6b7280'} />}
-            {contact.priority && groupBy !== 'priority' && <SmartColorBadge value={contact.priority} color={priorities?.find((p: Priority) => p.value === contact.priority)?.color || '#6b7280'} />}
-            {contact.source && groupBy !== 'source' && <SmartColorBadge value={contact.source} color={sources?.find((s: Source) => s.value === contact.source)?.color || '#6b7280'} />}
-          </div>
-        </div>
+    <div {...attributes} {...listeners} ref={setNodeRef} style={style} className='group relative cursor-move transition-colors hover:bg-accent'>
+      <div className='absolute top-2 right-2 cursor-grab touch-none opacity-0 group-hover:opacity-100' {...attributes} {...listeners}>
+        <div className='h-4 w-8 rounded-sm bg-muted/50' />
       </div>
+      <ContactCard contact={contact} onClickView={handleItemClick} groupBy={groupBy} />
     </div>
   );
 });
 
 interface SortableColumnProps {
   column: KanbanColumn;
-  contacts: Contact[];
   onClick: (id: string) => void;
   showEmptyColumns: boolean;
   groupBy: 'status' | 'priority' | 'source';
+  onHideColumn: (columnId: string) => void;
 }
 
-function DroppableColumn({ column, contacts, onClick, showEmptyColumns, groupBy }: SortableColumnProps) {
-  const isMobile = useIsMobile();
+function DroppableColumn({ column, onClick, showEmptyColumns, groupBy, onHideColumn }: SortableColumnProps) {
   const t = useTranslations();
+  const [columnSearch, setColumnSearch] = useState('');
+  const debouncedColumnSearch = useDebounce(columnSearch, 300);
 
   const { setNodeRef, isOver } = useDroppable({ id: column.id, data: { type: 'column', column } });
 
@@ -123,9 +199,26 @@ function DroppableColumn({ column, contacts, onClick, showEmptyColumns, groupBy 
     [setNodeRef]
   );
 
+  // Filter column items based on column search
+  const filteredItems = useMemo(() => {
+    if (!debouncedColumnSearch.trim()) {
+      return column.items;
+    }
+
+    const searchTerm = debouncedColumnSearch.toLowerCase();
+    return column.items.filter((contact) => {
+      const name = `${contact.firstName} ${contact.lastName}`.toLowerCase();
+      const email = (contact.email || '').toLowerCase();
+      const phone = (contact.phone || '').toLowerCase();
+      const company = (contact.company || '').toLowerCase();
+
+      return name.includes(searchTerm) || email.includes(searchTerm) || phone.includes(searchTerm) || company.includes(searchTerm);
+    });
+  }, [column.items, debouncedColumnSearch]);
+
   // Create virtualizer for this column
   const virtualizer = useVirtualizer({
-    count: column.items.length,
+    count: filteredItems.length,
     getScrollElement: () => columnRef,
     estimateSize: () => 120, // Estimate card height
     overscan: 5,
@@ -156,14 +249,32 @@ function DroppableColumn({ column, contacts, onClick, showEmptyColumns, groupBy 
     <div className='flex h-full w-[280px] shrink-0 flex-col sm:w-[280px]'>
       <div className='mb-2 flex items-center justify-between'>
         <SmartColorBadge value={column.title} color={getColumnColor()} />
-        <span className='text-muted-foreground text-xs'>{column.items.length}</span>
+        <div className='flex items-center gap-2'>
+          <span className='text-muted-foreground text-xs'>{column.items.length}</span>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant='ghost' className='h-6 w-6 p-0'>
+                <MoreHorizontal className='h-4 w-4' />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align='end'>
+              <DropdownMenuItem onClick={() => onHideColumn(column.id)}>
+                <EyeOff className='mr-2 h-4 w-4' />
+                {t('hide_column')}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      </div>
+      <div className='mb-2'>
+        <Input placeholder={t('search_in_column')} value={columnSearch} onChange={(e) => setColumnSearch(e.target.value)} className='h-7 w-full text-xs' />
       </div>
       <div ref={setMultipleRefs} className={`flex-1 overflow-y-auto rounded-lg border p-2 ${isOver ? 'bg-accent/20' : 'bg-muted/50'}`} style={{ position: 'relative' }}>
-        <SortableContext items={column.items.map((item) => item.id)} strategy={verticalListSortingStrategy}>
-          {column.items.length > 0 ? (
+        <SortableContext items={filteredItems.map((item) => item.id)} strategy={verticalListSortingStrategy}>
+          {filteredItems.length > 0 ? (
             <div className='relative w-full' style={{ height: `${virtualizer.getTotalSize()}px` }}>
               {virtualItems.map((virtualItem: { index: number; start: number }) => {
-                const contact = column.items[virtualItem.index];
+                const contact = filteredItems[virtualItem.index];
                 return (
                   <div
                     key={contact.id}
@@ -184,7 +295,7 @@ function DroppableColumn({ column, contacts, onClick, showEmptyColumns, groupBy 
             </div>
           ) : (
             <div className='flex h-full items-center justify-center p-2 text-muted-foreground text-sm' data-column-id={column.id}>
-              {t('drop_items_here')}
+              {debouncedColumnSearch ? t('no_results') : t('drop_items_here')}
             </div>
           )}
         </SortableContext>
@@ -196,7 +307,7 @@ function DroppableColumn({ column, contacts, onClick, showEmptyColumns, groupBy 
 // Memo the LoadingSkeleton component
 const LoadingSkeleton = memo(function LoadingSkeleton() {
   // Create fixed data arrays with predefined IDs instead of using indices
-  const columnSkeletons = [{ id: 'column-skeleton-1' }, { id: 'column-skeleton-2' }, { id: 'column-skeleton-3' }];
+  const columnSkeletons = [{ id: 'column-skeleton-1' }, { id: 'column-skeleton-2' }, { id: 'column-skeleton-3' }, { id: 'column-skeleton-4' }, { id: 'column-skeleton-5' }];
 
   const itemSkeletons = [{ id: 'item-skeleton-1' }, { id: 'item-skeleton-2' }, { id: 'item-skeleton-3' }, { id: 'item-skeleton-4' }, { id: 'item-skeleton-5' }];
 
@@ -206,7 +317,10 @@ const LoadingSkeleton = memo(function LoadingSkeleton() {
         <div key={column.id} className='flex h-full w-[280px] shrink-0 flex-col sm:w-[280px]'>
           <div className='mb-2 flex items-center justify-between'>
             <Skeleton className='h-6 w-20' />
-            <Skeleton className='h-4 w-4' />
+            <div className='flex items-center gap-2'>
+              <Skeleton className='h-4 w-6' />
+              <Skeleton className='h-4 w-4' />
+            </div>
           </div>
           <div className='flex-1 space-y-2 overflow-y-auto rounded-lg border bg-muted/50 p-2'>
             {itemSkeletons.map((item) => (
@@ -235,14 +349,13 @@ const LoadingSkeleton = memo(function LoadingSkeleton() {
 export default function CRMContactsKanbanPage() {
   const router = useRouter();
   const t = useTranslations();
-  const locale = useLocale() as Locale;
-  const isMobile = useIsMobile();
 
   const [search, setSearch] = useState('');
   const debouncedSearch = useDebounce(search, 300);
   const [showEmptyColumns, setShowEmptyColumns] = useState(true);
   const [groupBy, setGroupBy] = useState<'status' | 'priority' | 'source'>('status');
-  const [sortBy, setSortBy] = useState<string>('priority');
+  const [hiddenColumns, setHiddenColumns] = useState<string[]>([]);
+  const [hasHiddenColumns, setHasHiddenColumns] = useState(false);
 
   const { data: contactsData, isLoading } = api.contact.getAllContacts.useQuery();
   const { data: statuses } = api.site.getStatus.useQuery();
@@ -262,34 +375,40 @@ export default function CRMContactsKanbanPage() {
   const [isDragging, setIsDragging] = useState(false);
   const debouncedDragging = useDebounce(isDragging, 200);
 
+  // Reset hidden columns when changing group by
+  useEffect(() => {
+    setHiddenColumns([]);
+    setHasHiddenColumns(false);
+  }, [groupBy]);
+
+  // Handle hiding a column
+  const handleHideColumn = useCallback((columnId: string) => {
+    setHiddenColumns((prev) => [...prev, columnId]);
+    setHasHiddenColumns(true);
+  }, []);
+
+  // Handle showing all columns
+  const handleShowAllColumns = useCallback(() => {
+    setHiddenColumns([]);
+    setHasHiddenColumns(false);
+  }, []);
+
   // Fix the sensor configuration to prevent "Cannot use 'in' operator to search for 'x' in undefined" error
   const sensors = useSensors(
-    useSensor(MouseSensor),
+    useSensor(MouseSensor, {
+      // Don't start dragging on elements marked with data-no-dnd
+      activationConstraint: {
+        distance: 8,
+      },
+    }),
     useSensor(TouchSensor, {
+      // Don't start dragging on elements marked with data-no-dnd
       activationConstraint: {
         delay: 400,
         tolerance: 8,
       },
     })
   );
-
-  const sortOptions = useMemo(() => {
-    const options: SortOption[] = [];
-
-    options.push({ value: 'name', label: t('name') });
-
-    if (groupBy !== 'status') options.push({ value: 'status', label: t('status') });
-    if (groupBy !== 'priority') options.push({ value: 'priority', label: t('priority') });
-    if (groupBy !== 'source') options.push({ value: 'source', label: t('source') });
-
-    return options;
-  }, [groupBy, t]);
-
-  useEffect(() => {
-    if (sortBy === groupBy) {
-      setSortBy(groupBy !== 'priority' ? 'priority' : 'name');
-    }
-  }, [groupBy, sortBy]);
 
   const filteredContacts = useMemo(() => {
     if (!contactsData) return [];
@@ -310,42 +429,18 @@ export default function CRMContactsKanbanPage() {
     });
   }, [contactsData, debouncedSearch]);
 
-  // Memoize sorting function to prevent unnecessary calculations
+  // Simplify sorting function to only use priority
   const sortContacts = useCallback(
     (contacts: Contact[]) => {
       return [...contacts].sort((a, b) => {
-        if (sortBy === 'name') {
-          return (a.name || '').localeCompare(b.name || '');
+        if (priorities) {
+          const priorityOrder = priorities.map((p: Priority) => p.value);
+          return priorityOrder.indexOf(a.priority || 'Medium') - priorityOrder.indexOf(b.priority || 'Medium');
         }
-
-        if (sortBy === 'status') {
-          if (statuses) {
-            const statusOrder = statuses.map((s: Status) => s.value);
-            return statusOrder.indexOf(a.status) - statusOrder.indexOf(b.status);
-          }
-          return (a.status || '').localeCompare(b.status || '');
-        }
-
-        if (sortBy === 'priority') {
-          if (priorities) {
-            const priorityOrder = priorities.map((p: Priority) => p.value);
-            return priorityOrder.indexOf(a.priority || 'Medium') - priorityOrder.indexOf(b.priority || 'Medium');
-          }
-          return (a.priority || 'Medium').localeCompare(b.priority || 'Medium');
-        }
-
-        if (sortBy === 'source') {
-          if (sources) {
-            const sourceOrder = sources.map((s: Source) => s.value);
-            return sourceOrder.indexOf(a.source || '') - sourceOrder.indexOf(b.source || '');
-          }
-          return (a.source || '').localeCompare(b.source || '');
-        }
-
-        return 0;
+        return (a.priority || 'Medium').localeCompare(b.priority || 'Medium');
       });
     },
-    [sortBy, statuses, priorities, sources]
+    [priorities]
   );
 
   // Use a throttled/debounced column generation to prevent excess calculations
@@ -539,13 +634,18 @@ export default function CRMContactsKanbanPage() {
     [router]
   );
 
+  // Filter out hidden columns
+  const visibleColumns = useMemo(() => {
+    return columns.filter((column) => !hiddenColumns.includes(column.id));
+  }, [columns, hiddenColumns]);
+
   return (
     <div className='space-y-4 p-4'>
       <PageHeader title={t('contacts')} subtitle={!isLoading ? `(${t('total_number_contacts', { count: filteredContacts.length || 0 })})` : undefined} description={t('contacts_description')} />
 
       <div className='flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between'>
         <div className='flex flex-col gap-4 sm:flex-row sm:items-center'>
-          <Input placeholder={t('search_contacts')} value={search} onChange={(e) => setSearch(e.target.value)} className='h-8 w-full sm:w-72 max-w-sm' disabled={isLoading} />
+          <Input placeholder={t('search_contacts')} value={search} onChange={(e) => setSearch(e.target.value)} className='h-8 w-full max-w-sm sm:w-72' disabled={isLoading} />
           <Select value={groupBy} onValueChange={(value) => setGroupBy(value as 'status' | 'priority' | 'source')} disabled={debouncedDragging}>
             <SelectTrigger size='sm' className='h-8 w-full sm:w-[120px]'>
               <SelectValue placeholder={t('group_by')} />
@@ -554,18 +654,6 @@ export default function CRMContactsKanbanPage() {
               <SelectItem value='status'>{t('status')}</SelectItem>
               <SelectItem value='priority'>{t('priority')}</SelectItem>
               <SelectItem value='source'>{t('source')}</SelectItem>
-            </SelectContent>
-          </Select>
-          <Select value={sortBy} onValueChange={setSortBy} disabled={debouncedDragging}>
-            <SelectTrigger size='sm' className='h-8 w-full sm:w-[120px]'>
-              <SelectValue placeholder={t('sort_by')} />
-            </SelectTrigger>
-            <SelectContent>
-              {sortOptions.map((option) => (
-                <SelectItem key={option.value} value={option.value}>
-                  {option.label}
-                </SelectItem>
-              ))}
             </SelectContent>
           </Select>
           <div className='flex items-center gap-2'>
@@ -583,6 +671,12 @@ export default function CRMContactsKanbanPage() {
               {t('show_empty_columns')}
             </label>
           </div>
+          {hasHiddenColumns && (
+            <Button variant='outline' size='sm' className='h-8' onClick={handleShowAllColumns} disabled={debouncedDragging}>
+              <Eye className='mr-2 h-4 w-4' />
+              {t('show_all_columns')}
+            </Button>
+          )}
         </div>
 
         <div className='flex items-center gap-2'>
@@ -600,31 +694,32 @@ export default function CRMContactsKanbanPage() {
               onDragStart={handleDragStart}
               onDragEnd={handleDragEnd}
               collisionDetection={closestCenter}
-              // Remove modifiers that might be causing issues
+              // Skip dragging if starting on button or other interactive elements
+              autoScroll={{
+                threshold: {
+                  x: 0.12,
+                  y: 0.12,
+                },
+              }}
             >
-              {columns.map((column) => (
-                <DroppableColumn key={column.id} column={column} contacts={filteredContacts} onClick={handleContactClick} showEmptyColumns={showEmptyColumns} groupBy={groupBy} />
+              {visibleColumns.map((column) => (
+                <DroppableColumn key={column.id} column={column} onClick={handleContactClick} showEmptyColumns={showEmptyColumns} groupBy={groupBy} onHideColumn={handleHideColumn} />
               ))}
               <DragOverlay>
                 {activeId ? (
-                  <div className='rounded-lg border bg-card p-4 shadow-sm'>
-                    <div className='flex items-start gap-3'>
-                      <Avatar className='size-8'>
-                        <AvatarFallback>
-                          {filteredContacts.find((c) => c.id === activeId)?.firstName?.[0] ??
-                            filteredContacts.find((c) => c.id === activeId)?.name?.[0] ??
-                            filteredContacts.find((c) => c.id === activeId)?.email?.[0] ??
-                            ''}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className='flex-1 space-y-1'>
-                        <div className='flex items-center justify-between'>
-                          <h4 className='font-medium text-sm'>{filteredContacts.find((c) => c.id === activeId)?.name}</h4>
-                        </div>
-                        <p className='text-muted-foreground text-xs'>{filteredContacts.find((c) => c.id === activeId)?.email}</p>
-                      </div>
-                    </div>
-                  </div>
+                  <ContactCard
+                    contact={
+                      filteredContacts.find((c) => c.id === activeId) ||
+                      filteredContacts[0] || {
+                        id: activeId,
+                        name: '',
+                        email: '',
+                        status: '',
+                        priority: '',
+                      }
+                    }
+                    simplified={true}
+                  />
                 ) : null}
               </DragOverlay>
             </DndContext>
