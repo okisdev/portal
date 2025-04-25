@@ -134,6 +134,8 @@ interface SortableColumnProps {
 function DroppableColumn({ column, contacts, onClick, showEmptyColumns, groupBy }: SortableColumnProps) {
   const isMobile = useIsMobile();
   const t = useTranslations();
+  const [columnSearch, setColumnSearch] = useState('');
+  const debouncedColumnSearch = useDebounce(columnSearch, 300);
 
   const { setNodeRef, isOver } = useDroppable({ id: column.id, data: { type: 'column', column } });
 
@@ -155,9 +157,26 @@ function DroppableColumn({ column, contacts, onClick, showEmptyColumns, groupBy 
     [setNodeRef]
   );
 
+  // Filter column items based on column search
+  const filteredItems = useMemo(() => {
+    if (!debouncedColumnSearch.trim()) {
+      return column.items;
+    }
+
+    const searchTerm = debouncedColumnSearch.toLowerCase();
+    return column.items.filter((contact) => {
+      const name = `${contact.firstName} ${contact.lastName}`.toLowerCase();
+      const email = (contact.email || '').toLowerCase();
+      const phone = (contact.phone || '').toLowerCase();
+      const company = (contact.company || '').toLowerCase();
+
+      return name.includes(searchTerm) || email.includes(searchTerm) || phone.includes(searchTerm) || company.includes(searchTerm);
+    });
+  }, [column.items, debouncedColumnSearch]);
+
   // Create virtualizer for this column
   const virtualizer = useVirtualizer({
-    count: column.items.length,
+    count: filteredItems.length,
     getScrollElement: () => columnRef,
     estimateSize: () => 120, // Estimate card height
     overscan: 5,
@@ -190,12 +209,15 @@ function DroppableColumn({ column, contacts, onClick, showEmptyColumns, groupBy 
         <SmartColorBadge value={column.title} color={getColumnColor()} />
         <span className='text-muted-foreground text-xs'>{column.items.length}</span>
       </div>
+      <div className='mb-2'>
+        <Input placeholder={t('search_in_column')} value={columnSearch} onChange={(e) => setColumnSearch(e.target.value)} className='h-7 w-full text-xs' />
+      </div>
       <div ref={setMultipleRefs} className={`flex-1 overflow-y-auto rounded-lg border p-2 ${isOver ? 'bg-accent/20' : 'bg-muted/50'}`} style={{ position: 'relative' }}>
-        <SortableContext items={column.items.map((item) => item.id)} strategy={verticalListSortingStrategy}>
-          {column.items.length > 0 ? (
+        <SortableContext items={filteredItems.map((item) => item.id)} strategy={verticalListSortingStrategy}>
+          {filteredItems.length > 0 ? (
             <div className='relative w-full' style={{ height: `${virtualizer.getTotalSize()}px` }}>
               {virtualItems.map((virtualItem: { index: number; start: number }) => {
-                const contact = column.items[virtualItem.index];
+                const contact = filteredItems[virtualItem.index];
                 return (
                   <div
                     key={contact.id}
@@ -216,7 +238,7 @@ function DroppableColumn({ column, contacts, onClick, showEmptyColumns, groupBy 
             </div>
           ) : (
             <div className='flex h-full items-center justify-center p-2 text-muted-foreground text-sm' data-column-id={column.id}>
-              {t('drop_items_here')}
+              {debouncedColumnSearch ? t('no_results') : t('drop_items_here')}
             </div>
           )}
         </SortableContext>

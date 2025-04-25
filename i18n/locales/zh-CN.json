@@ -679,5 +679,6 @@
   "you": "你",
   "last_contacted": "最后联系",
   "last_contacted_date": "上次在{date}联系",
-  "next_follow_up_date": "下一个后续日期：{date}"
+  "next_follow_up_date": "下一个后续日期：{date}",
+  "search_in_column": "搜索列..."
 }

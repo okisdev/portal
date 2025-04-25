@@ -679,5 +679,6 @@
   "you": "You",
   "last_contacted": "Last contacted",
   "last_contacted_date": "Last contacted at {date}",
-  "next_follow_up_date": "Next follow up date: {date}"
+  "next_follow_up_date": "Next follow up date: {date}",
+  "search_in_column": "Search in column..."
 }
