@@ -4,7 +4,9 @@ import { AddContact } from '@/components/dashboard/contact/add-contact';
 import { PageHeader } from '@/components/shared/page-header';
 import { SmartColorBadge } from '@/components/shared/smart-color-badge';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -19,7 +21,7 @@ import { SortableContext, arrayMove, useSortable, verticalListSortingStrategy } 
 import { CSS } from '@dnd-kit/utilities';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { format } from 'date-fns';
-import { Calendar, CalendarClock, Clock } from 'lucide-react';
+import { Calendar, CalendarClock, Clock, Eye, EyeOff, MoreHorizontal } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import { memo, useCallback, useEffect, useMemo, useState } from 'react';
@@ -124,9 +126,10 @@ interface SortableColumnProps {
   onClick: (id: string) => void;
   showEmptyColumns: boolean;
   groupBy: 'status' | 'priority' | 'source';
+  onHideColumn: (columnId: string) => void;
 }
 
-function DroppableColumn({ column, contacts, onClick, showEmptyColumns, groupBy }: SortableColumnProps) {
+function DroppableColumn({ column, contacts, onClick, showEmptyColumns, groupBy, onHideColumn }: SortableColumnProps) {
   const isMobile = useIsMobile();
   const t = useTranslations();
   const [columnSearch, setColumnSearch] = useState('');
@@ -202,7 +205,22 @@ function DroppableColumn({ column, contacts, onClick, showEmptyColumns, groupBy 
     <div className='flex h-full w-[280px] shrink-0 flex-col sm:w-[280px]'>
       <div className='mb-2 flex items-center justify-between'>
         <SmartColorBadge value={column.title} color={getColumnColor()} />
-        <span className='text-muted-foreground text-xs'>{column.items.length}</span>
+        <div className='flex items-center gap-2'>
+          <span className='text-muted-foreground text-xs'>{column.items.length}</span>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant='ghost' className='h-6 w-6 p-0'>
+                <MoreHorizontal className='h-4 w-4' />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align='end'>
+              <DropdownMenuItem onClick={() => onHideColumn(column.id)}>
+                <EyeOff className='mr-2 h-4 w-4' />
+                {t('hide_column')}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </div>
       <div className='mb-2'>
         <Input placeholder={t('search_in_column')} value={columnSearch} onChange={(e) => setColumnSearch(e.target.value)} className='h-7 w-full text-xs' />
@@ -289,6 +307,8 @@ export default function CRMContactsKanbanPage() {
   const debouncedSearch = useDebounce(search, 300);
   const [showEmptyColumns, setShowEmptyColumns] = useState(true);
   const [groupBy, setGroupBy] = useState<'status' | 'priority' | 'source'>('status');
+  const [hiddenColumns, setHiddenColumns] = useState<string[]>([]);
+  const [hasHiddenColumns, setHasHiddenColumns] = useState(false);
 
   const { data: contactsData, isLoading } = api.contact.getAllContacts.useQuery();
   const { data: statuses } = api.site.getStatus.useQuery();
@@ -307,6 +327,24 @@ export default function CRMContactsKanbanPage() {
   const [columns, setColumns] = useState<KanbanColumn[]>([]);
   const [isDragging, setIsDragging] = useState(false);
   const debouncedDragging = useDebounce(isDragging, 200);
+
+  // Reset hidden columns when changing group by
+  useEffect(() => {
+    setHiddenColumns([]);
+    setHasHiddenColumns(false);
+  }, [groupBy]);
+
+  // Handle hiding a column
+  const handleHideColumn = useCallback((columnId: string) => {
+    setHiddenColumns((prev) => [...prev, columnId]);
+    setHasHiddenColumns(true);
+  }, []);
+
+  // Handle showing all columns
+  const handleShowAllColumns = useCallback(() => {
+    setHiddenColumns([]);
+    setHasHiddenColumns(false);
+  }, []);
 
   // Fix the sensor configuration to prevent "Cannot use 'in' operator to search for 'x' in undefined" error
   const sensors = useSensors(
@@ -543,13 +581,18 @@ export default function CRMContactsKanbanPage() {
     [router]
   );
 
+  // Filter out hidden columns
+  const visibleColumns = useMemo(() => {
+    return columns.filter((column) => !hiddenColumns.includes(column.id));
+  }, [columns, hiddenColumns]);
+
   return (
     <div className='space-y-4 p-4'>
       <PageHeader title={t('contacts')} subtitle={!isLoading ? `(${t('total_number_contacts', { count: filteredContacts.length || 0 })})` : undefined} description={t('contacts_description')} />
 
       <div className='flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between'>
         <div className='flex flex-col gap-4 sm:flex-row sm:items-center'>
-          <Input placeholder={t('search_contacts')} value={search} onChange={(e) => setSearch(e.target.value)} className='h-8 w-full sm:w-72 max-w-sm' disabled={isLoading} />
+          <Input placeholder={t('search_contacts')} value={search} onChange={(e) => setSearch(e.target.value)} className='h-8 w-full max-w-sm sm:w-72' disabled={isLoading} />
           <Select value={groupBy} onValueChange={(value) => setGroupBy(value as 'status' | 'priority' | 'source')} disabled={debouncedDragging}>
             <SelectTrigger size='sm' className='h-8 w-full sm:w-[120px]'>
               <SelectValue placeholder={t('group_by')} />
@@ -575,6 +618,12 @@ export default function CRMContactsKanbanPage() {
               {t('show_empty_columns')}
             </label>
           </div>
+          {hasHiddenColumns && (
+            <Button variant='outline' size='sm' className='h-8' onClick={handleShowAllColumns} disabled={debouncedDragging}>
+              <Eye className='mr-2 h-4 w-4' />
+              {t('show_all_columns')}
+            </Button>
+          )}
         </div>
 
         <div className='flex items-center gap-2'>
@@ -587,15 +636,17 @@ export default function CRMContactsKanbanPage() {
           <LoadingSkeleton />
         ) : (
           <div className='flex h-full gap-4 overflow-x-auto pb-4'>
-            <DndContext
-              sensors={sensors}
-              onDragStart={handleDragStart}
-              onDragEnd={handleDragEnd}
-              collisionDetection={closestCenter}
-              // Remove modifiers that might be causing issues
-            >
-              {columns.map((column) => (
-                <DroppableColumn key={column.id} column={column} contacts={filteredContacts} onClick={handleContactClick} showEmptyColumns={showEmptyColumns} groupBy={groupBy} />
+            <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd} collisionDetection={closestCenter}>
+              {visibleColumns.map((column) => (
+                <DroppableColumn
+                  key={column.id}
+                  column={column}
+                  contacts={filteredContacts}
+                  onClick={handleContactClick}
+                  showEmptyColumns={showEmptyColumns}
+                  groupBy={groupBy}
+                  onHideColumn={handleHideColumn}
+                />
               ))}
               <DragOverlay>
                 {activeId ? (

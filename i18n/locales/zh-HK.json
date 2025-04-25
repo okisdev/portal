@@ -680,5 +680,7 @@
   "last_contacted": "最後聯繫",
   "last_contacted_date": "上次在{date}聯繫",
   "next_follow_up_date": "下一個後續日期：{date}",
-  "search_in_column": "搜索列..."
+  "search_in_column": "搜索列...",
+  "hide_column": "隱藏列",
+  "show_all_columns": "顯示所有列"
 }
