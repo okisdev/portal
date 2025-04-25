@@ -20,7 +20,7 @@ import { SortableContext, arrayMove, useSortable, verticalListSortingStrategy } 
 import { CSS } from '@dnd-kit/utilities';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { format } from 'date-fns';
-import { Calendar, CalendarClock, Clock, Eye, EyeOff, MoreHorizontal } from 'lucide-react';
+import { ArrowUpRight, Calendar, CalendarClock, Clock, Eye, EyeOff, MoreHorizontal } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import { memo, useCallback, useEffect, useMemo, useState } from 'react';
@@ -53,7 +53,13 @@ const SortableItem = memo(function SortableItem({ contact, onClick, groupBy }: S
   const { data: priorities } = api.site.getPriority.useQuery();
   const { data: sources } = api.site.getSource.useQuery();
 
-  const handleClick = useCallback(() => onClick(contact.id), [onClick, contact.id]);
+  const handleClick = useCallback(
+    (e: React.MouseEvent<HTMLButtonElement>) => {
+      e.stopPropagation();
+      onClick(contact.id);
+    },
+    [onClick, contact.id]
+  );
 
   const formatDate = (date: Date | null | undefined) => {
     if (!date) return null;
@@ -65,55 +71,56 @@ const SortableItem = memo(function SortableItem({ contact, onClick, groupBy }: S
   const createdAt = formatDate(contact.createdAt);
 
   return (
-    <div ref={setNodeRef} style={style} className='group relative rounded-lg border bg-card p-4 shadow-sm transition-colors hover:bg-accent'>
+    <div {...attributes} {...listeners} ref={setNodeRef} style={style} className='group relative cursor-move rounded-lg border bg-card p-4 shadow-sm transition-colors hover:bg-accent'>
       <div className='absolute top-2 right-2 cursor-grab touch-none opacity-0 group-hover:opacity-100' {...attributes} {...listeners}>
         <div className='h-4 w-8 rounded-sm bg-muted/50' />
       </div>
 
-      <button type='button' onClick={handleClick} className='w-full cursor-pointer text-left' aria-label={t('view_contact_details')}>
-        <div className='flex items-start gap-3'>
-          <Avatar className='size-8'>
-            <AvatarFallback>{contact.firstName?.[0] ?? contact.name?.[0] ?? contact.email?.[0] ?? ''}</AvatarFallback>
-          </Avatar>
-          <div className='flex-1 space-y-1 overflow-hidden truncate'>
-            <div className='flex items-center justify-between'>
-              <h4 className='font-medium text-sm'>{contact.name}</h4>
-            </div>
-            <p className='text-muted-foreground text-xs'>{contact.email}</p>
-            <div className='flex items-center gap-2'>
-              {contact.phone && <span className='text-muted-foreground text-xs'>{parsePhoneWithoutCountryCode(contact.phone)}</span>}
-              {contact.company && <span className='text-muted-foreground text-xs'>{contact.company}</span>}
-            </div>
+      <div className='flex items-start gap-3'>
+        <Avatar className='size-8'>
+          <AvatarFallback>{contact.firstName?.[0] ?? contact.name?.[0] ?? contact.email?.[0] ?? ''}</AvatarFallback>
+        </Avatar>
+        <div className='flex-1 space-y-1 overflow-hidden truncate'>
+          <div className='flex items-center justify-between'>
+            <h4 className='font-medium text-sm'>{contact.name}</h4>
+            <Button variant='outline' size='icon' className='size-7 cursor-pointer' onClick={handleClick} title={t('view_contact_details')}>
+              <ArrowUpRight className='size-4' />
+            </Button>
+          </div>
+          <p className='text-muted-foreground text-xs'>{contact.email}</p>
+          <div className='flex items-center gap-2'>
+            {contact.phone && <span className='text-muted-foreground text-xs'>{parsePhoneWithoutCountryCode(contact.phone)}</span>}
+            {contact.company && <span className='text-muted-foreground text-xs'>{contact.company}</span>}
+          </div>
 
-            <div className='flex flex-wrap gap-2 pt-1'>
-              {contact.status && groupBy !== 'status' && <SmartColorBadge value={contact.status} color={statuses?.find((s: Status) => s.value === contact.status)?.color || '#6b7280'} />}
-              {contact.priority && groupBy !== 'priority' && <SmartColorBadge value={contact.priority} color={priorities?.find((p: Priority) => p.value === contact.priority)?.color || '#6b7280'} />}
-              {contact.source && groupBy !== 'source' && <SmartColorBadge value={contact.source} color={sources?.find((s: Source) => s.value === contact.source)?.color || '#6b7280'} />}
-            </div>
+          <div className='flex flex-wrap gap-2 pt-1'>
+            {contact.status && groupBy !== 'status' && <SmartColorBadge value={contact.status} color={statuses?.find((s: Status) => s.value === contact.status)?.color || '#6b7280'} />}
+            {contact.priority && groupBy !== 'priority' && <SmartColorBadge value={contact.priority} color={priorities?.find((p: Priority) => p.value === contact.priority)?.color || '#6b7280'} />}
+            {contact.source && groupBy !== 'source' && <SmartColorBadge value={contact.source} color={sources?.find((s: Source) => s.value === contact.source)?.color || '#6b7280'} />}
+          </div>
 
-            <div className='flex flex-col gap-1 pt-1'>
-              {createdAt && (
-                <div className='flex items-center gap-1'>
-                  <Calendar className='h-3 w-3 text-muted-foreground' />
-                  <span className='text-muted-foreground text-xs'>{t('created_at_date', { date: createdAt })}</span>
-                </div>
-              )}
-              {lastContacted && (
-                <div className='flex items-center gap-1'>
-                  <Clock className='h-3 w-3 text-muted-foreground' />
-                  <span className='text-muted-foreground text-xs'>{t('last_contacted_date', { date: lastContacted })}</span>
-                </div>
-              )}
-              {nextFollowUp && (
-                <div className='flex items-center gap-1'>
-                  <CalendarClock className='h-3 w-3 text-muted-foreground' />
-                  <span className='text-muted-foreground text-xs'>{t('next_follow_up_date', { date: nextFollowUp })}</span>
-                </div>
-              )}
-            </div>
+          <div className='flex flex-col gap-1 pt-1'>
+            {createdAt && (
+              <div className='flex items-center gap-1'>
+                <Calendar className='h-3 w-3 text-muted-foreground' />
+                <span className='text-muted-foreground text-xs'>{t('created_at_date', { date: createdAt })}</span>
+              </div>
+            )}
+            {lastContacted && (
+              <div className='flex items-center gap-1'>
+                <Clock className='h-3 w-3 text-muted-foreground' />
+                <span className='text-muted-foreground text-xs'>{t('last_contacted_date', { date: lastContacted })}</span>
+              </div>
+            )}
+            {nextFollowUp && (
+              <div className='flex items-center gap-1'>
+                <CalendarClock className='h-3 w-3 text-muted-foreground' />
+                <span className='text-muted-foreground text-xs'>{t('next_follow_up_date', { date: nextFollowUp })}</span>
+              </div>
+            )}
           </div>
         </div>
-      </button>
+      </div>
     </div>
   );
 });
@@ -259,7 +266,7 @@ function DroppableColumn({ column, onClick, showEmptyColumns, groupBy, onHideCol
 // Memo the LoadingSkeleton component
 const LoadingSkeleton = memo(function LoadingSkeleton() {
   // Create fixed data arrays with predefined IDs instead of using indices
-  const columnSkeletons = [{ id: 'column-skeleton-1' }, { id: 'column-skeleton-2' }, { id: 'column-skeleton-3' }];
+  const columnSkeletons = [{ id: 'column-skeleton-1' }, { id: 'column-skeleton-2' }, { id: 'column-skeleton-3' }, { id: 'column-skeleton-4' }, { id: 'column-skeleton-5' }];
 
   const itemSkeletons = [{ id: 'item-skeleton-1' }, { id: 'item-skeleton-2' }, { id: 'item-skeleton-3' }, { id: 'item-skeleton-4' }, { id: 'item-skeleton-5' }];
 
@@ -269,7 +276,10 @@ const LoadingSkeleton = memo(function LoadingSkeleton() {
         <div key={column.id} className='flex h-full w-[280px] shrink-0 flex-col sm:w-[280px]'>
           <div className='mb-2 flex items-center justify-between'>
             <Skeleton className='h-6 w-20' />
-            <Skeleton className='h-4 w-4' />
+            <div className='flex items-center gap-2'>
+              <Skeleton className='h-4 w-6' />
+              <Skeleton className='h-4 w-4' />
+            </div>
           </div>
           <div className='flex-1 space-y-2 overflow-y-auto rounded-lg border bg-muted/50 p-2'>
             {itemSkeletons.map((item) => (
