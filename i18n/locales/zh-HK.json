@@ -676,5 +676,8 @@
   "welcome_description": "歡迎訪問您的儀表板",
   "workspace": "工作區",
   "write_a_reply": "寫回復... 使用 @ 提及某人",
-  "you": "你"
+  "you": "你",
+  "last_contacted": "最後聯繫",
+  "last_contacted_date": "上次在{date}聯繫",
+  "next_follow_up_date": "下一個後續日期：{date}"
 }

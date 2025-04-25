@@ -11,7 +11,6 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useDebounce } from '@/hooks/use-debounce';
 import { useIsMobile } from '@/hooks/use-mobile';
 import type { Contact, Priority, Source, Status } from '@/lib/schema';
-import type { Locale } from '@/types/i18n';
 import { parsePhoneWithoutCountryCode } from '@/utils/phone';
 import { api } from '@/utils/trpc/client';
 import { DndContext, type DragEndEvent, DragOverlay, type DragStartEvent, MouseSensor, TouchSensor, useDroppable, useSensor, useSensors } from '@dnd-kit/core';
@@ -19,8 +18,9 @@ import { closestCenter } from '@dnd-kit/core';
 import { SortableContext, arrayMove, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { useVirtualizer } from '@tanstack/react-virtual';
+import { format } from 'date-fns';
+import { Calendar, CalendarClock, Clock } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { useLocale } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
@@ -45,6 +45,7 @@ interface SortableItemProps {
 // Memoize SortableItem to prevent unnecessary re-renders
 const SortableItem = memo(function SortableItem({ contact, onClick, groupBy }: SortableItemProps) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: contact.id });
+  const t = useTranslations();
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -57,6 +58,15 @@ const SortableItem = memo(function SortableItem({ contact, onClick, groupBy }: S
   const { data: sources } = api.site.getSource.useQuery();
 
   const handleClick = useCallback(() => onClick(contact.id), [onClick, contact.id]);
+
+  const formatDate = (date: Date | null | undefined) => {
+    if (!date) return null;
+    return format(new Date(date), 'MMM d, yyyy');
+  };
+
+  const lastContacted = formatDate(contact.lastContactedAt);
+  const nextFollowUp = formatDate(contact.nextFollowUpAt);
+  const createdAt = formatDate(contact.createdAt);
 
   return (
     <div
@@ -80,10 +90,32 @@ const SortableItem = memo(function SortableItem({ contact, onClick, groupBy }: S
             {contact.phone && <span className='text-muted-foreground text-xs'>{parsePhoneWithoutCountryCode(contact.phone)}</span>}
             {contact.company && <span className='text-muted-foreground text-xs'>{contact.company}</span>}
           </div>
+
           <div className='flex flex-wrap gap-2 pt-1'>
             {contact.status && groupBy !== 'status' && <SmartColorBadge value={contact.status} color={statuses?.find((s: Status) => s.value === contact.status)?.color || '#6b7280'} />}
             {contact.priority && groupBy !== 'priority' && <SmartColorBadge value={contact.priority} color={priorities?.find((p: Priority) => p.value === contact.priority)?.color || '#6b7280'} />}
             {contact.source && groupBy !== 'source' && <SmartColorBadge value={contact.source} color={sources?.find((s: Source) => s.value === contact.source)?.color || '#6b7280'} />}
+          </div>
+
+          <div className='flex flex-col gap-1 pt-1'>
+            {createdAt && (
+              <div className='flex items-center gap-1'>
+                <Calendar className='h-3 w-3 text-muted-foreground' />
+                <span className='text-muted-foreground text-xs'>{t('created_at_date', { date: createdAt })}</span>
+              </div>
+            )}
+            {lastContacted && (
+              <div className='flex items-center gap-1'>
+                <Clock className='h-3 w-3 text-muted-foreground' />
+                <span className='text-muted-foreground text-xs'>{t('last_contacted_date', { date: lastContacted })}</span>
+              </div>
+            )}
+            {nextFollowUp && (
+              <div className='flex items-center gap-1'>
+                <CalendarClock className='h-3 w-3 text-muted-foreground' />
+                <span className='text-muted-foreground text-xs'>{t('next_follow_up_date', { date: nextFollowUp })}</span>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -235,8 +267,6 @@ const LoadingSkeleton = memo(function LoadingSkeleton() {
 export default function CRMContactsKanbanPage() {
   const router = useRouter();
   const t = useTranslations();
-  const locale = useLocale() as Locale;
-  const isMobile = useIsMobile();
 
   const [search, setSearch] = useState('');
   const debouncedSearch = useDebounce(search, 300);
