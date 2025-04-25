@@ -326,6 +326,8 @@ export function DashboardSidebar() {
 }
 
 function SidebarGroupSection({ title, items, defaultOpen = true }: SidebarGroupSectionProps) {
+  const pathname = usePathname();
+
   return (
     <Collapsible defaultOpen={defaultOpen} className='group/collapsible' data-collapsible='icon'>
       <SidebarGroup>
@@ -338,31 +340,39 @@ function SidebarGroupSection({ title, items, defaultOpen = true }: SidebarGroupS
         <CollapsibleContent>
           <SidebarGroupContent>
             <SidebarMenu>
-              {items.map((item) => (
-                <SidebarMenuItem key={item.id}>
-                  <SidebarMenuButton tooltip={item.title} asChild>
-                    <Link href={item.url ?? ''}>
-                      <item.icon />
-                      <span>{item.title}</span>
-                    </Link>
-                  </SidebarMenuButton>
-                  {item.action && <SidebarMenuAction asChild>{item.action}</SidebarMenuAction>}
-                  {item.items && (
-                    <SidebarMenuSub>
-                      {item.items.map((subItem) => (
-                        <SidebarMenuItem key={subItem.id}>
-                          <SidebarMenuButton tooltip={subItem.title} asChild>
-                            <Link href={subItem.url}>
-                              <subItem.icon />
-                              <span>{subItem.title}</span>
-                            </Link>
-                          </SidebarMenuButton>
-                        </SidebarMenuItem>
-                      ))}
-                    </SidebarMenuSub>
-                  )}
-                </SidebarMenuItem>
-              ))}
+              {items.map((item) => {
+                const isItemActive = item.url ? pathname === item.url : false;
+
+                return (
+                  <SidebarMenuItem key={item.id}>
+                    <SidebarMenuButton tooltip={item.title} asChild className={isItemActive ? 'bg-accent' : ''}>
+                      <Link href={item.url ?? ''}>
+                        <item.icon />
+                        <span>{item.title}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                    {item.action && <SidebarMenuAction asChild>{item.action}</SidebarMenuAction>}
+                    {item.items && (
+                      <SidebarMenuSub>
+                        {item.items.map((subItem) => {
+                          const isSubItemActive = pathname === subItem.url;
+
+                          return (
+                            <SidebarMenuItem key={subItem.id}>
+                              <SidebarMenuButton tooltip={subItem.title} asChild className={isSubItemActive ? 'bg-accent' : ''}>
+                                <Link href={subItem.url}>
+                                  <subItem.icon />
+                                  <span>{subItem.title}</span>
+                                </Link>
+                              </SidebarMenuButton>
+                            </SidebarMenuItem>
+                          );
+                        })}
+                      </SidebarMenuSub>
+                    )}
+                  </SidebarMenuItem>
+                );
+              })}
             </SidebarMenu>
           </SidebarGroupContent>
         </CollapsibleContent>

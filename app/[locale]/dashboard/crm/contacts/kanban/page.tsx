@@ -11,7 +11,6 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useDebounce } from '@/hooks/use-debounce';
-import { useIsMobile } from '@/hooks/use-mobile';
 import type { Contact, Priority, Source, Status } from '@/lib/schema';
 import { parsePhoneWithoutCountryCode } from '@/utils/phone';
 import { api } from '@/utils/trpc/client';
@@ -66,71 +65,68 @@ const SortableItem = memo(function SortableItem({ contact, onClick, groupBy }: S
   const createdAt = formatDate(contact.createdAt);
 
   return (
-    <div
-      ref={setNodeRef}
-      style={style}
-      {...attributes}
-      {...listeners}
-      onClick={handleClick}
-      className='group relative cursor-pointer rounded-lg border bg-card p-4 shadow-sm transition-colors hover:bg-accent'
-    >
-      <div className='flex items-start gap-3'>
-        <Avatar className='size-8'>
-          <AvatarFallback>{contact.firstName?.[0] ?? contact.name?.[0] ?? contact.email?.[0] ?? ''}</AvatarFallback>
-        </Avatar>
-        <div className='flex-1 space-y-1 overflow-hidden truncate'>
-          <div className='flex items-center justify-between'>
-            <h4 className='font-medium text-sm'>{contact.name}</h4>
-          </div>
-          <p className='text-muted-foreground text-xs'>{contact.email}</p>
-          <div className='flex items-center gap-2'>
-            {contact.phone && <span className='text-muted-foreground text-xs'>{parsePhoneWithoutCountryCode(contact.phone)}</span>}
-            {contact.company && <span className='text-muted-foreground text-xs'>{contact.company}</span>}
-          </div>
+    <div ref={setNodeRef} style={style} className='group relative rounded-lg border bg-card p-4 shadow-sm transition-colors hover:bg-accent'>
+      <div className='absolute top-2 right-2 cursor-grab touch-none opacity-0 group-hover:opacity-100' {...attributes} {...listeners}>
+        <div className='h-4 w-8 rounded-sm bg-muted/50' />
+      </div>
 
-          <div className='flex flex-wrap gap-2 pt-1'>
-            {contact.status && groupBy !== 'status' && <SmartColorBadge value={contact.status} color={statuses?.find((s: Status) => s.value === contact.status)?.color || '#6b7280'} />}
-            {contact.priority && groupBy !== 'priority' && <SmartColorBadge value={contact.priority} color={priorities?.find((p: Priority) => p.value === contact.priority)?.color || '#6b7280'} />}
-            {contact.source && groupBy !== 'source' && <SmartColorBadge value={contact.source} color={sources?.find((s: Source) => s.value === contact.source)?.color || '#6b7280'} />}
-          </div>
+      <button type='button' onClick={handleClick} className='w-full cursor-pointer text-left' aria-label={t('view_contact_details')}>
+        <div className='flex items-start gap-3'>
+          <Avatar className='size-8'>
+            <AvatarFallback>{contact.firstName?.[0] ?? contact.name?.[0] ?? contact.email?.[0] ?? ''}</AvatarFallback>
+          </Avatar>
+          <div className='flex-1 space-y-1 overflow-hidden truncate'>
+            <div className='flex items-center justify-between'>
+              <h4 className='font-medium text-sm'>{contact.name}</h4>
+            </div>
+            <p className='text-muted-foreground text-xs'>{contact.email}</p>
+            <div className='flex items-center gap-2'>
+              {contact.phone && <span className='text-muted-foreground text-xs'>{parsePhoneWithoutCountryCode(contact.phone)}</span>}
+              {contact.company && <span className='text-muted-foreground text-xs'>{contact.company}</span>}
+            </div>
 
-          <div className='flex flex-col gap-1 pt-1'>
-            {createdAt && (
-              <div className='flex items-center gap-1'>
-                <Calendar className='h-3 w-3 text-muted-foreground' />
-                <span className='text-muted-foreground text-xs'>{t('created_at_date', { date: createdAt })}</span>
-              </div>
-            )}
-            {lastContacted && (
-              <div className='flex items-center gap-1'>
-                <Clock className='h-3 w-3 text-muted-foreground' />
-                <span className='text-muted-foreground text-xs'>{t('last_contacted_date', { date: lastContacted })}</span>
-              </div>
-            )}
-            {nextFollowUp && (
-              <div className='flex items-center gap-1'>
-                <CalendarClock className='h-3 w-3 text-muted-foreground' />
-                <span className='text-muted-foreground text-xs'>{t('next_follow_up_date', { date: nextFollowUp })}</span>
-              </div>
-            )}
+            <div className='flex flex-wrap gap-2 pt-1'>
+              {contact.status && groupBy !== 'status' && <SmartColorBadge value={contact.status} color={statuses?.find((s: Status) => s.value === contact.status)?.color || '#6b7280'} />}
+              {contact.priority && groupBy !== 'priority' && <SmartColorBadge value={contact.priority} color={priorities?.find((p: Priority) => p.value === contact.priority)?.color || '#6b7280'} />}
+              {contact.source && groupBy !== 'source' && <SmartColorBadge value={contact.source} color={sources?.find((s: Source) => s.value === contact.source)?.color || '#6b7280'} />}
+            </div>
+
+            <div className='flex flex-col gap-1 pt-1'>
+              {createdAt && (
+                <div className='flex items-center gap-1'>
+                  <Calendar className='h-3 w-3 text-muted-foreground' />
+                  <span className='text-muted-foreground text-xs'>{t('created_at_date', { date: createdAt })}</span>
+                </div>
+              )}
+              {lastContacted && (
+                <div className='flex items-center gap-1'>
+                  <Clock className='h-3 w-3 text-muted-foreground' />
+                  <span className='text-muted-foreground text-xs'>{t('last_contacted_date', { date: lastContacted })}</span>
+                </div>
+              )}
+              {nextFollowUp && (
+                <div className='flex items-center gap-1'>
+                  <CalendarClock className='h-3 w-3 text-muted-foreground' />
+                  <span className='text-muted-foreground text-xs'>{t('next_follow_up_date', { date: nextFollowUp })}</span>
+                </div>
+              )}
+            </div>
           </div>
         </div>
-      </div>
+      </button>
     </div>
   );
 });
 
 interface SortableColumnProps {
   column: KanbanColumn;
-  contacts: Contact[];
   onClick: (id: string) => void;
   showEmptyColumns: boolean;
   groupBy: 'status' | 'priority' | 'source';
   onHideColumn: (columnId: string) => void;
 }
 
-function DroppableColumn({ column, contacts, onClick, showEmptyColumns, groupBy, onHideColumn }: SortableColumnProps) {
-  const isMobile = useIsMobile();
+function DroppableColumn({ column, onClick, showEmptyColumns, groupBy, onHideColumn }: SortableColumnProps) {
   const t = useTranslations();
   const [columnSearch, setColumnSearch] = useState('');
   const debouncedColumnSearch = useDebounce(columnSearch, 300);
@@ -638,15 +634,7 @@ export default function CRMContactsKanbanPage() {
           <div className='flex h-full gap-4 overflow-x-auto pb-4'>
             <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd} collisionDetection={closestCenter}>
               {visibleColumns.map((column) => (
-                <DroppableColumn
-                  key={column.id}
-                  column={column}
-                  contacts={filteredContacts}
-                  onClick={handleContactClick}
-                  showEmptyColumns={showEmptyColumns}
-                  groupBy={groupBy}
-                  onHideColumn={handleHideColumn}
-                />
+                <DroppableColumn key={column.id} column={column} onClick={handleContactClick} showEmptyColumns={showEmptyColumns} groupBy={groupBy} onHideColumn={handleHideColumn} />
               ))}
               <DragOverlay>
                 {activeId ? (

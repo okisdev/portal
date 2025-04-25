@@ -682,5 +682,6 @@
   "next_follow_up_date": "Next follow up date: {date}",
   "search_in_column": "Search in column...",
   "hide_column": "Hide column",
-  "show_all_columns": "Show all columns"
+  "show_all_columns": "Show all columns",
+  "view_contact_details": "View contact details"
 }

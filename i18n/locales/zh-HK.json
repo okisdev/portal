@@ -682,5 +682,6 @@
   "next_follow_up_date": "下一個後續日期：{date}",
   "search_in_column": "搜索列...",
   "hide_column": "隱藏列",
-  "show_all_columns": "顯示所有列"
+  "show_all_columns": "顯示所有列",
+  "view_contact_details": "查看聯繫方式"
 }
