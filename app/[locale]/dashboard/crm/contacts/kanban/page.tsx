@@ -32,33 +32,33 @@ interface KanbanColumn {
   items: Contact[];
 }
 
-interface SortableItemProps {
+// Shared ContactCard component for consistent UI
+interface ContactCardProps {
   contact: Contact;
-  onClick: (id: string) => void;
-  groupBy: 'status' | 'priority' | 'source';
+  onClickView?: (id: string) => void;
+  groupBy?: 'status' | 'priority' | 'source';
+  simplified?: boolean;
 }
 
-// Memoize SortableItem to prevent unnecessary re-renders
-const SortableItem = memo(function SortableItem({ contact, onClick, groupBy }: SortableItemProps) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: contact.id });
+const ContactCard = memo(function ContactCard({ contact, onClickView, groupBy, simplified = false }: ContactCardProps) {
   const t = useTranslations();
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isDragging ? 0.5 : 1,
-  };
-
   const { data: statuses } = api.site.getStatus.useQuery();
   const { data: priorities } = api.site.getPriority.useQuery();
   const { data: sources } = api.site.getSource.useQuery();
 
   const handleClick = useCallback(
     (e: React.MouseEvent<HTMLButtonElement>) => {
-      e.stopPropagation();
-      onClick(contact.id);
+      if (onClickView) {
+        // Stop propagation to prevent triggering drag events
+        e.stopPropagation();
+        e.preventDefault();
+        e.nativeEvent.stopImmediatePropagation();
+
+        // Call the click handler
+        onClickView(contact.id);
+      }
     },
-    [onClick, contact.id]
+    [onClickView, contact.id]
   );
 
   const formatDate = (date: Date | null | undefined) => {
@@ -71,11 +71,7 @@ const SortableItem = memo(function SortableItem({ contact, onClick, groupBy }: S
   const createdAt = formatDate(contact.createdAt);
 
   return (
-    <div {...attributes} {...listeners} ref={setNodeRef} style={style} className='group relative cursor-move rounded-lg border bg-card p-4 shadow-sm transition-colors hover:bg-accent'>
-      <div className='absolute top-2 right-2 cursor-grab touch-none opacity-0 group-hover:opacity-100' {...attributes} {...listeners}>
-        <div className='h-4 w-8 rounded-sm bg-muted/50' />
-      </div>
-
+    <div className={`rounded-lg border bg-card p-4 shadow-sm ${!simplified ? 'group relative' : ''}`}>
       <div className='flex items-start gap-3'>
         <Avatar className='size-8'>
           <AvatarFallback>{contact.firstName?.[0] ?? contact.name?.[0] ?? contact.email?.[0] ?? ''}</AvatarFallback>
@@ -83,44 +79,89 @@ const SortableItem = memo(function SortableItem({ contact, onClick, groupBy }: S
         <div className='flex-1 space-y-1 overflow-hidden truncate'>
           <div className='flex items-center justify-between'>
             <h4 className='font-medium text-sm'>{contact.name}</h4>
-            <Button variant='outline' size='icon' className='size-7 cursor-pointer' onClick={handleClick} title={t('view_contact_details')}>
-              <ArrowUpRight className='size-4' />
-            </Button>
+            {onClickView && (
+              <Button variant='outline' size='icon' className='size-7 cursor-pointer' onClick={handleClick} title={t('view_contact_details')} data-no-dnd='true'>
+                <ArrowUpRight className='size-4' />
+              </Button>
+            )}
           </div>
           <p className='text-muted-foreground text-xs'>{contact.email}</p>
-          <div className='flex items-center gap-2'>
-            {contact.phone && <span className='text-muted-foreground text-xs'>{parsePhoneWithoutCountryCode(contact.phone)}</span>}
-            {contact.company && <span className='text-muted-foreground text-xs'>{contact.company}</span>}
-          </div>
 
-          <div className='flex flex-wrap gap-2 pt-1'>
-            {contact.status && groupBy !== 'status' && <SmartColorBadge value={contact.status} color={statuses?.find((s: Status) => s.value === contact.status)?.color || '#6b7280'} />}
-            {contact.priority && groupBy !== 'priority' && <SmartColorBadge value={contact.priority} color={priorities?.find((p: Priority) => p.value === contact.priority)?.color || '#6b7280'} />}
-            {contact.source && groupBy !== 'source' && <SmartColorBadge value={contact.source} color={sources?.find((s: Source) => s.value === contact.source)?.color || '#6b7280'} />}
-          </div>
+          {!simplified && (
+            <>
+              <div className='flex items-center gap-2'>
+                {contact.phone && <span className='text-muted-foreground text-xs'>{parsePhoneWithoutCountryCode(contact.phone)}</span>}
+                {contact.company && <span className='text-muted-foreground text-xs'>{contact.company}</span>}
+              </div>
 
-          <div className='flex flex-col gap-1 pt-1'>
-            {createdAt && (
-              <div className='flex items-center gap-1'>
-                <Calendar className='h-3 w-3 text-muted-foreground' />
-                <span className='text-muted-foreground text-xs'>{t('created_at_date', { date: createdAt })}</span>
+              <div className='flex flex-wrap gap-2 pt-1'>
+                {contact.status && groupBy !== 'status' && <SmartColorBadge value={contact.status} color={statuses?.find((s: Status) => s.value === contact.status)?.color || '#6b7280'} />}
+                {contact.priority && groupBy !== 'priority' && <SmartColorBadge value={contact.priority} color={priorities?.find((p: Priority) => p.value === contact.priority)?.color || '#6b7280'} />}
+                {contact.source && groupBy !== 'source' && <SmartColorBadge value={contact.source} color={sources?.find((s: Source) => s.value === contact.source)?.color || '#6b7280'} />}
               </div>
-            )}
-            {lastContacted && (
-              <div className='flex items-center gap-1'>
-                <Clock className='h-3 w-3 text-muted-foreground' />
-                <span className='text-muted-foreground text-xs'>{t('last_contacted_date', { date: lastContacted })}</span>
+
+              <div className='flex flex-col gap-1 pt-1'>
+                {createdAt && (
+                  <div className='flex items-center gap-1'>
+                    <Calendar className='h-3 w-3 text-muted-foreground' />
+                    <span className='text-muted-foreground text-xs'>{t('created_at_date', { date: createdAt })}</span>
+                  </div>
+                )}
+                {lastContacted && (
+                  <div className='flex items-center gap-1'>
+                    <Clock className='h-3 w-3 text-muted-foreground' />
+                    <span className='text-muted-foreground text-xs'>{t('last_contacted_date', { date: lastContacted })}</span>
+                  </div>
+                )}
+                {nextFollowUp && (
+                  <div className='flex items-center gap-1'>
+                    <CalendarClock className='h-3 w-3 text-muted-foreground' />
+                    <span className='text-muted-foreground text-xs'>{t('next_follow_up_date', { date: nextFollowUp })}</span>
+                  </div>
+                )}
               </div>
-            )}
-            {nextFollowUp && (
-              <div className='flex items-center gap-1'>
-                <CalendarClock className='h-3 w-3 text-muted-foreground' />
-                <span className='text-muted-foreground text-xs'>{t('next_follow_up_date', { date: nextFollowUp })}</span>
-              </div>
-            )}
-          </div>
+            </>
+          )}
         </div>
       </div>
+    </div>
+  );
+});
+
+interface SortableItemProps {
+  contact: Contact;
+  onClick: (id: string) => void;
+  groupBy: 'status' | 'priority' | 'source';
+}
+
+// Memoize SortableItem to prevent unnecessary re-renders
+const SortableItem = memo(function SortableItem({ contact, onClick, groupBy }: SortableItemProps) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: contact.id,
+  });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  const handleItemClick = useCallback(
+    (id: string) => {
+      // Only handle clicks if not currently dragging
+      if (!isDragging) {
+        onClick(id);
+      }
+    },
+    [isDragging, onClick]
+  );
+
+  return (
+    <div {...attributes} {...listeners} ref={setNodeRef} style={style} className='group relative cursor-move transition-colors hover:bg-accent'>
+      <div className='absolute top-2 right-2 cursor-grab touch-none opacity-0 group-hover:opacity-100' {...attributes} {...listeners}>
+        <div className='h-4 w-8 rounded-sm bg-muted/50' />
+      </div>
+      <ContactCard contact={contact} onClickView={handleItemClick} groupBy={groupBy} />
     </div>
   );
 });
@@ -354,8 +395,14 @@ export default function CRMContactsKanbanPage() {
 
   // Fix the sensor configuration to prevent "Cannot use 'in' operator to search for 'x' in undefined" error
   const sensors = useSensors(
-    useSensor(MouseSensor),
+    useSensor(MouseSensor, {
+      // Don't start dragging on elements marked with data-no-dnd
+      activationConstraint: {
+        distance: 8,
+      },
+    }),
     useSensor(TouchSensor, {
+      // Don't start dragging on elements marked with data-no-dnd
       activationConstraint: {
         delay: 400,
         tolerance: 8,
@@ -642,30 +689,37 @@ export default function CRMContactsKanbanPage() {
           <LoadingSkeleton />
         ) : (
           <div className='flex h-full gap-4 overflow-x-auto pb-4'>
-            <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd} collisionDetection={closestCenter}>
+            <DndContext
+              sensors={sensors}
+              onDragStart={handleDragStart}
+              onDragEnd={handleDragEnd}
+              collisionDetection={closestCenter}
+              // Skip dragging if starting on button or other interactive elements
+              autoScroll={{
+                threshold: {
+                  x: 0.12,
+                  y: 0.12,
+                },
+              }}
+            >
               {visibleColumns.map((column) => (
                 <DroppableColumn key={column.id} column={column} onClick={handleContactClick} showEmptyColumns={showEmptyColumns} groupBy={groupBy} onHideColumn={handleHideColumn} />
               ))}
               <DragOverlay>
                 {activeId ? (
-                  <div className='rounded-lg border bg-card p-4 shadow-sm'>
-                    <div className='flex items-start gap-3'>
-                      <Avatar className='size-8'>
-                        <AvatarFallback>
-                          {filteredContacts.find((c) => c.id === activeId)?.firstName?.[0] ??
-                            filteredContacts.find((c) => c.id === activeId)?.name?.[0] ??
-                            filteredContacts.find((c) => c.id === activeId)?.email?.[0] ??
-                            ''}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className='flex-1 space-y-1'>
-                        <div className='flex items-center justify-between'>
-                          <h4 className='font-medium text-sm'>{filteredContacts.find((c) => c.id === activeId)?.name}</h4>
-                        </div>
-                        <p className='text-muted-foreground text-xs'>{filteredContacts.find((c) => c.id === activeId)?.email}</p>
-                      </div>
-                    </div>
-                  </div>
+                  <ContactCard
+                    contact={
+                      filteredContacts.find((c) => c.id === activeId) ||
+                      filteredContacts[0] || {
+                        id: activeId,
+                        name: '',
+                        email: '',
+                        status: '',
+                        priority: '',
+                      }
+                    }
+                    simplified={true}
+                  />
                 ) : null}
               </DragOverlay>
             </DndContext>
