@@ -4,4 +4,4 @@ Streamline Your Business Operations
 
 ## LICENSE
 
-UNLICENSED
+[AGPL-3.0](LICENSE)
