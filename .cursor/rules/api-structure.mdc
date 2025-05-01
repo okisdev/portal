@@ -1,0 +1,37 @@
+---
+description:
+globs:
+alwaysApply: false
+---
+# API Structure
+
+The application uses tRPC for typesafe APIs and Next.js API routes for other endpoints.
+
+## tRPC Structure
+
+- `/server/routers`: tRPC router definitions organized by domain
+- `/app/api/trpc/[trpc]/route.ts`: tRPC API endpoint
+- `/utils/trpc`: tRPC client utilities
+
+## Key tRPC Routers
+
+- [server/routers/auth.ts](mdc:server/routers/auth.ts): Authentication-related procedures
+- [server/routers/user.ts](mdc:server/routers/user/index.ts): User management
+- [server/routers/contact.ts](mdc:server/routers/contact/index.ts): Contact management
+- [server/routers/company.ts](mdc:server/routers/company.ts): Company management
+- [server/routers/calendar.ts](mdc:server/routers/calendar.ts): Calendar functionality
+- [server/routers/task.ts](mdc:server/routers/task.ts): Task management
+
+## Next.js API Routes
+
+- `/app/api/auth/[...nextauth]/route.ts`: NextAuth.js authentication
+- `/app/api/upload/route.ts`: File upload handling
+
+## Client Usage
+
+tRPC is used in the client via React Query hooks:
+
+```tsx
+// Example usage
+const { data, isLoading } = api.user.getUser.useQuery({ id: userId });
+```

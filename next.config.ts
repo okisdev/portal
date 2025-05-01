@@ -16,7 +16,6 @@ const nextConfig: NextConfig = {
         destination: '/dashboard/workspace/calendar',
         permanent: false,
       },
-
       {
         source: '/dashboard/crm',
         destination: '/dashboard/crm/contacts',
@@ -25,11 +24,6 @@ const nextConfig: NextConfig = {
       {
         source: '/dashboard/resource',
         destination: '/dashboard/resource/content',
-        permanent: false,
-      },
-      {
-        source: '/dashboard/tools',
-        destination: '/dashboard/tools/qrcode',
         permanent: false,
       },
       {

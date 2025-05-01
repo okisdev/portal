@@ -1,0 +1,45 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Authentication System
+
+The application uses NextAuth.js (Auth.js) for authentication with Drizzle ORM for database storage.
+
+## Configuration
+
+- [auth.ts](mdc:auth.ts): Main NextAuth configuration
+- [app/api/auth/[...nextauth]/route.ts](mdc:app/api/auth/[...nextauth]/route.ts): NextAuth API routes
+
+## Authentication Pages
+
+- [app/[locale]/(auth)/login/page.tsx](mdc:app/[locale]/(auth)/login/page.tsx): Login page
+- [app/[locale]/(auth)/register/page.tsx](mdc:app/[locale]/(auth)/register/page.tsx): Registration page
+
+## Database Tables
+
+Authentication data is stored in these tables:
+- `portal_user`: User accounts
+- `portal_session`: User sessions
+- `portal_account`: OAuth accounts
+- `portal_verification_token`: Email verification tokens
+
+## Authentication Flows
+
+1. **Email/Password**:
+   - Standard credentials login
+   - Email verification flow
+
+2. **OAuth Providers**:
+   - Supporting various OAuth providers
+
+3. **Session Management**:
+   - JWT and database sessions
+   - Session expiration and renewal
+
+## Middleware Protection
+
+- [middleware.ts](mdc:middleware.ts): Route protection middleware
+- Protected routes require authentication
+- Role-based access control

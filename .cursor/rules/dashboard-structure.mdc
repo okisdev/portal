@@ -1,0 +1,43 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Dashboard Structure
+
+The dashboard is the main application interface after login, organized into several sections.
+
+## Main Layout
+
+- [app/[locale]/dashboard/layout.tsx](mdc:app/[locale]/dashboard/layout.tsx): Dashboard layout with navigation
+- [app/[locale]/dashboard/page.tsx](mdc:app/[locale]/dashboard/page.tsx): Dashboard homepage
+
+## Sections
+
+The dashboard is organized into these primary sections:
+
+### CRM
+
+- `/app/[locale]/dashboard/crm/contacts`: Contact management
+- `/app/[locale]/dashboard/crm/company`: Company management
+- `/app/[locale]/dashboard/crm/team`: Team management
+
+### Workspace
+
+- `/app/[locale]/dashboard/workspace/tasks`: Task management
+- `/app/[locale]/dashboard/workspace/calendar`: Calendar view
+
+### Resources
+
+- `/app/[locale]/dashboard/resource/content`: Content management
+- `/app/[locale]/dashboard/resource/emails`: Email templates
+
+### Site Management
+
+- `/app/[locale]/dashboard/site/(general)/management`: Site management
+- `/app/[locale]/dashboard/site/(admin)`: Admin controls
+
+### Account
+
+- `/app/[locale]/dashboard/account/settings`: User settings
+- `/app/[locale]/dashboard/account/notifications`: Notification settings
