@@ -1,0 +1,36 @@
+---
+description:
+globs:
+alwaysApply: false
+---
+# Database Structure
+
+The application uses PostgreSQL with Drizzle ORM for database operations.
+
+## Schema Definition
+
+- [drizzle/schema.ts](mdc:drizzle/schema.ts): Database table definitions
+- [drizzle/relations.ts](mdc:drizzle/relations.ts): Table relationships
+
+## Key Tables
+
+The database schema includes these primary tables:
+- `portal_user`: User accounts
+- `portal_session`: User sessions
+- `portal_account`: OAuth provider accounts
+- `portal_verification_token`: Email verification tokens
+
+## Database Operations
+
+Database operations are performed using Drizzle ORM queries:
+
+```typescript
+// Example query
+const users = await db.select().from(user).where(eq(user.role, 'ADMIN'));
+```
+
+## Migrations
+
+Database migrations are handled with Drizzle Kit:
+- `/drizzle/*.sql`: SQL migration files
+- `drizzle.config.ts`: Drizzle configuration

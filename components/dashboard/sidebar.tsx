@@ -23,7 +23,7 @@ import { usePathname, useRouter } from '@/i18n/navigation';
 import packageInfo from '@/package.json';
 import { copyToClipboard } from '@/utils/clipboard';
 import { api } from '@/utils/trpc/client';
-import { Building, Contact, Kanban, QrCode, Table, Users } from 'lucide-react';
+import { Building, Contact, Kanban, Table, Users } from 'lucide-react';
 import { Bell, Calendar, ChevronDown, ChevronRight, ChevronUp, Globe, Laptop, LogOut, Moon, Plus, Settings, Sparkle, Sun, Verified } from 'lucide-react';
 import { signOut } from 'next-auth/react';
 import { useLocale, useTranslations } from 'next-intl';
@@ -140,28 +140,6 @@ export function DashboardSidebar() {
               title: t('company'),
               url: '/dashboard/crm/company',
               icon: Building,
-            },
-          ]}
-        />
-        {/* <SidebarGroupSection
-          title={t('resources')}
-          items={[
-            {
-              id: 'content',
-              title: t('content'),
-              url: '/dashboard/resource/content',
-              icon: FileIcon,
-            },
-          ]}
-        /> */}
-        <SidebarGroupSection
-          title={t('tools')}
-          items={[
-            {
-              id: 'qrcode',
-              title: t('qr_code'),
-              url: '/dashboard/tools/qrcode',
-              icon: QrCode,
             },
           ]}
         />
