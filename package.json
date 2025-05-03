@@ -104,7 +104,7 @@
     "react-dom": "^19.1.0",
     "react-hook-form": "^7.56.1",
     "react-medium-image-zoom": "^5.2.14",
-    "react-resizable-panels": "^2.1.9",
+    "react-resizable-panels": "^3.0.0",
     "react-scan": "^0.3.3",
     "recharts": "^2.15.3",
     "resend": "^4.4.1",
