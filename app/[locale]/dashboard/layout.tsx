@@ -1,7 +1,8 @@
-import { auth } from '@/auth';
 import { DashboardHeader } from '@/components/dashboard/header';
 import { DashboardSidebar } from '@/components/dashboard/sidebar';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
+import { auth } from '@/lib/auth';
+import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 
 export default async function DashboardLayout({
@@ -9,7 +10,9 @@ export default async function DashboardLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const session = await auth();
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
 
   if (!session) return redirect('/login');
 

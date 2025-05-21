@@ -5,11 +5,11 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import { authClient } from '@/lib/auth.client';
 import type { Contact } from '@/lib/schema';
 import { api } from '@/utils/trpc/client';
 import { Calendar, File, Send, Trash2, X } from 'lucide-react';
 import { nanoid } from 'nanoid';
-import { useSession } from 'next-auth/react';
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { toast } from 'sonner';
@@ -35,7 +35,7 @@ export function SendEmail({ open, onOpenChange, recipient }: SendEmailProps) {
 
   const utils = api.useUtils();
 
-  const { data: session } = useSession();
+  const { data: session } = authClient.useSession();
   const [showCcBcc, setShowCcBcc] = useState(false);
   const [formData, setFormData] = useState<EmailFormData>({
     subject: '',

@@ -1,7 +1,7 @@
 'use client';
 
 import { Label } from '@/components/ui/label';
-import { encryptPassword } from '@/utils/password';
+import { authClient } from '@/lib/auth.client';
 import { api } from '@/utils/trpc/client';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { motion } from 'framer-motion';
@@ -17,6 +17,8 @@ import { z } from 'zod';
 const registerSchema = z.object({
   email: z.string().email('Please enter a valid email'),
   password: z.string().min(8, 'Password must be at least 8 characters'),
+  firstName: z.string().min(1, 'First name is required'),
+  lastName: z.string().min(1, 'Last name is required'),
 });
 
 type RegisterFormValues = z.infer<typeof registerSchema>;
@@ -39,9 +41,12 @@ export default function RegisterPage() {
 
   const email = watch('email');
   const password = watch('password');
+  const firstName = watch('firstName');
+  const lastName = watch('lastName');
 
-  const registerAccount = api.auth.register.useMutation();
   const [shouldValidate, setShouldValidate] = useState(false);
+
+  const registerMutation = api.auth.register.useMutation();
 
   const { data: isValidDomain } = api.auth.validateEmailDomain.useQuery({ email: email || '' }, { enabled: shouldValidate && !!email && email.includes('@') });
 
@@ -61,26 +66,48 @@ export default function RegisterPage() {
     setLoading(true);
     setError('');
 
-    const hashedPassword = encryptPassword(data.password);
-
-    await registerAccount.mutateAsync(
-      {
-        email: data.email,
-        password: hashedPassword,
-      },
-      {
-        onSuccess: () => {
-          toast.success(t('registration_successful'));
-          router.push('/login?from=register&type=success');
+    try {
+      // First register with auth client
+      await authClient.signUp.email(
+        {
+          email: data.email,
+          password: data.password,
+          name: `${data.firstName} ${data.lastName}`,
+          callbackURL: '/dashboard',
         },
-        onError: (error) => {
-          setError(error.message || t('unexpected_error'));
-          toast.error(error.message || t('unexpected_error'));
-        },
-      }
-    );
+        {
+          onRequest: () => {
+            setLoading(true);
+          },
+          onSuccess: async () => {
+            // Then update additional data with TRPC
+            try {
+              await registerMutation.mutateAsync({
+                email: data.email,
+                password: data.password,
+                firstName: data.firstName,
+                lastName: data.lastName,
+              });
 
-    setLoading(false);
+              toast.success(t('registration_successful'));
+              router.push('/login?from=register&type=success');
+            } catch (error: any) {
+              setError(error?.message || t('unexpected_error'));
+              toast.error(error?.message || t('unexpected_error'));
+            }
+          },
+          onError: (ctx) => {
+            setError(ctx.error.message || t('unexpected_error'));
+            toast.error(ctx.error.message || t('unexpected_error'));
+          },
+        }
+      );
+    } catch (error: any) {
+      setError(error?.message || t('unexpected_error'));
+      toast.error(error?.message || t('unexpected_error'));
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -105,6 +132,20 @@ export default function RegisterPage() {
           {errors.email && <p className='mt-1 text-destructive text-sm'>{errors.email.message}</p>}
         </div>
 
+        <div className='grid grid-cols-2 gap-4'>
+          <div className='space-y-1'>
+            <Label className='mb-1 block font-medium text-foreground text-sm'>{t('first_name')}</Label>
+            <input type='text' {...register('firstName')} className='w-full rounded-lg border bg-background p-2 focus:outline-hidden focus:ring-2 focus:ring-ring' placeholder={t('first_name')} />
+            {errors.firstName && <p className='mt-1 text-destructive text-sm'>{errors.firstName.message}</p>}
+          </div>
+
+          <div className='space-y-1'>
+            <Label className='mb-1 block font-medium text-foreground text-sm'>{t('last_name')}</Label>
+            <input type='text' {...register('lastName')} className='w-full rounded-lg border bg-background p-2 focus:outline-hidden focus:ring-2 focus:ring-ring' placeholder={t('last_name')} />
+            {errors.lastName && <p className='mt-1 text-destructive text-sm'>{errors.lastName.message}</p>}
+          </div>
+        </div>
+
         <div className='space-y-1'>
           <Label className='mb-1 block font-medium text-foreground text-sm'>{t('password')}</Label>
           <input
@@ -119,7 +160,7 @@ export default function RegisterPage() {
         <div className='space-y-3'>
           <button
             type='submit'
-            disabled={loading || !email || !password}
+            disabled={loading || !email || !password || !firstName || !lastName}
             className='flex w-full items-center justify-center rounded-lg bg-primary px-4 py-2 font-medium text-primary-foreground transition-colors hover:bg-primary/80 disabled:cursor-not-allowed disabled:opacity-50'
           >
             {loading ? (

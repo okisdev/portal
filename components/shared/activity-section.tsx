@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Textarea } from '@/components/ui/textarea';
 import { useUpload } from '@/hooks/use-upload';
+import { authClient } from '@/lib/auth.client';
 import type { ActivitySubType } from '@/lib/schema';
 import { cn } from '@/lib/utils';
 import type { Locale } from '@/types/i18n';
@@ -20,7 +21,6 @@ import { api } from '@/utils/trpc/client';
 import { format } from 'date-fns';
 import { enUS } from 'date-fns/locale';
 import { ArrowUpRight, Edit2, FileIcon, ImageIcon, MessageCircle, Paperclip, Trash, X } from 'lucide-react';
-import { useSession } from 'next-auth/react';
 import { useTranslations } from 'next-intl';
 import { useLocale } from 'next-intl';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -46,7 +46,7 @@ interface ActivitySectionProps {
 export function ActivitySection({ activities, onCreateActivity, isLoading, filterTypes, onDeleteNote, onUpdateNote, onReplyNote }: ActivitySectionProps) {
   const t = useTranslations();
   const locale = useLocale() as Locale;
-  const { data: session } = useSession();
+  const { data: session } = authClient.useSession();
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isComposing, setIsComposing] = useState(false);

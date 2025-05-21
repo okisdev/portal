@@ -1,203 +1,178 @@
-import { boolean, foreignKey, integer, pgTable, serial, text, timestamp, unique, varchar } from 'drizzle-orm/pg-core';
+import { boolean, integer, pgTable, serial, text, timestamp, varchar } from 'drizzle-orm/pg-core';
 
-export const verificationToken = pgTable('portal_verification_token', {
-  identifier: text().notNull(),
-  token: text().notNull(),
-  expires: timestamp({ mode: 'string' }).notNull(),
+export const user = pgTable('portal_user', {
+  id: text('id').primaryKey(),
+  firstName: text('first_name'),
+  lastName: text('last_name'),
+  name: text('name').notNull(),
+  username: text().unique(),
+  email: text('email').notNull().unique(),
+  emailVerified: boolean('email_verified')
+    .$defaultFn(() => false)
+    .notNull(),
+  image: text('image'),
+  role: text('role', { enum: ['ADMIN', 'SALES_MANAGER', 'SALES_ASSISTANT', 'MANAGER', 'USER'] }).default('USER'),
+  timezone: text('timezone', {
+    enum: [
+      // Africa
+      'Africa/Cairo',
+      'Africa/Casablanca',
+      'Africa/Johannesburg',
+      'Africa/Lagos',
+      'Africa/Nairobi',
+      // America
+      'America/Anchorage',
+      'America/Argentina/Buenos_Aires',
+      'America/Bogota',
+      'America/Caracas',
+      'America/Chicago',
+      'America/Denver',
+      'America/Edmonton',
+      'America/Halifax',
+      'America/Lima',
+      'America/Los_Angeles',
+      'America/Mexico_City',
+      'America/New_York',
+      'America/Phoenix',
+      'America/Santiago',
+      'America/Sao_Paulo',
+      'America/St_Johns',
+      'America/Toronto',
+      'America/Vancouver',
+      // Asia
+      'Asia/Almaty',
+      'Asia/Baghdad',
+      'Asia/Baku',
+      'Asia/Bangkok',
+      'Asia/Beirut',
+      'Asia/Colombo',
+      'Asia/Dhaka',
+      'Asia/Dubai',
+      'Asia/Ho_Chi_Minh',
+      'Asia/Hong_Kong',
+      'Asia/Istanbul',
+      'Asia/Jakarta',
+      'Asia/Jerusalem',
+      'Asia/Kabul',
+      'Asia/Karachi',
+      'Asia/Kathmandu',
+      'Asia/Kolkata',
+      'Asia/Kuala_Lumpur',
+      'Asia/Kuwait',
+      'Asia/Manila',
+      'Asia/Muscat',
+      'Asia/Riyadh',
+      'Asia/Seoul',
+      'Asia/Shanghai',
+      'Asia/Singapore',
+      'Asia/Taipei',
+      'Asia/Tashkent',
+      'Asia/Tehran',
+      'Asia/Tokyo',
+      'Asia/Ulaanbaatar',
+      'Asia/Yangon',
+      // Atlantic
+      'Atlantic/Azores',
+      'Atlantic/Cape_Verde',
+      'Atlantic/Reykjavik',
+      // Australia
+      'Australia/Adelaide',
+      'Australia/Brisbane',
+      'Australia/Darwin',
+      'Australia/Hobart',
+      'Australia/Melbourne',
+      'Australia/Perth',
+      'Australia/Sydney',
+      // Europe
+      'Europe/Amsterdam',
+      'Europe/Athens',
+      'Europe/Belgrade',
+      'Europe/Berlin',
+      'Europe/Brussels',
+      'Europe/Bucharest',
+      'Europe/Budapest',
+      'Europe/Copenhagen',
+      'Europe/Dublin',
+      'Europe/Helsinki',
+      'Europe/Istanbul',
+      'Europe/Kiev',
+      'Europe/Lisbon',
+      'Europe/London',
+      'Europe/Madrid',
+      'Europe/Moscow',
+      'Europe/Oslo',
+      'Europe/Paris',
+      'Europe/Prague',
+      'Europe/Rome',
+      'Europe/Stockholm',
+      'Europe/Vienna',
+      'Europe/Warsaw',
+      'Europe/Zurich',
+      // Indian
+      'Indian/Maldives',
+      'Indian/Mauritius',
+      // Pacific
+      'Pacific/Auckland',
+      'Pacific/Fiji',
+      'Pacific/Guam',
+      'Pacific/Honolulu',
+      'Pacific/Noumea',
+      'Pacific/Pago_Pago',
+      'Pacific/Port_Moresby',
+      'Pacific/Tongatapu',
+      // UTC
+      'UTC',
+    ],
+  })
+    .notNull()
+    .default('Asia/Hong_Kong'),
+  createdAt: timestamp('created_at')
+    .$defaultFn(() => new Date())
+    .notNull(),
+  updatedAt: timestamp('updated_at')
+    .$defaultFn(() => new Date())
+    .notNull(),
 });
 
-export const user = pgTable(
-  'portal_user',
-  {
-    id: text().primaryKey().notNull(),
-    firstName: text(),
-    lastName: text(),
-    name: text(),
-    email: text(),
-    emailVerified: timestamp({ mode: 'string' }),
-    password: text(),
-    image: text(),
-    role: text('role', { enum: ['ADMIN', 'SALES_MANAGER', 'SALES_ASSISTANT', 'MANAGER', 'USER'] }).default('USER'),
-    timezone: text('timezone', {
-      enum: [
-        // Africa
-        'Africa/Cairo',
-        'Africa/Casablanca',
-        'Africa/Johannesburg',
-        'Africa/Lagos',
-        'Africa/Nairobi',
-        // America
-        'America/Anchorage',
-        'America/Argentina/Buenos_Aires',
-        'America/Bogota',
-        'America/Caracas',
-        'America/Chicago',
-        'America/Denver',
-        'America/Edmonton',
-        'America/Halifax',
-        'America/Lima',
-        'America/Los_Angeles',
-        'America/Mexico_City',
-        'America/New_York',
-        'America/Phoenix',
-        'America/Santiago',
-        'America/Sao_Paulo',
-        'America/St_Johns',
-        'America/Toronto',
-        'America/Vancouver',
-        // Asia
-        'Asia/Almaty',
-        'Asia/Baghdad',
-        'Asia/Baku',
-        'Asia/Bangkok',
-        'Asia/Beirut',
-        'Asia/Colombo',
-        'Asia/Dhaka',
-        'Asia/Dubai',
-        'Asia/Ho_Chi_Minh',
-        'Asia/Hong_Kong',
-        'Asia/Istanbul',
-        'Asia/Jakarta',
-        'Asia/Jerusalem',
-        'Asia/Kabul',
-        'Asia/Karachi',
-        'Asia/Kathmandu',
-        'Asia/Kolkata',
-        'Asia/Kuala_Lumpur',
-        'Asia/Kuwait',
-        'Asia/Manila',
-        'Asia/Muscat',
-        'Asia/Riyadh',
-        'Asia/Seoul',
-        'Asia/Shanghai',
-        'Asia/Singapore',
-        'Asia/Taipei',
-        'Asia/Tashkent',
-        'Asia/Tehran',
-        'Asia/Tokyo',
-        'Asia/Ulaanbaatar',
-        'Asia/Yangon',
-        // Atlantic
-        'Atlantic/Azores',
-        'Atlantic/Cape_Verde',
-        'Atlantic/Reykjavik',
-        // Australia
-        'Australia/Adelaide',
-        'Australia/Brisbane',
-        'Australia/Darwin',
-        'Australia/Hobart',
-        'Australia/Melbourne',
-        'Australia/Perth',
-        'Australia/Sydney',
-        // Europe
-        'Europe/Amsterdam',
-        'Europe/Athens',
-        'Europe/Belgrade',
-        'Europe/Berlin',
-        'Europe/Brussels',
-        'Europe/Bucharest',
-        'Europe/Budapest',
-        'Europe/Copenhagen',
-        'Europe/Dublin',
-        'Europe/Helsinki',
-        'Europe/Istanbul',
-        'Europe/Kiev',
-        'Europe/Lisbon',
-        'Europe/London',
-        'Europe/Madrid',
-        'Europe/Moscow',
-        'Europe/Oslo',
-        'Europe/Paris',
-        'Europe/Prague',
-        'Europe/Rome',
-        'Europe/Stockholm',
-        'Europe/Vienna',
-        'Europe/Warsaw',
-        'Europe/Zurich',
-        // Indian
-        'Indian/Maldives',
-        'Indian/Mauritius',
-        // Pacific
-        'Pacific/Auckland',
-        'Pacific/Fiji',
-        'Pacific/Guam',
-        'Pacific/Honolulu',
-        'Pacific/Noumea',
-        'Pacific/Pago_Pago',
-        'Pacific/Port_Moresby',
-        'Pacific/Tongatapu',
-        // UTC
-        'UTC',
-      ],
-    })
-      .notNull()
-      .default('Asia/Hong_Kong'),
-    username: text().unique(),
-  },
-  (table) => [unique('user_email_unique').on(table.email)]
-);
+export const session = pgTable('portal_session', {
+  id: text('id').primaryKey(),
+  sessionToken: text().notNull(),
+  expires: timestamp({ mode: 'string' }).notNull(),
+  createdAt: timestamp('created_at').notNull(),
+  updatedAt: timestamp('updated_at').notNull(),
+  ipAddress: text('ip_address'),
+  userAgent: text('user_agent'),
+  userId: text('user_id')
+    .notNull()
+    .references(() => user.id, { onDelete: 'cascade' }),
+});
 
-export const account = pgTable(
-  'portal_account',
-  {
-    userId: text().notNull(),
-    type: text().notNull(),
-    provider: text().notNull(),
-    providerAccountId: text().notNull(),
-    refreshToken: text('refresh_token'),
-    accessToken: text('access_token'),
-    expiresAt: integer('expires_at'),
-    tokenType: text('token_type'),
-    scope: text(),
-    idToken: text('id_token'),
-    sessionState: text('session_state'),
-  },
-  (table) => [
-    foreignKey({
-      columns: [table.userId],
-      foreignColumns: [user.id],
-      name: 'portal_account_userId_user_id_fk',
-    }).onDelete('cascade'),
-  ]
-);
+export const account = pgTable('portal_account', {
+  id: text('id').primaryKey(),
+  accountId: text('account_id').notNull(),
+  providerId: text('provider_id').notNull(),
+  userId: text('user_id')
+    .notNull()
+    .references(() => user.id, { onDelete: 'cascade' }),
+  accessToken: text('access_token'),
+  refreshToken: text('refresh_token'),
+  idToken: text('id_token'),
+  accessTokenExpiresAt: timestamp('access_token_expires_at'),
+  refreshTokenExpiresAt: timestamp('refresh_token_expires_at'),
+  scope: text('scope'),
+  password: text('password'),
+  createdAt: timestamp('created_at').notNull(),
+  updatedAt: timestamp('updated_at').notNull(),
+});
 
-export const authenticator = pgTable(
-  'portal_authenticator',
-  {
-    credentialId: text().notNull(),
-    userId: text().notNull(),
-    providerAccountId: text().notNull(),
-    credentialPublicKey: text().notNull(),
-    counter: integer().notNull(),
-    credentialDeviceType: text().notNull(),
-    credentialBackedUp: boolean().notNull(),
-    transports: text(),
-  },
-  (table) => [
-    foreignKey({
-      columns: [table.userId],
-      foreignColumns: [user.id],
-      name: 'portal_authenticator_userId_user_id_fk',
-    }).onDelete('cascade'),
-    unique('portal_authenticator_credentialID_unique').on(table.credentialId),
-  ]
-);
-
-export const session = pgTable(
-  'portal_session',
-  {
-    sessionToken: text().primaryKey().notNull(),
-    userId: text().notNull(),
-    expires: timestamp({ mode: 'string' }).notNull(),
-  },
-  (table) => [
-    foreignKey({
-      columns: [table.userId],
-      foreignColumns: [user.id],
-      name: 'portal_session_userId_user_id_fk',
-    }).onDelete('cascade'),
-  ]
-);
+export const verification = pgTable('portal_verification', {
+  id: text('id').primaryKey(),
+  identifier: text('identifier').notNull(),
+  value: text('value').notNull(),
+  expiresAt: timestamp('expires_at').notNull(),
+  createdAt: timestamp('created_at').$defaultFn(() => new Date()),
+  updatedAt: timestamp('updated_at').$defaultFn(() => new Date()),
+});
 
 export const contact = pgTable('portal_contact', {
   id: text()

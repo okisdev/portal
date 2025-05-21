@@ -5,13 +5,13 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Skeleton } from '@/components/ui/skeleton';
+import { authClient } from '@/lib/auth.client';
 import type { CalendarFolder } from '@/lib/schema';
 import { cn } from '@/lib/utils';
 import type { Locale } from '@/types/i18n';
 import { addDays, endOfMonth, format, getDate, isSameDay, isSameMonth, startOfMonth, subDays } from 'date-fns';
 import { enUS, zhCN, zhHK } from 'date-fns/locale';
 import { ChevronsUpDown, Eye, MoreHorizontal, Pencil, Plus, Trash } from 'lucide-react';
-import { useSession } from 'next-auth/react';
 import { useLocale, useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { WEEKDAYS } from './constants';
@@ -44,7 +44,7 @@ export function CalendarSidePanel({
 }: CalendarSidePanelProps) {
   const t = useTranslations();
   const locale = useLocale() as Locale;
-  const { data: session } = useSession();
+  const { data: session } = authClient.useSession();
 
   const dateLocale =
     {

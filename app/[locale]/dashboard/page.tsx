@@ -7,17 +7,17 @@ import { type ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } f
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 // import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { authClient } from '@/lib/auth.client';
 import { api } from '@/utils/trpc/client';
 import { format, startOfMonth, subMonths } from 'date-fns';
 import { BarChart2, CheckCircle, Flame, HelpCircle, Phone, PieChart, TrendingUp, Users } from 'lucide-react';
-import { useSession } from 'next-auth/react';
 import { useTranslations } from 'next-intl';
 import { useMemo, useState } from 'react';
 import { Area, AreaChart, CartesianGrid, XAxis } from 'recharts';
 
 export default function Dashboard() {
   const t = useTranslations();
-  const { data: session, status } = useSession();
+  const { data: session } = authClient.useSession();
   const [timePeriod, setTimePeriod] = useState('this-month');
 
   // Fetch all contacts and configurations
@@ -67,7 +67,7 @@ export default function Dashboard() {
   const chartData = useMemo(() => {
     if (!contacts) return [];
 
-    const last6Months = Array.from({ length: 6 }, (_, i) => {
+    return Array.from({ length: 6 }, (_, i) => {
       const date = subMonths(new Date(), i);
       const monthStart = startOfMonth(date);
       const monthLeads = contacts.filter((contact) => new Date(contact.createdAt) >= monthStart && new Date(contact.createdAt) < (i === 0 ? new Date() : startOfMonth(subMonths(date, -1)))).length;
@@ -77,8 +77,6 @@ export default function Dashboard() {
         leads: monthLeads,
       };
     }).reverse();
-
-    return last6Months;
   }, [contacts]);
 
   const chartConfig = {

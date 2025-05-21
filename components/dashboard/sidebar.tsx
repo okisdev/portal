@@ -20,12 +20,12 @@ import {
 } from '@/components/ui/sidebar';
 import { Skeleton } from '@/components/ui/skeleton';
 import { usePathname, useRouter } from '@/i18n/navigation';
+import { authClient } from '@/lib/auth.client';
 import packageInfo from '@/package.json';
 import { copyToClipboard } from '@/utils/clipboard';
 import { api } from '@/utils/trpc/client';
 import { Building, Contact, Kanban, Table, Users } from 'lucide-react';
 import { Bell, Calendar, ChevronDown, ChevronRight, ChevronUp, Globe, Laptop, LogOut, Moon, Plus, Settings, Sparkle, Sun, Verified } from 'lucide-react';
-import { signOut } from 'next-auth/react';
 import { useLocale, useTranslations } from 'next-intl';
 import { useTheme } from 'next-themes';
 import Link from 'next/link';
@@ -293,7 +293,13 @@ export function DashboardSidebar() {
       <ActionAlertDialog
         open={showSignOutDialog}
         onOpenChange={setShowSignOutDialog}
-        onConfirm={() => signOut()}
+        onConfirm={async () =>
+          await authClient.signOut({
+            fetchOptions: {
+              onSuccess: () => router.push('/'),
+            },
+          })
+        }
         title={t('sign_out')}
         description={t('sign_out_description')}
         cancelText={t('cancel')}

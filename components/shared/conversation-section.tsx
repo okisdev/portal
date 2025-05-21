@@ -7,12 +7,12 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Textarea } from '@/components/ui/textarea';
+import { authClient } from '@/lib/auth.client';
 import { cn } from '@/lib/utils';
 import { formatDate } from '@/utils/date';
 import { api } from '@/utils/trpc/client';
 import { format } from 'date-fns';
 import { ArrowUpRight } from 'lucide-react';
-import { useSession } from 'next-auth/react';
 import { useTranslations } from 'next-intl';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
@@ -44,7 +44,7 @@ interface ConversationSectionProps {
 
 export function ConversationSection({ activities, onCreateActivity, isLoading, contactId }: ConversationSectionProps) {
   const t = useTranslations();
-  const { data: session } = useSession();
+  const { data: session } = authClient.useSession();
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
   const [newActivity, setNewActivity] = useState('');

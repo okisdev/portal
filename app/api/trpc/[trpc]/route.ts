@@ -1,4 +1,3 @@
-import { auth } from '@/auth';
 import { appRouter, createTRPCContext } from '@/server';
 import { fetchRequestHandler } from '@trpc/server/adapters/fetch';
 
@@ -26,14 +25,13 @@ export const OPTIONS = () => {
  * handling a HTTP request (e.g. when you make requests from Client Components).
  */
 
-const handler = auth(async (req) => {
+const handler = async (req: Request) => {
   const response = await fetchRequestHandler({
     endpoint: '/api/trpc',
     router: appRouter,
     req,
     createContext: () =>
       createTRPCContext({
-        session: req.auth,
         headers: req.headers,
       }),
     onError({ error, path }) {
@@ -44,6 +42,6 @@ const handler = auth(async (req) => {
   setCorsHeaders(response);
 
   return response;
-}) as any;
+};
 
 export { handler as GET, handler as POST };
