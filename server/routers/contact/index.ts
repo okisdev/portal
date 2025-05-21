@@ -13,19 +13,19 @@ import { z } from 'zod';
 export const contactRouter = createTRPCRouter({
   activity: activityRouter,
 
-  getAllContacts: protectedProcedure.query(({ ctx }) => {
-    return ctx.db.select().from(contact).orderBy(desc(contact.createdAt));
+  getAllContacts: protectedProcedure.query(async ({ ctx }) => {
+    return await ctx.db.select().from(contact).orderBy(desc(contact.createdAt));
   }),
 
-  getAllContactsCount: protectedProcedure.query(({ ctx }) => {
-    return ctx.db
+  getAllContactsCount: protectedProcedure.query(async ({ ctx }) => {
+    return await ctx.db
       .select({ count: count() })
       .from(contact)
       .then((rows) => rows[0]);
   }),
 
-  getContactsByPagination: protectedProcedure.input(z.object({ page: z.number(), limit: z.number() })).query(({ ctx, input }) => {
-    return ctx.db
+  getContactsByPagination: protectedProcedure.input(z.object({ page: z.number(), limit: z.number() })).query(async ({ ctx, input }) => {
+    return await ctx.db
       .select()
       .from(contact)
       .orderBy(desc(contact.createdAt))
@@ -42,10 +42,10 @@ export const contactRouter = createTRPCRouter({
     )
     .query(async ({ ctx, input }) => {
       if (!input.query.trim()) {
-        return ctx.db.select().from(contact).orderBy(desc(contact.createdAt)).limit(input.limit);
+        return await ctx.db.select().from(contact).orderBy(desc(contact.createdAt)).limit(input.limit);
       }
 
-      return ctx.db
+      return await ctx.db
         .select()
         .from(contact)
         .where(
@@ -58,7 +58,7 @@ export const contactRouter = createTRPCRouter({
     }),
 
   getContactById: protectedProcedure.input(z.object({ id: z.string() })).query(async ({ ctx, input }) => {
-    return ctx.db
+    return await ctx.db
       .select({
         id: contact.id,
         name: contact.name,
@@ -214,11 +214,11 @@ export const contactRouter = createTRPCRouter({
       initiatorId: ctx.session?.user.id,
     });
 
-    return ctx.db.delete(contact).where(eq(contact.id, input.id));
+    return await ctx.db.delete(contact).where(eq(contact.id, input.id));
   }),
 
-  getContactActivities: protectedProcedure.input(z.object({ id: z.string() })).query(({ ctx, input }) => {
-    return ctx.db.select().from(contactActivity).where(eq(contactActivity.contactId, input.id)).orderBy(asc(contactActivity.createdAt));
+  getContactActivities: protectedProcedure.input(z.object({ id: z.string() })).query(async ({ ctx, input }) => {
+    return await ctx.db.select().from(contactActivity).where(eq(contactActivity.contactId, input.id)).orderBy(asc(contactActivity.createdAt));
   }),
 
   createContactActivity: protectedProcedure
@@ -302,8 +302,8 @@ export const contactRouter = createTRPCRouter({
       return activity;
     }),
 
-  deleteContactActivity: protectedProcedure.input(z.object({ id: z.string() })).mutation(({ ctx, input }) => {
-    return ctx.db.delete(contactActivity).where(eq(contactActivity.id, input.id));
+  deleteContactActivity: protectedProcedure.input(z.object({ id: z.string() })).mutation(async ({ ctx, input }) => {
+    return await ctx.db.delete(contactActivity).where(eq(contactActivity.id, input.id));
   }),
 
   updateContact: protectedProcedure
