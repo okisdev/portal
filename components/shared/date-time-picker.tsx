@@ -1,5 +1,8 @@
 'use client';
 
+import { CalendarIcon } from '@radix-ui/react-icons';
+import { format } from 'date-fns';
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import {
@@ -8,9 +11,6 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
-import { CalendarIcon } from '@radix-ui/react-icons';
-import { format } from 'date-fns';
-import { useTranslations } from 'next-intl';
 
 export function DateTimePicker({
   value,

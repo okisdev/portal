@@ -1,22 +1,3 @@
-import { ActionAlertDialog } from '@/components/shared/action-alert-dialog';
-import { NameTag } from '@/components/shared/name-tag';
-import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
-import { Skeleton } from '@/components/ui/skeleton';
-import type { CalendarFolder } from '@/lib/schema';
-import { cn } from '@/lib/utils';
-import type { Locale } from '@/types/i18n';
 import {
   addDays,
   endOfMonth,
@@ -39,6 +20,25 @@ import {
 import { useSession } from 'next-auth/react';
 import { useLocale, useTranslations } from 'next-intl';
 import { useState } from 'react';
+import { ActionAlertDialog } from '@/components/shared/action-alert-dialog';
+import { NameTag } from '@/components/shared/name-tag';
+import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import { Skeleton } from '@/components/ui/skeleton';
+import type { CalendarFolder } from '@/lib/schema';
+import { cn } from '@/lib/utils';
+import type { Locale } from '@/types/i18n';
 import { WEEKDAYS } from './constants';
 import { YearMonthPicker } from './year-month-picker';
 

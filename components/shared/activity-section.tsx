@@ -1,5 +1,20 @@
 'use client';
 
+import { format } from 'date-fns';
+import { enUS } from 'date-fns/locale';
+import {
+  ArrowUpRight,
+  Edit2,
+  FileIcon,
+  ImageIcon,
+  MessageCircle,
+  Paperclip,
+  Trash,
+  X,
+} from 'lucide-react';
+import { useSession } from 'next-auth/react';
+import { useLocale, useTranslations } from 'next-intl';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { ActionAlertDialog } from '@/components/shared/action-alert-dialog';
 import { AttachmentPreview } from '@/components/shared/attchment-preview';
 import { ComboboxCommand } from '@/components/shared/combobox';
@@ -21,22 +36,6 @@ import type { Activity } from '@/utils/activity';
 import { renderDescription } from '@/utils/activity';
 import { dateLocaleMap, formatDate } from '@/utils/date';
 import { api } from '@/utils/trpc/client';
-import { format } from 'date-fns';
-import { enUS } from 'date-fns/locale';
-import {
-  ArrowUpRight,
-  Edit2,
-  FileIcon,
-  ImageIcon,
-  MessageCircle,
-  Paperclip,
-  Trash,
-  X,
-} from 'lucide-react';
-import { useSession } from 'next-auth/react';
-import { useTranslations } from 'next-intl';
-import { useLocale } from 'next-intl';
-import { useCallback, useEffect, useRef, useState } from 'react';
 
 interface ActivitySectionProps {
   activities?: Activity[];

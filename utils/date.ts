@@ -1,6 +1,6 @@
-import type { Locale } from '@/types/i18n';
 import { type Locale as DateFnsLocale, format } from 'date-fns';
 import { enUS, zhCN, zhHK } from 'date-fns/locale';
+import type { Locale } from '@/types/i18n';
 
 export const dateLocaleMap: Record<Locale, DateFnsLocale> = {
   en: enUS,

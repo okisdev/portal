@@ -1,3 +1,6 @@
+import { TRPCError } from '@trpc/server';
+import { and, asc, eq, exists, inArray, sql } from 'drizzle-orm';
+import { z } from 'zod/v4';
 import {
   calendarEvent,
   calendarEventParticipant,
@@ -16,9 +19,6 @@ import { createContactActivityHelper } from '@/server/helper/contact';
 import { createTeamActivityHelper } from '@/server/helper/team';
 import { activityRouter } from '@/server/routers/team/activity';
 import { createTRPCRouter, protectedProcedure } from '@/server/trpc';
-import { TRPCError } from '@trpc/server';
-import { and, asc, eq, exists, inArray, sql } from 'drizzle-orm';
-import { z } from 'zod/v4';
 
 export const teamRouter = createTRPCRouter({
   activity: activityRouter,

@@ -1,14 +1,5 @@
 'use client';
 
-import { EventDialog } from '@/components/shared/event-dialog';
-import type { EventFormData } from '@/components/shared/event-dialog';
-import { Button } from '@/components/ui/button';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 import { format, isFuture, isPast, isToday } from 'date-fns';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
@@ -21,6 +12,15 @@ import {
 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
+import type { EventFormData } from '@/components/shared/event-dialog';
+import { EventDialog } from '@/components/shared/event-dialog';
+import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 interface Appointment {
   id: string;

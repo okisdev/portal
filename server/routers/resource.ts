@@ -1,3 +1,6 @@
+import { TRPCError } from '@trpc/server';
+import { and, desc, eq, inArray, like, or, sql } from 'drizzle-orm';
+import { z } from 'zod/v4';
 import {
   contact,
   resourceContent,
@@ -7,9 +10,6 @@ import {
   user,
 } from '@/drizzle/schema';
 import { createTRPCRouter, protectedProcedure } from '@/server/trpc';
-import { TRPCError } from '@trpc/server';
-import { and, desc, eq, inArray, like, or, sql } from 'drizzle-orm';
-import { z } from 'zod/v4';
 
 const resourceContentSchema = z.object({
   title: z.string().min(1),

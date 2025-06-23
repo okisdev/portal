@@ -1,3 +1,7 @@
+import { TRPCError } from '@trpc/server';
+import { format, startOfDay, startOfMonth, subMonths } from 'date-fns';
+import { asc, desc, eq, inArray, sql } from 'drizzle-orm';
+import { z } from 'zod/v4';
 import {
   contact,
   contactActivity,
@@ -8,21 +12,17 @@ import {
   userNotifications,
 } from '@/drizzle/schema';
 import {
+  activitySubTypeSchema,
+  activityTypeSchema,
   type Priority,
   type Source,
   type Status,
-  activitySubTypeSchema,
-  activityTypeSchema,
 } from '@/lib/schema';
 import { createContactActivityHelper } from '@/server/helper/contact';
 import { activityRouter } from '@/server/routers/contact/activity';
 import { createTRPCRouter, protectedProcedure } from '@/server/trpc';
 import { sendEmail } from '@/utils/email';
 import { stringifyPhone } from '@/utils/phone';
-import { TRPCError } from '@trpc/server';
-import { format, startOfDay, startOfMonth, subMonths } from 'date-fns';
-import { asc, desc, eq, inArray, sql } from 'drizzle-orm';
-import { z } from 'zod/v4';
 
 export const contactRouter = createTRPCRouter({
   activity: activityRouter,

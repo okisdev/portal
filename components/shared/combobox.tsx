@@ -1,5 +1,9 @@
 'use client';
 
+import { Check, ChevronsUpDown } from 'lucide-react';
+import { nanoid } from 'nanoid';
+import { useTranslations } from 'next-intl';
+import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Command,
@@ -14,10 +18,6 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
-import { Check, ChevronsUpDown } from 'lucide-react';
-import { nanoid } from 'nanoid';
-import { useTranslations } from 'next-intl';
-import { useEffect, useState } from 'react';
 
 interface ComboboxProps {
   value: string;

@@ -1,6 +1,6 @@
-import { env } from '@/lib/env';
 import { Download, FileIcon } from 'lucide-react';
 import Zoom from 'react-medium-image-zoom';
+import { env } from '@/lib/env';
 import 'react-medium-image-zoom/dist/styles.css';
 
 export function AttachmentPreview({

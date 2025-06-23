@@ -1,5 +1,12 @@
 'use client';
 
+import { formatDistanceToNow } from 'date-fns';
+import { Bell, Mail, MessageSquare } from 'lucide-react';
+import { nanoid } from 'nanoid';
+import Link from 'next/link';
+import { useLocale, useTranslations } from 'next-intl';
+import { useState } from 'react';
+import { toast } from 'sonner';
 import { PageHeader } from '@/components/shared/page-header';
 import { Button } from '@/components/ui/button';
 import {
@@ -15,13 +22,6 @@ import { cn } from '@/lib/utils';
 import type { Locale } from '@/types/i18n';
 import { dateLocaleMap } from '@/utils/date';
 import { api } from '@/utils/trpc/client';
-import { formatDistanceToNow } from 'date-fns';
-import { Bell, Mail, MessageSquare } from 'lucide-react';
-import { nanoid } from 'nanoid';
-import { useLocale, useTranslations } from 'next-intl';
-import Link from 'next/link';
-import { useState } from 'react';
-import { toast } from 'sonner';
 
 export default function NotificationsPage() {
   const t = useTranslations();

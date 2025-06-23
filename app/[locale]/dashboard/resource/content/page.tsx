@@ -1,5 +1,11 @@
 'use client';
 
+import { formatDistanceToNow } from 'date-fns';
+import { Clock, Eye, Send } from 'lucide-react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useLocale, useTranslations } from 'next-intl';
+import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
 import { ContentEditor } from '@/components/dashboard/resource/content/content-editor';
 import { ContentForm } from '@/components/dashboard/resource/content/content-form';
 import { ActionAlertDialog } from '@/components/shared/action-alert-dialog';
@@ -10,12 +16,6 @@ import type { ResourceContent } from '@/lib/schema';
 import type { Locale } from '@/types/i18n';
 import { dateLocaleMap } from '@/utils/date';
 import { api } from '@/utils/trpc/client';
-import { formatDistanceToNow } from 'date-fns';
-import { Clock, Eye, Send } from 'lucide-react';
-import { useLocale, useTranslations } from 'next-intl';
-import { useRouter, useSearchParams } from 'next/navigation';
-import { useEffect, useState } from 'react';
-import { toast } from 'sonner';
 
 export default function ContentPage() {
   const searchParams = useSearchParams();

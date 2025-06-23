@@ -1,3 +1,5 @@
+import type { inferReactQueryProcedureOptions } from '@trpc/react-query';
+import type { inferRouterInputs, inferRouterOutputs } from '@trpc/server';
 import { accountRouter } from '@/server/routers/account';
 import { adminRouter } from '@/server/routers/admin';
 import { authRouter } from '@/server/routers/auth';
@@ -9,8 +11,6 @@ import { siteRouter } from '@/server/routers/site';
 import { taskRouter } from '@/server/routers/task';
 import { teamRouter } from '@/server/routers/team';
 import { userRouter } from '@/server/routers/user';
-import type { inferReactQueryProcedureOptions } from '@trpc/react-query';
-import type { inferRouterInputs, inferRouterOutputs } from '@trpc/server';
 import { createCallerFactory, createTRPCRouter } from './trpc';
 /**
  * This is the primary router for your server.

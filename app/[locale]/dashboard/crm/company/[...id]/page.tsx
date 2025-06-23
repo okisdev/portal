@@ -1,5 +1,19 @@
 'use client';
 
+import { zodResolver } from '@hookform/resolvers/zod';
+import { Edit2, Plus, Users } from 'lucide-react';
+import Link from 'next/link';
+import {
+  notFound,
+  useParams,
+  useRouter,
+  useSearchParams,
+} from 'next/navigation';
+import { useTranslations } from 'next-intl';
+import { useEffect, useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
+import { z } from 'zod/v4';
 import { ActionAlertDialog } from '@/components/shared/action-alert-dialog';
 import { ColorBadge } from '@/components/shared/color-badge';
 import { EventDialog } from '@/components/shared/event-dialog';
@@ -34,20 +48,6 @@ import {
 import { cn } from '@/lib/utils';
 import { formatDate } from '@/utils/date';
 import { api } from '@/utils/trpc/client';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { Edit2, Plus, Users } from 'lucide-react';
-import { useTranslations } from 'next-intl';
-import Link from 'next/link';
-import {
-  notFound,
-  useParams,
-  useRouter,
-  useSearchParams,
-} from 'next/navigation';
-import { useEffect, useState } from 'react';
-import { useForm } from 'react-hook-form';
-import { toast } from 'sonner';
-import { z } from 'zod/v4';
 
 const createCompanySchema = z.object({
   name: z.string().min(1, 'Name is required'),

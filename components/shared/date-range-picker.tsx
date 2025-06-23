@@ -1,5 +1,10 @@
 'use client';
 
+import { addMonths, format } from 'date-fns';
+import { Calendar as CalendarIcon } from 'lucide-react';
+import { useTranslations } from 'next-intl';
+import * as React from 'react';
+import type { DateRange } from 'react-day-picker';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import {
@@ -8,11 +13,6 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
-import { addMonths, format } from 'date-fns';
-import { Calendar as CalendarIcon } from 'lucide-react';
-import { useTranslations } from 'next-intl';
-import * as React from 'react';
-import type { DateRange } from 'react-day-picker';
 
 interface DateRangePickerProps {
   className?: string;

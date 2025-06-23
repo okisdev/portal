@@ -1,3 +1,5 @@
+import { eq, sql } from 'drizzle-orm';
+import { z } from 'zod/v4';
 import {
   company,
   companyContact,
@@ -6,8 +8,6 @@ import {
   teamContact,
 } from '@/drizzle/schema';
 import { createTRPCRouter, protectedProcedure } from '@/server/trpc';
-import { eq, sql } from 'drizzle-orm';
-import { z } from 'zod/v4';
 
 export const companyRouter = createTRPCRouter({
   getAllCompanies: protectedProcedure.query(async ({ ctx }) => {

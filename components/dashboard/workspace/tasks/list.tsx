@@ -1,7 +1,7 @@
-import { ColorBadge } from '@/components/shared/color-badge';
-import { Button } from '@/components/ui/button';
 import { format } from 'date-fns';
 import { AlignLeftIcon, PencilIcon, TrashIcon } from 'lucide-react';
+import { ColorBadge } from '@/components/shared/color-badge';
+import { Button } from '@/components/ui/button';
 
 interface Task {
   id: string;

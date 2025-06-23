@@ -1,8 +1,8 @@
+import type { Metadata } from 'next';
+import { redirect } from 'next/navigation';
 import { auth } from '@/auth';
 import Footer from '@/components/landing/footer';
 import Header from '@/components/landing/header';
-import type { Metadata } from 'next';
-import { redirect } from 'next/navigation';
 
 export const metadata: Metadata = {
   title: 'Portal',

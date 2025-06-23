@@ -1,12 +1,3 @@
-import { Combobox } from '@/components/shared/combobox';
-import { TipTapEditor } from '@/components/shared/tiptap-editor';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { contentTags } from '@/data/data';
-import type { ResourceContent } from '@/lib/schema';
-import type { Locale } from '@/types/i18n';
-import { dateLocaleMap } from '@/utils/date';
 import { formatDistanceToNow } from 'date-fns';
 import {
   Clock,
@@ -19,9 +10,17 @@ import {
   Trash,
   X,
 } from 'lucide-react';
-import { useTranslations } from 'next-intl';
-import { useLocale } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
+import { Combobox } from '@/components/shared/combobox';
+import { TipTapEditor } from '@/components/shared/tiptap-editor';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { contentTags } from '@/data/data';
+import type { ResourceContent } from '@/lib/schema';
+import type { Locale } from '@/types/i18n';
+import { dateLocaleMap } from '@/utils/date';
 import { SendHistoryDialog } from './send-history-dialog';
 
 interface ContentEditorProps {

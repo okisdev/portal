@@ -1,8 +1,8 @@
-import { auth } from '@/auth';
 import { ArrowLeft, Sparkle } from 'lucide-react';
-import { getTranslations } from 'next-intl/server';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
+import { getTranslations } from 'next-intl/server';
+import { auth } from '@/auth';
 
 export default async function AuthLayout({
   children,

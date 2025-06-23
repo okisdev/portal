@@ -1,5 +1,20 @@
 'use client';
 
+import { format, parseISO, subMonths } from 'date-fns';
+import {
+  BarChart2,
+  CheckCircle,
+  Flame,
+  HelpCircle,
+  Phone,
+  PieChart,
+  TrendingUp,
+  Users,
+} from 'lucide-react';
+import { useSession } from 'next-auth/react';
+import { useTranslations } from 'next-intl';
+import { useMemo } from 'react';
+import { Area, AreaChart, CartesianGrid, XAxis } from 'recharts';
 import { PageHeader } from '@/components/shared/page-header';
 import { PageLoading } from '@/components/shared/page-loading';
 import { SmartColorBadge } from '@/components/shared/smart-color-badge';
@@ -17,21 +32,6 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { api } from '@/utils/trpc/client';
-import { format, parseISO, subMonths } from 'date-fns';
-import {
-  BarChart2,
-  CheckCircle,
-  Flame,
-  HelpCircle,
-  Phone,
-  PieChart,
-  TrendingUp,
-  Users,
-} from 'lucide-react';
-import { useSession } from 'next-auth/react';
-import { useTranslations } from 'next-intl';
-import { useMemo } from 'react';
-import { Area, AreaChart, CartesianGrid, XAxis } from 'recharts';
 
 export default function Dashboard() {
   const t = useTranslations();

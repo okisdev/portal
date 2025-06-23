@@ -1,3 +1,5 @@
+import type { InferSelectModel } from 'drizzle-orm';
+import { z } from 'zod/v4';
 import type {
   account,
   authenticator,
@@ -30,8 +32,6 @@ import type {
   userNotifications,
   userTask,
 } from '@/drizzle/schema';
-import type { InferSelectModel } from 'drizzle-orm';
-import { z } from 'zod/v4';
 
 // Shared Schema
 

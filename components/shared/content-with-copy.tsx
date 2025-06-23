@@ -1,10 +1,10 @@
 'use client';
 
+import { Check, Copy } from 'lucide-react';
+import { useTranslations } from 'next-intl';
+import { useState } from 'react';
 import { cn } from '@/lib/utils';
 import { copyToClipboard } from '@/utils/clipboard';
-import { Check, Copy } from 'lucide-react';
-import { useState } from 'react';
-import { useTranslations } from 'next-intl';
 
 export function ContentWithCopy({
   content,

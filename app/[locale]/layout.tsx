@@ -1,8 +1,8 @@
+import { notFound } from 'next/navigation';
 import LocaleProvider from '@/app/[locale]/provider';
 import RootLayout from '@/components/root/layout';
 import { routing } from '@/i18n/routing';
 import type { Locale } from '@/types/i18n';
-import { notFound } from 'next/navigation';
 
 type Props = Readonly<{
   children: React.ReactNode;

@@ -2,7 +2,7 @@
   "name": "portal",
   "description": "Streamline Your Business Operations",
   "author": "Harry Yep <git@hode.co.uk>",
-  "license": "UNLICENSED",
+  "license": "AGPL-3.0-only",
   "version": "0.0.1",
   "private": true,
   "scripts": {
@@ -14,7 +14,7 @@
     "biome:check": "biome check",
     "biome:format": "biome format --write",
     "biome:lint": "biome lint --write",
-    "biome:fix": "biome format --write && biome lint --write",
+    "biome:fix": "biome check --fix",
     "deps:check": "ncu -x react-day-picker",
     "deps:update": "ncu -x react-day-picker -u && bun install"
   },

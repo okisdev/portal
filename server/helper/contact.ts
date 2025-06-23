@@ -1,6 +1,6 @@
+import { eq } from 'drizzle-orm';
 import { contact, contactActivity } from '@/drizzle/schema';
 import type { ActivitySubType, ActivityType } from '@/lib/schema';
-import { eq } from 'drizzle-orm';
 
 export const createContactActivityHelper = async (
   ctx: any,

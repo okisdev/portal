@@ -1,5 +1,11 @@
 'use client';
 
+import { Laptop, Moon, Sun } from 'lucide-react';
+import { usePathname } from 'next/navigation';
+import { useTranslations } from 'next-intl';
+import { useTheme } from 'next-themes';
+import React, { useCallback, useEffect, useState } from 'react';
+import { validate as uuidValidate } from 'uuid';
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -22,12 +28,6 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
 import { api } from '@/utils/trpc/client';
-import { Laptop, Moon, Sun } from 'lucide-react';
-import { useTranslations } from 'next-intl';
-import { useTheme } from 'next-themes';
-import { usePathname } from 'next/navigation';
-import React, { useCallback, useEffect, useState } from 'react';
-import { validate as uuidValidate } from 'uuid';
 
 export function DashboardHeader() {
   const pathname = usePathname();

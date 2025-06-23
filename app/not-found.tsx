@@ -1,7 +1,7 @@
+import Link from 'next/link';
+import { getTranslations } from 'next-intl/server';
 import RootLayout from '@/components/root/layout';
 import { routing } from '@/i18n/routing';
-import { getTranslations } from 'next-intl/server';
-import Link from 'next/link';
 
 export const generateMetadata = async () => {
   const t = await getTranslations();

@@ -1,5 +1,16 @@
 'use client';
 
+import {
+  type ColumnDef,
+  getCoreRowModel,
+  getPaginationRowModel,
+  getSortedRowModel,
+  type SortingState,
+  useReactTable,
+} from '@tanstack/react-table';
+import { formatDistanceToNow } from 'date-fns';
+import { useTranslations } from 'next-intl';
+import { useMemo, useState } from 'react';
 import { DataTable } from '@/components/shared/table';
 import {
   Dialog,
@@ -9,17 +20,6 @@ import {
 } from '@/components/ui/dialog';
 import type { ResourceContent } from '@/lib/schema';
 import { api } from '@/utils/trpc/client';
-import {
-  type ColumnDef,
-  type SortingState,
-  getCoreRowModel,
-  getPaginationRowModel,
-  getSortedRowModel,
-  useReactTable,
-} from '@tanstack/react-table';
-import { formatDistanceToNow } from 'date-fns';
-import { useTranslations } from 'next-intl';
-import { useMemo, useState } from 'react';
 
 interface SendHistoryDialogProps {
   open: boolean;

@@ -1,10 +1,10 @@
 'use client';
 
-import { Input } from '@/components/ui/input';
-import { cn } from '@/lib/utils';
 import { useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
+import { Input } from '@/components/ui/input';
+import { cn } from '@/lib/utils';
 
 interface EmailInputProps
   extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'onChange'> {

@@ -1,3 +1,9 @@
+import { zodResolver } from '@hookform/resolvers/zod';
+import { X } from 'lucide-react';
+import { useTranslations } from 'next-intl';
+import { useEffect } from 'react';
+import { useForm } from 'react-hook-form';
+import { z } from 'zod/v4';
 import { Combobox } from '@/components/shared/combobox';
 import { TipTapEditor } from '@/components/shared/tiptap-editor';
 import { Badge } from '@/components/ui/badge';
@@ -14,12 +20,6 @@ import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { contentTags } from '@/data/data';
 import type { ResourceContent } from '@/lib/schema';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { X } from 'lucide-react';
-import { useTranslations } from 'next-intl';
-import { useEffect } from 'react';
-import { useForm } from 'react-hook-form';
-import { z } from 'zod/v4';
 
 const formSchema = z.object({
   title: z.string().min(1, 'Title is required'),

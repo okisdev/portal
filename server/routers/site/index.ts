@@ -1,7 +1,7 @@
-import { siteConfig } from '@/drizzle/schema';
-import { createTRPCRouter, protectedProcedure } from '@/server/trpc';
 import { eq } from 'drizzle-orm';
 import { z } from 'zod/v4';
+import { siteConfig } from '@/drizzle/schema';
+import { createTRPCRouter, protectedProcedure } from '@/server/trpc';
 
 export const siteRouter = createTRPCRouter({
   getConfig: protectedProcedure

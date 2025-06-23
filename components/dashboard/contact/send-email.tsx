@@ -1,5 +1,11 @@
 'use client';
 
+import { Calendar, File, Send, Trash2, X } from 'lucide-react';
+import { nanoid } from 'nanoid';
+import { useSession } from 'next-auth/react';
+import { useTranslations } from 'next-intl';
+import { useState } from 'react';
+import { toast } from 'sonner';
 import { TipTapEditor } from '@/components/shared/tiptap-editor';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -12,12 +18,6 @@ import {
 import { Input } from '@/components/ui/input';
 import type { Contact } from '@/lib/schema';
 import { api } from '@/utils/trpc/client';
-import { Calendar, File, Send, Trash2, X } from 'lucide-react';
-import { nanoid } from 'nanoid';
-import { useSession } from 'next-auth/react';
-import { useTranslations } from 'next-intl';
-import { useState } from 'react';
-import { toast } from 'sonner';
 
 interface SendEmailProps {
   open: boolean;

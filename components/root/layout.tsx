@@ -1,11 +1,11 @@
+import Script from 'next/script';
+import { NextIntlClientProvider } from 'next-intl';
+import { getMessages } from 'next-intl/server';
 import BodyProvider from '@/components/root/provider';
 import { env } from '@/lib/env';
 import { cn } from '@/lib/utils';
 import { geistSans } from '@/styles/font';
 import { ReactScan } from '@/utils/react-scan';
-import { NextIntlClientProvider } from 'next-intl';
-import { getMessages } from 'next-intl/server';
-import Script from 'next/script';
 
 type Props = Readonly<{
   children: React.ReactNode;

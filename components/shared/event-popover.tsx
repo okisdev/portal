@@ -1,3 +1,4 @@
+import { useTranslations } from 'next-intl';
 import { NameTag } from '@/components/shared/name-tag';
 import { Button } from '@/components/ui/button';
 import {
@@ -9,7 +10,6 @@ import type {
   CalendarEventWithParticipants,
   CalendarFolder,
 } from '@/lib/schema';
-import { useTranslations } from 'next-intl';
 
 interface EventPopoverProps {
   event: CalendarEventWithParticipants;

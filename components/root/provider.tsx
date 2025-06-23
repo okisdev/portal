@@ -1,11 +1,11 @@
 'use client';
 
-import { Toaster } from '@/components/ui/sonner';
 import { Analytics } from '@vercel/analytics/react';
 import { SpeedInsights } from '@vercel/speed-insights/next';
 import { AppProgressBar as ProgressBar } from 'next-nprogress-bar';
 import { ThemeProvider } from 'next-themes';
 import { Monitoring } from 'react-scan/monitoring/next';
+import { Toaster } from '@/components/ui/sonner';
 
 export default function BodyProvider({
   children,

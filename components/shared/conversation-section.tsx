@@ -1,5 +1,10 @@
 'use client';
 
+import { format } from 'date-fns';
+import { ArrowUpRight } from 'lucide-react';
+import { useSession } from 'next-auth/react';
+import { useTranslations } from 'next-intl';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ComboboxCommand } from '@/components/shared/combobox';
 import { MetadataPopover } from '@/components/shared/metadata-popover';
 import { NameTag } from '@/components/shared/name-tag';
@@ -14,11 +19,6 @@ import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 import { formatDate } from '@/utils/date';
 import { api } from '@/utils/trpc/client';
-import { format } from 'date-fns';
-import { ArrowUpRight } from 'lucide-react';
-import { useSession } from 'next-auth/react';
-import { useTranslations } from 'next-intl';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 interface Activity {
   id: string;

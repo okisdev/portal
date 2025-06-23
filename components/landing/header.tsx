@@ -1,8 +1,8 @@
 'use client';
 
 import { Menu, Sparkle, X } from 'lucide-react';
-import { useTranslations } from 'next-intl';
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 
 const navigation = [

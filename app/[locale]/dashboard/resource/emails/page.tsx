@@ -1,5 +1,10 @@
 'use client';
 
+import { Plus } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
+import { useState } from 'react';
+import { toast } from 'sonner';
 import { PageHeader } from '@/components/shared/page-header';
 import { TipTapEditor } from '@/components/shared/tiptap-editor';
 import { Button } from '@/components/ui/button';
@@ -8,11 +13,6 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 import { api } from '@/utils/trpc/client';
-import { Plus } from 'lucide-react';
-import { useTranslations } from 'next-intl';
-import { useRouter } from 'next/navigation';
-import { useState } from 'react';
-import { toast } from 'sonner';
 
 interface Template {
   id: string;

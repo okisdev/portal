@@ -1,5 +1,32 @@
 'use client';
 
+import {
+  Bell,
+  Building,
+  Calendar,
+  ChevronDown,
+  ChevronRight,
+  ChevronUp,
+  Contact,
+  Globe,
+  Kanban,
+  Laptop,
+  LogOut,
+  Moon,
+  Plus,
+  Settings,
+  Sparkle,
+  Sun,
+  Table,
+  Users,
+  Verified,
+} from 'lucide-react';
+import Link from 'next/link';
+import { signOut } from 'next-auth/react';
+import { useLocale, useTranslations } from 'next-intl';
+import { useTheme } from 'next-themes';
+import type React from 'react';
+import { startTransition, useState } from 'react';
 import { ActionAlertDialog } from '@/components/shared/action-alert-dialog';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
@@ -35,29 +62,6 @@ import { usePathname, useRouter } from '@/i18n/navigation';
 import packageInfo from '@/package.json';
 import { copyToClipboard } from '@/utils/clipboard';
 import { api } from '@/utils/trpc/client';
-import { Building, Contact, Kanban, Table, Users } from 'lucide-react';
-import {
-  Bell,
-  Calendar,
-  ChevronDown,
-  ChevronRight,
-  ChevronUp,
-  Globe,
-  Laptop,
-  LogOut,
-  Moon,
-  Plus,
-  Settings,
-  Sparkle,
-  Sun,
-  Verified,
-} from 'lucide-react';
-import { signOut } from 'next-auth/react';
-import { useLocale, useTranslations } from 'next-intl';
-import { useTheme } from 'next-themes';
-import Link from 'next/link';
-import type React from 'react';
-import { startTransition, useState } from 'react';
 
 type SidebarGroupSectionProps = {
   title: string;

@@ -1,5 +1,11 @@
 'use client';
 
+import {
+  type ColumnDef,
+  flexRender,
+  type Table as TableType,
+} from '@tanstack/react-table';
+import { useTranslations } from 'next-intl';
 import { TableLoading } from '@/components/shared/table/loading';
 import { DataTablePagination } from '@/components/shared/table/pagination';
 import {
@@ -10,12 +16,6 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import {
-  type ColumnDef,
-  type Table as TableType,
-  flexRender,
-} from '@tanstack/react-table';
-import { useTranslations } from 'next-intl';
 
 interface PaginationTableProps<TData> {
   table: TableType<TData>;

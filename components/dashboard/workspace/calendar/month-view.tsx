@@ -1,9 +1,3 @@
-import { EventPopover } from '@/components/shared/event-popover';
-import type {
-  CalendarEventWithParticipants,
-  CalendarFolder,
-} from '@/lib/schema';
-import { cn } from '@/lib/utils';
 import {
   addDays,
   eachDayOfInterval,
@@ -15,6 +9,12 @@ import {
   subDays,
 } from 'date-fns';
 import { useTranslations } from 'next-intl';
+import { EventPopover } from '@/components/shared/event-popover';
+import type {
+  CalendarEventWithParticipants,
+  CalendarFolder,
+} from '@/lib/schema';
+import { cn } from '@/lib/utils';
 import { WEEKDAYS } from './constants';
 
 interface MonthViewProps {

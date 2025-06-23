@@ -1,12 +1,3 @@
-import { ActionAlertDialog } from '@/components/shared/action-alert-dialog';
-import { ColorBadge } from '@/components/shared/color-badge';
-import { Button } from '@/components/ui/button';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 import {
   DndContext,
   type DragEndEvent,
@@ -25,6 +16,15 @@ import {
   TrashIcon,
 } from 'lucide-react';
 import { useState } from 'react';
+import { ActionAlertDialog } from '@/components/shared/action-alert-dialog';
+import { ColorBadge } from '@/components/shared/color-badge';
+import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { STATUS_LABELS } from './list';
 
 interface Task {

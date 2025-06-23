@@ -1,18 +1,18 @@
 'use client';
 
-import { Label } from '@/components/ui/label';
-import { encryptPassword } from '@/utils/password';
-import { api } from '@/utils/trpc/client';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { motion } from 'framer-motion';
 import { Loader2 } from 'lucide-react';
-import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod/v4';
+import { Label } from '@/components/ui/label';
+import { encryptPassword } from '@/utils/password';
+import { api } from '@/utils/trpc/client';
 
 const registerSchema = z.object({
   email: z.email('Please enter a valid email'),

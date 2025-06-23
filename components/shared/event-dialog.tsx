@@ -1,5 +1,12 @@
 'use client';
 
+import { zodResolver } from '@hookform/resolvers/zod';
+import { PlusIcon, X } from 'lucide-react';
+import { nanoid } from 'nanoid';
+import { useTranslations } from 'next-intl';
+import { useEffect } from 'react';
+import { useForm } from 'react-hook-form';
+import { z } from 'zod/v4';
 import { Combobox } from '@/components/shared/combobox';
 import { DateTimePicker } from '@/components/shared/date-time-picker';
 import { Button } from '@/components/ui/button';
@@ -26,13 +33,6 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { PlusIcon, X } from 'lucide-react';
-import { nanoid } from 'nanoid';
-import { useTranslations } from 'next-intl';
-import { useEffect } from 'react';
-import { useForm } from 'react-hook-form';
-import { z } from 'zod/v4';
 
 const eventFormSchema = z.object({
   title: z.string().min(1, 'Title is required'),

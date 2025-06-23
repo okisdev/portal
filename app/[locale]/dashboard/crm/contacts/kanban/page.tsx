@@ -1,5 +1,39 @@
 'use client';
 
+import {
+  closestCenter,
+  DndContext,
+  type DragEndEvent,
+  DragOverlay,
+  type DragStartEvent,
+  MouseSensor,
+  TouchSensor,
+  useDroppable,
+  useSensor,
+  useSensors,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import { useVirtualizer } from '@tanstack/react-virtual';
+import { format } from 'date-fns';
+import {
+  ArrowUpRight,
+  Calendar,
+  CalendarClock,
+  Clock,
+  Eye,
+  EyeOff,
+  MoreHorizontal,
+} from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
+import { memo, useCallback, useEffect, useMemo, useState } from 'react';
+import { toast } from 'sonner';
 import { AddContact } from '@/components/dashboard/contact/add-contact';
 import { PageHeader } from '@/components/shared/page-header';
 import { SmartColorBadge } from '@/components/shared/smart-color-badge';
@@ -26,40 +60,6 @@ import { useDebounce } from '@/hooks/use-debounce';
 import type { Contact, Priority, Source, Status } from '@/lib/schema';
 import { parsePhoneWithoutCountryCode } from '@/utils/phone';
 import { api } from '@/utils/trpc/client';
-import {
-  DndContext,
-  type DragEndEvent,
-  DragOverlay,
-  type DragStartEvent,
-  MouseSensor,
-  TouchSensor,
-  useDroppable,
-  useSensor,
-  useSensors,
-} from '@dnd-kit/core';
-import { closestCenter } from '@dnd-kit/core';
-import {
-  SortableContext,
-  arrayMove,
-  useSortable,
-  verticalListSortingStrategy,
-} from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
-import { useVirtualizer } from '@tanstack/react-virtual';
-import { format } from 'date-fns';
-import {
-  ArrowUpRight,
-  Calendar,
-  CalendarClock,
-  Clock,
-  Eye,
-  EyeOff,
-  MoreHorizontal,
-} from 'lucide-react';
-import { useTranslations } from 'next-intl';
-import { useRouter } from 'next/navigation';
-import { memo, useCallback, useEffect, useMemo, useState } from 'react';
-import { toast } from 'sonner';
 
 interface KanbanColumn {
   id: string;

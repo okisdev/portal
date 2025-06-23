@@ -1,12 +1,12 @@
 'use client';
 
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { useTranslations } from 'next-intl';
+import { useState } from 'react';
 import ManualContactForm from '@/components/dashboard/contact/new/manual';
 import ContactUpload from '@/components/dashboard/contact/new/upload';
 import { PageHeader } from '@/components/shared/page-header';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useTranslations } from 'next-intl';
-import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { useState } from 'react';
 
 export default function ImportContacts() {
   const t = useTranslations();

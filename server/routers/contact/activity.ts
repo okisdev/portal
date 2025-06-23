@@ -1,9 +1,9 @@
-import { contactActivity } from '@/drizzle/schema';
-import { createContactActivityHelper } from '@/server/helper/contact';
-import { createTRPCRouter, protectedProcedure } from '@/server/trpc';
 import { TRPCError } from '@trpc/server';
 import { eq } from 'drizzle-orm';
 import { z } from 'zod/v4';
+import { contactActivity } from '@/drizzle/schema';
+import { createContactActivityHelper } from '@/server/helper/contact';
+import { createTRPCRouter, protectedProcedure } from '@/server/trpc';
 
 export const activityRouter = createTRPCRouter({
   replyNote: protectedProcedure

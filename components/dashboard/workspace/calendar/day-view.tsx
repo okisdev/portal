@@ -1,8 +1,8 @@
+import { useTranslations } from 'next-intl';
 import type {
   CalendarEventWithParticipants,
   CalendarFolder,
 } from '@/lib/schema';
-import { useTranslations } from 'next-intl';
 import { DayHeader } from './day-header';
 import { TimeColumn } from './time-column';
 import { TimeGrid } from './time-grid';

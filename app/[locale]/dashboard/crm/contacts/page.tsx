@@ -1,5 +1,18 @@
 'use client';
 
+import {
+  type ColumnDef,
+  type ColumnFiltersState,
+  getCoreRowModel,
+  type SortingState,
+  useReactTable,
+  type VisibilityState,
+} from '@tanstack/react-table';
+import { Check, Eye, MoreHorizontal, Trash2 } from 'lucide-react';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { useLocale, useTranslations } from 'next-intl';
+import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
 import { AddContact } from '@/components/dashboard/contact/add-contact';
 import { ActionAlertDialog } from '@/components/shared/action-alert-dialog';
 import { Combobox } from '@/components/shared/combobox';
@@ -32,21 +45,6 @@ import { renderDescription } from '@/utils/activity';
 import { formatDateWithoutTime } from '@/utils/date';
 import { parsePhoneWithoutCountryCode } from '@/utils/phone';
 import { api } from '@/utils/trpc/client';
-import {
-  type ColumnDef,
-  type ColumnFiltersState,
-  type SortingState,
-  type VisibilityState,
-  getCoreRowModel,
-  useReactTable,
-} from '@tanstack/react-table';
-import { Check, Eye, MoreHorizontal, Trash2 } from 'lucide-react';
-import { useTranslations } from 'next-intl';
-import { useLocale } from 'next-intl';
-import { useRouter, useSearchParams } from 'next/navigation';
-import { usePathname } from 'next/navigation';
-import { useEffect, useState } from 'react';
-import { toast } from 'sonner';
 
 // Define the contact type from the paginated response
 type PaginatedContact = {

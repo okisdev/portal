@@ -1,5 +1,9 @@
 'use client';
 
+import { BadgeX, Check, Pencil, Verified } from 'lucide-react';
+import { useTranslations } from 'next-intl';
+import { useEffect, useRef, useState } from 'react';
+import { toast } from 'sonner';
 import { Combobox } from '@/components/shared/combobox';
 import { PageHeader } from '@/components/shared/page-header';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -23,10 +27,6 @@ import {
 import { timezones } from '@/data/data';
 import type { Timezone } from '@/lib/schema';
 import { api } from '@/utils/trpc/client';
-import { BadgeX, Check, Pencil, Verified } from 'lucide-react';
-import { useTranslations } from 'next-intl';
-import { useEffect, useRef, useState } from 'react';
-import { toast } from 'sonner';
 
 export default function AccountSettingsPage() {
   const t = useTranslations();

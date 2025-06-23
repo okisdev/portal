@@ -1,5 +1,5 @@
-import { env } from '@/lib/env';
 import { Resend } from 'resend';
+import { env } from '@/lib/env';
 
 const resend = new Resend(env.AUTH_RESEND_KEY);
 

@@ -1,11 +1,11 @@
 'use client';
 
-import { Skeleton } from '@/components/ui/skeleton';
-import { cn } from '@/lib/utils';
-import { api } from '@/utils/trpc/client';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
+import { Skeleton } from '@/components/ui/skeleton';
+import { cn } from '@/lib/utils';
+import { api } from '@/utils/trpc/client';
 
 interface NameTagProps {
   id: string;

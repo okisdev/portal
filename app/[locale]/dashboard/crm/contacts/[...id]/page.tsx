@@ -1,11 +1,32 @@
 'use client';
 
+import {
+  Building2,
+  Edit2,
+  Mail,
+  MoreHorizontal,
+  Phone,
+  Save,
+  Trash2,
+  Users,
+  X,
+} from 'lucide-react';
+import Link from 'next/link';
+import {
+  notFound,
+  useParams,
+  useRouter,
+  useSearchParams,
+} from 'next/navigation';
+import { useTranslations } from 'next-intl';
+import React, { useEffect, useState } from 'react';
+import { toast } from 'sonner';
 import { ActionAlertDialog } from '@/components/shared/action-alert-dialog';
 import { ActivitySection } from '@/components/shared/activity-section';
 import { Combobox } from '@/components/shared/combobox';
 import { DateTimePicker } from '@/components/shared/date-time-picker';
-import { EventDialog } from '@/components/shared/event-dialog';
 import type { EventFormData } from '@/components/shared/event-dialog';
+import { EventDialog } from '@/components/shared/event-dialog';
 import { EventSection } from '@/components/shared/event-section';
 import { NameTag } from '@/components/shared/name-tag';
 import { PageLoading } from '@/components/shared/page-loading';
@@ -41,28 +62,6 @@ import type { Priority, Status } from '@/lib/schema';
 import { formatDate } from '@/utils/date';
 import { parsePhone } from '@/utils/phone';
 import { api } from '@/utils/trpc/client';
-import {
-  Building2,
-  Edit2,
-  Mail,
-  MoreHorizontal,
-  Phone,
-  Save,
-  Trash2,
-  Users,
-  X,
-} from 'lucide-react';
-import { useTranslations } from 'next-intl';
-import Link from 'next/link';
-import {
-  notFound,
-  useParams,
-  useRouter,
-  useSearchParams,
-} from 'next/navigation';
-import React from 'react';
-import { useEffect, useState } from 'react';
-import { toast } from 'sonner';
 
 export default function ContactIdPage() {
   const router = useRouter();

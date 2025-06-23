@@ -1,5 +1,12 @@
 'use client';
 
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useTranslations } from 'next-intl';
+import { useEffect, useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
+import { z } from 'zod/v4';
 import { ThreeDayView } from '@/components/dashboard/workspace/calendar/3-day-view';
 import { DayView } from '@/components/dashboard/workspace/calendar/day-view';
 import { CalendarHeader } from '@/components/dashboard/workspace/calendar/header';
@@ -36,13 +43,6 @@ import type {
 } from '@/lib/schema';
 import { randomColor } from '@/utils/color';
 import { api } from '@/utils/trpc/client';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useTranslations } from 'next-intl';
-import { useRouter, useSearchParams } from 'next/navigation';
-import { useEffect, useState } from 'react';
-import { useForm } from 'react-hook-form';
-import { toast } from 'sonner';
-import { z } from 'zod/v4';
 
 const eventFormSchema = z.object({
   title: z.string().min(1, 'Title is required'),

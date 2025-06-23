@@ -1,19 +1,19 @@
 'use client';
 
-import { Banner } from '@/components/shared/banner';
-import { Label } from '@/components/ui/label';
-import { api } from '@/utils/trpc/client';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { AnimatePresence, motion } from 'framer-motion';
 import { CheckCircle2, Loader2 } from 'lucide-react';
-import { signIn } from 'next-auth/react';
-import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
+import { signIn } from 'next-auth/react';
+import { useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod/v4';
+import { Banner } from '@/components/shared/banner';
+import { Label } from '@/components/ui/label';
+import { api } from '@/utils/trpc/client';
 
 const loginSchema = z.object({
   email: z.email('Please enter a valid email'),

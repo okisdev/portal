@@ -1,13 +1,13 @@
 'use client';
 
-import { Combobox } from '@/components/shared/combobox';
-import { Input } from '@/components/ui/input';
-import { phoneCountries } from '@/data/data';
-import { cn } from '@/lib/utils';
 import { isValidPhoneNumber } from 'libphonenumber-js';
 import { useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
+import { Combobox } from '@/components/shared/combobox';
+import { Input } from '@/components/ui/input';
+import { phoneCountries } from '@/data/data';
+import { cn } from '@/lib/utils';
 
 interface PhoneInputProps
   extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'onChange'> {
