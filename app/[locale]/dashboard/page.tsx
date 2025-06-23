@@ -31,7 +31,6 @@ import { SmartColorBadge } from '@/components/shared/smart-color-badge';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   type ChartConfig,
   ChartContainer,
@@ -339,16 +338,16 @@ export default function Dashboard() {
           {/* Left Column - Chart & Performance */}
           <div className='w-full space-y-4 sm:space-y-6 lg:w-1/2'>
             {/* Chart Section */}
-            <Card>
-              <CardHeader className='pb-3 sm:pb-6'>
+            <div className='rounded-lg border bg-card'>
+              <div className='flex flex-col space-y-1.5 p-6 pb-3 sm:pb-6'>
                 <div className='flex items-center gap-2'>
                   <BarChart2 className='size-4 text-primary sm:size-5' />
-                  <CardTitle className='text-base sm:text-lg'>
+                  <h3 className='font-semibold text-base leading-none tracking-tight sm:text-lg'>
                     {t('monthly_lead_growth')}
-                  </CardTitle>
+                  </h3>
                 </div>
-              </CardHeader>
-              <CardContent className='pt-0'>
+              </div>
+              <div className='p-6 pt-0'>
                 <ChartContainer config={chartConfig}>
                   <AreaChart
                     accessibilityLayer
@@ -395,20 +394,20 @@ export default function Dashboard() {
                     </div>
                   </div>
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
 
             {/* Performance Metrics */}
-            <Card>
-              <CardHeader className='pb-3 sm:pb-6'>
+            <div className='rounded-lg border bg-card'>
+              <div className='flex flex-col space-y-1.5 p-6 pb-3 sm:pb-6'>
                 <div className='flex items-center gap-2'>
                   <TrendingUp className='size-4 text-primary sm:size-5' />
-                  <CardTitle className='text-base sm:text-lg'>
+                  <h3 className='font-semibold text-base leading-none tracking-tight sm:text-lg'>
                     Performance Overview
-                  </CardTitle>
+                  </h3>
                 </div>
-              </CardHeader>
-              <CardContent className='space-y-4 pt-0'>
+              </div>
+              <div className='space-y-4 p-6 pt-0'>
                 <div className='grid grid-cols-2 gap-3 sm:gap-4'>
                   <div className='flex items-center gap-2 sm:gap-3'>
                     <Mail className='size-3 text-blue-500 sm:size-4' />
@@ -481,24 +480,24 @@ export default function Dashboard() {
                       </div>
                     </>
                   )}
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           </div>
 
           {/* Middle Column - Activities & Follow-ups */}
           <div className='w-full space-y-4 sm:space-y-6 lg:w-1/3'>
             {/* Overdue Follow-ups */}
             {overdueFollowUps && overdueFollowUps.length > 0 && (
-              <Card>
-                <CardHeader className='pb-3 sm:pb-6'>
+              <div className='rounded-lg border bg-card'>
+                <div className='flex flex-col space-y-1.5 p-6 pb-3 sm:pb-6'>
                   <div className='flex items-center gap-2'>
                     <AlertTriangle className='size-4 text-orange-500 sm:size-5' />
-                    <CardTitle className='text-base sm:text-lg'>
+                    <h3 className='font-semibold text-base leading-none tracking-tight sm:text-lg'>
                       Overdue Follow-ups
-                    </CardTitle>
+                    </h3>
                   </div>
-                </CardHeader>
-                <CardContent className='pt-0'>
+                </div>
+                <div className='p-6 pt-0'>
                   <div className='space-y-2 sm:space-y-3'>
                     {overdueFollowUps.slice(0, 5).map((contact) => (
                       <div
@@ -550,21 +549,21 @@ export default function Dashboard() {
                       </Button>
                     )}
                   </div>
-                </CardContent>
-              </Card>
+                </div>
+              </div>
             )}
 
             {/* Recent Activities */}
-            <Card className='flex-1'>
-              <CardHeader className='pb-3 sm:pb-6'>
+            <div className='flex-1 rounded-lg border bg-card'>
+              <div className='flex flex-col space-y-1.5 p-6 pb-3 sm:pb-6'>
                 <div className='flex items-center gap-2'>
                   <Activity className='size-4 text-primary sm:size-5' />
-                  <CardTitle className='text-base sm:text-lg'>
+                  <h3 className='font-semibold text-base leading-none tracking-tight sm:text-lg'>
                     Recent Activities
-                  </CardTitle>
+                  </h3>
                 </div>
-              </CardHeader>
-              <CardContent className='pt-0'>
+              </div>
+              <div className='p-6 pt-0'>
                 <div className='space-y-2 sm:space-y-3'>
                   {!isActivitiesLoading &&
                   recentActivities &&
@@ -598,26 +597,29 @@ export default function Dashboard() {
                                 locale
                               )}
                             </p>
-                            <span className='ml-2 whitespace-nowrap text-muted-foreground text-xs'>
-                              {formatDate(
-                                new Date(activity.createdAt),
-                                locale,
-                                true
-                              )}
-                            </span>
+                            <div className='flex flex-col items-end gap-2'>
+                              <span className='whitespace-nowrap text-muted-foreground text-xs'>
+                                {formatDate(
+                                  new Date(activity.createdAt),
+                                  locale,
+                                  true
+                                )}
+                              </span>
+                              <Button
+                                asChild
+                                variant='outline'
+                                size='icon'
+                                className='size-4 text-xs sm:size-5'
+                              >
+                                <Link
+                                  href={`/dashboard/crm/contacts/${activity.contact?.id}`}
+                                >
+                                  <Eye className='size-3' />
+                                  <span className='sr-only'>View Contact</span>
+                                </Link>
+                              </Button>
+                            </div>
                           </div>
-                          <Button
-                            asChild
-                            variant='ghost'
-                            size='sm'
-                            className='mt-1 h-5 px-2 text-xs sm:h-6'
-                          >
-                            <Link
-                              href={`/dashboard/crm/contacts/${activity.contact?.id}`}
-                            >
-                              View Contact
-                            </Link>
-                          </Button>
                         </div>
                       </div>
                     ))
@@ -627,23 +629,23 @@ export default function Dashboard() {
                     </p>
                   )}
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           </div>
 
           {/* Right Column - Lead Breakdowns & Company Data */}
           <div className='w-full space-y-4 sm:space-y-6 lg:w-1/3'>
             {/* Recent Contacts */}
-            <Card>
-              <CardHeader className='pb-3 sm:pb-6'>
+            <div className='rounded-lg border bg-card'>
+              <div className='flex flex-col space-y-1.5 p-6 pb-3 sm:pb-6'>
                 <div className='flex items-center gap-2'>
                   <UserPlus className='size-4 text-primary sm:size-5' />
-                  <CardTitle className='text-base sm:text-lg'>
+                  <h3 className='font-semibold text-base leading-none tracking-tight sm:text-lg'>
                     Recent Contacts
-                  </CardTitle>
+                  </h3>
                 </div>
-              </CardHeader>
-              <CardContent className='pt-0'>
+              </div>
+              <div className='p-6 pt-0'>
                 <div className='space-y-2 sm:space-y-3'>
                   {!isRecentContactsLoading &&
                   recentContacts &&
@@ -690,20 +692,20 @@ export default function Dashboard() {
                     </p>
                   )}
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
 
             {/* Top Companies */}
-            <Card>
-              <CardHeader className='pb-3 sm:pb-6'>
+            <div className='rounded-lg border bg-card'>
+              <div className='flex flex-col space-y-1.5 p-6 pb-3 sm:pb-6'>
                 <div className='flex items-center gap-2'>
                   <Building2 className='size-4 text-primary sm:size-5' />
-                  <CardTitle className='text-base sm:text-lg'>
+                  <h3 className='font-semibold text-base leading-none tracking-tight sm:text-lg'>
                     Top Companies
-                  </CardTitle>
+                  </h3>
                 </div>
-              </CardHeader>
-              <CardContent className='pt-0'>
+              </div>
+              <div className='p-6 pt-0'>
                 <div className='space-y-2 sm:space-y-3'>
                   {!isTopCompaniesLoading &&
                   topCompanies &&
@@ -733,20 +735,20 @@ export default function Dashboard() {
                     </p>
                   )}
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
 
             {/* Lead Breakdowns */}
-            <Card className='flex-1'>
-              <CardHeader className='pb-3 sm:pb-6'>
+            <div className='flex-1 rounded-lg border bg-card'>
+              <div className='flex flex-col space-y-1.5 p-6 pb-3 sm:pb-6'>
                 <div className='flex items-center gap-2'>
                   <PieChart className='size-4 text-primary sm:size-5' />
-                  <CardTitle className='text-base sm:text-lg'>
+                  <h3 className='font-semibold text-base leading-none tracking-tight sm:text-lg'>
                     {t('leads_breakdown')}
-                  </CardTitle>
+                  </h3>
                 </div>
-              </CardHeader>
-              <CardContent className='flex-1 pt-0'>
+              </div>
+              <div className='flex-1 p-6 pt-0'>
                 <Tabs defaultValue='status' className='h-full w-full'>
                   <TabsList className='grid w-full grid-cols-3 text-xs sm:text-sm'>
                     <TabsTrigger value='status'>{t('status')}</TabsTrigger>
@@ -847,8 +849,8 @@ export default function Dashboard() {
                     ))}
                   </TabsContent>
                 </Tabs>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           </div>
         </div>
       </div>
