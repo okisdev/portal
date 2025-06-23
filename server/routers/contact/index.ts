@@ -1,12 +1,12 @@
-import { contact, contactActivity, team, teamContact, user, userNotifications } from '@/drizzle/schema';
-import { activitySubTypeSchema, activityTypeSchema } from '@/lib/schema';
+import { contact, contactActivity, siteConfig, team, teamContact, user, userNotifications } from '@/drizzle/schema';
+import { type Priority, type Source, type Status, activitySubTypeSchema, activityTypeSchema } from '@/lib/schema';
 import { createContactActivityHelper } from '@/server/helper/contact';
 import { activityRouter } from '@/server/routers/contact/activity';
 import { createTRPCRouter, protectedProcedure } from '@/server/trpc';
 import { sendEmail } from '@/utils/email';
 import { stringifyPhone } from '@/utils/phone';
 import { TRPCError } from '@trpc/server';
-import { startOfDay } from 'date-fns';
+import { startOfDay, startOfMonth, subMonths } from 'date-fns';
 import { asc, desc, eq, inArray, sql } from 'drizzle-orm';
 import { z } from 'zod';
 
@@ -623,5 +623,254 @@ export const contactRouter = createTRPCRouter({
       } catch (error) {
         throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Failed to create contacts batch' });
       }
+    }),
+
+  // Optimized paginated endpoint with server-side filtering
+  getContactsPaginated: protectedProcedure
+    .input(
+      z.object({
+        page: z.number().min(1).default(1),
+        pageSize: z.number().min(1).max(100).default(10),
+        search: z.string().optional(),
+        statusFilter: z.array(z.string()).optional(),
+        priorityFilter: z.array(z.string()).optional(),
+        sourceFilter: z.array(z.string()).optional(),
+        sortBy: z.enum(['createdAt', 'name', 'status', 'priority', 'nextFollowUpAt']).optional(),
+        sortOrder: z.enum(['asc', 'desc']).optional(),
+      })
+    )
+    .query(async ({ ctx, input }) => {
+      const { page, pageSize, search, statusFilter, priorityFilter, sourceFilter, sortBy = 'createdAt', sortOrder = 'desc' } = input;
+      const offset = (page - 1) * pageSize;
+
+      // Build dynamic where conditions
+      const whereConditions = [];
+
+      if (search) {
+        const searchLower = search.toLowerCase();
+        whereConditions.push(
+          sql`(
+            LOWER(${contact.name}) LIKE ${`%${searchLower}%`} OR
+            LOWER(${contact.email}) LIKE ${`%${searchLower}%`} OR
+            LOWER(${contact.company}) LIKE ${`%${searchLower}%`} OR
+            ${contact.phone} LIKE ${`%${search}%`}
+          )`
+        );
+      }
+
+      if (statusFilter && statusFilter.length > 0) {
+        whereConditions.push(inArray(contact.status, statusFilter));
+      }
+
+      if (priorityFilter && priorityFilter.length > 0) {
+        whereConditions.push(inArray(contact.priority, priorityFilter));
+      }
+
+      if (sourceFilter && sourceFilter.length > 0) {
+        whereConditions.push(inArray(contact.source, sourceFilter));
+      }
+
+      // Get total count
+      const countResult = await ctx.db
+        .select({ count: sql<number>`count(*)` })
+        .from(contact)
+        .where(whereConditions.length > 0 ? sql`${whereConditions.reduce((acc, cond, i) => (i === 0 ? cond : sql`${acc} AND ${cond}`))}` : undefined)
+        .then((rows) => rows[0]);
+
+      const totalCount = Number(countResult.count);
+
+      // Build order by
+      const orderByColumn = {
+        createdAt: contact.createdAt,
+        name: contact.name,
+        status: contact.status,
+        priority: contact.priority,
+        nextFollowUpAt: contact.nextFollowUpAt,
+      }[sortBy];
+
+      // Get paginated results
+      const results = await ctx.db
+        .select({
+          id: contact.id,
+          name: contact.name,
+          firstName: contact.firstName,
+          lastName: contact.lastName,
+          email: contact.email,
+          phone: contact.phone,
+          company: contact.company,
+          status: contact.status,
+          priority: contact.priority,
+          source: contact.source,
+          createdAt: contact.createdAt,
+          nextFollowUpAt: contact.nextFollowUpAt,
+          lastContactedAt: contact.lastContactedAt,
+          lastActivity: contact.lastActivity,
+        })
+        .from(contact)
+        .where(whereConditions.length > 0 ? sql`${whereConditions.reduce((acc, cond, i) => (i === 0 ? cond : sql`${acc} AND ${cond}`))}` : undefined)
+        .orderBy(sortOrder === 'desc' ? desc(orderByColumn) : asc(orderByColumn))
+        .limit(pageSize)
+        .offset(offset);
+
+      return {
+        data: results,
+        totalCount,
+        page,
+        pageSize,
+        totalPages: Math.ceil(totalCount / pageSize),
+      };
+    }),
+
+  // Optimized dashboard metrics endpoint
+  getDashboardMetrics: protectedProcedure
+    .input(
+      z.object({
+        dateRange: z.enum(['this-month', 'last-month', 'last-3-months', 'last-6-months', 'this-year']).optional(),
+      })
+    )
+    .query(async ({ ctx, input }) => {
+      const now = new Date();
+      const monthStart = startOfMonth(now);
+      const lastMonthStart = startOfMonth(subMonths(now, 1));
+
+      // Get aggregated metrics in a single query
+      const metrics = await ctx.db
+        .select({
+          total: sql<number>`count(*)`,
+          totalThisMonth: sql<number>`count(*) filter (where ${contact.createdAt} >= ${monthStart})`,
+          totalLastMonth: sql<number>`count(*) filter (where ${contact.createdAt} >= ${lastMonthStart} and ${contact.createdAt} < ${monthStart})`,
+          contacted: sql<number>`count(*) filter (where ${contact.lastContactedAt} is not null)`,
+          qualified: sql<number>`count(*) filter (where ${contact.status} = 'Qualified')`,
+          hot: sql<number>`count(*) filter (where ${contact.priority} = 'High')`,
+        })
+        .from(contact)
+        .then((rows) => rows[0]);
+
+      // Calculate growth percentage
+      const growth = metrics.totalLastMonth > 0 ? ((metrics.totalThisMonth - metrics.totalLastMonth) / metrics.totalLastMonth) * 100 : 0;
+
+      // Get monthly breakdown for chart
+      const monthlyData = await ctx.db
+        .select({
+          month: sql<string>`to_char(${contact.createdAt}, 'YYYY-MM')`,
+          count: sql<number>`count(*)`,
+        })
+        .from(contact)
+        .where(sql`${contact.createdAt} >= ${subMonths(now, 6)}`)
+        .groupBy(sql`to_char(${contact.createdAt}, 'YYYY-MM')`)
+        .orderBy(sql`to_char(${contact.createdAt}, 'YYYY-MM')`);
+
+      // Get status breakdown
+      const statusBreakdown = await ctx.db
+        .select({
+          status: contact.status,
+          count: sql<number>`count(*)`,
+        })
+        .from(contact)
+        .groupBy(contact.status);
+
+      // Get priority breakdown
+      const priorityBreakdown = await ctx.db
+        .select({
+          priority: contact.priority,
+          count: sql<number>`count(*)`,
+        })
+        .from(contact)
+        .groupBy(contact.priority);
+
+      // Get source breakdown
+      const sourceBreakdown = await ctx.db
+        .select({
+          source: contact.source,
+          count: sql<number>`count(*)`,
+        })
+        .from(contact)
+        .groupBy(contact.source);
+
+      return {
+        metrics: {
+          ...metrics,
+          growth: growth.toFixed(0),
+        },
+        monthlyData,
+        statusBreakdown,
+        priorityBreakdown,
+        sourceBreakdown,
+      };
+    }),
+
+  // Batch load all configurations
+  getAllConfigurations: protectedProcedure.query(async ({ ctx }) => {
+    const configs = await ctx.db
+      .select()
+      .from(siteConfig)
+      .where(inArray(siteConfig.key, ['status', 'priority', 'source']));
+
+    const result = {
+      statuses: [] as Status[],
+      priorities: [] as Priority[],
+      sources: [] as Source[],
+    };
+
+    for (const config of configs) {
+      const items = config.value ? JSON.parse(config.value) : [];
+      if (config.key === 'status') result.statuses = items;
+      else if (config.key === 'priority') result.priorities = items;
+      else if (config.key === 'source') result.sources = items;
+    }
+
+    return result;
+  }),
+
+  // Search contacts endpoint for dropdowns and selectors
+  searchContacts: protectedProcedure
+    .input(
+      z.object({
+        query: z.string(),
+        limit: z.number().min(1).max(50).default(10),
+        excludeIds: z.array(z.string()).optional(),
+      })
+    )
+    .query(async ({ ctx, input }) => {
+      const { query, limit, excludeIds = [] } = input;
+
+      if (!query || query.trim().length === 0) {
+        return [];
+      }
+
+      const searchLower = query.toLowerCase();
+
+      const whereConditions = [
+        sql`(
+          LOWER(${contact.name}) LIKE ${`%${searchLower}%`} OR
+          LOWER(${contact.email}) LIKE ${`%${searchLower}%`} OR
+          LOWER(${contact.firstName}) LIKE ${`%${searchLower}%`} OR
+          LOWER(${contact.lastName}) LIKE ${`%${searchLower}%`}
+        )`,
+      ];
+
+      // Exclude specific IDs if provided
+      if (excludeIds.length > 0) {
+        whereConditions.push(
+          sql`${contact.id} NOT IN (${sql.join(
+            excludeIds.map((id) => sql`${id}`),
+            sql`, `
+          )})`
+        );
+      }
+
+      return ctx.db
+        .select({
+          id: contact.id,
+          name: contact.name,
+          firstName: contact.firstName,
+          lastName: contact.lastName,
+          email: contact.email,
+          company: contact.company,
+        })
+        .from(contact)
+        .where(sql`${whereConditions.reduce((acc, cond, i) => (i === 0 ? cond : sql`${acc} AND ${cond}`))}`)
+        .orderBy(contact.name)
+        .limit(limit);
     }),
 });

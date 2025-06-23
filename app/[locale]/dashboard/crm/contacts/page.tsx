@@ -15,32 +15,38 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useDebounce } from '@/hooks/use-debounce';
 import { useIsMobile } from '@/hooks/use-mobile';
-import type { Contact, Priority, Source, Status } from '@/lib/schema';
+import type { Priority, Source, Status } from '@/lib/schema';
 import type { Locale } from '@/types/i18n';
 import { renderDescription } from '@/utils/activity';
 import { formatDateWithoutTime } from '@/utils/date';
 import { parsePhoneWithoutCountryCode } from '@/utils/phone';
 import { api } from '@/utils/trpc/client';
-import {
-  type ColumnDef,
-  type ColumnFiltersState,
-  type SortingState,
-  type VisibilityState,
-  getCoreRowModel,
-  getFacetedRowModel,
-  getFacetedUniqueValues,
-  getFilteredRowModel,
-  getPaginationRowModel,
-  getSortedRowModel,
-  useReactTable,
-} from '@tanstack/react-table';
+import { type ColumnDef, type ColumnFiltersState, type SortingState, type VisibilityState, getCoreRowModel, useReactTable } from '@tanstack/react-table';
 import { Check, Eye, MoreHorizontal, Trash2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useLocale } from 'next-intl';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { usePathname } from 'next/navigation';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
+
+// Define the contact type from the paginated response
+type PaginatedContact = {
+  id: string;
+  name: string | null;
+  firstName: string;
+  lastName: string;
+  email: string | null;
+  phone: string | null;
+  company: string | null;
+  status: string;
+  priority: string | null;
+  source: string | null;
+  createdAt: Date;
+  nextFollowUpAt: Date | null;
+  lastContactedAt: Date | null;
+  lastActivity: string | null;
+};
 
 export default function CRMContactsTablePage() {
   const router = useRouter();
@@ -93,25 +99,25 @@ export default function CRMContactsTablePage() {
     setIsInitialLoad(false);
   }, [searchParams, pathname, router, isInitialLoad]);
 
-  const { data: contactsData, isLoading } = api.contact.getAllContacts.useQuery();
+  // Batch load all configurations at once
+  const { data: configurations } = api.contact.getAllConfigurations.useQuery();
 
-  const contacts = contactsData || [];
-  const { data: statuses } = api.site.getStatus.useQuery();
-  const { data: priorities } = api.site.getPriority.useQuery();
-  const { data: sources } = api.site.getSource.useQuery();
+  const statuses = configurations?.statuses || [];
+  const priorities = configurations?.priorities || [];
+  const sources = configurations?.sources || [];
 
   const utils = api.useUtils();
 
   const deleteContact = api.contact.deleteContact.useMutation({
     onSuccess: () => {
-      utils.contact.getAllContacts.invalidate();
+      utils.contact.getContactsPaginated.invalidate();
       toast.success(t('contact_deleted_successfully'));
     },
   });
 
   const updateContact = api.contact.updateContact.useMutation({
     onSuccess: () => {
-      utils.contact.getAllContacts.invalidate();
+      utils.contact.getContactsPaginated.invalidate();
       toast.success(t('contact_updated_successfully'));
     },
   });
@@ -130,6 +136,23 @@ export default function CRMContactsTablePage() {
 
   const [selectedColumn, setSelectedColumn] = useState<string>('');
   const [pageIndex, setPageIndex] = useState(0);
+  const [pageSize, setPageSize] = useState(10);
+
+  // Fetch contacts with server-side pagination and filtering
+  const { data: contactsData, isLoading } = api.contact.getContactsPaginated.useQuery({
+    page: pageIndex + 1,
+    pageSize,
+    search: debouncedSearch,
+    statusFilter: statusFilter.length > 0 ? statusFilter : undefined,
+    priorityFilter: priorityFilter.length > 0 ? priorityFilter : undefined,
+    sourceFilter: sourceFilter.length > 0 ? sourceFilter : undefined,
+    sortBy: sorting[0]?.id as any,
+    sortOrder: sorting[0]?.desc ? 'desc' : 'asc',
+  });
+
+  const contacts = contactsData?.data || [];
+  const totalCount = contactsData?.totalCount || 0;
+  const totalPages = contactsData?.totalPages || 1;
 
   // Update URL when search or filters change
   useEffect(() => {
@@ -163,44 +186,6 @@ export default function CRMContactsTablePage() {
       setPageIndex(0);
     }
   }, [debouncedSearch, statusFilter, priorityFilter, sourceFilter, isInitialLoad]);
-
-  const filteredContacts = useMemo(() => {
-    if (!contacts) return [];
-
-    return contacts.filter((contact) => {
-      // Apply search filter
-      if (debouncedSearch) {
-        const searchTerm = debouncedSearch.toLowerCase();
-        const fullName = `${contact.firstName} ${contact.lastName}`.toLowerCase();
-        const email = contact.email?.toLowerCase() ?? '';
-        const status = contact.status.toLowerCase();
-        const source = (contact.source || '').toLowerCase();
-
-        if (!fullName.includes(searchTerm) && !email.includes(searchTerm) && !status.includes(searchTerm) && !source.includes(searchTerm)) {
-          return false;
-        }
-      }
-
-      // Apply status filter
-      if (statusFilter.length > 0 && contact.status && !statusFilter.includes(contact.status)) {
-        return false;
-      }
-
-      // Apply priority filter
-      if (priorityFilter.length > 0 && contact.priority && !priorityFilter.includes(contact.priority)) {
-        return false;
-      }
-
-      // Apply source filter
-      if (sourceFilter.length > 0 && contact.source && !sourceFilter.includes(contact.source)) {
-        return false;
-      }
-
-      return true;
-    });
-  }, [contacts, debouncedSearch, statusFilter, priorityFilter, sourceFilter]);
-
-  const totalCount = filteredContacts.length;
 
   const handleDeleteClick = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -252,7 +237,7 @@ export default function CRMContactsTablePage() {
     });
   };
 
-  const tableColumns: ColumnDef<Contact>[] = [
+  const tableColumns: ColumnDef<PaginatedContact>[] = [
     {
       id: 'select',
       header: ({ table }) => (
@@ -279,7 +264,7 @@ export default function CRMContactsTablePage() {
           </div>
         </div>
       ),
-      enableSorting: false,
+      enableSorting: true,
     },
     {
       accessorKey: 'phone',
@@ -314,7 +299,7 @@ export default function CRMContactsTablePage() {
           </SelectContent>
         </Select>
       ),
-      enableSorting: false,
+      enableSorting: true,
     },
     {
       accessorKey: 'priority',
@@ -368,7 +353,7 @@ export default function CRMContactsTablePage() {
       enableHiding: isMobile,
     },
     {
-      accessorKey: 'next_follow_up',
+      accessorKey: 'nextFollowUpAt',
       header: ({ column }) => <DataTableHeader column={column} title={t('next_follow_up')} />,
       cell: ({ row }) => (row.original.nextFollowUpAt ? formatDateWithoutTime(row.original.nextFollowUpAt) : '—'),
       enableSorting: true,
@@ -419,8 +404,9 @@ export default function CRMContactsTablePage() {
   ];
 
   const table = useReactTable({
-    data: filteredContacts,
+    data: contacts,
     columns: tableColumns,
+    pageCount: totalPages,
     state: {
       sorting,
       columnVisibility,
@@ -428,7 +414,7 @@ export default function CRMContactsTablePage() {
       columnFilters,
       pagination: {
         pageIndex,
-        pageSize: 10,
+        pageSize,
       },
     },
     enableRowSelection: true,
@@ -438,18 +424,18 @@ export default function CRMContactsTablePage() {
     onColumnVisibilityChange: setColumnVisibility,
     onPaginationChange: (updater) => {
       if (typeof updater === 'function') {
-        const newState = updater({ pageIndex, pageSize: 10 });
+        const newState = updater({ pageIndex, pageSize });
         setPageIndex(newState.pageIndex);
+        setPageSize(newState.pageSize);
       } else {
         setPageIndex(updater.pageIndex);
+        setPageSize(updater.pageSize);
       }
     },
     getCoreRowModel: getCoreRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    getFacetedRowModel: getFacetedRowModel(),
-    getFacetedUniqueValues: getFacetedUniqueValues(),
+    manualPagination: true,
+    manualSorting: true,
+    manualFiltering: true,
   });
 
   return (
