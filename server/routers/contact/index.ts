@@ -952,6 +952,171 @@ export const contactRouter = createTRPCRouter({
     return result;
   }),
 
+  // Get recent activities for dashboard
+  getRecentActivities: protectedProcedure
+    .input(z.object({ limit: z.number().min(1).max(50).default(10) }))
+    .query(async ({ ctx, input }) => {
+      return ctx.db
+        .select({
+          id: contactActivity.id,
+          type: contactActivity.type,
+          subType: contactActivity.subType,
+          description: contactActivity.description,
+          createdAt: contactActivity.createdAt,
+          metadata: contactActivity.metadata,
+          contact: {
+            id: contact.id,
+            name: contact.name,
+            email: contact.email,
+          },
+          user: {
+            id: user.id,
+            name: user.name,
+            email: user.email,
+          },
+        })
+        .from(contactActivity)
+        .innerJoin(contact, eq(contactActivity.contactId, contact.id))
+        .leftJoin(user, eq(contactActivity.userId, user.id))
+        .orderBy(desc(contactActivity.createdAt))
+        .limit(input.limit);
+    }),
+
+  // Get overdue follow-ups
+  getOverdueFollowUps: protectedProcedure
+    .input(z.object({ limit: z.number().min(1).max(50).default(10) }))
+    .query(async ({ ctx, input }) => {
+      const now = new Date();
+      return ctx.db
+        .select({
+          id: contact.id,
+          name: contact.name,
+          email: contact.email,
+          company: contact.company,
+          status: contact.status,
+          priority: contact.priority,
+          nextFollowUpAt: contact.nextFollowUpAt,
+          lastContactedAt: contact.lastContactedAt,
+        })
+        .from(contact)
+        .where(
+          sql`${contact.nextFollowUpAt} < ${now} AND ${contact.nextFollowUpAt} IS NOT NULL`
+        )
+        .orderBy(asc(contact.nextFollowUpAt))
+        .limit(input.limit);
+    }),
+
+  // Get recent contacts
+  getRecentContacts: protectedProcedure
+    .input(z.object({ limit: z.number().min(1).max(50).default(10) }))
+    .query(async ({ ctx, input }) => {
+      return ctx.db
+        .select({
+          id: contact.id,
+          name: contact.name,
+          email: contact.email,
+          company: contact.company,
+          status: contact.status,
+          priority: contact.priority,
+          source: contact.source,
+          createdAt: contact.createdAt,
+        })
+        .from(contact)
+        .orderBy(desc(contact.createdAt))
+        .limit(input.limit);
+    }),
+
+  // Get top companies by contact count
+  getTopCompanies: protectedProcedure
+    .input(z.object({ limit: z.number().min(1).max(20).default(10) }))
+    .query(async ({ ctx, input }) => {
+      return ctx.db
+        .select({
+          company: contact.company,
+          count: sql<number>`count(*)`,
+          qualifiedCount: sql<number>`count(*) filter (where ${contact.status} = 'Qualified')`,
+          hotCount: sql<number>`count(*) filter (where ${contact.priority} = 'High')`,
+        })
+        .from(contact)
+        .where(sql`${contact.company} IS NOT NULL AND ${contact.company} != ''`)
+        .groupBy(contact.company)
+        .orderBy(desc(sql<number>`count(*)`))
+        .limit(input.limit);
+    }),
+
+  // Get performance metrics
+  getPerformanceMetrics: protectedProcedure.query(async ({ ctx }) => {
+    const now = new Date();
+    const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    const monthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+
+    // Get conversion rates
+    const conversionData = await ctx.db
+      .select({
+        totalContacts: sql<number>`count(*)`,
+        qualifiedContacts: sql<number>`count(*) filter (where ${contact.status} = 'Qualified')`,
+        closedContacts: sql<number>`count(*) filter (where ${contact.status} = 'Closed')`,
+        contactedContacts: sql<number>`count(*) filter (where ${contact.lastContactedAt} IS NOT NULL)`,
+      })
+      .from(contact)
+      .then((rows) => rows[0]);
+
+    // Get response metrics
+    const responseMetrics = await ctx.db
+      .select({
+        totalEmails: sql<number>`count(*) filter (where ${contactActivity.subType} = 'EMAIL_SENT')`,
+        totalNotes: sql<number>`count(*) filter (where ${contactActivity.subType} = 'NOTE_ADDED')`,
+        totalMeetings: sql<number>`count(*) filter (where ${contactActivity.subType} = 'MEETING_SCHEDULED')`,
+        recentActivity: sql<number>`count(*) filter (where ${contactActivity.createdAt} >= ${weekAgo})`,
+      })
+      .from(contactActivity)
+      .then((rows) => rows[0]);
+
+    // Get industry breakdown
+    const industryBreakdown = await ctx.db
+      .select({
+        industry: contact.industry,
+        count: sql<number>`count(*)`,
+      })
+      .from(contact)
+      .where(sql`${contact.industry} IS NOT NULL AND ${contact.industry} != ''`)
+      .groupBy(contact.industry)
+      .orderBy(desc(sql<number>`count(*)`))
+      .limit(5);
+
+    return {
+      conversion: {
+        total: conversionData.totalContacts,
+        qualified: conversionData.qualifiedContacts,
+        closed: conversionData.closedContacts,
+        contacted: conversionData.contactedContacts,
+        qualificationRate:
+          conversionData.totalContacts > 0
+            ? (
+                (conversionData.qualifiedContacts /
+                  conversionData.totalContacts) *
+                100
+              ).toFixed(1)
+            : '0',
+        contactRate:
+          conversionData.totalContacts > 0
+            ? (
+                (conversionData.contactedContacts /
+                  conversionData.totalContacts) *
+                100
+              ).toFixed(1)
+            : '0',
+      },
+      activity: {
+        totalEmails: responseMetrics.totalEmails,
+        totalNotes: responseMetrics.totalNotes,
+        totalMeetings: responseMetrics.totalMeetings,
+        recentActivity: responseMetrics.recentActivity,
+      },
+      industries: industryBreakdown,
+    };
+  }),
+
   // Optimized kanban view endpoint
   getContactsForKanban: protectedProcedure
     .input(
