@@ -831,7 +831,114 @@ export const contactRouter = createTRPCRouter({
     return result;
   }),
 
-  // Search contacts endpoint for dropdowns and selectors
+  // Optimized kanban view endpoint
+  getContactsForKanban: protectedProcedure
+    .input(
+      z.object({
+        groupBy: z.enum(['status', 'priority', 'source']),
+        search: z.string().optional(),
+        limit: z.number().min(10).max(200).default(100), // Limit per column
+      })
+    )
+    .query(async ({ ctx, input }) => {
+      const { groupBy, search, limit } = input;
+
+      // First, get the configuration for the grouping
+      const configKey = groupBy === 'status' ? 'status' : groupBy === 'priority' ? 'priority' : 'source';
+      const config = await ctx.db
+        .select()
+        .from(siteConfig)
+        .where(eq(siteConfig.key, configKey))
+        .then((rows) => rows[0]);
+
+      const items = config?.value ? JSON.parse(config.value) : [];
+
+      // Build search condition if provided
+      let searchCondition = null;
+      if (search) {
+        const searchLower = search.toLowerCase();
+        searchCondition = sql`(
+          LOWER(${contact.name}) LIKE ${`%${searchLower}%`} OR
+          LOWER(${contact.email}) LIKE ${`%${searchLower}%`} OR
+          LOWER(${contact.company}) LIKE ${`%${searchLower}%`} OR
+          ${contact.phone} LIKE ${`%${search}%`}
+        )`;
+      }
+
+      // Get grouped data with limits
+      const groupedData: Record<string, any[]> = {};
+
+      for (const item of items) {
+        const whereConditions = [eq(contact[groupBy], item.value)];
+
+        if (searchCondition) {
+          whereConditions.push(searchCondition);
+        }
+
+        const contacts = await ctx.db
+          .select({
+            id: contact.id,
+            name: contact.name,
+            firstName: contact.firstName,
+            lastName: contact.lastName,
+            email: contact.email,
+            phone: contact.phone,
+            company: contact.company,
+            status: contact.status,
+            priority: contact.priority,
+            source: contact.source,
+            createdAt: contact.createdAt,
+            lastContactedAt: contact.lastContactedAt,
+            nextFollowUpAt: contact.nextFollowUpAt,
+          })
+          .from(contact)
+          .where(whereConditions.length > 1 ? sql`${whereConditions[0]} AND ${whereConditions[1]}` : whereConditions[0])
+          .orderBy(
+            // Sort by priority first, then by created date
+            sql`CASE 
+              WHEN ${contact.priority} = 'High' THEN 1
+              WHEN ${contact.priority} = 'Medium' THEN 2
+              WHEN ${contact.priority} = 'Low' THEN 3
+              ELSE 4
+            END`,
+            desc(contact.createdAt)
+          )
+          .limit(limit);
+
+        groupedData[item.value] = contacts;
+      }
+
+      // Get total counts for each group (for display purposes)
+      const counts: Record<string, number> = {};
+      for (const item of items) {
+        const whereConditions = [eq(contact[groupBy], item.value)];
+
+        if (searchCondition) {
+          whereConditions.push(searchCondition);
+        }
+
+        const result = await ctx.db
+          .select({ count: sql<number>`count(*)` })
+          .from(contact)
+          .where(whereConditions.length > 1 ? sql`${whereConditions[0]} AND ${whereConditions[1]}` : whereConditions[0])
+          .then((rows) => rows[0]);
+
+        counts[item.value] = Number(result.count);
+      }
+
+      return {
+        columns: items.map((item: any) => ({
+          id: item.value,
+          title: item.value,
+          color: item.color,
+          items: groupedData[item.value] || [],
+          totalCount: counts[item.value] || 0,
+          hasMore: counts[item.value] > limit,
+        })),
+        config: items,
+      };
+    }),
+
   searchContacts: protectedProcedure
     .input(
       z.object({

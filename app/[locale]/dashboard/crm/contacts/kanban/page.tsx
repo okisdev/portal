@@ -4,6 +4,7 @@ import { AddContact } from '@/components/dashboard/contact/add-contact';
 import { PageHeader } from '@/components/shared/page-header';
 import { SmartColorBadge } from '@/components/shared/smart-color-badge';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -29,7 +30,10 @@ import { toast } from 'sonner';
 interface KanbanColumn {
   id: string;
   title: string;
+  color: string;
   items: Contact[];
+  totalCount: number;
+  hasMore: boolean;
 }
 
 // Shared ContactCard component for consistent UI
@@ -181,10 +185,6 @@ function DroppableColumn({ column, onClick, showEmptyColumns, groupBy, onHideCol
 
   const { setNodeRef, isOver } = useDroppable({ id: column.id, data: { type: 'column', column } });
 
-  const { data: statuses } = api.site.getStatus.useQuery();
-  const { data: priorities } = api.site.getPriority.useQuery();
-  const { data: sources } = api.site.getSource.useQuery();
-
   // Container ref for virtualization
   const [columnRef, setColumnRef] = useState<HTMLDivElement | null>(null);
 
@@ -232,25 +232,15 @@ function DroppableColumn({ column, onClick, showEmptyColumns, groupBy, onHideCol
     return null;
   }
 
-  const getColumnColor = () => {
-    if (groupBy === 'status') {
-      return statuses?.find((s: Status) => s.value === column.title)?.color || '#6b7280';
-    }
-    if (groupBy === 'priority') {
-      return priorities?.find((p: Priority) => p.value === column.title)?.color || '#6b7280';
-    }
-    if (groupBy === 'source') {
-      return sources?.find((s: Source) => s.value === column.title)?.color || '#6b7280';
-    }
-    return '#6b7280';
-  };
-
   return (
     <div className='flex h-full w-[280px] shrink-0 flex-col sm:w-[280px]'>
       <div className='mb-2 flex items-center justify-between'>
-        <SmartColorBadge value={column.title} color={getColumnColor()} />
+        <SmartColorBadge value={column.title} color={column.color} />
         <div className='flex items-center gap-2'>
-          <span className='text-muted-foreground text-xs'>{column.items.length}</span>
+          <span className='text-muted-foreground text-xs'>
+            {column.items.length}
+            {column.hasMore && `/${column.totalCount}`}
+          </span>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant='ghost' className='h-6 w-6 p-0'>
@@ -299,6 +289,13 @@ function DroppableColumn({ column, onClick, showEmptyColumns, groupBy, onHideCol
             </div>
           )}
         </SortableContext>
+        {column.hasMore && filteredItems.length === column.items.length && (
+          <div className='mt-2 text-center'>
+            <Badge variant='secondary' className='text-xs'>
+              {t('showing_x_of_y', { x: column.items.length, y: column.totalCount })}
+            </Badge>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -357,15 +354,17 @@ export default function CRMContactsKanbanPage() {
   const [hiddenColumns, setHiddenColumns] = useState<string[]>([]);
   const [hasHiddenColumns, setHasHiddenColumns] = useState(false);
 
-  const { data: contactsData, isLoading } = api.contact.getAllContacts.useQuery();
-  const { data: statuses } = api.site.getStatus.useQuery();
-  const { data: priorities } = api.site.getPriority.useQuery();
-  const { data: sources } = api.site.getSource.useQuery();
+  // Use the new optimized kanban endpoint
+  const { data: kanbanData, isLoading } = api.contact.getContactsForKanban.useQuery({
+    groupBy,
+    search: debouncedSearch,
+    limit: 100, // Load up to 100 contacts per column
+  });
 
   const utils = api.useUtils();
   const updateContact = api.contact.updateContact.useMutation({
     onSuccess: () => {
-      utils.contact.getAllContacts.invalidate();
+      utils.contact.getContactsForKanban.invalidate();
       toast.success(t('contact_updated_successfully'));
     },
   });
@@ -410,71 +409,18 @@ export default function CRMContactsKanbanPage() {
     })
   );
 
-  const filteredContacts = useMemo(() => {
-    if (!contactsData) return [];
+  // Get all contacts from columns for drag operations
+  const allContacts = useMemo(() => {
+    if (!columns) return [];
+    return columns.flatMap((column) => column.items);
+  }, [columns]);
 
-    return contactsData.filter((contact) => {
-      if (debouncedSearch) {
-        const searchTerm = debouncedSearch.toLowerCase();
-        const fullName = `${contact.firstName} ${contact.lastName}`.toLowerCase();
-        const email = contact.email?.toLowerCase() ?? '';
-        const status = contact.status.toLowerCase();
-        const source = (contact.source || '').toLowerCase();
-
-        if (!fullName.includes(searchTerm) && !email.includes(searchTerm) && !status.includes(searchTerm) && !source.includes(searchTerm)) {
-          return false;
-        }
-      }
-      return true;
-    });
-  }, [contactsData, debouncedSearch]);
-
-  // Simplify sorting function to only use priority
-  const sortContacts = useCallback(
-    (contacts: Contact[]) => {
-      return [...contacts].sort((a, b) => {
-        if (priorities) {
-          const priorityOrder = priorities.map((p: Priority) => p.value);
-          return priorityOrder.indexOf(a.priority || 'Medium') - priorityOrder.indexOf(b.priority || 'Medium');
-        }
-        return (a.priority || 'Medium').localeCompare(b.priority || 'Medium');
-      });
-    },
-    [priorities]
-  );
-
-  // Use a throttled/debounced column generation to prevent excess calculations
+  // Update columns when data changes
   useEffect(() => {
-    if (!filteredContacts || isLoading) return;
-
-    // Defer complex calculation to the next tick
-    const timer = setTimeout(() => {
-      let newColumns: KanbanColumn[] = [];
-      if (groupBy === 'status' && statuses) {
-        newColumns = statuses.map((status: Status) => ({
-          id: status.value,
-          title: status.value,
-          items: sortContacts(filteredContacts.filter((contact) => contact.status === status.value)),
-        }));
-      } else if (groupBy === 'priority' && priorities) {
-        newColumns = priorities.map((priority: Priority) => ({
-          id: priority.value,
-          title: priority.value,
-          items: sortContacts(filteredContacts.filter((contact) => contact.priority === priority.value)),
-        }));
-      } else if (groupBy === 'source' && sources) {
-        newColumns = sources.map((source: Source) => ({
-          id: source.value,
-          title: source.value,
-          items: sortContacts(filteredContacts.filter((contact) => contact.source === source.value)),
-        }));
-      }
-
-      setColumns(newColumns);
-    }, 50); // Small delay to batch changes
-
-    return () => clearTimeout(timer);
-  }, [filteredContacts, statuses, priorities, sources, groupBy, sortContacts, isLoading]);
+    if (kanbanData?.columns) {
+      setColumns(kanbanData.columns);
+    }
+  }, [kanbanData]);
 
   const handleDragStart = (event: DragStartEvent) => {
     if (debouncedDragging) {
@@ -500,7 +446,7 @@ export default function CRMContactsKanbanPage() {
       return;
     }
 
-    const activeContact = filteredContacts.find((c) => c.id === active.id);
+    const activeContact = allContacts.find((c) => c.id === active.id);
     if (!activeContact) {
       setIsDragging(false);
       setActiveId(null);
@@ -524,11 +470,19 @@ export default function CRMContactsKanbanPage() {
       if (sourceColumn.id !== targetColumn.id) {
         const updatedColumns = columns.map((column) => {
           if (column.id === sourceColumn.id) {
-            return { ...column, items: column.items.filter((item) => item.id !== active.id) };
+            return {
+              ...column,
+              items: column.items.filter((item) => item.id !== active.id),
+              totalCount: column.totalCount - 1,
+            };
           }
 
           if (column.id === targetColumn.id) {
-            return { ...column, items: [...column.items, activeContact] };
+            return {
+              ...column,
+              items: [...column.items, activeContact],
+              totalCount: column.totalCount + 1,
+            };
           }
 
           return column;
@@ -550,11 +504,19 @@ export default function CRMContactsKanbanPage() {
           // Optimized column update - only update the affected columns
           const updatedColumns = columns.map((column) => {
             if (column.id === sourceColumn.id) {
-              return { ...column, items: column.items.filter((item) => item.id !== active.id) };
+              return {
+                ...column,
+                items: column.items.filter((item) => item.id !== active.id),
+                totalCount: column.totalCount - 1,
+              };
             }
 
             if (column.id === targetColumn.id) {
-              return { ...column, items: [...column.items, activeContact] };
+              return {
+                ...column,
+                items: [...column.items, activeContact],
+                totalCount: column.totalCount + 1,
+              };
             }
 
             return column;
@@ -586,18 +548,30 @@ export default function CRMContactsKanbanPage() {
       // Moving between columns - only update affected columns
       const updatedColumns = columns.map((column) => {
         if (column.id === sourceColumn.id) {
-          return { ...column, items: column.items.filter((item) => item.id !== active.id) };
+          return {
+            ...column,
+            items: column.items.filter((item) => item.id !== active.id),
+            totalCount: column.totalCount - 1,
+          };
         }
 
         if (column.id === overColumn.id) {
           const overItemIndex = column.items.findIndex((item) => item.id === overItemId);
           if (overItemIndex === -1) {
             // Safety check - if we can't find the item, just append to the end
-            return { ...column, items: [...column.items, activeContact] };
+            return {
+              ...column,
+              items: [...column.items, activeContact],
+              totalCount: column.totalCount + 1,
+            };
           }
           const newItems = [...column.items];
           newItems.splice(overItemIndex, 0, activeContact);
-          return { ...column, items: newItems };
+          return {
+            ...column,
+            items: newItems,
+            totalCount: column.totalCount + 1,
+          };
         }
 
         return column;
@@ -639,9 +613,14 @@ export default function CRMContactsKanbanPage() {
     return columns.filter((column) => !hiddenColumns.includes(column.id));
   }, [columns, hiddenColumns]);
 
+  // Calculate total contacts across all columns
+  const totalContacts = useMemo(() => {
+    return columns.reduce((sum, column) => sum + column.totalCount, 0);
+  }, [columns]);
+
   return (
     <div className='space-y-4 p-4'>
-      <PageHeader title={t('contacts')} subtitle={!isLoading ? `(${t('total_number_contacts', { count: filteredContacts.length || 0 })})` : undefined} description={t('contacts_description')} />
+      <PageHeader title={t('contacts')} subtitle={!isLoading ? `(${t('total_number_contacts', { count: totalContacts })})` : undefined} description={t('contacts_description')} />
 
       <div className='flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between'>
         <div className='flex flex-col gap-4 sm:flex-row sm:items-center'>
@@ -709,8 +688,8 @@ export default function CRMContactsKanbanPage() {
                 {activeId ? (
                   <ContactCard
                     contact={
-                      filteredContacts.find((c) => c.id === activeId) ||
-                      filteredContacts[0] || {
+                      allContacts.find((c) => c.id === activeId) ||
+                      allContacts[0] || {
                         id: activeId,
                         name: '',
                         email: '',
