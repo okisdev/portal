@@ -4,7 +4,7 @@ import { createContactActivityHelper } from '@/server/helper/contact';
 import { createTRPCRouter, protectedProcedure } from '@/server/trpc';
 import { TRPCError } from '@trpc/server';
 import { and, desc, eq, gte, inArray, lte, or } from 'drizzle-orm';
-import { z } from 'zod';
+import { z } from 'zod/v4';
 
 export const calendarRouter = createTRPCRouter({
   getMyFolders: protectedProcedure.query(({ ctx }) => {

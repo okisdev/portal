@@ -31,7 +31,7 @@ import type {
   userTask,
 } from '@/drizzle/schema';
 import type { InferSelectModel } from 'drizzle-orm';
-import { z } from 'zod';
+import { z } from 'zod/v4';
 
 // Shared Schema
 

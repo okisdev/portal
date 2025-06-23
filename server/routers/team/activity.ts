@@ -3,7 +3,7 @@ import { createTeamActivityHelper } from '@/server/helper/team';
 import { createTRPCRouter, protectedProcedure } from '@/server/trpc';
 import { TRPCError } from '@trpc/server';
 import { eq } from 'drizzle-orm';
-import { z } from 'zod';
+import { z } from 'zod/v4';
 
 export const activityRouter = createTRPCRouter({
   replyNote: protectedProcedure.input(z.object({ id: z.string(), description: z.string() })).mutation(async ({ ctx, input }) => {

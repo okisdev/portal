@@ -8,7 +8,7 @@ import { stringifyPhone } from '@/utils/phone';
 import { TRPCError } from '@trpc/server';
 import { format, startOfDay, startOfMonth, subMonths } from 'date-fns';
 import { asc, desc, eq, inArray, sql } from 'drizzle-orm';
-import { z } from 'zod';
+import { z } from 'zod/v4';
 
 export const contactRouter = createTRPCRouter({
   activity: activityRouter,
@@ -190,7 +190,7 @@ export const contactRouter = createTRPCRouter({
         description: z.string(),
         initiatorType: z.enum(['user', 'contact', 'system']),
         initiatorId: z.string(),
-        metadata: z.record(z.any()).optional(),
+        metadata: z.record(z.string(), z.any()).optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {

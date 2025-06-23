@@ -4,7 +4,7 @@ import { createTRPCRouter, protectedProcedure } from '@/server/trpc';
 import { encryptPassword } from '@/utils/password';
 import { TRPCError } from '@trpc/server';
 import { eq } from 'drizzle-orm';
-import z from 'zod';
+import z from 'zod/v4';
 
 export const accountRouter = createTRPCRouter({
   getMe: protectedProcedure.query(({ ctx }) => {

@@ -22,7 +22,7 @@ import { notFound, useParams, useRouter, useSearchParams } from 'next/navigation
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
-import { z } from 'zod';
+import { z } from 'zod/v4';
 
 const createCompanySchema = z.object({
   name: z.string().min(1, 'Name is required'),
@@ -36,11 +36,9 @@ const createCompanySchema = z.object({
   country: z.string().optional(),
   postalCode: z.string().optional(),
   phone: z.string().optional(),
-  email: z.string().optional(),
+  email: z.email('Please input a valid email').optional(),
   status: z.enum(['active', 'inactive']).default('active'),
 });
-
-type CreateCompanySchema = z.infer<typeof createCompanySchema>;
 
 export default function CompanyIdPage() {
   const { id: companyId } = useParams<{ id: string }>();

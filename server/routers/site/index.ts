@@ -1,7 +1,7 @@
 import { siteConfig } from '@/drizzle/schema';
 import { createTRPCRouter, protectedProcedure } from '@/server/trpc';
 import { eq } from 'drizzle-orm';
-import { z } from 'zod';
+import { z } from 'zod/v4';
 
 export const siteRouter = createTRPCRouter({
   getConfig: protectedProcedure.input(z.object({ key: z.enum(['name', 'description', 'domain', 'supportEmailDomains', 'status', 'priority', 'source']) })).query(async ({ ctx, input }) => {

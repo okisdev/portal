@@ -3,7 +3,7 @@ import { createContactActivityHelper } from '@/server/helper/contact';
 import { createTRPCRouter, protectedProcedure } from '@/server/trpc';
 import { TRPCError } from '@trpc/server';
 import { eq } from 'drizzle-orm';
-import { z } from 'zod';
+import { z } from 'zod/v4';
 
 export const activityRouter = createTRPCRouter({
   replyNote: protectedProcedure.input(z.object({ id: z.string(), description: z.string(), contactId: z.string() })).mutation(async ({ ctx, input }) => {

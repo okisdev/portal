@@ -37,7 +37,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { usePathname } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { z } from 'zod';
+import { z } from 'zod/v4';
 
 type SortConfig = {
   column: string;
@@ -56,7 +56,7 @@ const createCompanySchema = z.object({
   country: z.string().optional(),
   postalCode: z.string().optional(),
   phone: z.string().optional(),
-  email: z.string().optional(),
+  email: z.email('Please input a valid email').optional(),
   status: z.enum(['active', 'inactive']).default('active'),
 });
 

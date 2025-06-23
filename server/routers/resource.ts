@@ -2,7 +2,7 @@ import { contact, resourceContent, resourceContentSendTrack, resourceContentShar
 import { createTRPCRouter, protectedProcedure } from '@/server/trpc';
 import { TRPCError } from '@trpc/server';
 import { and, desc, eq, inArray, like, or, sql } from 'drizzle-orm';
-import { z } from 'zod';
+import { z } from 'zod/v4';
 
 const resourceContentSchema = z.object({
   title: z.string().min(1),
@@ -329,7 +329,7 @@ export const resourceRouter = createTRPCRouter({
         resourceId: z.string(),
         contactId: z.string(),
         status: z.enum(['sent', 'delivered', 'read', 'failed']),
-        metadata: z.record(z.any()).optional(),
+        metadata: z.record(z.string(), z.any()).optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {

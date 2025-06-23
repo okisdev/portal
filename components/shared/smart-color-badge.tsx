@@ -1,7 +1,7 @@
 import type { basicTagSchema } from '@/lib/schema';
 import { cn } from '@/lib/utils';
 import { adjustColorBrightness, getContrastColor } from '@/utils/color';
-import type { z } from 'zod';
+import type { z } from 'zod/v4';
 
 type SmartColorBadgeProps = z.infer<typeof basicTagSchema> & {
   className?: string;

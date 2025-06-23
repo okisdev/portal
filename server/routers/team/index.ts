@@ -6,7 +6,7 @@ import { activityRouter } from '@/server/routers/team/activity';
 import { createTRPCRouter, protectedProcedure } from '@/server/trpc';
 import { TRPCError } from '@trpc/server';
 import { and, asc, eq, exists, inArray, sql } from 'drizzle-orm';
-import { z } from 'zod';
+import { z } from 'zod/v4';
 
 export const teamRouter = createTRPCRouter({
   activity: activityRouter,
@@ -329,7 +329,7 @@ export const teamRouter = createTRPCRouter({
         description: z.string(),
         initiatorType: z.enum(['user', 'system', 'team']).default('user'),
         initiatorId: z.string(),
-        metadata: z.record(z.any()).optional(),
+        metadata: z.record(z.string(), z.any()).optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
