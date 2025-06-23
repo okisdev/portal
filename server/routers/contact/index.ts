@@ -6,7 +6,7 @@ import { createTRPCRouter, protectedProcedure } from '@/server/trpc';
 import { sendEmail } from '@/utils/email';
 import { stringifyPhone } from '@/utils/phone';
 import { TRPCError } from '@trpc/server';
-import { startOfDay, startOfMonth, subMonths } from 'date-fns';
+import { format, startOfDay, startOfMonth, subMonths } from 'date-fns';
 import { asc, desc, eq, inArray, sql } from 'drizzle-orm';
 import { z } from 'zod';
 
@@ -750,15 +750,24 @@ export const contactRouter = createTRPCRouter({
       const growth = metrics.totalLastMonth > 0 ? ((metrics.totalThisMonth - metrics.totalLastMonth) / metrics.totalLastMonth) * 100 : 0;
 
       // Get monthly breakdown for chart
-      const monthlyData = await ctx.db
-        .select({
-          month: sql<string>`to_char(${contact.createdAt}, 'YYYY-MM')`,
-          count: sql<number>`count(*)`,
-        })
-        .from(contact)
-        .where(sql`${contact.createdAt} >= ${subMonths(now, 6)}`)
-        .groupBy(sql`to_char(${contact.createdAt}, 'YYYY-MM')`)
-        .orderBy(sql`to_char(${contact.createdAt}, 'YYYY-MM')`);
+      const last6Months = [];
+      for (let i = 5; i >= 0; i--) {
+        const monthStart = startOfMonth(subMonths(now, i));
+        const monthEnd = i === 0 ? now : startOfMonth(subMonths(now, i - 1));
+
+        const monthData = await ctx.db
+          .select({
+            count: sql<number>`count(*)`,
+          })
+          .from(contact)
+          .where(sql`${contact.createdAt} >= ${monthStart} AND ${contact.createdAt} < ${monthEnd}`)
+          .then((rows) => rows[0]);
+
+        last6Months.push({
+          month: format(monthStart, 'yyyy-MM'),
+          count: Number(monthData?.count) || 0,
+        });
+      }
 
       // Get status breakdown
       const statusBreakdown = await ctx.db
@@ -792,7 +801,7 @@ export const contactRouter = createTRPCRouter({
           ...metrics,
           growth: growth.toFixed(0),
         },
-        monthlyData,
+        monthlyData: last6Months,
         statusBreakdown,
         priorityBreakdown,
         sourceBreakdown,

@@ -7,7 +7,7 @@ import { type ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } f
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { api } from '@/utils/trpc/client';
-import { format, parseISO } from 'date-fns';
+import { format, parseISO, subMonths } from 'date-fns';
 import { BarChart2, CheckCircle, Flame, HelpCircle, Phone, PieChart, TrendingUp, Users } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import { useTranslations } from 'next-intl';
@@ -34,11 +34,22 @@ export default function Dashboard() {
 
   // Prepare data for monthly growth chart
   const chartData = useMemo(() => {
-    if (!dashboardData?.monthlyData) return [];
+    if (!dashboardData?.monthlyData || dashboardData.monthlyData.length === 0) {
+      // Return empty data for last 6 months if no data
+      const defaultData = [];
+      for (let i = 5; i >= 0; i--) {
+        const date = subMonths(new Date(), i);
+        defaultData.push({
+          month: format(date, 'MMMM'),
+          leads: 0,
+        });
+      }
+      return defaultData;
+    }
 
     return dashboardData.monthlyData.map((item) => ({
       month: format(parseISO(`${item.month}-01`), 'MMMM'),
-      leads: item.count,
+      leads: Number(item.count) || 0,
     }));
   }, [dashboardData?.monthlyData]);
 
@@ -229,7 +240,7 @@ export default function Dashboard() {
                   }}
                 >
                   <CartesianGrid vertical={false} />
-                  <XAxis dataKey='month' tickLine={false} axisLine={false} tickMargin={8} tickFormatter={(value) => value.slice(0, 3)} />
+                  <XAxis dataKey='month' tickLine={false} axisLine={false} tickMargin={8} tickFormatter={(value) => (typeof value === 'string' ? value.slice(0, 3) : '')} />
                   <ChartTooltip cursor={false} content={<ChartTooltipContent indicator='line' />} />
                   <Area dataKey='leads' type='natural' fill='var(--color-leads)' fillOpacity={0.4} stroke='var(--color-leads)' />
                 </AreaChart>
