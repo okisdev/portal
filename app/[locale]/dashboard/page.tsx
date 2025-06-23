@@ -5,20 +5,18 @@ import { PageLoading } from '@/components/shared/page-loading';
 import { SmartColorBadge } from '@/components/shared/smart-color-badge';
 import { type ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-// import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { api } from '@/utils/trpc/client';
 import { format, startOfMonth, subMonths } from 'date-fns';
 import { BarChart2, CheckCircle, Flame, HelpCircle, Phone, PieChart, TrendingUp, Users } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import { useTranslations } from 'next-intl';
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { Area, AreaChart, CartesianGrid, XAxis } from 'recharts';
 
 export default function Dashboard() {
   const t = useTranslations();
   const { data: session, status } = useSession();
-  const [timePeriod, setTimePeriod] = useState('this-month');
 
   // Fetch all contacts and configurations
   const { data: contacts, isLoading: isContactsLoading } = api.contact.getAllContacts.useQuery();

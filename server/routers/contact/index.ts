@@ -7,7 +7,7 @@ import { sendEmail } from '@/utils/email';
 import { stringifyPhone } from '@/utils/phone';
 import { TRPCError } from '@trpc/server';
 import { startOfDay } from 'date-fns';
-import { asc, count, desc, eq, inArray, sql } from 'drizzle-orm';
+import { asc, desc, eq, inArray, sql } from 'drizzle-orm';
 import { z } from 'zod';
 
 export const contactRouter = createTRPCRouter({
@@ -16,46 +16,6 @@ export const contactRouter = createTRPCRouter({
   getAllContacts: protectedProcedure.query(({ ctx }) => {
     return ctx.db.select().from(contact).orderBy(desc(contact.createdAt));
   }),
-
-  getAllContactsCount: protectedProcedure.query(({ ctx }) => {
-    return ctx.db
-      .select({ count: count() })
-      .from(contact)
-      .then((rows) => rows[0]);
-  }),
-
-  getContactsByPagination: protectedProcedure.input(z.object({ page: z.number(), limit: z.number() })).query(({ ctx, input }) => {
-    return ctx.db
-      .select()
-      .from(contact)
-      .orderBy(desc(contact.createdAt))
-      .offset(input.page * input.limit)
-      .limit(input.limit);
-  }),
-
-  getContactByQuery: protectedProcedure
-    .input(
-      z.object({
-        query: z.string(),
-        limit: z.number().optional().default(10),
-      })
-    )
-    .query(async ({ ctx, input }) => {
-      if (!input.query.trim()) {
-        return ctx.db.select().from(contact).orderBy(desc(contact.createdAt)).limit(input.limit);
-      }
-
-      return ctx.db
-        .select()
-        .from(contact)
-        .where(
-          sql`${contact.firstName} ILIKE ${`%${input.query}%`} OR 
-            ${contact.lastName} ILIKE ${`%${input.query}%`} OR 
-            ${contact.email} ILIKE ${`%${input.query}%`} OR
-            ${contact.phone} ILIKE ${`%${input.query}%`}`
-        )
-        .limit(input.limit);
-    }),
 
   getContactById: protectedProcedure.input(z.object({ id: z.string() })).query(async ({ ctx, input }) => {
     return ctx.db
