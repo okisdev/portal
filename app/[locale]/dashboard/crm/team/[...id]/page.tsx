@@ -109,9 +109,6 @@ export default function TeamIdPage() {
   const { data: teamMeetings } = api.team.getTeamMeetings.useQuery({
     teamId: teamId[0],
   });
-  const { data: contacts } = api.contact.getAllContacts.useQuery(undefined, {
-    enabled: isAddMemberOpen,
-  });
   const { data: folders } = api.calendar.getMyFolders.useQuery();
   const { data: participantOptions } =
     api.calendar.getParticipantOptions.useQuery(undefined, {
@@ -468,71 +465,6 @@ export default function TeamIdPage() {
                   )}
                 </div>
                 <div className='flex items-center gap-2'>
-                  <Popover
-                    open={isAddMemberOpen}
-                    onOpenChange={setIsAddMemberOpen}
-                  >
-                    <PopoverTrigger asChild>
-                      <Button variant='outline' size='sm' className='h-8'>
-                        <Plus className='mr-1 size-4' /> {t('add_team_member')}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className='w-[300px] p-0' align='end'>
-                      <ComboboxCommand
-                        query={searchValue}
-                        setQuery={setSearchValue}
-                        value=''
-                        onChange={handleAddMember}
-                        setOpen={setIsAddMemberOpen}
-                        items={
-                          contacts
-                            ?.filter(
-                              (contact) =>
-                                !teamContacts?.some(
-                                  (c) => c.contact.id === contact.id
-                                ) &&
-                                (contact.firstName
-                                  .toLowerCase()
-                                  .includes(searchValue.toLowerCase()) ||
-                                  contact.lastName
-                                    .toLowerCase()
-                                    .includes(searchValue.toLowerCase()) ||
-                                  contact.email
-                                    ?.toLowerCase()
-                                    .includes(searchValue.toLowerCase()))
-                            )
-                            .map((contact) => contact.id) ?? []
-                        }
-                        searchPlaceholder={t('search_contacts')}
-                        emptyText='No contacts found.'
-                        groupHeading='Contacts'
-                        allowCustom={false}
-                        renderItem={(contactId) => {
-                          const contact = contacts?.find(
-                            (c) => c.id === contactId
-                          );
-                          if (!contact) return null;
-                          return (
-                            <>
-                              <Avatar className='size-6'>
-                                <AvatarFallback>
-                                  {contact.firstName.charAt(0)}
-                                </AvatarFallback>
-                              </Avatar>
-                              <div className='flex-1'>
-                                <p className='text-sm'>
-                                  {contact.firstName} {contact.lastName}
-                                </p>
-                                <p className='text-muted-foreground text-xs'>
-                                  {contact.email}
-                                </p>
-                              </div>
-                            </>
-                          );
-                        }}
-                      />
-                    </PopoverContent>
-                  </Popover>
                   <Button
                     variant='outline'
                     size='sm'
@@ -842,22 +774,25 @@ export default function TeamIdPage() {
               <Combobox
                 value={
                   editForm.referralId
-                    ? `${contacts?.find((c) => c.id === editForm.referralId)?.firstName} ${contacts?.find((c) => c.id === editForm.referralId)?.lastName} (${
-                        contacts?.find((c) => c.id === editForm.referralId)
-                          ?.email
+                    ? `${teamContacts?.find((c) => c.contact.id === editForm.referralId)?.contact.firstName} ${teamContacts?.find((c) => c.contact.id === editForm.referralId)?.contact.lastName} (${
+                        teamContacts?.find(
+                          (c) => c.contact.id === editForm.referralId
+                        )?.contact.email
                       })`
                     : ''
                 }
                 onChange={(value) => {
-                  const contact = contacts?.find(
-                    (c) => `${c.firstName} ${c.lastName} (${c.email})` === value
+                  const contact = teamContacts?.find(
+                    (c) =>
+                      `${c.contact.firstName} ${c.contact.lastName} (${c.contact.email})` ===
+                      value
                   );
                   setEditForm({ ...editForm, referralId: contact?.id || '' });
                 }}
                 items={
-                  contacts?.map(
+                  teamContacts?.map(
                     (contact) =>
-                      `${contact.firstName} ${contact.lastName} (${contact.email})`
+                      `${contact.contact.firstName} ${contact.contact.lastName} (${contact.contact.email})`
                   ) || []
                 }
                 placeholder={t('select_referral')}

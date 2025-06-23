@@ -27,10 +27,6 @@ import { stringifyPhone } from '@/utils/phone';
 export const contactRouter = createTRPCRouter({
   activity: activityRouter,
 
-  getAllContacts: protectedProcedure.query(({ ctx }) => {
-    return ctx.db.select().from(contact).orderBy(desc(contact.createdAt));
-  }),
-
   getContactById: protectedProcedure
     .input(z.object({ id: z.string() }))
     .query(async ({ ctx, input }) => {
