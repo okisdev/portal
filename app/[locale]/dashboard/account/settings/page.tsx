@@ -1,21 +1,32 @@
 'use client';
 
-import { Combobox } from '@/components/shared/combobox';
-import { PageHeader } from '@/components/shared/page-header';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { timezones } from '@/data/data';
-import type { Timezone } from '@/lib/schema';
-import { api } from '@/utils/trpc/client';
 import { BadgeX, Check, Pencil, Verified } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
+import { Combobox } from '@/components/shared/combobox';
+import { PageHeader } from '@/components/shared/page-header';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+import { timezones } from '@/data/data';
+import type { Timezone } from '@/lib/schema';
+import { api } from '@/utils/trpc/client';
 
 export default function AccountSettingsPage() {
   const t = useTranslations();
@@ -54,7 +65,9 @@ export default function AccountSettingsPage() {
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
 
-  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
@@ -62,13 +75,20 @@ export default function AccountSettingsPage() {
     formData.append('file', file);
   };
 
-  const handleNameChange = async (field: 'firstName' | 'lastName', value: string) => {
+  const handleNameChange = async (
+    field: 'firstName' | 'lastName',
+    value: string
+  ) => {
     // Check if value has actually changed
-    if ((field === 'firstName' && value === me?.firstName) || (field === 'lastName' && value === me?.lastName)) {
+    if (
+      (field === 'firstName' && value === me?.firstName) ||
+      (field === 'lastName' && value === me?.lastName)
+    ) {
       return;
     }
 
-    const updateData = field === 'firstName' ? { firstName: value } : { lastName: value };
+    const updateData =
+      field === 'firstName' ? { firstName: value } : { lastName: value };
     try {
       await updateAccount.mutateAsync(updateData, {
         onSuccess: () => {
@@ -223,7 +243,10 @@ export default function AccountSettingsPage() {
 
   return (
     <div className='container mx-auto max-w-4xl space-y-4 px-4 pt-10'>
-      <PageHeader title={t('account_settings')} description={t('account_settings_description')} />
+      <PageHeader
+        title={t('account_settings')}
+        description={t('account_settings_description')}
+      />
 
       <div className='flex h-full flex-col space-y-8'>
         <Tabs defaultValue='profile' className='space-y-4'>
@@ -236,32 +259,67 @@ export default function AccountSettingsPage() {
             <div className='space-y-8'>
               <div className='flex items-center space-x-8'>
                 <Avatar className='h-28 w-28'>
-                  <AvatarImage src={image || '/default-avatar.png'} alt='Profile picture' />
+                  <AvatarImage
+                    src={image || '/default-avatar.png'}
+                    alt='Profile picture'
+                  />
                   <AvatarFallback>
                     {firstName?.[0]}
                     {lastName?.[0]}
                   </AvatarFallback>
                 </Avatar>
                 <div className='space-y-2'>
-                  <h2 className='font-medium text-xl tracking-tight'>{t('profile_picture')}</h2>
-                  <p className='text-muted-foreground text-sm'>{t('update_your_profile_picture')}</p>
-                  <Button type='button' variant='outline' onClick={() => fileInputRef.current?.click()}>
+                  <h2 className='font-medium text-xl tracking-tight'>
+                    {t('profile_picture')}
+                  </h2>
+                  <p className='text-muted-foreground text-sm'>
+                    {t('update_your_profile_picture')}
+                  </p>
+                  <Button
+                    type='button'
+                    variant='outline'
+                    onClick={() => fileInputRef.current?.click()}
+                  >
                     {t('change_photo')}
                   </Button>
-                  <Input type='file' ref={fileInputRef} onChange={handleImageUpload} accept='image/*' className='hidden' />
+                  <Input
+                    type='file'
+                    ref={fileInputRef}
+                    onChange={handleImageUpload}
+                    accept='image/*'
+                    className='hidden'
+                  />
                 </div>
               </div>
 
               <div className='space-y-4'>
-                <h2 className='font-medium text-xl tracking-tight'>{t('personal_information')}</h2>
+                <h2 className='font-medium text-xl tracking-tight'>
+                  {t('personal_information')}
+                </h2>
                 <div className='grid grid-cols-2 gap-6'>
                   <div className='space-y-2'>
                     <Label htmlFor='firstName'>{t('first_name')}</Label>
-                    <Input type='text' id='firstName' value={firstName} onChange={(e) => setFirstName(e.target.value)} onBlur={(e) => handleNameChange('firstName', e.target.value)} />
+                    <Input
+                      type='text'
+                      id='firstName'
+                      value={firstName}
+                      onChange={(e) => setFirstName(e.target.value)}
+                      onBlur={(e) =>
+                        handleNameChange('firstName', e.target.value)
+                      }
+                    />
                   </div>
                   <div className='space-y-2'>
                     <Label htmlFor='lastName'>{t('last_name')}</Label>
-                    <Input type='text' id='lastName' value={lastName} onChange={(e) => setLastName(e.target.value)} onBlur={(e) => handleNameChange('lastName', e.target.value)} />
+                    <Input
+                      type='text'
+                      id='lastName'
+                      value={lastName}
+                      onChange={(e) => setLastName(e.target.value)}
+                      onBlur={(e) =>
+                        handleNameChange('lastName', e.target.value)
+                      }
+                    />
                   </div>
                 </div>
                 <div className='space-y-2'>
@@ -271,29 +329,54 @@ export default function AccountSettingsPage() {
                     id='username'
                     value={username}
                     onChange={(e) => {
-                      const lowercaseValue = e.target.value.toLowerCase().replace(/\s+/g, '');
+                      const lowercaseValue = e.target.value
+                        .toLowerCase()
+                        .replace(/\s+/g, '');
                       setUsername(lowercaseValue);
                     }}
                     onBlur={(e) => handleUsernameChange(e.target.value)}
                     placeholder={t('enter_username')}
                   />
-                  {usernameError && <p className='text-destructive text-sm'>{usernameError}</p>}
+                  {usernameError && (
+                    <p className='text-destructive text-sm'>{usernameError}</p>
+                  )}
                 </div>
                 <div className='space-y-2'>
                   <Label htmlFor='email' className='flex items-center gap-2'>
                     {t('email_address')}
                     {!isLoading && (
                       <Tooltip>
-                        <TooltipTrigger>{me?.emailVerified ? <Verified className='h-4 w-4 text-green-500' /> : <BadgeX className='h-4 w-4 text-red-500' />}</TooltipTrigger>
+                        <TooltipTrigger>
+                          {me?.emailVerified ? (
+                            <Verified className='h-4 w-4 text-green-500' />
+                          ) : (
+                            <BadgeX className='h-4 w-4 text-red-500' />
+                          )}
+                        </TooltipTrigger>
                         <TooltipContent side='right'>
-                          <p>{me?.emailVerified ? t('email_verified') : t('email_not_verified')}</p>
+                          <p>
+                            {me?.emailVerified
+                              ? t('email_verified')
+                              : t('email_not_verified')}
+                          </p>
                         </TooltipContent>
                       </Tooltip>
                     )}
                   </Label>
                   <div className='flex items-center gap-2'>
-                    <Input type='email' id='email' value={email} readOnly className='cursor-default' />
-                    <Button variant='outline' size='icon' onClick={handleEmailEditClick} className='shrink-0'>
+                    <Input
+                      type='email'
+                      id='email'
+                      value={email}
+                      readOnly
+                      className='cursor-default'
+                    />
+                    <Button
+                      variant='outline'
+                      size='icon'
+                      onClick={handleEmailEditClick}
+                      className='shrink-0'
+                    >
                       <Pencil className='h-4 w-4' />
                     </Button>
                   </div>
@@ -301,13 +384,17 @@ export default function AccountSettingsPage() {
               </div>
 
               <div className='space-y-4'>
-                <h2 className='font-medium text-xl tracking-tight'>{t('preferences')}</h2>
+                <h2 className='font-medium text-xl tracking-tight'>
+                  {t('preferences')}
+                </h2>
 
                 <div className='space-y-2'>
                   <Label htmlFor='timezone'>{t('timezone')}</Label>
                   <Combobox
                     value={timezone}
-                    onChange={(value) => handleTimezoneChange(value as Timezone)}
+                    onChange={(value) =>
+                      handleTimezoneChange(value as Timezone)
+                    }
                     items={timezones.map((tz) => tz.value)}
                     placeholder={t('select_timezone')}
                     searchPlaceholder={t('search_timezone')}
@@ -316,7 +403,10 @@ export default function AccountSettingsPage() {
                     allowCustom={false}
                     renderItem={(item) => (
                       <div className='flex w-full items-center justify-between'>
-                        <span>{`${timezones.find((tz) => tz.value === item)?.value} (${timezones.find((tz) => tz.value === item)?.code})` || item}</span>
+                        <span>
+                          {`${timezones.find((tz) => tz.value === item)?.value} (${timezones.find((tz) => tz.value === item)?.code})` ||
+                            item}
+                        </span>
                         {timezone === item && <Check className='h-4 w-4' />}
                       </div>
                     )}
@@ -328,23 +418,46 @@ export default function AccountSettingsPage() {
 
           <TabsContent value='password' className='space-y-4'>
             <div className='space-y-4'>
-              <h2 className='font-medium text-2xl tracking-tight'>{t('change_password')}</h2>
+              <h2 className='font-medium text-2xl tracking-tight'>
+                {t('change_password')}
+              </h2>
               <form onSubmit={handlePasswordSubmit} className='space-y-4'>
                 <div className='space-y-2'>
-                  <Label htmlFor='currentPassword'>{t('current_password')}</Label>
-                  <Input type='password' id='currentPassword' value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} />
+                  <Label htmlFor='currentPassword'>
+                    {t('current_password')}
+                  </Label>
+                  <Input
+                    type='password'
+                    id='currentPassword'
+                    value={currentPassword}
+                    onChange={(e) => setCurrentPassword(e.target.value)}
+                  />
                 </div>
                 <div className='space-y-2'>
                   <Label htmlFor='newPassword'>{t('new_password')}</Label>
-                  <Input type='password' id='newPassword' value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
+                  <Input
+                    type='password'
+                    id='newPassword'
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                  />
                 </div>
                 <div className='space-y-2'>
-                  <Label htmlFor='confirmPassword'>{t('confirm_new_password')}</Label>
-                  <Input type='password' id='confirmPassword' value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
+                  <Label htmlFor='confirmPassword'>
+                    {t('confirm_new_password')}
+                  </Label>
+                  <Input
+                    type='password'
+                    id='confirmPassword'
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                  />
                 </div>
                 <div className='flex justify-end'>
                   <Button type='submit' disabled={updatePassword.isPending}>
-                    {updatePassword.isPending ? t('updating_password') : t('update_password')}
+                    {updatePassword.isPending
+                      ? t('updating_password')
+                      : t('update_password')}
                   </Button>
                 </div>
               </form>
@@ -367,24 +480,48 @@ export default function AccountSettingsPage() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{t('update_email_address')}</DialogTitle>
-            <DialogDescription>{t('update_email_address_description')}</DialogDescription>
+            <DialogDescription>
+              {t('update_email_address_description')}
+            </DialogDescription>
           </DialogHeader>
           <div className='space-y-4 py-4'>
             <div className='space-y-2'>
               <Label htmlFor='newEmail'>{t('new_email')}</Label>
-              <Input id='newEmail' type='email' value={pendingEmail} onChange={(e) => setPendingEmail(e.target.value)} placeholder={t('enter_new_email')} />
+              <Input
+                id='newEmail'
+                type='email'
+                value={pendingEmail}
+                onChange={(e) => setPendingEmail(e.target.value)}
+                placeholder={t('enter_new_email')}
+              />
             </div>
             <div className='space-y-2'>
               <Label htmlFor='confirmEmail'>{t('confirm_new_email')}</Label>
-              <Input id='confirmEmail' type='email' value={confirmPendingEmail} onChange={(e) => setConfirmPendingEmail(e.target.value)} placeholder={t('confirm_new_email')} />
+              <Input
+                id='confirmEmail'
+                type='email'
+                value={confirmPendingEmail}
+                onChange={(e) => setConfirmPendingEmail(e.target.value)}
+                placeholder={t('confirm_new_email')}
+              />
             </div>
-            {emailError && <p className='text-destructive text-sm'>{emailError}</p>}
+            {emailError && (
+              <p className='text-destructive text-sm'>{emailError}</p>
+            )}
           </div>
           <DialogFooter>
-            <Button variant='outline' onClick={() => setIsEmailDialogOpen(false)}>
+            <Button
+              variant='outline'
+              onClick={() => setIsEmailDialogOpen(false)}
+            >
               {t('cancel')}
             </Button>
-            <Button onClick={confirmEmailChange} disabled={updateAccount.isPending || !pendingEmail || !confirmPendingEmail}>
+            <Button
+              onClick={confirmEmailChange}
+              disabled={
+                updateAccount.isPending || !pendingEmail || !confirmPendingEmail
+              }
+            >
               {updateAccount.isPending ? t('updating') : t('update_email')}
             </Button>
           </DialogFooter>

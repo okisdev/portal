@@ -1,11 +1,31 @@
+import {
+  DndContext,
+  type DragEndEvent,
+  MouseSensor,
+  TouchSensor,
+  useDraggable,
+  useDroppable,
+  useSensor,
+  useSensors,
+} from '@dnd-kit/core';
+import { format } from 'date-fns';
+import {
+  AlignLeftIcon,
+  MoreVerticalIcon,
+  PencilIcon,
+  TrashIcon,
+} from 'lucide-react';
+import { useState } from 'react';
 import { ActionAlertDialog } from '@/components/shared/action-alert-dialog';
 import { ColorBadge } from '@/components/shared/color-badge';
 import { Button } from '@/components/ui/button';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { DndContext, type DragEndEvent, MouseSensor, TouchSensor, useDraggable, useDroppable, useSensor, useSensors } from '@dnd-kit/core';
-import { format } from 'date-fns';
-import { AlignLeftIcon, MoreVerticalIcon, PencilIcon, TrashIcon } from 'lucide-react';
-import { useState } from 'react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { cn } from '@/lib/utils';
 import { STATUS_LABELS } from './list';
 
 interface Task {
@@ -27,9 +47,10 @@ interface TaskCardProps {
 
 function TaskCard({ task, onEdit, onDelete, onContentClick }: TaskCardProps) {
   const [isDeleteAlertOpen, setIsDeleteAlertOpen] = useState(false);
-  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
-    id: task.id,
-  });
+  const { attributes, listeners, setNodeRef, transform, isDragging } =
+    useDraggable({
+      id: task.id,
+    });
 
   const style = transform
     ? {
@@ -44,23 +65,37 @@ function TaskCard({ task, onEdit, onDelete, onContentClick }: TaskCardProps) {
       style={style}
       {...listeners}
       {...attributes}
-      className={`group z-50 cursor-grab rounded-lg border bg-card p-4 shadow-xs transition-all hover:shadow-md active:cursor-grabbing ${isDragging ? 'scale-105 shadow-lg ring-2 ring-primary' : ''}`}
+      className={cn(
+        'group z-50 cursor-grab rounded-lg border bg-card p-4 shadow-xs transition-all hover:shadow-md active:cursor-grabbing',
+        isDragging ? 'scale-105 shadow-lg ring-2 ring-primary' : ''
+      )}
       data-task-id={task.id}
     >
       <div className='flex items-center justify-between'>
         <div className='flex flex-1 flex-col gap-1'>
           <div className='flex items-center justify-between'>
             <div className='flex items-center gap-2'>
-              <span className='font-medium text-foreground text-sm'>{task.title}</span>
+              <span className='font-medium text-foreground text-sm'>
+                {task.title}
+              </span>
               {task.content && (
-                <Button variant='ghost' size='icon' onClick={() => onContentClick(task)} className='h-6 w-6'>
+                <Button
+                  variant='ghost'
+                  size='icon'
+                  onClick={() => onContentClick(task)}
+                  className='h-6 w-6'
+                >
                   <AlignLeftIcon className='h-4 w-4' />
                 </Button>
               )}
             </div>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant='ghost' size='icon' className='h-8 w-8 opacity-0 group-hover:opacity-100'>
+                <Button
+                  variant='ghost'
+                  size='icon'
+                  className='h-8 w-8 opacity-0 group-hover:opacity-100'
+                >
                   <MoreVerticalIcon className='h-4 w-4' />
                 </Button>
               </DropdownMenuTrigger>
@@ -69,17 +104,28 @@ function TaskCard({ task, onEdit, onDelete, onContentClick }: TaskCardProps) {
                   <PencilIcon className='mr-2 h-4 w-4' />
                   Edit
                 </DropdownMenuItem>
-                <DropdownMenuItem className='text-destructive' onClick={() => setIsDeleteAlertOpen(true)}>
+                <DropdownMenuItem
+                  className='text-destructive'
+                  onClick={() => setIsDeleteAlertOpen(true)}
+                >
                   <TrashIcon className='mr-2 h-4 w-4' />
                   Delete
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
-          {task.description && <p className='text-muted-foreground text-xs'>{task.description}</p>}
+          {task.description && (
+            <p className='text-muted-foreground text-xs'>{task.description}</p>
+          )}
           <div className='flex items-center gap-3 text-muted-foreground text-xs'>
-            {task.dueDate && <span>Due: {format(new Date(task.dueDate), 'MM/dd/yyyy HH:mm')}</span>}
-            {task.priority && <ColorBadge type='priority' value={task.priority} />}
+            {task.dueDate && (
+              <span>
+                Due: {format(new Date(task.dueDate), 'MM/dd/yyyy HH:mm')}
+              </span>
+            )}
+            {task.priority && (
+              <ColorBadge type='priority' value={task.priority} />
+            )}
           </div>
         </div>
       </div>
@@ -113,7 +159,13 @@ function DroppableColumn({ status, children }: DroppableColumnProps) {
   return (
     <div ref={setNodeRef} data-status={status} className='flex h-full flex-col'>
       <div className='flex items-center justify-between pb-4'>{header}</div>
-      <div className={`flex-1 overflow-hidden rounded-lg border transition-colors duration-200 ${isOver ? 'border-primary/50 bg-primary/10' : 'bg-muted/50'}`} id={`droppable-${status}`}>
+      <div
+        className={cn(
+          'flex-1 overflow-hidden rounded-lg border transition-colors duration-200',
+          isOver ? 'border-primary/50 bg-primary/10' : 'bg-muted/50'
+        )}
+        id={`droppable-${status}`}
+      >
         <div className='h-full overflow-y-auto p-4'>{content}</div>
       </div>
     </div>
@@ -129,7 +181,14 @@ interface KanbanBoardProps {
   onStatusChange: (id: string, status: string) => void;
 }
 
-export default function KanbanBoard({ tasks, visibleStatuses, onEdit, onDelete, onContentView, onStatusChange }: KanbanBoardProps) {
+export default function KanbanBoard({
+  tasks,
+  visibleStatuses,
+  onEdit,
+  onDelete,
+  onContentView,
+  onStatusChange,
+}: KanbanBoardProps) {
   const [isDragging, setIsDragging] = useState(false);
 
   const mouseSensor = useSensor(MouseSensor, {
@@ -166,7 +225,7 @@ export default function KanbanBoard({ tasks, visibleStatuses, onEdit, onDelete, 
   );
 
   return (
-    <div className={`h-full ${isDragging ? 'cursor-grabbing' : ''}`}>
+    <div className={cn('h-full', isDragging ? 'cursor-grabbing' : '')}>
       <DndContext
         sensors={sensors}
         onDragEnd={(event) => {
@@ -186,12 +245,19 @@ export default function KanbanBoard({ tasks, visibleStatuses, onEdit, onDelete, 
               <DroppableColumn key={status} status={status}>
                 <div className='flex items-center justify-between'>
                   <h3 className='font-semibold'>{STATUS_LABELS[status]}</h3>
-                  <span className='rounded-full bg-muted px-2 py-1 text-xs'>{tasksByStatus[status].length}</span>
+                  <span className='rounded-full bg-muted px-2 py-1 text-xs'>
+                    {tasksByStatus[status].length}
+                  </span>
                 </div>
                 <div className='flex flex-col gap-3'>
                   {tasksByStatus[status].map((task) => (
                     <div key={task.id}>
-                      <TaskCard task={task} onEdit={onEdit} onDelete={onDelete} onContentClick={onContentView} />
+                      <TaskCard
+                        task={task}
+                        onEdit={onEdit}
+                        onDelete={onDelete}
+                        onContentClick={onContentView}
+                      />
                     </div>
                   ))}
                   {tasksByStatus[status].length === 0 && (

@@ -1,5 +1,30 @@
 'use client';
 
+import {
+  type ColumnDef,
+  type ColumnFiltersState,
+  getCoreRowModel,
+  getFacetedRowModel,
+  getFacetedUniqueValues,
+  getFilteredRowModel,
+  getPaginationRowModel,
+  getSortedRowModel,
+  type SortingState,
+  useReactTable,
+  type VisibilityState,
+} from '@tanstack/react-table';
+import {
+  Check,
+  MoreHorizontal,
+  Pencil,
+  Plus,
+  Trash,
+  Users,
+} from 'lucide-react';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { useTranslations } from 'next-intl';
+import { useEffect, useMemo, useState } from 'react';
+import { toast } from 'sonner';
 import { ActionAlertDialog } from '@/components/shared/action-alert-dialog';
 import { Combobox } from '@/components/shared/combobox';
 import { PageHeader } from '@/components/shared/page-header';
@@ -7,32 +32,23 @@ import { DataTable } from '@/components/shared/table';
 import { DataTableHeader } from '@/components/shared/table/header';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useDebounce } from '@/hooks/use-debounce';
 import { formatDate } from '@/utils/date';
 import { api } from '@/utils/trpc/client';
-import {
-  type ColumnDef,
-  type ColumnFiltersState,
-  type SortingState,
-  type VisibilityState,
-  getCoreRowModel,
-  getFacetedRowModel,
-  getFacetedUniqueValues,
-  getFilteredRowModel,
-  getPaginationRowModel,
-  getSortedRowModel,
-  useReactTable,
-} from '@tanstack/react-table';
-import { MoreHorizontal, Pencil, Plus, Trash, Users } from 'lucide-react';
-import { Check } from 'lucide-react';
-import { useTranslations } from 'next-intl';
-import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { useEffect, useMemo, useState } from 'react';
-import { toast } from 'sonner';
 
 type TeamWithCount = {
   id: string;
@@ -102,7 +118,9 @@ export default function CRMTeamsPage() {
       params.set('search', search);
     }
 
-    const newUrl = params.toString() ? `${pathname}?${params.toString()}` : pathname;
+    const newUrl = params.toString()
+      ? `${pathname}?${params.toString()}`
+      : pathname;
     router.replace(newUrl, { scroll: false });
   }, [search, pathname]);
 
@@ -116,7 +134,11 @@ export default function CRMTeamsPage() {
         const description = (team.description || '').toLowerCase();
         const company = (team.company?.name || '').toLowerCase();
 
-        return name.includes(searchTerm) || description.includes(searchTerm) || company.includes(searchTerm);
+        return (
+          name.includes(searchTerm) ||
+          description.includes(searchTerm) ||
+          company.includes(searchTerm)
+        );
       }
       return true;
     });
@@ -142,18 +164,29 @@ export default function CRMTeamsPage() {
       id: 'select',
       header: ({ table }) => (
         <Checkbox
-          checked={table.getIsAllPageRowsSelected() || (table.getIsSomePageRowsSelected() && 'indeterminate')}
+          checked={
+            table.getIsAllPageRowsSelected() ||
+            (table.getIsSomePageRowsSelected() && 'indeterminate')
+          }
           onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
           aria-label='Select all'
         />
       ),
-      cell: ({ row }) => <Checkbox checked={row.getIsSelected()} onCheckedChange={(value) => row.toggleSelected(!!value)} aria-label='Select row' />,
+      cell: ({ row }) => (
+        <Checkbox
+          checked={row.getIsSelected()}
+          onCheckedChange={(value) => row.toggleSelected(!!value)}
+          aria-label='Select row'
+        />
+      ),
       enableSorting: false,
       enableHiding: false,
     },
     {
       accessorKey: 'name',
-      header: ({ column }) => <DataTableHeader column={column} title={t('team_name')} />,
+      header: ({ column }) => (
+        <DataTableHeader column={column} title={t('team_name')} />
+      ),
       cell: ({ row }) => (
         <div className='flex items-center gap-2'>
           <Users className='size-4 text-muted-foreground' />
@@ -163,15 +196,21 @@ export default function CRMTeamsPage() {
     },
     {
       accessorKey: 'description',
-      header: ({ column }) => <DataTableHeader column={column} title={t('description')} />,
+      header: ({ column }) => (
+        <DataTableHeader column={column} title={t('description')} />
+      ),
     },
     {
       accessorKey: 'contacts',
-      header: ({ column }) => <DataTableHeader column={column} title={t('contacts')} />,
+      header: ({ column }) => (
+        <DataTableHeader column={column} title={t('contacts')} />
+      ),
     },
     {
       accessorKey: 'company',
-      header: ({ column }) => <DataTableHeader column={column} title={t('company')} />,
+      header: ({ column }) => (
+        <DataTableHeader column={column} title={t('company')} />
+      ),
       cell: ({ row }) => {
         const { company } = row.original;
         return company ? company.name : '-';
@@ -179,7 +218,9 @@ export default function CRMTeamsPage() {
     },
     {
       accessorKey: 'createdAt',
-      header: ({ column }) => <DataTableHeader column={column} title={t('created')} />,
+      header: ({ column }) => (
+        <DataTableHeader column={column} title={t('created')} />
+      ),
       cell: ({ row }) => formatDate(new Date(row.getValue('createdAt'))),
     },
     {
@@ -245,16 +286,32 @@ export default function CRMTeamsPage() {
 
   return (
     <div className='space-y-4 p-4'>
-      <PageHeader title={t('teams')} subtitle={!isLoading ? `(${t('total_number_teams', { count: filteredTeams.length })})` : undefined} description={t('teams_description')} />
+      <PageHeader
+        title={t('teams')}
+        subtitle={
+          !isLoading
+            ? `(${t('total_number_teams', { count: filteredTeams.length })})`
+            : undefined
+        }
+        description={t('teams_description')}
+      />
 
       <div className='flex items-center justify-between'>
         <div className='flex items-center'>
-          <Input placeholder={t('filter_teams')} disabled={isLoading} value={search} onChange={(e) => setSearch(e.target.value)} className='h-8 w-72 max-w-sm' />
+          <Input
+            placeholder={t('filter_teams')}
+            disabled={isLoading}
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className='h-8 w-72 max-w-sm'
+          />
           <Combobox
             value={selectedColumn}
             onChange={(value) => {
               setSelectedColumn(value);
-              const column = table.getAllColumns().find((col) => col.id === value);
+              const column = table
+                .getAllColumns()
+                .find((col) => col.id === value);
               if (column) {
                 column.toggleVisibility(!column.getIsVisible());
               }
@@ -269,7 +326,9 @@ export default function CRMTeamsPage() {
             groupHeading={t('visible_columns')}
             allowCustom={false}
             renderItem={(item) => {
-              const column = table.getAllColumns().find((col) => col.id === item);
+              const column = table
+                .getAllColumns()
+                .find((col) => col.id === item);
               return (
                 <div className='flex w-full items-center justify-between'>
                   <span>{t(item)}</span>
@@ -284,13 +343,22 @@ export default function CRMTeamsPage() {
         </div>
 
         <div className='flex flex-row gap-2'>
-          <Button variant='outline' className='h-8' onClick={() => setIsCreateModalOpen(true)}>
+          <Button
+            variant='outline'
+            className='h-8'
+            onClick={() => setIsCreateModalOpen(true)}
+          >
             <Plus className='size-4' /> {t('create_team')}
           </Button>
         </div>
       </div>
 
-      <DataTable table={table} columns={tableColumns} loading={isLoading} onRowClick={(row) => router.push(`/dashboard/crm/team/${row.id}`)} />
+      <DataTable
+        table={table}
+        columns={tableColumns}
+        loading={isLoading}
+        onRowClick={(row) => router.push(`/dashboard/crm/team/${row.id}`)}
+      />
 
       <ActionAlertDialog
         open={!!teamToDelete}
@@ -307,14 +375,26 @@ export default function CRMTeamsPage() {
           <form onSubmit={handleCreateTeam} className='space-y-4'>
             <div className='space-y-2'>
               <Label>{t('team_name')}</Label>
-              <Input value={newTeamName} onChange={(e) => setNewTeamName(e.target.value)} placeholder='Enter team name...' />
+              <Input
+                value={newTeamName}
+                onChange={(e) => setNewTeamName(e.target.value)}
+                placeholder='Enter team name...'
+              />
             </div>
             <div className='space-y-2'>
               <Label>{t('description')}</Label>
-              <Input value={newTeamDescription} onChange={(e) => setNewTeamDescription(e.target.value)} placeholder={t('enter_team_description')} />
+              <Input
+                value={newTeamDescription}
+                onChange={(e) => setNewTeamDescription(e.target.value)}
+                placeholder={t('enter_team_description')}
+              />
             </div>
             <div className='flex justify-end gap-2'>
-              <Button type='button' variant='outline' onClick={() => setIsCreateModalOpen(false)}>
+              <Button
+                type='button'
+                variant='outline'
+                onClick={() => setIsCreateModalOpen(false)}
+              >
                 {t('cancel')}
               </Button>
               <Button type='submit' disabled={createTeam.isPending}>

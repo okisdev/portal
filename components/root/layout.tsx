@@ -1,11 +1,11 @@
+import Script from 'next/script';
+import { NextIntlClientProvider } from 'next-intl';
+import { getMessages } from 'next-intl/server';
 import BodyProvider from '@/components/root/provider';
 import { env } from '@/lib/env';
 import { cn } from '@/lib/utils';
 import { geistSans } from '@/styles/font';
 import { ReactScan } from '@/utils/react-scan';
-import { NextIntlClientProvider } from 'next-intl';
-import { getMessages } from 'next-intl/server';
-import Script from 'next/script';
 
 type Props = Readonly<{
   children: React.ReactNode;
@@ -23,9 +23,21 @@ export default async function RootLayout(props: Props) {
     <html lang={locale} suppressHydrationWarning>
       <head>
         <meta name='apple-mobile-web-app-title' content='Portal' />
-        <meta name='theme-color' media='(prefers-color-scheme: light)' content='white' />
-        <meta name='theme-color' media='(prefers-color-scheme: dark)' content='black' />
-        <Script defer src='https://umami.harisfox.com/script.js' data-website-id={env.NEXT_PUBLIC_UMAMI_WEBSITE_ID} />
+        <meta
+          name='theme-color'
+          media='(prefers-color-scheme: light)'
+          content='white'
+        />
+        <meta
+          name='theme-color'
+          media='(prefers-color-scheme: dark)'
+          content='black'
+        />
+        <Script
+          defer
+          src='https://umami.harisfox.com/script.js'
+          data-website-id={env.NEXT_PUBLIC_UMAMI_WEBSITE_ID}
+        />
       </head>
 
       <ReactScan />

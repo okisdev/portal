@@ -44,7 +44,9 @@ export const userRelations = relations(user, ({ many }) => ({
   sessions: many(session),
   calendarFolders: many(calendarFolder),
   calendarEvents: many(calendarEvent),
-  sharedCalendarEvents: many(calendarEventShare, { relationName: 'sharedWithUser' }),
+  sharedCalendarEvents: many(calendarEventShare, {
+    relationName: 'sharedWithUser',
+  }),
   eventParticipations: many(calendarEventParticipant),
   createdTeams: many(team, { relationName: 'teamCreator' }),
   tasks: many(userTask, { relationName: 'userTasks' }),
@@ -91,16 +93,19 @@ export const contactRelations = relations(contact, ({ many, one }) => ({
   customValues: many(contactCustomValue),
 }));
 
-export const contactActivityRelations = relations(contactActivity, ({ one }) => ({
-  contact: one(contact, {
-    fields: [contactActivity.contactId],
-    references: [contact.id],
-  }),
-  user: one(user, {
-    fields: [contactActivity.userId],
-    references: [user.id],
-  }),
-}));
+export const contactActivityRelations = relations(
+  contactActivity,
+  ({ one }) => ({
+    contact: one(contact, {
+      fields: [contactActivity.contactId],
+      references: [contact.id],
+    }),
+    user: one(user, {
+      fields: [contactActivity.userId],
+      references: [user.id],
+    }),
+  })
+);
 
 export const paymentTrackRelations = relations(paymentTrack, ({ one }) => ({
   contact: one(contact, {
@@ -113,83 +118,104 @@ export const paymentTrackRelations = relations(paymentTrack, ({ one }) => ({
   }),
 }));
 
-export const notificationRelations = relations(userNotifications, ({ one }) => ({
-  user: one(user, {
-    fields: [userNotifications.userId],
-    references: [user.id],
-  }),
-}));
+export const notificationRelations = relations(
+  userNotifications,
+  ({ one }) => ({
+    user: one(user, {
+      fields: [userNotifications.userId],
+      references: [user.id],
+    }),
+  })
+);
 
-export const calendarFolderRelations = relations(calendarFolder, ({ one, many }) => ({
-  user: one(user, {
-    fields: [calendarFolder.userId],
-    references: [user.id],
-  }),
-  events: many(calendarEvent),
-}));
+export const calendarFolderRelations = relations(
+  calendarFolder,
+  ({ one, many }) => ({
+    user: one(user, {
+      fields: [calendarFolder.userId],
+      references: [user.id],
+    }),
+    events: many(calendarEvent),
+  })
+);
 
-export const calendarEventRelations = relations(calendarEvent, ({ one, many }) => ({
-  user: one(user, {
-    fields: [calendarEvent.userId],
-    references: [user.id],
-  }),
-  folder: one(calendarFolder, {
-    fields: [calendarEvent.folderId],
-    references: [calendarFolder.id],
-  }),
-  shares: many(calendarEventShare),
-  participants: many(calendarEventParticipant),
-}));
+export const calendarEventRelations = relations(
+  calendarEvent,
+  ({ one, many }) => ({
+    user: one(user, {
+      fields: [calendarEvent.userId],
+      references: [user.id],
+    }),
+    folder: one(calendarFolder, {
+      fields: [calendarEvent.folderId],
+      references: [calendarFolder.id],
+    }),
+    shares: many(calendarEventShare),
+    participants: many(calendarEventParticipant),
+  })
+);
 
-export const calendarEventShareRelations = relations(calendarEventShare, ({ one }) => ({
-  event: one(calendarEvent, {
-    fields: [calendarEventShare.eventId],
-    references: [calendarEvent.id],
-  }),
-  sharedWithUser: one(user, {
-    fields: [calendarEventShare.sharedWithUserId],
-    references: [user.id],
-  }),
-}));
+export const calendarEventShareRelations = relations(
+  calendarEventShare,
+  ({ one }) => ({
+    event: one(calendarEvent, {
+      fields: [calendarEventShare.eventId],
+      references: [calendarEvent.id],
+    }),
+    sharedWithUser: one(user, {
+      fields: [calendarEventShare.sharedWithUserId],
+      references: [user.id],
+    }),
+  })
+);
 
-export const calendarEventParticipantRelations = relations(calendarEventParticipant, ({ one }) => ({
-  event: one(calendarEvent, {
-    fields: [calendarEventParticipant.eventId],
-    references: [calendarEvent.id],
-  }),
-  user: one(user, {
-    fields: [calendarEventParticipant.participantId],
-    references: [user.id],
-  }),
-  contact: one(contact, {
-    fields: [calendarEventParticipant.participantId],
-    references: [contact.id],
-  }),
-}));
+export const calendarEventParticipantRelations = relations(
+  calendarEventParticipant,
+  ({ one }) => ({
+    event: one(calendarEvent, {
+      fields: [calendarEventParticipant.eventId],
+      references: [calendarEvent.id],
+    }),
+    user: one(user, {
+      fields: [calendarEventParticipant.participantId],
+      references: [user.id],
+    }),
+    contact: one(contact, {
+      fields: [calendarEventParticipant.participantId],
+      references: [contact.id],
+    }),
+  })
+);
 
-export const resourceContentRelations = relations(resourceContent, ({ one, many }) => ({
-  creator: one(user, {
-    fields: [resourceContent.createdBy],
-    references: [user.id],
-  }),
-  updater: one(user, {
-    fields: [resourceContent.updatedBy],
-    references: [user.id],
-  }),
-  shares: many(resourceContentShare),
-  sendTracks: many(resourceContentSendTrack),
-}));
+export const resourceContentRelations = relations(
+  resourceContent,
+  ({ one, many }) => ({
+    creator: one(user, {
+      fields: [resourceContent.createdBy],
+      references: [user.id],
+    }),
+    updater: one(user, {
+      fields: [resourceContent.updatedBy],
+      references: [user.id],
+    }),
+    shares: many(resourceContentShare),
+    sendTracks: many(resourceContentSendTrack),
+  })
+);
 
-export const resourceContentShareRelations = relations(resourceContentShare, ({ one }) => ({
-  resource: one(resourceContent, {
-    fields: [resourceContentShare.resourceId],
-    references: [resourceContent.id],
-  }),
-  sharedWithUser: one(user, {
-    fields: [resourceContentShare.sharedWithUserId],
-    references: [user.id],
-  }),
-}));
+export const resourceContentShareRelations = relations(
+  resourceContentShare,
+  ({ one }) => ({
+    resource: one(resourceContent, {
+      fields: [resourceContentShare.resourceId],
+      references: [resourceContent.id],
+    }),
+    sharedWithUser: one(user, {
+      fields: [resourceContentShare.sharedWithUserId],
+      references: [user.id],
+    }),
+  })
+);
 
 export const resourceEmailsRelations = relations(resourceEmails, ({ one }) => ({
   creator: one(user, {
@@ -287,20 +313,23 @@ export const userTaskRelations = relations(userTask, ({ one, many }) => ({
   subtasks: many(userTask, { relationName: 'subtasks' }),
 }));
 
-export const resourceContentSendTrackRelations = relations(resourceContentSendTrack, ({ one }) => ({
-  resource: one(resourceContent, {
-    fields: [resourceContentSendTrack.resourceId],
-    references: [resourceContent.id],
-  }),
-  contact: one(contact, {
-    fields: [resourceContentSendTrack.contactId],
-    references: [contact.id],
-  }),
-  sender: one(user, {
-    fields: [resourceContentSendTrack.sentBy],
-    references: [user.id],
-  }),
-}));
+export const resourceContentSendTrackRelations = relations(
+  resourceContentSendTrack,
+  ({ one }) => ({
+    resource: one(resourceContent, {
+      fields: [resourceContentSendTrack.resourceId],
+      references: [resourceContent.id],
+    }),
+    contact: one(contact, {
+      fields: [resourceContentSendTrack.contactId],
+      references: [contact.id],
+    }),
+    sender: one(user, {
+      fields: [resourceContentSendTrack.sentBy],
+      references: [user.id],
+    }),
+  })
+);
 
 export const companyContactRelations = relations(companyContact, ({ one }) => ({
   company: one(company, {
@@ -313,47 +342,65 @@ export const companyContactRelations = relations(companyContact, ({ one }) => ({
   }),
 }));
 
-export const contactCustomFieldRelations = relations(contactCustomField, ({ many }) => ({
-  values: many(contactCustomValue),
-}));
+export const contactCustomFieldRelations = relations(
+  contactCustomField,
+  ({ many }) => ({
+    values: many(contactCustomValue),
+  })
+);
 
-export const contactCustomValueRelations = relations(contactCustomValue, ({ one }) => ({
-  contact: one(contact, {
-    fields: [contactCustomValue.contactId],
-    references: [contact.id],
-  }),
-  field: one(contactCustomField, {
-    fields: [contactCustomValue.fieldId],
-    references: [contactCustomField.id],
-  }),
-}));
+export const contactCustomValueRelations = relations(
+  contactCustomValue,
+  ({ one }) => ({
+    contact: one(contact, {
+      fields: [contactCustomValue.contactId],
+      references: [contact.id],
+    }),
+    field: one(contactCustomField, {
+      fields: [contactCustomValue.fieldId],
+      references: [contactCustomField.id],
+    }),
+  })
+);
 
-export const teamCustomFieldRelations = relations(teamCustomField, ({ many }) => ({
-  values: many(teamCustomValue),
-}));
+export const teamCustomFieldRelations = relations(
+  teamCustomField,
+  ({ many }) => ({
+    values: many(teamCustomValue),
+  })
+);
 
-export const teamCustomValueRelations = relations(teamCustomValue, ({ one }) => ({
-  team: one(team, {
-    fields: [teamCustomValue.teamId],
-    references: [team.id],
-  }),
-  field: one(teamCustomField, {
-    fields: [teamCustomValue.fieldId],
-    references: [teamCustomField.id],
-  }),
-}));
+export const teamCustomValueRelations = relations(
+  teamCustomValue,
+  ({ one }) => ({
+    team: one(team, {
+      fields: [teamCustomValue.teamId],
+      references: [team.id],
+    }),
+    field: one(teamCustomField, {
+      fields: [teamCustomValue.fieldId],
+      references: [teamCustomField.id],
+    }),
+  })
+);
 
-export const companyCustomFieldRelations = relations(companyCustomField, ({ many }) => ({
-  values: many(companyCustomValue),
-}));
+export const companyCustomFieldRelations = relations(
+  companyCustomField,
+  ({ many }) => ({
+    values: many(companyCustomValue),
+  })
+);
 
-export const companyCustomValueRelations = relations(companyCustomValue, ({ one }) => ({
-  company: one(company, {
-    fields: [companyCustomValue.companyId],
-    references: [company.id],
-  }),
-  field: one(companyCustomField, {
-    fields: [companyCustomValue.fieldId],
-    references: [companyCustomField.id],
-  }),
-}));
+export const companyCustomValueRelations = relations(
+  companyCustomValue,
+  ({ one }) => ({
+    company: one(company, {
+      fields: [companyCustomValue.companyId],
+      references: [company.id],
+    }),
+    field: one(companyCustomField, {
+      fields: [companyCustomValue.fieldId],
+      references: [companyCustomField.id],
+    }),
+  })
+);

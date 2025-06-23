@@ -13,7 +13,11 @@ export interface Activity {
   createdAt: Date;
 }
 
-export const renderDescription = (activity: Activity, t: (key: string, params?: Record<string, string>) => string, locale: Locale) => {
+export const renderDescription = (
+  activity: Activity,
+  t: (key: string, params?: Record<string, string>) => string,
+  locale: Locale
+) => {
   switch (activity.subType) {
     case 'CONTACT_CREATED':
       if (JSON.parse(activity.metadata as string).createdType === 'referral') {
@@ -66,34 +70,61 @@ export const renderDescription = (activity: Activity, t: (key: string, params?: 
     case 'NEXT_FOLLOW_UP_REMOVED':
       return t('activity_contact_next_follow_up_removed');
     case 'MEETING_SCHEDULED':
-      if (activity.type === 'TEAM' && activity.subType === 'MEETING_SCHEDULED') {
+      if (
+        activity.type === 'TEAM' &&
+        activity.subType === 'MEETING_SCHEDULED'
+      ) {
         return t('activity_team_meeting_scheduled', {
           team: `${JSON.parse(activity.metadata as string).team?.name} (${JSON.parse(activity.metadata as string).team?.id})`,
-          startAt: formatDate(new Date(JSON.parse(activity.metadata as string).startAt), locale),
-          endAt: formatDate(new Date(JSON.parse(activity.metadata as string).endAt), locale),
+          startAt: formatDate(
+            new Date(JSON.parse(activity.metadata as string).startAt),
+            locale
+          ),
+          endAt: formatDate(
+            new Date(JSON.parse(activity.metadata as string).endAt),
+            locale
+          ),
         });
       }
       return t('activity_meeting_scheduled', {
         contact: `${JSON.parse(activity.metadata as string).contact?.name}`,
-        startAt: formatDate(new Date(JSON.parse(activity.metadata as string).startAt), locale),
-        endAt: formatDate(new Date(JSON.parse(activity.metadata as string).endAt), locale),
+        startAt: formatDate(
+          new Date(JSON.parse(activity.metadata as string).startAt),
+          locale
+        ),
+        endAt: formatDate(
+          new Date(JSON.parse(activity.metadata as string).endAt),
+          locale
+        ),
       });
     case 'MEETING_UPDATED':
       return t('activity_meeting_updated', {
         contact: `${JSON.parse(activity.metadata as string).contact?.name}`,
-        newStartAt: formatDate(new Date(JSON.parse(activity.metadata as string).newStartAt), locale),
-        newEndAt: formatDate(new Date(JSON.parse(activity.metadata as string).newEndAt), locale),
+        newStartAt: formatDate(
+          new Date(JSON.parse(activity.metadata as string).newStartAt),
+          locale
+        ),
+        newEndAt: formatDate(
+          new Date(JSON.parse(activity.metadata as string).newEndAt),
+          locale
+        ),
       });
     case 'MEETING_CANCELLED':
       if (activity.type === 'TEAM') {
         return t('activity_team_meeting_cancelled', {
           team: `${JSON.parse(activity.metadata as string).team?.name} (${JSON.parse(activity.metadata as string).team?.id})`,
-          startAt: formatDate(new Date(JSON.parse(activity.metadata as string).startAt), locale),
+          startAt: formatDate(
+            new Date(JSON.parse(activity.metadata as string).startAt),
+            locale
+          ),
         });
       }
       return t('activity_meeting_cancelled', {
         contact: `${JSON.parse(activity.metadata as string).contact?.name}`,
-        startAt: formatDate(new Date(JSON.parse(activity.metadata as string).startAt), locale),
+        startAt: formatDate(
+          new Date(JSON.parse(activity.metadata as string).startAt),
+          locale
+        ),
       });
     case 'REMARK_UPDATED':
       return t('activity_contact_remark_updated', {

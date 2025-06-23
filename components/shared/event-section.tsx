@@ -1,14 +1,27 @@
 'use client';
 
-import { EventDialog } from '@/components/shared/event-dialog';
-import type { EventFormData } from '@/components/shared/event-dialog';
-import { Button } from '@/components/ui/button';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { format, isFuture, isPast, isToday } from 'date-fns';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Calendar, ChevronDown, Edit2, MoreHorizontal, Plus, Trash2 } from 'lucide-react';
+import {
+  Calendar,
+  ChevronDown,
+  Edit2,
+  MoreHorizontal,
+  Plus,
+  Trash2,
+} from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
+import type { EventFormData } from '@/components/shared/event-dialog';
+import { EventDialog } from '@/components/shared/event-dialog';
+import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { cn } from '@/lib/utils';
 
 interface Appointment {
   id: string;
@@ -27,7 +40,14 @@ interface EventSectionProps {
   defaultTitle?: string;
 }
 
-export function EventSection({ appointments, calendarFolders, onCreateAppointment, onUpdateAppointment, onDeleteAppointment, defaultTitle }: EventSectionProps) {
+export function EventSection({
+  appointments,
+  calendarFolders,
+  onCreateAppointment,
+  onUpdateAppointment,
+  onDeleteAppointment,
+  defaultTitle,
+}: EventSectionProps) {
   const t = useTranslations();
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
   const [editingAppointment, setEditingAppointment] = useState<{
@@ -52,9 +72,19 @@ export function EventSection({ appointments, calendarFolders, onCreateAppointmen
     setEditingAppointment(null);
   };
 
-  const upcomingAppointments = appointments.filter((apt) => isFuture(new Date(apt.startAt))).sort((a, b) => new Date(a.startAt).getTime() - new Date(b.startAt).getTime());
-  const pastAppointments = appointments.filter((apt) => isPast(new Date(apt.startAt))).sort((a, b) => new Date(b.startAt).getTime() - new Date(a.startAt).getTime());
-  const todayAppointments = appointments.filter((apt) => isToday(new Date(apt.startAt)));
+  const upcomingAppointments = appointments
+    .filter((apt) => isFuture(new Date(apt.startAt)))
+    .sort(
+      (a, b) => new Date(a.startAt).getTime() - new Date(b.startAt).getTime()
+    );
+  const pastAppointments = appointments
+    .filter((apt) => isPast(new Date(apt.startAt)))
+    .sort(
+      (a, b) => new Date(b.startAt).getTime() - new Date(a.startAt).getTime()
+    );
+  const todayAppointments = appointments.filter((apt) =>
+    isToday(new Date(apt.startAt))
+  );
 
   return (
     <div className='space-y-1'>
@@ -82,7 +112,8 @@ export function EventSection({ appointments, calendarFolders, onCreateAppointmen
                   <div className='min-w-0 flex-1'>
                     <p className='truncate font-medium text-sm'>{apt.title}</p>
                     <p className='text-muted-foreground text-xs'>
-                      {format(new Date(apt.startAt), 'p')} - {format(new Date(apt.endAt), 'p')}
+                      {format(new Date(apt.startAt), 'p')} -{' '}
+                      {format(new Date(apt.endAt), 'p')}
                     </p>
                   </div>
                   <DropdownMenu>
@@ -105,7 +136,10 @@ export function EventSection({ appointments, calendarFolders, onCreateAppointmen
                         <Edit2 className='mr-2 h-4 w-4' />
                         {t('edit')}
                       </DropdownMenuItem>
-                      <DropdownMenuItem className='text-destructive' onClick={() => onDeleteAppointment(apt.id)}>
+                      <DropdownMenuItem
+                        className='text-destructive'
+                        onClick={() => onDeleteAppointment(apt.id)}
+                      >
                         <Trash2 className='mr-2 h-4 w-4' />
                         {t('delete')}
                       </DropdownMenuItem>
@@ -118,18 +152,38 @@ export function EventSection({ appointments, calendarFolders, onCreateAppointmen
         )}
 
         <div className='space-y-1'>
-          <button type='button' className='flex w-full items-center justify-between rounded-md px-1 py-1 hover:bg-accent' onClick={() => setIsUpcomingOpen(!isUpcomingOpen)}>
+          <button
+            type='button'
+            className='flex w-full items-center justify-between rounded-md px-1 py-1 hover:bg-accent'
+            onClick={() => setIsUpcomingOpen(!isUpcomingOpen)}
+          >
             <p className='font-medium text-muted-foreground text-sm'>
               {t('upcoming_meetings')}
-              {upcomingAppointments.length > 0 && <span className='ml-2 text-primary text-sm'>({upcomingAppointments.length})</span>}
+              {upcomingAppointments.length > 0 && (
+                <span className='ml-2 text-primary text-sm'>
+                  ({upcomingAppointments.length})
+                </span>
+              )}
             </p>
-            <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${isUpcomingOpen ? 'rotate-180' : ''}`} />
+            <ChevronDown
+              className={cn(
+                'h-4 w-4 text-muted-foreground transition-transform',
+                isUpcomingOpen ? 'rotate-180' : ''
+              )}
+            />
           </button>
           <AnimatePresence initial={false}>
             {isUpcomingOpen && (
-              <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className='space-y-1 pt-1'>
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                className='space-y-1 pt-1'
+              >
                 {upcomingAppointments.length === 0 ? (
-                  <p className='px-1 text-muted-foreground text-xs'>{t('no_upcoming_meetings')}</p>
+                  <p className='px-1 text-muted-foreground text-xs'>
+                    {t('no_upcoming_meetings')}
+                  </p>
                 ) : (
                   upcomingAppointments.map((apt) => (
                     <motion.div
@@ -141,14 +195,21 @@ export function EventSection({ appointments, calendarFolders, onCreateAppointmen
                     >
                       <Calendar className='h-4 w-4 shrink-0 text-primary' />
                       <div className='min-w-0 flex-1'>
-                        <p className='truncate font-medium text-sm'>{apt.title}</p>
+                        <p className='truncate font-medium text-sm'>
+                          {apt.title}
+                        </p>
                         <p className='text-muted-foreground text-xs'>
-                          {format(new Date(apt.startAt), 'PPp')} - {format(new Date(apt.endAt), 'PPp')}
+                          {format(new Date(apt.startAt), 'PPp')} -{' '}
+                          {format(new Date(apt.endAt), 'PPp')}
                         </p>
                       </div>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button variant='ghost' size='icon' className='h-8 w-8'>
+                          <Button
+                            variant='ghost'
+                            size='icon'
+                            className='h-8 w-8'
+                          >
                             <MoreHorizontal className='h-4 w-4' />
                           </Button>
                         </DropdownMenuTrigger>
@@ -166,7 +227,10 @@ export function EventSection({ appointments, calendarFolders, onCreateAppointmen
                             <Edit2 className='mr-2 h-4 w-4' />
                             {t('edit')}
                           </DropdownMenuItem>
-                          <DropdownMenuItem className='text-destructive' onClick={() => onDeleteAppointment(apt.id)}>
+                          <DropdownMenuItem
+                            className='text-destructive'
+                            onClick={() => onDeleteAppointment(apt.id)}
+                          >
                             <Trash2 className='mr-2 h-4 w-4' />
                             {t('delete')}
                           </DropdownMenuItem>
@@ -181,18 +245,38 @@ export function EventSection({ appointments, calendarFolders, onCreateAppointmen
         </div>
 
         <div className='space-y-1'>
-          <button type='button' className='flex w-full items-center justify-between rounded-md px-1 py-1 hover:bg-accent' onClick={() => setIsPastOpen(!isPastOpen)}>
+          <button
+            type='button'
+            className='flex w-full items-center justify-between rounded-md px-1 py-1 hover:bg-accent'
+            onClick={() => setIsPastOpen(!isPastOpen)}
+          >
             <span className='font-medium text-muted-foreground text-sm'>
               {t('past_meetings')}
-              {pastAppointments.length > 0 && <span className='ml-2 text-muted-foreground text-xs'>({pastAppointments.length})</span>}
+              {pastAppointments.length > 0 && (
+                <span className='ml-2 text-muted-foreground text-xs'>
+                  ({pastAppointments.length})
+                </span>
+              )}
             </span>
-            <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${isPastOpen ? 'rotate-180' : ''}`} />
+            <ChevronDown
+              className={cn(
+                'h-4 w-4 text-muted-foreground transition-transform',
+                isPastOpen ? 'rotate-180' : ''
+              )}
+            />
           </button>
           <AnimatePresence initial={false}>
             {isPastOpen && (
-              <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className='space-y-1 pt-1'>
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                className='space-y-1 pt-1'
+              >
                 {pastAppointments.length === 0 ? (
-                  <p className='px-1 text-muted-foreground text-xs'>{t('no_past_meetings')}</p>
+                  <p className='px-1 text-muted-foreground text-xs'>
+                    {t('no_past_meetings')}
+                  </p>
                 ) : (
                   pastAppointments.map((apt) => (
                     <motion.div
@@ -204,12 +288,20 @@ export function EventSection({ appointments, calendarFolders, onCreateAppointmen
                     >
                       <Calendar className='h-4 w-4 shrink-0 text-muted-foreground' />
                       <div className='min-w-0 flex-1'>
-                        <p className='truncate font-medium text-muted-foreground text-sm'>{apt.title}</p>
-                        <p className='text-muted-foreground text-xs'>{format(new Date(apt.startAt), 'PPp')}</p>
+                        <p className='truncate font-medium text-muted-foreground text-sm'>
+                          {apt.title}
+                        </p>
+                        <p className='text-muted-foreground text-xs'>
+                          {format(new Date(apt.startAt), 'PPp')}
+                        </p>
                       </div>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button variant='ghost' size='icon' className='h-8 w-8'>
+                          <Button
+                            variant='ghost'
+                            size='icon'
+                            className='h-8 w-8'
+                          >
                             <MoreHorizontal className='h-4 w-4' />
                           </Button>
                         </DropdownMenuTrigger>
@@ -227,7 +319,10 @@ export function EventSection({ appointments, calendarFolders, onCreateAppointmen
                             <Edit2 className='mr-2 h-4 w-4' />
                             {t('edit')}
                           </DropdownMenuItem>
-                          <DropdownMenuItem className='text-destructive' onClick={() => onDeleteAppointment(apt.id)}>
+                          <DropdownMenuItem
+                            className='text-destructive'
+                            onClick={() => onDeleteAppointment(apt.id)}
+                          >
                             <Trash2 className='mr-2 h-4 w-4' />
                             {t('delete')}
                           </DropdownMenuItem>
@@ -254,7 +349,9 @@ export function EventSection({ appointments, calendarFolders, onCreateAppointmen
                 title: editingAppointment.title,
                 description: editingAppointment.description,
                 startAt: new Date(editingAppointment.startAt),
-                endAt: new Date(editingAppointment.startAt.getTime() + 30 * 60000),
+                endAt: new Date(
+                  editingAppointment.startAt.getTime() + 30 * 60000
+                ),
               }
             : undefined
         }

@@ -1,10 +1,11 @@
 'use client';
 
-import { Button } from '@/components/ui/button';
 import { CheckIcon, CopyIcon } from 'lucide-react';
 import { useState } from 'react';
+import { Button } from '@/components/ui/button';
 
-interface CopyButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+interface CopyButtonProps
+  extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   value: string;
 }
 
@@ -19,7 +20,11 @@ export function CopyButton({ value, children, ...props }: CopyButtonProps) {
 
   return (
     <Button variant='outline' size='sm' onClick={onCopy} {...props}>
-      {copied ? <CheckIcon className='h-4 w-4' /> : <CopyIcon className='h-4 w-4' />}
+      {copied ? (
+        <CheckIcon className='h-4 w-4' />
+      ) : (
+        <CopyIcon className='h-4 w-4' />
+      )}
       <span className='ml-2'>{children}</span>
     </Button>
   );

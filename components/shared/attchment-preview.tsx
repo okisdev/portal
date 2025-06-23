@@ -1,16 +1,28 @@
-import { env } from '@/lib/env';
 import { Download, FileIcon } from 'lucide-react';
 import Zoom from 'react-medium-image-zoom';
+import { env } from '@/lib/env';
 import 'react-medium-image-zoom/dist/styles.css';
 
-export function AttachmentPreview({ url, name, type }: { url: string; name: string; type: string }) {
+export function AttachmentPreview({
+  url,
+  name,
+  type,
+}: {
+  url: string;
+  name: string;
+  type: string;
+}) {
   const s3Url = `${env.NEXT_PUBLIC_S3_PUBLIC_URL}/${url}`;
   // For image attachments
   if (type === 'image') {
     return (
       <div className='group relative overflow-hidden rounded-md border border-border'>
         <Zoom>
-          <img src={s3Url} alt={name} className='max-h-[300px] object-contain w-auto cursor-zoom-in' />
+          <img
+            src={s3Url}
+            alt={name}
+            className='max-h-[300px] w-auto cursor-zoom-in object-contain'
+          />
         </Zoom>
         <div className='absolute top-2 right-2 opacity-0 transition-opacity group-hover:opacity-100'>
           <a
@@ -22,7 +34,9 @@ export function AttachmentPreview({ url, name, type }: { url: string; name: stri
             <Download className='h-4 w-4' />
           </a>
         </div>
-        <div className='absolute right-0 bottom-0 left-0 truncate bg-background/80 p-1 text-xs'>{name}</div>
+        <div className='absolute right-0 bottom-0 left-0 truncate bg-background/80 p-1 text-xs'>
+          {name}
+        </div>
       </div>
     );
   }
@@ -31,7 +45,10 @@ export function AttachmentPreview({ url, name, type }: { url: string; name: stri
   return (
     <div className='flex items-center gap-1 rounded-md bg-muted/50 px-2 py-1 text-xs'>
       {type === 'video' ? (
-        <div className='flex h-3 w-3 items-center justify-center' title='Video file'>
+        <div
+          className='flex h-3 w-3 items-center justify-center'
+          title='Video file'
+        >
           <svg
             xmlns='http://www.w3.org/2000/svg'
             width='12'
@@ -50,7 +67,10 @@ export function AttachmentPreview({ url, name, type }: { url: string; name: stri
           </svg>
         </div>
       ) : type === 'audio' ? (
-        <div className='flex h-3 w-3 items-center justify-center' title='Audio file'>
+        <div
+          className='flex h-3 w-3 items-center justify-center'
+          title='Audio file'
+        >
           <svg
             xmlns='http://www.w3.org/2000/svg'
             width='12'
@@ -72,10 +92,21 @@ export function AttachmentPreview({ url, name, type }: { url: string; name: stri
       ) : (
         <FileIcon className='h-3 w-3' />
       )}
-      <a href={s3Url} target='_blank' rel='noopener noreferrer' className='max-w-[150px] truncate hover:underline' title={name}>
+      <a
+        href={s3Url}
+        target='_blank'
+        rel='noopener noreferrer'
+        className='max-w-[150px] truncate hover:underline'
+        title={name}
+      >
         {name}
       </a>
-      <a href={s3Url} download className='text-muted-foreground hover:text-foreground' title='Download'>
+      <a
+        href={s3Url}
+        download
+        className='text-muted-foreground hover:text-foreground'
+        title='Download'
+      >
         <Download className='h-3 w-3' />
       </a>
     </div>

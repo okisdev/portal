@@ -1,10 +1,33 @@
 'use client';
 
+import {
+  type ColumnDef,
+  type ColumnFiltersState,
+  getCoreRowModel,
+  getFacetedRowModel,
+  getFacetedUniqueValues,
+  getFilteredRowModel,
+  getPaginationRowModel,
+  getSortedRowModel,
+  type SortingState,
+  useReactTable,
+  type VisibilityState,
+} from '@tanstack/react-table';
+import { Calendar, Edit2, Eye, MoreHorizontal, Trash2 } from 'lucide-react';
+import Link from 'next/link';
+import {
+  notFound,
+  useParams,
+  useRouter,
+  useSearchParams,
+} from 'next/navigation';
+import { useTranslations } from 'next-intl';
+import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
 import { ActionAlertDialog } from '@/components/shared/action-alert-dialog';
 import { ActivitySection } from '@/components/shared/activity-section';
 import { ColorBadge } from '@/components/shared/color-badge';
 import { Combobox } from '@/components/shared/combobox';
-import { ComboboxCommand } from '@/components/shared/combobox';
 import { EventDialog } from '@/components/shared/event-dialog';
 import { EventSection } from '@/components/shared/event-section';
 import { PageLoading } from '@/components/shared/page-loading';
@@ -15,36 +38,27 @@ import { DataTableHeader } from '@/components/shared/table/header';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
 import type { Status } from '@/lib/schema';
 import { cn } from '@/lib/utils';
 import { formatDate } from '@/utils/date';
 import { parsePhone } from '@/utils/phone';
 import { api } from '@/utils/trpc/client';
-import {
-  type ColumnDef,
-  type ColumnFiltersState,
-  type SortingState,
-  type VisibilityState,
-  getCoreRowModel,
-  getFacetedRowModel,
-  getFacetedUniqueValues,
-  getFilteredRowModel,
-  getPaginationRowModel,
-  getSortedRowModel,
-  useReactTable,
-} from '@tanstack/react-table';
-import { Calendar, Edit2, Eye, MoreHorizontal, Plus, Trash2 } from 'lucide-react';
-import { useTranslations } from 'next-intl';
-import Link from 'next/link';
-import { notFound, useParams, useRouter, useSearchParams } from 'next/navigation';
-import { useEffect, useState } from 'react';
-import { toast } from 'sonner';
 
 export default function TeamIdPage() {
   const { id: teamId } = useParams<{ id: string }>();
@@ -71,8 +85,6 @@ export default function TeamIdPage() {
     remarks: '',
     company: { id: '', name: '' },
   });
-  const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
-  const [searchValue, setSearchValue] = useState('');
   const [contactToDelete, setContactToDelete] = useState<string | null>(null);
 
   const { data: team, isLoading } = api.team.getTeamById.useQuery({
@@ -84,16 +96,15 @@ export default function TeamIdPage() {
   const { data: teamMeetings } = api.team.getTeamMeetings.useQuery({
     teamId: teamId[0],
   });
-  const { data: contacts } = api.contact.getAllContacts.useQuery(undefined, {
-    enabled: isAddMemberOpen,
-  });
   const { data: folders } = api.calendar.getMyFolders.useQuery();
-  const { data: participantOptions } = api.calendar.getParticipantOptions.useQuery(undefined, {
-    enabled: isNewMeetingModalOpen,
-  });
-  const { data: teamActivities, refetch: refetchTeamActivities } = api.team.getTeamActivities.useQuery({
-    id: teamId[0],
-  });
+  const { data: participantOptions } =
+    api.calendar.getParticipantOptions.useQuery(undefined, {
+      enabled: isNewMeetingModalOpen,
+    });
+  const { data: teamActivities, refetch: refetchTeamActivities } =
+    api.team.getTeamActivities.useQuery({
+      id: teamId[0],
+    });
   const { data: companies } = api.company.getAllCompanies.useQuery();
   const { data: statuses } = api.site.getStatus.useQuery();
 
@@ -173,7 +184,6 @@ export default function TeamIdPage() {
 
   const addTeamContact = api.team.addTeamContact.useMutation({
     onSuccess: () => {
-      setIsAddMemberOpen(false);
       utils.team.getTeamContacts.invalidate({ teamId: teamId[0] });
       utils.team.getTeamActivities.invalidate({ id: teamId[0] });
       toast.success(t('contact_added_successfully'));
@@ -217,55 +227,97 @@ export default function TeamIdPage() {
       id: 'select',
       header: ({ table }) => (
         <Checkbox
-          checked={table.getIsAllPageRowsSelected() || (table.getIsSomePageRowsSelected() && 'indeterminate')}
+          checked={
+            table.getIsAllPageRowsSelected() ||
+            (table.getIsSomePageRowsSelected() && 'indeterminate')
+          }
           onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
           aria-label='Select all'
         />
       ),
-      cell: ({ row }) => <Checkbox checked={row.getIsSelected()} onCheckedChange={(value) => row.toggleSelected(!!value)} aria-label='Select row' />,
+      cell: ({ row }) => (
+        <Checkbox
+          checked={row.getIsSelected()}
+          onCheckedChange={(value) => row.toggleSelected(!!value)}
+          aria-label='Select row'
+        />
+      ),
       enableSorting: false,
       enableHiding: false,
     },
     {
       accessorKey: 'name',
-      header: ({ column }) => <DataTableHeader column={column} title={t('name')} />,
+      header: ({ column }) => (
+        <DataTableHeader column={column} title={t('name')} />
+      ),
       cell: ({ row }) => (
         <div className='flex items-center gap-2'>
           <Avatar className='size-8'>
-            <AvatarFallback>{row.original.contact.firstName.charAt(0)}</AvatarFallback>
+            <AvatarFallback>
+              {row.original.contact.firstName.charAt(0)}
+            </AvatarFallback>
           </Avatar>
           <div>
             <p className='font-medium'>
               {row.original.contact.firstName} {row.original.contact.lastName}
             </p>
-            <p className='text-muted-foreground text-sm'>{row.original.contact.email}</p>
+            <p className='text-muted-foreground text-sm'>
+              {row.original.contact.email}
+            </p>
           </div>
         </div>
       ),
     },
     {
       accessorKey: 'role',
-      header: ({ column }) => <DataTableHeader column={column} title={t('role')} />,
+      header: ({ column }) => (
+        <DataTableHeader column={column} title={t('role')} />
+      ),
       cell: ({ row }) => {
         const isLeader = team?.leaderId === row.original.contact.id;
         const isSubLeader = team?.subLeaderId === row.original.contact.id;
-        return <div>{isLeader ? <ColorBadge type='default' value='Leader' /> : isSubLeader ? <ColorBadge type='default' value='Sub Leader' /> : <ColorBadge type='default' value='Member' />}</div>;
+        return (
+          <div>
+            {isLeader ? (
+              <ColorBadge type='default' value='Leader' />
+            ) : isSubLeader ? (
+              <ColorBadge type='default' value='Sub Leader' />
+            ) : (
+              <ColorBadge type='default' value='Member' />
+            )}
+          </div>
+        );
       },
     },
     {
       accessorKey: 'phone',
-      header: ({ column }) => <DataTableHeader column={column} title={t('phone')} />,
+      header: ({ column }) => (
+        <DataTableHeader column={column} title={t('phone')} />
+      ),
       cell: ({ row }) => parsePhone(row.original.contact.phone) || '-',
     },
     {
       accessorKey: 'company',
-      header: ({ column }) => <DataTableHeader column={column} title={t('company')} />,
+      header: ({ column }) => (
+        <DataTableHeader column={column} title={t('company')} />
+      ),
       cell: ({ row }) => row.original.contact.company || '-',
     },
     {
       accessorKey: 'status',
-      header: ({ column }) => <DataTableHeader column={column} title={t('status')} />,
-      cell: ({ row }) => <SmartColorBadge value={row.original.contact.status} color={statuses?.find((s: Status) => s.value === (row.original.contact.status || 'Lead'))?.color || '#6b7280'} />,
+      header: ({ column }) => (
+        <DataTableHeader column={column} title={t('status')} />
+      ),
+      cell: ({ row }) => (
+        <SmartColorBadge
+          value={row.original.contact.status}
+          color={
+            statuses?.find(
+              (s: Status) => s.value === (row.original.contact.status || 'Lead')
+            )?.color || '#6b7280'
+          }
+        />
+      ),
     },
     {
       id: 'actions',
@@ -283,7 +335,9 @@ export default function TeamIdPage() {
                 className='cursor-pointer'
                 onClick={(e) => {
                   e.stopPropagation();
-                  router.push(`/dashboard/crm/contacts/${row.original.contact.id}`);
+                  router.push(
+                    `/dashboard/crm/contacts/${row.original.contact.id}`
+                  );
                 }}
               >
                 <Eye className='mr-2 size-4' />
@@ -376,87 +430,68 @@ export default function TeamIdPage() {
   };
 
   return (
-    <div className='container mx-auto h-[calc(100vh-4rem)] p-0 sm:p-3'>
-      <div className='flex h-full flex-col lg:flex-row'>
-        <div className='w-full lg:w-2/3'>
-          <div className='flex h-full flex-col rounded-none border bg-card text-card-foreground shadow-xs sm:rounded-l-lg'>
-            <div className='flex-none border-b p-6'>
-              <div className={cn(team.description ? 'flex items-start justify-between' : 'flex items-center justify-between')}>
+    <div className='h-full min-h-0 w-full flex-1'>
+      <div className='flex h-full'>
+        <div className='flex-1'>
+          <div className='flex h-full flex-col border-r bg-background'>
+            {/* Header Section */}
+            <div className='border-b px-6 py-4'>
+              <div
+                className={cn(
+                  team.description
+                    ? 'flex items-start justify-between'
+                    : 'flex items-center justify-between'
+                )}
+              >
                 <div>
                   <h1 className='font-semibold text-xl'>{team.name}</h1>
-                  {team.description && <p className='text-muted-foreground text-sm'>{team.description}</p>}
+                  {team.description && (
+                    <p className='mt-1 text-muted-foreground text-sm'>
+                      {team.description}
+                    </p>
+                  )}
                 </div>
                 <div className='flex items-center gap-2'>
-                  <Popover open={isAddMemberOpen} onOpenChange={setIsAddMemberOpen}>
-                    <PopoverTrigger asChild>
-                      <Button variant='outline' size='sm' className='h-8'>
-                        <Plus className='mr-1 size-4' /> {t('add_team_member')}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className='w-[300px] p-0' align='end'>
-                      <ComboboxCommand
-                        query={searchValue}
-                        setQuery={setSearchValue}
-                        value=''
-                        onChange={handleAddMember}
-                        setOpen={setIsAddMemberOpen}
-                        items={
-                          contacts
-                            ?.filter(
-                              (contact) =>
-                                !teamContacts?.some((c) => c.contact.id === contact.id) &&
-                                (contact.firstName.toLowerCase().includes(searchValue.toLowerCase()) ||
-                                  contact.lastName.toLowerCase().includes(searchValue.toLowerCase()) ||
-                                  contact.email?.toLowerCase().includes(searchValue.toLowerCase()))
-                            )
-                            .map((contact) => contact.id) ?? []
-                        }
-                        searchPlaceholder={t('search_contacts')}
-                        emptyText='No contacts found.'
-                        groupHeading='Contacts'
-                        allowCustom={false}
-                        renderItem={(contactId) => {
-                          const contact = contacts?.find((c) => c.id === contactId);
-                          if (!contact) return null;
-                          return (
-                            <>
-                              <Avatar className='size-6'>
-                                <AvatarFallback>{contact.firstName.charAt(0)}</AvatarFallback>
-                              </Avatar>
-                              <div className='flex-1'>
-                                <p className='text-sm'>
-                                  {contact.firstName} {contact.lastName}
-                                </p>
-                                <p className='text-muted-foreground text-xs'>{contact.email}</p>
-                              </div>
-                            </>
-                          );
-                        }}
-                      />
-                    </PopoverContent>
-                  </Popover>
-                  <Button variant='outline' size='sm' className='h-8' onClick={() => setIsNewMeetingModalOpen(true)}>
-                    <Calendar className='mr-1 size-4' /> {t('add_meeting')}
+                  <Button
+                    variant='outline'
+                    size='sm'
+                    onClick={() => setIsNewMeetingModalOpen(true)}
+                  >
+                    <Calendar className='mr-2 size-4' /> {t('add_meeting')}
                   </Button>
-                  <Button variant='outline' size='sm' className='h-8' onClick={handleEditClick}>
-                    <Edit2 className='mr-1 size-4' /> {t('edit_team')}
+                  <Button variant='outline' size='sm' onClick={handleEditClick}>
+                    <Edit2 className='mr-2 size-4' /> {t('edit_team')}
                   </Button>
                 </div>
               </div>
             </div>
 
+            {/* Content Section */}
             <div className='flex-1 overflow-y-auto'>
-              <div className='space-y-3 border-b p-4 sm:p-6'>
-                <div className='flex items-center justify-between'>
-                  <p className='font-medium'>{t('team_members')}</p>
+              {/* Team Members Section */}
+              <div className='border-b px-6 py-4'>
+                <div className='mb-4'>
+                  <h2 className='font-medium'>{t('team_members')}</h2>
                 </div>
-                {teamContacts && teamContacts.length === 0 && <p className='text-muted-foreground text-sm'>{t('no_team_contacts_found')}</p>}
+                {teamContacts && teamContacts.length === 0 && (
+                  <p className='text-muted-foreground text-sm'>
+                    {t('no_team_contacts_found')}
+                  </p>
+                )}
                 {teamContacts && teamContacts?.length > 0 && (
-                  <DataTable table={table} columns={columns} loading={isLoading} onRowClick={(row) => router.push(`/dashboard/crm/contacts/${row.contact.id}`)} />
+                  <DataTable
+                    table={table}
+                    columns={columns}
+                    loading={isLoading}
+                    onRowClick={(row) =>
+                      router.push(`/dashboard/crm/contacts/${row.contact.id}`)
+                    }
+                  />
                 )}
               </div>
 
-              <div className='p-4 sm:p-6'>
+              {/* Activity Section */}
+              <div className='px-6 py-4'>
                 <TabSwitcher
                   config={[
                     {
@@ -481,13 +516,20 @@ export default function TeamIdPage() {
                               description: data.description,
                               initiatorType: data.initiatorType,
                               initiatorId: data.initiatorId,
-                              metadata: { ...(data.metadata as any), attachments: data.attachments },
+                              metadata: {
+                                ...(data.metadata as any),
+                                attachments: data.attachments,
+                              },
                             });
                           }}
                           isLoading={createTeamActivity.isPending}
                           onDeleteNote={(id) => deleteNote.mutate({ id })}
-                          onUpdateNote={(id, description) => updateNote.mutate({ id, description })}
-                          onReplyNote={(id, description) => replyNote.mutate({ id, description })}
+                          onUpdateNote={(id, description) =>
+                            updateNote.mutate({ id, description })
+                          }
+                          onReplyNote={(id, description) =>
+                            replyNote.mutate({ id, description })
+                          }
                         />
                       ),
                     },
@@ -498,79 +540,147 @@ export default function TeamIdPage() {
           </div>
         </div>
 
-        <div className='w-full lg:w-1/3'>
-          <div className='h-full overflow-y-auto rounded-none border border-t-0 border-l-0 p-4 sm:rounded-r-lg sm:border-t-1 sm:p-6'>
-            <div className='h-full space-y-6'>
-              <div>
-                <h2 className='mb-4 font-medium'>{t('team_information')}</h2>
-                <div className='space-y-4'>
-                  <div>
-                    <Label className='text-muted-foreground text-xs'>{t('team_leader')}</Label>
-                    <p className='text-sm'>
-                      <Link href={team.leaderId ? `/dashboard/crm/contacts/${team.leaderId}` : ''}>{team.leaderId ? `${team.leader?.firstName} ${team.leader?.lastName}` : 'N/A'}</Link>
-                    </p>
-                  </div>
-                  <div>
-                    <Label className='text-muted-foreground text-xs'>{t('sub_leader')}</Label>
-                    <p className='text-sm'>
-                      <Link href={team.subLeaderId ? `/dashboard/crm/contacts/${team.subLeaderId}` : ''}>{team.subLeaderId ? `${team.subLeader?.firstName} ${team.subLeader?.lastName}` : 'N/A'}</Link>
-                    </p>
-                  </div>
-                  <div>
-                    <Label className='text-muted-foreground text-xs'>{t('referral')}</Label>
-                    <p className='text-sm'>
-                      <Link href={team.referralId ? `/dashboard/crm/contacts/${team.referralId}` : ''}>{team.referralId ? `${team.referral?.firstName} ${team.referral?.lastName}` : 'N/A'}</Link>
-                    </p>
-                  </div>
-                  <div>
-                    <Label className='text-muted-foreground text-xs'>{t('company')}</Label>
-                    <p className='text-sm'>
-                      <Link href={team.company ? `/dashboard/crm/company/${team.company?.id}` : ''}>{team.company?.name || 'N/A'}</Link>
-                    </p>
-                  </div>
-                  <div>
-                    <Label className='text-muted-foreground text-xs'>{t('remarks')}</Label>
-                    <p className='text-sm'>{team.remarks || t('no_remark_added')}</p>
-                  </div>
-                  <div className='flex justify-end'>
-                    <p className='text-muted-foreground text-xs'>{t('created_on', { date: formatDate(new Date(team.createdAt)) })}</p>
-                  </div>
+        {/* Right Sidebar */}
+        <div className='w-80'>
+          <div className='h-full overflow-y-auto bg-card'>
+            {/* Team Information */}
+            <div className='p-3'>
+              <h3 className='mb-3 font-medium text-sm'>
+                {t('team_information')}
+              </h3>
+              <div className='space-y-3'>
+                <div>
+                  <Label className='text-muted-foreground text-xs uppercase tracking-wide'>
+                    {t('team_leader')}
+                  </Label>
+                  <p className='mt-1 text-sm'>
+                    <Link
+                      href={
+                        team.leaderId
+                          ? `/dashboard/crm/contacts/${team.leaderId}`
+                          : ''
+                      }
+                      className='hover:underline'
+                    >
+                      {team.leaderId
+                        ? `${team.leader?.firstName} ${team.leader?.lastName}`
+                        : 'N/A'}
+                    </Link>
+                  </p>
+                </div>
+                <div>
+                  <Label className='text-muted-foreground text-xs uppercase tracking-wide'>
+                    {t('sub_leader')}
+                  </Label>
+                  <p className='mt-1 text-sm'>
+                    <Link
+                      href={
+                        team.subLeaderId
+                          ? `/dashboard/crm/contacts/${team.subLeaderId}`
+                          : ''
+                      }
+                      className='hover:underline'
+                    >
+                      {team.subLeaderId
+                        ? `${team.subLeader?.firstName} ${team.subLeader?.lastName}`
+                        : 'N/A'}
+                    </Link>
+                  </p>
+                </div>
+                <div>
+                  <Label className='text-muted-foreground text-xs uppercase tracking-wide'>
+                    {t('referral')}
+                  </Label>
+                  <p className='mt-1 text-sm'>
+                    <Link
+                      href={
+                        team.referralId
+                          ? `/dashboard/crm/contacts/${team.referralId}`
+                          : ''
+                      }
+                      className='hover:underline'
+                    >
+                      {team.referralId
+                        ? `${team.referral?.firstName} ${team.referral?.lastName}`
+                        : 'N/A'}
+                    </Link>
+                  </p>
+                </div>
+                <div>
+                  <Label className='text-muted-foreground text-xs uppercase tracking-wide'>
+                    {t('company')}
+                  </Label>
+                  <p className='mt-1 text-sm'>
+                    <Link
+                      href={
+                        team.company
+                          ? `/dashboard/crm/company/${team.company?.id}`
+                          : ''
+                      }
+                      className='hover:underline'
+                    >
+                      {team.company?.name || 'N/A'}
+                    </Link>
+                  </p>
+                </div>
+                <div>
+                  <Label className='text-muted-foreground text-xs uppercase tracking-wide'>
+                    {t('remarks')}
+                  </Label>
+                  <p className='mt-1 text-sm'>
+                    {team.remarks || t('no_remark_added')}
+                  </p>
+                </div>
+                <div>
+                  <p className='text-right text-muted-foreground text-xs'>
+                    {t('created_on', {
+                      date: formatDate(new Date(team.createdAt)),
+                    })}
+                  </p>
                 </div>
               </div>
+            </div>
 
-              <div>
-                <h2 className='mb-4 font-medium'>{t('team_meetings')}</h2>
-                <EventSection
-                  appointments={
-                    teamMeetings?.map((meeting) => ({
-                      id: meeting.id,
-                      title: meeting.title,
-                      description: meeting.description,
-                      startAt: new Date(meeting.meetingDate),
-                      endAt: new Date(meeting.meetingDate),
-                    })) || []
-                  }
-                  calendarFolders={folders}
-                  onCreateAppointment={handleCreateMeeting}
-                  onUpdateAppointment={(data) => {
-                    // TODO: Add update meeting functionality
-                    toast.error('Update meeting functionality not implemented yet');
-                  }}
-                  onDeleteAppointment={(id) => {
-                    deleteTeamMeeting.mutate({
-                      id,
-                      teamId: teamId[0],
-                    });
-                  }}
-                  defaultTitle={t('team_meeting_title', { name: team.name })}
-                />
-              </div>
+            <Separator />
+
+            {/* Team Meetings */}
+            <div className='p-3'>
+              <h3 className='mb-3 font-medium text-sm'>{t('team_meetings')}</h3>
+              <EventSection
+                appointments={
+                  teamMeetings?.map((meeting) => ({
+                    id: meeting.id,
+                    title: meeting.title,
+                    description: meeting.description,
+                    startAt: new Date(meeting.meetingDate),
+                    endAt: new Date(meeting.meetingDate),
+                  })) || []
+                }
+                calendarFolders={folders}
+                onCreateAppointment={handleCreateMeeting}
+                onUpdateAppointment={(data) => {
+                  // TODO: Add update meeting functionality
+                  toast.error(
+                    'Update meeting functionality not implemented yet'
+                  );
+                }}
+                onDeleteAppointment={(id) => {
+                  deleteTeamMeeting.mutate({
+                    id,
+                    teamId: teamId[0],
+                  });
+                }}
+                defaultTitle={t('team_meeting_title', { name: team.name })}
+              />
             </div>
           </div>
         </div>
       </div>
 
-      <Dialog open={isEditModalOpen} onOpenChange={(open) => !open && handleCloseEdit()}>
+      <Dialog
+        open={isEditModalOpen}
+        onOpenChange={(open) => !open && handleCloseEdit()}
+      >
         <DialogContent className='max-h-[90vh] max-w-xl overflow-y-auto'>
           <DialogHeader>
             <DialogTitle>{t('edit_team_information')}</DialogTitle>
@@ -578,11 +688,21 @@ export default function TeamIdPage() {
           <form onSubmit={handleSubmitEdit} className='space-y-4'>
             <div className='space-y-2'>
               <Label>{t('team_name')}</Label>
-              <Input value={editForm.name} onChange={(e) => setEditForm({ ...editForm, name: e.target.value })} />
+              <Input
+                value={editForm.name}
+                onChange={(e) =>
+                  setEditForm({ ...editForm, name: e.target.value })
+                }
+              />
             </div>
             <div className='space-y-2'>
               <Label>{t('description')}</Label>
-              <Textarea value={editForm.description} onChange={(e) => setEditForm({ ...editForm, description: e.target.value })} />
+              <Textarea
+                value={editForm.description}
+                onChange={(e) =>
+                  setEditForm({ ...editForm, description: e.target.value })
+                }
+              />
             </div>
             <div className='space-y-2'>
               <Label>{t('team_leader')}</Label>
@@ -593,10 +713,20 @@ export default function TeamIdPage() {
                     : ''
                 }
                 onChange={(value) => {
-                  const contact = teamContacts?.find((c) => `${c.contact.firstName} ${c.contact.lastName}` === value);
-                  setEditForm({ ...editForm, leaderId: contact?.contact.id || '' });
+                  const contact = teamContacts?.find(
+                    (c) =>
+                      `${c.contact.firstName} ${c.contact.lastName}` === value
+                  );
+                  setEditForm({
+                    ...editForm,
+                    leaderId: contact?.contact.id || '',
+                  });
                 }}
-                items={teamContacts?.map((c) => `${c.contact.firstName} ${c.contact.lastName}`) || []}
+                items={
+                  teamContacts?.map(
+                    (c) => `${c.contact.firstName} ${c.contact.lastName}`
+                  ) || []
+                }
                 placeholder={t('select_team_leader')}
                 searchPlaceholder={t('search_team_leader')}
                 allowCustom={false}
@@ -612,10 +742,20 @@ export default function TeamIdPage() {
                     : ''
                 }
                 onChange={(value) => {
-                  const contact = teamContacts?.find((c) => `${c.contact.firstName} ${c.contact.lastName}` === value);
-                  setEditForm({ ...editForm, subLeaderId: contact?.contact.id || '' });
+                  const contact = teamContacts?.find(
+                    (c) =>
+                      `${c.contact.firstName} ${c.contact.lastName}` === value
+                  );
+                  setEditForm({
+                    ...editForm,
+                    subLeaderId: contact?.contact.id || '',
+                  });
                 }}
-                items={teamContacts?.map((c) => `${c.contact.firstName} ${c.contact.lastName}`) || []}
+                items={
+                  teamContacts?.map(
+                    (c) => `${c.contact.firstName} ${c.contact.lastName}`
+                  ) || []
+                }
                 placeholder={t('select_sub_leader')}
                 searchPlaceholder={t('search_sub_leader')}
                 allowCustom={false}
@@ -627,16 +767,27 @@ export default function TeamIdPage() {
               <Combobox
                 value={
                   editForm.referralId
-                    ? `${contacts?.find((c) => c.id === editForm.referralId)?.firstName} ${contacts?.find((c) => c.id === editForm.referralId)?.lastName} (${
-                        contacts?.find((c) => c.id === editForm.referralId)?.email
+                    ? `${teamContacts?.find((c) => c.contact.id === editForm.referralId)?.contact.firstName} ${teamContacts?.find((c) => c.contact.id === editForm.referralId)?.contact.lastName} (${
+                        teamContacts?.find(
+                          (c) => c.contact.id === editForm.referralId
+                        )?.contact.email
                       })`
                     : ''
                 }
                 onChange={(value) => {
-                  const contact = contacts?.find((c) => `${c.firstName} ${c.lastName} (${c.email})` === value);
+                  const contact = teamContacts?.find(
+                    (c) =>
+                      `${c.contact.firstName} ${c.contact.lastName} (${c.contact.email})` ===
+                      value
+                  );
                   setEditForm({ ...editForm, referralId: contact?.id || '' });
                 }}
-                items={contacts?.map((contact) => `${contact.firstName} ${contact.lastName} (${contact.email})`) || []}
+                items={
+                  teamContacts?.map(
+                    (contact) =>
+                      `${contact.contact.firstName} ${contact.contact.lastName} (${contact.contact.email})`
+                  ) || []
+                }
                 placeholder={t('select_referral')}
                 searchPlaceholder={t('search_referral')}
                 allowCustom={false}
@@ -646,10 +797,18 @@ export default function TeamIdPage() {
             <div className='space-y-2'>
               <Label>{t('company')}</Label>
               <Combobox
-                value={editForm.company ? companies?.find((c) => c.id === editForm.company.id)?.name || '' : ''}
+                value={
+                  editForm.company
+                    ? companies?.find((c) => c.id === editForm.company.id)
+                        ?.name || ''
+                    : ''
+                }
                 onChange={(value) => {
                   const company = companies?.find((c) => c.name === value);
-                  setEditForm({ ...editForm, company: company || { id: '', name: '' } });
+                  setEditForm({
+                    ...editForm,
+                    company: company || { id: '', name: '' },
+                  });
                 }}
                 items={companies?.map((company) => company.name) || []}
                 placeholder={t('select_company')}
@@ -660,10 +819,20 @@ export default function TeamIdPage() {
             </div>
             <div className='space-y-2'>
               <Label>{t('remarks')}</Label>
-              <Textarea value={editForm.remarks} onChange={(e) => setEditForm({ ...editForm, remarks: e.target.value })} placeholder={t('enter_remarks')} />
+              <Textarea
+                value={editForm.remarks}
+                onChange={(e) =>
+                  setEditForm({ ...editForm, remarks: e.target.value })
+                }
+                placeholder={t('enter_remarks')}
+              />
             </div>
             <div className='flex justify-end space-x-2'>
-              <Button type='button' variant='outline' onClick={() => setIsEditModalOpen(false)}>
+              <Button
+                type='button'
+                variant='outline'
+                onClick={() => setIsEditModalOpen(false)}
+              >
                 {t('cancel')}
               </Button>
               <Button type='submit' disabled={updateTeam.isPending}>
@@ -681,7 +850,10 @@ export default function TeamIdPage() {
         folders={folders}
         participantOptions={
           participantOptions && {
-            users: participantOptions.users.map((u) => ({ id: u.id, name: u.name || '' })),
+            users: participantOptions.users.map((u) => ({
+              id: u.id,
+              name: u.name || '',
+            })),
             contacts: participantOptions.contacts,
           }
         }

@@ -1,13 +1,25 @@
 'use client';
 
-import { DataTable } from '@/components/shared/table';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import type { ResourceContent } from '@/lib/schema';
-import { api } from '@/utils/trpc/client';
-import { type ColumnDef, type SortingState, getCoreRowModel, getPaginationRowModel, getSortedRowModel, useReactTable } from '@tanstack/react-table';
+import {
+  type ColumnDef,
+  getCoreRowModel,
+  getPaginationRowModel,
+  getSortedRowModel,
+  type SortingState,
+  useReactTable,
+} from '@tanstack/react-table';
 import { formatDistanceToNow } from 'date-fns';
 import { useTranslations } from 'next-intl';
 import { useMemo, useState } from 'react';
+import { DataTable } from '@/components/shared/table';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import type { ResourceContent } from '@/lib/schema';
+import { api } from '@/utils/trpc/client';
 
 interface SendHistoryDialogProps {
   open: boolean;
@@ -31,16 +43,21 @@ type SendHistoryRecord = {
   } | null;
 };
 
-export function SendHistoryDialog({ open, onOpenChange, content }: SendHistoryDialogProps) {
+export function SendHistoryDialog({
+  open,
+  onOpenChange,
+  content,
+}: SendHistoryDialogProps) {
   const t = useTranslations();
   const [sorting, setSorting] = useState<SortingState>([]);
 
-  const { data: sendHistory, isLoading } = api.resource.getContentSendHistory.useQuery(
-    { resourceId: content.id },
-    {
-      enabled: open,
-    }
-  );
+  const { data: sendHistory, isLoading } =
+    api.resource.getContentSendHistory.useQuery(
+      { resourceId: content.id },
+      {
+        enabled: open,
+      }
+    );
 
   const columns = useMemo<ColumnDef<SendHistoryRecord>[]>(
     () => [
@@ -59,7 +76,10 @@ export function SendHistoryDialog({ open, onOpenChange, content }: SendHistoryDi
       {
         accessorKey: 'sentAt',
         header: t('sent_at'),
-        cell: ({ row }) => formatDistanceToNow(new Date(row.original.sentAt), { addSuffix: true }),
+        cell: ({ row }) =>
+          formatDistanceToNow(new Date(row.original.sentAt), {
+            addSuffix: true,
+          }),
         enableSorting: true,
         enableHiding: false,
       },
@@ -102,7 +122,11 @@ export function SendHistoryDialog({ open, onOpenChange, content }: SendHistoryDi
           <div className='flex items-center justify-between'>
             <div>
               <h3 className='font-medium'>{content.title}</h3>
-              {content.description && <p className='text-muted-foreground text-sm'>{content.description}</p>}
+              {content.description && (
+                <p className='text-muted-foreground text-sm'>
+                  {content.description}
+                </p>
+              )}
             </div>
           </div>
 

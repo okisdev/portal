@@ -1,4 +1,13 @@
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 interface ActionAlertDialogProps {
   open: boolean;
@@ -28,7 +37,10 @@ export function ActionAlertDialog({
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel>{cancelText}</AlertDialogCancel>
-          <AlertDialogAction onClick={onConfirm} className='bg-red-500 hover:bg-red-600 dark:bg-red-500 dark:text-white dark:hover:bg-red-600'>
+          <AlertDialogAction
+            onClick={onConfirm}
+            className='bg-red-500 hover:bg-red-600 dark:bg-red-500 dark:text-white dark:hover:bg-red-600'
+          >
             {confirmText}
           </AlertDialogAction>
         </AlertDialogFooter>

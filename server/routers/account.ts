@@ -1,10 +1,10 @@
+import { TRPCError } from '@trpc/server';
+import { eq } from 'drizzle-orm';
+import z from 'zod/v4';
 import { user } from '@/drizzle/schema';
 import { timezoneSchema } from '@/lib/schema';
 import { createTRPCRouter, protectedProcedure } from '@/server/trpc';
 import { encryptPassword } from '@/utils/password';
-import { TRPCError } from '@trpc/server';
-import { eq } from 'drizzle-orm';
-import z from 'zod';
 
 export const accountRouter = createTRPCRouter({
   getMe: protectedProcedure.query(({ ctx }) => {
@@ -47,7 +47,10 @@ export const accountRouter = createTRPCRouter({
         image: z.string().optional(),
         username: z
           .string()
-          .regex(/^[a-z0-9_-]+$/, 'Username can only contain lowercase letters, numbers, underscores, and hyphens')
+          .regex(
+            /^[a-z0-9_-]+$/,
+            'Username can only contain lowercase letters, numbers, underscores, and hyphens'
+          )
           .optional(),
       })
     )
@@ -60,7 +63,11 @@ export const accountRouter = createTRPCRouter({
           .from(user)
           .where(eq(user.username, input.username))
           .then((rows) => rows[0]);
-        if (existingUser) throw new TRPCError({ code: 'CONFLICT', message: 'Username already exists' });
+        if (existingUser)
+          throw new TRPCError({
+            code: 'CONFLICT',
+            message: 'Username already exists',
+          });
       }
 
       // First get the current user data to properly handle name updates
@@ -99,7 +106,10 @@ export const accountRouter = createTRPCRouter({
         updateData.name = `${newFirstName} ${newLastName}`.trim();
       }
 
-      return ctx.db.update(user).set(updateData).where(eq(user.id, ctx.session.user.id));
+      return ctx.db
+        .update(user)
+        .set(updateData)
+        .where(eq(user.id, ctx.session.user.id));
     }),
 
   updatePassword: protectedProcedure
@@ -115,7 +125,10 @@ export const accountRouter = createTRPCRouter({
 
       const hashedPassword = encryptPassword(input.newPassword);
 
-      return ctx.db.update(user).set({ password: hashedPassword }).where(eq(user.id, ctx.session.user.id));
+      return ctx.db
+        .update(user)
+        .set({ password: hashedPassword })
+        .where(eq(user.id, ctx.session.user.id));
     }),
 
   updateTimezone: protectedProcedure
@@ -126,6 +139,9 @@ export const accountRouter = createTRPCRouter({
     )
     .mutation(({ ctx, input }) => {
       if (!ctx.session.user.id) throw new TRPCError({ code: 'UNAUTHORIZED' });
-      return ctx.db.update(user).set({ timezone: input.timezone }).where(eq(user.id, ctx.session.user.id));
+      return ctx.db
+        .update(user)
+        .set({ timezone: input.timezone })
+        .where(eq(user.id, ctx.session.user.id));
     }),
 });

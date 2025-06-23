@@ -1,7 +1,5 @@
 'use client';
 
-import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
 import Image from '@tiptap/extension-image';
 import Link from '@tiptap/extension-link';
 import Placeholder from '@tiptap/extension-placeholder';
@@ -30,6 +28,8 @@ import {
 import { useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
 import TurndownService from 'turndown';
+import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 
 type EditorMode = 'rich-text' | 'html' | 'markdown';
 
@@ -64,7 +64,15 @@ turndownService.addRule('strikethrough', {
   replacement: (content) => `~${content}~`,
 });
 
-export function TipTapEditor({ content, onChange, placeholder = 'Start writing...', editable = true, className, disabled = false, defaultMode = 'rich-text' }: TipTapEditorProps) {
+export function TipTapEditor({
+  content,
+  onChange,
+  placeholder = 'Start writing...',
+  editable = true,
+  className,
+  disabled = false,
+  defaultMode = 'rich-text',
+}: TipTapEditorProps) {
   const t = useTranslations();
 
   const [mode, setMode] = useState<EditorMode>(defaultMode);
@@ -160,8 +168,22 @@ export function TipTapEditor({ content, onChange, placeholder = 'Start writing..
     return null;
   }
 
-  const ToolbarButton = ({ onClick, isActive = false, children }: { onClick: () => void; isActive?: boolean; children: React.ReactNode }) => (
-    <Button type='button' variant='ghost' size='icon' className={cn('h-8 w-8', isActive && 'bg-muted')} onClick={onClick}>
+  const ToolbarButton = ({
+    onClick,
+    isActive = false,
+    children,
+  }: {
+    onClick: () => void;
+    isActive?: boolean;
+    children: React.ReactNode;
+  }) => (
+    <Button
+      type='button'
+      variant='ghost'
+      size='icon'
+      className={cn('h-8 w-8', isActive && 'bg-muted')}
+      onClick={onClick}
+    >
       {children}
     </Button>
   );
@@ -185,15 +207,33 @@ export function TipTapEditor({ content, onChange, placeholder = 'Start writing..
       {editable && !disabled && (
         <div className='flex flex-col items-start gap-1 border-b bg-muted/50 p-1'>
           <div className='flex gap-1'>
-            <Button type='button' variant='ghost' size='sm' className={cn('gap-2', mode === 'rich-text' && 'bg-muted')} onClick={() => setMode('rich-text')}>
+            <Button
+              type='button'
+              variant='ghost'
+              size='sm'
+              className={cn('gap-2', mode === 'rich-text' && 'bg-muted')}
+              onClick={() => setMode('rich-text')}
+            >
               <FileText className='h-4 w-4' />
               {t('rich_text')}
             </Button>
-            <Button type='button' variant='ghost' size='sm' className={cn('gap-2', mode === 'markdown' && 'bg-muted')} onClick={() => setMode('markdown')}>
+            <Button
+              type='button'
+              variant='ghost'
+              size='sm'
+              className={cn('gap-2', mode === 'markdown' && 'bg-muted')}
+              onClick={() => setMode('markdown')}
+            >
               <FileText className='h-4 w-4' />
               {t('markdown')}
             </Button>
-            <Button type='button' variant='ghost' size='sm' className={cn('gap-2', mode === 'html' && 'bg-muted')} onClick={() => setMode('html')}>
+            <Button
+              type='button'
+              variant='ghost'
+              size='sm'
+              className={cn('gap-2', mode === 'html' && 'bg-muted')}
+              onClick={() => setMode('html')}
+            >
               <Code className='h-4 w-4' />
               {t('html')}
             </Button>
@@ -202,46 +242,95 @@ export function TipTapEditor({ content, onChange, placeholder = 'Start writing..
           <div>
             {mode === 'rich-text' && (
               <>
-                <ToolbarButton onClick={() => editor.chain().focus().toggleBold().run()} isActive={editor.isActive('bold')}>
+                <ToolbarButton
+                  onClick={() => editor.chain().focus().toggleBold().run()}
+                  isActive={editor.isActive('bold')}
+                >
                   <Bold className='h-4 w-4' />
                 </ToolbarButton>
-                <ToolbarButton onClick={() => editor.chain().focus().toggleItalic().run()} isActive={editor.isActive('italic')}>
+                <ToolbarButton
+                  onClick={() => editor.chain().focus().toggleItalic().run()}
+                  isActive={editor.isActive('italic')}
+                >
                   <Italic className='h-4 w-4' />
                 </ToolbarButton>
-                <ToolbarButton onClick={() => editor.chain().focus().toggleUnderline().run()} isActive={editor.isActive('underline')}>
+                <ToolbarButton
+                  onClick={() => editor.chain().focus().toggleUnderline().run()}
+                  isActive={editor.isActive('underline')}
+                >
                   <UnderlineIcon className='h-4 w-4' />
                 </ToolbarButton>
-                <ToolbarButton onClick={() => editor.chain().focus().toggleStrike().run()} isActive={editor.isActive('strike')}>
+                <ToolbarButton
+                  onClick={() => editor.chain().focus().toggleStrike().run()}
+                  isActive={editor.isActive('strike')}
+                >
                   <Strikethrough className='h-4 w-4' />
                 </ToolbarButton>
-                <ToolbarButton onClick={setLink} isActive={editor.isActive('link')}>
+                <ToolbarButton
+                  onClick={setLink}
+                  isActive={editor.isActive('link')}
+                >
                   <LinkIcon className='h-4 w-4' />
                 </ToolbarButton>
                 <ToolbarButton onClick={addImage}>
                   <ImageIcon className='h-4 w-4' />
                 </ToolbarButton>
-                <ToolbarButton onClick={() => editor.chain().focus().setTextAlign('left').run()} isActive={editor.isActive({ textAlign: 'left' })}>
+                <ToolbarButton
+                  onClick={() =>
+                    editor.chain().focus().setTextAlign('left').run()
+                  }
+                  isActive={editor.isActive({ textAlign: 'left' })}
+                >
                   <AlignLeft className='h-4 w-4' />
                 </ToolbarButton>
-                <ToolbarButton onClick={() => editor.chain().focus().setTextAlign('center').run()} isActive={editor.isActive({ textAlign: 'center' })}>
+                <ToolbarButton
+                  onClick={() =>
+                    editor.chain().focus().setTextAlign('center').run()
+                  }
+                  isActive={editor.isActive({ textAlign: 'center' })}
+                >
                   <AlignCenter className='h-4 w-4' />
                 </ToolbarButton>
-                <ToolbarButton onClick={() => editor.chain().focus().setTextAlign('right').run()} isActive={editor.isActive({ textAlign: 'right' })}>
+                <ToolbarButton
+                  onClick={() =>
+                    editor.chain().focus().setTextAlign('right').run()
+                  }
+                  isActive={editor.isActive({ textAlign: 'right' })}
+                >
                   <AlignRight className='h-4 w-4' />
                 </ToolbarButton>
-                <ToolbarButton onClick={() => editor.chain().focus().toggleBulletList().run()} isActive={editor.isActive('bulletList')}>
+                <ToolbarButton
+                  onClick={() =>
+                    editor.chain().focus().toggleBulletList().run()
+                  }
+                  isActive={editor.isActive('bulletList')}
+                >
                   <List className='h-4 w-4' />
                 </ToolbarButton>
-                <ToolbarButton onClick={() => editor.chain().focus().toggleOrderedList().run()} isActive={editor.isActive('orderedList')}>
+                <ToolbarButton
+                  onClick={() =>
+                    editor.chain().focus().toggleOrderedList().run()
+                  }
+                  isActive={editor.isActive('orderedList')}
+                >
                   <ListOrdered className='h-4 w-4' />
                 </ToolbarButton>
-                <ToolbarButton onClick={() => editor.chain().focus().toggleBlockquote().run()} isActive={editor.isActive('blockquote')}>
+                <ToolbarButton
+                  onClick={() =>
+                    editor.chain().focus().toggleBlockquote().run()
+                  }
+                  isActive={editor.isActive('blockquote')}
+                >
                   <Quote className='h-4 w-4' />
                 </ToolbarButton>
-                <ToolbarButton onClick={() => editor.chain().focus().undo().run()}>
+                <ToolbarButton
+                  onClick={() => editor.chain().focus().undo().run()}
+                >
                   <Undo className='h-4 w-4' />
                 </ToolbarButton>
-                <ToolbarButton onClick={() => editor.chain().focus().redo().run()}>
+                <ToolbarButton
+                  onClick={() => editor.chain().focus().redo().run()}
+                >
                   <Redo className='h-4 w-4' />
                 </ToolbarButton>
               </>
@@ -271,14 +360,22 @@ export function TipTapEditor({ content, onChange, placeholder = 'Start writing..
           />
         ) : (
           <div
-            className={cn('absolute inset-0 overflow-y-auto', editable && !disabled && mode === 'rich-text' ? 'cursor-text' : 'cursor-default select-text')}
+            className={cn(
+              'absolute inset-0 overflow-y-auto',
+              editable && !disabled && mode === 'rich-text'
+                ? 'cursor-text'
+                : 'cursor-default select-text'
+            )}
             onMouseDown={() => {
               if (editable && !disabled && mode === 'rich-text') {
                 editor?.chain().focus().run();
               }
             }}
           >
-            <EditorContent editor={editor} className='prose prose-sm dark:prose-invert max-w-none p-4' />
+            <EditorContent
+              editor={editor}
+              className='prose prose-sm dark:prose-invert max-w-none p-4'
+            />
           </div>
         )}
       </div>

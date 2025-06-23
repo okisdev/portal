@@ -1,24 +1,33 @@
 'use client';
 
-import { Combobox } from '@/components/shared/combobox';
-import { Input } from '@/components/ui/input';
-import { phoneCountries } from '@/data/data';
-import { cn } from '@/lib/utils';
 import { isValidPhoneNumber } from 'libphonenumber-js';
 import { useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
+import { Combobox } from '@/components/shared/combobox';
+import { Input } from '@/components/ui/input';
+import { phoneCountries } from '@/data/data';
+import { cn } from '@/lib/utils';
 
-interface PhoneInputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'onChange'> {
+interface PhoneInputProps
+  extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'onChange'> {
   value: string;
   onChange: (value: string) => void;
   onValidityChange?: (isValid: boolean) => void;
 }
 
-export function PhoneInput({ className, value, onChange, onValidityChange, ...props }: PhoneInputProps) {
+export function PhoneInput({
+  className,
+  value,
+  onChange,
+  onValidityChange,
+  ...props
+}: PhoneInputProps) {
   const t = useTranslations();
 
-  const [selectedCountry, setSelectedCountry] = useState<(typeof phoneCountries)[0] | null>(null);
+  const [selectedCountry, setSelectedCountry] = useState<
+    (typeof phoneCountries)[0] | null
+  >(null);
   const [phoneNumber, setPhoneNumber] = useState('');
   const [isValid, setIsValid] = useState(false);
 
@@ -32,7 +41,9 @@ export function PhoneInput({ className, value, onChange, onValidityChange, ...pr
   const defaultCountry = phoneCountries.find((c) => c.code === '+852');
 
   // Ensure all recommended countries exist in the phoneCountries list
-  const validRecommendedCountries = finalRecommendedCountries.filter((country) => phoneCountries.some((c) => c.label === country.label));
+  const validRecommendedCountries = finalRecommendedCountries.filter(
+    (country) => phoneCountries.some((c) => c.label === country.label)
+  );
 
   const validateAndNotify = (number: string, shouldNotify = false) => {
     if (!selectedCountry) {
@@ -149,7 +160,9 @@ export function PhoneInput({ className, value, onChange, onValidityChange, ...pr
         value={selectedCountry?.label ?? defaultCountry?.label ?? ''}
         onChange={handleCountryChange}
         items={phoneCountries.map((country) => country.label)}
-        recommendedItems={validRecommendedCountries.map((country) => country.label)}
+        recommendedItems={validRecommendedCountries.map(
+          (country) => country.label
+        )}
         placeholder={t('select_country')}
         searchPlaceholder={t('search_country')}
         groupHeading={t('countries')}
@@ -162,8 +175,19 @@ export function PhoneInput({ className, value, onChange, onValidityChange, ...pr
         value={phoneNumber}
         onChange={handlePhoneChange}
         onBlur={handleBlur}
-        className={cn('flex-1', isValid ? 'border-green-500 focus-visible:ring-green-500' : selectedCountry ? 'border-red-500 focus-visible:ring-red-500' : '')}
-        placeholder={selectedCountry || defaultCountry ? undefined : t('enter_phone_number')}
+        className={cn(
+          'flex-1',
+          isValid
+            ? 'border-green-500 focus-visible:ring-green-500'
+            : selectedCountry
+              ? 'border-red-500 focus-visible:ring-red-500'
+              : ''
+        )}
+        placeholder={
+          selectedCountry || defaultCountry
+            ? undefined
+            : t('enter_phone_number')
+        }
         {...props}
       />
     </div>

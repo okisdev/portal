@@ -1,6 +1,9 @@
-import type { CalendarEventWithParticipants, CalendarFolder } from '@/lib/schema';
 import { addDays, eachDayOfInterval } from 'date-fns';
 import { useTranslations } from 'next-intl';
+import type {
+  CalendarEventWithParticipants,
+  CalendarFolder,
+} from '@/lib/schema';
 import { DayHeader } from './day-header';
 import { TimeColumn } from './time-column';
 import { TimeGrid } from './time-grid';
@@ -11,7 +14,13 @@ interface ThreeDayViewProps {
   events: CalendarEventWithParticipants[];
   folders: CalendarFolder[];
   hiddenCalendars: Set<string>;
-  onTimeSelect: (date: Date, hour: number, minute: number, isStart: boolean, e?: React.MouseEvent) => void;
+  onTimeSelect: (
+    date: Date,
+    hour: number,
+    minute: number,
+    isStart: boolean,
+    e?: React.MouseEvent
+  ) => void;
   isSelecting: boolean;
   isTimeSlotSelected: (date: Date, hour: number, minute: number) => boolean;
   onSelectionEnd: () => void;
@@ -65,7 +74,10 @@ export function ThreeDayView({
         ))}
       </div>
       <div className='flex-1 overflow-y-auto'>
-        <div className='grid grid-cols-[50px_repeat(3,1fr)] divide-x md:grid-cols-[100px_repeat(3,1fr)]' style={{ height: 'calc(60px * 24)' }}>
+        <div
+          className='grid grid-cols-[50px_repeat(3,1fr)] divide-x md:grid-cols-[100px_repeat(3,1fr)]'
+          style={{ height: 'calc(60px * 24)' }}
+        >
           <TimeColumn />
           {threeDays.map((date) => (
             <TimeGrid

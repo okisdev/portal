@@ -1,12 +1,16 @@
 'use client';
 
-import { Button } from '@/components/ui/button';
-import { Calendar } from '@/components/ui/calendar';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { cn } from '@/lib/utils';
 import { CalendarIcon } from '@radix-ui/react-icons';
 import { format } from 'date-fns';
 import { useTranslations } from 'next-intl';
+import { Button } from '@/components/ui/button';
+import { Calendar } from '@/components/ui/calendar';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import { cn } from '@/lib/utils';
 
 export function DateTimePicker({
   value,
@@ -60,15 +64,38 @@ export function DateTimePicker({
     <Popover onOpenChange={(open) => !open && onClose?.()}>
       <PopoverTrigger asChild>
         <div>
-          <Button size={size} type='button' variant={'outline'} className={cn('flex w-full items-center pl-3 text-left font-normal', !value && 'text-muted-foreground')}>
-            <span className='truncate'>{value ? showTimePicker ? format(value, 'MM/dd/yyyy HH:mm') : format(value, 'MM/dd/yyyy') : <span>{t('select_date')}</span>}</span>
+          <Button
+            size={size}
+            type='button'
+            variant={'outline'}
+            className={cn(
+              'flex w-full items-center pl-3 text-left font-normal',
+              !value && 'text-muted-foreground'
+            )}
+          >
+            <span className='truncate'>
+              {value ? (
+                showTimePicker ? (
+                  format(value, 'MM/dd/yyyy HH:mm')
+                ) : (
+                  format(value, 'MM/dd/yyyy')
+                )
+              ) : (
+                <span>{t('select_date')}</span>
+              )}
+            </span>
             <CalendarIcon className='ml-auto h-4 w-4 shrink-0 opacity-50' />
           </Button>
         </div>
       </PopoverTrigger>
       <PopoverContent className='w-auto p-0'>
         <div className='sm:flex'>
-          <Calendar mode='single' selected={value === null ? undefined : value} onSelect={handleDateSelect} initialFocus />
+          <Calendar
+            mode='single'
+            selected={value === null ? undefined : value}
+            onSelect={handleDateSelect}
+            initialFocus
+          />
           {showTimePicker && value && (
             <div className='flex flex-col divide-y sm:h-[300px] sm:flex-row sm:divide-x sm:divide-y-0'>
               <div className='overflow-y-auto'>
@@ -80,9 +107,13 @@ export function DateTimePicker({
                         key={hour}
                         type='button'
                         size='icon'
-                        variant={value.getHours() === hour ? 'default' : 'ghost'}
+                        variant={
+                          value.getHours() === hour ? 'default' : 'ghost'
+                        }
                         className='aspect-square shrink-0 sm:w-full'
-                        onClick={() => handleTimeChange('hour', hour.toString())}
+                        onClick={() =>
+                          handleTimeChange('hour', hour.toString())
+                        }
                       >
                         {hour}
                       </Button>
@@ -96,9 +127,13 @@ export function DateTimePicker({
                       key={minute}
                       type='button'
                       size='icon'
-                      variant={value.getMinutes() === minute ? 'default' : 'ghost'}
+                      variant={
+                        value.getMinutes() === minute ? 'default' : 'ghost'
+                      }
                       className='aspect-square shrink-0 sm:w-full'
-                      onClick={() => handleTimeChange('minute', minute.toString())}
+                      onClick={() =>
+                        handleTimeChange('minute', minute.toString())
+                      }
                     >
                       {minute.toString().padStart(2, '0')}
                     </Button>

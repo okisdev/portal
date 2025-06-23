@@ -1,7 +1,7 @@
-import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
 import { AlertCircle } from 'lucide-react';
 import type { ReactNode } from 'react';
+import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 
 interface BannerProps {
   title: string;
@@ -41,7 +41,12 @@ const variantStyles = {
   },
 };
 
-export function Banner({ title, description, variant = 'info', action }: BannerProps) {
+export function Banner({
+  title,
+  description,
+  variant = 'info',
+  action,
+}: BannerProps) {
   const styles = variantStyles[variant];
 
   return (
@@ -50,7 +55,9 @@ export function Banner({ title, description, variant = 'info', action }: BannerP
         <AlertCircle className={cn('h-5 w-5', styles.icon)} />
         <h3 className={cn('font-medium', styles.title)}>{title}</h3>
       </div>
-      {description && <p className={cn('text-sm', styles.description)}>{description}</p>}
+      {description && (
+        <p className={cn('text-sm', styles.description)}>{description}</p>
+      )}
       {action && (
         <Button variant='outline' size='sm' onClick={action.onClick}>
           {action.icon}

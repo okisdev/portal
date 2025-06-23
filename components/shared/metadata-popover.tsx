@@ -1,8 +1,12 @@
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { cn } from '@/lib/utils';
 import { Info } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import type { ReactNode } from 'react';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import { cn } from '@/lib/utils';
 
 interface PopoverContentProps {
   title?: string;
@@ -13,7 +17,14 @@ interface PopoverContentProps {
   align?: 'start' | 'center' | 'end';
 }
 
-export function MetadataPopover({ title, withTitle = true, trigger, children, className = 'w-80', align = 'end' }: PopoverContentProps) {
+export function MetadataPopover({
+  title,
+  withTitle = true,
+  trigger,
+  children,
+  className = 'w-80',
+  align = 'end',
+}: PopoverContentProps) {
   const t = useTranslations();
 
   return (
@@ -29,7 +40,10 @@ export function MetadataPopover({ title, withTitle = true, trigger, children, cl
           </button>
         )}
       </PopoverTrigger>
-      <PopoverContent className={cn('h-auto max-h-[50vh] overflow-y-auto', className)} align={align}>
+      <PopoverContent
+        className={cn('h-auto max-h-[50vh] overflow-y-auto', className)}
+        align={align}
+      >
         {children}
       </PopoverContent>
     </Popover>

@@ -1,11 +1,32 @@
 'use client';
 
+import {
+  Building2,
+  Edit2,
+  Mail,
+  MoreHorizontal,
+  Phone,
+  Save,
+  Trash2,
+  Users,
+  X,
+} from 'lucide-react';
+import Link from 'next/link';
+import {
+  notFound,
+  useParams,
+  useRouter,
+  useSearchParams,
+} from 'next/navigation';
+import { useTranslations } from 'next-intl';
+import React, { useEffect, useState } from 'react';
+import { toast } from 'sonner';
 import { ActionAlertDialog } from '@/components/shared/action-alert-dialog';
 import { ActivitySection } from '@/components/shared/activity-section';
 import { Combobox } from '@/components/shared/combobox';
 import { DateTimePicker } from '@/components/shared/date-time-picker';
-import { EventDialog } from '@/components/shared/event-dialog';
 import type { EventFormData } from '@/components/shared/event-dialog';
+import { EventDialog } from '@/components/shared/event-dialog';
 import { EventSection } from '@/components/shared/event-section';
 import { NameTag } from '@/components/shared/name-tag';
 import { PageLoading } from '@/components/shared/page-loading';
@@ -14,24 +35,33 @@ import { SmartColorBadge } from '@/components/shared/smart-color-badge';
 import { TabSwitcher } from '@/components/shared/tab-switcher';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { sources } from '@/data/data';
 import type { Priority, Status } from '@/lib/schema';
 import { formatDate } from '@/utils/date';
 import { parsePhone } from '@/utils/phone';
 import { api } from '@/utils/trpc/client';
-import { Building2, Edit2, Mail, MoreHorizontal, Phone, Save, Trash2, Users, X } from 'lucide-react';
-import { useTranslations } from 'next-intl';
-import Link from 'next/link';
-import { notFound, useParams, useRouter, useSearchParams } from 'next/navigation';
-import React from 'react';
-import { useEffect, useState } from 'react';
-import { toast } from 'sonner';
 
 export default function ContactIdPage() {
   const router = useRouter();
@@ -46,15 +76,17 @@ export default function ContactIdPage() {
   const { data: contact, isLoading } = api.contact.getContactById.useQuery({
     id: contactId[0],
   });
-  const { data: appointments } = api.calendar.getAppointmentsByContactId.useQuery({
-    contactId: contactId[0],
-  });
+  const { data: appointments } =
+    api.calendar.getAppointmentsByContactId.useQuery({
+      contactId: contactId[0],
+    });
   const { data: allTeams } = api.team.getAllTeams.useQuery();
   const { data: calendarFolders } = api.calendar.getMyFolders.useQuery();
   const { data: companies } = api.company.getAllCompanies.useQuery();
-  const { data: activities, refetch: refetchActivities } = api.contact.getContactActivities.useQuery({
-    id: contactId[0],
-  });
+  const { data: activities, refetch: refetchActivities } =
+    api.contact.getContactActivities.useQuery({
+      id: contactId[0],
+    });
   const { data: statuses } = api.site.getStatus.useQuery();
   const { data: priorities } = api.site.getPriority.useQuery();
 
@@ -82,8 +114,12 @@ export default function ContactIdPage() {
   } | null>(null);
   const [isNotesEditing, setIsNotesEditing] = useState(false);
   const [editableRemark, setEditableRemark] = useState('');
-  const [lastContactDate, setLastContactDate] = useState<Date | null>(contact?.lastContactedAt ? new Date(contact.lastContactedAt) : null);
-  const [nextFollowUpDate, setNextFollowUpDate] = useState<Date | null>(contact?.nextFollowUpAt ? new Date(contact.nextFollowUpAt) : null);
+  const [lastContactDate, setLastContactDate] = useState<Date | null>(
+    contact?.lastContactedAt ? new Date(contact.lastContactedAt) : null
+  );
+  const [nextFollowUpDate, setNextFollowUpDate] = useState<Date | null>(
+    contact?.nextFollowUpAt ? new Date(contact.nextFollowUpAt) : null
+  );
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [contactToDelete, setContactToDelete] = useState<string | null>(null);
 
@@ -147,7 +183,9 @@ export default function ContactIdPage() {
   const createAppointment = api.calendar.createAppointment.useMutation({
     onSuccess: () => {
       setIsBookingModalOpen(false);
-      utils.calendar.getAppointmentsByContactId.invalidate({ contactId: contactId[0] });
+      utils.calendar.getAppointmentsByContactId.invalidate({
+        contactId: contactId[0],
+      });
       utils.contact.getContactById.invalidate({ id: contactId[0] });
       utils.contact.getContactActivities.invalidate({ id: contactId[0] });
       toast.success(t('appointment_created_successfully'));
@@ -159,7 +197,9 @@ export default function ContactIdPage() {
 
   const deleteAppointment = api.calendar.deleteEvent.useMutation({
     onSuccess: () => {
-      utils.calendar.getAppointmentsByContactId.invalidate({ contactId: contactId[0] });
+      utils.calendar.getAppointmentsByContactId.invalidate({
+        contactId: contactId[0],
+      });
       utils.contact.getContactActivities.invalidate({ id: contactId[0] });
       toast.success(t('appointment_deleted_successfully'));
     },
@@ -171,7 +211,9 @@ export default function ContactIdPage() {
   const updateAppointment = api.calendar.updateEvent.useMutation({
     onSuccess: () => {
       setEditingAppointment(null);
-      utils.calendar.getAppointmentsByContactId.invalidate({ contactId: contactId[0] });
+      utils.calendar.getAppointmentsByContactId.invalidate({
+        contactId: contactId[0],
+      });
       utils.contact.getContactActivities.invalidate({ id: contactId[0] });
       toast.success(t('appointment_updated_successfully'));
     },
@@ -344,22 +386,29 @@ export default function ContactIdPage() {
   };
 
   return (
-    <div className='container mx-auto h-[calc(100vh-4rem)] p-0 sm:p-3'>
+    <div className='h-full min-h-0 w-full flex-1'>
       <div className='flex h-full flex-col lg:flex-row'>
         <div className='w-full lg:w-1/3'>
-          <div className='flex h-full flex-col rounded-none border bg-card text-card-foreground shadow-xs sm:rounded-l-lg'>
+          <div className='flex h-full flex-col bg-card text-card-foreground'>
             <div className='flex-none border-b p-6'>
               <div className='flex items-start gap-4'>
                 <Avatar className='size-16'>
                   <AvatarImage src='' />
-                  <AvatarFallback>{contact?.name?.charAt(0) || ''}</AvatarFallback>
+                  <AvatarFallback>
+                    {contact?.name?.charAt(0) || ''}
+                  </AvatarFallback>
                 </Avatar>
                 <div className='min-w-0 flex-1 space-y-1 text-muted-foreground text-sm'>
-                  <h1 className='mb-2 truncate font-semibold text-foreground text-xl'>{contact?.name}</h1>
+                  <h1 className='mb-2 truncate font-semibold text-foreground text-xl'>
+                    {contact?.name}
+                  </h1>
                   {contact?.company && (
                     <div className='flex items-center gap-2'>
                       <Building2 className='size-4 shrink-0' />
-                      <Link href={`/dashboard/crm/contacts?company=${contact.company}`} className='hover:text-primary'>
+                      <Link
+                        href={`/dashboard/crm/contacts?company=${contact.company}`}
+                        className='hover:text-primary'
+                      >
                         {contact.company}
                       </Link>
                     </div>
@@ -370,7 +419,10 @@ export default function ContactIdPage() {
                       <div className='flex flex-wrap gap-1'>
                         {contact?.teams?.map((team, index) => (
                           <React.Fragment key={team.id}>
-                            <Link href={`/dashboard/crm/team/${team.id}`} className='hover:text-primary'>
+                            <Link
+                              href={`/dashboard/crm/team/${team.id}`}
+                              className='hover:text-primary'
+                            >
                               {team.name}
                             </Link>
                             {index < contact.teams.length - 1 && ', '}
@@ -380,13 +432,23 @@ export default function ContactIdPage() {
                     </div>
                   )}
                   {contact?.email && (
-                    <Link href={`mailto:${contact.email}`} target='_blank' rel='noopener noreferrer' className='flex items-center gap-2 hover:text-primary'>
+                    <Link
+                      href={`mailto:${contact.email}`}
+                      target='_blank'
+                      rel='noopener noreferrer'
+                      className='flex items-center gap-2 hover:text-primary'
+                    >
                       <Mail className='size-4 shrink-0' />
                       <span className='truncate'>{contact.email}</span>
                     </Link>
                   )}
                   {contact?.phone && (
-                    <Link href={`https://wa.me/${contact.phone.replace(/\D/g, '')}`} target='_blank' rel='noopener noreferrer' className='flex items-center gap-2 hover:text-primary'>
+                    <Link
+                      href={`https://wa.me/${contact.phone.replace(/\D/g, '')}`}
+                      target='_blank'
+                      rel='noopener noreferrer'
+                      className='flex items-center gap-2 hover:text-primary'
+                    >
                       <Phone className='size-4 shrink-0' />
                       <span>{parsePhone(contact.phone)}</span>
                     </Link>
@@ -398,11 +460,17 @@ export default function ContactIdPage() {
                           ? t.rich('created_at_via_by', {
                               date: formatDate(new Date(contact.createdAt)),
                               source: contact.source,
-                              user: () => (contact.createdBy ? <NameTag id={contact.createdBy} type='user' /> : null),
+                              user: () =>
+                                contact.createdBy ? (
+                                  <NameTag id={contact.createdBy} type='user' />
+                                ) : null,
                             })
                           : t.rich('created_at_date_by', {
                               date: formatDate(new Date(contact.createdAt)),
-                              user: () => (contact.createdBy ? <NameTag id={contact.createdBy} type='user' /> : null),
+                              user: () =>
+                                contact.createdBy ? (
+                                  <NameTag id={contact.createdBy} type='user' />
+                                ) : null,
                             })
                         : contact.source
                           ? t.rich('created_at_via', {
@@ -417,17 +485,29 @@ export default function ContactIdPage() {
                 </div>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <button type='button' className='my-1 text-muted-foreground outline-hidden hover:text-foreground'>
+                    <button
+                      type='button'
+                      className='my-1 text-muted-foreground outline-hidden hover:text-foreground'
+                    >
                       <MoreHorizontal className='size-4' />
                     </button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align='end' className='bg-popover text-popover-foreground'>
-                    <DropdownMenuItem onClick={handleEditClick} className='cursor-pointer'>
+                  <DropdownMenuContent
+                    align='end'
+                    className='bg-popover text-popover-foreground'
+                  >
+                    <DropdownMenuItem
+                      onClick={handleEditClick}
+                      className='cursor-pointer'
+                    >
                       <Edit2 className='mr-2 size-4' />
                       {t('edit')}
                     </DropdownMenuItem>
 
-                    <DropdownMenuItem onClick={handleDeleteClick} className='cursor-pointer text-destructive'>
+                    <DropdownMenuItem
+                      onClick={handleDeleteClick}
+                      className='cursor-pointer text-destructive'
+                    >
                       <Trash2 className='mr-2 size-4' />
                       {t('delete')}
                     </DropdownMenuItem>
@@ -462,7 +542,9 @@ export default function ContactIdPage() {
                     value={lastContactDate}
                     onChange={(date) => setLastContactDate(date)}
                     onClose={() => {
-                      const lastContactedAt = contact?.lastContactedAt ? new Date(contact.lastContactedAt).getTime() : null;
+                      const lastContactedAt = contact?.lastContactedAt
+                        ? new Date(contact.lastContactedAt).getTime()
+                        : null;
                       const newTime = lastContactDate?.getTime() || null;
 
                       if (lastContactedAt !== newTime) {
@@ -498,23 +580,33 @@ export default function ContactIdPage() {
                     value={nextFollowUpDate}
                     onChange={(date) => setNextFollowUpDate(date)}
                     onClose={() => {
-                      const currentTime = contact?.nextFollowUpAt ? new Date(contact.nextFollowUpAt).getTime() : null;
+                      const currentTime = contact?.nextFollowUpAt
+                        ? new Date(contact.nextFollowUpAt).getTime()
+                        : null;
                       const newTime = nextFollowUpDate?.getTime() || null;
 
                       if (nextFollowUpDate) {
                         const today = new Date();
                         today.setHours(0, 0, 0, 0);
-                        const lastContact = lastContactDate ? new Date(lastContactDate) : null;
+                        const lastContact = lastContactDate
+                          ? new Date(lastContactDate)
+                          : null;
 
                         if (nextFollowUpDate < today) {
                           setNextFollowUpDate(null);
-                          toast.error(t('next_follow_up_cannot_be_earlier_than_today'));
+                          toast.error(
+                            t('next_follow_up_cannot_be_earlier_than_today')
+                          );
                           return;
                         }
 
                         if (lastContact && nextFollowUpDate < lastContact) {
                           setNextFollowUpDate(null);
-                          toast.error(t('next_follow_up_cannot_be_earlier_than_last_contact'));
+                          toast.error(
+                            t(
+                              'next_follow_up_cannot_be_earlier_than_last_contact'
+                            )
+                          );
                           return;
                         }
                       }
@@ -529,34 +621,66 @@ export default function ContactIdPage() {
                   />
                 </div>
                 <div className='space-y-1.5'>
-                  <span className='text-muted-foreground text-xs'>{t('priority')}</span>
-                  <Select value={contact?.priority || 'Medium'} onValueChange={handlePriorityChange}>
+                  <span className='text-muted-foreground text-xs'>
+                    {t('priority')}
+                  </span>
+                  <Select
+                    value={contact?.priority || 'Medium'}
+                    onValueChange={handlePriorityChange}
+                  >
                     <SelectTrigger className='w-full'>
                       <SelectValue>
-                        <SmartColorBadge value={contact?.priority || 'Medium'} color={priorities?.find((p: Priority) => p.value === (contact?.priority || 'Medium'))?.color || '#6b7280'} />
+                        <SmartColorBadge
+                          value={contact?.priority || 'Medium'}
+                          color={
+                            priorities?.find(
+                              (p: Priority) =>
+                                p.value === (contact?.priority || 'Medium')
+                            )?.color || '#6b7280'
+                          }
+                        />
                       </SelectValue>
                     </SelectTrigger>
                     <SelectContent className='bg-popover text-popover-foreground'>
                       {priorities?.map((priority: Priority) => (
                         <SelectItem key={priority.value} value={priority.value}>
-                          <SmartColorBadge value={priority.value} color={priority.color} />
+                          <SmartColorBadge
+                            value={priority.value}
+                            color={priority.color}
+                          />
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </div>
                 <div className='space-y-1.5'>
-                  <span className='text-muted-foreground text-xs'>{t('status')}</span>
-                  <Select value={contact?.status || 'Lead'} onValueChange={handleStatusChange}>
+                  <span className='text-muted-foreground text-xs'>
+                    {t('status')}
+                  </span>
+                  <Select
+                    value={contact?.status || 'Lead'}
+                    onValueChange={handleStatusChange}
+                  >
                     <SelectTrigger className='w-full'>
                       <SelectValue>
-                        <SmartColorBadge value={contact?.status || 'Lead'} color={statuses?.find((s: Status) => s.value === (contact?.status || 'Lead'))?.color || '#6b7280'} />
+                        <SmartColorBadge
+                          value={contact?.status || 'Lead'}
+                          color={
+                            statuses?.find(
+                              (s: Status) =>
+                                s.value === (contact?.status || 'Lead')
+                            )?.color || '#6b7280'
+                          }
+                        />
                       </SelectValue>
                     </SelectTrigger>
                     <SelectContent className='bg-popover text-popover-foreground'>
                       {statuses?.map((status: Status) => (
                         <SelectItem key={status.value} value={status.value}>
-                          <SmartColorBadge value={status.value} color={status.color} />
+                          <SmartColorBadge
+                            value={status.value}
+                            color={status.color}
+                          />
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -596,9 +720,16 @@ export default function ContactIdPage() {
                   </button>
                 </div>
                 {isNotesEditing ? (
-                  <Textarea value={editableRemark} onChange={(e) => setEditableRemark(e.target.value)} className='min-h-[100px] bg-background' placeholder={t('add_remark_about_this_contact')} />
+                  <Textarea
+                    value={editableRemark}
+                    onChange={(e) => setEditableRemark(e.target.value)}
+                    className='min-h-[100px] bg-background'
+                    placeholder={t('add_remark_about_this_contact')}
+                  />
                 ) : (
-                  <p className='whitespace-pre-wrap text-muted-foreground text-sm'>{contact?.remark || t('no_remark_added')}</p>
+                  <p className='whitespace-pre-wrap text-muted-foreground text-sm'>
+                    {contact?.remark || t('no_remark_added')}
+                  </p>
                 )}
               </div>
 
@@ -609,51 +740,96 @@ export default function ContactIdPage() {
                   onCreateAppointment={handleBookAppointment}
                   onUpdateAppointment={(data) => updateAppointment.mutate(data)}
                   onDeleteAppointment={(id) => deleteAppointment.mutate({ id })}
-                  defaultTitle={t('meeting_with', { who: me?.name || '', name: contact?.name || '' })}
+                  defaultTitle={t('meeting_with', {
+                    who: me?.name || '',
+                    name: contact?.name || '',
+                  })}
                 />
               </div>
 
               <div className='p-6'>
                 <h2 className='mb-4 font-medium'>{t('team_roles')}</h2>
                 {!contact?.teams || contact.teams.length === 0 ? (
-                  <p className='text-muted-foreground text-sm'>{t('no_team_roles_found')}</p>
+                  <p className='text-muted-foreground text-sm'>
+                    {t('no_team_roles_found')}
+                  </p>
                 ) : (
                   <>
                     {contact?.leadingTeams?.map((team) => (
-                      <div key={team.id} className='mb-3 flex items-center justify-between'>
-                        <Link href={`/dashboard/crm/team/${team.id}`} className='text-sm transition-colors duration-200 hover:text-primary hover:underline'>
+                      <div
+                        key={team.id}
+                        className='mb-3 flex items-center justify-between'
+                      >
+                        <Link
+                          href={`/dashboard/crm/team/${team.id}`}
+                          className='text-sm transition-colors duration-200 hover:text-primary hover:underline'
+                        >
                           {team.name}
                         </Link>
-                        <span className='text-muted-foreground text-xs'>{t('team_leader')}</span>
+                        <span className='text-muted-foreground text-xs'>
+                          {t('team_leader')}
+                        </span>
                       </div>
                     ))}
                     {contact?.subLeadingTeams?.map((team) => (
-                      <div key={team.id} className='mb-3 flex items-center justify-between'>
-                        <Link href={`/dashboard/crm/team/${team.id}`} className='text-sm transition-colors duration-200 hover:text-primary hover:underline'>
+                      <div
+                        key={team.id}
+                        className='mb-3 flex items-center justify-between'
+                      >
+                        <Link
+                          href={`/dashboard/crm/team/${team.id}`}
+                          className='text-sm transition-colors duration-200 hover:text-primary hover:underline'
+                        >
                           {team.name}
                         </Link>
-                        <span className='text-muted-foreground text-xs'>{t('sub_leader')}</span>
+                        <span className='text-muted-foreground text-xs'>
+                          {t('sub_leader')}
+                        </span>
                       </div>
                     ))}
                     {contact?.referralTeams?.map((team) => (
-                      <div key={team.id} className='mb-3 flex items-center justify-between'>
-                        <Link href={`/dashboard/crm/team/${team.id}`} className='text-sm transition-colors duration-200 hover:text-primary hover:underline'>
+                      <div
+                        key={team.id}
+                        className='mb-3 flex items-center justify-between'
+                      >
+                        <Link
+                          href={`/dashboard/crm/team/${team.id}`}
+                          className='text-sm transition-colors duration-200 hover:text-primary hover:underline'
+                        >
                           {team.name}
                         </Link>
-                        <span className='text-muted-foreground text-xs'>{t('referral')}</span>
+                        <span className='text-muted-foreground text-xs'>
+                          {t('referral')}
+                        </span>
                       </div>
                     ))}
                     {contact?.teams
                       ?.filter(
                         (team) =>
-                          !contact.leadingTeams?.some((lt) => lt.id === team.id) && !contact.subLeadingTeams?.some((st) => st.id === team.id) && !contact.referralTeams?.some((rt) => rt.id === team.id)
+                          !contact.leadingTeams?.some(
+                            (lt) => lt.id === team.id
+                          ) &&
+                          !contact.subLeadingTeams?.some(
+                            (st) => st.id === team.id
+                          ) &&
+                          !contact.referralTeams?.some(
+                            (rt) => rt.id === team.id
+                          )
                       )
                       .map((team) => (
-                        <div key={team.id} className='mb-3 flex items-center justify-between'>
-                          <Link href={`/dashboard/crm/team/${team.id}`} className='text-sm hover:text-primary hover:underline'>
+                        <div
+                          key={team.id}
+                          className='mb-3 flex items-center justify-between'
+                        >
+                          <Link
+                            href={`/dashboard/crm/team/${team.id}`}
+                            className='text-sm hover:text-primary hover:underline'
+                          >
                             {team.name}
                           </Link>
-                          <span className='text-muted-foreground text-xs'>{t('member')}</span>
+                          <span className='text-muted-foreground text-xs'>
+                            {t('member')}
+                          </span>
                         </div>
                       ))}
                   </>
@@ -664,7 +840,7 @@ export default function ContactIdPage() {
         </div>
 
         <div className='w-full lg:w-2/3'>
-          <div className='h-full rounded-none border border-t-0 border-l-0 p-4 sm:rounded-r-lg sm:border-t-1 sm:p-6'>
+          <div className='h-full border-l p-3'>
             <TabSwitcher
               config={[
                 {
@@ -689,14 +865,25 @@ export default function ContactIdPage() {
                           description: data.description,
                           initiatorType: data.initiatorType,
                           initiatorId: data.initiatorId,
-                          metadata: { ...(data.metadata as any), attachments: data.attachments },
+                          metadata: {
+                            ...(data.metadata as any),
+                            attachments: data.attachments,
+                          },
                         });
                       }}
                       isLoading={createContactActivity.isPending}
                       filterTypes={['NOTE_ADDED']}
                       onDeleteNote={(id) => deleteNote.mutate({ id })}
-                      onUpdateNote={(id, description) => updateNote.mutate({ id, description })}
-                      onReplyNote={(id, description) => replyNote.mutate({ id, description, contactId: contactId[0] })}
+                      onUpdateNote={(id, description) =>
+                        updateNote.mutate({ id, description })
+                      }
+                      onReplyNote={(id, description) =>
+                        replyNote.mutate({
+                          id,
+                          description,
+                          contactId: contactId[0],
+                        })
+                      }
                     />
                   ),
                 },
@@ -722,13 +909,24 @@ export default function ContactIdPage() {
                           description: data.description,
                           initiatorType: data.initiatorType,
                           initiatorId: data.initiatorId,
-                          metadata: { ...(data.metadata as any), attachments: data.attachments },
+                          metadata: {
+                            ...(data.metadata as any),
+                            attachments: data.attachments,
+                          },
                         });
                       }}
                       isLoading={createContactActivity.isPending}
                       onDeleteNote={(id) => deleteNote.mutate({ id })}
-                      onUpdateNote={(id, description) => updateNote.mutate({ id, description })}
-                      onReplyNote={(id, description) => replyNote.mutate({ id, description, contactId: contactId[0] })}
+                      onUpdateNote={(id, description) =>
+                        updateNote.mutate({ id, description })
+                      }
+                      onReplyNote={(id, description) =>
+                        replyNote.mutate({
+                          id,
+                          description,
+                          contactId: contactId[0],
+                        })
+                      }
                     />
                   ),
                 },
@@ -747,27 +945,52 @@ export default function ContactIdPage() {
             <div className='grid grid-cols-2 gap-4'>
               <div className='space-y-2'>
                 <Label htmlFor='firstName'>{t('first_name')}</Label>
-                <Input id='firstName' value={editForm.firstName} onChange={(e) => setEditForm({ ...editForm, firstName: e.target.value })} />
+                <Input
+                  id='firstName'
+                  value={editForm.firstName}
+                  onChange={(e) =>
+                    setEditForm({ ...editForm, firstName: e.target.value })
+                  }
+                />
               </div>
               <div className='space-y-2'>
                 <Label htmlFor='lastName'>{t('last_name')}</Label>
-                <Input id='lastName' value={editForm.lastName} onChange={(e) => setEditForm({ ...editForm, lastName: e.target.value })} />
+                <Input
+                  id='lastName'
+                  value={editForm.lastName}
+                  onChange={(e) =>
+                    setEditForm({ ...editForm, lastName: e.target.value })
+                  }
+                />
               </div>
             </div>
             <div className='space-y-2'>
               <Label htmlFor='email'>{t('email')}</Label>
-              <Input id='email' type='email' value={editForm.email} onChange={(e) => setEditForm({ ...editForm, email: e.target.value })} />
+              <Input
+                id='email'
+                type='email'
+                value={editForm.email}
+                onChange={(e) =>
+                  setEditForm({ ...editForm, email: e.target.value })
+                }
+              />
             </div>
             <div className='space-y-2'>
               <Label htmlFor='phone'>{t('phone')}</Label>
-              <PhoneInput id='phone' value={editForm.phone} onChange={(value) => setEditForm({ ...editForm, phone: value })} />
+              <PhoneInput
+                id='phone'
+                value={editForm.phone}
+                onChange={(value) => setEditForm({ ...editForm, phone: value })}
+              />
             </div>
             <div className='space-y-2'>
               <Label htmlFor='company'>{t('company')}</Label>
               <Combobox
                 value={editForm.company}
                 onChange={(value) => {
-                  const selectedCompany = companies?.find((c) => c.name === value);
+                  const selectedCompany = companies?.find(
+                    (c) => c.name === value
+                  );
                   setEditForm({
                     ...editForm,
                     company: selectedCompany ? selectedCompany.name : value,
@@ -784,14 +1007,22 @@ export default function ContactIdPage() {
             <div className='space-y-2'>
               <Label htmlFor='status'>{t('status')}</Label>
 
-              <Select value={editForm.status} onValueChange={(value) => setEditForm({ ...editForm, status: value })}>
+              <Select
+                value={editForm.status}
+                onValueChange={(value) =>
+                  setEditForm({ ...editForm, status: value })
+                }
+              >
                 <SelectTrigger>
                   <SelectValue placeholder='Select status' />
                 </SelectTrigger>
                 <SelectContent>
                   {statuses?.map((status: Status) => (
                     <SelectItem key={status.value} value={status.value}>
-                      <SmartColorBadge value={status.value} color={status.color} />
+                      <SmartColorBadge
+                        value={status.value}
+                        color={status.color}
+                      />
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -801,7 +1032,9 @@ export default function ContactIdPage() {
               <Label htmlFor='source'>{t('source')}</Label>
               <Combobox
                 value={editForm.source}
-                onChange={(value) => setEditForm({ ...editForm, source: value })}
+                onChange={(value) =>
+                  setEditForm({ ...editForm, source: value })
+                }
                 items={sources}
                 placeholder={t('select_source')}
                 searchPlaceholder={t('search_source')}
@@ -810,21 +1043,33 @@ export default function ContactIdPage() {
             </div>
             <div className='space-y-2'>
               <Label htmlFor='priority'>{t('priority')}</Label>
-              <Select value={editForm.priority} onValueChange={(value) => setEditForm({ ...editForm, priority: value })}>
+              <Select
+                value={editForm.priority}
+                onValueChange={(value) =>
+                  setEditForm({ ...editForm, priority: value })
+                }
+              >
                 <SelectTrigger>
                   <SelectValue placeholder='Select priority' />
                 </SelectTrigger>
                 <SelectContent>
                   {priorities?.map((priority: Priority) => (
                     <SelectItem key={priority.value} value={priority.value}>
-                      <SmartColorBadge value={priority.value} color={priority.color} />
+                      <SmartColorBadge
+                        value={priority.value}
+                        color={priority.color}
+                      />
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
             <div className='flex justify-end space-x-2'>
-              <Button type='button' variant='outline' onClick={handleCloseEditModal}>
+              <Button
+                type='button'
+                variant='outline'
+                onClick={handleCloseEditModal}
+              >
                 {t('cancel')}
               </Button>
               <Button type='submit' disabled={updateContact.isPending}>
@@ -847,7 +1092,9 @@ export default function ContactIdPage() {
                 title: editingAppointment.title,
                 description: editingAppointment.description,
                 startAt: new Date(editingAppointment.startAt),
-                endAt: new Date(editingAppointment.startAt.getTime() + 30 * 60000),
+                endAt: new Date(
+                  editingAppointment.startAt.getTime() + 30 * 60000
+                ),
               }
             : undefined
         }
@@ -859,7 +1106,10 @@ export default function ContactIdPage() {
         onOpenChange={setIsBookingModalOpen}
         onSubmit={handleBookAppointment}
         defaultValues={{
-          title: t('meeting_with', { who: me?.name || '', name: contact?.name || '' }),
+          title: t('meeting_with', {
+            who: me?.name || '',
+            name: contact?.name || '',
+          }),
           startAt: new Date(),
           endAt: new Date(Date.now() + 30 * 60000),
           folderId: 'default',
@@ -890,7 +1140,10 @@ export default function ContactIdPage() {
               </Select>
             </div>
             <div className='flex justify-end gap-2'>
-              <Button onClick={handleAssignTeam} disabled={assignToTeam.isPending || !selectedTeam}>
+              <Button
+                onClick={handleAssignTeam}
+                disabled={assignToTeam.isPending || !selectedTeam}
+              >
                 {t('assign')}
               </Button>
             </div>

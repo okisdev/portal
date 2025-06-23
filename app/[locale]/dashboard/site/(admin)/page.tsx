@@ -1,17 +1,23 @@
 'use client';
 
-import { SiteMembers } from '@/components/dashboard/site/members';
-import { PageHeader } from '@/components/shared/page-header';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { api } from '@/utils/trpc/client';
 import type { TRPCClientErrorLike } from '@trpc/client';
 import { useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
+import { SiteMembers } from '@/components/dashboard/site/members';
+import { PageHeader } from '@/components/shared/page-header';
+import { Button } from '@/components/ui/button';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { api } from '@/utils/trpc/client';
 
 export default function SitePage() {
   const t = useTranslations();
@@ -24,8 +30,12 @@ export default function SitePage() {
   const utils = api.useUtils();
 
   const { data: siteNameConfig } = api.site.getConfig.useQuery({ key: 'name' });
-  const { data: siteDomainConfig } = api.site.getConfig.useQuery({ key: 'domain' });
-  const { data: supportEmailDomainConfig } = api.site.getConfig.useQuery({ key: 'supportEmailDomains' });
+  const { data: siteDomainConfig } = api.site.getConfig.useQuery({
+    key: 'domain',
+  });
+  const { data: supportEmailDomainConfig } = api.site.getConfig.useQuery({
+    key: 'supportEmailDomains',
+  });
 
   useEffect(() => {
     if (siteNameConfig) {
@@ -45,7 +55,9 @@ export default function SitePage() {
     }
   }, [supportEmailDomainConfig]);
 
-  const handleSupportEmailDomainChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleSupportEmailDomainChange = (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
     // Clean up the input by removing spaces around commas and filtering out empty entries
     const domains = e.target.value
       .split(',')
@@ -56,7 +68,12 @@ export default function SitePage() {
 
   const { mutate: updateSiteConfig } = api.site.updateConfig.useMutation({
     onSuccess: (_, variables) => {
-      const configType = variables.key === 'name' ? 'Site name' : variables.key === 'domain' ? 'Site domain' : 'Support email domain';
+      const configType =
+        variables.key === 'name'
+          ? 'Site name'
+          : variables.key === 'domain'
+            ? 'Site domain'
+            : 'Support email domain';
       toast.success(`${configType} updated successfully`);
       utils.site.getConfig.invalidate({ key: variables.key });
     },
@@ -103,7 +120,10 @@ export default function SitePage() {
 
   return (
     <div className='container mx-auto max-w-4xl space-y-4 px-4 pt-10'>
-      <PageHeader title={t('site_configuration')} description={t('site_configuration_description')} />
+      <PageHeader
+        title={t('site_configuration')}
+        description={t('site_configuration_description')}
+      />
 
       <Tabs defaultValue='general' className='space-y-4'>
         <TabsList>
@@ -117,21 +137,42 @@ export default function SitePage() {
           <Card>
             <CardHeader>
               <CardTitle>{t('general_settings')}</CardTitle>
-              <CardDescription>{t('general_settings_description')}</CardDescription>
+              <CardDescription>
+                {t('general_settings_description')}
+              </CardDescription>
             </CardHeader>
             <CardContent className='space-y-4'>
               <div className='space-y-2'>
                 <Label htmlFor='siteName'>{t('site_name')}</Label>
-                <Input id='siteName' placeholder='Portal' value={siteName} onChange={(e) => setSiteName(e.target.value)} />
+                <Input
+                  id='siteName'
+                  placeholder='Portal'
+                  value={siteName}
+                  onChange={(e) => setSiteName(e.target.value)}
+                />
               </div>
               <div className='space-y-2'>
                 <Label htmlFor='siteDomain'>{t('site_domain')}</Label>
-                <Input id='siteDomain' placeholder='portal' value={siteDomain} onChange={(e) => setSiteDomain(e.target.value)} />
+                <Input
+                  id='siteDomain'
+                  placeholder='portal'
+                  value={siteDomain}
+                  onChange={(e) => setSiteDomain(e.target.value)}
+                />
               </div>
               <div className='space-y-2'>
-                <Label htmlFor='supportEmailDomains'>{t('support_email_domains')}</Label>
-                <Input id='supportEmailDomains' placeholder='support.portal.com, help.portal.com' value={supportEmailDomains} onChange={handleSupportEmailDomainChange} />
-                <p className='text-muted-foreground text-sm'>{t('support_email_domains_description')}</p>
+                <Label htmlFor='supportEmailDomains'>
+                  {t('support_email_domains')}
+                </Label>
+                <Input
+                  id='supportEmailDomains'
+                  placeholder='support.portal.com, help.portal.com'
+                  value={supportEmailDomains}
+                  onChange={handleSupportEmailDomainChange}
+                />
+                <p className='text-muted-foreground text-sm'>
+                  {t('support_email_domains_description')}
+                </p>
               </div>
               <Button onClick={handleSaveChanges} disabled={isLoading}>
                 {isLoading ? t('saving') : t('save_changes')}
@@ -155,7 +196,9 @@ export default function SitePage() {
                 <div className='flex items-center justify-between border-b pb-4'>
                   <div className='space-y-1'>
                     <h4 className='font-semibold text-sm'>Slack</h4>
-                    <p className='text-muted-foreground text-sm'>Receive notifications and updates in your Slack workspace</p>
+                    <p className='text-muted-foreground text-sm'>
+                      Receive notifications and updates in your Slack workspace
+                    </p>
                   </div>
                   <Button variant='outline'>Connect</Button>
                 </div>
@@ -163,7 +206,9 @@ export default function SitePage() {
                 <div className='flex items-center justify-between border-b pb-4'>
                   <div className='space-y-1'>
                     <h4 className='font-semibold text-sm'>Google Calendar</h4>
-                    <p className='text-muted-foreground text-sm'>Sync events and schedules with Google Calendar</p>
+                    <p className='text-muted-foreground text-sm'>
+                      Sync events and schedules with Google Calendar
+                    </p>
                   </div>
                   <Button variant='outline'>Connect</Button>
                 </div>
@@ -171,7 +216,9 @@ export default function SitePage() {
                 <div className='flex items-center justify-between border-b pb-4'>
                   <div className='space-y-1'>
                     <h4 className='font-semibold text-sm'>GitHub</h4>
-                    <p className='text-muted-foreground text-sm'>Connect your repositories and track development progress</p>
+                    <p className='text-muted-foreground text-sm'>
+                      Connect your repositories and track development progress
+                    </p>
                   </div>
                   <Button variant='outline'>Connect</Button>
                 </div>
@@ -179,7 +226,9 @@ export default function SitePage() {
                 <div className='flex items-center justify-between border-b pb-4'>
                   <div className='space-y-1'>
                     <h4 className='font-semibold text-sm'>Microsoft Teams</h4>
-                    <p className='text-muted-foreground text-sm'>Integrate with Teams for communication and collaboration</p>
+                    <p className='text-muted-foreground text-sm'>
+                      Integrate with Teams for communication and collaboration
+                    </p>
                   </div>
                   <Button variant='outline'>Connect</Button>
                 </div>
@@ -187,7 +236,9 @@ export default function SitePage() {
                 <div className='flex items-center justify-between pb-4'>
                   <div className='space-y-1'>
                     <h4 className='font-semibold text-sm'>Zapier</h4>
-                    <p className='text-muted-foreground text-sm'>Connect with thousands of apps through Zapier automation</p>
+                    <p className='text-muted-foreground text-sm'>
+                      Connect with thousands of apps through Zapier automation
+                    </p>
                   </div>
                   <Button variant='outline'>Connect</Button>
                 </div>

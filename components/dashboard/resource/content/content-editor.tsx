@@ -1,3 +1,17 @@
+import { formatDistanceToNow } from 'date-fns';
+import {
+  Clock,
+  Database,
+  Eye,
+  EyeOff,
+  Plus,
+  Save,
+  Tags,
+  Trash,
+  X,
+} from 'lucide-react';
+import { useLocale, useTranslations } from 'next-intl';
+import { useEffect, useState } from 'react';
 import { Combobox } from '@/components/shared/combobox';
 import { TipTapEditor } from '@/components/shared/tiptap-editor';
 import { Badge } from '@/components/ui/badge';
@@ -7,11 +21,6 @@ import { contentTags } from '@/data/data';
 import type { ResourceContent } from '@/lib/schema';
 import type { Locale } from '@/types/i18n';
 import { dateLocaleMap } from '@/utils/date';
-import { formatDistanceToNow } from 'date-fns';
-import { Clock, Database, Eye, EyeOff, Plus, Save, Tags, Trash, X } from 'lucide-react';
-import { useTranslations } from 'next-intl';
-import { useLocale } from 'next-intl';
-import { useEffect, useState } from 'react';
 import { SendHistoryDialog } from './send-history-dialog';
 
 interface ContentEditorProps {
@@ -61,10 +70,19 @@ function TagManager({ tags, onTagsChange, disabled }: TagManagerProps) {
         </div>
       ) : (
         <div className='flex items-center gap-1'>
-          <button type='button' onClick={() => !disabled && setIsEditing(true)} disabled={disabled} className='flex flex-wrap items-center gap-1 rounded-sm px-1 hover:bg-accent/40'>
+          <button
+            type='button'
+            onClick={() => !disabled && setIsEditing(true)}
+            disabled={disabled}
+            className='flex flex-wrap items-center gap-1 rounded-sm px-1 hover:bg-accent/40'
+          >
             {tags.length > 0 ? (
               tags.map((tag) => (
-                <Badge key={tag} variant='secondary' className='gap-0.5 py-0.5 text-xs'>
+                <Badge
+                  key={tag}
+                  variant='secondary'
+                  className='gap-0.5 py-0.5 text-xs'
+                >
                   {tag}
                   {!disabled && (
                     <div
@@ -80,11 +98,18 @@ function TagManager({ tags, onTagsChange, disabled }: TagManagerProps) {
                 </Badge>
               ))
             ) : (
-              <span className='text-muted-foreground text-xs'>{t('add_tags')}</span>
+              <span className='text-muted-foreground text-xs'>
+                {t('add_tags')}
+              </span>
             )}
           </button>
           {tags.length > 0 && !disabled && (
-            <Button variant='ghost' size='sm' onClick={() => setIsEditing(true)} className='h-5 w-5 p-0'>
+            <Button
+              variant='ghost'
+              size='sm'
+              onClick={() => setIsEditing(true)}
+              className='h-5 w-5 p-0'
+            >
               <Plus className='size-3' />
             </Button>
           )}
@@ -94,7 +119,12 @@ function TagManager({ tags, onTagsChange, disabled }: TagManagerProps) {
   );
 }
 
-export function ContentEditor({ content, onUpdate, onDelete, isLoading }: ContentEditorProps) {
+export function ContentEditor({
+  content,
+  onUpdate,
+  onDelete,
+  isLoading,
+}: ContentEditorProps) {
   const t = useTranslations();
   const locale = useLocale() as Locale;
   const dateLocale = dateLocaleMap[locale];
@@ -103,7 +133,9 @@ export function ContentEditor({ content, onUpdate, onDelete, isLoading }: Conten
   const [editingTitle, setEditingTitle] = useState(false);
   const [editingDescription, setEditingDescription] = useState(false);
   const [tempTitle, setTempTitle] = useState(content?.title || '');
-  const [tempDescription, setTempDescription] = useState(content?.description || '');
+  const [tempDescription, setTempDescription] = useState(
+    content?.description || ''
+  );
   const [tempTags, setTempTags] = useState<string[]>([]);
   const [showSendHistory, setShowSendHistory] = useState(false);
   const [editorContent, setEditorContent] = useState(content?.content || '');
@@ -182,7 +214,12 @@ export function ContentEditor({ content, onUpdate, onDelete, isLoading }: Conten
                 className='h-8 font-medium text-base'
               />
             ) : (
-              <button type='button' className='w-full rounded-sm p-0.5 text-left font-medium text-base hover:bg-accent/40' onClick={() => !isViewMode && setEditingTitle(true)} disabled={isViewMode}>
+              <button
+                type='button'
+                className='w-full rounded-sm p-0.5 text-left font-medium text-base hover:bg-accent/40'
+                onClick={() => !isViewMode && setEditingTitle(true)}
+                disabled={isViewMode}
+              >
                 {content.title}
               </button>
             )}
@@ -204,24 +241,53 @@ export function ContentEditor({ content, onUpdate, onDelete, isLoading }: Conten
                 {content.description || t('add_a_description')}
               </button>
             )}
-            <TagManager tags={tempTags} onTagsChange={handleTagsChange} disabled={isViewMode} />
+            <TagManager
+              tags={tempTags}
+              onTagsChange={handleTagsChange}
+              disabled={isViewMode}
+            />
           </div>
           <div className='flex h-full flex-col items-center justify-between'>
             <div className='flex items-center gap-1'>
               {hasUnsavedChanges && !isViewMode && (
-                <Button variant='ghost' size='sm' onClick={handleSave} disabled={isLoading} className='h-7 gap-1 px-2 text-xs'>
+                <Button
+                  variant='ghost'
+                  size='sm'
+                  onClick={handleSave}
+                  disabled={isLoading}
+                  className='h-7 gap-1 px-2 text-xs'
+                >
                   <Save className='h-3 w-3' />
                   {t('save')}
                 </Button>
               )}
-              <Button variant='ghost' size='sm' onClick={() => setShowSendHistory(true)} className='h-7 w-7 p-0'>
+              <Button
+                variant='ghost'
+                size='sm'
+                onClick={() => setShowSendHistory(true)}
+                className='h-7 w-7 p-0'
+              >
                 <Database className='h-3 w-3' />
               </Button>
-              <Button variant='ghost' size='sm' onClick={() => setIsViewMode(!isViewMode)} className='h-7 w-7 p-0'>
-                {isViewMode ? <Eye className='h-3 w-3' /> : <EyeOff className='h-3 w-3' />}
+              <Button
+                variant='ghost'
+                size='sm'
+                onClick={() => setIsViewMode(!isViewMode)}
+                className='h-7 w-7 p-0'
+              >
+                {isViewMode ? (
+                  <Eye className='h-3 w-3' />
+                ) : (
+                  <EyeOff className='h-3 w-3' />
+                )}
               </Button>
               {!isViewMode && (
-                <Button variant='ghost' size='sm' onClick={onDelete} className='h-7 w-7 p-0'>
+                <Button
+                  variant='ghost'
+                  size='sm'
+                  onClick={onDelete}
+                  className='h-7 w-7 p-0'
+                >
                   <Trash className='h-3 w-3 text-destructive' />
                 </Button>
               )}
@@ -229,11 +295,21 @@ export function ContentEditor({ content, onUpdate, onDelete, isLoading }: Conten
             <div className='flex flex-col items-start gap-0.5'>
               <div className='flex items-center gap-1.5 text-muted-foreground text-xs'>
                 <Clock className='size-3' />
-                {t('created_at_time', { time: formatDistanceToNow(new Date(content.createdAt), { addSuffix: true, locale: dateLocale }) })}
+                {t('created_at_time', {
+                  time: formatDistanceToNow(new Date(content.createdAt), {
+                    addSuffix: true,
+                    locale: dateLocale,
+                  }),
+                })}
               </div>
               <div className='flex items-center gap-1.5 text-muted-foreground text-xs'>
                 <Clock className='size-3' />
-                {t('last_updated_at', { time: formatDistanceToNow(new Date(content.updatedAt), { addSuffix: true, locale: dateLocale }) })}
+                {t('last_updated_at', {
+                  time: formatDistanceToNow(new Date(content.updatedAt), {
+                    addSuffix: true,
+                    locale: dateLocale,
+                  }),
+                })}
               </div>
             </div>
           </div>
@@ -241,10 +317,23 @@ export function ContentEditor({ content, onUpdate, onDelete, isLoading }: Conten
       </div>
 
       <div className='flex-1'>
-        <TipTapEditor key={content.id} content={editorContent} onChange={handleContentChange} disabled={isViewMode} editable={!isViewMode} className='h-full' />
+        <TipTapEditor
+          key={content.id}
+          content={editorContent}
+          onChange={handleContentChange}
+          disabled={isViewMode}
+          editable={!isViewMode}
+          className='h-full'
+        />
       </div>
 
-      {content && <SendHistoryDialog open={showSendHistory} onOpenChange={setShowSendHistory} content={content} />}
+      {content && (
+        <SendHistoryDialog
+          open={showSendHistory}
+          onOpenChange={setShowSendHistory}
+          content={content}
+        />
+      )}
     </div>
   );
 }

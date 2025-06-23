@@ -1,12 +1,12 @@
 'use client';
 
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { useTranslations } from 'next-intl';
+import { useState } from 'react';
 import ManualContactForm from '@/components/dashboard/contact/new/manual';
 import ContactUpload from '@/components/dashboard/contact/new/upload';
 import { PageHeader } from '@/components/shared/page-header';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useTranslations } from 'next-intl';
-import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { useState } from 'react';
 
 export default function ImportContacts() {
   const t = useTranslations();
@@ -15,7 +15,9 @@ export default function ImportContacts() {
   const searchParams = useSearchParams();
   const mode = searchParams.get('mode');
 
-  const [activeTab, setActiveTab] = useState(mode === 'upload' ? 'upload' : 'manual');
+  const [activeTab, setActiveTab] = useState(
+    mode === 'upload' ? 'upload' : 'manual'
+  );
 
   const handleTabChange = (value: string) => {
     setActiveTab(value);
@@ -24,13 +26,19 @@ export default function ImportContacts() {
 
   return (
     <div className='p-4'>
-      <Tabs defaultValue={activeTab} onValueChange={handleTabChange} className='w-full space-y-8'>
+      <Tabs
+        defaultValue={activeTab}
+        onValueChange={handleTabChange}
+        className='w-full space-y-8'
+      >
         <PageHeader
           title={t('create_contact')}
           right={
             <TabsList>
               <TabsTrigger value='manual'>{t('manual_create')}</TabsTrigger>
-              <TabsTrigger value='upload'>{t('upload_existing_contacts')}</TabsTrigger>
+              <TabsTrigger value='upload'>
+                {t('upload_existing_contacts')}
+              </TabsTrigger>
             </TabsList>
           }
         />

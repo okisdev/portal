@@ -1,3 +1,5 @@
-export default async function SiteLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+export default async function SiteLayout({
+  children,
+}: Readonly<{ children: React.ReactNode }>) {
   return children;
 }

@@ -1,5 +1,20 @@
 'use client';
 
+import { format } from 'date-fns';
+import { enUS } from 'date-fns/locale';
+import {
+  ArrowUpRight,
+  Edit2,
+  FileIcon,
+  ImageIcon,
+  MessageCircle,
+  Paperclip,
+  Trash,
+  X,
+} from 'lucide-react';
+import { useSession } from 'next-auth/react';
+import { useLocale, useTranslations } from 'next-intl';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { ActionAlertDialog } from '@/components/shared/action-alert-dialog';
 import { AttachmentPreview } from '@/components/shared/attchment-preview';
 import { ComboboxCommand } from '@/components/shared/combobox';
@@ -7,7 +22,11 @@ import { MetadataPopover } from '@/components/shared/metadata-popover';
 import { NameTag } from '@/components/shared/name-tag';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
 import { Textarea } from '@/components/ui/textarea';
 import { useUpload } from '@/hooks/use-upload';
 import type { ActivitySubType } from '@/lib/schema';
@@ -17,13 +36,6 @@ import type { Activity } from '@/utils/activity';
 import { renderDescription } from '@/utils/activity';
 import { dateLocaleMap, formatDate } from '@/utils/date';
 import { api } from '@/utils/trpc/client';
-import { format } from 'date-fns';
-import { enUS } from 'date-fns/locale';
-import { ArrowUpRight, Edit2, FileIcon, ImageIcon, MessageCircle, Paperclip, Trash, X } from 'lucide-react';
-import { useSession } from 'next-auth/react';
-import { useTranslations } from 'next-intl';
-import { useLocale } from 'next-intl';
-import { useCallback, useEffect, useRef, useState } from 'react';
 
 interface ActivitySectionProps {
   activities?: Activity[];
@@ -43,7 +55,15 @@ interface ActivitySectionProps {
   onReplyNote: (id: string, description: string) => void;
 }
 
-export function ActivitySection({ activities, onCreateActivity, isLoading, filterTypes, onDeleteNote, onUpdateNote, onReplyNote }: ActivitySectionProps) {
+export function ActivitySection({
+  activities,
+  onCreateActivity,
+  isLoading,
+  filterTypes,
+  onDeleteNote,
+  onUpdateNote,
+  onReplyNote,
+}: ActivitySectionProps) {
   const t = useTranslations();
   const locale = useLocale() as Locale;
   const { data: session } = useSession();
@@ -61,7 +81,9 @@ export function ActivitySection({ activities, onCreateActivity, isLoading, filte
   const [showMentions, setShowMentions] = useState(false);
   const [mentionSearch, setMentionSearch] = useState('');
   const [cursorPosition, setCursorPosition] = useState(0);
-  const [attachments, setAttachments] = useState<Array<{ url: string; name: string; type: string }>>([]);
+  const [attachments, setAttachments] = useState<
+    Array<{ url: string; name: string; type: string }>
+  >([]);
   const [uploadProgress, setUploadProgress] = useState<string | null>(null);
 
   const { data: users } = api.user.getAllUsers.useQuery();
@@ -105,7 +127,11 @@ export function ActivitySection({ activities, onCreateActivity, isLoading, filte
     );
   };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>, isReply = false, isEdit = false) => {
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLTextAreaElement>,
+    isReply = false,
+    isEdit = false
+  ) => {
     const value = e.target.value;
     if (isEdit) {
       setEditText(value);
@@ -139,14 +165,23 @@ export function ActivitySection({ activities, onCreateActivity, isLoading, filte
 
   const handleMention = useCallback(
     (username: string, isReply = false, isEdit = false) => {
-      const currentValue = isEdit ? editText : isReply ? replyText : newActivity;
-      const beforeMention = currentValue.slice(0, currentValue.lastIndexOf('@'));
+      const currentValue = isEdit
+        ? editText
+        : isReply
+          ? replyText
+          : newActivity;
+      const beforeMention = currentValue.slice(
+        0,
+        currentValue.lastIndexOf('@')
+      );
       const afterMention = currentValue.slice(cursorPosition);
       const newValue = `${beforeMention}@${username} ${afterMention}`;
 
       if (isEdit) {
         setEditText(newValue);
-        const editInput = document.getElementById('editInput') as HTMLInputElement;
+        const editInput = document.getElementById(
+          'editInput'
+        ) as HTMLInputElement;
         if (editInput) {
           editInput.focus();
           const newCursorPos = beforeMention.length + username.length + 2;
@@ -154,7 +189,9 @@ export function ActivitySection({ activities, onCreateActivity, isLoading, filte
         }
       } else if (isReply) {
         setReplyText(newValue);
-        const replyInput = document.getElementById('replyInput') as HTMLInputElement;
+        const replyInput = document.getElementById(
+          'replyInput'
+        ) as HTMLInputElement;
         if (replyInput) {
           replyInput.focus();
           const newCursorPos = beforeMention.length + username.length + 2;
@@ -223,7 +260,11 @@ export function ActivitySection({ activities, onCreateActivity, isLoading, filte
     setEditText('');
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>, isReply = false, isEdit = false) => {
+  const handleKeyDown = (
+    e: React.KeyboardEvent<HTMLTextAreaElement>,
+    isReply = false,
+    isEdit = false
+  ) => {
     if (e.key === 'Enter') {
       if (e.shiftKey || isComposing) {
         // Allow Shift+Enter for new line or when using IME (like Chinese input)
@@ -253,7 +294,9 @@ export function ActivitySection({ activities, onCreateActivity, isLoading, filte
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as Node;
-      const popover = document.querySelector('[data-radix-popper-content-wrapper]');
+      const popover = document.querySelector(
+        '[data-radix-popper-content-wrapper]'
+      );
 
       if (popover?.contains(target)) {
         return;
@@ -275,7 +318,9 @@ export function ActivitySection({ activities, onCreateActivity, isLoading, filte
     }
   }, [activities]);
 
-  const filteredActivities = activities?.filter((activity) => !filterTypes || filterTypes.includes(activity.subType));
+  const filteredActivities = activities?.filter(
+    (activity) => !filterTypes || filterTypes.includes(activity.subType)
+  );
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -290,7 +335,13 @@ export function ActivitySection({ activities, onCreateActivity, isLoading, filte
         {
           url,
           name: file.name,
-          type: file.type.startsWith('image/') ? 'image' : file.type.startsWith('video/') ? 'video' : file.type.startsWith('audio/') ? 'audio' : 'file',
+          type: file.type.startsWith('image/')
+            ? 'image'
+            : file.type.startsWith('video/')
+              ? 'video'
+              : file.type.startsWith('audio/')
+                ? 'audio'
+                : 'file',
         },
       ]);
     } catch (error) {
@@ -307,15 +358,25 @@ export function ActivitySection({ activities, onCreateActivity, isLoading, filte
 
     try {
       const parsedMetadata = JSON.parse(metadata);
-      if (!parsedMetadata.attachments || !Array.isArray(parsedMetadata.attachments)) return null;
+      if (
+        !parsedMetadata.attachments ||
+        !Array.isArray(parsedMetadata.attachments)
+      )
+        return null;
 
       return (
         <div className='mt-2 flex flex-wrap gap-2'>
-          {parsedMetadata.attachments.map((attachment: { url: string; name: string; type: string }) => (
-            <div key={attachment.url} className='relative'>
-              <AttachmentPreview url={attachment.url} name={attachment.name} type={attachment.type} />
-            </div>
-          ))}
+          {parsedMetadata.attachments.map(
+            (attachment: { url: string; name: string; type: string }) => (
+              <div key={attachment.url} className='relative'>
+                <AttachmentPreview
+                  url={attachment.url}
+                  name={attachment.name}
+                  type={attachment.type}
+                />
+              </div>
+            )
+          )}
         </div>
       );
     } catch (error) {
@@ -344,24 +405,42 @@ export function ActivitySection({ activities, onCreateActivity, isLoading, filte
       <div id='activities-container' className='flex-1 overflow-y-auto'>
         <div className='pointer-events-none sticky top-0 z-10 h-4 bg-linear-to-b from-background to-transparent' />
         <div className='space-y-1'>
-          {filteredActivities?.length === 0 && <p className='text-muted-foreground text-sm'>{t('no_activities_found')}</p>}
+          {filteredActivities?.length === 0 && (
+            <p className='text-muted-foreground text-sm'>
+              {t('no_activities_found')}
+            </p>
+          )}
           {filteredActivities?.map((activity, index) => {
-            const currentDate = format(new Date(activity.createdAt), 'PP', { locale: dateLocaleMap[locale] || enUS });
-            const prevDate = index > 0 ? format(new Date(filteredActivities[index - 1].createdAt), 'PP', { locale: dateLocaleMap[locale] || enUS }) : null;
+            const currentDate = format(new Date(activity.createdAt), 'PP', {
+              locale: dateLocaleMap[locale] || enUS,
+            });
+            const prevDate =
+              index > 0
+                ? format(
+                    new Date(filteredActivities[index - 1].createdAt),
+                    'PP',
+                    { locale: dateLocaleMap[locale] || enUS }
+                  )
+                : null;
             const showDateDivider = currentDate !== prevDate;
 
             return (
               <div key={activity.id} id={`note-${activity.id}`}>
                 {showDateDivider && (
                   <div className='sticky top-0 bg-background/95 py-2 backdrop-blur-sm supports-backdrop-filter:bg-background/60'>
-                    <p className='font-medium text-muted-foreground text-sm'>{currentDate}</p>
+                    <p className='font-medium text-muted-foreground text-sm'>
+                      {currentDate}
+                    </p>
                   </div>
                 )}
                 <div
                   className={cn(
                     'flex items-start gap-3 border-l-2 py-3 pr-2 pl-4 hover:bg-muted/30',
-                    highlightedNote === activity.id && 'bg-neutral-500/20 dark:bg-neutral-500/50',
-                    activity.metadata && JSON.parse(activity.metadata).replyTo && 'ml-4'
+                    highlightedNote === activity.id &&
+                      'bg-neutral-500/20 dark:bg-neutral-500/50',
+                    activity.metadata &&
+                      JSON.parse(activity.metadata).replyTo &&
+                      'ml-4'
                   )}
                   style={{
                     borderLeftColor:
@@ -387,64 +466,103 @@ export function ActivitySection({ activities, onCreateActivity, isLoading, filte
                   <div className='flex-1 space-y-1'>
                     <div className='flex w-full items-center justify-between'>
                       <div className='flex items-center gap-2 text-sm'>
-                        <span className='font-medium'>{activity.subType && t(activity.subType)}</span>
+                        <span className='font-medium'>
+                          {activity.subType && t(activity.subType)}
+                        </span>
                         <span className='text-muted-foreground text-xs'>•</span>
                         {activity.initiatorType === 'system' ? (
-                          <span className='text-muted-foreground text-xs'>{t('by_system')}</span>
+                          <span className='text-muted-foreground text-xs'>
+                            {t('by_system')}
+                          </span>
                         ) : (
                           <span className='flex items-center gap-1 text-muted-foreground text-xs'>
                             {t.rich('by_who', {
-                              name: () => <NameTag id={activity.userId || ''} type='user' />,
+                              name: () => (
+                                <NameTag
+                                  id={activity.userId || ''}
+                                  type='user'
+                                />
+                              ),
                             })}
                           </span>
                         )}
                         <span className='text-muted-foreground text-xs'>•</span>
-                        <span className='text-muted-foreground text-xs'>{formatDate(new Date(activity.createdAt), locale as any)}</span>
+                        <span className='text-muted-foreground text-xs'>
+                          {formatDate(
+                            new Date(activity.createdAt),
+                            locale as any
+                          )}
+                        </span>
                       </div>
                       <div className='flex items-center gap-2'>
                         {activity.metadata && (
                           <MetadataPopover title={t('view_details')}>
-                            <pre className='whitespace-pre-wrap font-mono text-xs'>{JSON.stringify(JSON.parse(activity.metadata), null, 2)}</pre>
+                            <pre className='whitespace-pre-wrap font-mono text-xs'>
+                              {JSON.stringify(
+                                JSON.parse(activity.metadata),
+                                null,
+                                2
+                              )}
+                            </pre>
                           </MetadataPopover>
                         )}
-                        {activity.type === 'ENGAGEMENT' && activity.subType === 'NOTE_ADDED' && (
-                          <button
-                            type='button'
-                            onClick={() => setReplyingTo(activity.id)}
-                            className='flex cursor-pointer items-center gap-1 rounded bg-muted/50 px-1 py-0.5 text-muted-foreground text-xs transition-colors hover:bg-foreground/10 hover:text-foreground'
-                          >
-                            <MessageCircle className='size-3' />
-                            {t('reply')}
-                          </button>
-                        )}
-                        {activity.type === 'ENGAGEMENT' && activity.subType === 'NOTE_ADDED' && (
-                          <button
-                            type='button'
-                            onClick={() => handleEditNote(activity.id, activity.description)}
-                            className='flex cursor-pointer items-center gap-1 rounded bg-muted/50 px-1 py-0.5 text-muted-foreground text-xs transition-colors hover:bg-foreground/10 hover:text-foreground'
-                          >
-                            <Edit2 className='size-3' />
-                            {t('edit')}
-                          </button>
-                        )}
-                        {activity.type === 'ENGAGEMENT' && activity.subType === 'NOTE_ADDED' && (
-                          <button
-                            type='button'
-                            onClick={() => handleDeleteNote(activity.id)}
-                            className='flex cursor-pointer items-center gap-1 rounded bg-muted/50 px-1 py-0.5 text-muted-foreground text-xs transition-colors hover:bg-foreground/10 hover:text-foreground'
-                          >
-                            <Trash className='size-3' />
-                            {t('delete')}
-                          </button>
-                        )}
+                        {activity.type === 'ENGAGEMENT' &&
+                          activity.subType === 'NOTE_ADDED' && (
+                            <button
+                              type='button'
+                              onClick={() => setReplyingTo(activity.id)}
+                              className='flex cursor-pointer items-center gap-1 rounded bg-muted/50 px-1 py-0.5 text-muted-foreground text-xs transition-colors hover:bg-foreground/10 hover:text-foreground'
+                            >
+                              <MessageCircle className='size-3' />
+                              {t('reply')}
+                            </button>
+                          )}
+                        {activity.type === 'ENGAGEMENT' &&
+                          activity.subType === 'NOTE_ADDED' && (
+                            <button
+                              type='button'
+                              onClick={() =>
+                                handleEditNote(
+                                  activity.id,
+                                  activity.description
+                                )
+                              }
+                              className='flex cursor-pointer items-center gap-1 rounded bg-muted/50 px-1 py-0.5 text-muted-foreground text-xs transition-colors hover:bg-foreground/10 hover:text-foreground'
+                            >
+                              <Edit2 className='size-3' />
+                              {t('edit')}
+                            </button>
+                          )}
+                        {activity.type === 'ENGAGEMENT' &&
+                          activity.subType === 'NOTE_ADDED' && (
+                            <button
+                              type='button'
+                              onClick={() => handleDeleteNote(activity.id)}
+                              className='flex cursor-pointer items-center gap-1 rounded bg-muted/50 px-1 py-0.5 text-muted-foreground text-xs transition-colors hover:bg-foreground/10 hover:text-foreground'
+                            >
+                              <Trash className='size-3' />
+                              {t('delete')}
+                            </button>
+                          )}
                       </div>
                     </div>
-                    <div className={cn('text-sm', activity.type === 'ENGAGEMENT' && activity.subType === 'NOTE_ADDED' ? 'rounded-md bg-blue-50 p-3 dark:bg-blue-950/50' : '')}>
+                    <div
+                      className={cn(
+                        'text-sm',
+                        activity.type === 'ENGAGEMENT' &&
+                          activity.subType === 'NOTE_ADDED'
+                          ? 'rounded-md bg-blue-50 p-3 dark:bg-blue-950/50'
+                          : ''
+                      )}
+                    >
                       {renderDescription(activity, t, locale)}
                       {renderAttachments(activity.metadata ?? null)}
                     </div>
                     {editingNoteId === activity.id && (
-                      <form onSubmit={handleEditSubmit} className='mt-2 flex items-start gap-2'>
+                      <form
+                        onSubmit={handleEditSubmit}
+                        className='mt-2 flex items-start gap-2'
+                      >
                         <div className='relative flex-1'>
                           <Popover open={showMentions}>
                             <PopoverTrigger asChild>
@@ -452,8 +570,12 @@ export function ActivitySection({ activities, onCreateActivity, isLoading, filte
                                 <Textarea
                                   id='editInput'
                                   value={editText}
-                                  onChange={(e) => handleInputChange(e, false, true)}
-                                  onKeyDown={(e) => handleKeyDown(e, false, true)}
+                                  onChange={(e) =>
+                                    handleInputChange(e, false, true)
+                                  }
+                                  onKeyDown={(e) =>
+                                    handleKeyDown(e, false, true)
+                                  }
                                   placeholder={t('edit_note')}
                                   className='min-h-[60px] resize-none'
                                 />
@@ -464,7 +586,9 @@ export function ActivitySection({ activities, onCreateActivity, isLoading, filte
                                 query={mentionSearch}
                                 setQuery={setMentionSearch}
                                 value=''
-                                onChange={(username) => handleMention(username, false, true)}
+                                onChange={(username) =>
+                                  handleMention(username, false, true)
+                                }
                                 setOpen={setShowMentions}
                                 items={userMentionItems}
                                 searchPlaceholder={t('search_users')}
@@ -495,7 +619,10 @@ export function ActivitySection({ activities, onCreateActivity, isLoading, filte
                       </form>
                     )}
                     {replyingTo === activity.id && (
-                      <form onSubmit={handleReplySubmit} className='mt-2 flex items-start gap-2'>
+                      <form
+                        onSubmit={handleReplySubmit}
+                        className='mt-2 flex items-start gap-2'
+                      >
                         <div className='relative flex-1'>
                           <Popover open={showMentions}>
                             <PopoverTrigger asChild>
@@ -515,7 +642,9 @@ export function ActivitySection({ activities, onCreateActivity, isLoading, filte
                                 query={mentionSearch}
                                 setQuery={setMentionSearch}
                                 value=''
-                                onChange={(username) => handleMention(username, true)}
+                                onChange={(username) =>
+                                  handleMention(username, true)
+                                }
                                 setOpen={setShowMentions}
                                 items={userMentionItems}
                                 searchPlaceholder={t('search_users')}
@@ -545,16 +674,21 @@ export function ActivitySection({ activities, onCreateActivity, isLoading, filte
                         </div>
                       </form>
                     )}
-                    {activity.metadata && JSON.parse(activity.metadata).replyTo && (
-                      <button
-                        type='button'
-                        onClick={() => scrollToNote(JSON.parse(activity.metadata as string).replyTo)}
-                        className='mt-1 flex items-center gap-1 rounded bg-muted/50 px-1 py-0.5 text-muted-foreground text-xs transition-colors hover:bg-foreground/10 hover:text-foreground'
-                      >
-                        <ArrowUpRight className='size-3' />
-                        {t('jump_to_original_note')}
-                      </button>
-                    )}
+                    {activity.metadata &&
+                      JSON.parse(activity.metadata).replyTo && (
+                        <button
+                          type='button'
+                          onClick={() =>
+                            scrollToNote(
+                              JSON.parse(activity.metadata as string).replyTo
+                            )
+                          }
+                          className='mt-1 flex items-center gap-1 rounded bg-muted/50 px-1 py-0.5 text-muted-foreground text-xs transition-colors hover:bg-foreground/10 hover:text-foreground'
+                        >
+                          <ArrowUpRight className='size-3' />
+                          {t('jump_to_original_note')}
+                        </button>
+                      )}
                   </div>
                 </div>
               </div>
@@ -578,14 +712,37 @@ export function ActivitySection({ activities, onCreateActivity, isLoading, filte
                     placeholder={t('add_a_note')}
                     className='min-h-[60px] resize-none pr-24'
                   />
-                  {uploadProgress && <div className='absolute bottom-2 left-2 text-muted-foreground text-xs'>{uploadProgress}</div>}
+                  {uploadProgress && (
+                    <div className='absolute bottom-2 left-2 text-muted-foreground text-xs'>
+                      {uploadProgress}
+                    </div>
+                  )}
 
                   <div className='absolute top-2 right-2 flex items-center gap-1'>
-                    <input type='file' ref={fileInputRef} onChange={handleFileUpload} className='hidden' accept='image/*,video/*,audio/*,.pdf,.doc,.docx,.xls,.xlsx,.txt' />
-                    <Button type='button' size='icon' variant='ghost' onClick={() => fileInputRef.current?.click()} disabled={isUploading} className='h-8 w-8' title={t('attach_file')}>
+                    <input
+                      type='file'
+                      ref={fileInputRef}
+                      onChange={handleFileUpload}
+                      className='hidden'
+                      accept='image/*,video/*,audio/*,.pdf,.doc,.docx,.xls,.xlsx,.txt'
+                    />
+                    <Button
+                      type='button'
+                      size='icon'
+                      variant='ghost'
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={isUploading}
+                      className='h-8 w-8'
+                      title={t('attach_file')}
+                    >
                       <Paperclip className='h-4 w-4' />
                     </Button>
-                    <Button type='submit' size='sm' disabled={isLoading || isUploading} className='h-8'>
+                    <Button
+                      type='submit'
+                      size='sm'
+                      disabled={isLoading || isUploading}
+                      className='h-8'
+                    >
                       {t('add_note')}
                     </Button>
                   </div>
@@ -611,12 +768,27 @@ export function ActivitySection({ activities, onCreateActivity, isLoading, filte
             {attachments.length > 0 && (
               <div className='mt-2 flex flex-wrap gap-1'>
                 {attachments.map((attachment, index) => (
-                  <div key={attachment.url} className='flex items-center gap-1 rounded-md bg-muted px-2 py-1 text-xs'>
-                    {attachment.type === 'image' ? <ImageIcon className='h-3 w-3' /> : <FileIcon className='h-3 w-3' />}
-                    <span className='max-w-[150px] truncate' title={attachment.name}>
+                  <div
+                    key={attachment.url}
+                    className='flex items-center gap-1 rounded-md bg-muted px-2 py-1 text-xs'
+                  >
+                    {attachment.type === 'image' ? (
+                      <ImageIcon className='h-3 w-3' />
+                    ) : (
+                      <FileIcon className='h-3 w-3' />
+                    )}
+                    <span
+                      className='max-w-[150px] truncate'
+                      title={attachment.name}
+                    >
                       {attachment.name}
                     </span>
-                    <button type='button' onClick={() => handleRemoveFile(index)} className='ml-1 text-muted-foreground hover:text-foreground' title={t('remove')}>
+                    <button
+                      type='button'
+                      onClick={() => handleRemoveFile(index)}
+                      className='ml-1 text-muted-foreground hover:text-foreground'
+                      title={t('remove')}
+                    >
                       <X className='h-3 w-3' />
                     </button>
                   </div>

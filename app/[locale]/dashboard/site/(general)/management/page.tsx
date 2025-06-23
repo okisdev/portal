@@ -1,17 +1,21 @@
 'use client';
 
-import { PageHeader } from '@/components/shared/page-header';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Form, FormControl, FormField, FormItem, FormLabel } from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { randomColor } from '@/utils/color';
-import { api } from '@/utils/trpc/client';
-import { DndContext, type DragEndEvent, DragOverlay, type DragStartEvent, MouseSensor, TouchSensor, useSensor, useSensors } from '@dnd-kit/core';
-import { SortableContext, arrayMove, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import {
+  DndContext,
+  type DragEndEvent,
+  DragOverlay,
+  type DragStartEvent,
+  MouseSensor,
+  TouchSensor,
+  useSensor,
+  useSensors,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { MoreHorizontal, Pencil, Plus, Trash } from 'lucide-react';
@@ -19,7 +23,35 @@ import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
-import { z } from 'zod';
+import { z } from 'zod/v4';
+import { PageHeader } from '@/components/shared/page-header';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+} from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { cn } from '@/lib/utils';
+import { randomColor } from '@/utils/color';
+import { api } from '@/utils/trpc/client';
 
 const addSchema = z.object({
   value: z.string().min(1, 'Value is required'),
@@ -31,13 +63,29 @@ type AddFormValues = z.infer<typeof addSchema>;
 interface SortableItemProps {
   item: { value: string; color: string };
   type: 'status' | 'priority' | 'source';
-  onEdit: (item: { value: string; color: string }, type: 'status' | 'priority' | 'source') => void;
+  onEdit: (
+    item: { value: string; color: string },
+    type: 'status' | 'priority' | 'source'
+  ) => void;
   onRemove: (value: string) => void;
 }
 
-function SortableItem({ item, type, onEdit, onRemove, index }: SortableItemProps & { index: number }) {
+function SortableItem({
+  item,
+  type,
+  onEdit,
+  onRemove,
+  index,
+}: SortableItemProps & { index: number }) {
   const t = useTranslations();
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: item.value });
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: item.value });
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
@@ -51,26 +99,36 @@ function SortableItem({ item, type, onEdit, onRemove, index }: SortableItemProps
       style={style}
       {...attributes}
       {...listeners}
-      className={`group flex items-center justify-between rounded-lg border bg-card p-3 text-sm shadow-sm cursor-grab active:cursor-grabbing transition-all duration-200 ${
+      className={cn(
+        'group flex cursor-grab items-center justify-between rounded-lg border bg-card p-3 text-sm shadow-sm transition-all duration-200 active:cursor-grabbing',
         isDragging ? 'shadow-md ring-1 ring-primary/50' : 'hover:shadow-md'
-      }`}
+      )}
     >
       <div className='flex items-center gap-3'>
-        <div className='flex h-6 w-6 items-center justify-center rounded-full bg-muted text-muted-foreground text-xs font-medium'>{index + 1}</div>
+        <div className='flex h-6 w-6 items-center justify-center rounded-full bg-muted font-medium text-muted-foreground text-xs'>
+          {index + 1}
+        </div>
         <div className='flex items-center gap-2'>
-          <div className='h-3 w-3 rounded-full' style={{ backgroundColor: item.color }} />
+          <div
+            className='h-3 w-3 rounded-full'
+            style={{ backgroundColor: item.color }}
+          />
           <span>{item.value}</span>
         </div>
       </div>
       <div className='flex items-center gap-2'>
-        <div className='flex -space-x-1 opacity-50 group-hover:opacity-100 transition-opacity'>
+        <div className='-space-x-1 flex opacity-50 transition-opacity group-hover:opacity-100'>
           <div className='h-4 w-4 rounded-full bg-muted' />
           <div className='h-4 w-4 rounded-full bg-muted' />
           <div className='h-4 w-4 rounded-full bg-muted' />
         </div>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant='ghost' size='icon' className='h-6 w-6 opacity-0 group-hover:opacity-100'>
+            <Button
+              variant='ghost'
+              size='icon'
+              className='h-6 w-6 opacity-0 group-hover:opacity-100'
+            >
               <MoreHorizontal className='h-4 w-4' />
             </Button>
           </DropdownMenuTrigger>
@@ -79,7 +137,10 @@ function SortableItem({ item, type, onEdit, onRemove, index }: SortableItemProps
               <Pencil className='mr-2 h-4 w-4' />
               {t('edit')}
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => onRemove(item.value)} className='text-destructive'>
+            <DropdownMenuItem
+              onClick={() => onRemove(item.value)}
+              className='text-destructive'
+            >
               <Trash className='mr-2 h-4 w-4' />
               {t('remove')}
             </DropdownMenuItem>
@@ -90,18 +151,29 @@ function SortableItem({ item, type, onEdit, onRemove, index }: SortableItemProps
   );
 }
 
-function DragOverlayItem({ item, index }: { item: { value: string; color: string }; index: number }) {
+function DragOverlayItem({
+  item,
+  index,
+}: {
+  item: { value: string; color: string };
+  index: number;
+}) {
   return (
     <div className='flex items-center justify-between rounded-lg border bg-card p-3 text-sm shadow-md ring-1 ring-primary/50'>
       <div className='flex items-center gap-3'>
-        <div className='flex h-6 w-6 items-center justify-center rounded-full bg-muted text-muted-foreground text-xs font-medium'>{index + 1}</div>
+        <div className='flex h-6 w-6 items-center justify-center rounded-full bg-muted font-medium text-muted-foreground text-xs'>
+          {index + 1}
+        </div>
         <div className='flex items-center gap-2'>
-          <div className='h-3 w-3 rounded-full' style={{ backgroundColor: item.color }} />
+          <div
+            className='h-3 w-3 rounded-full'
+            style={{ backgroundColor: item.color }}
+          />
           <span>{item.value}</span>
         </div>
       </div>
       <div className='flex items-center gap-2'>
-        <div className='flex -space-x-1 opacity-50'>
+        <div className='-space-x-1 flex opacity-50'>
           <div className='h-4 w-4 rounded-full bg-muted' />
           <div className='h-4 w-4 rounded-full bg-muted' />
           <div className='h-4 w-4 rounded-full bg-muted' />
@@ -118,13 +190,23 @@ export default function ManagementPage() {
   const [isStatusDialogOpen, setIsStatusDialogOpen] = useState(false);
   const [isPriorityDialogOpen, setIsPriorityDialogOpen] = useState(false);
   const [isSourceDialogOpen, setIsSourceDialogOpen] = useState(false);
-  const [editingItem, setEditingItem] = useState<{ value: string; color: string; type: 'status' | 'priority' | 'source' } | null>(null);
+  const [editingItem, setEditingItem] = useState<{
+    value: string;
+    color: string;
+    type: 'status' | 'priority' | 'source';
+  } | null>(null);
   const [activeId, setActiveId] = useState<string | null>(null);
-  const [activeItem, setActiveItem] = useState<{ value: string; color: string } | null>(null);
+  const [activeItem, setActiveItem] = useState<{
+    value: string;
+    color: string;
+  } | null>(null);
 
-  const { data: statusConfig, isLoading: isStatusLoading } = api.site.getConfig.useQuery({ key: 'status' });
-  const { data: priorityConfig, isLoading: isPriorityLoading } = api.site.getConfig.useQuery({ key: 'priority' });
-  const { data: sourceConfig, isLoading: isSourceLoading } = api.site.getConfig.useQuery({ key: 'source' });
+  const { data: statusConfig, isLoading: isStatusLoading } =
+    api.site.getConfig.useQuery({ key: 'status' });
+  const { data: priorityConfig, isLoading: isPriorityLoading } =
+    api.site.getConfig.useQuery({ key: 'priority' });
+  const { data: sourceConfig, isLoading: isSourceLoading } =
+    api.site.getConfig.useQuery({ key: 'source' });
 
   const statusForm = useForm<AddFormValues>({
     resolver: zodResolver(addSchema),
@@ -287,7 +369,10 @@ export default function ManagementPage() {
         color: data.color || randomColor(),
       });
     } else {
-      addStatus.mutate({ value: data.value, color: data.color || randomColor() });
+      addStatus.mutate({
+        value: data.value,
+        color: data.color || randomColor(),
+      });
     }
   };
 
@@ -299,7 +384,10 @@ export default function ManagementPage() {
         color: data.color || randomColor(),
       });
     } else {
-      addPriority.mutate({ value: data.value, color: data.color || randomColor() });
+      addPriority.mutate({
+        value: data.value,
+        color: data.color || randomColor(),
+      });
     }
   };
 
@@ -311,11 +399,17 @@ export default function ManagementPage() {
         color: data.color || randomColor(),
       });
     } else {
-      addSource.mutate({ value: data.value, color: data.color || randomColor() });
+      addSource.mutate({
+        value: data.value,
+        color: data.color || randomColor(),
+      });
     }
   };
 
-  const handleEdit = (item: { value: string; color: string }, type: 'status' | 'priority' | 'source') => {
+  const handleEdit = (
+    item: { value: string; color: string },
+    type: 'status' | 'priority' | 'source'
+  ) => {
     setEditingItem({ ...item, type });
     switch (type) {
       case 'status':
@@ -348,7 +442,10 @@ export default function ManagementPage() {
 
   const sensors = useSensors(mouseSensor, touchSensor);
 
-  const handleDragStart = (event: DragStartEvent, values: { value: string; color: string }[]) => {
+  const handleDragStart = (
+    event: DragStartEvent,
+    values: { value: string; color: string }[]
+  ) => {
     const { active } = event;
     setActiveId(active.id as string);
     const draggedItem = values.find((item) => item.value === active.id);
@@ -357,7 +454,11 @@ export default function ManagementPage() {
     }
   };
 
-  const handleDragEnd = (event: DragEndEvent, type: 'status' | 'priority' | 'source', values: { value: string; color: string }[]) => {
+  const handleDragEnd = (
+    event: DragEndEvent,
+    type: 'status' | 'priority' | 'source',
+    values: { value: string; color: string }[]
+  ) => {
     const { active, over } = event;
     setActiveId(null);
     setActiveItem(null);
@@ -383,7 +484,12 @@ export default function ManagementPage() {
     }
   };
 
-  const renderValues = (values: { value: string; color: string }[] | undefined, isLoading: boolean, onRemove: (value: string) => void, type: 'status' | 'priority' | 'source') => {
+  const renderValues = (
+    values: { value: string; color: string }[] | undefined,
+    isLoading: boolean,
+    onRemove: (value: string) => void,
+    type: 'status' | 'priority' | 'source'
+  ) => {
     if (isLoading) {
       return <div className='text-muted-foreground'>{t('loading')}</div>;
     }
@@ -393,28 +499,52 @@ export default function ManagementPage() {
     }
 
     return (
-      <DndContext sensors={sensors} onDragStart={(event) => handleDragStart(event, values)} onDragEnd={(event) => handleDragEnd(event, type, values)}>
+      <DndContext
+        sensors={sensors}
+        onDragStart={(event) => handleDragStart(event, values)}
+        onDragEnd={(event) => handleDragEnd(event, type, values)}
+      >
         <div className='space-y-4'>
-          <div className='flex items-center justify-between text-sm text-muted-foreground'>
+          <div className='flex items-center justify-between text-muted-foreground text-sm'>
             <span>{t('drag_to_reorder')}</span>
             <span>{t('total_items', { count: values.length })}</span>
           </div>
-          <SortableContext items={values.map((item) => item.value)} strategy={verticalListSortingStrategy}>
+          <SortableContext
+            items={values.map((item) => item.value)}
+            strategy={verticalListSortingStrategy}
+          >
             <div className='space-y-2'>
               {values.map((item, index) => (
-                <SortableItem key={item.value} item={item} type={type} onEdit={handleEdit} onRemove={onRemove} index={index} />
+                <SortableItem
+                  key={item.value}
+                  item={item}
+                  type={type}
+                  onEdit={handleEdit}
+                  onRemove={onRemove}
+                  index={index}
+                />
               ))}
             </div>
           </SortableContext>
         </div>
-        <DragOverlay>{activeItem ? <DragOverlayItem item={activeItem} index={values.findIndex((item) => item.value === activeId)} /> : null}</DragOverlay>
+        <DragOverlay>
+          {activeItem ? (
+            <DragOverlayItem
+              item={activeItem}
+              index={values.findIndex((item) => item.value === activeId)}
+            />
+          ) : null}
+        </DragOverlay>
       </DndContext>
     );
   };
 
   return (
     <div className='container mx-auto space-y-4 p-4'>
-      <PageHeader title={t('management')} description={t('management_description')} />
+      <PageHeader
+        title={t('management')}
+        description={t('management_description')}
+      />
 
       <Tabs defaultValue='status' className='space-y-6'>
         <TabsList className='grid w-full grid-cols-3'>
@@ -426,39 +556,72 @@ export default function ManagementPage() {
         <TabsContent value='status'>
           <Card>
             <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
-              <CardTitle className='font-semibold text-xl'>{t('status_management')}</CardTitle>
+              <CardTitle className='font-semibold text-xl'>
+                {t('status_management')}
+              </CardTitle>
               <Button onClick={() => setIsStatusDialogOpen(true)} size='sm'>
                 <Plus className='mr-2 h-4 w-4' />
                 {t('add_status')}
               </Button>
             </CardHeader>
-            <CardContent>{renderValues(statusConfig?.value ? JSON.parse(statusConfig.value) : undefined, isStatusLoading, (value) => removeStatus.mutate({ value }), 'status')}</CardContent>
+            <CardContent>
+              {renderValues(
+                statusConfig?.value
+                  ? JSON.parse(statusConfig.value)
+                  : undefined,
+                isStatusLoading,
+                (value) => removeStatus.mutate({ value }),
+                'status'
+              )}
+            </CardContent>
           </Card>
         </TabsContent>
 
         <TabsContent value='priority'>
           <Card>
             <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
-              <CardTitle className='font-semibold text-xl'>{t('priority_management')}</CardTitle>
+              <CardTitle className='font-semibold text-xl'>
+                {t('priority_management')}
+              </CardTitle>
               <Button onClick={() => setIsPriorityDialogOpen(true)} size='sm'>
                 <Plus className='mr-2 h-4 w-4' />
                 {t('add_priority')}
               </Button>
             </CardHeader>
-            <CardContent>{renderValues(priorityConfig?.value ? JSON.parse(priorityConfig.value) : undefined, isPriorityLoading, (value) => removePriority.mutate({ value }), 'priority')}</CardContent>
+            <CardContent>
+              {renderValues(
+                priorityConfig?.value
+                  ? JSON.parse(priorityConfig.value)
+                  : undefined,
+                isPriorityLoading,
+                (value) => removePriority.mutate({ value }),
+                'priority'
+              )}
+            </CardContent>
           </Card>
         </TabsContent>
 
         <TabsContent value='source'>
           <Card>
             <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
-              <CardTitle className='font-semibold text-xl'>{t('source_management')}</CardTitle>
+              <CardTitle className='font-semibold text-xl'>
+                {t('source_management')}
+              </CardTitle>
               <Button onClick={() => setIsSourceDialogOpen(true)} size='sm'>
                 <Plus className='mr-2 h-4 w-4' />
                 {t('add_source')}
               </Button>
             </CardHeader>
-            <CardContent>{renderValues(sourceConfig?.value ? JSON.parse(sourceConfig.value) : undefined, isSourceLoading, (value) => removeSource.mutate({ value }), 'source')}</CardContent>
+            <CardContent>
+              {renderValues(
+                sourceConfig?.value
+                  ? JSON.parse(sourceConfig.value)
+                  : undefined,
+                isSourceLoading,
+                (value) => removeSource.mutate({ value }),
+                'source'
+              )}
+            </CardContent>
           </Card>
         </TabsContent>
       </Tabs>
@@ -472,10 +635,15 @@ export default function ManagementPage() {
       >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{editingItem ? t('edit_status') : t('add_status')}</DialogTitle>
+            <DialogTitle>
+              {editingItem ? t('edit_status') : t('add_status')}
+            </DialogTitle>
           </DialogHeader>
           <Form {...statusForm}>
-            <form onSubmit={statusForm.handleSubmit(onSubmitStatus)} className='space-y-4'>
+            <form
+              onSubmit={statusForm.handleSubmit(onSubmitStatus)}
+              className='space-y-4'
+            >
               <FormField
                 control={statusForm.control}
                 name='value'
@@ -501,7 +669,9 @@ export default function ManagementPage() {
                 )}
               />
               <DialogFooter>
-                <Button type='submit'>{editingItem ? t('update') : t('add')}</Button>
+                <Button type='submit'>
+                  {editingItem ? t('update') : t('add')}
+                </Button>
               </DialogFooter>
             </form>
           </Form>
@@ -517,10 +687,15 @@ export default function ManagementPage() {
       >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{editingItem ? t('edit_priority') : t('add_priority')}</DialogTitle>
+            <DialogTitle>
+              {editingItem ? t('edit_priority') : t('add_priority')}
+            </DialogTitle>
           </DialogHeader>
           <Form {...priorityForm}>
-            <form onSubmit={priorityForm.handleSubmit(onSubmitPriority)} className='space-y-4'>
+            <form
+              onSubmit={priorityForm.handleSubmit(onSubmitPriority)}
+              className='space-y-4'
+            >
               <FormField
                 control={priorityForm.control}
                 name='value'
@@ -528,7 +703,10 @@ export default function ManagementPage() {
                   <FormItem>
                     <FormLabel>{t('priority_value')}</FormLabel>
                     <FormControl>
-                      <Input {...field} placeholder={t('enter_priority_value')} />
+                      <Input
+                        {...field}
+                        placeholder={t('enter_priority_value')}
+                      />
                     </FormControl>
                   </FormItem>
                 )}
@@ -546,7 +724,9 @@ export default function ManagementPage() {
                 )}
               />
               <DialogFooter>
-                <Button type='submit'>{editingItem ? t('update') : t('add')}</Button>
+                <Button type='submit'>
+                  {editingItem ? t('update') : t('add')}
+                </Button>
               </DialogFooter>
             </form>
           </Form>
@@ -562,10 +742,15 @@ export default function ManagementPage() {
       >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{editingItem ? t('edit_source') : t('add_source')}</DialogTitle>
+            <DialogTitle>
+              {editingItem ? t('edit_source') : t('add_source')}
+            </DialogTitle>
           </DialogHeader>
           <Form {...sourceForm}>
-            <form onSubmit={sourceForm.handleSubmit(onSubmitSource)} className='space-y-4'>
+            <form
+              onSubmit={sourceForm.handleSubmit(onSubmitSource)}
+              className='space-y-4'
+            >
               <FormField
                 control={sourceForm.control}
                 name='value'
@@ -591,7 +776,9 @@ export default function ManagementPage() {
                 )}
               />
               <DialogFooter>
-                <Button type='submit'>{editingItem ? t('update') : t('add')}</Button>
+                <Button type='submit'>
+                  {editingItem ? t('update') : t('add')}
+                </Button>
               </DialogFooter>
             </form>
           </Form>

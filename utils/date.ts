@@ -1,6 +1,6 @@
-import type { Locale } from '@/types/i18n';
 import { type Locale as DateFnsLocale, format } from 'date-fns';
 import { enUS, zhCN, zhHK } from 'date-fns/locale';
+import type { Locale } from '@/types/i18n';
 
 export const dateLocaleMap: Record<Locale, DateFnsLocale> = {
   en: enUS,
@@ -8,7 +8,13 @@ export const dateLocaleMap: Record<Locale, DateFnsLocale> = {
   'zh-CN': zhCN,
 } as const;
 
-export function formatDate(date: Date, locale: Locale = (typeof window !== 'undefined' ? window.navigator.language : 'en') as Locale, noTime = false) {
+export function formatDate(
+  date: Date,
+  locale: Locale = (
+    typeof window !== 'undefined' ? window.navigator.language : 'en'
+  ) as Locale,
+  noTime = false
+) {
   const dateLocale = dateLocaleMap[locale] || enUS;
 
   // Convert to HKT for display
@@ -22,6 +28,11 @@ export function formatDate(date: Date, locale: Locale = (typeof window !== 'unde
   });
 }
 
-export function formatDateWithoutTime(date: Date, locale: Locale = (typeof window !== 'undefined' ? window.navigator.language : 'en') as Locale) {
+export function formatDateWithoutTime(
+  date: Date,
+  locale: Locale = (
+    typeof window !== 'undefined' ? window.navigator.language : 'en'
+  ) as Locale
+) {
   return formatDate(date, locale, true);
 }

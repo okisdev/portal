@@ -1,21 +1,27 @@
 'use client';
 
+import { formatDistanceToNow } from 'date-fns';
+import { Bell, Mail, MessageSquare } from 'lucide-react';
+import { nanoid } from 'nanoid';
+import Link from 'next/link';
+import { useLocale, useTranslations } from 'next-intl';
+import { useState } from 'react';
+import { toast } from 'sonner';
 import { PageHeader } from '@/components/shared/page-header';
 import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { Notifications } from '@/lib/schema';
 import { cn } from '@/lib/utils';
 import type { Locale } from '@/types/i18n';
 import { dateLocaleMap } from '@/utils/date';
 import { api } from '@/utils/trpc/client';
-import { formatDistanceToNow } from 'date-fns';
-import { Bell, Mail, MessageSquare } from 'lucide-react';
-import { nanoid } from 'nanoid';
-import { useLocale, useTranslations } from 'next-intl';
-import Link from 'next/link';
-import { useState } from 'react';
-import { toast } from 'sonner';
 
 export default function NotificationsPage() {
   const t = useTranslations();
@@ -26,7 +32,8 @@ export default function NotificationsPage() {
 
   const utils = api.useUtils();
 
-  const { data: notifications, isLoading } = api.user.getNotifications.useQuery();
+  const { data: notifications, isLoading } =
+    api.user.getNotifications.useQuery();
 
   const markAsRead = api.user.markNotificationAsRead.useMutation({
     onSuccess: () => {
@@ -69,7 +76,10 @@ export default function NotificationsPage() {
 
   return (
     <div className='space-y-6 p-6'>
-      <PageHeader title={t('notifications')} description={t('notifications_description')} />
+      <PageHeader
+        title={t('notifications')}
+        description={t('notifications_description')}
+      />
 
       <div className='flex h-[calc(100vh-12rem)] flex-col gap-8'>
         <div className='flex items-center justify-between'>
@@ -87,8 +97,16 @@ export default function NotificationsPage() {
               </SelectContent>
             </Select>
           </div>
-          <Button variant='outline' size='sm' disabled={markAllAsRead.isPending} onClick={() => markAllAsRead.mutate()} className='transition-colors hover:bg-neutral-100 dark:hover:bg-neutral-800'>
-            {markAllAsRead.isPending ? t('marking_all_as_read') : t('mark_all_as_read')}
+          <Button
+            variant='outline'
+            size='sm'
+            disabled={markAllAsRead.isPending}
+            onClick={() => markAllAsRead.mutate()}
+            className='transition-colors hover:bg-neutral-100 dark:hover:bg-neutral-800'
+          >
+            {markAllAsRead.isPending
+              ? t('marking_all_as_read')
+              : t('mark_all_as_read')}
           </Button>
         </div>
 
@@ -97,7 +115,10 @@ export default function NotificationsPage() {
             Array(3)
               .fill(0)
               .map((_, i) => (
-                <div key={nanoid()} className='flex animate-pulse flex-col gap-2 rounded-lg border bg-white p-4 shadow-xs dark:border-neutral-800 dark:bg-neutral-900'>
+                <div
+                  key={nanoid()}
+                  className='flex animate-pulse flex-col gap-2 rounded-lg border bg-white p-4 shadow-xs dark:border-neutral-800 dark:bg-neutral-900'
+                >
                   <div className='flex items-center gap-3'>
                     <Skeleton className='h-8 w-8 rounded-full' />
                     <div className='flex-1 space-y-2'>
@@ -111,7 +132,9 @@ export default function NotificationsPage() {
           {filteredNotifications?.length === 0 && !isLoading && (
             <div className='flex flex-col items-center justify-center rounded-lg border bg-white p-8 text-center dark:border-neutral-800 dark:bg-neutral-900'>
               <Bell className='mb-4 h-12 w-12 text-neutral-300 dark:text-neutral-600' />
-              <p className='text-neutral-500 dark:text-neutral-400'>{t('no_notifications_found')}</p>
+              <p className='text-neutral-500 dark:text-neutral-400'>
+                {t('no_notifications_found')}
+              </p>
             </div>
           )}
 
@@ -130,7 +153,14 @@ export default function NotificationsPage() {
               </div>
               <div className='min-w-0 flex-1'>
                 <div className='flex items-center justify-between gap-4'>
-                  <p className={cn('font-medium text-sm', notification.read ? 'text-neutral-700 dark:text-neutral-300' : 'text-neutral-900 dark:text-neutral-50')}>
+                  <p
+                    className={cn(
+                      'font-medium text-sm',
+                      notification.read
+                        ? 'text-neutral-700 dark:text-neutral-300'
+                        : 'text-neutral-900 dark:text-neutral-50'
+                    )}
+                  >
                     {renderNotificationType(notification)}
                   </p>
                   <time className='whitespace-nowrap text-neutral-500 text-xs dark:text-neutral-400'>
@@ -141,16 +171,34 @@ export default function NotificationsPage() {
                       })}
                   </time>
                 </div>
-                <p className={cn('mt-1 text-xs', notification.read ? 'text-neutral-500 dark:text-neutral-400' : 'text-neutral-600 dark:text-neutral-300')}>{notification.message}</p>
+                <p
+                  className={cn(
+                    'mt-1 text-xs',
+                    notification.read
+                      ? 'text-neutral-500 dark:text-neutral-400'
+                      : 'text-neutral-600 dark:text-neutral-300'
+                  )}
+                >
+                  {notification.message}
+                </p>
               </div>
               <div className='flex flex-row items-center gap-2'>
                 {notification.metadata && (
                   <Button variant='ghost' size='sm'>
-                    <Link href={`/dashboard/crm/${JSON.parse(notification.metadata)?.type}/${JSON.parse(notification.metadata)?.id}`}>{t('view')}</Link>
+                    <Link
+                      href={`/dashboard/crm/${JSON.parse(notification.metadata)?.type}/${JSON.parse(notification.metadata)?.id}`}
+                    >
+                      {t('view')}
+                    </Link>
                   </Button>
                 )}
                 {!notification.read && (
-                  <Button variant='ghost' size='sm' className='hover:bg-blue-300 dark:hover:bg-blue-800' onClick={() => markAsRead.mutate(notification.id)}>
+                  <Button
+                    variant='ghost'
+                    size='sm'
+                    className='hover:bg-blue-300 dark:hover:bg-blue-800'
+                    onClick={() => markAsRead.mutate(notification.id)}
+                  >
                     {t('mark_as_read')}
                   </Button>
                 )}
@@ -166,10 +214,14 @@ export default function NotificationsPage() {
 function NotificationIcon({ type }: { type: string }) {
   switch (type) {
     case 'message':
-      return <MessageSquare className='h-5 w-5 text-blue-500 dark:text-blue-400' />;
+      return (
+        <MessageSquare className='h-5 w-5 text-blue-500 dark:text-blue-400' />
+      );
     case 'email':
       return <Mail className='h-5 w-5 text-green-500 dark:text-green-400' />;
     default:
-      return <Bell className='h-5 w-5 text-neutral-500 dark:text-neutral-400' />;
+      return (
+        <Bell className='h-5 w-5 text-neutral-500 dark:text-neutral-400' />
+      );
   }
 }

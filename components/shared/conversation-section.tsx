@@ -1,20 +1,24 @@
 'use client';
 
-import { ComboboxCommand } from '@/components/shared/combobox';
-import { MetadataPopover } from '@/components/shared/metadata-popover';
-import { NameTag } from '@/components/shared/name-tag';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Button } from '@/components/ui/button';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Textarea } from '@/components/ui/textarea';
-import { cn } from '@/lib/utils';
-import { formatDate } from '@/utils/date';
-import { api } from '@/utils/trpc/client';
 import { format } from 'date-fns';
 import { ArrowUpRight } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import { useTranslations } from 'next-intl';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { ComboboxCommand } from '@/components/shared/combobox';
+import { MetadataPopover } from '@/components/shared/metadata-popover';
+import { NameTag } from '@/components/shared/name-tag';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import { Textarea } from '@/components/ui/textarea';
+import { cn } from '@/lib/utils';
+import { formatDate } from '@/utils/date';
+import { api } from '@/utils/trpc/client';
 
 interface Activity {
   id: string;
@@ -37,12 +41,24 @@ interface Activity {
 
 interface ConversationSectionProps {
   activities?: Activity[];
-  onCreateActivity: (data: { type: string; subType: string; description: string; initiatorType: 'user' | 'system'; initiatorId: string; metadata?: any }) => void;
+  onCreateActivity: (data: {
+    type: string;
+    subType: string;
+    description: string;
+    initiatorType: 'user' | 'system';
+    initiatorId: string;
+    metadata?: any;
+  }) => void;
   isLoading?: boolean;
   contactId?: string;
 }
 
-export function ConversationSection({ activities, onCreateActivity, isLoading, contactId }: ConversationSectionProps) {
+export function ConversationSection({
+  activities,
+  onCreateActivity,
+  isLoading,
+  contactId,
+}: ConversationSectionProps) {
   const t = useTranslations();
   const { data: session } = useSession();
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -59,8 +75,17 @@ export function ConversationSection({ activities, onCreateActivity, isLoading, c
 
   const conversationActivities = useMemo(() => {
     return activities
-      ?.filter((activity) => activity.type === 'ENGAGEMENT' && (activity.subType === 'MESSAGE_SENT' || activity.subType === 'MESSAGE_RECEIVED' || activity.subType === 'NOTE_ADDED'))
-      .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+      ?.filter(
+        (activity) =>
+          activity.type === 'ENGAGEMENT' &&
+          (activity.subType === 'MESSAGE_SENT' ||
+            activity.subType === 'MESSAGE_RECEIVED' ||
+            activity.subType === 'NOTE_ADDED')
+      )
+      .sort(
+        (a, b) =>
+          new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+      );
   }, [activities]);
 
   const userMentionData =
@@ -89,7 +114,10 @@ export function ConversationSection({ activities, onCreateActivity, isLoading, c
     );
   };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>, isReply = false) => {
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLTextAreaElement>,
+    isReply = false
+  ) => {
     const value = e.target.value;
     isReply ? setReplyText(value) : setNewActivity(value);
 
@@ -118,13 +146,18 @@ export function ConversationSection({ activities, onCreateActivity, isLoading, c
   const handleMention = useCallback(
     (username: string, isReply = false) => {
       const currentValue = isReply ? replyText : newActivity;
-      const beforeMention = currentValue.slice(0, currentValue.lastIndexOf('@'));
+      const beforeMention = currentValue.slice(
+        0,
+        currentValue.lastIndexOf('@')
+      );
       const afterMention = currentValue.slice(cursorPosition);
       const newValue = `${beforeMention}@${username} ${afterMention}`;
 
       if (isReply) {
         setReplyText(newValue);
-        const replyInput = document.getElementById('replyInput') as HTMLInputElement;
+        const replyInput = document.getElementById(
+          'replyInput'
+        ) as HTMLInputElement;
         if (replyInput) {
           replyInput.focus();
           const newCursorPos = beforeMention.length + username.length + 2;
@@ -188,7 +221,10 @@ export function ConversationSection({ activities, onCreateActivity, isLoading, c
     }
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>, isReply = false) => {
+  const handleKeyDown = (
+    e: React.KeyboardEvent<HTMLTextAreaElement>,
+    isReply = false
+  ) => {
     if (e.key === 'Enter' && e.shiftKey) {
       e.preventDefault();
       if (isReply) {
@@ -211,7 +247,9 @@ export function ConversationSection({ activities, onCreateActivity, isLoading, c
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as Node;
-      const popover = document.querySelector('[data-radix-popper-content-wrapper]');
+      const popover = document.querySelector(
+        '[data-radix-popper-content-wrapper]'
+      );
 
       if (popover?.contains(target)) {
         return;
@@ -238,10 +276,20 @@ export function ConversationSection({ activities, onCreateActivity, isLoading, c
       <div id='activities-container' className='flex-1 overflow-y-auto'>
         <div className='pointer-events-none sticky top-0 z-10 h-4 bg-linear-to-b from-background to-transparent' />
         <div className='space-y-1'>
-          {conversationActivities?.length === 0 && <p className='text-muted-foreground text-sm'>{t('no_activities_found')}</p>}
+          {conversationActivities?.length === 0 && (
+            <p className='text-muted-foreground text-sm'>
+              {t('no_activities_found')}
+            </p>
+          )}
           {conversationActivities?.map((activity, index) => {
             const currentDate = format(new Date(activity.createdAt), 'PP');
-            const prevDate = index > 0 ? format(new Date(conversationActivities[index - 1].createdAt), 'PP') : null;
+            const prevDate =
+              index > 0
+                ? format(
+                    new Date(conversationActivities[index - 1].createdAt),
+                    'PP'
+                  )
+                : null;
             const showDateDivider = currentDate !== prevDate;
             const isWhatsAppMessage = activity.metadata?.channel === 'whatsapp';
             const isIncoming = activity.subType === 'MESSAGE_RECEIVED';
@@ -250,65 +298,110 @@ export function ConversationSection({ activities, onCreateActivity, isLoading, c
               <div key={activity.id} id={`note-${activity.id}`}>
                 {showDateDivider && (
                   <div className='sticky top-0 bg-background/95 py-2 backdrop-blur-sm supports-backdrop-filter:bg-background/60'>
-                    <p className='font-medium text-muted-foreground text-sm'>{currentDate}</p>
+                    <p className='font-medium text-muted-foreground text-sm'>
+                      {currentDate}
+                    </p>
                   </div>
                 )}
                 <div
                   className={cn(
                     'flex items-start gap-3 py-3 pr-2 pl-4',
-                    isWhatsAppMessage ? (isIncoming ? 'justify-start' : 'justify-end') : 'border-l-2 hover:bg-muted/30',
-                    highlightedNote === activity.id && 'bg-neutral-500/20 dark:bg-neutral-500/50',
+                    isWhatsAppMessage
+                      ? isIncoming
+                        ? 'justify-start'
+                        : 'justify-end'
+                      : 'border-l-2 hover:bg-muted/30',
+                    highlightedNote === activity.id &&
+                      'bg-neutral-500/20 dark:bg-neutral-500/50',
                     activity.metadata?.replyTo && 'ml-4'
                   )}
                   style={{
-                    borderLeftColor: !isWhatsAppMessage ? 'rgb(59 130 246)' : 'transparent',
+                    borderLeftColor: !isWhatsAppMessage
+                      ? 'rgb(59 130 246)'
+                      : 'transparent',
                   }}
                 >
-                  <div className={cn('flex-1 space-y-1', isWhatsAppMessage && 'max-w-[80%]')}>
+                  <div
+                    className={cn(
+                      'flex-1 space-y-1',
+                      isWhatsAppMessage && 'max-w-[80%]'
+                    )}
+                  >
                     <div className='flex w-full items-center justify-between'>
                       <div className='flex items-center gap-2 text-sm'>
                         {!isWhatsAppMessage && (
                           <>
-                            <span className='font-medium'>{activity.subType && t(activity.subType)}</span>
-                            <span className='text-muted-foreground text-xs'>•</span>
+                            <span className='font-medium'>
+                              {activity.subType && t(activity.subType)}
+                            </span>
+                            <span className='text-muted-foreground text-xs'>
+                              •
+                            </span>
                           </>
                         )}
                         {activity.initiatorType === 'system' ? (
-                          <span className='text-muted-foreground text-xs'>{t('by_system')}</span>
+                          <span className='text-muted-foreground text-xs'>
+                            {t('by_system')}
+                          </span>
                         ) : (
                           <span className='flex items-center gap-1 text-muted-foreground text-xs'>
                             {t.rich('by_who', {
-                              name: () => <NameTag id={activity.userId || ''} type='user' />,
+                              name: () => (
+                                <NameTag
+                                  id={activity.userId || ''}
+                                  type='user'
+                                />
+                              ),
                             })}
                           </span>
                         )}
                         <span className='text-muted-foreground text-xs'>•</span>
-                        <span className='text-muted-foreground text-xs'>{formatDate(new Date(activity.createdAt))}</span>
+                        <span className='text-muted-foreground text-xs'>
+                          {formatDate(new Date(activity.createdAt))}
+                        </span>
                       </div>
                       <div className='flex items-center gap-2'>
                         {activity.metadata && !isWhatsAppMessage && (
                           <MetadataPopover title={t('view_details')}>
-                            <pre className='whitespace-pre-wrap font-mono text-xs'>{JSON.stringify(activity.metadata, null, 2)}</pre>
+                            <pre className='whitespace-pre-wrap font-mono text-xs'>
+                              {JSON.stringify(activity.metadata, null, 2)}
+                            </pre>
                           </MetadataPopover>
                         )}
-                        {!isWhatsAppMessage && activity.subType === 'NOTE_ADDED' && (
-                          <button type='button' onClick={() => setReplyingTo(activity.id)} className='rounded-md bg-muted/50 px-1 py-0.5 text-muted-foreground text-xs hover:bg-muted'>
-                            {t('reply')}
-                          </button>
-                        )}
+                        {!isWhatsAppMessage &&
+                          activity.subType === 'NOTE_ADDED' && (
+                            <button
+                              type='button'
+                              onClick={() => setReplyingTo(activity.id)}
+                              className='rounded-md bg-muted/50 px-1 py-0.5 text-muted-foreground text-xs hover:bg-muted'
+                            >
+                              {t('reply')}
+                            </button>
+                          )}
                       </div>
                     </div>
                     <div
                       className={cn(
                         'text-sm',
-                        isWhatsAppMessage ? (isIncoming ? 'rounded-lg bg-muted p-3' : 'rounded-lg bg-blue-500 text-white p-3') : 'rounded-md bg-blue-50 p-3 dark:bg-blue-950/50'
+                        isWhatsAppMessage
+                          ? isIncoming
+                            ? 'rounded-lg bg-muted p-3'
+                            : 'rounded-lg bg-blue-500 p-3 text-white'
+                          : 'rounded-md bg-blue-50 p-3 dark:bg-blue-950/50'
                       )}
                     >
                       {activity.description}
                     </div>
-                    {activity.metadata?.status && isWhatsAppMessage && <div className='text-right text-muted-foreground text-xs'>{activity.metadata.status}</div>}
+                    {activity.metadata?.status && isWhatsAppMessage && (
+                      <div className='text-right text-muted-foreground text-xs'>
+                        {activity.metadata.status}
+                      </div>
+                    )}
                     {replyingTo === activity.id && (
-                      <form onSubmit={handleReplySubmit} className='mt-2 flex items-start gap-2'>
+                      <form
+                        onSubmit={handleReplySubmit}
+                        className='mt-2 flex items-start gap-2'
+                      >
                         <div className='relative flex-1'>
                           <Popover open={showMentions}>
                             <PopoverTrigger asChild>
@@ -328,7 +421,9 @@ export function ConversationSection({ activities, onCreateActivity, isLoading, c
                                 query={mentionSearch}
                                 setQuery={setMentionSearch}
                                 value=''
-                                onChange={(username) => handleMention(username, true)}
+                                onChange={(username) =>
+                                  handleMention(username, true)
+                                }
                                 setOpen={setShowMentions}
                                 items={userMentionItems}
                                 searchPlaceholder={t('search_users')}
@@ -361,7 +456,9 @@ export function ConversationSection({ activities, onCreateActivity, isLoading, c
                     {activity.metadata?.replyTo && (
                       <button
                         type='button'
-                        onClick={() => scrollToNote(activity.metadata?.replyTo as string)}
+                        onClick={() =>
+                          scrollToNote(activity.metadata?.replyTo as string)
+                        }
                         className='mt-1 flex items-center gap-1 rounded bg-muted/50 px-1 py-0.5 text-muted-foreground text-xs transition-colors hover:bg-foreground/10 hover:text-foreground'
                       >
                         <ArrowUpRight className='size-3' />
@@ -376,7 +473,10 @@ export function ConversationSection({ activities, onCreateActivity, isLoading, c
         </div>
       </div>
       <div className='mt-auto bg-background pt-4'>
-        <form onSubmit={handleSubmitActivity} className='relative flex max-w-full flex-col gap-2 sm:flex-row'>
+        <form
+          onSubmit={handleSubmitActivity}
+          className='relative flex max-w-full flex-col gap-2 sm:flex-row'
+        >
           <div className='relative flex-1'>
             <Popover open={showMentions}>
               <PopoverTrigger asChild>
@@ -386,7 +486,11 @@ export function ConversationSection({ activities, onCreateActivity, isLoading, c
                     value={newActivity}
                     onChange={(e) => handleInputChange(e)}
                     onKeyDown={(e) => handleKeyDown(e)}
-                    placeholder={replyingTo ? t('write_a_reply') : t('send_whatsapp_message')}
+                    placeholder={
+                      replyingTo
+                        ? t('write_a_reply')
+                        : t('send_whatsapp_message')
+                    }
                     className='min-h-[60px] resize-none'
                   />
                 </div>
@@ -408,7 +512,12 @@ export function ConversationSection({ activities, onCreateActivity, isLoading, c
               </PopoverContent>
             </Popover>
           </div>
-          <Button type='submit' size='sm' disabled={isLoading} className='w-full sm:w-auto'>
+          <Button
+            type='submit'
+            size='sm'
+            disabled={isLoading}
+            className='w-full sm:w-auto'
+          >
             {replyingTo ? t('reply') : t('send')}
           </Button>
         </form>

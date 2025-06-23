@@ -1,28 +1,53 @@
 'use client';
 
+import { zodResolver } from '@hookform/resolvers/zod';
+import { Edit2, Plus, Users } from 'lucide-react';
+import Link from 'next/link';
+import {
+  notFound,
+  useParams,
+  useRouter,
+  useSearchParams,
+} from 'next/navigation';
+import { useTranslations } from 'next-intl';
+import { useEffect, useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
+import { z } from 'zod/v4';
 import { ActionAlertDialog } from '@/components/shared/action-alert-dialog';
 import { ColorBadge } from '@/components/shared/color-badge';
 import { EventDialog } from '@/components/shared/event-dialog';
 import { PageLoading } from '@/components/shared/page-loading';
 import { PhoneInput } from '@/components/shared/phone-input';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { cn } from '@/lib/utils';
 import { formatDate } from '@/utils/date';
 import { api } from '@/utils/trpc/client';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { Edit2, Plus, Users } from 'lucide-react';
-import { useTranslations } from 'next-intl';
-import Link from 'next/link';
-import { notFound, useParams, useRouter, useSearchParams } from 'next/navigation';
-import { useEffect, useState } from 'react';
-import { useForm } from 'react-hook-form';
-import { toast } from 'sonner';
-import { z } from 'zod';
 
 const createCompanySchema = z.object({
   name: z.string().min(1, 'Name is required'),
@@ -36,11 +61,9 @@ const createCompanySchema = z.object({
   country: z.string().optional(),
   postalCode: z.string().optional(),
   phone: z.string().optional(),
-  email: z.string().optional(),
+  email: z.email('Please input a valid email').optional(),
   status: z.enum(['active', 'inactive']).default('active'),
 });
-
-type CreateCompanySchema = z.infer<typeof createCompanySchema>;
 
 export default function CompanyIdPage() {
   const { id: companyId } = useParams<{ id: string }>();
@@ -82,9 +105,10 @@ export default function CompanyIdPage() {
     companyId: companyId[0],
   });
   const { data: folders } = api.calendar.getMyFolders.useQuery();
-  const { data: participantOptions } = api.calendar.getParticipantOptions.useQuery(undefined, {
-    enabled: isNewMeetingModalOpen,
-  });
+  const { data: participantOptions } =
+    api.calendar.getParticipantOptions.useQuery(undefined, {
+      enabled: isNewMeetingModalOpen,
+    });
 
   const updateCompany = api.company.updateCompany.useMutation({
     onSuccess: () => {
@@ -200,18 +224,33 @@ export default function CompanyIdPage() {
   };
 
   return (
-    <div className='container mx-auto h-[calc(100vh-4rem)] p-0 sm:p-3'>
+    <div className='h-full min-h-0 w-full flex-1'>
       <div className='flex h-full flex-col lg:flex-row'>
         <div className='w-full lg:w-2/3'>
-          <div className='flex h-full flex-col rounded-none border bg-card text-card-foreground shadow-xs sm:rounded-l-lg'>
-            <div className='flex-none border-b p-6'>
-              <div className={cn(company.description ? 'flex items-start justify-between' : 'flex items-center justify-between')}>
+          <div className='flex h-full flex-col text-card-foreground'>
+            <div className='flex-none border-b p-4 md:p-6'>
+              <div
+                className={cn(
+                  company.description
+                    ? 'flex items-start justify-between'
+                    : 'flex items-center justify-between'
+                )}
+              >
                 <div>
                   <h1 className='font-semibold text-xl'>{company.name}</h1>
-                  {company.description && <p className='text-muted-foreground text-sm'>{company.description}</p>}
+                  {company.description && (
+                    <p className='text-muted-foreground text-sm'>
+                      {company.description}
+                    </p>
+                  )}
                 </div>
                 <div className='flex items-center gap-2'>
-                  <Button variant='outline' size='sm' className='h-8' onClick={handleEditClick}>
+                  <Button
+                    variant='outline'
+                    size='sm'
+                    className='h-8'
+                    onClick={handleEditClick}
+                  >
                     <Edit2 className='mr-1 size-4' /> {t('edit_company')}
                   </Button>
                 </div>
@@ -222,18 +261,37 @@ export default function CompanyIdPage() {
               <div className='border-b p-4 sm:p-6'>
                 <div className='flex items-center justify-between'>
                   <p className='font-medium'>{t('company_teams')}</p>
-                  <Button variant='outline' size='sm' className='h-8' onClick={() => router.push(`/dashboard/crm/team/new?companyId=${companyId[0]}`)}>
+                  <Button
+                    variant='outline'
+                    size='sm'
+                    className='h-8'
+                    onClick={() =>
+                      router.push(
+                        `/dashboard/crm/team/new?companyId=${companyId[0]}`
+                      )
+                    }
+                  >
                     <Plus className='mr-1 size-4' /> {t('add_team')}
                   </Button>
                 </div>
                 <div className='mt-4 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3'>
-                  {teams && teams?.length === 0 && <p className='text-muted-foreground text-sm'>{t('no_company_teams_found')}</p>}
+                  {teams && teams?.length === 0 && (
+                    <p className='text-muted-foreground text-sm'>
+                      {t('no_company_teams_found')}
+                    </p>
+                  )}
                   {teams?.map((team) => (
-                    <Link key={team.id} href={`/dashboard/crm/team/${team.id}`} className='rounded-lg border bg-card p-4 transition-colors hover:bg-muted/50'>
+                    <Link
+                      key={team.id}
+                      href={`/dashboard/crm/team/${team.id}`}
+                      className='rounded-lg bg-card p-4 transition-colors hover:bg-muted/50'
+                    >
                       <div className='flex items-center justify-between'>
                         <div>
                           <p className='font-medium'>{team.name}</p>
-                          <p className='text-muted-foreground text-sm'>{team.description || 'N/A'}</p>
+                          <p className='text-muted-foreground text-sm'>
+                            {team.description || 'N/A'}
+                          </p>
                         </div>
                         <div className='flex items-center gap-2'>
                           <div className='flex items-center gap-1'>
@@ -251,24 +309,35 @@ export default function CompanyIdPage() {
         </div>
 
         <div className='w-full lg:w-1/3'>
-          <div className='h-full overflow-y-auto rounded-none border border-t-0 border-l-0 p-4 sm:rounded-r-lg sm:border-t-1 sm:p-6'>
+          <div className='h-full overflow-y-auto border-l bg-card p-3'>
             <div className='space-y-6'>
               <div>
                 <h2 className='mb-4 font-medium'>{t('company_information')}</h2>
                 <div className='space-y-4'>
                   <div>
-                    <Label className='text-muted-foreground text-xs'>{t('industry')}</Label>
+                    <Label className='text-muted-foreground text-xs'>
+                      {t('industry')}
+                    </Label>
                     <p className='text-sm'>{company.industry || 'N/A'}</p>
                   </div>
                   <div>
-                    <Label className='text-muted-foreground text-xs'>{t('size')}</Label>
+                    <Label className='text-muted-foreground text-xs'>
+                      {t('size')}
+                    </Label>
                     <p className='text-sm'>{company.size || 'N/A'}</p>
                   </div>
                   <div>
-                    <Label className='text-muted-foreground text-xs'>{t('website')}</Label>
+                    <Label className='text-muted-foreground text-xs'>
+                      {t('website')}
+                    </Label>
                     <p className='text-sm'>
                       {(company.website && (
-                        <Link href={company.website} target='_blank' rel='noopener noreferrer' className='text-primary hover:underline'>
+                        <Link
+                          href={company.website}
+                          target='_blank'
+                          rel='noopener noreferrer'
+                          className='text-primary hover:underline'
+                        >
                           {company.website}
                         </Link>
                       )) ||
@@ -276,25 +345,50 @@ export default function CompanyIdPage() {
                     </p>
                   </div>
                   <div>
-                    <Label className='text-muted-foreground text-xs'>{t('email')}</Label>
+                    <Label className='text-muted-foreground text-xs'>
+                      {t('email')}
+                    </Label>
                     <p className='text-sm'>{company.email || 'N/A'}</p>
                   </div>
                   <div>
-                    <Label className='text-muted-foreground text-xs'>{t('phone')}</Label>
+                    <Label className='text-muted-foreground text-xs'>
+                      {t('phone')}
+                    </Label>
                     <p className='text-sm'>{company.phone || 'N/A'}</p>
                   </div>
                   <div>
-                    <Label className='text-muted-foreground text-xs'>{t('address')}</Label>
-                    <p className='text-sm'>{[company.address, company.city, company.state, company.country, company.postalCode].filter(Boolean).join(', ') || 'N/A'}</p>
+                    <Label className='text-muted-foreground text-xs'>
+                      {t('address')}
+                    </Label>
+                    <p className='text-sm'>
+                      {[
+                        company.address,
+                        company.city,
+                        company.state,
+                        company.country,
+                        company.postalCode,
+                      ]
+                        .filter(Boolean)
+                        .join(', ') || 'N/A'}
+                    </p>
                   </div>
                   <div>
-                    <Label className='text-muted-foreground text-xs'>{t('status')}</Label>
+                    <Label className='text-muted-foreground text-xs'>
+                      {t('status')}
+                    </Label>
                     <p className='text-sm'>
-                      <ColorBadge type='companyStatus' value={company.status || ''} />
+                      <ColorBadge
+                        type='companyStatus'
+                        value={company.status || ''}
+                      />
                     </p>
                   </div>
                   <div className='flex justify-end'>
-                    <p className='text-muted-foreground text-xs'>{t('created_on', { date: formatDate(new Date(company.createdAt)) })}</p>
+                    <p className='text-muted-foreground text-xs'>
+                      {t('created_on', {
+                        date: formatDate(new Date(company.createdAt)),
+                      })}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -307,14 +401,18 @@ export default function CompanyIdPage() {
                       <Users className='size-5' />
                       <p className='font-medium text-sm'>{t('contacts')}</p>
                     </div>
-                    <p className='mt-2 font-bold text-2xl'>{company.contactCount}</p>
+                    <p className='mt-2 font-bold text-2xl'>
+                      {company.contactCount}
+                    </p>
                   </div>
                   <div className='rounded-lg border bg-background p-4'>
                     <div className='flex items-center gap-2'>
                       <Users className='size-5' />
                       <p className='font-medium text-sm'>{t('teams')}</p>
                     </div>
-                    <p className='mt-2 font-bold text-2xl'>{company.teamCount}</p>
+                    <p className='mt-2 font-bold text-2xl'>
+                      {company.teamCount}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -323,11 +421,16 @@ export default function CompanyIdPage() {
         </div>
       </div>
 
-      <Dialog open={isEditModalOpen} onOpenChange={(open) => !open && handleCloseEdit()}>
+      <Dialog
+        open={isEditModalOpen}
+        onOpenChange={(open) => !open && handleCloseEdit()}
+      >
         <DialogContent className='sm:max-w-[600px]'>
           <DialogHeader>
             <DialogTitle>{t('edit_company')}</DialogTitle>
-            <DialogDescription>{t('edit_company_description')}</DialogDescription>
+            <DialogDescription>
+              {t('edit_company_description')}
+            </DialogDescription>
           </DialogHeader>
           <Form {...editCompanyForm}>
             <form onSubmit={handleSubmitEdit} className='space-y-4'>
@@ -403,7 +506,10 @@ export default function CompanyIdPage() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>{t('status')}</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                      >
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder={t('select_status')} />
@@ -411,7 +517,9 @@ export default function CompanyIdPage() {
                         </FormControl>
                         <SelectContent>
                           <SelectItem value='active'>{t('active')}</SelectItem>
-                          <SelectItem value='inactive'>{t('inactive')}</SelectItem>
+                          <SelectItem value='inactive'>
+                            {t('inactive')}
+                          </SelectItem>
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -427,7 +535,10 @@ export default function CompanyIdPage() {
                   <FormItem>
                     <FormLabel>{t('phone')}</FormLabel>
                     <FormControl>
-                      <PhoneInput value={field.value || ''} onChange={field.onChange} />
+                      <PhoneInput
+                        value={field.value || ''}
+                        onChange={field.onChange}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -517,7 +628,11 @@ export default function CompanyIdPage() {
               </div>
 
               <DialogFooter>
-                <Button variant='outline' type='button' onClick={handleCloseEdit}>
+                <Button
+                  variant='outline'
+                  type='button'
+                  onClick={handleCloseEdit}
+                >
                   {t('cancel')}
                 </Button>
                 <Button type='submit' disabled={updateCompany.isPending}>
@@ -536,7 +651,10 @@ export default function CompanyIdPage() {
         folders={folders}
         participantOptions={
           participantOptions && {
-            users: participantOptions.users.map((u) => ({ id: u.id, name: u.name || '' })),
+            users: participantOptions.users.map((u) => ({
+              id: u.id,
+              name: u.name || '',
+            })),
             contacts: participantOptions.contacts,
           }
         }

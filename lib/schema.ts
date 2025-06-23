@@ -1,3 +1,5 @@
+import type { InferSelectModel } from 'drizzle-orm';
+import { z } from 'zod/v4';
 import type {
   account,
   authenticator,
@@ -30,14 +32,16 @@ import type {
   userNotifications,
   userTask,
 } from '@/drizzle/schema';
-import type { InferSelectModel } from 'drizzle-orm';
-import { z } from 'zod';
 
 // Shared Schema
 
 export const credentialSchema = z.object({
   email: z.string().min(1, 'Email is required').email('Invalid email'),
-  password: z.string().min(1, 'Password is required').min(8, 'Password must be more than 8 characters').max(32, 'Password must be less than 32 characters'),
+  password: z
+    .string()
+    .min(1, 'Password is required')
+    .min(8, 'Password must be more than 8 characters')
+    .max(32, 'Password must be less than 32 characters'),
 });
 
 export const activityTypeSchema = z.enum([
@@ -118,7 +122,13 @@ export type Status = BasicTag;
 export type Source = BasicTag;
 export type Priority = BasicTag;
 
-export const userRoleSchema = z.enum(['ADMIN', 'SALES_MANAGER', 'SALES_ASSISTANT', 'MANAGER', 'USER']);
+export const userRoleSchema = z.enum([
+  'ADMIN',
+  'SALES_MANAGER',
+  'SALES_ASSISTANT',
+  'MANAGER',
+  'USER',
+]);
 
 export type UserRole = z.infer<typeof userRoleSchema>;
 
@@ -215,13 +225,19 @@ export type CalendarEvent = InferSelectModel<typeof calendarEvent>;
 
 export type CalendarEventShare = InferSelectModel<typeof calendarEventShare>;
 
-export type CalendarEventParticipant = InferSelectModel<typeof calendarEventParticipant>;
+export type CalendarEventParticipant = InferSelectModel<
+  typeof calendarEventParticipant
+>;
 
 export type ResourceContent = InferSelectModel<typeof resourceContent>;
 
-export type ResourceContentShare = InferSelectModel<typeof resourceContentShare>;
+export type ResourceContentShare = InferSelectModel<
+  typeof resourceContentShare
+>;
 
-export type ResourceContentSendTrack = InferSelectModel<typeof resourceContentSendTrack>;
+export type ResourceContentSendTrack = InferSelectModel<
+  typeof resourceContentSendTrack
+>;
 
 export type ResourceEmails = InferSelectModel<typeof resourceEmails>;
 

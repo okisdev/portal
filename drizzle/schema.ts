@@ -1,4 +1,14 @@
-import { boolean, foreignKey, integer, pgTable, serial, text, timestamp, unique, varchar } from 'drizzle-orm/pg-core';
+import {
+  boolean,
+  foreignKey,
+  integer,
+  pgTable,
+  serial,
+  text,
+  timestamp,
+  unique,
+  varchar,
+} from 'drizzle-orm/pg-core';
 
 export const verificationToken = pgTable('portal_verification_token', {
   identifier: text().notNull(),
@@ -17,7 +27,9 @@ export const user = pgTable(
     emailVerified: timestamp({ mode: 'string' }),
     password: text(),
     image: text(),
-    role: text('role', { enum: ['ADMIN', 'SALES_MANAGER', 'SALES_ASSISTANT', 'MANAGER', 'USER'] }).default('USER'),
+    role: text('role', {
+      enum: ['ADMIN', 'SALES_MANAGER', 'SALES_ASSISTANT', 'MANAGER', 'USER'],
+    }).default('USER'),
     timezone: text('timezone', {
       enum: [
         // Africa
@@ -249,7 +261,9 @@ export const companyContact = pgTable('portal_company_contact', {
   contactId: text()
     .notNull()
     .references(() => contact.id, { onDelete: 'cascade' }),
-  role: text('role', { enum: ['employee', 'manager', 'executive', 'other'] }).default('employee'),
+  role: text('role', {
+    enum: ['employee', 'manager', 'executive', 'other'],
+  }).default('employee'),
   department: text(),
   startDate: timestamp({ mode: 'date' }),
   endDate: timestamp({ mode: 'date' }),
@@ -373,9 +387,13 @@ export const userNotifications = pgTable('portal_user_notifications', {
   id: serial('id').primaryKey(),
   userId: varchar('user_id').notNull(),
   type: varchar('type', { enum: ['MESSAGE'] }).notNull(),
-  subType: varchar('sub_type', { enum: ['MENTIONED', 'NOTE_ADDED', 'NOTE_UPDATED', 'NOTE_DELETED'] }),
+  subType: varchar('sub_type', {
+    enum: ['MENTIONED', 'NOTE_ADDED', 'NOTE_UPDATED', 'NOTE_DELETED'],
+  }),
   initiatorId: varchar('initiator_id'),
-  initiatorType: varchar('initiator_type', { enum: ['user', 'contact', 'team', 'system'] }),
+  initiatorType: varchar('initiator_type', {
+    enum: ['user', 'contact', 'team', 'system'],
+  }),
   message: text('message').notNull(),
   read: boolean('read').default(false),
   createdAt: timestamp('created_at').defaultNow(),
@@ -441,23 +459,32 @@ export const calendarEventShare = pgTable('portal_calendar_event_share', {
   updatedAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
 });
 
-export const calendarEventParticipant = pgTable('portal_calendar_event_participant', {
-  id: text()
-    .primaryKey()
-    .notNull()
-    .$defaultFn(() => crypto.randomUUID()),
-  eventId: text()
-    .notNull()
-    .references(() => calendarEvent.id, { onDelete: 'cascade' }),
-  participantType: text('participantType', { enum: ['user', 'contact', 'external'] }).notNull(),
-  participantId: text(), // userId or contactId for internal participants
-  email: text(), // for external participants
-  name: text(), // for external participants
-  status: text('status', { enum: ['pending', 'accepted', 'declined', 'tentative'] }).default('pending'),
-  role: text('role', { enum: ['organizer', 'required', 'optional'] }).default('required'),
-  createdAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
-  updatedAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
-});
+export const calendarEventParticipant = pgTable(
+  'portal_calendar_event_participant',
+  {
+    id: text()
+      .primaryKey()
+      .notNull()
+      .$defaultFn(() => crypto.randomUUID()),
+    eventId: text()
+      .notNull()
+      .references(() => calendarEvent.id, { onDelete: 'cascade' }),
+    participantType: text('participantType', {
+      enum: ['user', 'contact', 'external'],
+    }).notNull(),
+    participantId: text(), // userId or contactId for internal participants
+    email: text(), // for external participants
+    name: text(), // for external participants
+    status: text('status', {
+      enum: ['pending', 'accepted', 'declined', 'tentative'],
+    }).default('pending'),
+    role: text('role', { enum: ['organizer', 'required', 'optional'] }).default(
+      'required'
+    ),
+    createdAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
+    updatedAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
+  }
+);
 
 export const resourceContent = pgTable('portal_resource_content', {
   id: text()
@@ -495,26 +522,31 @@ export const resourceContentShare = pgTable('portal_resource_content_share', {
   updatedAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
 });
 
-export const resourceContentSendTrack = pgTable('portal_resource_content_send_track', {
-  id: text()
-    .primaryKey()
-    .notNull()
-    .$defaultFn(() => crypto.randomUUID()),
-  resourceId: text()
-    .notNull()
-    .references(() => resourceContent.id, { onDelete: 'cascade' }),
-  contactId: text()
-    .notNull()
-    .references(() => contact.id, { onDelete: 'cascade' }),
-  sentAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
-  sentBy: text()
-    .notNull()
-    .references(() => user.id),
-  status: text('status', { enum: ['sent', 'delivered', 'read', 'failed'] }).default('sent'),
-  metadata: text(), // JSON string for additional data like delivery channel, error messages, etc.
-  createdAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
-  updatedAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
-});
+export const resourceContentSendTrack = pgTable(
+  'portal_resource_content_send_track',
+  {
+    id: text()
+      .primaryKey()
+      .notNull()
+      .$defaultFn(() => crypto.randomUUID()),
+    resourceId: text()
+      .notNull()
+      .references(() => resourceContent.id, { onDelete: 'cascade' }),
+    contactId: text()
+      .notNull()
+      .references(() => contact.id, { onDelete: 'cascade' }),
+    sentAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
+    sentBy: text()
+      .notNull()
+      .references(() => user.id),
+    status: text('status', {
+      enum: ['sent', 'delivered', 'read', 'failed'],
+    }).default('sent'),
+    metadata: text(), // JSON string for additional data like delivery channel, error messages, etc.
+    createdAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
+    updatedAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
+  }
+);
 
 export const resourceEmails = pgTable('portal_resource_emails', {
   id: text()
@@ -694,8 +726,12 @@ export const userTask = pgTable('portal_user_task', {
   title: text().notNull(),
   description: text(),
   content: text(), // Rich text content for detailed task documentation
-  status: text('status', { enum: ['backlog', 'todo', 'in_progress', 'in_review', 'done'] }).default('todo'),
-  priority: text('priority', { enum: ['urgent', 'high', 'medium', 'low'] }).default('medium'),
+  status: text('status', {
+    enum: ['backlog', 'todo', 'in_progress', 'in_review', 'done'],
+  }).default('todo'),
+  priority: text('priority', {
+    enum: ['urgent', 'high', 'medium', 'low'],
+  }).default('medium'),
   dueDate: timestamp({ mode: 'date' }),
   completedAt: timestamp({ mode: 'date' }),
   assignedTo: text().references(() => user.id), // can be assigned to another user
@@ -719,7 +755,9 @@ export const teamMeeting = pgTable('portal_team_meeting', {
   title: text().notNull(),
   description: text(),
   meetingDate: timestamp({ mode: 'date' }).notNull(),
-  status: text('status', { enum: ['upcoming', 'completed', 'cancelled', 'no_show'] }).default('upcoming'),
+  status: text('status', {
+    enum: ['upcoming', 'completed', 'cancelled', 'no_show'],
+  }).default('upcoming'),
   createdBy: text()
     .notNull()
     .references(() => user.id),
@@ -838,7 +876,15 @@ export const siteConfig = pgTable('portal_site_config', {
     .notNull()
     .$defaultFn(() => crypto.randomUUID()),
   key: text('key', {
-    enum: ['name', 'description', 'domain', 'supportEmailDomains', 'status', 'priority', 'source'],
+    enum: [
+      'name',
+      'description',
+      'domain',
+      'supportEmailDomains',
+      'status',
+      'priority',
+      'source',
+    ],
   })
     .notNull()
     .unique(), // Unique key for the config

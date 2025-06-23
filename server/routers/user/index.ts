@@ -1,42 +1,63 @@
+import { and, count, desc, eq } from 'drizzle-orm';
+import { z } from 'zod/v4';
 import { user, userNotifications } from '@/drizzle/schema';
 import { createTRPCRouter, protectedProcedure } from '@/server/trpc';
-import { and, count, desc, eq } from 'drizzle-orm';
-import { z } from 'zod';
 
 export const userRouter = createTRPCRouter({
   getAllUsers: protectedProcedure.query(({ ctx }) => {
     return ctx.db.select().from(user);
   }),
 
-  getUserById: protectedProcedure.input(z.object({ id: z.string() })).query(({ ctx, input }) => {
-    return ctx.db
-      .select()
-      .from(user)
-      .where(eq(user.id, input.id))
-      .then((rows) => rows[0]);
-  }),
+  getUserById: protectedProcedure
+    .input(z.object({ id: z.string() }))
+    .query(({ ctx, input }) => {
+      return ctx.db
+        .select()
+        .from(user)
+        .where(eq(user.id, input.id))
+        .then((rows) => rows[0]);
+    }),
 
   getNotifications: protectedProcedure.query(({ ctx }) => {
-    return ctx.db.select().from(userNotifications).where(eq(userNotifications.userId, ctx.session.user.id)).orderBy(desc(userNotifications.createdAt));
+    return ctx.db
+      .select()
+      .from(userNotifications)
+      .where(eq(userNotifications.userId, ctx.session.user.id))
+      .orderBy(desc(userNotifications.createdAt));
   }),
 
   getUnreadNotificationsCount: protectedProcedure.query(({ ctx }) => {
     return ctx.db
       .select({ count: count() })
       .from(userNotifications)
-      .where(and(eq(userNotifications.userId, ctx.session.user.id), eq(userNotifications.read, false)))
+      .where(
+        and(
+          eq(userNotifications.userId, ctx.session.user.id),
+          eq(userNotifications.read, false)
+        )
+      )
       .then((rows) => rows[0]);
   }),
 
-  markNotificationAsRead: protectedProcedure.input(z.number()).mutation(({ ctx, input }) => {
+  markNotificationAsRead: protectedProcedure
+    .input(z.number())
+    .mutation(({ ctx, input }) => {
+      return ctx.db
+        .update(userNotifications)
+        .set({ read: true })
+        .where(
+          and(
+            eq(userNotifications.userId, ctx.session.user.id),
+            eq(userNotifications.id, input)
+          )
+        );
+    }),
+
+  markAllNotificationsAsRead: protectedProcedure.mutation(({ ctx }) => {
     return ctx.db
       .update(userNotifications)
       .set({ read: true })
-      .where(and(eq(userNotifications.userId, ctx.session.user.id), eq(userNotifications.id, input)));
-  }),
-
-  markAllNotificationsAsRead: protectedProcedure.mutation(({ ctx }) => {
-    return ctx.db.update(userNotifications).set({ read: true }).where(eq(userNotifications.userId, ctx.session.user.id));
+      .where(eq(userNotifications.userId, ctx.session.user.id));
   }),
 
   createNotification: protectedProcedure
@@ -44,7 +65,12 @@ export const userRouter = createTRPCRouter({
       z.object({
         userId: z.string(),
         type: z.enum(['MESSAGE']),
-        subType: z.enum(['MENTIONED', 'NOTE_ADDED', 'NOTE_UPDATED', 'NOTE_DELETED']),
+        subType: z.enum([
+          'MENTIONED',
+          'NOTE_ADDED',
+          'NOTE_UPDATED',
+          'NOTE_DELETED',
+        ]),
         initiatorId: z.string().optional(),
         initiatorType: z.enum(['user', 'contact', 'team', 'system']),
         message: z.string(),

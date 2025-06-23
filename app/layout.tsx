@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import '@/styles/globals.css';
-import RootProvider from '@/app/provider';
 import type { Metadata } from 'next';
+import RootProvider from '@/app/provider';
 
 export const metadata: Metadata = {
   title: 'Portal',

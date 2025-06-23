@@ -7,12 +7,11 @@
  * need to use are documented accordingly near the end.
  */
 
-import { TRPCError, initTRPC } from '@trpc/server';
-import superjson from 'superjson';
-import { ZodError } from 'zod';
-
-import { database } from '@/lib/database';
+import { initTRPC, TRPCError } from '@trpc/server';
 import type { Session } from 'next-auth';
+import superjson from 'superjson';
+import { ZodError } from 'zod/v4';
+import { database } from '@/lib/database';
 
 /**
  * 1. CONTEXT
@@ -26,7 +25,10 @@ import type { Session } from 'next-auth';
  *
  * @see https://trpc.io/docs/server/context
  */
-export const createTRPCContext = async (opts: { headers: Headers; session: Session | null }) => {
+export const createTRPCContext = async (opts: {
+  headers: Headers;
+  session: Session | null;
+}) => {
   return {
     db: database,
     // session,
@@ -48,7 +50,8 @@ const t = initTRPC.context<typeof createTRPCContext>().create({
       ...shape,
       data: {
         ...shape.data,
-        zodError: error.cause instanceof ZodError ? error.cause.flatten() : null,
+        zodError:
+          error.cause instanceof ZodError ? error.cause.flatten() : null,
       },
     };
   },

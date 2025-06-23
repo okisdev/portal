@@ -1,6 +1,9 @@
-import type { CalendarEventWithParticipants, CalendarFolder } from '@/lib/schema';
 import { eachDayOfInterval, endOfWeek, startOfWeek } from 'date-fns';
 import { useTranslations } from 'next-intl';
+import type {
+  CalendarEventWithParticipants,
+  CalendarFolder,
+} from '@/lib/schema';
 import { DayHeader } from './day-header';
 import { TimeColumn } from './time-column';
 import { TimeGrid } from './time-grid';
@@ -11,7 +14,13 @@ interface WeekViewProps {
   events: CalendarEventWithParticipants[];
   folders: CalendarFolder[];
   hiddenCalendars: Set<string>;
-  onTimeSelect: (date: Date, hour: number, minute: number, isStart: boolean, e?: React.MouseEvent) => void;
+  onTimeSelect: (
+    date: Date,
+    hour: number,
+    minute: number,
+    isStart: boolean,
+    e?: React.MouseEvent
+  ) => void;
   isSelecting: boolean;
   isTimeSlotSelected: (date: Date, hour: number, minute: number) => boolean;
   onSelectionEnd: () => void;
@@ -19,7 +28,19 @@ interface WeekViewProps {
   onEventDelete?: (eventId: string) => void;
 }
 
-export function WeekView({ currentDate, selectedDate, events, folders, hiddenCalendars, onTimeSelect, isSelecting, isTimeSlotSelected, onSelectionEnd, onEventEdit, onEventDelete }: WeekViewProps) {
+export function WeekView({
+  currentDate,
+  selectedDate,
+  events,
+  folders,
+  hiddenCalendars,
+  onTimeSelect,
+  isSelecting,
+  isTimeSlotSelected,
+  onSelectionEnd,
+  onEventEdit,
+  onEventDelete,
+}: WeekViewProps) {
   const t = useTranslations();
 
   const getWeekDays = (date: Date) => {
@@ -47,7 +68,10 @@ export function WeekView({ currentDate, selectedDate, events, folders, hiddenCal
         ))}
       </div>
       <div className='flex-1 overflow-y-auto'>
-        <div className='grid grid-cols-8 divide-x' style={{ height: 'calc(60px * 24)' }}>
+        <div
+          className='grid grid-cols-8 divide-x'
+          style={{ height: 'calc(60px * 24)' }}
+        >
           <TimeColumn />
           {getWeekDays(currentDate).map((date) => (
             <TimeGrid

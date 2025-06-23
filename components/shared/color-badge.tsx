@@ -1,14 +1,26 @@
 import { cn } from '@/lib/utils';
 
 type ColorBadgeProps = {
-  type: 'status' | 'contactStatus' | 'priority' | 'source' | 'default' | 'companyStatus';
+  type:
+    | 'status'
+    | 'contactStatus'
+    | 'priority'
+    | 'source'
+    | 'default'
+    | 'companyStatus';
   value: string;
   color?: string;
   className?: string;
   isActive?: boolean;
 };
 
-export function ColorBadge({ type, value, color, className, isActive }: ColorBadgeProps) {
+export function ColorBadge({
+  type,
+  value,
+  color,
+  className,
+  isActive,
+}: ColorBadgeProps) {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'upcoming':
@@ -56,11 +68,24 @@ export function ColorBadge({ type, value, color, className, isActive }: ColorBad
   const displayValue = () => {
     switch (type) {
       case 'contactStatus':
-        return value.replaceAll('_', ' ').replace(/\b\w/g, (char) => char.toUpperCase());
+        return value
+          .replaceAll('_', ' ')
+          .replace(/\b\w/g, (char) => char.toUpperCase());
       default:
         return value.charAt(0).toUpperCase() + value.slice(1);
     }
   };
 
-  return <span className={cn('inline-block rounded-full px-1.5 py-0.5 font-medium text-xs', colorClass, className, isActive && 'ring-2 ring-offset-2 ring-offset-background')}>{displayValue()}</span>;
+  return (
+    <span
+      className={cn(
+        'inline-block rounded-full px-1.5 py-0.5 font-medium text-xs',
+        colorClass,
+        className,
+        isActive && 'ring-2 ring-offset-2 ring-offset-background'
+      )}
+    >
+      {displayValue()}
+    </span>
+  );
 }

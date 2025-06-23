@@ -1,85 +1,81 @@
 'use client';
 
+import { format, parseISO, subMonths } from 'date-fns';
+import {
+  BarChart2,
+  CheckCircle,
+  Flame,
+  HelpCircle,
+  Phone,
+  PieChart,
+  TrendingUp,
+  Users,
+} from 'lucide-react';
+import { useSession } from 'next-auth/react';
+import { useTranslations } from 'next-intl';
+import { useMemo } from 'react';
+import { Area, AreaChart, CartesianGrid, XAxis } from 'recharts';
 import { PageHeader } from '@/components/shared/page-header';
 import { PageLoading } from '@/components/shared/page-loading';
 import { SmartColorBadge } from '@/components/shared/smart-color-badge';
-import { type ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
+import {
+  type ChartConfig,
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+} from '@/components/ui/chart';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-// import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { api } from '@/utils/trpc/client';
-import { format, startOfMonth, subMonths } from 'date-fns';
-import { BarChart2, CheckCircle, Flame, HelpCircle, Phone, PieChart, TrendingUp, Users } from 'lucide-react';
-import { useSession } from 'next-auth/react';
-import { useTranslations } from 'next-intl';
-import { useMemo, useState } from 'react';
-import { Area, AreaChart, CartesianGrid, XAxis } from 'recharts';
 
 export default function Dashboard() {
   const t = useTranslations();
   const { data: session, status } = useSession();
-  const [timePeriod, setTimePeriod] = useState('this-month');
 
-  // Fetch all contacts and configurations
-  const { data: contacts, isLoading: isContactsLoading } = api.contact.getAllContacts.useQuery();
-  const { data: statusConfig } = api.site.getConfig.useQuery({ key: 'status' });
-  const { data: priorityConfig } = api.site.getConfig.useQuery({ key: 'priority' });
-  const { data: sourceConfig } = api.site.getConfig.useQuery({ key: 'source' });
+  // Fetch dashboard metrics and configurations in parallel
+  const { data: dashboardData, isLoading: isMetricsLoading } =
+    api.contact.getDashboardMetrics.useQuery({
+      dateRange: 'this-month',
+    });
 
-  // Parse configurations
-  const statusItems = useMemo(() => (statusConfig?.value ? JSON.parse(statusConfig.value) : []), [statusConfig]);
-  const priorityItems = useMemo(() => (priorityConfig?.value ? JSON.parse(priorityConfig.value) : []), [priorityConfig]);
-  const sourceItems = useMemo(() => (sourceConfig?.value ? JSON.parse(sourceConfig.value) : []), [sourceConfig]);
+  const { data: configurations, isLoading: isConfigLoading } =
+    api.contact.getAllConfigurations.useQuery();
+
+  const isLoading = isMetricsLoading || isConfigLoading;
 
   // Helper function to get color from config
-  const getColorFromConfig = (value: string, items: { value: string; color: string }[]) => {
+  const getColorFromConfig = (
+    value: string,
+    items: { value: string; color: string }[]
+  ) => {
     return items.find((item) => item.value === value)?.color || '#6B7280';
   };
 
-  // Calculate metrics based on contacts data
-  const metrics = useMemo(() => {
-    if (!contacts) return null;
-
-    const now = new Date();
-    const monthStart = startOfMonth(now);
-    const lastMonthStart = startOfMonth(subMonths(now, 1));
-
-    const thisMonthContacts = contacts.filter((contact) => new Date(contact.createdAt) >= monthStart);
-    const lastMonthContacts = contacts.filter((contact) => new Date(contact.createdAt) >= lastMonthStart && new Date(contact.createdAt) < monthStart);
-
-    const contactedLeads = contacts.filter((contact) => contact.lastContactedAt).length;
-    const qualifiedLeads = contacts.filter((contact) => contact.status === 'Qualified').length;
-    const hotLeads = contacts.filter((contact) => contact.priority === 'High').length;
-
-    const totalGrowth = lastMonthContacts.length > 0 ? ((thisMonthContacts.length - lastMonthContacts.length) / lastMonthContacts.length) * 100 : 0;
-
-    return {
-      total: contacts.length,
-      totalThisMonth: thisMonthContacts.length,
-      contacted: contactedLeads,
-      qualified: qualifiedLeads,
-      hot: hotLeads,
-      growth: totalGrowth.toFixed(0),
-    };
-  }, [contacts]);
-
   // Prepare data for monthly growth chart
   const chartData = useMemo(() => {
-    if (!contacts) return [];
+    if (!dashboardData?.monthlyData || dashboardData.monthlyData.length === 0) {
+      // Return empty data for last 6 months if no data
+      const defaultData = [];
+      for (let i = 5; i >= 0; i--) {
+        const date = subMonths(new Date(), i);
+        defaultData.push({
+          month: format(date, 'MMMM'),
+          leads: 0,
+        });
+      }
+      return defaultData;
+    }
 
-    const last6Months = Array.from({ length: 6 }, (_, i) => {
-      const date = subMonths(new Date(), i);
-      const monthStart = startOfMonth(date);
-      const monthLeads = contacts.filter((contact) => new Date(contact.createdAt) >= monthStart && new Date(contact.createdAt) < (i === 0 ? new Date() : startOfMonth(subMonths(date, -1)))).length;
-
-      return {
-        month: format(date, 'MMMM'),
-        leads: monthLeads,
-      };
-    }).reverse();
-
-    return last6Months;
-  }, [contacts]);
+    return dashboardData.monthlyData.map((item) => ({
+      month: format(parseISO(`${item.month}-01`), 'MMMM'),
+      leads: Number(item.count) || 0,
+    }));
+  }, [dashboardData?.monthlyData]);
 
   const chartConfig = {
     leads: {
@@ -90,84 +86,61 @@ export default function Dashboard() {
 
   // Prepare data for status breakdown
   const statusData = useMemo(() => {
-    if (!contacts || !statusItems.length) return [];
+    if (!dashboardData?.statusBreakdown || !configurations?.statuses) return [];
 
-    const statusCounts = contacts.reduce(
-      (acc, contact) => {
-        acc[contact.status] = (acc[contact.status] || 0) + 1;
-        return acc;
-      },
-      {} as Record<string, number>
-    );
-
-    return Object.entries(statusCounts).map(([status, count]) => ({
-      status,
-      value: count,
-      color: getColorFromConfig(status, statusItems),
+    return dashboardData.statusBreakdown.map((item) => ({
+      status: item.status,
+      value: item.count,
+      color: getColorFromConfig(item.status, configurations.statuses),
     }));
-  }, [contacts, statusItems]);
+  }, [dashboardData?.statusBreakdown, configurations?.statuses]);
 
   // Prepare data for priority breakdown
   const priorityData = useMemo(() => {
-    if (!contacts || !priorityItems.length) return [];
+    if (!dashboardData?.priorityBreakdown || !configurations?.priorities)
+      return [];
 
-    const priorityCounts = contacts.reduce(
-      (acc, contact) => {
-        const priority = contact.priority || 'Medium';
-        acc[priority] = (acc[priority] || 0) + 1;
-        return acc;
-      },
-      {} as Record<string, number>
-    );
+    return dashboardData.priorityBreakdown
+      .filter((item) => item.priority !== null)
+      .map((item) => ({
+        status: item.priority || 'Medium',
+        value: item.count,
+        color: getColorFromConfig(
+          item.priority || 'Medium',
+          configurations.priorities
+        ),
+      }));
+  }, [dashboardData?.priorityBreakdown, configurations?.priorities]);
 
-    return Object.entries(priorityCounts).map(([priority, count]) => ({
-      status: priority,
-      value: count,
-      color: getColorFromConfig(priority, priorityItems),
-    }));
-  }, [contacts, priorityItems]);
+  // Prepare data for source breakdown
+  const sourceData = useMemo(() => {
+    if (!dashboardData?.sourceBreakdown || !configurations?.sources) return [];
 
-  // Prepare data for resource breakdown
-  const resourceData = useMemo(() => {
-    if (!contacts || !sourceItems.length) return [];
+    return dashboardData.sourceBreakdown
+      .filter((item) => item.source !== null)
+      .map((item) => ({
+        status: item.source || 'Other',
+        value: item.count,
+        color: getColorFromConfig(
+          item.source || 'Other',
+          configurations.sources
+        ),
+      }));
+  }, [dashboardData?.sourceBreakdown, configurations?.sources]);
 
-    const resourceCounts = contacts.reduce(
-      (acc, contact) => {
-        const source = contact.source || 'Other';
-        acc[source] = (acc[source] || 0) + 1;
-        return acc;
-      },
-      {} as Record<string, number>
-    );
-
-    return Object.entries(resourceCounts).map(([source, count]) => ({
-      status: source,
-      value: count,
-      color: getColorFromConfig(source, sourceItems),
-    }));
-  }, [contacts, sourceItems]);
-
-  if (status === 'loading' || isContactsLoading) {
+  if (status === 'loading' || isLoading) {
     return <PageLoading />;
   }
+
+  const metrics = dashboardData?.metrics;
 
   return (
     <div className='container mx-auto h-[calc(100vh-4rem)] p-4'>
       <div className='flex h-full flex-col'>
         <div className='mb-6 flex items-center justify-between'>
-          <PageHeader title={t('welcome_back', { name: session?.user?.name || '' })} />
-          {/* <Select value={timePeriod} onValueChange={setTimePeriod}>
-            <SelectTrigger className='w-[180px]'>
-              <SelectValue placeholder='Select period' />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value='this-month'>{t('this_month')}</SelectItem>
-              <SelectItem value='last-month'>{t('last_month')}</SelectItem>
-              <SelectItem value='last-3-months'>{t('last_3_months')}</SelectItem>
-              <SelectItem value='last-6-months'>{t('last_6_months')}</SelectItem>
-              <SelectItem value='this-year'>{t('this_year')}</SelectItem>
-            </SelectContent>
-          </Select> */}
+          <PageHeader
+            title={t('welcome_back', { name: session?.user?.name || '' })}
+          />
         </div>
 
         {/* Main Content */}
@@ -182,7 +155,9 @@ export default function Dashboard() {
                 </div>
                 <div className='min-w-0 flex-1'>
                   <div className='flex items-center gap-1'>
-                    <p className='text-muted-foreground text-sm'>{t('total_leads')}</p>
+                    <p className='text-muted-foreground text-sm'>
+                      {t('total_leads')}
+                    </p>
                     <TooltipProvider>
                       <Tooltip>
                         <TooltipTrigger>
@@ -195,11 +170,26 @@ export default function Dashboard() {
                     </TooltipProvider>
                   </div>
                   <div className='mt-1'>
-                    <p className='truncate font-semibold text-2xl'>{metrics?.total || 0}</p>
+                    <p className='truncate font-semibold text-2xl'>
+                      {metrics?.total || 0}
+                    </p>
                     {metrics?.growth && (
                       <p className='text-muted-foreground text-xs'>
-                        <span className={Number(metrics.growth) > 0 ? 'text-green-500' : Number(metrics.growth) < 0 ? 'text-red-500' : ''}>
-                          {Number(metrics.growth) > 0 ? '↑' : Number(metrics.growth) < 0 ? '↓' : ''} {Math.abs(Number(metrics.growth))}%
+                        <span
+                          className={
+                            Number(metrics.growth) > 0
+                              ? 'text-green-500'
+                              : Number(metrics.growth) < 0
+                                ? 'text-red-500'
+                                : ''
+                          }
+                        >
+                          {Number(metrics.growth) > 0
+                            ? '↑'
+                            : Number(metrics.growth) < 0
+                              ? '↓'
+                              : ''}{' '}
+                          {Math.abs(Number(metrics.growth))}%
                         </span>
                         {' vs last month'}
                       </p>
@@ -214,7 +204,9 @@ export default function Dashboard() {
                 </div>
                 <div className='min-w-0 flex-1'>
                   <div className='flex items-center gap-1'>
-                    <p className='text-muted-foreground text-sm'>{t('contacted_leads')}</p>
+                    <p className='text-muted-foreground text-sm'>
+                      {t('contacted_leads')}
+                    </p>
                     <TooltipProvider>
                       <Tooltip>
                         <TooltipTrigger>
@@ -227,8 +219,16 @@ export default function Dashboard() {
                     </TooltipProvider>
                   </div>
                   <div className='mt-1'>
-                    <p className='truncate font-semibold text-2xl'>{metrics?.contacted || 0}</p>
-                    <p className='text-muted-foreground text-xs'>{(((metrics?.contacted || 0) / (metrics?.total || 1)) * 100).toFixed(0)}% of total</p>
+                    <p className='truncate font-semibold text-2xl'>
+                      {metrics?.contacted || 0}
+                    </p>
+                    <p className='text-muted-foreground text-xs'>
+                      {(
+                        ((metrics?.contacted || 0) / (metrics?.total || 1)) *
+                        100
+                      ).toFixed(0)}
+                      % of total
+                    </p>
                   </div>
                 </div>
               </div>
@@ -239,7 +239,9 @@ export default function Dashboard() {
                 </div>
                 <div className='min-w-0 flex-1'>
                   <div className='flex items-center gap-1'>
-                    <p className='text-muted-foreground text-sm'>{t('qualified_leads')}</p>
+                    <p className='text-muted-foreground text-sm'>
+                      {t('qualified_leads')}
+                    </p>
                     <TooltipProvider>
                       <Tooltip>
                         <TooltipTrigger>
@@ -252,8 +254,16 @@ export default function Dashboard() {
                     </TooltipProvider>
                   </div>
                   <div className='mt-1'>
-                    <p className='truncate font-semibold text-2xl'>{metrics?.qualified || 0}</p>
-                    <p className='text-muted-foreground text-xs'>{(((metrics?.qualified || 0) / (metrics?.total || 1)) * 100).toFixed(0)}% of total</p>
+                    <p className='truncate font-semibold text-2xl'>
+                      {metrics?.qualified || 0}
+                    </p>
+                    <p className='text-muted-foreground text-xs'>
+                      {(
+                        ((metrics?.qualified || 0) / (metrics?.total || 1)) *
+                        100
+                      ).toFixed(0)}
+                      % of total
+                    </p>
                   </div>
                 </div>
               </div>
@@ -264,7 +274,9 @@ export default function Dashboard() {
                 </div>
                 <div className='min-w-0 flex-1'>
                   <div className='flex items-center gap-1'>
-                    <p className='text-muted-foreground text-sm'>{t('hot_leads')}</p>
+                    <p className='text-muted-foreground text-sm'>
+                      {t('hot_leads')}
+                    </p>
                     <TooltipProvider>
                       <Tooltip>
                         <TooltipTrigger>
@@ -277,8 +289,16 @@ export default function Dashboard() {
                     </TooltipProvider>
                   </div>
                   <div className='mt-1'>
-                    <p className='truncate font-semibold text-2xl'>{metrics?.hot || 0}</p>
-                    <p className='text-muted-foreground text-xs'>{(((metrics?.hot || 0) / (metrics?.total || 1)) * 100).toFixed(0)}% of total</p>
+                    <p className='truncate font-semibold text-2xl'>
+                      {metrics?.hot || 0}
+                    </p>
+                    <p className='text-muted-foreground text-xs'>
+                      {(
+                        ((metrics?.hot || 0) / (metrics?.total || 1)) *
+                        100
+                      ).toFixed(0)}
+                      % of total
+                    </p>
                   </div>
                 </div>
               </div>
@@ -300,18 +320,37 @@ export default function Dashboard() {
                   }}
                 >
                   <CartesianGrid vertical={false} />
-                  <XAxis dataKey='month' tickLine={false} axisLine={false} tickMargin={8} tickFormatter={(value) => value.slice(0, 3)} />
-                  <ChartTooltip cursor={false} content={<ChartTooltipContent indicator='line' />} />
-                  <Area dataKey='leads' type='natural' fill='var(--color-leads)' fillOpacity={0.4} stroke='var(--color-leads)' />
+                  <XAxis
+                    dataKey='month'
+                    tickLine={false}
+                    axisLine={false}
+                    tickMargin={8}
+                    tickFormatter={(value) =>
+                      typeof value === 'string' ? value.slice(0, 3) : ''
+                    }
+                  />
+                  <ChartTooltip
+                    cursor={false}
+                    content={<ChartTooltipContent indicator='line' />}
+                  />
+                  <Area
+                    dataKey='leads'
+                    type='natural'
+                    fill='var(--color-leads)'
+                    fillOpacity={0.4}
+                    stroke='var(--color-leads)'
+                  />
                 </AreaChart>
               </ChartContainer>
               <div className='mt-4 flex w-full items-start gap-2 text-sm'>
                 <div className='grid gap-2'>
                   <div className='flex items-center gap-2 font-medium leading-none'>
-                    {t('trending_up_by', { percentage: metrics?.growth || 0 })} <TrendingUp className='h-4 w-4' />
+                    {t('trending_up_by', { percentage: metrics?.growth || 0 })}{' '}
+                    <TrendingUp className='h-4 w-4' />
                   </div>
                   <div className='flex items-center gap-2 text-muted-foreground leading-none'>
-                    {format(subMonths(new Date(), 5), 'MMMM')} - {format(new Date(), 'MMMM yyyy')}
+                    {chartData.length > 0 &&
+                      `${chartData[0].month} - ${chartData[chartData.length - 1].month}`}
                   </div>
                 </div>
               </div>
@@ -332,39 +371,75 @@ export default function Dashboard() {
               </TabsList>
               <TabsContent value='status' className='mt-4 space-y-4'>
                 {statusData.map((item) => (
-                  <div key={item.status} className='flex items-center justify-between'>
+                  <div
+                    key={item.status}
+                    className='flex items-center justify-between'
+                  >
                     <div className='flex items-center gap-2'>
-                      <SmartColorBadge value={item.status} color={item.color} hoverEffect={false} />
+                      <SmartColorBadge
+                        value={item.status}
+                        color={item.color}
+                        hoverEffect={false}
+                      />
                     </div>
                     <div className='flex items-center gap-2'>
                       <span className='font-medium text-sm'>{item.value}</span>
-                      <span className='text-muted-foreground text-xs'>{((item.value / (metrics?.total || 1)) * 100).toFixed(0)}%</span>
+                      <span className='text-muted-foreground text-xs'>
+                        {((item.value / (metrics?.total || 1)) * 100).toFixed(
+                          0
+                        )}
+                        %
+                      </span>
                     </div>
                   </div>
                 ))}
               </TabsContent>
               <TabsContent value='priority' className='mt-4 space-y-4'>
                 {priorityData.map((item) => (
-                  <div key={item.status} className='flex items-center justify-between'>
+                  <div
+                    key={item.status}
+                    className='flex items-center justify-between'
+                  >
                     <div className='flex items-center gap-2'>
-                      <SmartColorBadge value={item.status} color={item.color} hoverEffect={false} />
+                      <SmartColorBadge
+                        value={item.status}
+                        color={item.color}
+                        hoverEffect={false}
+                      />
                     </div>
                     <div className='flex items-center gap-2'>
                       <span className='font-medium text-sm'>{item.value}</span>
-                      <span className='text-muted-foreground text-xs'>{((item.value / (metrics?.total || 1)) * 100).toFixed(0)}%</span>
+                      <span className='text-muted-foreground text-xs'>
+                        {((item.value / (metrics?.total || 1)) * 100).toFixed(
+                          0
+                        )}
+                        %
+                      </span>
                     </div>
                   </div>
                 ))}
               </TabsContent>
               <TabsContent value='resource' className='mt-4 space-y-4'>
-                {resourceData.map((item) => (
-                  <div key={item.status} className='flex items-center justify-between'>
+                {sourceData.map((item) => (
+                  <div
+                    key={item.status}
+                    className='flex items-center justify-between'
+                  >
                     <div className='flex items-center gap-2'>
-                      <SmartColorBadge value={item.status} color={item.color} hoverEffect={false} />
+                      <SmartColorBadge
+                        value={item.status}
+                        color={item.color}
+                        hoverEffect={false}
+                      />
                     </div>
                     <div className='flex items-center gap-2'>
                       <span className='font-medium text-sm'>{item.value}</span>
-                      <span className='text-muted-foreground text-xs'>{((item.value / (metrics?.total || 1)) * 100).toFixed(0)}%</span>
+                      <span className='text-muted-foreground text-xs'>
+                        {((item.value / (metrics?.total || 1)) * 100).toFixed(
+                          0
+                        )}
+                        %
+                      </span>
                     </div>
                   </div>
                 ))}

@@ -1,9 +1,48 @@
 'use client';
 
+import {
+  Bell,
+  Building,
+  Calendar,
+  ChevronDown,
+  ChevronRight,
+  ChevronUp,
+  Contact,
+  Globe,
+  Kanban,
+  Laptop,
+  LogOut,
+  Moon,
+  Plus,
+  Settings,
+  Sparkle,
+  Sun,
+  Table,
+  Users,
+  Verified,
+} from 'lucide-react';
+import Link from 'next/link';
+import { signOut } from 'next-auth/react';
+import { useLocale, useTranslations } from 'next-intl';
+import { useTheme } from 'next-themes';
+import type React from 'react';
+import { startTransition, useState } from 'react';
 import { ActionAlertDialog } from '@/components/shared/action-alert-dialog';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/components/ui/collapsible';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import {
   Sidebar,
   SidebarContent,
@@ -23,14 +62,6 @@ import { usePathname, useRouter } from '@/i18n/navigation';
 import packageInfo from '@/package.json';
 import { copyToClipboard } from '@/utils/clipboard';
 import { api } from '@/utils/trpc/client';
-import { Building, Contact, Kanban, Table, Users } from 'lucide-react';
-import { Bell, Calendar, ChevronDown, ChevronRight, ChevronUp, Globe, Laptop, LogOut, Moon, Plus, Settings, Sparkle, Sun, Verified } from 'lucide-react';
-import { signOut } from 'next-auth/react';
-import { useLocale, useTranslations } from 'next-intl';
-import { useTheme } from 'next-themes';
-import Link from 'next/link';
-import type React from 'react';
-import { startTransition, useState } from 'react';
 
 type SidebarGroupSectionProps = {
   title: string;
@@ -58,10 +89,12 @@ export function DashboardSidebar() {
 
   const HASH = process.env.NEXT_PUBLIC_VERCEL_GIT_COMMIT_SHA;
 
-  const { data: workspaceName, isLoading: isWorkspaceNameLoading } = api.site.getConfig.useQuery({ key: 'name' });
+  const { data: workspaceName, isLoading: isWorkspaceNameLoading } =
+    api.site.getConfig.useQuery({ key: 'name' });
 
   const { data: me, isLoading } = api.account.getMeFromDatabase.useQuery();
-  const { data: unreadNotificationsCount } = api.user.getUnreadNotificationsCount.useQuery();
+  const { data: unreadNotificationsCount } =
+    api.user.getUnreadNotificationsCount.useQuery();
 
   const [showSignOutDialog, setShowSignOutDialog] = useState(false);
 
@@ -83,7 +116,11 @@ export function DashboardSidebar() {
             <SidebarMenuButton asChild>
               <Link href='/dashboard'>
                 <Sparkle className='h-4 w-4' />
-                {isWorkspaceNameLoading ? <Skeleton className='h-6 w-full' /> : (workspaceName?.value ?? 'Portal')}
+                {isWorkspaceNameLoading ? (
+                  <Skeleton className='h-6 w-full' />
+                ) : (
+                  (workspaceName?.value ?? 'Portal')
+                )}
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
@@ -179,9 +216,15 @@ export function DashboardSidebar() {
             <SidebarMenuButton tooltip={t('notifications')} asChild>
               <Link href='/dashboard/account/notifications'>
                 <Bell />
-                {unreadNotificationsCount && unreadNotificationsCount.count > 0 && <span className='-top-0.5 -right-0.5 absolute h-1.5 w-1.5 rounded-full bg-red-500' />}
+                {unreadNotificationsCount &&
+                  unreadNotificationsCount.count > 0 && (
+                    <span className='-top-0.5 -right-0.5 absolute h-1.5 w-1.5 rounded-full bg-red-500' />
+                  )}
                 <span>
-                  {t('notifications')} {unreadNotificationsCount && unreadNotificationsCount.count > 0 && `(${unreadNotificationsCount.count})`}
+                  {t('notifications')}{' '}
+                  {unreadNotificationsCount &&
+                    unreadNotificationsCount.count > 0 &&
+                    `(${unreadNotificationsCount.count})`}
                 </span>
               </Link>
             </SidebarMenuButton>
@@ -192,15 +235,27 @@ export function DashboardSidebar() {
                 <SidebarMenuButton tooltip={t('account')}>
                   <Avatar className='h-4 w-4'>
                     <AvatarImage src={me?.image ?? ''} />
-                    <AvatarFallback>{me?.name?.charAt(0) ?? me?.email?.charAt(0)}</AvatarFallback>
+                    <AvatarFallback>
+                      {me?.name?.charAt(0) ?? me?.email?.charAt(0)}
+                    </AvatarFallback>
                   </Avatar>
-                  {isLoading ? <Skeleton className='h-4 w-[100px]' /> : <span>{me?.name ?? me?.email}</span>}
+                  {isLoading ? (
+                    <Skeleton className='h-4 w-[100px]' />
+                  ) : (
+                    <span>{me?.name ?? me?.email}</span>
+                  )}
                   <ChevronUp className='ml-auto' />
                 </SidebarMenuButton>
               </DropdownMenuTrigger>
-              <DropdownMenuContent side='top' className='w-(--radix-popper-anchor-width)'>
+              <DropdownMenuContent
+                side='top'
+                className='w-(--radix-popper-anchor-width)'
+              >
                 <DropdownMenuItem asChild>
-                  <Link href='/dashboard/account/settings' className='cursor-pointer'>
+                  <Link
+                    href='/dashboard/account/settings'
+                    className='cursor-pointer'
+                  >
                     <Settings className='mr-2 h-4 w-4' />
                     <span>{t('account')}</span>
                   </Link>
@@ -208,7 +263,10 @@ export function DashboardSidebar() {
                 <DropdownMenuItem
                   className='cursor-pointer text-green-500'
                   onClick={() => {
-                    copyToClipboard(packageInfo.version, t('version_copied_to_clipboard'));
+                    copyToClipboard(
+                      packageInfo.version,
+                      t('version_copied_to_clipboard')
+                    );
                   }}
                 >
                   <Verified className='mr-2 h-4 w-4' />
@@ -220,22 +278,43 @@ export function DashboardSidebar() {
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <DropdownMenuItem className='cursor-pointer'>
-                      {theme === 'system' ? <Laptop className='mr-2 h-4 w-4' /> : theme === 'dark' ? <Moon className='mr-2 h-4 w-4' /> : <Sun className='mr-2 h-4 w-4' />}
+                      {theme === 'system' ? (
+                        <Laptop className='mr-2 h-4 w-4' />
+                      ) : theme === 'dark' ? (
+                        <Moon className='mr-2 h-4 w-4' />
+                      ) : (
+                        <Sun className='mr-2 h-4 w-4' />
+                      )}
                       <span>{t('theme')}</span>
                       <ChevronRight className='ml-auto h-4 w-4' />
                     </DropdownMenuItem>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent side='right'>
-                    <DropdownMenuRadioGroup value={theme} onValueChange={setTheme}>
-                      <DropdownMenuRadioItem value='system' className='flex cursor-pointer items-center gap-2' onClick={() => setTheme('system')}>
+                    <DropdownMenuRadioGroup
+                      value={theme}
+                      onValueChange={setTheme}
+                    >
+                      <DropdownMenuRadioItem
+                        value='system'
+                        className='flex cursor-pointer items-center gap-2'
+                        onClick={() => setTheme('system')}
+                      >
                         <Laptop className='mr-2 h-4 w-4' />
                         <span>{t('system')}</span>
                       </DropdownMenuRadioItem>
-                      <DropdownMenuRadioItem value='light' className='flex cursor-pointer items-center gap-2' onClick={() => setTheme('light')}>
+                      <DropdownMenuRadioItem
+                        value='light'
+                        className='flex cursor-pointer items-center gap-2'
+                        onClick={() => setTheme('light')}
+                      >
                         <Sun className='mr-2 h-4 w-4' />
                         <span>{t('light')}</span>
                       </DropdownMenuRadioItem>
-                      <DropdownMenuRadioItem value='dark' className='flex cursor-pointer items-center gap-2' onClick={() => setTheme('dark')}>
+                      <DropdownMenuRadioItem
+                        value='dark'
+                        className='flex cursor-pointer items-center gap-2'
+                        onClick={() => setTheme('dark')}
+                      >
                         <Moon className='mr-2 h-4 w-4' />
                         <span>{t('dark')}</span>
                       </DropdownMenuRadioItem>
@@ -251,7 +330,10 @@ export function DashboardSidebar() {
                     </DropdownMenuItem>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent side='right'>
-                    <DropdownMenuRadioGroup value={locale} onValueChange={handleChangeLocale}>
+                    <DropdownMenuRadioGroup
+                      value={locale}
+                      onValueChange={handleChangeLocale}
+                    >
                       {[
                         {
                           id: 'en',
@@ -272,7 +354,11 @@ export function DashboardSidebar() {
                           flag: '🇭🇰',
                         },
                       ].map((item) => (
-                        <DropdownMenuRadioItem key={item.value} value={item.value} className='flex cursor-pointer items-center gap-2'>
+                        <DropdownMenuRadioItem
+                          key={item.value}
+                          value={item.value}
+                          className='flex cursor-pointer items-center gap-2'
+                        >
                           <span>{item.flag}</span>
                           <span>{item.title}</span>
                         </DropdownMenuRadioItem>
@@ -281,7 +367,10 @@ export function DashboardSidebar() {
                   </DropdownMenuContent>
                 </DropdownMenu>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem className='cursor-pointer text-red-500 dark:text-red-400' onClick={() => setShowSignOutDialog(true)}>
+                <DropdownMenuItem
+                  className='cursor-pointer text-red-500 dark:text-red-400'
+                  onClick={() => setShowSignOutDialog(true)}
+                >
                   <LogOut className='mr-2 h-4 w-4' />
                   <span>{t('sign_out')}</span>
                 </DropdownMenuItem>
@@ -303,11 +392,19 @@ export function DashboardSidebar() {
   );
 }
 
-function SidebarGroupSection({ title, items, defaultOpen = true }: SidebarGroupSectionProps) {
+function SidebarGroupSection({
+  title,
+  items,
+  defaultOpen = true,
+}: SidebarGroupSectionProps) {
   const pathname = usePathname();
 
   return (
-    <Collapsible defaultOpen={defaultOpen} className='group/collapsible' data-collapsible='icon'>
+    <Collapsible
+      defaultOpen={defaultOpen}
+      className='group/collapsible'
+      data-collapsible='icon'
+    >
       <SidebarGroup>
         <SidebarGroupLabel asChild>
           <CollapsibleTrigger>
@@ -323,13 +420,21 @@ function SidebarGroupSection({ title, items, defaultOpen = true }: SidebarGroupS
 
                 return (
                   <SidebarMenuItem key={item.id}>
-                    <SidebarMenuButton tooltip={item.title} asChild className={isItemActive ? 'bg-accent' : ''}>
+                    <SidebarMenuButton
+                      tooltip={item.title}
+                      asChild
+                      className={isItemActive ? 'bg-accent' : ''}
+                    >
                       <Link href={item.url ?? ''}>
                         <item.icon />
                         <span>{item.title}</span>
                       </Link>
                     </SidebarMenuButton>
-                    {item.action && <SidebarMenuAction asChild>{item.action}</SidebarMenuAction>}
+                    {item.action && (
+                      <SidebarMenuAction asChild>
+                        {item.action}
+                      </SidebarMenuAction>
+                    )}
                     {item.items && (
                       <SidebarMenuSub>
                         {item.items.map((subItem) => {
@@ -337,7 +442,11 @@ function SidebarGroupSection({ title, items, defaultOpen = true }: SidebarGroupS
 
                           return (
                             <SidebarMenuItem key={subItem.id}>
-                              <SidebarMenuButton tooltip={subItem.title} asChild className={isSubItemActive ? 'bg-accent' : ''}>
+                              <SidebarMenuButton
+                                tooltip={subItem.title}
+                                asChild
+                                className={isSubItemActive ? 'bg-accent' : ''}
+                              >
                                 <Link href={subItem.url}>
                                   <subItem.icon />
                                   <span>{subItem.title}</span>

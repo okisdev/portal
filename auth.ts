@@ -1,13 +1,13 @@
+import { DrizzleAdapter } from '@auth/drizzle-adapter';
+import bcrypt from 'bcrypt-edge';
+import type { User } from 'next-auth';
+import NextAuth, { CredentialsSignin } from 'next-auth';
+import Credentials from 'next-auth/providers/credentials';
+import Resend from 'next-auth/providers/resend';
 import { database } from '@/lib/database';
 import { credentialSchema } from '@/lib/schema';
 import { getUserFromDb } from '@/utils/database';
 import { UnexpectedError, UserOrPasswordIncorrectError } from '@/utils/error';
-import { DrizzleAdapter } from '@auth/drizzle-adapter';
-import bcrypt from 'bcrypt-edge';
-import NextAuth, { CredentialsSignin } from 'next-auth';
-import type { User } from 'next-auth';
-import Credentials from 'next-auth/providers/credentials';
-import Resend from 'next-auth/providers/resend';
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: DrizzleAdapter(database),
@@ -19,7 +19,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       },
       authorize: async (credentials): Promise<User | null> => {
         try {
-          const { email, password } = await credentialSchema.parseAsync(credentials);
+          const { email, password } =
+            await credentialSchema.parseAsync(credentials);
 
           const dbUser = await getUserFromDb(email);
 

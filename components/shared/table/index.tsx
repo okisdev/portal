@@ -1,10 +1,21 @@
 'use client';
 
+import {
+  type ColumnDef,
+  flexRender,
+  type Table as TableType,
+} from '@tanstack/react-table';
+import { useTranslations } from 'next-intl';
 import { TableLoading } from '@/components/shared/table/loading';
 import { DataTablePagination } from '@/components/shared/table/pagination';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { type ColumnDef, type Table as TableType, flexRender } from '@tanstack/react-table';
-import { useTranslations } from 'next-intl';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 
 interface PaginationTableProps<TData> {
   table: TableType<TData>;
@@ -13,7 +24,12 @@ interface PaginationTableProps<TData> {
   onRowClick?: (row: TData) => void;
 }
 
-export function DataTable<TData>({ table, columns, loading, onRowClick }: PaginationTableProps<TData>) {
+export function DataTable<TData>({
+  table,
+  columns,
+  loading,
+  onRowClick,
+}: PaginationTableProps<TData>) {
   const t = useTranslations();
 
   const handleRowClick = (e: React.MouseEvent, row: TData) => {
@@ -37,7 +53,12 @@ export function DataTable<TData>({ table, columns, loading, onRowClick }: Pagina
                   <TableRow key={headerGroup.id}>
                     {headerGroup.headers.map((header) => (
                       <TableHead key={header.id} colSpan={header.colSpan}>
-                        {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
+                        {header.isPlaceholder
+                          ? null
+                          : flexRender(
+                              header.column.columnDef.header,
+                              header.getContext()
+                            )}
                       </TableHead>
                     ))}
                   </TableRow>
@@ -46,17 +67,32 @@ export function DataTable<TData>({ table, columns, loading, onRowClick }: Pagina
               <TableBody>
                 {table.getRowModel().rows?.length ? (
                   table.getRowModel().rows.map((row) => (
-                    <TableRow key={row.id} data-state={row.getIsSelected() && 'selected'} onClick={(e) => handleRowClick(e, row.original)}>
+                    <TableRow
+                      key={row.id}
+                      data-state={row.getIsSelected() && 'selected'}
+                      onClick={(e) => handleRowClick(e, row.original)}
+                    >
                       {row.getVisibleCells().map((cell) => (
-                        <TableCell key={cell.id} data-checkbox-cell={cell.column.id === 'select' ? true : undefined}>
-                          {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                        <TableCell
+                          key={cell.id}
+                          data-checkbox-cell={
+                            cell.column.id === 'select' ? true : undefined
+                          }
+                        >
+                          {flexRender(
+                            cell.column.columnDef.cell,
+                            cell.getContext()
+                          )}
                         </TableCell>
                       ))}
                     </TableRow>
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={columns.length} className='h-24 text-center'>
+                    <TableCell
+                      colSpan={columns.length}
+                      className='h-24 text-center'
+                    >
                       {t('no_results')}
                     </TableCell>
                   </TableRow>

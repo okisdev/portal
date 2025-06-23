@@ -1,16 +1,27 @@
-import { Button } from '@/components/ui/button';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { cn } from '@/lib/utils';
 import type { Column } from '@tanstack/react-table';
 import { ArrowDown, ArrowUp, ChevronsUpDown, EyeOff, X } from 'lucide-react';
 import { useTranslations } from 'next-intl';
+import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { cn } from '@/lib/utils';
 
-interface DataTableHeaderProps<TData, TValue> extends React.HTMLAttributes<HTMLDivElement> {
+interface DataTableHeaderProps<TData, TValue>
+  extends React.HTMLAttributes<HTMLDivElement> {
   column: Column<TData, TValue>;
   title: string;
 }
 
-export function DataTableHeader<TData, TValue>({ column, title, className }: DataTableHeaderProps<TData, TValue>) {
+export function DataTableHeader<TData, TValue>({
+  column,
+  title,
+  className,
+}: DataTableHeaderProps<TData, TValue>) {
   const t = useTranslations();
 
   if (!column.getCanSort()) {
@@ -21,9 +32,19 @@ export function DataTableHeader<TData, TValue>({ column, title, className }: Dat
     <div className={cn('flex items-center space-x-2', className)}>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant='ghost' size='sm' className='-ml-3 h-8 data-[state=open]:bg-accent'>
+          <Button
+            variant='ghost'
+            size='sm'
+            className='-ml-3 h-8 data-[state=open]:bg-accent'
+          >
             <span>{title}</span>
-            {column.getIsSorted() === 'desc' ? <ArrowDown /> : column.getIsSorted() === 'asc' ? <ArrowUp /> : <ChevronsUpDown />}
+            {column.getIsSorted() === 'desc' ? (
+              <ArrowDown />
+            ) : column.getIsSorted() === 'asc' ? (
+              <ArrowUp />
+            ) : (
+              <ChevronsUpDown />
+            )}
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align='start'>

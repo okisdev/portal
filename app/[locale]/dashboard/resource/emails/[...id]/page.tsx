@@ -1,15 +1,15 @@
 'use client';
 
+import { useParams, useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
+import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
 import { PageHeader } from '@/components/shared/page-header';
 import { TipTapEditor } from '@/components/shared/tiptap-editor';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { api } from '@/utils/trpc/client';
-import { useTranslations } from 'next-intl';
-import { useParams, useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
-import { toast } from 'sonner';
 
 export default function EmailDetailPage() {
   const params = useParams();
@@ -34,9 +34,12 @@ export default function EmailDetailPage() {
   };
 
   // Query to fetch the email template
-  const { data: template, isLoading } = api.resource.getEmail.useQuery(id || '', {
-    enabled: !!id,
-  });
+  const { data: template, isLoading } = api.resource.getEmail.useQuery(
+    id || '',
+    {
+      enabled: !!id,
+    }
+  );
 
   // Mutation to update the template
   const updateMutation = api.resource.updateEmail.useMutation({
@@ -112,9 +115,17 @@ export default function EmailDetailPage() {
     return (
       <div className='container mx-auto px-8 py-6'>
         <div className='text-center'>
-          <h3 className='font-medium text-lg text-neutral-900'>Template not found</h3>
-          <p className='mt-1 text-neutral-500'>The template you're looking for doesn't exist or has been deleted.</p>
-          <Button onClick={() => router.push('/dashboard/resource/emails')} className='mt-4' variant='outline'>
+          <h3 className='font-medium text-lg text-neutral-900'>
+            Template not found
+          </h3>
+          <p className='mt-1 text-neutral-500'>
+            The template you're looking for doesn't exist or has been deleted.
+          </p>
+          <Button
+            onClick={() => router.push('/dashboard/resource/emails')}
+            className='mt-4'
+            variant='outline'
+          >
             Back to Templates
           </Button>
         </div>
@@ -126,18 +137,35 @@ export default function EmailDetailPage() {
     <div className='flex h-full flex-col'>
       <div className='container mx-auto flex h-full flex-col px-8 py-6'>
         <div className='mb-6 flex items-center justify-between'>
-          <PageHeader title='Edit Email Template' description='Make changes to your email template' />
+          <PageHeader
+            title='Edit Email Template'
+            description='Make changes to your email template'
+          />
           <div className='flex gap-2'>
-            <Button onClick={() => router.push('/dashboard/resource/emails')} variant='outline'>
+            <Button
+              onClick={() => router.push('/dashboard/resource/emails')}
+              variant='outline'
+            >
               {t('back')}
             </Button>
-            <Button onClick={handleCopyHtml} variant='outline' className='text-neutral-600 hover:bg-neutral-50'>
+            <Button
+              onClick={handleCopyHtml}
+              variant='outline'
+              className='text-neutral-600 hover:bg-neutral-50'
+            >
               {t('copy_html')}
             </Button>
-            <Button onClick={handleDeleteTemplate} variant='outline' className='text-red-600 hover:bg-red-50'>
+            <Button
+              onClick={handleDeleteTemplate}
+              variant='outline'
+              className='text-red-600 hover:bg-red-50'
+            >
               {t('delete')}
             </Button>
-            <Button onClick={handleSaveTemplate} className='bg-neutral-900 text-white hover:bg-neutral-800'>
+            <Button
+              onClick={handleSaveTemplate}
+              className='bg-neutral-900 text-white hover:bg-neutral-800'
+            >
               {t('save_changes')}
             </Button>
           </div>
@@ -145,14 +173,33 @@ export default function EmailDetailPage() {
 
         <div className='flex flex-1 flex-col space-y-4'>
           <div>
-            <Input placeholder='Template Title' value={title} onChange={(e) => setTitle(e.target.value)} className='mb-2' />
-            <Textarea placeholder='Template Description (optional)' value={description} onChange={(e) => setDescription(e.target.value)} rows={2} />
+            <Input
+              placeholder='Template Title'
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              className='mb-2'
+            />
+            <Textarea
+              placeholder='Template Description (optional)'
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              rows={2}
+            />
           </div>
 
-          <Input placeholder='Email Subject' value={subject} onChange={(e) => setSubject(e.target.value)} />
+          <Input
+            placeholder='Email Subject'
+            value={subject}
+            onChange={(e) => setSubject(e.target.value)}
+          />
 
           <div className='min-h-0 flex-1'>
-            <TipTapEditor content={editorContent} onChange={setEditorContent} placeholder='Write your email content here...' className='h-full' />
+            <TipTapEditor
+              content={editorContent}
+              onChange={setEditorContent}
+              placeholder='Write your email content here...'
+              className='h-full'
+            />
           </div>
         </div>
       </div>

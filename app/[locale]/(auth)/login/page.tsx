@@ -1,22 +1,22 @@
 'use client';
 
-import { Banner } from '@/components/shared/banner';
-import { Label } from '@/components/ui/label';
-import { api } from '@/utils/trpc/client';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { AnimatePresence, motion } from 'framer-motion';
 import { CheckCircle2, Loader2 } from 'lucide-react';
-import { signIn } from 'next-auth/react';
-import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
+import { signIn } from 'next-auth/react';
+import { useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
-import { z } from 'zod';
+import { z } from 'zod/v4';
+import { Banner } from '@/components/shared/banner';
+import { Label } from '@/components/ui/label';
+import { api } from '@/utils/trpc/client';
 
 const loginSchema = z.object({
-  email: z.string().email('Please enter a valid email'),
+  email: z.email('Please enter a valid email'),
   password: z.string().optional(),
 });
 
@@ -49,7 +49,10 @@ export default function LoginPage() {
 
   const [shouldValidate, setShouldValidate] = useState(false);
 
-  const { data: isValidDomain } = api.auth.validateEmailDomain.useQuery({ email: email || '' }, { enabled: shouldValidate && !!email && email.includes('@') });
+  const { data: isValidDomain } = api.auth.validateEmailDomain.useQuery(
+    { email: email || '' },
+    { enabled: shouldValidate && !!email && email.includes('@') }
+  );
 
   useEffect(() => {
     if (email?.includes('@')) {
@@ -148,20 +151,42 @@ export default function LoginPage() {
   return (
     <AnimatePresence mode='wait'>
       {!emailSent ? (
-        <motion.div key='login-form' initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.2 }}>
+        <motion.div
+          key='login-form'
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -20 }}
+          transition={{ duration: 0.2 }}
+        >
           <div className='space-y-2 text-center'>
-            <h1 className='font-medium text-foreground text-lg md:text-2xl'>{t('login_title')}</h1>
-            <p className='text-muted-foreground text-sm md:text-base'>{t('login_description')}</p>
+            <h1 className='font-medium text-foreground text-lg md:text-2xl'>
+              {t('login_title')}
+            </h1>
+            <p className='text-muted-foreground text-sm md:text-base'>
+              {t('login_description')}
+            </p>
           </div>
 
           <form onSubmit={handleSubmit(onSubmit)} className='mt-6 space-y-4'>
-            {from === 'register' && type === 'success' && <Banner title={t('registration_successful')} description={t('please_login_to_continue')} variant='success' />}
-            {error && <Banner title={t('error')} description={error} variant='error' />}
+            {from === 'register' && type === 'success' && (
+              <Banner
+                title={t('registration_successful')}
+                description={t('please_login_to_continue')}
+                variant='success'
+              />
+            )}
+            {error && (
+              <Banner title={t('error')} description={error} variant='error' />
+            )}
 
             <div className='space-y-1'>
               <Label className='mb-1 flex justify-between font-medium text-foreground text-sm'>
                 <span>{t('email')}</span>
-                <button type='button' onClick={() => setIsPasswordLogin(!isPasswordLogin)} className='text-muted-foreground text-sm hover:text-foreground'>
+                <button
+                  type='button'
+                  onClick={() => setIsPasswordLogin(!isPasswordLogin)}
+                  className='text-muted-foreground text-sm hover:text-foreground'
+                >
                   {isPasswordLogin ? t('use_magic_link') : t('use_password')}
                 </button>
               </Label>
@@ -172,29 +197,47 @@ export default function LoginPage() {
                 className='w-full rounded-lg border bg-background p-2 focus:outline-hidden focus:ring-2 focus:ring-ring'
                 placeholder={t('email_placeholder')}
               />
-              {errors.email && <p className='mt-1 text-destructive text-sm'>{errors.email.message}</p>}
+              {errors.email && (
+                <p className='mt-1 text-destructive text-sm'>
+                  {errors.email.message}
+                </p>
+              )}
             </div>
 
             {isPasswordLogin && (
               <div className='space-y-1'>
-                <Label className='mb-1 block font-medium text-foreground text-sm'>{t('password')}</Label>
+                <Label className='mb-1 block font-medium text-foreground text-sm'>
+                  {t('password')}
+                </Label>
                 <input
                   type='password'
                   {...register('password')}
                   className='w-full rounded-lg border bg-background p-2 focus:outline-hidden focus:ring-2 focus:ring-ring'
                   placeholder={t('password_placeholder')}
                 />
-                {errors.password && <p className='mt-1 text-destructive text-sm'>{errors.password.message}</p>}
+                {errors.password && (
+                  <p className='mt-1 text-destructive text-sm'>
+                    {errors.password.message}
+                  </p>
+                )}
               </div>
             )}
 
             <div className='flex items-center justify-between'>
               <label className='flex items-center'>
-                <input type='checkbox' className='h-3 w-3 rounded border-input text-primary accent-primary focus:ring-ring focus:ring-offset-0' />
-                <span className='ml-2 text-muted-foreground text-sm'>{t('remember_for_30_days')}</span>
+                <input
+                  type='checkbox'
+                  className='h-3 w-3 rounded border-input text-primary accent-primary focus:ring-ring focus:ring-offset-0'
+                />
+                <span className='ml-2 text-muted-foreground text-sm'>
+                  {t('remember_for_30_days')}
+                </span>
               </label>
               {isPasswordLogin && (
-                <Link href='/forgot-password' className='text-muted-foreground text-sm hover:text-foreground hover:underline'>
+                <Link
+                  href='/forgot-password'
+                  className='text-muted-foreground text-sm hover:text-foreground hover:underline'
+                >
                   {t('forgot_password')}
                 </Link>
               )}
@@ -219,7 +262,10 @@ export default function LoginPage() {
               </button>
               <p className='text-center text-muted-foreground text-sm'>
                 {t('dont_have_an_account')}{' '}
-                <Link href='/register' className='text-muted-foreground underline hover:text-foreground'>
+                <Link
+                  href='/register'
+                  className='text-muted-foreground underline hover:text-foreground'
+                >
                   {t('sign_up')}
                 </Link>
               </p>
@@ -227,14 +273,24 @@ export default function LoginPage() {
           </form>
         </motion.div>
       ) : (
-        <motion.div key='success-message' initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.2 }} className='space-y-6 text-center'>
+        <motion.div
+          key='success-message'
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -20 }}
+          transition={{ duration: 0.2 }}
+          className='space-y-6 text-center'
+        >
           <div className='flex justify-center'>
             <CheckCircle2 className='h-12 w-12 text-green-500' />
           </div>
           <div className='space-y-2'>
-            <h2 className='font-medium text-2xl text-foreground'>Check your email</h2>
+            <h2 className='font-medium text-2xl text-foreground'>
+              Check your email
+            </h2>
             <p className='text-muted-foreground'>
-              We've sent a magic link to <span className='font-medium text-foreground'>{sentEmail}</span>
+              We've sent a magic link to{' '}
+              <span className='font-medium text-foreground'>{sentEmail}</span>
             </p>
           </div>
           <button

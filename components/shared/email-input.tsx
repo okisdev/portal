@@ -1,18 +1,25 @@
 'use client';
 
-import { Input } from '@/components/ui/input';
-import { cn } from '@/lib/utils';
 import { useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
+import { Input } from '@/components/ui/input';
+import { cn } from '@/lib/utils';
 
-interface EmailInputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'onChange'> {
+interface EmailInputProps
+  extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'onChange'> {
   value: string;
   onChange: (value: string) => void;
   onValidityChange?: (isValid: boolean) => void;
 }
 
-export function EmailInput({ className, value, onChange, onValidityChange, ...props }: EmailInputProps) {
+export function EmailInput({
+  className,
+  value,
+  onChange,
+  onValidityChange,
+  ...props
+}: EmailInputProps) {
   const t = useTranslations();
   const [isValid, setIsValid] = useState(false);
 
@@ -56,7 +63,14 @@ export function EmailInput({ className, value, onChange, onValidityChange, ...pr
       value={value}
       onChange={handleEmailChange}
       onBlur={handleBlur}
-      className={cn(className, value ? (isValid ? 'border-green-500 focus-visible:ring-green-500' : 'border-red-500 focus-visible:ring-red-500') : '')}
+      className={cn(
+        className,
+        value
+          ? isValid
+            ? 'border-green-500 focus-visible:ring-green-500'
+            : 'border-red-500 focus-visible:ring-red-500'
+          : ''
+      )}
       placeholder={t('enter_email_address')}
       {...props}
     />

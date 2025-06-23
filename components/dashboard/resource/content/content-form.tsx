@@ -1,18 +1,25 @@
-import { Combobox } from '@/components/shared/combobox';
-import { TipTapEditor } from '@/components/shared/tiptap-editor';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import { Switch } from '@/components/ui/switch';
-import { contentTags } from '@/data/data';
-import type { ResourceContent } from '@/lib/schema';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { X } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
-import { z } from 'zod';
+import { z } from 'zod/v4';
+import { Combobox } from '@/components/shared/combobox';
+import { TipTapEditor } from '@/components/shared/tiptap-editor';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { Switch } from '@/components/ui/switch';
+import { contentTags } from '@/data/data';
+import type { ResourceContent } from '@/lib/schema';
 
 const formSchema = z.object({
   title: z.string().min(1, 'Title is required'),
@@ -31,7 +38,12 @@ interface ContentFormProps {
   isSubmitting?: boolean;
 }
 
-export function ContentForm({ content, onSuccess, onSubmit, isSubmitting }: ContentFormProps) {
+export function ContentForm({
+  content,
+  onSuccess,
+  onSubmit,
+  isSubmitting,
+}: ContentFormProps) {
   const t = useTranslations();
 
   const form = useForm({
@@ -89,14 +101,19 @@ export function ContentForm({ content, onSuccess, onSubmit, isSubmitting }: Cont
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmitForm)} className='flex h-full flex-col'>
+      <form
+        onSubmit={form.handleSubmit(onSubmitForm)}
+        className='flex h-full flex-col'
+      >
         <div className='space-y-4 border-b bg-background p-4'>
           <FormField
             control={form.control}
             name='title'
             render={({ field }) => (
               <FormItem>
-                <FormLabel className='text-muted-foreground text-sm'>{t('title')}</FormLabel>
+                <FormLabel className='text-muted-foreground text-sm'>
+                  {t('title')}
+                </FormLabel>
                 <FormControl>
                   <Input {...field} className='h-9 font-medium text-lg' />
                 </FormControl>
@@ -109,7 +126,9 @@ export function ContentForm({ content, onSuccess, onSubmit, isSubmitting }: Cont
             name='description'
             render={({ field }) => (
               <FormItem>
-                <FormLabel className='text-muted-foreground text-sm'>{t('description')}</FormLabel>
+                <FormLabel className='text-muted-foreground text-sm'>
+                  {t('description')}
+                </FormLabel>
                 <FormControl>
                   <Input {...field} value={field.value || ''} />
                 </FormControl>
@@ -122,7 +141,9 @@ export function ContentForm({ content, onSuccess, onSubmit, isSubmitting }: Cont
             name='tags'
             render={({ field }) => (
               <FormItem>
-                <FormLabel className='text-muted-foreground text-sm'>{t('tags')}</FormLabel>
+                <FormLabel className='text-muted-foreground text-sm'>
+                  {t('tags')}
+                </FormLabel>
                 <FormControl>
                   <div className='space-y-2'>
                     <Combobox
@@ -136,10 +157,17 @@ export function ContentForm({ content, onSuccess, onSubmit, isSubmitting }: Cont
                       allowCustom
                     />
                     <div className='flex flex-wrap gap-1.5'>
-                      {(field.value ? (JSON.parse(field.value) as string[]) : []).map((tag: string) => (
+                      {(field.value
+                        ? (JSON.parse(field.value) as string[])
+                        : []
+                      ).map((tag: string) => (
                         <Badge key={tag} variant='secondary' className='gap-1'>
                           {tag}
-                          <button type='button' onClick={() => handleRemoveTag(tag)} className='ml-1 rounded-full outline-hidden hover:text-destructive'>
+                          <button
+                            type='button'
+                            onClick={() => handleRemoveTag(tag)}
+                            className='ml-1 rounded-full outline-hidden hover:text-destructive'
+                          >
                             <X className='size-3' />
                           </button>
                         </Badge>
@@ -157,9 +185,16 @@ export function ContentForm({ content, onSuccess, onSubmit, isSubmitting }: Cont
             render={({ field }) => (
               <FormItem className='flex flex-row items-center space-x-2'>
                 <FormControl>
-                  <Switch checked={field.value === 'PUBLIC'} onCheckedChange={(checked) => field.onChange(checked ? 'PUBLIC' : 'PRIVATE')} />
+                  <Switch
+                    checked={field.value === 'PUBLIC'}
+                    onCheckedChange={(checked) =>
+                      field.onChange(checked ? 'PUBLIC' : 'PRIVATE')
+                    }
+                  />
                 </FormControl>
-                <FormLabel className='text-sm'>{t('public_description')}</FormLabel>
+                <FormLabel className='text-sm'>
+                  {t('public_description')}
+                </FormLabel>
               </FormItem>
             )}
           />
@@ -171,7 +206,11 @@ export function ContentForm({ content, onSuccess, onSubmit, isSubmitting }: Cont
             render={({ field }) => (
               <FormItem className='h-full'>
                 <FormControl>
-                  <TipTapEditor content={field.value} onChange={field.onChange} className='h-full' />
+                  <TipTapEditor
+                    content={field.value}
+                    onChange={field.onChange}
+                    className='h-full'
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>

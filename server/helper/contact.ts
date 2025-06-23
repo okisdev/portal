@@ -1,6 +1,6 @@
+import { eq } from 'drizzle-orm';
 import { contact, contactActivity } from '@/drizzle/schema';
 import type { ActivitySubType, ActivityType } from '@/lib/schema';
-import { eq } from 'drizzle-orm';
 
 export const createContactActivityHelper = async (
   ctx: any,
@@ -28,5 +28,8 @@ export const createContactActivityHelper = async (
   await ctx.db.insert(contactActivity).values(activity);
 
   // Update the contact's lastActivity field
-  return ctx.db.update(contact).set({ lastActivity: activity }).where(eq(contact.id, input.contactId));
+  return ctx.db
+    .update(contact)
+    .set({ lastActivity: activity })
+    .where(eq(contact.id, input.contactId));
 };

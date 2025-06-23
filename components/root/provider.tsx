@@ -1,11 +1,11 @@
 'use client';
 
-import { Toaster } from '@/components/ui/sonner';
 import { Analytics } from '@vercel/analytics/react';
 import { SpeedInsights } from '@vercel/speed-insights/next';
 import { AppProgressBar as ProgressBar } from 'next-nprogress-bar';
 import { ThemeProvider } from 'next-themes';
 import { Monitoring } from 'react-scan/monitoring/next';
+import { Toaster } from '@/components/ui/sonner';
 
 export default function BodyProvider({
   children,
@@ -13,12 +13,22 @@ export default function BodyProvider({
   children: React.ReactNode;
 }>) {
   return (
-    <ThemeProvider attribute='class' defaultTheme='system' value={{ light: 'light', dark: 'dark' }} disableTransitionOnChange>
+    <ThemeProvider
+      attribute='class'
+      defaultTheme='system'
+      value={{ light: 'light', dark: 'dark' }}
+      disableTransitionOnChange
+    >
       {children}
 
       <Toaster richColors position='top-right' />
 
-      <ProgressBar height='2px' color='hsl(var(--foreground))' options={{ showSpinner: false }} shallowRouting />
+      <ProgressBar
+        height='2px'
+        color='hsl(var(--foreground))'
+        options={{ showSpinner: false }}
+        shallowRouting
+      />
 
       <Monitoring
         url='https://monitoring.react-scan.com/api/v1/ingest'

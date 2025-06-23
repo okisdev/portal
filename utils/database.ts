@@ -1,6 +1,6 @@
+import { eq } from 'drizzle-orm';
 import { user } from '@/drizzle/schema';
 import { database } from '@/lib/database';
-import { eq } from 'drizzle-orm';
 
 export const getUserFromDb = async (email: string) => {
   return await database

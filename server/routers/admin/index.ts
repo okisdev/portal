@@ -1,8 +1,8 @@
-import { user } from '@/drizzle/schema';
 import { TRPCError } from '@trpc/server';
 import { eq } from 'drizzle-orm';
 import { v4 as uuidv4 } from 'uuid';
-import { z } from 'zod';
+import { z } from 'zod/v4';
+import { user } from '@/drizzle/schema';
 import { createTRPCRouter, protectedProcedure } from '../../trpc';
 
 const adminProcedure = protectedProcedure.use(async ({ ctx, next }) => {
@@ -44,7 +44,13 @@ export const adminRouter = createTRPCRouter({
       z.object({
         email: z.string().email(),
         name: z.string(),
-        role: z.enum(['ADMIN', 'SALES_MANAGER', 'SALES_ASSISTANT', 'MANAGER', 'USER']),
+        role: z.enum([
+          'ADMIN',
+          'SALES_MANAGER',
+          'SALES_ASSISTANT',
+          'MANAGER',
+          'USER',
+        ]),
         username: z.string().optional(),
       })
     )
@@ -62,7 +68,15 @@ export const adminRouter = createTRPCRouter({
     .input(
       z.object({
         id: z.string(),
-        role: z.enum(['ADMIN', 'SALES_MANAGER', 'SALES_ASSISTANT', 'MANAGER', 'USER']).nullish(),
+        role: z
+          .enum([
+            'ADMIN',
+            'SALES_MANAGER',
+            'SALES_ASSISTANT',
+            'MANAGER',
+            'USER',
+          ])
+          .nullish(),
         email: z.string().email().optional(),
         firstName: z.string().optional(),
         lastName: z.string().optional(),
@@ -82,7 +96,11 @@ export const adminRouter = createTRPCRouter({
         ...(input.username && { username: input.username }),
       };
 
-      return ctx.db.update(user).set(updateData).where(eq(user.id, input.id)).execute();
+      return ctx.db
+        .update(user)
+        .set(updateData)
+        .where(eq(user.id, input.id))
+        .execute();
     }),
 
   deleteUser: adminProcedure.input(z.string()).mutation(({ ctx, input }) => {

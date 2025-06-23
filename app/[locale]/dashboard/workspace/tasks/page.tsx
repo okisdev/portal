@@ -1,34 +1,60 @@
 'use client';
 
+import { zodResolver } from '@hookform/resolvers/zod';
+import { FilterIcon, LayoutGridIcon, ListIcon, PlusIcon } from 'lucide-react';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { useTranslations } from 'next-intl';
+import { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
+import { z } from 'zod/v4';
 import KanbanBoard from '@/components/dashboard/workspace/tasks/kanban';
 import TaskList from '@/components/dashboard/workspace/tasks/list';
 import { DateTimePicker } from '@/components/shared/date-time-picker';
 import { PageHeader } from '@/components/shared/page-header';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { api } from '@/utils/trpc/client';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { FilterIcon, LayoutGridIcon, ListIcon, PlusIcon } from 'lucide-react';
-import { useTranslations } from 'next-intl';
-import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { useState } from 'react';
-import { useForm } from 'react-hook-form';
-import { toast } from 'sonner';
-import { z } from 'zod';
 
 const taskFormSchema = z.object({
   title: z.string().min(1, 'Title is required'),
   description: z.string().optional(),
   content: z.string().optional(),
-  status: z.enum(['backlog', 'todo', 'in_progress', 'in_review', 'done']).default('todo'),
+  status: z
+    .enum(['backlog', 'todo', 'in_progress', 'in_review', 'done'])
+    .default('todo'),
   priority: z.enum(['urgent', 'high', 'medium', 'low']).default('medium'),
   dueDate: z.date().optional(),
 });
@@ -36,7 +62,13 @@ const taskFormSchema = z.object({
 type TaskFormValues = z.infer<typeof taskFormSchema>;
 type ViewMode = 'list' | 'kanban';
 
-const STATUSES = ['backlog', 'todo', 'in_progress', 'in_review', 'done'] as const;
+const STATUSES = [
+  'backlog',
+  'todo',
+  'in_progress',
+  'in_review',
+  'done',
+] as const;
 
 interface Task {
   id: string;
@@ -70,13 +102,23 @@ export default function TasksPage() {
   const [viewMode, setViewMode] = useState<ViewMode>(defaultViewMode);
 
   // Get visible statuses from URL or show all by default
-  const defaultVisibleStatuses = searchParams.get('statuses')?.split(',') || STATUSES;
-  const [visibleStatuses, setVisibleStatuses] = useState<(typeof STATUSES)[number][]>(defaultVisibleStatuses as (typeof STATUSES)[number][]);
+  const defaultVisibleStatuses =
+    searchParams.get('statuses')?.split(',') || STATUSES;
+  const [visibleStatuses, setVisibleStatuses] = useState<
+    (typeof STATUSES)[number][]
+  >(defaultVisibleStatuses as (typeof STATUSES)[number][]);
 
   const [isCreateOpen, setIsCreateOpen] = useState(false);
-  const [editingTask, setEditingTask] = useState<{ id: string; data: TaskFormValues } | null>(null);
+  const [editingTask, setEditingTask] = useState<{
+    id: string;
+    data: TaskFormValues;
+  } | null>(null);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
-  const [viewingContent, setViewingContent] = useState<{ id: string; title: string; content: string } | null>(null);
+  const [viewingContent, setViewingContent] = useState<{
+    id: string;
+    title: string;
+    content: string;
+  } | null>(null);
   const [keepCreating, setKeepCreating] = useState(false);
 
   const utils = api.useUtils();
@@ -202,11 +244,18 @@ export default function TasksPage() {
   return (
     <div className='flex h-full flex-col'>
       <div className='container mx-auto max-w-7xl space-y-8 px-6 py-6 pb-0 2xl:px-0'>
-        <PageHeader title='Personal Tasks' description='Manage your personal tasks and stay organized' />
+        <PageHeader
+          title='Personal Tasks'
+          description='Manage your personal tasks and stay organized'
+        />
 
         <div className='flex items-center justify-between'>
           <div className='flex items-center gap-2'>
-            <Button variant='outline' className='h-8' onClick={() => setIsCreateOpen(true)}>
+            <Button
+              variant='outline'
+              className='h-8'
+              onClick={() => setIsCreateOpen(true)}
+            >
               <PlusIcon className='mr-2 h-4 w-4' />
               Add Task
             </Button>
@@ -216,7 +265,11 @@ export default function TasksPage() {
                 <Button variant='outline' className='h-8 gap-2'>
                   <FilterIcon className='h-4 w-4' />
                   Filter
-                  {visibleStatuses.length !== STATUSES.length && <span className='rounded-full bg-primary px-2 py-0.5 text-primary-foreground text-xs'>{visibleStatuses.length}</span>}
+                  {visibleStatuses.length !== STATUSES.length && (
+                    <span className='rounded-full bg-primary px-2 py-0.5 text-primary-foreground text-xs'>
+                      {visibleStatuses.length}
+                    </span>
+                  )}
                 </Button>
               </PopoverTrigger>
               <PopoverContent className='w-80' align='start'>
@@ -229,11 +282,16 @@ export default function TasksPage() {
                           id={status}
                           checked={visibleStatuses.includes(status)}
                           onCheckedChange={(checked) => {
-                            const newStatuses = checked ? [...visibleStatuses, status] : visibleStatuses.filter((s) => s !== status);
+                            const newStatuses = checked
+                              ? [...visibleStatuses, status]
+                              : visibleStatuses.filter((s) => s !== status);
                             updateVisibleStatuses(newStatuses);
                           }}
                         />
-                        <label htmlFor={status} className='font-medium text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70'>
+                        <label
+                          htmlFor={status}
+                          className='font-medium text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70'
+                        >
                           {status}
                         </label>
                       </div>
@@ -245,10 +303,20 @@ export default function TasksPage() {
           </div>
 
           <div className='flex items-center gap-2'>
-            <Button variant={viewMode === 'list' ? 'default' : 'outline'} size='icon' onClick={() => updateViewMode('list')} className='h-8 w-8'>
+            <Button
+              variant={viewMode === 'list' ? 'default' : 'outline'}
+              size='icon'
+              onClick={() => updateViewMode('list')}
+              className='h-8 w-8'
+            >
               <ListIcon className='h-4 w-4' />
             </Button>
-            <Button variant={viewMode === 'kanban' ? 'default' : 'outline'} size='icon' onClick={() => updateViewMode('kanban')} className='h-8 w-8'>
+            <Button
+              variant={viewMode === 'kanban' ? 'default' : 'outline'}
+              size='icon'
+              onClick={() => updateViewMode('kanban')}
+              className='h-8 w-8'
+            >
               <LayoutGridIcon className='h-4 w-4' />
             </Button>
           </div>
@@ -258,9 +326,22 @@ export default function TasksPage() {
       <div className='flex-1 overflow-hidden p-6 pt-8'>
         <div className='h-full overflow-auto'>
           {viewMode === 'list' ? (
-            <TaskList tasks={tasks} visibleStatuses={visibleStatuses} onEdit={handleEdit} onDelete={handleDelete} onContentView={handleContentView} />
+            <TaskList
+              tasks={tasks}
+              visibleStatuses={visibleStatuses}
+              onEdit={handleEdit}
+              onDelete={handleDelete}
+              onContentView={handleContentView}
+            />
           ) : (
-            <KanbanBoard tasks={tasks} visibleStatuses={visibleStatuses} onEdit={handleEdit} onDelete={handleDelete} onContentView={handleContentView} onStatusChange={handleStatusChange} />
+            <KanbanBoard
+              tasks={tasks}
+              visibleStatuses={visibleStatuses}
+              onEdit={handleEdit}
+              onDelete={handleDelete}
+              onContentView={handleContentView}
+              onStatusChange={handleStatusChange}
+            />
           )}
         </div>
       </div>
@@ -289,8 +370,12 @@ export default function TasksPage() {
       >
         <DialogContent className='max-h-[90vh] max-w-xl overflow-y-auto'>
           <DialogHeader>
-            <DialogTitle>{editingTask ? 'Edit Task' : 'Create New Task'}</DialogTitle>
-            <DialogDescription>Fill in the details for your task.</DialogDescription>
+            <DialogTitle>
+              {editingTask ? 'Edit Task' : 'Create New Task'}
+            </DialogTitle>
+            <DialogDescription>
+              Fill in the details for your task.
+            </DialogDescription>
           </DialogHeader>
 
           <Form {...form}>
@@ -330,7 +415,11 @@ export default function TasksPage() {
                   <FormItem>
                     <FormLabel>Content</FormLabel>
                     <FormControl>
-                      <Textarea placeholder='Add detailed content for your task...' className='min-h-[200px]' {...field} />
+                      <Textarea
+                        placeholder='Add detailed content for your task...'
+                        className='min-h-[200px]'
+                        {...field}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -344,7 +433,10 @@ export default function TasksPage() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Priority</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                      >
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder='Select priority' />
@@ -368,7 +460,10 @@ export default function TasksPage() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Status</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                      >
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder='Select status' />
@@ -377,7 +472,9 @@ export default function TasksPage() {
                         <SelectContent>
                           <SelectItem value='backlog'>Backlog</SelectItem>
                           <SelectItem value='todo'>To Do</SelectItem>
-                          <SelectItem value='in_progress'>In Progress</SelectItem>
+                          <SelectItem value='in_progress'>
+                            In Progress
+                          </SelectItem>
                           <SelectItem value='in_review'>In Review</SelectItem>
                           <SelectItem value='done'>Done</SelectItem>
                         </SelectContent>
@@ -395,7 +492,11 @@ export default function TasksPage() {
                   <FormItem>
                     <FormLabel>Due Date</FormLabel>
                     <FormControl>
-                      <DateTimePicker value={field.value || new Date()} onChange={field.onChange} showTimePicker={true} />
+                      <DateTimePicker
+                        value={field.value || new Date()}
+                        onChange={field.onChange}
+                        showTimePicker={true}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -405,11 +506,18 @@ export default function TasksPage() {
               <DialogFooter className='flex items-center gap-4'>
                 {!editingTask && (
                   <div className='flex flex-1 items-center gap-2'>
-                    <Switch id='keep-creating' checked={keepCreating} onCheckedChange={setKeepCreating} />
+                    <Switch
+                      id='keep-creating'
+                      checked={keepCreating}
+                      onCheckedChange={setKeepCreating}
+                    />
                     <Label htmlFor='keep-creating'>Keep creating</Label>
                   </div>
                 )}
-                <Button type='submit' disabled={createTask.isPending || updateTask.isPending}>
+                <Button
+                  type='submit'
+                  disabled={createTask.isPending || updateTask.isPending}
+                >
                   {editingTask ? 'Update Task' : 'Create Task'}
                 </Button>
               </DialogFooter>
@@ -418,7 +526,10 @@ export default function TasksPage() {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={!!viewingContent} onOpenChange={(open) => !open && setViewingContent(null)}>
+      <Dialog
+        open={!!viewingContent}
+        onOpenChange={(open) => !open && setViewingContent(null)}
+      >
         <DialogContent className='max-h-[90vh] max-w-xl overflow-y-auto'>
           <DialogHeader>
             <DialogTitle>{viewingContent?.title}</DialogTitle>

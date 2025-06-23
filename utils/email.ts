@@ -1,5 +1,5 @@
-import { env } from '@/lib/env';
 import { Resend } from 'resend';
+import { env } from '@/lib/env';
 
 const resend = new Resend(env.AUTH_RESEND_KEY);
 
@@ -13,7 +13,15 @@ interface SendEmailParams {
   attachments?: any[];
 }
 
-export async function sendEmail({ from, to, subject, content, cc, bcc, attachments }: SendEmailParams) {
+export async function sendEmail({
+  from,
+  to,
+  subject,
+  content,
+  cc,
+  bcc,
+  attachments,
+}: SendEmailParams) {
   try {
     const { data, error } = await resend.emails.send({
       from: 'Portal <portal@mail.vifu.org>',

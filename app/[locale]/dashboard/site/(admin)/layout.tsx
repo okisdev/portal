@@ -1,8 +1,8 @@
+import { eq } from 'drizzle-orm';
+import { notFound } from 'next/navigation';
 import { auth } from '@/auth';
 import { user } from '@/drizzle/schema';
 import { database } from '@/lib/database';
-import { eq } from 'drizzle-orm';
-import { notFound } from 'next/navigation';
 
 export default async function SiteAdminLayout({
   children,
