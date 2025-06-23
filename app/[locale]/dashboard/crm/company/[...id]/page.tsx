@@ -309,7 +309,7 @@ export default function CompanyIdPage() {
         </div>
 
         <div className='w-full lg:w-1/3'>
-          <div className='h-full overflow-y-auto bg-card p-3'>
+          <div className='h-full overflow-y-auto border-l bg-card p-3'>
             <div className='space-y-6'>
               <div>
                 <h2 className='mb-4 font-medium'>{t('company_information')}</h2>

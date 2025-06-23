@@ -52,6 +52,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
 import type { Status } from '@/lib/schema';
 import { cn } from '@/lib/utils';
@@ -541,138 +542,136 @@ export default function TeamIdPage() {
 
         {/* Right Sidebar */}
         <div className='w-80'>
-          <div className='h-full overflow-y-auto bg-muted/30 px-6 py-4'>
-            <div className='space-y-6'>
-              {/* Team Information */}
-              <div>
-                <h3 className='mb-3 font-medium text-sm'>
-                  {t('team_information')}
-                </h3>
-                <div className='space-y-3'>
-                  <div>
-                    <Label className='text-muted-foreground text-xs uppercase tracking-wide'>
-                      {t('team_leader')}
-                    </Label>
-                    <p className='mt-1 text-sm'>
-                      <Link
-                        href={
-                          team.leaderId
-                            ? `/dashboard/crm/contacts/${team.leaderId}`
-                            : ''
-                        }
-                        className='hover:underline'
-                      >
-                        {team.leaderId
-                          ? `${team.leader?.firstName} ${team.leader?.lastName}`
-                          : 'N/A'}
-                      </Link>
-                    </p>
-                  </div>
-                  <div>
-                    <Label className='text-muted-foreground text-xs uppercase tracking-wide'>
-                      {t('sub_leader')}
-                    </Label>
-                    <p className='mt-1 text-sm'>
-                      <Link
-                        href={
-                          team.subLeaderId
-                            ? `/dashboard/crm/contacts/${team.subLeaderId}`
-                            : ''
-                        }
-                        className='hover:underline'
-                      >
-                        {team.subLeaderId
-                          ? `${team.subLeader?.firstName} ${team.subLeader?.lastName}`
-                          : 'N/A'}
-                      </Link>
-                    </p>
-                  </div>
-                  <div>
-                    <Label className='text-muted-foreground text-xs uppercase tracking-wide'>
-                      {t('referral')}
-                    </Label>
-                    <p className='mt-1 text-sm'>
-                      <Link
-                        href={
-                          team.referralId
-                            ? `/dashboard/crm/contacts/${team.referralId}`
-                            : ''
-                        }
-                        className='hover:underline'
-                      >
-                        {team.referralId
-                          ? `${team.referral?.firstName} ${team.referral?.lastName}`
-                          : 'N/A'}
-                      </Link>
-                    </p>
-                  </div>
-                  <div>
-                    <Label className='text-muted-foreground text-xs uppercase tracking-wide'>
-                      {t('company')}
-                    </Label>
-                    <p className='mt-1 text-sm'>
-                      <Link
-                        href={
-                          team.company
-                            ? `/dashboard/crm/company/${team.company?.id}`
-                            : ''
-                        }
-                        className='hover:underline'
-                      >
-                        {team.company?.name || 'N/A'}
-                      </Link>
-                    </p>
-                  </div>
-                  <div>
-                    <Label className='text-muted-foreground text-xs uppercase tracking-wide'>
-                      {t('remarks')}
-                    </Label>
-                    <p className='mt-1 text-sm'>
-                      {team.remarks || t('no_remark_added')}
-                    </p>
-                  </div>
-                  <div className='border-t pt-2'>
-                    <p className='text-muted-foreground text-xs'>
-                      {t('created_on', {
-                        date: formatDate(new Date(team.createdAt)),
-                      })}
-                    </p>
-                  </div>
+          <div className='h-full overflow-y-auto bg-card'>
+            {/* Team Information */}
+            <div className='p-3'>
+              <h3 className='mb-3 font-medium text-sm'>
+                {t('team_information')}
+              </h3>
+              <div className='space-y-3'>
+                <div>
+                  <Label className='text-muted-foreground text-xs uppercase tracking-wide'>
+                    {t('team_leader')}
+                  </Label>
+                  <p className='mt-1 text-sm'>
+                    <Link
+                      href={
+                        team.leaderId
+                          ? `/dashboard/crm/contacts/${team.leaderId}`
+                          : ''
+                      }
+                      className='hover:underline'
+                    >
+                      {team.leaderId
+                        ? `${team.leader?.firstName} ${team.leader?.lastName}`
+                        : 'N/A'}
+                    </Link>
+                  </p>
+                </div>
+                <div>
+                  <Label className='text-muted-foreground text-xs uppercase tracking-wide'>
+                    {t('sub_leader')}
+                  </Label>
+                  <p className='mt-1 text-sm'>
+                    <Link
+                      href={
+                        team.subLeaderId
+                          ? `/dashboard/crm/contacts/${team.subLeaderId}`
+                          : ''
+                      }
+                      className='hover:underline'
+                    >
+                      {team.subLeaderId
+                        ? `${team.subLeader?.firstName} ${team.subLeader?.lastName}`
+                        : 'N/A'}
+                    </Link>
+                  </p>
+                </div>
+                <div>
+                  <Label className='text-muted-foreground text-xs uppercase tracking-wide'>
+                    {t('referral')}
+                  </Label>
+                  <p className='mt-1 text-sm'>
+                    <Link
+                      href={
+                        team.referralId
+                          ? `/dashboard/crm/contacts/${team.referralId}`
+                          : ''
+                      }
+                      className='hover:underline'
+                    >
+                      {team.referralId
+                        ? `${team.referral?.firstName} ${team.referral?.lastName}`
+                        : 'N/A'}
+                    </Link>
+                  </p>
+                </div>
+                <div>
+                  <Label className='text-muted-foreground text-xs uppercase tracking-wide'>
+                    {t('company')}
+                  </Label>
+                  <p className='mt-1 text-sm'>
+                    <Link
+                      href={
+                        team.company
+                          ? `/dashboard/crm/company/${team.company?.id}`
+                          : ''
+                      }
+                      className='hover:underline'
+                    >
+                      {team.company?.name || 'N/A'}
+                    </Link>
+                  </p>
+                </div>
+                <div>
+                  <Label className='text-muted-foreground text-xs uppercase tracking-wide'>
+                    {t('remarks')}
+                  </Label>
+                  <p className='mt-1 text-sm'>
+                    {team.remarks || t('no_remark_added')}
+                  </p>
+                </div>
+                <div>
+                  <p className='text-right text-muted-foreground text-xs'>
+                    {t('created_on', {
+                      date: formatDate(new Date(team.createdAt)),
+                    })}
+                  </p>
                 </div>
               </div>
+            </div>
 
-              {/* Team Meetings */}
-              <div>
-                <h3 className='mb-3 font-medium text-sm'>
-                  {t('team_meetings')}
-                </h3>
-                <EventSection
-                  appointments={
-                    teamMeetings?.map((meeting) => ({
-                      id: meeting.id,
-                      title: meeting.title,
-                      description: meeting.description,
-                      startAt: new Date(meeting.meetingDate),
-                      endAt: new Date(meeting.meetingDate),
-                    })) || []
-                  }
-                  calendarFolders={folders}
-                  onCreateAppointment={handleCreateMeeting}
-                  onUpdateAppointment={(data) => {
-                    // TODO: Add update meeting functionality
-                    toast.error(
-                      'Update meeting functionality not implemented yet'
-                    );
-                  }}
-                  onDeleteAppointment={(id) => {
-                    deleteTeamMeeting.mutate({
-                      id,
-                      teamId: teamId[0],
-                    });
-                  }}
-                  defaultTitle={t('team_meeting_title', { name: team.name })}
-                />
-              </div>
+            <Separator />
+
+            {/* Team Meetings */}
+            <div className='p-3'>
+              <h3 className='mb-3 font-medium text-sm'>{t('team_meetings')}</h3>
+              <EventSection
+                appointments={
+                  teamMeetings?.map((meeting) => ({
+                    id: meeting.id,
+                    title: meeting.title,
+                    description: meeting.description,
+                    startAt: new Date(meeting.meetingDate),
+                    endAt: new Date(meeting.meetingDate),
+                  })) || []
+                }
+                calendarFolders={folders}
+                onCreateAppointment={handleCreateMeeting}
+                onUpdateAppointment={(data) => {
+                  // TODO: Add update meeting functionality
+                  toast.error(
+                    'Update meeting functionality not implemented yet'
+                  );
+                }}
+                onDeleteAppointment={(id) => {
+                  deleteTeamMeeting.mutate({
+                    id,
+                    teamId: teamId[0],
+                  });
+                }}
+                defaultTitle={t('team_meeting_title', { name: team.name })}
+              />
             </div>
           </div>
         </div>

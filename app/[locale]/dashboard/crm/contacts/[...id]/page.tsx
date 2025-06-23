@@ -840,7 +840,7 @@ export default function ContactIdPage() {
         </div>
 
         <div className='w-full lg:w-2/3'>
-          <div className='h-full p-3'>
+          <div className='h-full border-l p-3'>
             <TabSwitcher
               config={[
                 {
