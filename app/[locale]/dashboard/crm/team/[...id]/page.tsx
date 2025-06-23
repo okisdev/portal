@@ -13,14 +13,7 @@ import {
   useReactTable,
   type VisibilityState,
 } from '@tanstack/react-table';
-import {
-  Calendar,
-  Edit2,
-  Eye,
-  MoreHorizontal,
-  Plus,
-  Trash2,
-} from 'lucide-react';
+import { Calendar, Edit2, Eye, MoreHorizontal, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import {
   notFound,
@@ -34,7 +27,7 @@ import { toast } from 'sonner';
 import { ActionAlertDialog } from '@/components/shared/action-alert-dialog';
 import { ActivitySection } from '@/components/shared/activity-section';
 import { ColorBadge } from '@/components/shared/color-badge';
-import { Combobox, ComboboxCommand } from '@/components/shared/combobox';
+import { Combobox } from '@/components/shared/combobox';
 import { EventDialog } from '@/components/shared/event-dialog';
 import { EventSection } from '@/components/shared/event-section';
 import { PageLoading } from '@/components/shared/page-loading';
@@ -59,11 +52,6 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
 import { Textarea } from '@/components/ui/textarea';
 import type { Status } from '@/lib/schema';
 import { cn } from '@/lib/utils';
@@ -96,8 +84,6 @@ export default function TeamIdPage() {
     remarks: '',
     company: { id: '', name: '' },
   });
-  const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
-  const [searchValue, setSearchValue] = useState('');
   const [contactToDelete, setContactToDelete] = useState<string | null>(null);
 
   const { data: team, isLoading } = api.team.getTeamById.useQuery({
@@ -197,7 +183,6 @@ export default function TeamIdPage() {
 
   const addTeamContact = api.team.addTeamContact.useMutation({
     onSuccess: () => {
-      setIsAddMemberOpen(false);
       utils.team.getTeamContacts.invalidate({ teamId: teamId[0] });
       utils.team.getTeamActivities.invalidate({ id: teamId[0] });
       toast.success(t('contact_added_successfully'));
@@ -444,11 +429,12 @@ export default function TeamIdPage() {
   };
 
   return (
-    <div className='container mx-auto h-[calc(100vh-4rem)] p-0 sm:p-3'>
-      <div className='flex h-full flex-col lg:flex-row'>
-        <div className='w-full lg:w-2/3'>
-          <div className='flex h-full flex-col rounded-none border bg-card text-card-foreground shadow-xs sm:rounded-l-lg'>
-            <div className='flex-none border-b p-6'>
+    <div className='h-full min-h-0 w-full flex-1'>
+      <div className='flex h-full'>
+        <div className='flex-1'>
+          <div className='flex h-full flex-col border-r bg-background'>
+            {/* Header Section */}
+            <div className='border-b px-6 py-4'>
               <div
                 className={cn(
                   team.description
@@ -459,7 +445,7 @@ export default function TeamIdPage() {
                 <div>
                   <h1 className='font-semibold text-xl'>{team.name}</h1>
                   {team.description && (
-                    <p className='text-muted-foreground text-sm'>
+                    <p className='mt-1 text-muted-foreground text-sm'>
                       {team.description}
                     </p>
                   )}
@@ -468,27 +454,23 @@ export default function TeamIdPage() {
                   <Button
                     variant='outline'
                     size='sm'
-                    className='h-8'
                     onClick={() => setIsNewMeetingModalOpen(true)}
                   >
-                    <Calendar className='mr-1 size-4' /> {t('add_meeting')}
+                    <Calendar className='mr-2 size-4' /> {t('add_meeting')}
                   </Button>
-                  <Button
-                    variant='outline'
-                    size='sm'
-                    className='h-8'
-                    onClick={handleEditClick}
-                  >
-                    <Edit2 className='mr-1 size-4' /> {t('edit_team')}
+                  <Button variant='outline' size='sm' onClick={handleEditClick}>
+                    <Edit2 className='mr-2 size-4' /> {t('edit_team')}
                   </Button>
                 </div>
               </div>
             </div>
 
+            {/* Content Section */}
             <div className='flex-1 overflow-y-auto'>
-              <div className='space-y-3 border-b p-4 sm:p-6'>
-                <div className='flex items-center justify-between'>
-                  <p className='font-medium'>{t('team_members')}</p>
+              {/* Team Members Section */}
+              <div className='border-b px-6 py-4'>
+                <div className='mb-4'>
+                  <h2 className='font-medium'>{t('team_members')}</h2>
                 </div>
                 {teamContacts && teamContacts.length === 0 && (
                   <p className='text-muted-foreground text-sm'>
@@ -507,7 +489,8 @@ export default function TeamIdPage() {
                 )}
               </div>
 
-              <div className='p-4 sm:p-6'>
+              {/* Activity Section */}
+              <div className='px-6 py-4'>
                 <TabSwitcher
                   config={[
                     {
@@ -556,23 +539,28 @@ export default function TeamIdPage() {
           </div>
         </div>
 
-        <div className='w-full lg:w-1/3'>
-          <div className='h-full overflow-y-auto rounded-none border border-t-0 border-l-0 p-4 sm:rounded-r-lg sm:border-t-1 sm:p-6'>
-            <div className='h-full space-y-6'>
+        {/* Right Sidebar */}
+        <div className='w-80'>
+          <div className='h-full overflow-y-auto bg-muted/30 px-6 py-4'>
+            <div className='space-y-6'>
+              {/* Team Information */}
               <div>
-                <h2 className='mb-4 font-medium'>{t('team_information')}</h2>
-                <div className='space-y-4'>
+                <h3 className='mb-3 font-medium text-sm'>
+                  {t('team_information')}
+                </h3>
+                <div className='space-y-3'>
                   <div>
-                    <Label className='text-muted-foreground text-xs'>
+                    <Label className='text-muted-foreground text-xs uppercase tracking-wide'>
                       {t('team_leader')}
                     </Label>
-                    <p className='text-sm'>
+                    <p className='mt-1 text-sm'>
                       <Link
                         href={
                           team.leaderId
                             ? `/dashboard/crm/contacts/${team.leaderId}`
                             : ''
                         }
+                        className='hover:underline'
                       >
                         {team.leaderId
                           ? `${team.leader?.firstName} ${team.leader?.lastName}`
@@ -581,16 +569,17 @@ export default function TeamIdPage() {
                     </p>
                   </div>
                   <div>
-                    <Label className='text-muted-foreground text-xs'>
+                    <Label className='text-muted-foreground text-xs uppercase tracking-wide'>
                       {t('sub_leader')}
                     </Label>
-                    <p className='text-sm'>
+                    <p className='mt-1 text-sm'>
                       <Link
                         href={
                           team.subLeaderId
                             ? `/dashboard/crm/contacts/${team.subLeaderId}`
                             : ''
                         }
+                        className='hover:underline'
                       >
                         {team.subLeaderId
                           ? `${team.subLeader?.firstName} ${team.subLeader?.lastName}`
@@ -599,16 +588,17 @@ export default function TeamIdPage() {
                     </p>
                   </div>
                   <div>
-                    <Label className='text-muted-foreground text-xs'>
+                    <Label className='text-muted-foreground text-xs uppercase tracking-wide'>
                       {t('referral')}
                     </Label>
-                    <p className='text-sm'>
+                    <p className='mt-1 text-sm'>
                       <Link
                         href={
                           team.referralId
                             ? `/dashboard/crm/contacts/${team.referralId}`
                             : ''
                         }
+                        className='hover:underline'
                       >
                         {team.referralId
                           ? `${team.referral?.firstName} ${team.referral?.lastName}`
@@ -617,30 +607,31 @@ export default function TeamIdPage() {
                     </p>
                   </div>
                   <div>
-                    <Label className='text-muted-foreground text-xs'>
+                    <Label className='text-muted-foreground text-xs uppercase tracking-wide'>
                       {t('company')}
                     </Label>
-                    <p className='text-sm'>
+                    <p className='mt-1 text-sm'>
                       <Link
                         href={
                           team.company
                             ? `/dashboard/crm/company/${team.company?.id}`
                             : ''
                         }
+                        className='hover:underline'
                       >
                         {team.company?.name || 'N/A'}
                       </Link>
                     </p>
                   </div>
                   <div>
-                    <Label className='text-muted-foreground text-xs'>
+                    <Label className='text-muted-foreground text-xs uppercase tracking-wide'>
                       {t('remarks')}
                     </Label>
-                    <p className='text-sm'>
+                    <p className='mt-1 text-sm'>
                       {team.remarks || t('no_remark_added')}
                     </p>
                   </div>
-                  <div className='flex justify-end'>
+                  <div className='border-t pt-2'>
                     <p className='text-muted-foreground text-xs'>
                       {t('created_on', {
                         date: formatDate(new Date(team.createdAt)),
@@ -650,8 +641,11 @@ export default function TeamIdPage() {
                 </div>
               </div>
 
+              {/* Team Meetings */}
               <div>
-                <h2 className='mb-4 font-medium'>{t('team_meetings')}</h2>
+                <h3 className='mb-3 font-medium text-sm'>
+                  {t('team_meetings')}
+                </h3>
                 <EventSection
                   appointments={
                     teamMeetings?.map((meeting) => ({
