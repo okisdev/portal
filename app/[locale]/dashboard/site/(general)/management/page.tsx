@@ -49,6 +49,7 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { cn } from '@/lib/utils';
 import { randomColor } from '@/utils/color';
 import { api } from '@/utils/trpc/client';
 
@@ -98,9 +99,10 @@ function SortableItem({
       style={style}
       {...attributes}
       {...listeners}
-      className={`group flex cursor-grab items-center justify-between rounded-lg border bg-card p-3 text-sm shadow-sm transition-all duration-200 active:cursor-grabbing ${
+      className={cn(
+        'group flex cursor-grab items-center justify-between rounded-lg border bg-card p-3 text-sm shadow-sm transition-all duration-200 active:cursor-grabbing',
         isDragging ? 'shadow-md ring-1 ring-primary/50' : 'hover:shadow-md'
-      }`}
+      )}
     >
       <div className='flex items-center gap-3'>
         <div className='flex h-6 w-6 items-center justify-center rounded-full bg-muted font-medium text-muted-foreground text-xs'>

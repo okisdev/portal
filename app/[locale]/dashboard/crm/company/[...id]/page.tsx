@@ -224,11 +224,11 @@ export default function CompanyIdPage() {
   };
 
   return (
-    <div className='container mx-auto h-[calc(100vh-4rem)] p-0 sm:p-3'>
+    <div className='h-full min-h-0 w-full flex-1'>
       <div className='flex h-full flex-col lg:flex-row'>
         <div className='w-full lg:w-2/3'>
-          <div className='flex h-full flex-col rounded-none border bg-card text-card-foreground shadow-xs sm:rounded-l-lg'>
-            <div className='flex-none border-b p-6'>
+          <div className='flex h-full flex-col text-card-foreground'>
+            <div className='flex-none border-b p-4 md:p-6'>
               <div
                 className={cn(
                   company.description
@@ -284,7 +284,7 @@ export default function CompanyIdPage() {
                     <Link
                       key={team.id}
                       href={`/dashboard/crm/team/${team.id}`}
-                      className='rounded-lg border bg-card p-4 transition-colors hover:bg-muted/50'
+                      className='rounded-lg bg-card p-4 transition-colors hover:bg-muted/50'
                     >
                       <div className='flex items-center justify-between'>
                         <div>
@@ -309,7 +309,7 @@ export default function CompanyIdPage() {
         </div>
 
         <div className='w-full lg:w-1/3'>
-          <div className='h-full overflow-y-auto rounded-none border border-t-0 border-l-0 p-4 sm:rounded-r-lg sm:border-t-1 sm:p-6'>
+          <div className='h-full overflow-y-auto bg-card p-3'>
             <div className='space-y-6'>
               <div>
                 <h2 className='mb-4 font-medium'>{t('company_information')}</h2>

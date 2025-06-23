@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { ResourceContent } from '@/lib/schema';
+import { cn } from '@/lib/utils';
 
 interface ContentListProps {
   contents?: { resourceContent: ResourceContent }[];
@@ -60,7 +61,12 @@ export function ContentSideList({
             <button
               type='button'
               key={item.resourceContent.id}
-              className={`mb-2 w-full cursor-pointer rounded-lg p-4 text-left transition-colors hover:bg-accent/50 ${currentContent?.id === item.resourceContent.id ? 'bg-accent' : ''}`}
+              className={cn(
+                'mb-2 w-full cursor-pointer rounded-lg p-4 text-left transition-colors hover:bg-accent/50',
+                currentContent?.id === item.resourceContent.id
+                  ? 'bg-accent'
+                  : ''
+              )}
               onClick={() => {
                 router.push(`?id=${item.resourceContent.id}`);
               }}

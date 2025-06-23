@@ -21,6 +21,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { cn } from '@/lib/utils';
 
 interface Appointment {
   id: string;
@@ -165,7 +166,10 @@ export function EventSection({
               )}
             </p>
             <ChevronDown
-              className={`h-4 w-4 text-muted-foreground transition-transform ${isUpcomingOpen ? 'rotate-180' : ''}`}
+              className={cn(
+                'h-4 w-4 text-muted-foreground transition-transform',
+                isUpcomingOpen ? 'rotate-180' : ''
+              )}
             />
           </button>
           <AnimatePresence initial={false}>
@@ -255,7 +259,10 @@ export function EventSection({
               )}
             </span>
             <ChevronDown
-              className={`h-4 w-4 text-muted-foreground transition-transform ${isPastOpen ? 'rotate-180' : ''}`}
+              className={cn(
+                'h-4 w-4 text-muted-foreground transition-transform',
+                isPastOpen ? 'rotate-180' : ''
+              )}
             />
           </button>
           <AnimatePresence initial={false}>

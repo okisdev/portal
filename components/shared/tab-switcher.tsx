@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { cn } from '@/lib/utils';
 
 type TabSwitcherProps = {
   config: {
@@ -91,7 +92,12 @@ export function TabSwitcher({ config }: TabSwitcherProps) {
                 tabIndex={0}
                 aria-selected={index === activeIndex}
                 aria-controls={`panel-${tab.label}`}
-                className={`h-[30px] cursor-pointer px-3 py-2 transition-colors duration-300 ${index === activeIndex ? 'text-foreground' : 'text-foreground/60'}`}
+                className={cn(
+                  'h-[30px] cursor-pointer px-3 py-2 transition-colors duration-300',
+                  index === activeIndex
+                    ? 'text-foreground'
+                    : 'text-foreground/60'
+                )}
                 onMouseEnter={() => setHoveredIndex(index)}
                 onMouseLeave={() => setHoveredIndex(null)}
                 onClick={() => setActiveIndex(index)}

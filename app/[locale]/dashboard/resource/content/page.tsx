@@ -13,6 +13,7 @@ import { PageHeader } from '@/components/shared/page-header';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { ResourceContent } from '@/lib/schema';
+import { cn } from '@/lib/utils';
 import type { Locale } from '@/types/i18n';
 import { dateLocaleMap } from '@/utils/date';
 import { api } from '@/utils/trpc/client';
@@ -167,11 +168,12 @@ export default function ContentPage() {
                       `/dashboard/resource/content?id=${item.resourceContent.id}`
                     )
                   }
-                  className={`group w-full space-y-2 rounded-lg border bg-background p-3 text-left transition-all hover:border-primary/20 hover:shadow-xs ${
+                  className={cn(
+                    'group w-full space-y-2 rounded-lg border bg-background p-3 text-left transition-all hover:border-primary/20 hover:shadow-xs',
                     currentContent?.id === item.resourceContent.id
                       ? 'border-primary/40 shadow-xs'
                       : ''
-                  }`}
+                  )}
                 >
                   <div>
                     <h3 className='line-clamp-1 font-medium text-sm group-hover:text-primary'>

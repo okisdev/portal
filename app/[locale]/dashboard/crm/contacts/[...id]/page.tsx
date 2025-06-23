@@ -386,10 +386,10 @@ export default function ContactIdPage() {
   };
 
   return (
-    <div className='container mx-auto h-[calc(100vh-4rem)] p-0 sm:p-3'>
+    <div className='h-full min-h-0 w-full flex-1'>
       <div className='flex h-full flex-col lg:flex-row'>
         <div className='w-full lg:w-1/3'>
-          <div className='flex h-full flex-col rounded-none border bg-card text-card-foreground shadow-xs sm:rounded-l-lg'>
+          <div className='flex h-full flex-col bg-card text-card-foreground'>
             <div className='flex-none border-b p-6'>
               <div className='flex items-start gap-4'>
                 <Avatar className='size-16'>
@@ -840,7 +840,7 @@ export default function ContactIdPage() {
         </div>
 
         <div className='w-full lg:w-2/3'>
-          <div className='h-full rounded-none border border-t-0 border-l-0 p-4 sm:rounded-r-lg sm:border-t-1 sm:p-6'>
+          <div className='h-full p-3'>
             <TabSwitcher
               config={[
                 {

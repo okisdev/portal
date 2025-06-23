@@ -58,6 +58,7 @@ import {
 import { Skeleton } from '@/components/ui/skeleton';
 import { useDebounce } from '@/hooks/use-debounce';
 import type { Contact, Priority, Source, Status } from '@/lib/schema';
+import { cn } from '@/lib/utils';
 import { parsePhoneWithoutCountryCode } from '@/utils/phone';
 import { api } from '@/utils/trpc/client';
 
@@ -115,7 +116,10 @@ const ContactCard = memo(function ContactCard({
 
   return (
     <div
-      className={`rounded-lg border bg-card p-4 shadow-sm ${!simplified ? 'group relative' : ''}`}
+      className={cn(
+        'rounded-lg border bg-card p-4 shadow-sm',
+        !simplified ? 'group relative' : ''
+      )}
     >
       <div className='flex items-start gap-3'>
         <Avatar className='size-8'>
@@ -269,7 +273,7 @@ const SortableItem = memo(function SortableItem({
       {...listeners}
       ref={setNodeRef}
       style={style}
-      className='group relative cursor-move transition-colors hover:bg-accent'
+      className='group relative cursor-move transition-colors'
     >
       <div
         className='absolute top-2 right-2 cursor-grab touch-none opacity-0 group-hover:opacity-100'
@@ -397,7 +401,10 @@ function DroppableColumn({
       </div>
       <div
         ref={setMultipleRefs}
-        className={`flex-1 overflow-y-auto rounded-lg border p-2 ${isOver ? 'bg-accent/20' : 'bg-muted/50'}`}
+        className={cn(
+          'flex-1 overflow-y-auto rounded-lg border p-2',
+          isOver ? 'bg-accent/20' : 'bg-muted/50'
+        )}
         style={{ position: 'relative' }}
       >
         <SortableContext

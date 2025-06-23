@@ -25,6 +25,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { cn } from '@/lib/utils';
 import { STATUS_LABELS } from './list';
 
 interface Task {
@@ -64,7 +65,10 @@ function TaskCard({ task, onEdit, onDelete, onContentClick }: TaskCardProps) {
       style={style}
       {...listeners}
       {...attributes}
-      className={`group z-50 cursor-grab rounded-lg border bg-card p-4 shadow-xs transition-all hover:shadow-md active:cursor-grabbing ${isDragging ? 'scale-105 shadow-lg ring-2 ring-primary' : ''}`}
+      className={cn(
+        'group z-50 cursor-grab rounded-lg border bg-card p-4 shadow-xs transition-all hover:shadow-md active:cursor-grabbing',
+        isDragging ? 'scale-105 shadow-lg ring-2 ring-primary' : ''
+      )}
       data-task-id={task.id}
     >
       <div className='flex items-center justify-between'>
@@ -156,7 +160,10 @@ function DroppableColumn({ status, children }: DroppableColumnProps) {
     <div ref={setNodeRef} data-status={status} className='flex h-full flex-col'>
       <div className='flex items-center justify-between pb-4'>{header}</div>
       <div
-        className={`flex-1 overflow-hidden rounded-lg border transition-colors duration-200 ${isOver ? 'border-primary/50 bg-primary/10' : 'bg-muted/50'}`}
+        className={cn(
+          'flex-1 overflow-hidden rounded-lg border transition-colors duration-200',
+          isOver ? 'border-primary/50 bg-primary/10' : 'bg-muted/50'
+        )}
         id={`droppable-${status}`}
       >
         <div className='h-full overflow-y-auto p-4'>{content}</div>
@@ -218,7 +225,7 @@ export default function KanbanBoard({
   );
 
   return (
-    <div className={`h-full ${isDragging ? 'cursor-grabbing' : ''}`}>
+    <div className={cn('h-full', isDragging ? 'cursor-grabbing' : '')}>
       <DndContext
         sensors={sensors}
         onDragEnd={(event) => {
