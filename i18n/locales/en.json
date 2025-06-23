@@ -684,5 +684,6 @@
   "workspace": "Workspace",
   "write_a_reply": "Write a reply... Use @ to mention someone",
   "you": "You",
-  "showing_x_of_y": "Showing {x} of {y}"
+  "showing_x_of_y": "Showing {x} of {y}",
+  "failed_to_load_more_contacts": "Failed to load more contacts"
 }

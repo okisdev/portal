@@ -297,6 +297,8 @@ interface SortableColumnProps {
   showEmptyColumns: boolean;
   groupBy: 'status' | 'priority' | 'source';
   onHideColumn: (columnId: string) => void;
+  onLoadMore: (columnId: string) => void;
+  isLoadingMore: boolean;
 }
 
 function DroppableColumn({
@@ -305,6 +307,8 @@ function DroppableColumn({
   showEmptyColumns,
   groupBy,
   onHideColumn,
+  onLoadMore,
+  isLoadingMore,
 }: SortableColumnProps) {
   const t = useTranslations();
   const [columnSearch, setColumnSearch] = useState('');
@@ -452,13 +456,22 @@ function DroppableColumn({
           )}
         </SortableContext>
         {column.hasMore && filteredItems.length === column.items.length && (
-          <div className='mt-2 text-center'>
+          <div className='mt-2 space-y-2 text-center'>
             <Badge variant='secondary' className='text-xs'>
               {t('showing_x_of_y', {
                 x: column.items.length,
                 y: column.totalCount,
               })}
             </Badge>
+            <Button
+              variant='outline'
+              size='sm'
+              className='w-full text-xs'
+              onClick={() => onLoadMore(column.id)}
+              disabled={isLoadingMore}
+            >
+              {isLoadingMore ? t('loading') : t('load_more')}
+            </Button>
           </div>
         )}
       </div>
@@ -486,7 +499,7 @@ const LoadingSkeleton = memo(function LoadingSkeleton() {
   ];
 
   return (
-    <div className='flex h-full gap-4 overflow-x-auto pb-4'>
+    <div className='flex h-full gap-4 overflow-x-auto'>
       {columnSkeletons.map((column) => (
         <div
           key={column.id}
@@ -538,6 +551,7 @@ export default function CRMContactsKanbanPage() {
   );
   const [hiddenColumns, setHiddenColumns] = useState<string[]>([]);
   const [hasHiddenColumns, setHasHiddenColumns] = useState(false);
+  const [loadingMore, setLoadingMore] = useState<Record<string, boolean>>({});
 
   // Use the new optimized kanban endpoint
   const { data: kanbanData, isLoading } =
@@ -545,6 +559,7 @@ export default function CRMContactsKanbanPage() {
       groupBy,
       search: debouncedSearch,
       limit: 100, // Load up to 100 contacts per column
+      offset: 0, // Initial load
     });
 
   const utils = api.useUtils();
@@ -564,7 +579,7 @@ export default function CRMContactsKanbanPage() {
   useEffect(() => {
     setHiddenColumns([]);
     setHasHiddenColumns(false);
-  }, [groupBy]);
+  }, []);
 
   // Handle hiding a column
   const handleHideColumn = useCallback((columnId: string) => {
@@ -607,6 +622,53 @@ export default function CRMContactsKanbanPage() {
       setColumns(kanbanData.columns);
     }
   }, [kanbanData]);
+
+  // Handle loading more contacts for a specific column
+  const handleLoadMore = useCallback(
+    async (columnId: string) => {
+      if (loadingMore[columnId]) return;
+
+      setLoadingMore((prev) => ({ ...prev, [columnId]: true }));
+
+      try {
+        const currentColumn = columns.find(
+          (col: KanbanColumn) => col.id === columnId
+        );
+        if (!currentColumn) return;
+
+        const moreData = await utils.contact.getContactsForKanban.fetch({
+          groupBy,
+          search: debouncedSearch,
+          limit: 100,
+          offset: currentColumn.items.length,
+        });
+
+        // Find the new data for this column
+        const newColumnData = moreData.columns.find(
+          (col: KanbanColumn) => col.id === columnId
+        );
+        if (newColumnData && newColumnData.items.length > 0) {
+          setColumns((prevColumns) =>
+            prevColumns.map((col) =>
+              col.id === columnId
+                ? {
+                    ...col,
+                    items: [...col.items, ...newColumnData.items],
+                    hasMore: newColumnData.hasMore,
+                  }
+                : col
+            )
+          );
+        }
+      } catch (error) {
+        console.error('Error loading more contacts:', error);
+        toast.error(t('failed_to_load_more_contacts'));
+      } finally {
+        setLoadingMore((prev) => ({ ...prev, [columnId]: false }));
+      }
+    },
+    [columns, groupBy, debouncedSearch, loadingMore, utils, t]
+  );
 
   const handleDragStart = (event: DragStartEvent) => {
     if (debouncedDragging) {
@@ -906,7 +968,7 @@ export default function CRMContactsKanbanPage() {
         {isLoading ? (
           <LoadingSkeleton />
         ) : (
-          <div className='flex h-full gap-4 overflow-x-auto pb-4'>
+          <div className='flex h-full gap-4 overflow-x-auto'>
             <DndContext
               sensors={sensors}
               onDragStart={handleDragStart}
@@ -928,6 +990,8 @@ export default function CRMContactsKanbanPage() {
                   showEmptyColumns={showEmptyColumns}
                   groupBy={groupBy}
                   onHideColumn={handleHideColumn}
+                  onLoadMore={handleLoadMore}
+                  isLoadingMore={loadingMore[column.id] || false}
                 />
               ))}
               <DragOverlay>

@@ -959,10 +959,11 @@ export const contactRouter = createTRPCRouter({
         groupBy: z.enum(['status', 'priority', 'source']),
         search: z.string().optional(),
         limit: z.number().min(10).max(200).default(100), // Limit per column
+        offset: z.number().min(0).default(0), // Offset for pagination
       })
     )
     .query(async ({ ctx, input }) => {
-      const { groupBy, search, limit } = input;
+      const { groupBy, search, limit, offset } = input;
 
       // First, get the configuration for the grouping
       const configKey =
@@ -1033,7 +1034,8 @@ export const contactRouter = createTRPCRouter({
             END`,
             desc(contact.createdAt)
           )
-          .limit(limit);
+          .limit(limit)
+          .offset(offset);
 
         groupedData[item.value] = contacts;
       }
@@ -1067,7 +1069,7 @@ export const contactRouter = createTRPCRouter({
           color: item.color,
           items: groupedData[item.value] || [],
           totalCount: counts[item.value] || 0,
-          hasMore: counts[item.value] > limit,
+          hasMore: counts[item.value] > offset + limit,
         })),
         config: items,
       };

@@ -684,5 +684,7 @@
   "workspace": "工作區",
   "write_a_reply": "寫回復... 使用 @ 提及某人",
   "you": "你",
-  "showing_x_of_y": "顯示{y}的{x}"
+  "showing_x_of_y": "顯示{y}的{x}",
+  "failed_to_load_more_contacts": "無法加載更多的聯繫人",
+  "load_more": "加載更多"
 }
