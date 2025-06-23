@@ -9,7 +9,9 @@ export const taskRouter = createTRPCRouter({
       z.object({
         title: z.string(),
         description: z.string().optional(),
-        status: z.enum(['backlog', 'todo', 'in_progress', 'in_review', 'done']).default('todo'),
+        status: z
+          .enum(['backlog', 'todo', 'in_progress', 'in_review', 'done'])
+          .default('todo'),
         priority: z.enum(['urgent', 'high', 'medium', 'low']).default('medium'),
         dueDate: z.date().optional(),
         assignedTo: z.string().optional(),
@@ -38,7 +40,9 @@ export const taskRouter = createTRPCRouter({
     .input(
       z
         .object({
-          status: z.enum(['backlog', 'todo', 'in_progress', 'in_review', 'done']).optional(),
+          status: z
+            .enum(['backlog', 'todo', 'in_progress', 'in_review', 'done'])
+            .optional(),
           priority: z.enum(['urgent', 'high', 'medium', 'low']).optional(),
           assignedToMe: z.boolean().optional(),
           parentTaskId: z.string().optional(),
@@ -71,13 +75,20 @@ export const taskRouter = createTRPCRouter({
     }),
 
   // Get task by ID
-  getById: protectedProcedure.input(z.object({ id: z.string() })).query(async ({ ctx, input }) => {
-    return ctx.db
-      .select()
-      .from(userTask)
-      .where(and(eq(userTask.id, input.id), eq(userTask.userId, ctx.session.user.id)))
-      .then((rows) => rows[0]);
-  }),
+  getById: protectedProcedure
+    .input(z.object({ id: z.string() }))
+    .query(async ({ ctx, input }) => {
+      return ctx.db
+        .select()
+        .from(userTask)
+        .where(
+          and(
+            eq(userTask.id, input.id),
+            eq(userTask.userId, ctx.session.user.id)
+          )
+        )
+        .then((rows) => rows[0]);
+    }),
 
   // Update task
   update: protectedProcedure
@@ -87,7 +98,9 @@ export const taskRouter = createTRPCRouter({
         data: z.object({
           title: z.string().optional(),
           description: z.string().optional(),
-          status: z.enum(['backlog', 'todo', 'in_progress', 'in_review', 'done']).optional(),
+          status: z
+            .enum(['backlog', 'todo', 'in_progress', 'in_review', 'done'])
+            .optional(),
           priority: z.enum(['urgent', 'high', 'medium', 'low']).optional(),
           dueDate: z.date().optional(),
           completedAt: z.date().optional(),
@@ -107,11 +120,25 @@ export const taskRouter = createTRPCRouter({
       return ctx.db
         .update(userTask)
         .set(updateData)
-        .where(and(eq(userTask.id, input.id), eq(userTask.userId, ctx.session.user.id)));
+        .where(
+          and(
+            eq(userTask.id, input.id),
+            eq(userTask.userId, ctx.session.user.id)
+          )
+        );
     }),
 
   // Delete task
-  delete: protectedProcedure.input(z.object({ id: z.string() })).mutation(async ({ ctx, input }) => {
-    return ctx.db.delete(userTask).where(and(eq(userTask.id, input.id), eq(userTask.userId, ctx.session.user.id)));
-  }),
+  delete: protectedProcedure
+    .input(z.object({ id: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      return ctx.db
+        .delete(userTask)
+        .where(
+          and(
+            eq(userTask.id, input.id),
+            eq(userTask.userId, ctx.session.user.id)
+          )
+        );
+    }),
 });

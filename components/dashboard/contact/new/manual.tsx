@@ -5,9 +5,20 @@ import { EmailInput } from '@/components/shared/email-input';
 import { PhoneInput } from '@/components/shared/phone-input';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
 import { Textarea } from '@/components/ui/textarea';
 import { sources } from '@/data/data';
 import type { Status } from '@/lib/schema';
@@ -79,7 +90,9 @@ export default function ManualContactForm() {
 
     try {
       // Ensure createdAt is set to midnight if provided
-      const createdAt = values.createdAt ? startOfDay(values.createdAt) : undefined;
+      const createdAt = values.createdAt
+        ? startOfDay(values.createdAt)
+        : undefined;
 
       const result = await createContact.mutateAsync({
         ...values,
@@ -175,7 +188,10 @@ export default function ManualContactForm() {
               <FormItem>
                 <FormLabel>{t('email')}</FormLabel>
                 <FormControl>
-                  <EmailInput value={field.value || ''} onChange={field.onChange} />
+                  <EmailInput
+                    value={field.value || ''}
+                    onChange={field.onChange}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -189,7 +205,10 @@ export default function ManualContactForm() {
               <FormItem>
                 <FormLabel>{t('phone')}</FormLabel>
                 <FormControl>
-                  <PhoneInput value={field.value || ''} onChange={field.onChange} />
+                  <PhoneInput
+                    value={field.value || ''}
+                    onChange={field.onChange}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -208,8 +227,13 @@ export default function ManualContactForm() {
                   <Combobox
                     value={field.value ?? ''}
                     onChange={(value) => {
-                      const selectedCompany = companies?.find((c) => c.name === value);
-                      form.setValue('company', selectedCompany ? selectedCompany.name : value);
+                      const selectedCompany = companies?.find(
+                        (c) => c.name === value
+                      );
+                      form.setValue(
+                        'company',
+                        selectedCompany ? selectedCompany.name : value
+                      );
                       form.setValue('companyId', selectedCompany?.id || null);
                     }}
                     items={companies?.map((c) => c.name) || []}
@@ -231,7 +255,14 @@ export default function ManualContactForm() {
               <FormItem>
                 <FormLabel>{t('source')}</FormLabel>
                 <FormControl>
-                  <Combobox value={field.value ?? ''} onChange={field.onChange} items={sources} placeholder={t('select_source')} searchPlaceholder={t('search_source')} groupHeading={t('sources')} />
+                  <Combobox
+                    value={field.value ?? ''}
+                    onChange={field.onChange}
+                    items={sources}
+                    placeholder={t('select_source')}
+                    searchPlaceholder={t('search_source')}
+                    groupHeading={t('sources')}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -256,7 +287,9 @@ export default function ManualContactForm() {
                     groupHeading={t('statuses')}
                     allowCustom={false}
                     renderItem={(id) => {
-                      const status = statuses?.find((s: Status) => s.value === id);
+                      const status = statuses?.find(
+                        (s: Status) => s.value === id
+                      );
                       return status?.value ?? id;
                     }}
                   />
@@ -278,7 +311,9 @@ export default function ManualContactForm() {
                   <FormControl>
                     <Input
                       placeholder='YYYY/MM/DD'
-                      value={field.value ? format(field.value, 'yyyy/MM/dd') : ''}
+                      value={
+                        field.value ? format(field.value, 'yyyy/MM/dd') : ''
+                      }
                       onChange={(e) => {
                         const parsedDate = parseDate(e.target.value);
                         field.onChange(parsedDate);
@@ -287,12 +322,22 @@ export default function ManualContactForm() {
                   </FormControl>
                   <Popover>
                     <PopoverTrigger asChild>
-                      <Button type='button' variant={'outline'} className={cn('px-2')}>
+                      <Button
+                        type='button'
+                        variant={'outline'}
+                        className={cn('px-2')}
+                      >
                         <CalendarIcon className='h-4 w-4' />
                       </Button>
                     </PopoverTrigger>
                     <PopoverContent className='w-auto p-0' align='start'>
-                      <Calendar mode='single' selected={field.value} onSelect={field.onChange} disabled={(date) => date > new Date()} initialFocus />
+                      <Calendar
+                        mode='single'
+                        selected={field.value}
+                        onSelect={field.onChange}
+                        disabled={(date) => date > new Date()}
+                        initialFocus
+                      />
                     </PopoverContent>
                   </Popover>
                 </div>

@@ -23,9 +23,21 @@ export default async function RootLayout(props: Props) {
     <html lang={locale} suppressHydrationWarning>
       <head>
         <meta name='apple-mobile-web-app-title' content='Portal' />
-        <meta name='theme-color' media='(prefers-color-scheme: light)' content='white' />
-        <meta name='theme-color' media='(prefers-color-scheme: dark)' content='black' />
-        <Script defer src='https://umami.harisfox.com/script.js' data-website-id={env.NEXT_PUBLIC_UMAMI_WEBSITE_ID} />
+        <meta
+          name='theme-color'
+          media='(prefers-color-scheme: light)'
+          content='white'
+        />
+        <meta
+          name='theme-color'
+          media='(prefers-color-scheme: dark)'
+          content='black'
+        />
+        <Script
+          defer
+          src='https://umami.harisfox.com/script.js'
+          data-website-id={env.NEXT_PUBLIC_UMAMI_WEBSITE_ID}
+        />
       </head>
 
       <ReactScan />

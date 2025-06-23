@@ -3,7 +3,9 @@ import { z } from 'zod/v4';
 
 export const env = createEnv({
   server: {
-    NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
+    NODE_ENV: z
+      .enum(['development', 'production', 'test'])
+      .default('development'),
     DATABASE_URL: z.string().min(1, 'DATABASE_URL is required'),
     AUTH_RESEND_KEY: z.string().min(1, 'AUTH_RESEND_KEY is required'),
     AUTH_SECRET: z.string().min(1, 'AUTH_SECRET is required'),
@@ -14,9 +16,16 @@ export const env = createEnv({
   },
   client: {
     NEXT_PUBLIC_APP_URL: z.string().min(1, 'NEXT_PUBLIC_APP_URL is required'),
-    NEXT_PUBLIC_REACT_SCAN_API_KEY: z.string().min(1, 'NEXT_PUBLIC_REACT_SCAN_API_KEY is required'),
-    NEXT_PUBLIC_UMAMI_WEBSITE_ID: z.string().min(1, 'NEXT_PUBLIC_UMAMI_WEBSITE_ID is required').optional(),
-    NEXT_PUBLIC_S3_PUBLIC_URL: z.string().min(1, 'NEXT_PUBLIC_S3_PUBLIC_URL is required'),
+    NEXT_PUBLIC_REACT_SCAN_API_KEY: z
+      .string()
+      .min(1, 'NEXT_PUBLIC_REACT_SCAN_API_KEY is required'),
+    NEXT_PUBLIC_UMAMI_WEBSITE_ID: z
+      .string()
+      .min(1, 'NEXT_PUBLIC_UMAMI_WEBSITE_ID is required')
+      .optional(),
+    NEXT_PUBLIC_S3_PUBLIC_URL: z
+      .string()
+      .min(1, 'NEXT_PUBLIC_S3_PUBLIC_URL is required'),
   },
   runtimeEnv: {
     NODE_ENV: process.env.NODE_ENV,

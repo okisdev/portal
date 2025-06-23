@@ -3,12 +3,31 @@
 import { PageHeader } from '@/components/shared/page-header';
 import { PageLoading } from '@/components/shared/page-loading';
 import { SmartColorBadge } from '@/components/shared/smart-color-badge';
-import { type ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
+import {
+  type ChartConfig,
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+} from '@/components/ui/chart';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { api } from '@/utils/trpc/client';
 import { format, parseISO, subMonths } from 'date-fns';
-import { BarChart2, CheckCircle, Flame, HelpCircle, Phone, PieChart, TrendingUp, Users } from 'lucide-react';
+import {
+  BarChart2,
+  CheckCircle,
+  Flame,
+  HelpCircle,
+  Phone,
+  PieChart,
+  TrendingUp,
+  Users,
+} from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import { useTranslations } from 'next-intl';
 import { useMemo } from 'react';
@@ -19,16 +38,21 @@ export default function Dashboard() {
   const { data: session, status } = useSession();
 
   // Fetch dashboard metrics and configurations in parallel
-  const { data: dashboardData, isLoading: isMetricsLoading } = api.contact.getDashboardMetrics.useQuery({
-    dateRange: 'this-month',
-  });
+  const { data: dashboardData, isLoading: isMetricsLoading } =
+    api.contact.getDashboardMetrics.useQuery({
+      dateRange: 'this-month',
+    });
 
-  const { data: configurations, isLoading: isConfigLoading } = api.contact.getAllConfigurations.useQuery();
+  const { data: configurations, isLoading: isConfigLoading } =
+    api.contact.getAllConfigurations.useQuery();
 
   const isLoading = isMetricsLoading || isConfigLoading;
 
   // Helper function to get color from config
-  const getColorFromConfig = (value: string, items: { value: string; color: string }[]) => {
+  const getColorFromConfig = (
+    value: string,
+    items: { value: string; color: string }[]
+  ) => {
     return items.find((item) => item.value === value)?.color || '#6B7280';
   };
 
@@ -73,14 +97,18 @@ export default function Dashboard() {
 
   // Prepare data for priority breakdown
   const priorityData = useMemo(() => {
-    if (!dashboardData?.priorityBreakdown || !configurations?.priorities) return [];
+    if (!dashboardData?.priorityBreakdown || !configurations?.priorities)
+      return [];
 
     return dashboardData.priorityBreakdown
       .filter((item) => item.priority !== null)
       .map((item) => ({
         status: item.priority || 'Medium',
         value: item.count,
-        color: getColorFromConfig(item.priority || 'Medium', configurations.priorities),
+        color: getColorFromConfig(
+          item.priority || 'Medium',
+          configurations.priorities
+        ),
       }));
   }, [dashboardData?.priorityBreakdown, configurations?.priorities]);
 
@@ -93,7 +121,10 @@ export default function Dashboard() {
       .map((item) => ({
         status: item.source || 'Other',
         value: item.count,
-        color: getColorFromConfig(item.source || 'Other', configurations.sources),
+        color: getColorFromConfig(
+          item.source || 'Other',
+          configurations.sources
+        ),
       }));
   }, [dashboardData?.sourceBreakdown, configurations?.sources]);
 
@@ -107,7 +138,9 @@ export default function Dashboard() {
     <div className='container mx-auto h-[calc(100vh-4rem)] p-4'>
       <div className='flex h-full flex-col'>
         <div className='mb-6 flex items-center justify-between'>
-          <PageHeader title={t('welcome_back', { name: session?.user?.name || '' })} />
+          <PageHeader
+            title={t('welcome_back', { name: session?.user?.name || '' })}
+          />
         </div>
 
         {/* Main Content */}
@@ -122,7 +155,9 @@ export default function Dashboard() {
                 </div>
                 <div className='min-w-0 flex-1'>
                   <div className='flex items-center gap-1'>
-                    <p className='text-muted-foreground text-sm'>{t('total_leads')}</p>
+                    <p className='text-muted-foreground text-sm'>
+                      {t('total_leads')}
+                    </p>
                     <TooltipProvider>
                       <Tooltip>
                         <TooltipTrigger>
@@ -135,11 +170,26 @@ export default function Dashboard() {
                     </TooltipProvider>
                   </div>
                   <div className='mt-1'>
-                    <p className='truncate font-semibold text-2xl'>{metrics?.total || 0}</p>
+                    <p className='truncate font-semibold text-2xl'>
+                      {metrics?.total || 0}
+                    </p>
                     {metrics?.growth && (
                       <p className='text-muted-foreground text-xs'>
-                        <span className={Number(metrics.growth) > 0 ? 'text-green-500' : Number(metrics.growth) < 0 ? 'text-red-500' : ''}>
-                          {Number(metrics.growth) > 0 ? '↑' : Number(metrics.growth) < 0 ? '↓' : ''} {Math.abs(Number(metrics.growth))}%
+                        <span
+                          className={
+                            Number(metrics.growth) > 0
+                              ? 'text-green-500'
+                              : Number(metrics.growth) < 0
+                                ? 'text-red-500'
+                                : ''
+                          }
+                        >
+                          {Number(metrics.growth) > 0
+                            ? '↑'
+                            : Number(metrics.growth) < 0
+                              ? '↓'
+                              : ''}{' '}
+                          {Math.abs(Number(metrics.growth))}%
                         </span>
                         {' vs last month'}
                       </p>
@@ -154,7 +204,9 @@ export default function Dashboard() {
                 </div>
                 <div className='min-w-0 flex-1'>
                   <div className='flex items-center gap-1'>
-                    <p className='text-muted-foreground text-sm'>{t('contacted_leads')}</p>
+                    <p className='text-muted-foreground text-sm'>
+                      {t('contacted_leads')}
+                    </p>
                     <TooltipProvider>
                       <Tooltip>
                         <TooltipTrigger>
@@ -167,8 +219,16 @@ export default function Dashboard() {
                     </TooltipProvider>
                   </div>
                   <div className='mt-1'>
-                    <p className='truncate font-semibold text-2xl'>{metrics?.contacted || 0}</p>
-                    <p className='text-muted-foreground text-xs'>{(((metrics?.contacted || 0) / (metrics?.total || 1)) * 100).toFixed(0)}% of total</p>
+                    <p className='truncate font-semibold text-2xl'>
+                      {metrics?.contacted || 0}
+                    </p>
+                    <p className='text-muted-foreground text-xs'>
+                      {(
+                        ((metrics?.contacted || 0) / (metrics?.total || 1)) *
+                        100
+                      ).toFixed(0)}
+                      % of total
+                    </p>
                   </div>
                 </div>
               </div>
@@ -179,7 +239,9 @@ export default function Dashboard() {
                 </div>
                 <div className='min-w-0 flex-1'>
                   <div className='flex items-center gap-1'>
-                    <p className='text-muted-foreground text-sm'>{t('qualified_leads')}</p>
+                    <p className='text-muted-foreground text-sm'>
+                      {t('qualified_leads')}
+                    </p>
                     <TooltipProvider>
                       <Tooltip>
                         <TooltipTrigger>
@@ -192,8 +254,16 @@ export default function Dashboard() {
                     </TooltipProvider>
                   </div>
                   <div className='mt-1'>
-                    <p className='truncate font-semibold text-2xl'>{metrics?.qualified || 0}</p>
-                    <p className='text-muted-foreground text-xs'>{(((metrics?.qualified || 0) / (metrics?.total || 1)) * 100).toFixed(0)}% of total</p>
+                    <p className='truncate font-semibold text-2xl'>
+                      {metrics?.qualified || 0}
+                    </p>
+                    <p className='text-muted-foreground text-xs'>
+                      {(
+                        ((metrics?.qualified || 0) / (metrics?.total || 1)) *
+                        100
+                      ).toFixed(0)}
+                      % of total
+                    </p>
                   </div>
                 </div>
               </div>
@@ -204,7 +274,9 @@ export default function Dashboard() {
                 </div>
                 <div className='min-w-0 flex-1'>
                   <div className='flex items-center gap-1'>
-                    <p className='text-muted-foreground text-sm'>{t('hot_leads')}</p>
+                    <p className='text-muted-foreground text-sm'>
+                      {t('hot_leads')}
+                    </p>
                     <TooltipProvider>
                       <Tooltip>
                         <TooltipTrigger>
@@ -217,8 +289,16 @@ export default function Dashboard() {
                     </TooltipProvider>
                   </div>
                   <div className='mt-1'>
-                    <p className='truncate font-semibold text-2xl'>{metrics?.hot || 0}</p>
-                    <p className='text-muted-foreground text-xs'>{(((metrics?.hot || 0) / (metrics?.total || 1)) * 100).toFixed(0)}% of total</p>
+                    <p className='truncate font-semibold text-2xl'>
+                      {metrics?.hot || 0}
+                    </p>
+                    <p className='text-muted-foreground text-xs'>
+                      {(
+                        ((metrics?.hot || 0) / (metrics?.total || 1)) *
+                        100
+                      ).toFixed(0)}
+                      % of total
+                    </p>
                   </div>
                 </div>
               </div>
@@ -240,17 +320,38 @@ export default function Dashboard() {
                   }}
                 >
                   <CartesianGrid vertical={false} />
-                  <XAxis dataKey='month' tickLine={false} axisLine={false} tickMargin={8} tickFormatter={(value) => (typeof value === 'string' ? value.slice(0, 3) : '')} />
-                  <ChartTooltip cursor={false} content={<ChartTooltipContent indicator='line' />} />
-                  <Area dataKey='leads' type='natural' fill='var(--color-leads)' fillOpacity={0.4} stroke='var(--color-leads)' />
+                  <XAxis
+                    dataKey='month'
+                    tickLine={false}
+                    axisLine={false}
+                    tickMargin={8}
+                    tickFormatter={(value) =>
+                      typeof value === 'string' ? value.slice(0, 3) : ''
+                    }
+                  />
+                  <ChartTooltip
+                    cursor={false}
+                    content={<ChartTooltipContent indicator='line' />}
+                  />
+                  <Area
+                    dataKey='leads'
+                    type='natural'
+                    fill='var(--color-leads)'
+                    fillOpacity={0.4}
+                    stroke='var(--color-leads)'
+                  />
                 </AreaChart>
               </ChartContainer>
               <div className='mt-4 flex w-full items-start gap-2 text-sm'>
                 <div className='grid gap-2'>
                   <div className='flex items-center gap-2 font-medium leading-none'>
-                    {t('trending_up_by', { percentage: metrics?.growth || 0 })} <TrendingUp className='h-4 w-4' />
+                    {t('trending_up_by', { percentage: metrics?.growth || 0 })}{' '}
+                    <TrendingUp className='h-4 w-4' />
                   </div>
-                  <div className='flex items-center gap-2 text-muted-foreground leading-none'>{chartData.length > 0 && `${chartData[0].month} - ${chartData[chartData.length - 1].month}`}</div>
+                  <div className='flex items-center gap-2 text-muted-foreground leading-none'>
+                    {chartData.length > 0 &&
+                      `${chartData[0].month} - ${chartData[chartData.length - 1].month}`}
+                  </div>
                 </div>
               </div>
             </div>
@@ -270,39 +371,75 @@ export default function Dashboard() {
               </TabsList>
               <TabsContent value='status' className='mt-4 space-y-4'>
                 {statusData.map((item) => (
-                  <div key={item.status} className='flex items-center justify-between'>
+                  <div
+                    key={item.status}
+                    className='flex items-center justify-between'
+                  >
                     <div className='flex items-center gap-2'>
-                      <SmartColorBadge value={item.status} color={item.color} hoverEffect={false} />
+                      <SmartColorBadge
+                        value={item.status}
+                        color={item.color}
+                        hoverEffect={false}
+                      />
                     </div>
                     <div className='flex items-center gap-2'>
                       <span className='font-medium text-sm'>{item.value}</span>
-                      <span className='text-muted-foreground text-xs'>{((item.value / (metrics?.total || 1)) * 100).toFixed(0)}%</span>
+                      <span className='text-muted-foreground text-xs'>
+                        {((item.value / (metrics?.total || 1)) * 100).toFixed(
+                          0
+                        )}
+                        %
+                      </span>
                     </div>
                   </div>
                 ))}
               </TabsContent>
               <TabsContent value='priority' className='mt-4 space-y-4'>
                 {priorityData.map((item) => (
-                  <div key={item.status} className='flex items-center justify-between'>
+                  <div
+                    key={item.status}
+                    className='flex items-center justify-between'
+                  >
                     <div className='flex items-center gap-2'>
-                      <SmartColorBadge value={item.status} color={item.color} hoverEffect={false} />
+                      <SmartColorBadge
+                        value={item.status}
+                        color={item.color}
+                        hoverEffect={false}
+                      />
                     </div>
                     <div className='flex items-center gap-2'>
                       <span className='font-medium text-sm'>{item.value}</span>
-                      <span className='text-muted-foreground text-xs'>{((item.value / (metrics?.total || 1)) * 100).toFixed(0)}%</span>
+                      <span className='text-muted-foreground text-xs'>
+                        {((item.value / (metrics?.total || 1)) * 100).toFixed(
+                          0
+                        )}
+                        %
+                      </span>
                     </div>
                   </div>
                 ))}
               </TabsContent>
               <TabsContent value='resource' className='mt-4 space-y-4'>
                 {sourceData.map((item) => (
-                  <div key={item.status} className='flex items-center justify-between'>
+                  <div
+                    key={item.status}
+                    className='flex items-center justify-between'
+                  >
                     <div className='flex items-center gap-2'>
-                      <SmartColorBadge value={item.status} color={item.color} hoverEffect={false} />
+                      <SmartColorBadge
+                        value={item.status}
+                        color={item.color}
+                        hoverEffect={false}
+                      />
                     </div>
                     <div className='flex items-center gap-2'>
                       <span className='font-medium text-sm'>{item.value}</span>
-                      <span className='text-muted-foreground text-xs'>{((item.value / (metrics?.total || 1)) * 100).toFixed(0)}%</span>
+                      <span className='text-muted-foreground text-xs'>
+                        {((item.value / (metrics?.total || 1)) * 100).toFixed(
+                          0
+                        )}
+                        %
+                      </span>
                     </div>
                   </div>
                 ))}

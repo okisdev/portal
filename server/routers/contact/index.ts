@@ -1,5 +1,19 @@
-import { contact, contactActivity, siteConfig, team, teamContact, user, userNotifications } from '@/drizzle/schema';
-import { type Priority, type Source, type Status, activitySubTypeSchema, activityTypeSchema } from '@/lib/schema';
+import {
+  contact,
+  contactActivity,
+  siteConfig,
+  team,
+  teamContact,
+  user,
+  userNotifications,
+} from '@/drizzle/schema';
+import {
+  type Priority,
+  type Source,
+  type Status,
+  activitySubTypeSchema,
+  activityTypeSchema,
+} from '@/lib/schema';
 import { createContactActivityHelper } from '@/server/helper/contact';
 import { activityRouter } from '@/server/routers/contact/activity';
 import { createTRPCRouter, protectedProcedure } from '@/server/trpc';
@@ -17,52 +31,54 @@ export const contactRouter = createTRPCRouter({
     return ctx.db.select().from(contact).orderBy(desc(contact.createdAt));
   }),
 
-  getContactById: protectedProcedure.input(z.object({ id: z.string() })).query(async ({ ctx, input }) => {
-    return ctx.db
-      .select({
-        id: contact.id,
-        name: contact.name,
-        firstName: contact.firstName,
-        lastName: contact.lastName,
-        email: contact.email,
-        phone: contact.phone,
-        company: contact.company,
-        companyId: contact.companyId,
-        source: contact.source,
-        priority: contact.priority,
-        workExperience: contact.workExperience,
-        currentRole: contact.currentRole,
-        industry: contact.industry,
-        skills: contact.skills,
-        status: contact.status,
-        lastContactedAt: contact.lastContactedAt,
-        nextFollowUpAt: contact.nextFollowUpAt,
-        remark: contact.remark,
-        teams: sql<Array<{ id: string; name: string }>>`
+  getContactById: protectedProcedure
+    .input(z.object({ id: z.string() }))
+    .query(async ({ ctx, input }) => {
+      return ctx.db
+        .select({
+          id: contact.id,
+          name: contact.name,
+          firstName: contact.firstName,
+          lastName: contact.lastName,
+          email: contact.email,
+          phone: contact.phone,
+          company: contact.company,
+          companyId: contact.companyId,
+          source: contact.source,
+          priority: contact.priority,
+          workExperience: contact.workExperience,
+          currentRole: contact.currentRole,
+          industry: contact.industry,
+          skills: contact.skills,
+          status: contact.status,
+          lastContactedAt: contact.lastContactedAt,
+          nextFollowUpAt: contact.nextFollowUpAt,
+          remark: contact.remark,
+          teams: sql<Array<{ id: string; name: string }>>`
           (SELECT json_agg(json_build_object('id', t.id, 'name', t.name))
            FROM ${team} t 
            INNER JOIN ${teamContact} tc ON tc."teamId" = t.id
            WHERE tc."contactId" = ${input.id})`,
-        leadingTeams: sql<Array<{ id: string; name: string }>>`
+          leadingTeams: sql<Array<{ id: string; name: string }>>`
           (SELECT json_agg(json_build_object('id', t.id, 'name', t.name))
            FROM ${team} t 
            WHERE t."leaderId" = ${input.id})`,
-        subLeadingTeams: sql<Array<{ id: string; name: string }>>`
+          subLeadingTeams: sql<Array<{ id: string; name: string }>>`
           (SELECT json_agg(json_build_object('id', t.id, 'name', t.name))
            FROM ${team} t 
            WHERE t."subLeaderId" = ${input.id})`,
-        referralTeams: sql<Array<{ id: string; name: string }>>`
+          referralTeams: sql<Array<{ id: string; name: string }>>`
           (SELECT json_agg(json_build_object('id', t.id, 'name', t.name))
            FROM ${team} t 
            WHERE t."referralId" = ${input.id})`,
-        createdAt: contact.createdAt,
-        updatedAt: contact.updatedAt,
-        createdBy: contact.createdBy,
-      })
-      .from(contact)
-      .where(eq(contact.id, input.id))
-      .then((rows) => rows[0]);
-  }),
+          createdAt: contact.createdAt,
+          updatedAt: contact.updatedAt,
+          createdBy: contact.createdBy,
+        })
+        .from(contact)
+        .where(eq(contact.id, input.id))
+        .then((rows) => rows[0]);
+    }),
 
   createContact: protectedProcedure
     .input(
@@ -92,12 +108,15 @@ export const contactRouter = createTRPCRouter({
       if (existingContact) return existingContact;
 
       // Ensure createdAt is set to midnight if provided
-      const createdAt = input.createdAt ? startOfDay(input.createdAt) : undefined;
+      const createdAt = input.createdAt
+        ? startOfDay(input.createdAt)
+        : undefined;
 
       const [result] = await ctx.db
         .insert(contact)
         .values({
-          name: input.name ?? `${input.firstName ?? ''} ${input.lastName ?? ''}`,
+          name:
+            input.name ?? `${input.firstName ?? ''} ${input.lastName ?? ''}`,
           firstName: input.firstName ?? '',
           lastName: input.lastName ?? '',
           email: input.email,
@@ -129,57 +148,76 @@ export const contactRouter = createTRPCRouter({
       return result;
     }),
 
-  updateContactRemark: protectedProcedure.input(z.object({ id: z.string(), remark: z.string(), oldRemark: z.string().optional() })).mutation(async ({ ctx, input }) => {
-    const thisContact = await ctx.db
-      .select()
-      .from(contact)
-      .where(eq(contact.id, input.id))
-      .then((rows) => rows[0]);
-
-    await ctx.db.update(contact).set({ remark: input.remark }).where(eq(contact.id, input.id));
-
-    // Log remark update activity
-    await createContactActivityHelper(ctx, {
-      contactId: input.id,
-      type: 'ENGAGEMENT',
-      subType: 'REMARK_UPDATED',
-      initiatorType: 'user',
-      initiatorId: ctx.session?.user.id,
-      metadata: {
-        contact: thisContact,
-        oldRemark: input.oldRemark,
-        newRemark: input.remark,
-      },
-    });
-  }),
-
-  deleteContact: protectedProcedure.input(z.object({ id: z.string() })).mutation(async ({ ctx, input }) => {
-    // Get contact details before deletion for activity log
-    const contactDetails = await ctx.db
-      .select({
-        name: contact.name,
-        email: contact.email,
+  updateContactRemark: protectedProcedure
+    .input(
+      z.object({
+        id: z.string(),
+        remark: z.string(),
+        oldRemark: z.string().optional(),
       })
-      .from(contact)
-      .where(eq(contact.id, input.id))
-      .then((rows) => rows[0]);
+    )
+    .mutation(async ({ ctx, input }) => {
+      const thisContact = await ctx.db
+        .select()
+        .from(contact)
+        .where(eq(contact.id, input.id))
+        .then((rows) => rows[0]);
 
-    // Log deletion activity before actually deleting
-    await createContactActivityHelper(ctx, {
-      contactId: input.id,
-      type: 'CONTACT',
-      subType: 'CONTACT_DELETED',
-      metadata: { contact: contactDetails },
-      initiatorType: 'user',
-      initiatorId: ctx.session?.user.id,
-    });
+      await ctx.db
+        .update(contact)
+        .set({ remark: input.remark })
+        .where(eq(contact.id, input.id));
 
-    return ctx.db.delete(contact).where(eq(contact.id, input.id));
-  }),
+      // Log remark update activity
+      await createContactActivityHelper(ctx, {
+        contactId: input.id,
+        type: 'ENGAGEMENT',
+        subType: 'REMARK_UPDATED',
+        initiatorType: 'user',
+        initiatorId: ctx.session?.user.id,
+        metadata: {
+          contact: thisContact,
+          oldRemark: input.oldRemark,
+          newRemark: input.remark,
+        },
+      });
+    }),
 
-  getContactActivities: protectedProcedure.input(z.object({ id: z.string() })).query(({ ctx, input }) => {
-    return ctx.db.select().from(contactActivity).where(eq(contactActivity.contactId, input.id)).orderBy(asc(contactActivity.createdAt));
-  }),
+  deleteContact: protectedProcedure
+    .input(z.object({ id: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      // Get contact details before deletion for activity log
+      const contactDetails = await ctx.db
+        .select({
+          name: contact.name,
+          email: contact.email,
+        })
+        .from(contact)
+        .where(eq(contact.id, input.id))
+        .then((rows) => rows[0]);
+
+      // Log deletion activity before actually deleting
+      await createContactActivityHelper(ctx, {
+        contactId: input.id,
+        type: 'CONTACT',
+        subType: 'CONTACT_DELETED',
+        metadata: { contact: contactDetails },
+        initiatorType: 'user',
+        initiatorId: ctx.session?.user.id,
+      });
+
+      return ctx.db.delete(contact).where(eq(contact.id, input.id));
+    }),
+
+  getContactActivities: protectedProcedure
+    .input(z.object({ id: z.string() }))
+    .query(({ ctx, input }) => {
+      return ctx.db
+        .select()
+        .from(contactActivity)
+        .where(eq(contactActivity.contactId, input.id))
+        .orderBy(asc(contactActivity.createdAt));
+    }),
 
   createContactActivity: protectedProcedure
     .input(
@@ -198,7 +236,11 @@ export const contactRouter = createTRPCRouter({
       const metadata = input.metadata;
 
       // If metadata contains attachments, ensure it's properly formatted
-      if (metadata && typeof metadata === 'object' && 'attachments' in metadata) {
+      if (
+        metadata &&
+        typeof metadata === 'object' &&
+        'attachments' in metadata
+      ) {
         // Ensure attachments is an array
         if (!Array.isArray(metadata.attachments)) {
           metadata.attachments = [];
@@ -229,11 +271,15 @@ export const contactRouter = createTRPCRouter({
 
       // Handle @mentions
       const mentionRegex = /@(\w+)/g;
-      const mentions = input.description.match(mentionRegex)?.map((m) => m.slice(1)) || [];
+      const mentions =
+        input.description.match(mentionRegex)?.map((m) => m.slice(1)) || [];
 
       if (mentions.length > 0) {
         // Get all mentioned users
-        const mentionedUsers = await ctx.db.select().from(user).where(inArray(user.username, mentions));
+        const mentionedUsers = await ctx.db
+          .select()
+          .from(user)
+          .where(inArray(user.username, mentions));
 
         const thisContact = await ctx.db
           .select()
@@ -262,9 +308,13 @@ export const contactRouter = createTRPCRouter({
       return activity;
     }),
 
-  deleteContactActivity: protectedProcedure.input(z.object({ id: z.string() })).mutation(({ ctx, input }) => {
-    return ctx.db.delete(contactActivity).where(eq(contactActivity.id, input.id));
-  }),
+  deleteContactActivity: protectedProcedure
+    .input(z.object({ id: z.string() }))
+    .mutation(({ ctx, input }) => {
+      return ctx.db
+        .delete(contactActivity)
+        .where(eq(contactActivity.id, input.id));
+    }),
 
   updateContact: protectedProcedure
     .input(
@@ -457,15 +507,27 @@ export const contactRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      const emails = input.contacts.map((c) => c.email).filter((e): e is string => !!e);
+      const emails = input.contacts
+        .map((c) => c.email)
+        .filter((e): e is string => !!e);
       const phones = input.contacts
         .map((c) => c.phone)
         .filter((p): p is string => !!p)
         .map(stringifyPhone);
 
       const [existingEmails, existingPhones] = await Promise.all([
-        emails.length > 0 ? ctx.db.select({ email: contact.email }).from(contact).where(inArray(contact.email, emails)) : Promise.resolve([]),
-        phones.length > 0 ? ctx.db.select({ phone: contact.phone }).from(contact).where(inArray(contact.phone, phones)) : Promise.resolve([]),
+        emails.length > 0
+          ? ctx.db
+              .select({ email: contact.email })
+              .from(contact)
+              .where(inArray(contact.email, emails))
+          : Promise.resolve([]),
+        phones.length > 0
+          ? ctx.db
+              .select({ phone: contact.phone })
+              .from(contact)
+              .where(inArray(contact.phone, phones))
+          : Promise.resolve([]),
       ]);
 
       return {
@@ -489,7 +551,10 @@ export const contactRouter = createTRPCRouter({
     .mutation(async ({ input, ctx }) => {
       try {
         if (!ctx.session.user.email) {
-          throw new TRPCError({ code: 'BAD_REQUEST', message: 'User email is not set' });
+          throw new TRPCError({
+            code: 'BAD_REQUEST',
+            message: 'User email is not set',
+          });
         }
 
         await sendEmail({
@@ -524,7 +589,10 @@ export const contactRouter = createTRPCRouter({
           success: true,
         };
       } catch (error) {
-        throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Failed to send email' });
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to send email',
+        });
       }
     }),
 
@@ -553,7 +621,16 @@ export const contactRouter = createTRPCRouter({
       const errors: Array<{ email: string; error: string }> = [];
 
       // Get all unique emails for existence check
-      const emails = [...new Set(input.contacts.map((contact) => contact.email).filter((email): email is string => typeof email === 'string' && email.length > 0))];
+      const emails = [
+        ...new Set(
+          input.contacts
+            .map((contact) => contact.email)
+            .filter(
+              (email): email is string =>
+                typeof email === 'string' && email.length > 0
+            )
+        ),
+      ];
       const existingContacts =
         emails.length > 0
           ? await ctx.db
@@ -567,19 +644,25 @@ export const contactRouter = createTRPCRouter({
       const existingEmails = new Set(existingContacts.map((c) => c.email));
 
       // Process contacts that don't exist yet
-      const newContacts = input.contacts.filter((contact) => !contact.email || !existingEmails.has(contact.email));
+      const newContacts = input.contacts.filter(
+        (contact) => !contact.email || !existingEmails.has(contact.email)
+      );
 
       try {
         // Create contacts one by one, reusing createContact logic
         for (const contactData of newContacts) {
           try {
             // Ensure createdAt is set to midnight if provided
-            const createdAt = contactData.createdAt ? startOfDay(contactData.createdAt) : undefined;
+            const createdAt = contactData.createdAt
+              ? startOfDay(contactData.createdAt)
+              : undefined;
 
             const [result] = await ctx.db
               .insert(contact)
               .values({
-                name: contactData.name ?? `${contactData.firstName ?? ''} ${contactData.lastName ?? ''}`,
+                name:
+                  contactData.name ??
+                  `${contactData.firstName ?? ''} ${contactData.lastName ?? ''}`,
                 firstName: contactData.firstName ?? '',
                 lastName: contactData.lastName ?? '',
                 email: contactData.email,
@@ -611,7 +694,10 @@ export const contactRouter = createTRPCRouter({
             results.push(result);
           } catch (error) {
             console.error('Error creating contact:', error);
-            errors.push({ email: contactData.email ?? '', error: error instanceof Error ? error.message : 'Unknown error' });
+            errors.push({
+              email: contactData.email ?? '',
+              error: error instanceof Error ? error.message : 'Unknown error',
+            });
           }
         }
 
@@ -621,7 +707,10 @@ export const contactRouter = createTRPCRouter({
           errors,
         };
       } catch (error) {
-        throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Failed to create contacts batch' });
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to create contacts batch',
+        });
       }
     }),
 
@@ -635,12 +724,23 @@ export const contactRouter = createTRPCRouter({
         statusFilter: z.array(z.string()).optional(),
         priorityFilter: z.array(z.string()).optional(),
         sourceFilter: z.array(z.string()).optional(),
-        sortBy: z.enum(['createdAt', 'name', 'status', 'priority', 'nextFollowUpAt']).optional(),
+        sortBy: z
+          .enum(['createdAt', 'name', 'status', 'priority', 'nextFollowUpAt'])
+          .optional(),
         sortOrder: z.enum(['asc', 'desc']).optional(),
       })
     )
     .query(async ({ ctx, input }) => {
-      const { page, pageSize, search, statusFilter, priorityFilter, sourceFilter, sortBy = 'createdAt', sortOrder = 'desc' } = input;
+      const {
+        page,
+        pageSize,
+        search,
+        statusFilter,
+        priorityFilter,
+        sourceFilter,
+        sortBy = 'createdAt',
+        sortOrder = 'desc',
+      } = input;
       const offset = (page - 1) * pageSize;
 
       // Build dynamic where conditions
@@ -674,7 +774,11 @@ export const contactRouter = createTRPCRouter({
       const countResult = await ctx.db
         .select({ count: sql<number>`count(*)` })
         .from(contact)
-        .where(whereConditions.length > 0 ? sql`${whereConditions.reduce((acc, cond, i) => (i === 0 ? cond : sql`${acc} AND ${cond}`))}` : undefined)
+        .where(
+          whereConditions.length > 0
+            ? sql`${whereConditions.reduce((acc, cond, i) => (i === 0 ? cond : sql`${acc} AND ${cond}`))}`
+            : undefined
+        )
         .then((rows) => rows[0]);
 
       const totalCount = Number(countResult.count);
@@ -707,8 +811,14 @@ export const contactRouter = createTRPCRouter({
           lastActivity: contact.lastActivity,
         })
         .from(contact)
-        .where(whereConditions.length > 0 ? sql`${whereConditions.reduce((acc, cond, i) => (i === 0 ? cond : sql`${acc} AND ${cond}`))}` : undefined)
-        .orderBy(sortOrder === 'desc' ? desc(orderByColumn) : asc(orderByColumn))
+        .where(
+          whereConditions.length > 0
+            ? sql`${whereConditions.reduce((acc, cond, i) => (i === 0 ? cond : sql`${acc} AND ${cond}`))}`
+            : undefined
+        )
+        .orderBy(
+          sortOrder === 'desc' ? desc(orderByColumn) : asc(orderByColumn)
+        )
         .limit(pageSize)
         .offset(offset);
 
@@ -725,7 +835,15 @@ export const contactRouter = createTRPCRouter({
   getDashboardMetrics: protectedProcedure
     .input(
       z.object({
-        dateRange: z.enum(['this-month', 'last-month', 'last-3-months', 'last-6-months', 'this-year']).optional(),
+        dateRange: z
+          .enum([
+            'this-month',
+            'last-month',
+            'last-3-months',
+            'last-6-months',
+            'this-year',
+          ])
+          .optional(),
       })
     )
     .query(async ({ ctx, input }) => {
@@ -747,7 +865,12 @@ export const contactRouter = createTRPCRouter({
         .then((rows) => rows[0]);
 
       // Calculate growth percentage
-      const growth = metrics.totalLastMonth > 0 ? ((metrics.totalThisMonth - metrics.totalLastMonth) / metrics.totalLastMonth) * 100 : 0;
+      const growth =
+        metrics.totalLastMonth > 0
+          ? ((metrics.totalThisMonth - metrics.totalLastMonth) /
+              metrics.totalLastMonth) *
+            100
+          : 0;
 
       // Get monthly breakdown for chart
       const last6Months = [];
@@ -760,7 +883,9 @@ export const contactRouter = createTRPCRouter({
             count: sql<number>`count(*)`,
           })
           .from(contact)
-          .where(sql`${contact.createdAt} >= ${monthStart} AND ${contact.createdAt} < ${monthEnd}`)
+          .where(
+            sql`${contact.createdAt} >= ${monthStart} AND ${contact.createdAt} < ${monthEnd}`
+          )
           .then((rows) => rows[0]);
 
         last6Months.push({
@@ -844,7 +969,12 @@ export const contactRouter = createTRPCRouter({
       const { groupBy, search, limit } = input;
 
       // First, get the configuration for the grouping
-      const configKey = groupBy === 'status' ? 'status' : groupBy === 'priority' ? 'priority' : 'source';
+      const configKey =
+        groupBy === 'status'
+          ? 'status'
+          : groupBy === 'priority'
+            ? 'priority'
+            : 'source';
       const config = await ctx.db
         .select()
         .from(siteConfig)
@@ -892,7 +1022,11 @@ export const contactRouter = createTRPCRouter({
             nextFollowUpAt: contact.nextFollowUpAt,
           })
           .from(contact)
-          .where(whereConditions.length > 1 ? sql`${whereConditions[0]} AND ${whereConditions[1]}` : whereConditions[0])
+          .where(
+            whereConditions.length > 1
+              ? sql`${whereConditions[0]} AND ${whereConditions[1]}`
+              : whereConditions[0]
+          )
           .orderBy(
             // Sort by priority first, then by created date
             sql`CASE 
@@ -920,7 +1054,11 @@ export const contactRouter = createTRPCRouter({
         const result = await ctx.db
           .select({ count: sql<number>`count(*)` })
           .from(contact)
-          .where(whereConditions.length > 1 ? sql`${whereConditions[0]} AND ${whereConditions[1]}` : whereConditions[0])
+          .where(
+            whereConditions.length > 1
+              ? sql`${whereConditions[0]} AND ${whereConditions[1]}`
+              : whereConditions[0]
+          )
           .then((rows) => rows[0]);
 
         counts[item.value] = Number(result.count);
@@ -985,7 +1123,9 @@ export const contactRouter = createTRPCRouter({
           company: contact.company,
         })
         .from(contact)
-        .where(sql`${whereConditions.reduce((acc, cond, i) => (i === 0 ? cond : sql`${acc} AND ${cond}`))}`)
+        .where(
+          sql`${whereConditions.reduce((acc, cond, i) => (i === 0 ? cond : sql`${acc} AND ${cond}`))}`
+        )
         .orderBy(contact.name)
         .limit(limit);
     }),

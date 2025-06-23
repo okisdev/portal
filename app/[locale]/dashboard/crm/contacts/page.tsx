@@ -10,9 +10,20 @@ import { DataTableHeader } from '@/components/shared/table/header';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { useDebounce } from '@/hooks/use-debounce';
 import { useIsMobile } from '@/hooks/use-mobile';
 import type { Priority, Source, Status } from '@/lib/schema';
@@ -21,7 +32,14 @@ import { renderDescription } from '@/utils/activity';
 import { formatDateWithoutTime } from '@/utils/date';
 import { parsePhoneWithoutCountryCode } from '@/utils/phone';
 import { api } from '@/utils/trpc/client';
-import { type ColumnDef, type ColumnFiltersState, type SortingState, type VisibilityState, getCoreRowModel, useReactTable } from '@tanstack/react-table';
+import {
+  type ColumnDef,
+  type ColumnFiltersState,
+  type SortingState,
+  type VisibilityState,
+  getCoreRowModel,
+  useReactTable,
+} from '@tanstack/react-table';
 import { Check, Eye, MoreHorizontal, Trash2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useLocale } from 'next-intl';
@@ -139,16 +157,17 @@ export default function CRMContactsTablePage() {
   const [pageSize, setPageSize] = useState(10);
 
   // Fetch contacts with server-side pagination and filtering
-  const { data: contactsData, isLoading } = api.contact.getContactsPaginated.useQuery({
-    page: pageIndex + 1,
-    pageSize,
-    search: debouncedSearch,
-    statusFilter: statusFilter.length > 0 ? statusFilter : undefined,
-    priorityFilter: priorityFilter.length > 0 ? priorityFilter : undefined,
-    sourceFilter: sourceFilter.length > 0 ? sourceFilter : undefined,
-    sortBy: sorting[0]?.id as any,
-    sortOrder: sorting[0]?.desc ? 'desc' : 'asc',
-  });
+  const { data: contactsData, isLoading } =
+    api.contact.getContactsPaginated.useQuery({
+      page: pageIndex + 1,
+      pageSize,
+      search: debouncedSearch,
+      statusFilter: statusFilter.length > 0 ? statusFilter : undefined,
+      priorityFilter: priorityFilter.length > 0 ? priorityFilter : undefined,
+      sourceFilter: sourceFilter.length > 0 ? sourceFilter : undefined,
+      sortBy: sorting[0]?.id as any,
+      sortOrder: sorting[0]?.desc ? 'desc' : 'asc',
+    });
 
   const contacts = contactsData?.data || [];
   const totalCount = contactsData?.totalCount || 0;
@@ -178,14 +197,27 @@ export default function CRMContactsTablePage() {
 
     const newUrl = `${pathname}${params.toString() ? `?${params.toString()}` : ''}`;
     router.replace(newUrl, { scroll: false });
-  }, [search, statusFilter, priorityFilter, sourceFilter, pathname, isInitialLoad]);
+  }, [
+    search,
+    statusFilter,
+    priorityFilter,
+    sourceFilter,
+    pathname,
+    isInitialLoad,
+  ]);
 
   // Reset pagination when filters change
   useEffect(() => {
     if (!isInitialLoad) {
       setPageIndex(0);
     }
-  }, [debouncedSearch, statusFilter, priorityFilter, sourceFilter, isInitialLoad]);
+  }, [
+    debouncedSearch,
+    statusFilter,
+    priorityFilter,
+    sourceFilter,
+    isInitialLoad,
+  ]);
 
   const handleDeleteClick = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -242,25 +274,43 @@ export default function CRMContactsTablePage() {
       id: 'select',
       header: ({ table }) => (
         <Checkbox
-          checked={table.getIsAllPageRowsSelected() || (table.getIsAllPageRowsSelected() && 'indeterminate')}
+          checked={
+            table.getIsAllPageRowsSelected() ||
+            (table.getIsAllPageRowsSelected() && 'indeterminate')
+          }
           onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
           aria-label='Select all'
         />
       ),
-      cell: ({ row }) => <Checkbox checked={row.getIsSelected()} onCheckedChange={(value) => row.toggleSelected(!!value)} aria-label='Select row' />,
+      cell: ({ row }) => (
+        <Checkbox
+          checked={row.getIsSelected()}
+          onCheckedChange={(value) => row.toggleSelected(!!value)}
+          aria-label='Select row'
+        />
+      ),
       enableSorting: false,
     },
     {
       accessorKey: 'name',
-      header: ({ column }) => <DataTableHeader column={column} title={t('name')} />,
+      header: ({ column }) => (
+        <DataTableHeader column={column} title={t('name')} />
+      ),
       cell: ({ row }) => (
         <div className='flex items-center gap-2'>
           <Avatar className='size-8'>
-            <AvatarFallback>{row.original.firstName?.[0] ?? row.original.name?.[0] ?? row.original.email?.[0] ?? ''}</AvatarFallback>
+            <AvatarFallback>
+              {row.original.firstName?.[0] ??
+                row.original.name?.[0] ??
+                row.original.email?.[0] ??
+                ''}
+            </AvatarFallback>
           </Avatar>
           <div className='w-16'>
             <div className='truncate font-medium'>{row.original.name}</div>
-            <div className='truncate text-neutral-500 text-xs'>{row.original.email}</div>
+            <div className='truncate text-neutral-500 text-xs'>
+              {row.original.email}
+            </div>
           </div>
         </div>
       ),
@@ -268,26 +318,51 @@ export default function CRMContactsTablePage() {
     },
     {
       accessorKey: 'phone',
-      header: ({ column }) => <DataTableHeader column={column} title={t('phone')} />,
-      cell: ({ row }) => <span>{row.original.phone ? parsePhoneWithoutCountryCode(row.original.phone) : '—'}</span>,
+      header: ({ column }) => (
+        <DataTableHeader column={column} title={t('phone')} />
+      ),
+      cell: ({ row }) => (
+        <span>
+          {row.original.phone
+            ? parsePhoneWithoutCountryCode(row.original.phone)
+            : '—'}
+        </span>
+      ),
       enableSorting: false,
       enableHiding: isMobile,
     },
     {
       accessorKey: 'company',
-      header: ({ column }) => <DataTableHeader column={column} title={t('company')} />,
-      cell: ({ row }) => <span className='capitalize'>{row.original.company || '—'}</span>,
+      header: ({ column }) => (
+        <DataTableHeader column={column} title={t('company')} />
+      ),
+      cell: ({ row }) => (
+        <span className='capitalize'>{row.original.company || '—'}</span>
+      ),
       enableSorting: false,
       enableHiding: isMobile,
     },
     {
       accessorKey: 'status',
-      header: ({ column }) => <DataTableHeader column={column} title={t('status')} />,
+      header: ({ column }) => (
+        <DataTableHeader column={column} title={t('status')} />
+      ),
       cell: ({ row }) => (
-        <Select value={row.original.status} onValueChange={(value) => handleStatusChange(row.original.id, value)} disabled={updateContact.isPending}>
+        <Select
+          value={row.original.status}
+          onValueChange={(value) => handleStatusChange(row.original.id, value)}
+          disabled={updateContact.isPending}
+        >
           <SelectTrigger className='h-8 w-[130px]'>
             <SelectValue>
-              <SmartColorBadge value={row.original.status} color={statuses?.find((s: Status) => s.value === (row.original.status || 'Lead'))?.color || '#6b7280'} />
+              <SmartColorBadge
+                value={row.original.status}
+                color={
+                  statuses?.find(
+                    (s: Status) => s.value === (row.original.status || 'Lead')
+                  )?.color || '#6b7280'
+                }
+              />
             </SelectValue>
           </SelectTrigger>
           <SelectContent>
@@ -303,18 +378,37 @@ export default function CRMContactsTablePage() {
     },
     {
       accessorKey: 'priority',
-      header: ({ column }) => <DataTableHeader column={column} title={t('priority')} />,
+      header: ({ column }) => (
+        <DataTableHeader column={column} title={t('priority')} />
+      ),
       cell: ({ row }) => (
-        <Select value={row.original.priority || 'Medium'} onValueChange={(value) => handlePriorityChange(row.original.id, value)} disabled={updateContact.isPending}>
+        <Select
+          value={row.original.priority || 'Medium'}
+          onValueChange={(value) =>
+            handlePriorityChange(row.original.id, value)
+          }
+          disabled={updateContact.isPending}
+        >
           <SelectTrigger className='h-8 w-[130px]'>
             <SelectValue>
-              <SmartColorBadge value={row.original.priority || 'Medium'} color={priorities?.find((p: Priority) => p.value === (row.original.priority || 'Medium'))?.color || '#6b7280'} />
+              <SmartColorBadge
+                value={row.original.priority || 'Medium'}
+                color={
+                  priorities?.find(
+                    (p: Priority) =>
+                      p.value === (row.original.priority || 'Medium')
+                  )?.color || '#6b7280'
+                }
+              />
             </SelectValue>
           </SelectTrigger>
           <SelectContent>
             {priorities?.map((priority: Priority) => (
               <SelectItem key={priority.value} value={priority.value}>
-                <SmartColorBadge value={priority.value} color={priority.color} />
+                <SmartColorBadge
+                  value={priority.value}
+                  color={priority.color}
+                />
               </SelectItem>
             ))}
           </SelectContent>
@@ -325,12 +419,25 @@ export default function CRMContactsTablePage() {
     },
     {
       accessorKey: 'source',
-      header: ({ column }) => <DataTableHeader column={column} title={t('source')} />,
+      header: ({ column }) => (
+        <DataTableHeader column={column} title={t('source')} />
+      ),
       cell: ({ row }) => (
-        <Select value={row.original.source || 'N/A'} onValueChange={(value) => handleSourceChange(row.original.id, value)} disabled={updateContact.isPending}>
+        <Select
+          value={row.original.source || 'N/A'}
+          onValueChange={(value) => handleSourceChange(row.original.id, value)}
+          disabled={updateContact.isPending}
+        >
           <SelectTrigger className='h-8 w-[130px]'>
             <SelectValue>
-              <SmartColorBadge value={row.original.source || 'N/A'} color={sources?.find((s: Source) => s.value === (row.original.source || 'N/A'))?.color || '#6b7280'} />
+              <SmartColorBadge
+                value={row.original.source || 'N/A'}
+                color={
+                  sources?.find(
+                    (s: Source) => s.value === (row.original.source || 'N/A')
+                  )?.color || '#6b7280'
+                }
+              />
             </SelectValue>
           </SelectTrigger>
           <SelectContent>
@@ -347,29 +454,42 @@ export default function CRMContactsTablePage() {
     },
     {
       accessorKey: 'createdAt',
-      header: ({ column }) => <DataTableHeader column={column} title={t('created_at')} />,
+      header: ({ column }) => (
+        <DataTableHeader column={column} title={t('created_at')} />
+      ),
       cell: ({ row }) => formatDateWithoutTime(row.original.createdAt),
       enableSorting: true,
       enableHiding: isMobile,
     },
     {
       accessorKey: 'nextFollowUpAt',
-      header: ({ column }) => <DataTableHeader column={column} title={t('next_follow_up')} />,
-      cell: ({ row }) => (row.original.nextFollowUpAt ? formatDateWithoutTime(row.original.nextFollowUpAt) : '—'),
+      header: ({ column }) => (
+        <DataTableHeader column={column} title={t('next_follow_up')} />
+      ),
+      cell: ({ row }) =>
+        row.original.nextFollowUpAt
+          ? formatDateWithoutTime(row.original.nextFollowUpAt)
+          : '—',
       enableSorting: true,
       enableHiding: isMobile,
     },
     {
       accessorKey: 'lastActivity',
-      header: ({ column }) => <DataTableHeader column={column} title={t('last_activity')} />,
+      header: ({ column }) => (
+        <DataTableHeader column={column} title={t('last_activity')} />
+      ),
       cell: ({ row }) => {
-        const lastActivity = row.original.lastActivity ? JSON.parse(row.original.lastActivity) : null;
+        const lastActivity = row.original.lastActivity
+          ? JSON.parse(row.original.lastActivity)
+          : null;
 
         if (!lastActivity) return '—';
 
         return (
           <div className='w-32'>
-            <p className='truncate whitespace-nowrap text-sm'>{renderDescription(lastActivity, t, locale)}</p>
+            <p className='truncate whitespace-nowrap text-sm'>
+              {renderDescription(lastActivity, t, locale)}
+            </p>
           </div>
         );
       },
@@ -391,7 +511,10 @@ export default function CRMContactsTablePage() {
               <Eye className='mr-2 h-4 w-4' />
               {t('view')}
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={(e) => handleDeleteClick(row.original.id, e)} className='text-destructive'>
+            <DropdownMenuItem
+              onClick={(e) => handleDeleteClick(row.original.id, e)}
+              className='text-destructive'
+            >
               <Trash2 className='mr-2 h-4 w-4' />
               {t('delete')}
             </DropdownMenuItem>
@@ -440,7 +563,15 @@ export default function CRMContactsTablePage() {
 
   return (
     <div className='space-y-4 p-4'>
-      <PageHeader title={t('contacts')} subtitle={!isLoading ? `(${t('total_number_contacts', { count: totalCount || 0 })})` : undefined} description={t('contacts_description')} />
+      <PageHeader
+        title={t('contacts')}
+        subtitle={
+          !isLoading
+            ? `(${t('total_number_contacts', { count: totalCount || 0 })})`
+            : undefined
+        }
+        description={t('contacts_description')}
+      />
 
       <div className='flex flex-col gap-4'>
         <div className='flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between'>
@@ -451,7 +582,7 @@ export default function CRMContactsTablePage() {
               onChange={(e) => {
                 setSearch(e.target.value);
               }}
-              className='h-8 w-full sm:w-72 max-w-sm'
+              className='h-8 w-full max-w-sm sm:w-72'
               disabled={isLoading}
             />
 
@@ -459,7 +590,9 @@ export default function CRMContactsTablePage() {
               value={selectedColumn}
               onChange={(value) => {
                 setSelectedColumn(value);
-                const column = table.getAllColumns().find((col) => col.id === value);
+                const column = table
+                  .getAllColumns()
+                  .find((col) => col.id === value);
                 if (column) {
                   column.toggleVisibility(!column.getIsVisible());
                 }
@@ -474,7 +607,9 @@ export default function CRMContactsTablePage() {
               groupHeading={t('visible_columns')}
               allowCustom={false}
               renderItem={(item) => {
-                const column = table.getAllColumns().find((col) => col.id === item);
+                const column = table
+                  .getAllColumns()
+                  .find((col) => col.id === item);
                 return (
                   <div className='flex w-full items-center justify-between'>
                     <span>{t(item)}</span>
@@ -487,7 +622,9 @@ export default function CRMContactsTablePage() {
               alwaysPlaceHolder={true}
             />
 
-            {(statusFilter.length > 0 || sourceFilter.length > 0 || priorityFilter.length > 0) && (
+            {(statusFilter.length > 0 ||
+              sourceFilter.length > 0 ||
+              priorityFilter.length > 0) && (
               <Button
                 variant='outline'
                 size='sm'
@@ -507,13 +644,20 @@ export default function CRMContactsTablePage() {
             {table.getFilteredSelectedRowModel().rows.length > 0 && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant='outline' size='sm' className='flex h-8 items-center gap-2'>
+                  <Button
+                    variant='outline'
+                    size='sm'
+                    className='flex h-8 items-center gap-2'
+                  >
                     <MoreHorizontal className='mr-2 h-4 w-4' />
                     {t('bulk_actions')}
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent>
-                  <DropdownMenuItem className='cursor-pointer text-destructive' onClick={() => setBulkDeleteDialogOpen(true)}>
+                  <DropdownMenuItem
+                    className='cursor-pointer text-destructive'
+                    onClick={() => setBulkDeleteDialogOpen(true)}
+                  >
                     <Trash2 className='mr-2 h-4 w-4' />
                     {t('delete_selected')}
                   </DropdownMenuItem>
@@ -538,19 +682,30 @@ export default function CRMContactsTablePage() {
                   key={status.value}
                   onClick={() => {
                     if (isActive) {
-                      setStatusFilter(statusFilter.filter((s) => s !== status.value));
+                      setStatusFilter(
+                        statusFilter.filter((s) => s !== status.value)
+                      );
                     } else {
                       setStatusFilter([...statusFilter, status.value]);
                     }
                   }}
                 >
-                  <SmartColorBadge value={status.value} color={status.color} isActive={isActive} />
+                  <SmartColorBadge
+                    value={status.value}
+                    color={status.color}
+                    isActive={isActive}
+                  />
                 </button>
               );
             })}
           </div>
           {statusFilter.length > 0 && (
-            <Button variant='ghost' size='sm' className='h-6 px-2 text-xs' onClick={() => setStatusFilter([])}>
+            <Button
+              variant='ghost'
+              size='sm'
+              className='h-6 px-2 text-xs'
+              onClick={() => setStatusFilter([])}
+            >
               {t('clear')}
             </Button>
           )}
@@ -566,19 +721,30 @@ export default function CRMContactsTablePage() {
                   key={source.value}
                   onClick={() => {
                     if (isActive) {
-                      setSourceFilter(sourceFilter.filter((s) => s !== source.value));
+                      setSourceFilter(
+                        sourceFilter.filter((s) => s !== source.value)
+                      );
                     } else {
                       setSourceFilter([...sourceFilter, source.value]);
                     }
                   }}
                 >
-                  <SmartColorBadge value={source.value} color={source.color} isActive={isActive} />
+                  <SmartColorBadge
+                    value={source.value}
+                    color={source.color}
+                    isActive={isActive}
+                  />
                 </button>
               );
             })}
           </div>
           {sourceFilter.length > 0 && (
-            <Button variant='ghost' size='sm' className='h-6 px-2 text-xs' onClick={() => setSourceFilter([])}>
+            <Button
+              variant='ghost'
+              size='sm'
+              className='h-6 px-2 text-xs'
+              onClick={() => setSourceFilter([])}
+            >
               {t('clear')}
             </Button>
           )}
@@ -594,26 +760,42 @@ export default function CRMContactsTablePage() {
                   key={priority.value}
                   onClick={() => {
                     if (isActive) {
-                      setPriorityFilter(priorityFilter.filter((p) => p !== priority.value));
+                      setPriorityFilter(
+                        priorityFilter.filter((p) => p !== priority.value)
+                      );
                     } else {
                       setPriorityFilter([...priorityFilter, priority.value]);
                     }
                   }}
                 >
-                  <SmartColorBadge value={priority.value} color={priority.color} isActive={isActive} />
+                  <SmartColorBadge
+                    value={priority.value}
+                    color={priority.color}
+                    isActive={isActive}
+                  />
                 </button>
               );
             })}
           </div>
           {priorityFilter.length > 0 && (
-            <Button variant='ghost' size='sm' className='h-6 px-2 text-xs' onClick={() => setPriorityFilter([])}>
+            <Button
+              variant='ghost'
+              size='sm'
+              className='h-6 px-2 text-xs'
+              onClick={() => setPriorityFilter([])}
+            >
               {t('clear')}
             </Button>
           )}
         </div>
       </div>
 
-      <DataTable table={table} columns={tableColumns} loading={isLoading} onRowClick={(row) => router.push(`/dashboard/crm/contacts/${row.id}`)} />
+      <DataTable
+        table={table}
+        columns={tableColumns}
+        loading={isLoading}
+        onRowClick={(row) => router.push(`/dashboard/crm/contacts/${row.id}`)}
+      />
 
       <ActionAlertDialog
         open={deleteDialogOpen}
@@ -630,7 +812,9 @@ export default function CRMContactsTablePage() {
         onOpenChange={setBulkDeleteDialogOpen}
         onConfirm={handleBulkDelete}
         title={t('delete_selected_contacts')}
-        description={t('delete_selected_contacts_description', { count: table.getFilteredSelectedRowModel().rows.length })}
+        description={t('delete_selected_contacts_description', {
+          count: table.getFilteredSelectedRowModel().rows.length,
+        })}
         confirmText={t('delete')}
         cancelText={t('cancel')}
       />

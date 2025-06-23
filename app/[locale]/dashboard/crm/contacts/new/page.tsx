@@ -15,7 +15,9 @@ export default function ImportContacts() {
   const searchParams = useSearchParams();
   const mode = searchParams.get('mode');
 
-  const [activeTab, setActiveTab] = useState(mode === 'upload' ? 'upload' : 'manual');
+  const [activeTab, setActiveTab] = useState(
+    mode === 'upload' ? 'upload' : 'manual'
+  );
 
   const handleTabChange = (value: string) => {
     setActiveTab(value);
@@ -24,13 +26,19 @@ export default function ImportContacts() {
 
   return (
     <div className='p-4'>
-      <Tabs defaultValue={activeTab} onValueChange={handleTabChange} className='w-full space-y-8'>
+      <Tabs
+        defaultValue={activeTab}
+        onValueChange={handleTabChange}
+        className='w-full space-y-8'
+      >
         <PageHeader
           title={t('create_contact')}
           right={
             <TabsList>
               <TabsTrigger value='manual'>{t('manual_create')}</TabsTrigger>
-              <TabsTrigger value='upload'>{t('upload_existing_contacts')}</TabsTrigger>
+              <TabsTrigger value='upload'>
+                {t('upload_existing_contacts')}
+              </TabsTrigger>
             </TabsList>
           }
         />

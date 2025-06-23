@@ -4,10 +4,27 @@ import { Combobox } from '@/components/shared/combobox';
 import { DateTimePicker } from '@/components/shared/date-time-picker';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Form, FormControl, FormField, FormItem, FormLabel } from '@/components/ui/form';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+} from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { PlusIcon, X } from 'lucide-react';
@@ -55,7 +72,16 @@ interface EventDialogProps {
   onCreateFolder?: (name: string) => Promise<void>;
 }
 
-export function EventDialog({ open, onOpenChange, onSubmit, isEditMode = false, defaultValues, folders = [], participantOptions, onCreateFolder }: EventDialogProps) {
+export function EventDialog({
+  open,
+  onOpenChange,
+  onSubmit,
+  isEditMode = false,
+  defaultValues,
+  folders = [],
+  participantOptions,
+  onCreateFolder,
+}: EventDialogProps) {
   const t = useTranslations();
 
   const setAllDayEventTimes = (date: Date, isEnd = false) => {
@@ -172,7 +198,9 @@ export function EventDialog({ open, onOpenChange, onSubmit, isEditMode = false, 
     >
       <DialogContent className='max-h-[90vh] max-w-xl overflow-y-auto'>
         <DialogHeader>
-          <DialogTitle>{isEditMode ? t('edit_event') : t('create_new_event')}</DialogTitle>
+          <DialogTitle>
+            {isEditMode ? t('edit_event') : t('create_new_event')}
+          </DialogTitle>
         </DialogHeader>
         <Form {...form}>
           <form
@@ -218,7 +246,17 @@ export function EventDialog({ open, onOpenChange, onSubmit, isEditMode = false, 
                     <Combobox
                       value={field.value || ''}
                       onChange={field.onChange}
-                      items={['Meeting Room 1', 'Meeting Room 2', 'Conference Room A', 'Conference Room B', 'Office', 'Virtual Meeting', 'Zoom', 'Google Meet', 'Microsoft Teams']}
+                      items={[
+                        'Meeting Room 1',
+                        'Meeting Room 2',
+                        'Conference Room A',
+                        'Conference Room B',
+                        'Office',
+                        'Virtual Meeting',
+                        'Zoom',
+                        'Google Meet',
+                        'Microsoft Teams',
+                      ]}
                       placeholder={t('enter_or_select_location')}
                       searchPlaceholder={t('search_locations')}
                       emptyText={t('no_locations_found')}
@@ -237,7 +275,10 @@ export function EventDialog({ open, onOpenChange, onSubmit, isEditMode = false, 
                 render={({ field }) => (
                   <FormItem className='flex flex-row items-center justify-center gap-2'>
                     <FormControl>
-                      <Checkbox checked={field.value} onCheckedChange={field.onChange} />
+                      <Checkbox
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
                     </FormControl>
                     <FormLabel className='text-sm'>{t('all_day')}</FormLabel>
                   </FormItem>
@@ -249,7 +290,10 @@ export function EventDialog({ open, onOpenChange, onSubmit, isEditMode = false, 
                 render={({ field }) => (
                   <FormItem className='flex flex-row items-center gap-2'>
                     <FormControl>
-                      <Checkbox checked={field.value} onCheckedChange={field.onChange} />
+                      <Checkbox
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
                     </FormControl>
                     <FormLabel className='text-sm'>{t('public')}</FormLabel>
                   </FormItem>
@@ -265,7 +309,11 @@ export function EventDialog({ open, onOpenChange, onSubmit, isEditMode = false, 
                   <FormItem>
                     <FormLabel>{t('start')}</FormLabel>
                     <FormControl>
-                      <DateTimePicker value={field.value} onChange={(date) => field.onChange(date)} showTimePicker={!form.watch('isAllDay')} />
+                      <DateTimePicker
+                        value={field.value}
+                        onChange={(date) => field.onChange(date)}
+                        showTimePicker={!form.watch('isAllDay')}
+                      />
                     </FormControl>
                   </FormItem>
                 )}
@@ -278,7 +326,11 @@ export function EventDialog({ open, onOpenChange, onSubmit, isEditMode = false, 
                   <FormItem>
                     <FormLabel>{t('end')}</FormLabel>
                     <FormControl>
-                      <DateTimePicker value={field.value} onChange={(date) => field.onChange(date)} showTimePicker={!form.watch('isAllDay')} />
+                      <DateTimePicker
+                        value={field.value}
+                        onChange={(date) => field.onChange(date)}
+                        showTimePicker={!form.watch('isAllDay')}
+                      />
                     </FormControl>
                   </FormItem>
                 )}
@@ -293,7 +345,9 @@ export function EventDialog({ open, onOpenChange, onSubmit, isEditMode = false, 
                   <FormLabel>{t('calendar')}</FormLabel>
                   <FormControl>
                     <Combobox
-                      value={folders?.find((f) => f.id === field.value)?.name || ''}
+                      value={
+                        folders?.find((f) => f.id === field.value)?.name || ''
+                      }
                       onChange={handleCalendarSelect}
                       items={folders?.map((f) => f.name) || []}
                       placeholder={t('select_or_create_calendar')}
@@ -315,7 +369,15 @@ export function EventDialog({ open, onOpenChange, onSubmit, isEditMode = false, 
                     type='button'
                     onClick={() => {
                       const participants = form.getValues('participants') || [];
-                      form.setValue('participants', [...participants, { type: 'external', email: '', name: '', role: 'required' }]);
+                      form.setValue('participants', [
+                        ...participants,
+                        {
+                          type: 'external',
+                          email: '',
+                          name: '',
+                          role: 'required',
+                        },
+                      ]);
                     }}
                     className='flex items-center justify-center rounded-full bg-neutral-100 p-1 transition-colors hover:bg-neutral-200'
                   >
@@ -323,145 +385,193 @@ export function EventDialog({ open, onOpenChange, onSubmit, isEditMode = false, 
                   </button>
                 </div>
 
-                {(form.watch('participants') || []).map((participant, index) => (
-                  <div key={participant.id + nanoid()} className='flex items-start gap-2'>
-                    <FormField
-                      control={form.control}
-                      name={`participants.${index}.type`}
-                      render={({ field }) => (
-                        <FormItem className='flex-1'>
-                          <Select
-                            value={field.value}
-                            onValueChange={(value: 'user' | 'contact' | 'external') => {
-                              field.onChange(value);
-                              form.setValue(`participants.${index}.id`, undefined);
-                              form.setValue(`participants.${index}.email`, undefined);
-                              form.setValue(`participants.${index}.name`, undefined);
-                            }}
-                          >
-                            <SelectTrigger>
-                              <SelectValue placeholder={t('type')} />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value='user'>{t('user')}</SelectItem>
-                              <SelectItem value='contact'>{t('contact')}</SelectItem>
-                              <SelectItem value='external'>{t('external')}</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </FormItem>
-                      )}
-                    />
-
-                    {participant.type === 'user' && (
+                {(form.watch('participants') || []).map(
+                  (participant, index) => (
+                    <div
+                      key={participant.id + nanoid()}
+                      className='flex items-start gap-2'
+                    >
                       <FormField
                         control={form.control}
-                        name={`participants.${index}.id`}
+                        name={`participants.${index}.type`}
                         render={({ field }) => (
                           <FormItem className='flex-1'>
-                            <Select value={field.value} onValueChange={field.onChange}>
+                            <Select
+                              value={field.value}
+                              onValueChange={(
+                                value: 'user' | 'contact' | 'external'
+                              ) => {
+                                field.onChange(value);
+                                form.setValue(
+                                  `participants.${index}.id`,
+                                  undefined
+                                );
+                                form.setValue(
+                                  `participants.${index}.email`,
+                                  undefined
+                                );
+                                form.setValue(
+                                  `participants.${index}.name`,
+                                  undefined
+                                );
+                              }}
+                            >
                               <SelectTrigger>
-                                <SelectValue placeholder={t('select_user')} />
+                                <SelectValue placeholder={t('type')} />
                               </SelectTrigger>
                               <SelectContent>
-                                {participantOptions.users?.map((user) => (
-                                  <SelectItem key={user.id} value={user.id}>
-                                    {user.name}
-                                  </SelectItem>
-                                ))}
+                                <SelectItem value='user'>
+                                  {t('user')}
+                                </SelectItem>
+                                <SelectItem value='contact'>
+                                  {t('contact')}
+                                </SelectItem>
+                                <SelectItem value='external'>
+                                  {t('external')}
+                                </SelectItem>
                               </SelectContent>
                             </Select>
                           </FormItem>
                         )}
                       />
-                    )}
 
-                    {participant.type === 'contact' && (
+                      {participant.type === 'user' && (
+                        <FormField
+                          control={form.control}
+                          name={`participants.${index}.id`}
+                          render={({ field }) => (
+                            <FormItem className='flex-1'>
+                              <Select
+                                value={field.value}
+                                onValueChange={field.onChange}
+                              >
+                                <SelectTrigger>
+                                  <SelectValue placeholder={t('select_user')} />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {participantOptions.users?.map((user) => (
+                                    <SelectItem key={user.id} value={user.id}>
+                                      {user.name}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </FormItem>
+                          )}
+                        />
+                      )}
+
+                      {participant.type === 'contact' && (
+                        <FormField
+                          control={form.control}
+                          name={`participants.${index}.id`}
+                          render={({ field }) => (
+                            <FormItem className='flex-1'>
+                              <Combobox
+                                value={
+                                  participantOptions.contacts?.find(
+                                    (contact) => contact.id === field.value
+                                  )?.name || ''
+                                }
+                                onChange={(value) => {
+                                  const contact =
+                                    participantOptions.contacts?.find(
+                                      (c) => c.name === value
+                                    );
+                                  field.onChange(contact?.id || '');
+                                }}
+                                items={
+                                  participantOptions.contacts?.map(
+                                    (contact) => contact.name
+                                  ) || []
+                                }
+                                placeholder={t('select_contact')}
+                                searchPlaceholder={t('search_contacts')}
+                                emptyText={t('no_contacts_found')}
+                                groupHeading={t('contacts')}
+                                allowCustom={false}
+                              />
+                            </FormItem>
+                          )}
+                        />
+                      )}
+
+                      {participant.type === 'external' && (
+                        <>
+                          <FormField
+                            control={form.control}
+                            name={`participants.${index}.email`}
+                            render={({ field }) => (
+                              <FormItem className='flex-1'>
+                                <Input {...field} placeholder='Email' />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={form.control}
+                            name={`participants.${index}.name`}
+                            render={({ field }) => (
+                              <FormItem className='flex-1'>
+                                <Input {...field} placeholder={t('name')} />
+                              </FormItem>
+                            )}
+                          />
+                        </>
+                      )}
+
                       <FormField
                         control={form.control}
-                        name={`participants.${index}.id`}
+                        name={`participants.${index}.role`}
                         render={({ field }) => (
-                          <FormItem className='flex-1'>
-                            <Combobox
-                              value={participantOptions.contacts?.find((contact) => contact.id === field.value)?.name || ''}
-                              onChange={(value) => {
-                                const contact = participantOptions.contacts?.find((c) => c.name === value);
-                                field.onChange(contact?.id || '');
-                              }}
-                              items={participantOptions.contacts?.map((contact) => contact.name) || []}
-                              placeholder={t('select_contact')}
-                              searchPlaceholder={t('search_contacts')}
-                              emptyText={t('no_contacts_found')}
-                              groupHeading={t('contacts')}
-                              allowCustom={false}
-                            />
+                          <FormItem>
+                            <Select
+                              value={field.value}
+                              onValueChange={field.onChange}
+                            >
+                              <SelectTrigger>
+                                <SelectValue placeholder={t('role')} />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value='organizer'>
+                                  {t('organizer')}
+                                </SelectItem>
+                                <SelectItem value='required'>
+                                  {t('required')}
+                                </SelectItem>
+                                <SelectItem value='optional'>
+                                  {t('optional')}
+                                </SelectItem>
+                              </SelectContent>
+                            </Select>
                           </FormItem>
                         )}
                       />
-                    )}
 
-                    {participant.type === 'external' && (
-                      <>
-                        <FormField
-                          control={form.control}
-                          name={`participants.${index}.email`}
-                          render={({ field }) => (
-                            <FormItem className='flex-1'>
-                              <Input {...field} placeholder='Email' />
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={form.control}
-                          name={`participants.${index}.name`}
-                          render={({ field }) => (
-                            <FormItem className='flex-1'>
-                              <Input {...field} placeholder={t('name')} />
-                            </FormItem>
-                          )}
-                        />
-                      </>
-                    )}
-
-                    <FormField
-                      control={form.control}
-                      name={`participants.${index}.role`}
-                      render={({ field }) => (
-                        <FormItem>
-                          <Select value={field.value} onValueChange={field.onChange}>
-                            <SelectTrigger>
-                              <SelectValue placeholder={t('role')} />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value='organizer'>{t('organizer')}</SelectItem>
-                              <SelectItem value='required'>{t('required')}</SelectItem>
-                              <SelectItem value='optional'>{t('optional')}</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </FormItem>
-                      )}
-                    />
-
-                    <Button
-                      type='button'
-                      variant='ghost'
-                      size='icon'
-                      onClick={() => {
-                        const participants = form.getValues('participants') || [];
-                        form.setValue(
-                          'participants',
-                          participants.filter((_, i) => i !== index)
-                        );
-                      }}
-                    >
-                      <X className='h-4 w-4' />
-                    </Button>
-                  </div>
-                ))}
+                      <Button
+                        type='button'
+                        variant='ghost'
+                        size='icon'
+                        onClick={() => {
+                          const participants =
+                            form.getValues('participants') || [];
+                          form.setValue(
+                            'participants',
+                            participants.filter((_, i) => i !== index)
+                          );
+                        }}
+                      >
+                        <X className='h-4 w-4' />
+                      </Button>
+                    </div>
+                  )
+                )}
               </div>
             )}
 
             <div className='flex justify-end gap-2'>
-              <Button type='submit'>{isEditMode ? t('update_event') : t('create_event')}</Button>
+              <Button type='submit'>
+                {isEditMode ? t('update_event') : t('create_event')}
+              </Button>
             </div>
           </form>
         </Form>

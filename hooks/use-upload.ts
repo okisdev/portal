@@ -46,10 +46,13 @@ export function useUpload(options: UseUploadOptions = {}) {
 
       return key;
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown upload error';
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown upload error';
       console.error('Upload error:', errorMessage);
       options.onProgress?.(`Upload error: ${errorMessage}`);
-      options.onError?.(error instanceof Error ? error : new Error(errorMessage));
+      options.onError?.(
+        error instanceof Error ? error : new Error(errorMessage)
+      );
       throw error;
     } finally {
       setIsUploading(false);

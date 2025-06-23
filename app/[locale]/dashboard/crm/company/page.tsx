@@ -9,11 +9,36 @@ import { DataTable } from '@/components/shared/table';
 import { DataTableHeader } from '@/components/shared/table/header';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { useDebounce } from '@/hooks/use-debounce';
 import { api } from '@/utils/trpc/client';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -30,7 +55,14 @@ import {
   getSortedRowModel,
   useReactTable,
 } from '@tanstack/react-table';
-import { Check, ExternalLink, MoreHorizontal, Pencil, Plus, Trash2 } from 'lucide-react';
+import {
+  Check,
+  ExternalLink,
+  MoreHorizontal,
+  Pencil,
+  Plus,
+  Trash2,
+} from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -86,7 +118,10 @@ export default function CompanyPage() {
   const [search, setSearch] = useState('');
   const debouncedSearch = useDebounce(search, 300);
 
-  const [sortConfig, setSortConfig] = useState<SortConfig>({ column: '', direction: 'asc' });
+  const [sortConfig, setSortConfig] = useState<SortConfig>({
+    column: '',
+    direction: 'asc',
+  });
 
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
 
@@ -185,7 +220,9 @@ export default function CompanyPage() {
       params.set('sort', `${sortConfig.column}:${sortConfig.direction}`);
     }
 
-    const newUrl = params.toString() ? `${pathname}?${params.toString()}` : pathname;
+    const newUrl = params.toString()
+      ? `${pathname}?${params.toString()}`
+      : pathname;
     router.replace(newUrl, { scroll: false });
   }, [search, sortConfig, pathname]);
 
@@ -201,7 +238,12 @@ export default function CompanyPage() {
           const email = (company.email || '').toLowerCase();
           const status = company.status?.toLowerCase();
 
-          return name.includes(searchTerm) || industry.includes(searchTerm) || email.includes(searchTerm) || status?.includes(searchTerm);
+          return (
+            name.includes(searchTerm) ||
+            industry.includes(searchTerm) ||
+            email.includes(searchTerm) ||
+            status?.includes(searchTerm)
+          );
         }
         return true;
       })
@@ -274,40 +316,63 @@ export default function CompanyPage() {
       id: 'select',
       header: ({ table }) => (
         <Checkbox
-          checked={table.getIsAllPageRowsSelected() || (table.getIsSomePageRowsSelected() && 'indeterminate')}
+          checked={
+            table.getIsAllPageRowsSelected() ||
+            (table.getIsSomePageRowsSelected() && 'indeterminate')
+          }
           onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
           aria-label='Select all'
         />
       ),
-      cell: ({ row }) => <Checkbox checked={row.getIsSelected()} onCheckedChange={(value) => row.toggleSelected(!!value)} aria-label='Select row' />,
+      cell: ({ row }) => (
+        <Checkbox
+          checked={row.getIsSelected()}
+          onCheckedChange={(value) => row.toggleSelected(!!value)}
+          aria-label='Select row'
+        />
+      ),
       enableSorting: false,
       enableHiding: false,
     },
     {
       accessorKey: 'name',
-      header: ({ column }) => <DataTableHeader column={column} title={t('name')} />,
+      header: ({ column }) => (
+        <DataTableHeader column={column} title={t('name')} />
+      ),
       cell: ({ row }) => (
         <div className='flex items-center gap-2'>
           <div>
             <div className='font-medium'>{row.original.name}</div>
-            <div className='text-neutral-500 text-xs'>{row.original.email || '—'}</div>
+            <div className='text-neutral-500 text-xs'>
+              {row.original.email || '—'}
+            </div>
           </div>
         </div>
       ),
     },
     {
       accessorKey: 'industry',
-      header: ({ column }) => <DataTableHeader column={column} title={t('industry')} />,
-      cell: ({ row }) => <span className='capitalize'>{row.original.industry || '—'}</span>,
+      header: ({ column }) => (
+        <DataTableHeader column={column} title={t('industry')} />
+      ),
+      cell: ({ row }) => (
+        <span className='capitalize'>{row.original.industry || '—'}</span>
+      ),
     },
     {
       accessorKey: 'size',
-      header: ({ column }) => <DataTableHeader column={column} title={t('size')} />,
-      cell: ({ row }) => <span className='capitalize'>{row.original.size || '—'}</span>,
+      header: ({ column }) => (
+        <DataTableHeader column={column} title={t('size')} />
+      ),
+      cell: ({ row }) => (
+        <span className='capitalize'>{row.original.size || '—'}</span>
+      ),
     },
     {
       accessorKey: 'teams',
-      header: ({ column }) => <DataTableHeader column={column} title={t('teams')} />,
+      header: ({ column }) => (
+        <DataTableHeader column={column} title={t('teams')} />
+      ),
       cell: ({ row }) => <span>{row.original.teams || 0}</span>,
     },
     // {
@@ -317,20 +382,38 @@ export default function CompanyPage() {
     // },
     {
       accessorKey: 'status',
-      header: ({ column }) => <DataTableHeader column={column} title={t('status')} />,
-      cell: ({ row }) => <ColorBadge type='companyStatus' value={row.original.status || ''} />,
+      header: ({ column }) => (
+        <DataTableHeader column={column} title={t('status')} />
+      ),
+      cell: ({ row }) => (
+        <ColorBadge type='companyStatus' value={row.original.status || ''} />
+      ),
     },
     {
       accessorKey: 'phone',
-      header: ({ column }) => <DataTableHeader column={column} title={t('phone')} />,
+      header: ({ column }) => (
+        <DataTableHeader column={column} title={t('phone')} />
+      ),
       cell: ({ row }) => <span>{row.original.phone || '—'}</span>,
     },
     {
       accessorKey: 'website',
-      header: ({ column }) => <DataTableHeader column={column} title={t('website')} />,
+      header: ({ column }) => (
+        <DataTableHeader column={column} title={t('website')} />
+      ),
       cell: ({ row }) => (
-        <Button variant='ghost' size='sm' disabled={!row.original.website} asChild onClick={(e) => e.stopPropagation()}>
-          <Link href={row.original.website || ''} target='_blank' rel='noopener noreferrer'>
+        <Button
+          variant='ghost'
+          size='sm'
+          disabled={!row.original.website}
+          asChild
+          onClick={(e) => e.stopPropagation()}
+        >
+          <Link
+            href={row.original.website || ''}
+            target='_blank'
+            rel='noopener noreferrer'
+          >
             {row.original.website ? t('visit') : '—'}
             {row.original.website && <ExternalLink className='h-4 w-4' />}
           </Link>
@@ -339,7 +422,9 @@ export default function CompanyPage() {
     },
     {
       accessorKey: 'createdAt',
-      header: ({ column }) => <DataTableHeader column={column} title={t('created')} />,
+      header: ({ column }) => (
+        <DataTableHeader column={column} title={t('created')} />
+      ),
       cell: ({ row }) => new Date(row.original.createdAt).toLocaleDateString(),
     },
     {
@@ -352,11 +437,17 @@ export default function CompanyPage() {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align='end'>
-            <DropdownMenuItem className='cursor-pointer' onClick={(e) => handleEdit(row.original, e)}>
+            <DropdownMenuItem
+              className='cursor-pointer'
+              onClick={(e) => handleEdit(row.original, e)}
+            >
               <Pencil className='mr-2 h-4 w-4' />
               {t('edit')}
             </DropdownMenuItem>
-            <DropdownMenuItem className='cursor-pointer text-destructive' onClick={(e) => handleDeleteClick(row.original.id, e)}>
+            <DropdownMenuItem
+              className='cursor-pointer text-destructive'
+              onClick={(e) => handleDeleteClick(row.original.id, e)}
+            >
               <Trash2 className='mr-2 h-4 w-4' />
               {t('delete')}
             </DropdownMenuItem>
@@ -390,18 +481,34 @@ export default function CompanyPage() {
 
   return (
     <div className='space-y-4 p-4'>
-      <PageHeader title={t('companies')} subtitle={!isLoading ? `(${t('total_number_companies', { count: filteredCompanies.length })})` : undefined} description={t('companies_description')} />
+      <PageHeader
+        title={t('companies')}
+        subtitle={
+          !isLoading
+            ? `(${t('total_number_companies', { count: filteredCompanies.length })})`
+            : undefined
+        }
+        description={t('companies_description')}
+      />
 
       <div className='flex flex-col gap-4'>
         <div className='flex items-center justify-between'>
           <div className='flex flex-row gap-2'>
-            <Input placeholder={t('search_companies')} value={search} onChange={(e) => setSearch(e.target.value)} className='h-8 w-72 max-w-sm' disabled={isLoading} />
+            <Input
+              placeholder={t('search_companies')}
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className='h-8 w-72 max-w-sm'
+              disabled={isLoading}
+            />
 
             <Combobox
               value={selectedColumn}
               onChange={(value) => {
                 setSelectedColumn(value);
-                const column = table.getAllColumns().find((col) => col.id === value);
+                const column = table
+                  .getAllColumns()
+                  .find((col) => col.id === value);
                 if (column) {
                   column.toggleVisibility(!column.getIsVisible());
                 }
@@ -416,7 +523,9 @@ export default function CompanyPage() {
               groupHeading={t('visible_columns')}
               allowCustom={false}
               renderItem={(item) => {
-                const column = table.getAllColumns().find((col) => col.id === item);
+                const column = table
+                  .getAllColumns()
+                  .find((col) => col.id === item);
                 return (
                   <div className='flex w-full items-center justify-between'>
                     <span>{t(item)}</span>
@@ -431,14 +540,25 @@ export default function CompanyPage() {
           </div>
 
           <div className='flex flex-row gap-2'>
-            <Button variant='outline' size='sm' className='h-8' disabled={isLoading} onClick={() => setCreateDialogOpen(true)}>
+            <Button
+              variant='outline'
+              size='sm'
+              className='h-8'
+              disabled={isLoading}
+              onClick={() => setCreateDialogOpen(true)}
+            >
               <Plus className='size-4' /> {t('add_company')}
             </Button>
           </div>
         </div>
       </div>
 
-      <DataTable table={table} columns={tableColumns} loading={isLoading} onRowClick={(row) => router.push(`/dashboard/crm/company/${row.id}`)} />
+      <DataTable
+        table={table}
+        columns={tableColumns}
+        loading={isLoading}
+        onRowClick={(row) => router.push(`/dashboard/crm/company/${row.id}`)}
+      />
 
       <ActionAlertDialog
         open={deleteDialogOpen}
@@ -454,11 +574,16 @@ export default function CompanyPage() {
         <DialogContent className='sm:max-w-[600px]'>
           <DialogHeader>
             <DialogTitle>{t('add_company')}</DialogTitle>
-            <DialogDescription>{t('add_company_description')}</DialogDescription>
+            <DialogDescription>
+              {t('add_company_description')}
+            </DialogDescription>
           </DialogHeader>
 
           <Form {...createCompanyForm}>
-            <form onSubmit={createCompanyForm.handleSubmit(onSubmit)} className='space-y-4'>
+            <form
+              onSubmit={createCompanyForm.handleSubmit(onSubmit)}
+              className='space-y-4'
+            >
               <div className='grid grid-cols-2 gap-4'>
                 <FormField
                   control={createCompanyForm.control}
@@ -536,7 +661,10 @@ export default function CompanyPage() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>{t('status')}</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                      >
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder={t('select_status')} />
@@ -544,7 +672,9 @@ export default function CompanyPage() {
                         </FormControl>
                         <SelectContent>
                           <SelectItem value='active'>{t('active')}</SelectItem>
-                          <SelectItem value='inactive'>{t('inactive')}</SelectItem>
+                          <SelectItem value='inactive'>
+                            {t('inactive')}
+                          </SelectItem>
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -560,7 +690,10 @@ export default function CompanyPage() {
                   <FormItem>
                     <FormLabel>{t('phone')}</FormLabel>
                     <FormControl>
-                      <PhoneInput value={field.value || ''} onChange={field.onChange} />
+                      <PhoneInput
+                        value={field.value || ''}
+                        onChange={field.onChange}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -654,7 +787,11 @@ export default function CompanyPage() {
               </div>
 
               <DialogFooter>
-                <Button variant='outline' type='button' onClick={() => setCreateDialogOpen(false)}>
+                <Button
+                  variant='outline'
+                  type='button'
+                  onClick={() => setCreateDialogOpen(false)}
+                >
                   {t('cancel')}
                 </Button>
                 <Button type='submit' disabled={createCompany.isPending}>
@@ -670,11 +807,16 @@ export default function CompanyPage() {
         <DialogContent className='sm:max-w-[600px]'>
           <DialogHeader>
             <DialogTitle>{t('edit_company')}</DialogTitle>
-            <DialogDescription>{t('edit_company_description')}</DialogDescription>
+            <DialogDescription>
+              {t('edit_company_description')}
+            </DialogDescription>
           </DialogHeader>
 
           <Form {...editCompanyForm}>
-            <form onSubmit={editCompanyForm.handleSubmit(onEditSubmit)} className='space-y-4'>
+            <form
+              onSubmit={editCompanyForm.handleSubmit(onEditSubmit)}
+              className='space-y-4'
+            >
               <div className='grid grid-cols-2 gap-4'>
                 <FormField
                   control={editCompanyForm.control}
@@ -753,7 +895,10 @@ export default function CompanyPage() {
                     <FormItem>
                       <FormLabel>{t('phone')}</FormLabel>
                       <FormControl>
-                        <PhoneInput value={field.value || ''} onChange={field.onChange} />
+                        <PhoneInput
+                          value={field.value || ''}
+                          onChange={field.onChange}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -766,7 +911,10 @@ export default function CompanyPage() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>{t('status')}</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                      >
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder={t('select_status')} />
@@ -774,7 +922,9 @@ export default function CompanyPage() {
                         </FormControl>
                         <SelectContent>
                           <SelectItem value='active'>{t('active')}</SelectItem>
-                          <SelectItem value='inactive'>{t('inactive')}</SelectItem>
+                          <SelectItem value='inactive'>
+                            {t('inactive')}
+                          </SelectItem>
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -870,7 +1020,11 @@ export default function CompanyPage() {
               </div>
 
               <DialogFooter>
-                <Button variant='outline' type='button' onClick={() => setEditDialogOpen(false)}>
+                <Button
+                  variant='outline'
+                  type='button'
+                  onClick={() => setEditDialogOpen(false)}
+                >
                   {t('cancel')}
                 </Button>
                 <Button type='submit' disabled={editCompany.isPending}>

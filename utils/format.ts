@@ -56,7 +56,9 @@ export const parseDate = (dateString: string): Date | undefined => {
   return undefined;
 };
 
-export const parseFullName = (fullName: string): { firstName: string; lastName: string } => {
+export const parseFullName = (
+  fullName: string
+): { firstName: string; lastName: string } => {
   if (!fullName) return { firstName: 'N/A', lastName: '' };
 
   // Trim and remove extra spaces

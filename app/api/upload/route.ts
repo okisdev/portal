@@ -27,6 +27,9 @@ export async function POST(request: Request) {
       key: uniqueFilename,
     });
   } catch (err) {
-    return NextResponse.json({ error: `Failed to generate upload URL: ${err}` }, { status: 500 });
+    return NextResponse.json(
+      { error: `Failed to generate upload URL: ${err}` },
+      { status: 500 }
+    );
   }
 }

@@ -1,8 +1,22 @@
 'use client';
 
-import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from '@/components/ui/breadcrumb';
 import { Button } from '@/components/ui/button';
-import { CommandDialog, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
+import {
+  CommandDialog,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from '@/components/ui/command';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -50,9 +64,18 @@ export function DashboardHeader() {
     }
   }, [paths]);
 
-  const { data: contact, isLoading: isContactLoading } = api.contact.getContactById.useQuery({ id: contactId || '' }, { enabled: !!contactId });
-  const { data: company, isLoading: isCompanyLoading } = api.company.getCompanyById.useQuery({ id: companyId || '' }, { enabled: !!companyId });
-  const { data: team, isLoading: isTeamLoading } = api.team.getTeamById.useQuery({ id: teamId || '' }, { enabled: !!teamId });
+  const { data: contact, isLoading: isContactLoading } =
+    api.contact.getContactById.useQuery(
+      { id: contactId || '' },
+      { enabled: !!contactId }
+    );
+  const { data: company, isLoading: isCompanyLoading } =
+    api.company.getCompanyById.useQuery(
+      { id: companyId || '' },
+      { enabled: !!companyId }
+    );
+  const { data: team, isLoading: isTeamLoading } =
+    api.team.getTeamById.useQuery({ id: teamId || '' }, { enabled: !!teamId });
 
   const isDashboard = paths.length === 2 && paths[1] === 'dashboard';
 
@@ -130,10 +153,16 @@ export function DashboardHeader() {
                   {index === paths.length - 1 ? (
                     <BreadcrumbPage>{i18nPath(path)}</BreadcrumbPage>
                   ) : (
-                    <BreadcrumbLink href={`/dashboard/${paths.slice(0, index + 1).join('/')}`}>{i18nPath(path)}</BreadcrumbLink>
+                    <BreadcrumbLink
+                      href={`/dashboard/${paths.slice(0, index + 1).join('/')}`}
+                    >
+                      {i18nPath(path)}
+                    </BreadcrumbLink>
                   )}
                 </BreadcrumbItem>
-                {index < paths.length - 1 && !isDashboard && <BreadcrumbSeparator />}
+                {index < paths.length - 1 && !isDashboard && (
+                  <BreadcrumbSeparator />
+                )}
               </React.Fragment>
             ))}
           </BreadcrumbList>
@@ -145,11 +174,17 @@ export function DashboardHeader() {
         <div className='flex items-center gap-2 px-4'>
           <Button
             variant='outline'
-            className={cn('relative h-8 w-full justify-start rounded-[0.5rem] bg-muted/50 font-normal text-muted-foreground text-sm shadow-none sm:pr-12 md:w-40 lg:w-56 xl:w-64')}
+            className={cn(
+              'relative h-8 w-full justify-start rounded-[0.5rem] bg-muted/50 font-normal text-muted-foreground text-sm shadow-none sm:pr-12 md:w-40 lg:w-56 xl:w-64'
+            )}
             onClick={() => setOpen(true)}
           >
-            <span className='hidden lg:inline-flex'>{t('search_placeholder')}</span>
-            <span className='inline-flex lg:hidden'>{t('search_placeholder')}</span>
+            <span className='hidden lg:inline-flex'>
+              {t('search_placeholder')}
+            </span>
+            <span className='inline-flex lg:hidden'>
+              {t('search_placeholder')}
+            </span>
             <kbd className='pointer-events-none absolute top-[0.3rem] right-[0.3rem] hidden h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-medium font-mono text-[10px] opacity-100 sm:flex'>
               <span className='text-xs'>⌘</span>K
             </kbd>
@@ -160,15 +195,21 @@ export function DashboardHeader() {
               <CommandEmpty>{t('no_results_found')}</CommandEmpty>
 
               <CommandGroup heading={t('theme')}>
-                <CommandItem onSelect={() => runCommand(() => setTheme('light'))}>
+                <CommandItem
+                  onSelect={() => runCommand(() => setTheme('light'))}
+                >
                   <Sun />
                   {t('light')}
                 </CommandItem>
-                <CommandItem onSelect={() => runCommand(() => setTheme('dark'))}>
+                <CommandItem
+                  onSelect={() => runCommand(() => setTheme('dark'))}
+                >
                   <Moon />
                   {t('dark')}
                 </CommandItem>
-                <CommandItem onSelect={() => runCommand(() => setTheme('system'))}>
+                <CommandItem
+                  onSelect={() => runCommand(() => setTheme('system'))}
+                >
                   <Laptop />
                   {t('system')}
                 </CommandItem>

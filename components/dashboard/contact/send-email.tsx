@@ -3,7 +3,12 @@
 import { TipTapEditor } from '@/components/shared/tiptap-editor';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import type { Contact } from '@/lib/schema';
 import { api } from '@/utils/trpc/client';
@@ -146,18 +151,24 @@ export function SendEmail({ open, onOpenChange, recipient }: SendEmailProps) {
         </DialogHeader>
         <div className='space-y-4 py-2 sm:py-4'>
           <div className='flex flex-col gap-2 border-b pb-4 sm:flex-row sm:items-center sm:gap-4'>
-            <div className='w-full text-muted-foreground text-sm sm:w-16'>{t('from')}</div>
+            <div className='w-full text-muted-foreground text-sm sm:w-16'>
+              {t('from')}
+            </div>
             <div className='flex items-center gap-2'>
               <Avatar className='size-6'>
                 <AvatarImage src={session?.user?.image || ''} />
-                <AvatarFallback>{session?.user?.name?.charAt(0)}</AvatarFallback>
+                <AvatarFallback>
+                  {session?.user?.name?.charAt(0)}
+                </AvatarFallback>
               </Avatar>
               <span className='text-sm'>{session?.user?.name}</span>
             </div>
           </div>
 
           <div className='flex flex-col gap-2 border-b pb-4 sm:flex-row sm:items-center sm:gap-4'>
-            <div className='w-full text-muted-foreground text-sm sm:w-16'>{t('to')}</div>
+            <div className='w-full text-muted-foreground text-sm sm:w-16'>
+              {t('to')}
+            </div>
             <div className='flex flex-1 flex-wrap items-center gap-2'>
               <div className='flex items-center gap-2 rounded-full border bg-muted px-2 py-1'>
                 <Avatar className='size-6'>
@@ -166,7 +177,12 @@ export function SendEmail({ open, onOpenChange, recipient }: SendEmailProps) {
                 </Avatar>
                 <span className='text-sm'>{recipient.name}</span>
               </div>
-              <Button variant='ghost' size='sm' onClick={() => setShowCcBcc(!showCcBcc)} className='text-muted-foreground hover:text-foreground'>
+              <Button
+                variant='ghost'
+                size='sm'
+                onClick={() => setShowCcBcc(!showCcBcc)}
+                className='text-muted-foreground hover:text-foreground'
+              >
                 {showCcBcc ? 'Hide CC/BCC' : 'Add CC/BCC'}
               </Button>
             </div>
@@ -175,48 +191,98 @@ export function SendEmail({ open, onOpenChange, recipient }: SendEmailProps) {
           {showCcBcc && (
             <>
               <div className='flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4'>
-                <div className='w-full text-muted-foreground text-sm sm:w-16'>CC</div>
+                <div className='w-full text-muted-foreground text-sm sm:w-16'>
+                  CC
+                </div>
                 <Input
                   placeholder='Enter CC email addresses (comma separated)'
                   value={formData.cc.join(', ')}
-                  onChange={(e) => setFormData((prev) => ({ ...prev, cc: e.target.value.split(',').map((email) => email.trim()) }))}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      cc: e.target.value
+                        .split(',')
+                        .map((email) => email.trim()),
+                    }))
+                  }
                 />
               </div>
               <div className='flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4'>
-                <div className='w-full text-muted-foreground text-sm sm:w-16'>BCC</div>
+                <div className='w-full text-muted-foreground text-sm sm:w-16'>
+                  BCC
+                </div>
                 <Input
                   placeholder='Enter BCC email addresses (comma separated)'
                   value={formData.bcc.join(', ')}
-                  onChange={(e) => setFormData((prev) => ({ ...prev, bcc: e.target.value.split(',').map((email) => email.trim()) }))}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      bcc: e.target.value
+                        .split(',')
+                        .map((email) => email.trim()),
+                    }))
+                  }
                 />
               </div>
             </>
           )}
 
           <div className='space-y-4'>
-            <Input placeholder='Subject' value={formData.subject} onChange={(e) => setFormData((prev) => ({ ...prev, subject: e.target.value }))} />
-            <TipTapEditor content={formData.content} onChange={(content) => setFormData((prev) => ({ ...prev, content }))} placeholder='Write your message...' className='min-h-[200px]' />
+            <Input
+              placeholder='Subject'
+              value={formData.subject}
+              onChange={(e) =>
+                setFormData((prev) => ({ ...prev, subject: e.target.value }))
+              }
+            />
+            <TipTapEditor
+              content={formData.content}
+              onChange={(content) =>
+                setFormData((prev) => ({ ...prev, content }))
+              }
+              placeholder='Write your message...'
+              className='min-h-[200px]'
+            />
           </div>
 
           <div className='space-y-4 border-t pt-4'>
             <div className='flex items-center justify-between'>
               <h3 className='font-medium text-sm'>{t('attachments')}</h3>
-              <input type='file' multiple onChange={handleFileChange} className='hidden' id='file-upload' />
-              <label htmlFor='file-upload' className='cursor-pointer text-muted-foreground text-xs hover:text-foreground'>
+              <input
+                type='file'
+                multiple
+                onChange={handleFileChange}
+                className='hidden'
+                id='file-upload'
+              />
+              <label
+                htmlFor='file-upload'
+                className='cursor-pointer text-muted-foreground text-xs hover:text-foreground'
+              >
                 {t('add_attachment')}
               </label>
             </div>
             <div className='grid grid-cols-1 gap-4 sm:grid-cols-3'>
               {formData.attachments.map((file, index) => (
-                <div key={file.name + nanoid()} className='flex items-center gap-3 rounded-lg border p-3'>
+                <div
+                  key={file.name + nanoid()}
+                  className='flex items-center gap-3 rounded-lg border p-3'
+                >
                   <div className='flex size-10 items-center justify-center rounded-lg bg-muted'>
                     <File className='size-5 text-blue-600' />
                   </div>
                   <div className='min-w-0 flex-1'>
                     <p className='truncate text-sm'>{file.name}</p>
-                    <p className='text-muted-foreground text-xs'>{Math.round(file.size / 1024)} KB</p>
+                    <p className='text-muted-foreground text-xs'>
+                      {Math.round(file.size / 1024)} KB
+                    </p>
                   </div>
-                  <Button variant='ghost' size='icon' onClick={() => removeAttachment(index)} className='size-6'>
+                  <Button
+                    variant='ghost'
+                    size='icon'
+                    onClick={() => removeAttachment(index)}
+                    className='size-6'
+                  >
                     <X className='size-4' />
                   </Button>
                 </div>
@@ -227,19 +293,38 @@ export function SendEmail({ open, onOpenChange, recipient }: SendEmailProps) {
 
         <div className='flex flex-col items-center justify-between gap-4 border-t pt-4 sm:flex-row'>
           <div className='flex w-full items-center gap-2 sm:w-auto'>
-            <Button variant='outline' size='icon' onClick={() => setFormData((prev) => ({ ...prev, attachments: [] }))}>
+            <Button
+              variant='outline'
+              size='icon'
+              onClick={() =>
+                setFormData((prev) => ({ ...prev, attachments: [] }))
+              }
+            >
               <Trash2 className='size-4' />
             </Button>
           </div>
           <div className='flex w-full flex-col items-center gap-2 sm:w-auto sm:flex-row'>
             {isScheduleMode ? (
-              <Input type='datetime-local' value={scheduledDate?.toISOString().slice(0, 16) || ''} onChange={(e) => setScheduledDate(new Date(e.target.value))} className='w-full sm:w-auto' />
+              <Input
+                type='datetime-local'
+                value={scheduledDate?.toISOString().slice(0, 16) || ''}
+                onChange={(e) => setScheduledDate(new Date(e.target.value))}
+                className='w-full sm:w-auto'
+              />
             ) : null}
-            <Button variant='outline' className='w-full gap-2 sm:w-auto' onClick={() => setIsScheduleMode(!isScheduleMode)}>
+            <Button
+              variant='outline'
+              className='w-full gap-2 sm:w-auto'
+              onClick={() => setIsScheduleMode(!isScheduleMode)}
+            >
               <Calendar className='size-4' />
               {isScheduleMode ? t('cancel_schedule') : t('schedule')}
             </Button>
-            <Button className='w-full gap-2 sm:w-auto' onClick={handleSend} disabled={sendEmail.isPending}>
+            <Button
+              className='w-full gap-2 sm:w-auto'
+              onClick={handleSend}
+              disabled={sendEmail.isPending}
+            >
               <Send className='size-4' />
               {isScheduleMode ? t('schedule') : t('send')}
             </Button>

@@ -28,5 +28,8 @@ export const createContactActivityHelper = async (
   await ctx.db.insert(contactActivity).values(activity);
 
   // Update the contact's lastActivity field
-  return ctx.db.update(contact).set({ lastActivity: activity }).where(eq(contact.id, input.contactId));
+  return ctx.db
+    .update(contact)
+    .set({ lastActivity: activity })
+    .where(eq(contact.id, input.contactId));
 };

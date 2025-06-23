@@ -1,5 +1,12 @@
 import { Skeleton } from '@/components/ui/skeleton';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 import { nanoid } from 'nanoid';
 
 interface TableLoadingProps {
@@ -8,7 +15,11 @@ interface TableLoadingProps {
   showActions?: boolean;
 }
 
-export function TableLoading({ columnCount = 5, rowCount = 10, showActions = true }: TableLoadingProps) {
+export function TableLoading({
+  columnCount = 5,
+  rowCount = 10,
+  showActions = true,
+}: TableLoadingProps) {
   return (
     <Table>
       <TableHeader>

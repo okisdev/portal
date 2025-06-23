@@ -27,11 +27,15 @@ export default function ContentPage() {
   const locale = useLocale() as Locale;
   const dateLocale = dateLocaleMap[locale];
 
-  const [currentContent, setCurrentContent] = useState<ResourceContent | null>(null);
+  const [currentContent, setCurrentContent] = useState<ResourceContent | null>(
+    null
+  );
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
-  const { data: contents, isLoading: contentsLoading } = api.resource.getContents.useQuery();
-  const { data: content, isLoading: contentLoading } = api.resource.getContent.useQuery({ id: id || '' }, { enabled: !!id });
+  const { data: contents, isLoading: contentsLoading } =
+    api.resource.getContents.useQuery();
+  const { data: content, isLoading: contentLoading } =
+    api.resource.getContent.useQuery({ id: id || '' }, { enabled: !!id });
 
   const createContent = api.resource.createContent.useMutation({
     onSuccess: () => {
@@ -84,7 +88,10 @@ export default function ContentPage() {
       const updatedData = {
         title: data.title || currentContent.title,
         content: data.content || currentContent.content,
-        description: data.description === undefined ? currentContent.description || undefined : data.description || undefined,
+        description:
+          data.description === undefined
+            ? currentContent.description || undefined
+            : data.description || undefined,
         visibility: data.visibility || currentContent.visibility,
         tags: data.tags || undefined,
       };
@@ -143,28 +150,48 @@ export default function ContentPage() {
               </>
             )}
             {contents && contents.length === 0 && (
-              <div className='flex h-[200px] items-center justify-center rounded-lg border border-dashed text-muted-foreground text-sm'>{t('no_contents_found')}</div>
+              <div className='flex h-[200px] items-center justify-center rounded-lg border border-dashed text-muted-foreground text-sm'>
+                {t('no_contents_found')}
+              </div>
             )}
             {contents?.map((item) => {
-              const tags = item.resourceContent.tags ? JSON.parse(item.resourceContent.tags) : [];
+              const tags = item.resourceContent.tags
+                ? JSON.parse(item.resourceContent.tags)
+                : [];
               return (
                 <button
                   key={item.resourceContent.id}
                   type='button'
-                  onClick={() => router.push(`/dashboard/resource/content?id=${item.resourceContent.id}`)}
+                  onClick={() =>
+                    router.push(
+                      `/dashboard/resource/content?id=${item.resourceContent.id}`
+                    )
+                  }
                   className={`group w-full space-y-2 rounded-lg border bg-background p-3 text-left transition-all hover:border-primary/20 hover:shadow-xs ${
-                    currentContent?.id === item.resourceContent.id ? 'border-primary/40 shadow-xs' : ''
+                    currentContent?.id === item.resourceContent.id
+                      ? 'border-primary/40 shadow-xs'
+                      : ''
                   }`}
                 >
                   <div>
-                    <h3 className='line-clamp-1 font-medium text-sm group-hover:text-primary'>{item.resourceContent.title}</h3>
-                    {item.resourceContent.description && <p className='line-clamp-2 text-muted-foreground text-xs'>{item.resourceContent.description}</p>}
+                    <h3 className='line-clamp-1 font-medium text-sm group-hover:text-primary'>
+                      {item.resourceContent.title}
+                    </h3>
+                    {item.resourceContent.description && (
+                      <p className='line-clamp-2 text-muted-foreground text-xs'>
+                        {item.resourceContent.description}
+                      </p>
+                    )}
                   </div>
 
                   {tags.length > 0 && (
                     <div className='flex flex-wrap items-center gap-1.5'>
                       {tags.map((tag: string) => (
-                        <Badge key={tag} variant='secondary' className='text-xs'>
+                        <Badge
+                          key={tag}
+                          variant='secondary'
+                          className='text-xs'
+                        >
                           {tag}
                         </Badge>
                       ))}
@@ -174,7 +201,10 @@ export default function ContentPage() {
                   <div className='flex items-center gap-4 text-muted-foreground text-xs'>
                     <div className='flex items-center gap-1.5'>
                       <Clock className='size-3' />
-                      {formatDistanceToNow(new Date(item.resourceContent.updatedAt), { addSuffix: true, locale: dateLocale })}
+                      {formatDistanceToNow(
+                        new Date(item.resourceContent.updatedAt),
+                        { addSuffix: true, locale: dateLocale }
+                      )}
                     </div>
 
                     <div className='flex items-center gap-1.5'>
@@ -196,9 +226,17 @@ export default function ContentPage() {
 
       <div className='flex-1'>
         {id ? (
-          <ContentEditor content={currentContent} onUpdate={handleUpdate} onDelete={() => setIsDeleteDialogOpen(true)} isLoading={contentLoading} />
+          <ContentEditor
+            content={currentContent}
+            onUpdate={handleUpdate}
+            onDelete={() => setIsDeleteDialogOpen(true)}
+            isLoading={contentLoading}
+          />
         ) : (
-          <ContentForm onSubmit={createContent.mutate} isSubmitting={createContent.isPending} />
+          <ContentForm
+            onSubmit={createContent.mutate}
+            isSubmitting={createContent.isPending}
+          />
         )}
       </div>
 

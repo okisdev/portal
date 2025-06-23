@@ -43,7 +43,10 @@ export default function RegisterPage() {
   const registerAccount = api.auth.register.useMutation();
   const [shouldValidate, setShouldValidate] = useState(false);
 
-  const { data: isValidDomain } = api.auth.validateEmailDomain.useQuery({ email: email || '' }, { enabled: shouldValidate && !!email && email.includes('@') });
+  const { data: isValidDomain } = api.auth.validateEmailDomain.useQuery(
+    { email: email || '' },
+    { enabled: shouldValidate && !!email && email.includes('@') }
+  );
 
   const handleEmailBlur = () => {
     if (email?.includes('@')) {
@@ -84,17 +87,33 @@ export default function RegisterPage() {
   };
 
   return (
-    <motion.div key='register-form' initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.2 }}>
+    <motion.div
+      key='register-form'
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -20 }}
+      transition={{ duration: 0.2 }}
+    >
       <div className='space-y-2 text-center'>
-        <h1 className='font-medium text-foreground text-lg md:text-2xl'>{t('sign_up_title')}</h1>
-        <p className='text-muted-foreground text-sm md:text-base'>{t('sign_up_description')}</p>
+        <h1 className='font-medium text-foreground text-lg md:text-2xl'>
+          {t('sign_up_title')}
+        </h1>
+        <p className='text-muted-foreground text-sm md:text-base'>
+          {t('sign_up_description')}
+        </p>
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className='mt-6 space-y-4'>
-        {error && <div className='rounded-lg bg-destructive/10 p-3 text-destructive text-sm'>{error}</div>}
+        {error && (
+          <div className='rounded-lg bg-destructive/10 p-3 text-destructive text-sm'>
+            {error}
+          </div>
+        )}
 
         <div className='space-y-1'>
-          <Label className='mb-1 block font-medium text-foreground text-sm'>{t('email')}</Label>
+          <Label className='mb-1 block font-medium text-foreground text-sm'>
+            {t('email')}
+          </Label>
           <input
             type='email'
             {...register('email')}
@@ -102,18 +121,28 @@ export default function RegisterPage() {
             className='w-full rounded-lg border bg-background p-2 focus:outline-hidden focus:ring-2 focus:ring-ring'
             placeholder={t('email_placeholder')}
           />
-          {errors.email && <p className='mt-1 text-destructive text-sm'>{errors.email.message}</p>}
+          {errors.email && (
+            <p className='mt-1 text-destructive text-sm'>
+              {errors.email.message}
+            </p>
+          )}
         </div>
 
         <div className='space-y-1'>
-          <Label className='mb-1 block font-medium text-foreground text-sm'>{t('password')}</Label>
+          <Label className='mb-1 block font-medium text-foreground text-sm'>
+            {t('password')}
+          </Label>
           <input
             type='password'
             {...register('password')}
             className='w-full rounded-lg border bg-background p-2 focus:outline-hidden focus:ring-2 focus:ring-ring'
             placeholder={t('create_a_password')}
           />
-          {errors.password && <p className='mt-1 text-destructive text-sm'>{errors.password.message}</p>}
+          {errors.password && (
+            <p className='mt-1 text-destructive text-sm'>
+              {errors.password.message}
+            </p>
+          )}
         </div>
 
         <div className='space-y-3'>
@@ -134,7 +163,10 @@ export default function RegisterPage() {
 
           <p className='text-center text-muted-foreground text-sm'>
             {t('already_have_an_account')}{' '}
-            <Link href='/login' className='text-muted-foreground underline hover:text-foreground'>
+            <Link
+              href='/login'
+              className='text-muted-foreground underline hover:text-foreground'
+            >
               {t('sign_in')}
             </Link>
           </p>

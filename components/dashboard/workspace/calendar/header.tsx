@@ -17,7 +17,15 @@ interface CalendarHeaderProps {
   onAddEvent: () => void;
 }
 
-export function CalendarHeader({ currentDate, view, onViewChange, onTodayClick, onPrevious, onNext, onAddEvent }: CalendarHeaderProps) {
+export function CalendarHeader({
+  currentDate,
+  view,
+  onViewChange,
+  onTodayClick,
+  onPrevious,
+  onNext,
+  onAddEvent,
+}: CalendarHeaderProps) {
   const t = useTranslations();
   const locale = useLocale() as Locale;
   const dateLocale = dateLocaleMap[locale] || enUS;
@@ -34,7 +42,9 @@ export function CalendarHeader({ currentDate, view, onViewChange, onTodayClick, 
       const startYear = format(startDate, 'yyyy', { locale: dateLocale });
       const endYear = format(endDate, 'yyyy', { locale: dateLocale });
       const dateRange = `${format(startDate, 'MMMM d', { locale: dateLocale })} - ${format(endDate, startDate.getMonth() !== endDate.getMonth() ? 'MMMM d' : 'd', { locale: dateLocale })}`;
-      return startYear === endYear ? `${dateRange}, ${startYear}` : `${dateRange}, ${startYear}-${endYear}`;
+      return startYear === endYear
+        ? `${dateRange}, ${startYear}`
+        : `${dateRange}, ${startYear}-${endYear}`;
     }
     if (view === '3days') {
       const startDate = new Date(currentDate);
@@ -66,24 +76,44 @@ export function CalendarHeader({ currentDate, view, onViewChange, onTodayClick, 
       </div>
       <div className='flex items-center gap-2'>
         <div className='flex rounded-md border'>
-          <Button variant={view === 'month' ? 'secondary' : 'ghost'} className='h-8 rounded-r-none border-r px-2 md:px-3' onClick={() => onViewChange('month')}>
+          <Button
+            variant={view === 'month' ? 'secondary' : 'ghost'}
+            className='h-8 rounded-r-none border-r px-2 md:px-3'
+            onClick={() => onViewChange('month')}
+          >
             <span className='hidden md:inline'>{t('month')}</span>
             <span className='md:hidden'>M</span>
           </Button>
-          <Button variant={view === 'week' ? 'secondary' : 'ghost'} className='hidden h-8 rounded-none border-r-none border-l-none px-2 md:flex md:px-3' onClick={() => onViewChange('week')}>
+          <Button
+            variant={view === 'week' ? 'secondary' : 'ghost'}
+            className='hidden h-8 rounded-none border-r-none border-l-none px-2 md:flex md:px-3'
+            onClick={() => onViewChange('week')}
+          >
             <span className='hidden md:inline'>{t('week')}</span>
             <span className='md:hidden'>W</span>
           </Button>
-          <Button variant={view === '3days' ? 'secondary' : 'ghost'} className='h-8 rounded-none border-r px-2 md:border-l md:px-3' onClick={() => onViewChange('3days')}>
+          <Button
+            variant={view === '3days' ? 'secondary' : 'ghost'}
+            className='h-8 rounded-none border-r px-2 md:border-l md:px-3'
+            onClick={() => onViewChange('3days')}
+          >
             <span className='hidden md:inline'>{t('3days')}</span>
             <span className='md:hidden'>3D</span>
           </Button>
-          <Button variant={view === 'day' ? 'secondary' : 'ghost'} className='h-8 rounded-l-none px-2 md:px-3' onClick={() => onViewChange('day')}>
+          <Button
+            variant={view === 'day' ? 'secondary' : 'ghost'}
+            className='h-8 rounded-l-none px-2 md:px-3'
+            onClick={() => onViewChange('day')}
+          >
             <span className='hidden md:inline'>{t('day')}</span>
             <span className='md:hidden'>D</span>
           </Button>
         </div>
-        <Button variant='outline' className='h-8 w-8 p-0 md:w-auto md:px-3' onClick={onAddEvent}>
+        <Button
+          variant='outline'
+          className='h-8 w-8 p-0 md:w-auto md:px-3'
+          onClick={onAddEvent}
+        >
           <Plus className='h-4 w-4' />
           <span className='hidden md:ml-2 md:inline'>{t('add_event')}</span>
         </Button>

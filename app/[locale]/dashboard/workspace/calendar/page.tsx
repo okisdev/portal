@@ -9,11 +9,31 @@ import { WeekView } from '@/components/dashboard/workspace/calendar/week-view';
 import { ActionAlertDialog } from '@/components/shared/action-alert-dialog';
 import { EventDialog } from '@/components/shared/event-dialog';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Form, FormControl, FormField, FormItem, FormLabel } from '@/components/ui/form';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+} from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import type { CalendarEventWithParticipants, CalendarFolder } from '@/lib/schema';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import type {
+  CalendarEventWithParticipants,
+  CalendarFolder,
+} from '@/lib/schema';
 import { randomColor } from '@/utils/color';
 import { api } from '@/utils/trpc/client';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -54,16 +74,30 @@ export default function DashboardPersonalCalendar() {
   const searchParams = useSearchParams();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState(new Date());
-  const [view, setView] = useState<CalendarView>((searchParams.get('view') as CalendarView) || 'month');
+  const [view, setView] = useState<CalendarView>(
+    (searchParams.get('view') as CalendarView) || 'month'
+  );
   const [isEventDialogOpen, setIsEventDialogOpen] = useState(false);
-  const [selectedEvent, setSelectedEvent] = useState<CalendarEventWithParticipants | null>(null);
+  const [selectedEvent, setSelectedEvent] =
+    useState<CalendarEventWithParticipants | null>(null);
   const [isEditMode, setIsEditMode] = useState(false);
-  const [hiddenCalendars, setHiddenCalendars] = useState<Set<string>>(new Set());
+  const [hiddenCalendars, setHiddenCalendars] = useState<Set<string>>(
+    new Set()
+  );
   const [isEditCalendarOpen, setIsEditCalendarOpen] = useState(false);
-  const [selectedCalendar, setSelectedCalendar] = useState<CalendarFolder | null>(null);
+  const [selectedCalendar, setSelectedCalendar] =
+    useState<CalendarFolder | null>(null);
   const [isAddCalendarOpen, setIsAddCalendarOpen] = useState(false);
-  const [selectionStart, setSelectionStart] = useState<{ date: Date; hour: number; minute: number } | null>(null);
-  const [selectionEnd, setSelectionEnd] = useState<{ date: Date; hour: number; minute: number } | null>(null);
+  const [selectionStart, setSelectionStart] = useState<{
+    date: Date;
+    hour: number;
+    minute: number;
+  } | null>(null);
+  const [selectionEnd, setSelectionEnd] = useState<{
+    date: Date;
+    hour: number;
+    minute: number;
+  } | null>(null);
   const [isSelecting, setIsSelecting] = useState(false);
   const [isDeleteEventDialogOpen, setIsDeleteEventDialogOpen] = useState(false);
   const [eventToDelete, setEventToDelete] = useState<string | null>(null);
@@ -86,17 +120,27 @@ export default function DashboardPersonalCalendar() {
     return () => window.removeEventListener('resize', handleResize);
   }, [view, router, searchParams]);
 
-  const startOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
-  const endOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
+  const startOfMonth = new Date(
+    currentDate.getFullYear(),
+    currentDate.getMonth(),
+    1
+  );
+  const endOfMonth = new Date(
+    currentDate.getFullYear(),
+    currentDate.getMonth() + 1,
+    0
+  );
 
-  const { data: folders, isLoading: isLoadingFolders } = api.calendar.getAllFolders.useQuery();
+  const { data: folders, isLoading: isLoadingFolders } =
+    api.calendar.getAllFolders.useQuery();
   const { data: events } = api.calendar.getEvents.useQuery({
     startDate: startOfMonth,
     endDate: endOfMonth,
   });
-  const { data: participantOptions } = api.calendar.getParticipantOptions.useQuery(undefined, {
-    enabled: isEventDialogOpen,
-  });
+  const { data: participantOptions } =
+    api.calendar.getParticipantOptions.useQuery(undefined, {
+      enabled: isEventDialogOpen,
+    });
 
   const form = useForm({
     resolver: zodResolver(eventFormSchema),
@@ -235,7 +279,11 @@ export default function DashboardPersonalCalendar() {
     setIsEventDialogOpen(true);
   };
 
-  const handleCalendarSubmit = (data: { name: string; color: string; visibility: 'PUBLIC' | 'SHARED' | 'PRIVATE' }) => {
+  const handleCalendarSubmit = (data: {
+    name: string;
+    color: string;
+    visibility: 'PUBLIC' | 'SHARED' | 'PRIVATE';
+  }) => {
     if (selectedCalendar) {
       updateFolder.mutate({
         id: selectedCalendar.id,
@@ -249,7 +297,11 @@ export default function DashboardPersonalCalendar() {
     }
   };
 
-  const handleAddCalendarSubmit = (data: { name: string; color: string; visibility: 'PUBLIC' | 'SHARED' | 'PRIVATE' }) => {
+  const handleAddCalendarSubmit = (data: {
+    name: string;
+    color: string;
+    visibility: 'PUBLIC' | 'SHARED' | 'PRIVATE';
+  }) => {
     createFolder.mutate({
       name: data.name,
       color: data.color,
@@ -259,13 +311,23 @@ export default function DashboardPersonalCalendar() {
     addCalendarForm.reset();
   };
 
-  const handleTimeSelection = (date: Date, hour: number, minute: number, isStart: boolean, e?: React.MouseEvent) => {
+  const handleTimeSelection = (
+    date: Date,
+    hour: number,
+    minute: number,
+    isStart: boolean,
+    e?: React.MouseEvent
+  ) => {
     if (isStart && e?.currentTarget) {
       const rect = e.currentTarget.getBoundingClientRect();
       const relativeY = e.clientY - rect.top;
       const minuteInBlock = Math.floor((relativeY / rect.height) * 60);
       const calculatedMinute = Math.floor(minuteInBlock / 15) * 15;
-      setSelectionStart({ date: new Date(date), hour, minute: calculatedMinute });
+      setSelectionStart({
+        date: new Date(date),
+        hour,
+        minute: calculatedMinute,
+      });
       setSelectionEnd({ date: new Date(date), hour, minute: calculatedMinute });
       setIsSelecting(true);
     } else if (isSelecting && e?.currentTarget) {
@@ -285,7 +347,8 @@ export default function DashboardPersonalCalendar() {
       endDate.setHours(selectionEnd.hour, selectionEnd.minute, 0, 0);
 
       // Ensure start is before end
-      const [finalStartDate, finalEndDate] = startDate > endDate ? [endDate, startDate] : [startDate, endDate];
+      const [finalStartDate, finalEndDate] =
+        startDate > endDate ? [endDate, startDate] : [startDate, endDate];
 
       setSelectedDate(finalStartDate);
       form.reset({
@@ -330,7 +393,9 @@ export default function DashboardPersonalCalendar() {
 
   const goToPrevious = () => {
     if (view === 'month') {
-      setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1));
+      setCurrentDate(
+        new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1)
+      );
     } else if (view === 'week') {
       const newDate = new Date(currentDate);
       newDate.setDate(newDate.getDate() - 7);
@@ -348,7 +413,9 @@ export default function DashboardPersonalCalendar() {
 
   const goToNext = () => {
     if (view === 'month') {
-      setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1));
+      setCurrentDate(
+        new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1)
+      );
     } else if (view === 'week') {
       const newDate = new Date(currentDate);
       newDate.setDate(newDate.getDate() + 7);
@@ -372,7 +439,9 @@ export default function DashboardPersonalCalendar() {
     if (newView !== 'month') {
       setCurrentDate(new Date(selectedDate));
     } else {
-      setCurrentDate(new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1));
+      setCurrentDate(
+        new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1)
+      );
     }
   };
 
@@ -402,7 +471,10 @@ export default function DashboardPersonalCalendar() {
             isLoading={isLoadingFolders}
             onDateSelect={(date) => {
               setSelectedDate(date);
-              if (date.getMonth() !== currentDate.getMonth() || date.getFullYear() !== currentDate.getFullYear()) {
+              if (
+                date.getMonth() !== currentDate.getMonth() ||
+                date.getFullYear() !== currentDate.getFullYear()
+              ) {
                 setCurrentDate(date);
               }
             }}
@@ -558,7 +630,10 @@ export default function DashboardPersonalCalendar() {
         folders={folders}
         participantOptions={
           participantOptions && {
-            users: participantOptions.users.map((u) => ({ id: u.id, name: u.name || '' })),
+            users: participantOptions.users.map((u) => ({
+              id: u.id,
+              name: u.name || '',
+            })),
             contacts: participantOptions.contacts,
           }
         }
@@ -585,7 +660,10 @@ export default function DashboardPersonalCalendar() {
             <DialogTitle>{t('edit_calendar')}</DialogTitle>
           </DialogHeader>
           <Form {...calendarForm}>
-            <form onSubmit={calendarForm.handleSubmit(handleCalendarSubmit)} className='space-y-4'>
+            <form
+              onSubmit={calendarForm.handleSubmit(handleCalendarSubmit)}
+              className='space-y-4'
+            >
               <FormField
                 control={calendarForm.control}
                 name='name'
@@ -607,8 +685,16 @@ export default function DashboardPersonalCalendar() {
                     <FormLabel>{t('color')}</FormLabel>
                     <FormControl>
                       <div className='flex items-center gap-2'>
-                        <Input type='color' {...field} className='h-10 w-20 p-1' />
-                        <Input {...field} className='flex-1' placeholder='#000000' />
+                        <Input
+                          type='color'
+                          {...field}
+                          className='h-10 w-20 p-1'
+                        />
+                        <Input
+                          {...field}
+                          className='flex-1'
+                          placeholder='#000000'
+                        />
                       </div>
                     </FormControl>
                   </FormItem>
@@ -621,7 +707,10 @@ export default function DashboardPersonalCalendar() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>{t('visibility')}</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                    >
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder={t('select_visibility')} />
@@ -650,7 +739,9 @@ export default function DashboardPersonalCalendar() {
                   {t('cancel')}
                 </Button>
                 <Button type='submit' disabled={updateFolder.isPending}>
-                  {updateFolder.isPending ? t('saving_loading') : t('save_changes')}
+                  {updateFolder.isPending
+                    ? t('saving_loading')
+                    : t('save_changes')}
                 </Button>
               </div>
             </form>
@@ -672,7 +763,10 @@ export default function DashboardPersonalCalendar() {
             <DialogTitle>{t('add_calendar_folder')}</DialogTitle>
           </DialogHeader>
           <Form {...addCalendarForm}>
-            <form onSubmit={addCalendarForm.handleSubmit(handleAddCalendarSubmit)} className='space-y-4'>
+            <form
+              onSubmit={addCalendarForm.handleSubmit(handleAddCalendarSubmit)}
+              className='space-y-4'
+            >
               <FormField
                 control={addCalendarForm.control}
                 name='name'
@@ -694,8 +788,16 @@ export default function DashboardPersonalCalendar() {
                     <FormLabel>{t('color')}</FormLabel>
                     <FormControl>
                       <div className='flex items-center gap-2'>
-                        <Input type='color' {...field} className='h-10 w-20 p-1' />
-                        <Input {...field} className='flex-1' placeholder='#4f46e5' />
+                        <Input
+                          type='color'
+                          {...field}
+                          className='h-10 w-20 p-1'
+                        />
+                        <Input
+                          {...field}
+                          className='flex-1'
+                          placeholder='#4f46e5'
+                        />
                       </div>
                     </FormControl>
                   </FormItem>
@@ -708,7 +810,10 @@ export default function DashboardPersonalCalendar() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>{t('visibility')}</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                    >
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder={t('select_visibility')} />

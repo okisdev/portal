@@ -16,9 +16,20 @@ interface NameTagProps {
 export function NameTag({ id, type, className }: NameTagProps) {
   const [displayName, setDisplayName] = useState<string>('Loading...');
 
-  const { data: contact, isError: isContactError, isLoading: isContactLoading } = api.contact.getContactById.useQuery({ id }, { enabled: type === 'contact' });
+  const {
+    data: contact,
+    isError: isContactError,
+    isLoading: isContactLoading,
+  } = api.contact.getContactById.useQuery(
+    { id },
+    { enabled: type === 'contact' }
+  );
 
-  const { data: user, isError: isUserError, isLoading: isUserLoading } = api.user.getUserById.useQuery({ id }, { enabled: type === 'user' });
+  const {
+    data: user,
+    isError: isUserError,
+    isLoading: isUserLoading,
+  } = api.user.getUserById.useQuery({ id }, { enabled: type === 'user' });
 
   useEffect(() => {
     if (isContactLoading || isUserLoading) {
@@ -36,7 +47,11 @@ export function NameTag({ id, type, className }: NameTagProps) {
         setDisplayName('Loading...');
         return;
       }
-      setDisplayName(contact.name || `${contact.firstName || ''} ${contact.lastName || ''}`.trim() || 'Unknown Contact');
+      setDisplayName(
+        contact.name ||
+          `${contact.firstName || ''} ${contact.lastName || ''}`.trim() ||
+          'Unknown Contact'
+      );
       return;
     }
 
@@ -50,9 +65,23 @@ export function NameTag({ id, type, className }: NameTagProps) {
         setDisplayName('Unknown User');
         return;
       }
-      setDisplayName(user.name || `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email || 'Unknown User');
+      setDisplayName(
+        user.name ||
+          `${user.firstName || ''} ${user.lastName || ''}`.trim() ||
+          user.email ||
+          'Unknown User'
+      );
     }
-  }, [type, id, contact, user, isContactError, isUserError, isContactLoading, isUserLoading]);
+  }, [
+    type,
+    id,
+    contact,
+    user,
+    isContactError,
+    isUserError,
+    isContactLoading,
+    isUserLoading,
+  ]);
 
   if (isContactLoading || isUserLoading) {
     return <Skeleton className={cn(className, 'h-4 w-20')} />;
@@ -60,7 +89,13 @@ export function NameTag({ id, type, className }: NameTagProps) {
 
   if (type === 'contact') {
     return (
-      <Link href={`/dashboard/crm/contacts/${id}`} className={cn(className, 'text-muted-foreground underline transition duration-100 ease-in-out hover:text-neutral-900')}>
+      <Link
+        href={`/dashboard/crm/contacts/${id}`}
+        className={cn(
+          className,
+          'text-muted-foreground underline transition duration-100 ease-in-out hover:text-neutral-900'
+        )}
+      >
         {displayName}
       </Link>
     );

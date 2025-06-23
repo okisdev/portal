@@ -1,7 +1,19 @@
 import { EventPopover } from '@/components/shared/event-popover';
-import type { CalendarEventWithParticipants, CalendarFolder } from '@/lib/schema';
+import type {
+  CalendarEventWithParticipants,
+  CalendarFolder,
+} from '@/lib/schema';
 import { cn } from '@/lib/utils';
-import { addDays, eachDayOfInterval, endOfMonth, getDate, isSameDay, isSameMonth, startOfMonth, subDays } from 'date-fns';
+import {
+  addDays,
+  eachDayOfInterval,
+  endOfMonth,
+  getDate,
+  isSameDay,
+  isSameMonth,
+  startOfMonth,
+  subDays,
+} from 'date-fns';
 import { useTranslations } from 'next-intl';
 import { WEEKDAYS } from './constants';
 
@@ -16,7 +28,16 @@ interface MonthViewProps {
   onEventDelete: (eventId: string) => void;
 }
 
-export function MonthView({ currentDate, selectedDate, setSelectedDate, events, folders, hiddenCalendars, onEventEdit, onEventDelete }: MonthViewProps) {
+export function MonthView({
+  currentDate,
+  selectedDate,
+  setSelectedDate,
+  events,
+  folders,
+  hiddenCalendars,
+  onEventEdit,
+  onEventDelete,
+}: MonthViewProps) {
   const t = useTranslations();
 
   const getDaysInMonth = (date: Date) => {
@@ -52,7 +73,10 @@ export function MonthView({ currentDate, selectedDate, setSelectedDate, events, 
   return (
     <div className='grid flex-1 grid-cols-7'>
       {WEEKDAYS.map((day) => (
-        <div key={day} className='border-r border-b p-2 text-muted-foreground text-sm'>
+        <div
+          key={day}
+          className='border-r border-b p-2 text-muted-foreground text-sm'
+        >
           {t(day)}
         </div>
       ))}
@@ -63,16 +87,36 @@ export function MonthView({ currentDate, selectedDate, setSelectedDate, events, 
           // biome-ignore lint/a11y/useKeyWithClickEvents: <explanation>
           <div
             key={date.toISOString()}
-            className={cn('relative min-h-[120px] border-r border-b p-2', !isSameMonth(date, currentDate) && 'bg-muted/50', isSameDay(date, selectedDate) && 'ring-2 ring-primary ring-inset')}
+            className={cn(
+              'relative min-h-[120px] border-r border-b p-2',
+              !isSameMonth(date, currentDate) && 'bg-muted/50',
+              isSameDay(date, selectedDate) && 'ring-2 ring-primary ring-inset'
+            )}
             onClick={() => setSelectedDate(date)}
           >
-            <span className={cn('text-sm', isSameDay(date, new Date()) && 'inline-flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground')}>{getDate(date)}</span>
+            <span
+              className={cn(
+                'text-sm',
+                isSameDay(date, new Date()) &&
+                  'inline-flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground'
+              )}
+            >
+              {getDate(date)}
+            </span>
             {events
               .filter((event) => !hiddenCalendars.has(event.folderId))
               .map((event) => {
                 const folder = folders?.find((f) => f.id === event.folderId);
 
-                return <EventPopover key={event.id} event={event} folder={folder} onEventEdit={onEventEdit} onEventDelete={onEventDelete} />;
+                return (
+                  <EventPopover
+                    key={event.id}
+                    event={event}
+                    folder={folder}
+                    onEventEdit={onEventEdit}
+                    onEventDelete={onEventDelete}
+                  />
+                );
               })}
           </div>
         );

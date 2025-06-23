@@ -19,7 +19,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       },
       authorize: async (credentials): Promise<User | null> => {
         try {
-          const { email, password } = await credentialSchema.parseAsync(credentials);
+          const { email, password } =
+            await credentialSchema.parseAsync(credentials);
 
           const dbUser = await getUserFromDb(email);
 

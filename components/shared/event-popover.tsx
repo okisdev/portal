@@ -1,7 +1,14 @@
 import { NameTag } from '@/components/shared/name-tag';
 import { Button } from '@/components/ui/button';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import type { CalendarEventWithParticipants, CalendarFolder } from '@/lib/schema';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import type {
+  CalendarEventWithParticipants,
+  CalendarFolder,
+} from '@/lib/schema';
 import { useTranslations } from 'next-intl';
 
 interface EventPopoverProps {
@@ -12,7 +19,13 @@ interface EventPopoverProps {
   onEventClick?: (e: React.MouseEvent) => void;
 }
 
-export function EventPopover({ event, folder, onEventEdit, onEventDelete, onEventClick }: EventPopoverProps) {
+export function EventPopover({
+  event,
+  folder,
+  onEventEdit,
+  onEventDelete,
+  onEventClick,
+}: EventPopoverProps) {
   const t = useTranslations();
 
   return (
@@ -51,7 +64,10 @@ export function EventPopover({ event, folder, onEventEdit, onEventDelete, onEven
         <div className='grid gap-2'>
           <div className='space-y-2'>
             <div className='flex items-center gap-2'>
-              <div className='h-3 w-3 rounded-full' style={{ backgroundColor: folder?.color ?? 'transparent' }} />
+              <div
+                className='h-3 w-3 rounded-full'
+                style={{ backgroundColor: folder?.color ?? 'transparent' }}
+              />
               <h4 className='font-medium leading-none'>{event.title}</h4>
             </div>
             <p className='text-muted-foreground text-sm'>
@@ -105,17 +121,35 @@ export function EventPopover({ event, folder, onEventEdit, onEventDelete, onEven
                   <p className='text-sm'>{t('participants')}:</p>
                   <div className='col-span-2 space-y-1'>
                     {event.participants.map((participant) => (
-                      <div key={participant.id} className='flex items-center justify-between text-sm'>
+                      <div
+                        key={participant.id}
+                        className='flex items-center justify-between text-sm'
+                      >
                         <span>
-                          {participant.participantType === 'contact' && participant.participantId && <NameTag id={participant.participantId} type='contact' />}
-                          {participant.participantType === 'user' && participant.participantId && <NameTag id={participant.participantId} type='user' />}
+                          {participant.participantType === 'contact' &&
+                            participant.participantId && (
+                              <NameTag
+                                id={participant.participantId}
+                                type='contact'
+                              />
+                            )}
+                          {participant.participantType === 'user' &&
+                            participant.participantId && (
+                              <NameTag
+                                id={participant.participantId}
+                                type='user'
+                              />
+                            )}
                           {participant.participantType === 'external' && (
                             <span className='text-orange-600'>
-                              {t('external')}: {participant.name} ({participant.email})
+                              {t('external')}: {participant.name} (
+                              {participant.email})
                             </span>
                           )}
                         </span>
-                        <span className='text-muted-foreground text-xs capitalize'>{t(participant.status || '')}</span>
+                        <span className='text-muted-foreground text-xs capitalize'>
+                          {t(participant.status || '')}
+                        </span>
                       </div>
                     ))}
                   </div>
@@ -126,12 +160,20 @@ export function EventPopover({ event, folder, onEventEdit, onEventDelete, onEven
           {(onEventEdit || onEventDelete) && (
             <div className='flex justify-end gap-2'>
               {onEventDelete && (
-                <Button size='sm' variant='destructive' onClick={() => onEventDelete(event.id)}>
+                <Button
+                  size='sm'
+                  variant='destructive'
+                  onClick={() => onEventDelete(event.id)}
+                >
                   {t('delete')}
                 </Button>
               )}
               {onEventEdit && (
-                <Button variant='outline' size='sm' onClick={() => onEventEdit(event)}>
+                <Button
+                  variant='outline'
+                  size='sm'
+                  onClick={() => onEventEdit(event)}
+                >
                   {t('edit')}
                 </Button>
               )}

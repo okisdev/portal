@@ -13,12 +13,22 @@ export default function BodyProvider({
   children: React.ReactNode;
 }>) {
   return (
-    <ThemeProvider attribute='class' defaultTheme='system' value={{ light: 'light', dark: 'dark' }} disableTransitionOnChange>
+    <ThemeProvider
+      attribute='class'
+      defaultTheme='system'
+      value={{ light: 'light', dark: 'dark' }}
+      disableTransitionOnChange
+    >
       {children}
 
       <Toaster richColors position='top-right' />
 
-      <ProgressBar height='2px' color='hsl(var(--foreground))' options={{ showSpinner: false }} shallowRouting />
+      <ProgressBar
+        height='2px'
+        color='hsl(var(--foreground))'
+        options={{ showSpinner: false }}
+        shallowRouting
+      />
 
       <Monitoring
         url='https://monitoring.react-scan.com/api/v1/ingest'

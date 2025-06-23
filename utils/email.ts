@@ -13,7 +13,15 @@ interface SendEmailParams {
   attachments?: any[];
 }
 
-export async function sendEmail({ from, to, subject, content, cc, bcc, attachments }: SendEmailParams) {
+export async function sendEmail({
+  from,
+  to,
+  subject,
+  content,
+  cc,
+  bcc,
+  attachments,
+}: SendEmailParams) {
   try {
     const { data, error } = await resend.emails.send({
       from: 'Portal <portal@mail.vifu.org>',

@@ -72,9 +72,15 @@ export function TabSwitcher({ config }: TabSwitcherProps) {
             }}
           />
 
-          <div className='absolute bottom-[-6px] h-[2px] bg-foreground transition-all duration-300 ease-out' style={activeStyle} />
+          <div
+            className='absolute bottom-[-6px] h-[2px] bg-foreground transition-all duration-300 ease-out'
+            style={activeStyle}
+          />
 
-          <div className='relative flex items-center space-x-[6px]' role='tablist'>
+          <div
+            className='relative flex items-center space-x-[6px]'
+            role='tablist'
+          >
             {config.map((tab, index) => (
               <div
                 key={tab.label}
@@ -91,13 +97,20 @@ export function TabSwitcher({ config }: TabSwitcherProps) {
                 onClick={() => setActiveIndex(index)}
                 onKeyDown={(e) => handleKeyDown(index, e)}
               >
-                <div className='flex h-full items-center justify-center whitespace-nowrap font-[var(--www-mattmannucci-me-geist-regular-font-family)] text-sm leading-5'>{tab.label}</div>
+                <div className='flex h-full items-center justify-center whitespace-nowrap font-[var(--www-mattmannucci-me-geist-regular-font-family)] text-sm leading-5'>
+                  {tab.label}
+                </div>
               </div>
             ))}
           </div>
         </div>
       </div>
-      <div className='relative mt-4 h-[calc(100%-44px)]' role='tabpanel' id={`panel-${config[activeIndex]?.label}`} aria-labelledby={config[activeIndex]?.label}>
+      <div
+        className='relative mt-4 h-[calc(100%-44px)]'
+        role='tabpanel'
+        id={`panel-${config[activeIndex]?.label}`}
+        aria-labelledby={config[activeIndex]?.label}
+      >
         {config[activeIndex]?.value}
       </div>
     </div>

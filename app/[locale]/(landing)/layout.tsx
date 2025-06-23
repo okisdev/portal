@@ -9,7 +9,11 @@ export const metadata: Metadata = {
   description: 'Streamline Your Business Operations',
 };
 
-export default async function LandingLayout({ children }: { children: React.ReactNode }) {
+export default async function LandingLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   const session = await auth();
 
   if (session) redirect('/dashboard');

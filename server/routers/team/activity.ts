@@ -6,40 +6,50 @@ import { eq } from 'drizzle-orm';
 import { z } from 'zod/v4';
 
 export const activityRouter = createTRPCRouter({
-  replyNote: protectedProcedure.input(z.object({ id: z.string(), description: z.string() })).mutation(async ({ ctx, input }) => {
-    const note = await ctx.db.select().from(teamActivity).where(eq(teamActivity.id, input.id));
+  replyNote: protectedProcedure
+    .input(z.object({ id: z.string(), description: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      const note = await ctx.db
+        .select()
+        .from(teamActivity)
+        .where(eq(teamActivity.id, input.id));
 
-    if (!note) {
-      throw new TRPCError({ code: 'NOT_FOUND', message: 'Note not found' });
-    }
+      if (!note) {
+        throw new TRPCError({ code: 'NOT_FOUND', message: 'Note not found' });
+      }
 
-    await createTeamActivityHelper(ctx, {
-      teamId: note[0].teamId,
-      type: 'ENGAGEMENT',
-      subType: 'NOTE_ADDED',
-      description: input.description,
-      initiatorType: 'user',
-      initiatorId: ctx.session.user.id,
-      metadata: { replyTo: note[0].id },
-    });
+      await createTeamActivityHelper(ctx, {
+        teamId: note[0].teamId,
+        type: 'ENGAGEMENT',
+        subType: 'NOTE_ADDED',
+        description: input.description,
+        initiatorType: 'user',
+        initiatorId: ctx.session.user.id,
+        metadata: { replyTo: note[0].id },
+      });
 
-    return {
-      success: true,
-    };
-  }),
+      return {
+        success: true,
+      };
+    }),
 
-  deleteNote: protectedProcedure.input(z.object({ id: z.string() })).mutation(async ({ ctx, input }) => {
-    const note = await ctx.db.select().from(teamActivity).where(eq(teamActivity.id, input.id));
-    if (!note) {
-      throw new TRPCError({ code: 'NOT_FOUND', message: 'Note not found' });
-    }
+  deleteNote: protectedProcedure
+    .input(z.object({ id: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      const note = await ctx.db
+        .select()
+        .from(teamActivity)
+        .where(eq(teamActivity.id, input.id));
+      if (!note) {
+        throw new TRPCError({ code: 'NOT_FOUND', message: 'Note not found' });
+      }
 
-    await ctx.db.delete(teamActivity).where(eq(teamActivity.id, input.id));
+      await ctx.db.delete(teamActivity).where(eq(teamActivity.id, input.id));
 
-    return {
-      success: true,
-    };
-  }),
+      return {
+        success: true,
+      };
+    }),
 
   updateNote: protectedProcedure
     .input(
@@ -49,7 +59,10 @@ export const activityRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      const note = await ctx.db.select().from(teamActivity).where(eq(teamActivity.id, input.id));
+      const note = await ctx.db
+        .select()
+        .from(teamActivity)
+        .where(eq(teamActivity.id, input.id));
       if (!note || note.length === 0) {
         throw new TRPCError({ code: 'NOT_FOUND', message: 'Note not found' });
       }

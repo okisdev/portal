@@ -1,8 +1,44 @@
-export const insuranceCompanies = ['AIA', 'AXA', 'BoC Life', 'China Life', 'Chubb', 'FWD', 'Manulife', 'YF Life', 'MetLife', 'Prudential', 'Sun Life', 'HSBC', 'Ping An', 'HANG SENG'];
+export const insuranceCompanies = [
+  'AIA',
+  'AXA',
+  'BoC Life',
+  'China Life',
+  'Chubb',
+  'FWD',
+  'Manulife',
+  'YF Life',
+  'MetLife',
+  'Prudential',
+  'Sun Life',
+  'HSBC',
+  'Ping An',
+  'HANG SENG',
+];
 
-export const sources = ['Pitching', 'Referral', 'Website', 'Email', 'Instagram', 'LinkedIn', 'WhatsApp', 'Facebook', 'BNI', 'No Planner', 'Pay Trial', 'Other'];
+export const sources = [
+  'Pitching',
+  'Referral',
+  'Website',
+  'Email',
+  'Instagram',
+  'LinkedIn',
+  'WhatsApp',
+  'Facebook',
+  'BNI',
+  'No Planner',
+  'Pay Trial',
+  'Other',
+];
 
-export const contentTags = ['whatsapp', 'message', 'email', 'social media', 'event', 'referral', 'other'];
+export const contentTags = [
+  'whatsapp',
+  'message',
+  'email',
+  'social media',
+  'event',
+  'referral',
+  'other',
+];
 
 export const phoneCountries = [
   { value: 'af', label: '🇦🇫 Afghanistan', code: '+93' },
@@ -83,7 +119,11 @@ export const timezones = [
   { value: 'Africa/Nairobi', code: 'EAT', label: '🇰🇪 Nairobi' },
   // America
   { value: 'America/Anchorage', code: 'AKST', label: '🇺🇸 Anchorage' },
-  { value: 'America/Argentina/Buenos_Aires', code: 'ART', label: '🇦🇷 Buenos Aires' },
+  {
+    value: 'America/Argentina/Buenos_Aires',
+    code: 'ART',
+    label: '🇦🇷 Buenos Aires',
+  },
   { value: 'America/Bogota', code: 'COT', label: '🇨🇴 Bogota' },
   { value: 'America/Caracas', code: 'VET', label: '🇻🇪 Caracas' },
   { value: 'America/Chicago', code: 'CST', label: '🇺🇸 Chicago' },

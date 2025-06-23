@@ -22,7 +22,10 @@ export default async function NotFound() {
           <h1 className='font-medium text-xl'>{t('404_title')}</h1>
           <p className='text-muted-foreground'>{t('404_description')}</p>
         </div>
-        <Link href='/' className='text-muted-foreground text-sm transition duration-300 hover:text-primary'>
+        <Link
+          href='/'
+          className='text-muted-foreground text-sm transition duration-300 hover:text-primary'
+        >
           {t('go_back_to_home')}
         </Link>
       </main>
