@@ -41,16 +41,21 @@ export default function RegisterPage() {
   const password = watch('password');
 
   const registerAccount = api.auth.register.useMutation();
-  const [shouldValidate, setShouldValidate] = useState(false);
+  const [emailToValidate, setEmailToValidate] = useState<string>('');
 
   const { data: isValidDomain } = api.auth.validateEmailDomain.useQuery(
-    { email: email || '' },
-    { enabled: shouldValidate && !!email && email.includes('@') }
+    { email: emailToValidate },
+    { enabled: !!emailToValidate }
   );
 
+  const isValidEmailFormat = (email: string) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+
   const handleEmailBlur = () => {
-    if (email?.includes('@')) {
-      setShouldValidate(true);
+    if (email && isValidEmailFormat(email)) {
+      setEmailToValidate(email);
     }
   };
 

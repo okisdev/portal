@@ -47,27 +47,26 @@ export default function LoginPage() {
   const email = watch('email');
   const password = watch('password');
 
-  const [shouldValidate, setShouldValidate] = useState(false);
+  const [emailToValidate, setEmailToValidate] = useState<string>('');
 
   const { data: isValidDomain } = api.auth.validateEmailDomain.useQuery(
-    { email: email || '' },
-    { enabled: shouldValidate && !!email && email.includes('@') }
+    { email: emailToValidate },
+    { enabled: !!emailToValidate }
   );
 
-  useEffect(() => {
-    if (email?.includes('@')) {
-      setShouldValidate(true);
-    }
-  }, [email]);
+  const isValidEmailFormat = (email: string) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
 
   const handleEmailBlur = () => {
-    if (email?.includes('@')) {
-      setShouldValidate(true);
+    if (email && isValidEmailFormat(email)) {
+      setEmailToValidate(email);
     }
   };
 
   const onSubmit = async (data: LoginFormValues) => {
-    if (shouldValidate && isValidDomain === false) {
+    if (emailToValidate && isValidDomain === false) {
       setError(t('login_not_allowed_support_only'));
       toast.error(t('login_not_allowed_support_only'));
       return;
@@ -172,6 +171,13 @@ export default function LoginPage() {
               <Banner
                 title={t('registration_successful')}
                 description={t('please_login_to_continue')}
+                variant='success'
+              />
+            )}
+            {from === 'reset-password' && type === 'success' && (
+              <Banner
+                title={t('password_reset_successful')}
+                description={t('please_login_with_new_password')}
                 variant='success'
               />
             )}

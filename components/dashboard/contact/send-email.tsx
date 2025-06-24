@@ -34,12 +34,8 @@ interface EmailFormData {
 }
 
 export function SendEmail({ open, onOpenChange, recipient }: SendEmailProps) {
-  if (!recipient) return null;
-
   const t = useTranslations();
-
   const utils = api.useUtils();
-
   const { data: session } = useSession();
   const [showCcBcc, setShowCcBcc] = useState(false);
   const [formData, setFormData] = useState<EmailFormData>({
@@ -55,7 +51,9 @@ export function SendEmail({ open, onOpenChange, recipient }: SendEmailProps) {
   const sendEmail = api.contact.sendEmail.useMutation({
     onSuccess: () => {
       toast.success(t('email_sent_successfully'));
-      utils.contact.getContactById.invalidate({ id: recipient.id });
+      if (recipient?.id) {
+        utils.contact.getContactById.invalidate({ id: recipient.id });
+      }
       handleClose();
     },
     onError: (error) => {
@@ -103,7 +101,7 @@ export function SendEmail({ open, onOpenChange, recipient }: SendEmailProps) {
       return;
     }
 
-    if (!recipient.email) {
+    if (!recipient?.email) {
       toast.error(t('please_enter_a_valid_email'));
       return;
     }
@@ -142,6 +140,8 @@ export function SendEmail({ open, onOpenChange, recipient }: SendEmailProps) {
       attachments: prev.attachments.filter((_, i) => i !== index),
     }));
   };
+
+  if (!recipient) return null;
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>

@@ -7,7 +7,8 @@ export const env = createEnv({
       .enum(['development', 'production', 'test'])
       .default('development'),
     DATABASE_URL: z.string().min(1, 'DATABASE_URL is required'),
-    AUTH_RESEND_KEY: z.string().min(1, 'AUTH_RESEND_KEY is required'),
+    RESEND_API_KEY: z.string().min(1, 'RESEND_API_KEY is required'),
+    RESEND_FROM_EMAIL: z.string().min(1, 'RESEND_FROM_EMAIL is required'),
     AUTH_SECRET: z.string().min(1, 'AUTH_SECRET is required'),
     S3_ACCESS_KEY_ID: z.string().min(1, 'S3_ACCESS_KEY_ID is required'),
     S3_SECRET_ACCESS_KEY: z.string().min(1, 'S3_SECRET_ACCESS_KEY is required'),
@@ -30,7 +31,8 @@ export const env = createEnv({
   runtimeEnv: {
     NODE_ENV: process.env.NODE_ENV,
     DATABASE_URL: process.env.DATABASE_URL,
-    AUTH_RESEND_KEY: process.env.AUTH_RESEND_KEY,
+    RESEND_API_KEY: process.env.RESEND_API_KEY,
+    RESEND_FROM_EMAIL: process.env.RESEND_FROM_EMAIL,
     AUTH_SECRET: process.env.AUTH_SECRET,
     S3_ACCESS_KEY_ID: process.env.S3_ACCESS_KEY_ID,
     S3_SECRET_ACCESS_KEY: process.env.S3_SECRET_ACCESS_KEY,
