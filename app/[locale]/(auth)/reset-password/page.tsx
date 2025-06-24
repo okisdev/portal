@@ -12,7 +12,6 @@ import { toast } from 'sonner';
 import { z } from 'zod/v4';
 import { Banner } from '@/components/shared/banner';
 import { Label } from '@/components/ui/label';
-import { encryptPassword } from '@/utils/password';
 import { api } from '@/utils/trpc/client';
 
 const resetPasswordSchema = z
@@ -78,11 +77,9 @@ export default function ResetPasswordPage() {
     setError('');
 
     try {
-      const hashedPassword = encryptPassword(data.password);
-
       await resetPassword.mutateAsync({
         email,
-        password: hashedPassword,
+        password: data.password,
         token,
       });
 
