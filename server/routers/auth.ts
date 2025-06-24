@@ -1,9 +1,12 @@
 import { TRPCError } from '@trpc/server';
 import bcrypt from 'bcrypt-edge';
-import { eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import { v4 as uuidv4 } from 'uuid';
 import { z } from 'zod/v4';
-import { siteConfig, user } from '@/drizzle/schema';
+import { siteConfig, user, verificationToken } from '@/drizzle/schema';
+import { PasswordResetEmail } from '@/emails';
+import { env } from '@/lib/env';
+import { sendEmail } from '@/lib/mail';
 import { createTRPCRouter, publicProcedure } from '@/server/trpc';
 
 export const authRouter = createTRPCRouter({
@@ -133,7 +136,53 @@ export const authRouter = createTRPCRouter({
         });
       }
 
-      // Return success - the actual email sending will be handled by NextAuth
+      // Generate a unique token
+      const token = uuidv4();
+      const expires = new Date();
+      expires.setHours(expires.getHours() + 1); // Token expires in 1 hour
+
+      // Delete any existing tokens for this email
+      await ctx.db
+        .delete(verificationToken)
+        .where(eq(verificationToken.identifier, email));
+
+      // Store the new token
+      await ctx.db.insert(verificationToken).values({
+        identifier: email,
+        token,
+        expires: expires.toISOString(),
+      });
+
+      // Create the reset URL
+      const resetUrl = `${env.NEXT_PUBLIC_APP_URL}/reset-password?token=${token}&email=${encodeURIComponent(email)}`;
+
+      // Get user agent and IP from request headers (if available)
+      const userAgent = ctx.headers?.get('user-agent') || 'Unknown device';
+      const ip =
+        ctx.headers?.get('x-forwarded-for') ||
+        ctx.headers?.get('x-real-ip') ||
+        'Unknown IP';
+
+      // Send the password reset email
+      try {
+        await sendEmail({
+          to: email,
+          subject: 'Reset your Portal password',
+          node: PasswordResetEmail({
+            email,
+            resetUrl,
+            userAgent,
+            ip,
+          }),
+        });
+      } catch (error) {
+        console.error('Failed to send password reset email:', error);
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to send password reset email',
+        });
+      }
+
       return { success: true, message: 'Password reset email sent' };
     }),
 
@@ -142,10 +191,11 @@ export const authRouter = createTRPCRouter({
       z.object({
         email: z.email(),
         password: z.string().min(8),
+        token: z.string(),
       })
     )
     .mutation(async ({ ctx, input }) => {
-      const { email, password } = input;
+      const { email, password, token } = input;
 
       // Check if user exists
       const existingUser = await ctx.db
@@ -160,6 +210,38 @@ export const authRouter = createTRPCRouter({
         });
       }
 
+      // Verify the token
+      const validToken = await ctx.db
+        .select()
+        .from(verificationToken)
+        .where(
+          and(
+            eq(verificationToken.identifier, email),
+            eq(verificationToken.token, token)
+          )
+        );
+
+      if (validToken.length === 0) {
+        throw new TRPCError({
+          code: 'UNAUTHORIZED',
+          message: 'Invalid or expired reset token',
+        });
+      }
+
+      // Check if token is expired
+      const tokenExpiry = new Date(validToken[0].expires);
+      if (tokenExpiry < new Date()) {
+        // Delete expired token
+        await ctx.db
+          .delete(verificationToken)
+          .where(eq(verificationToken.identifier, email));
+
+        throw new TRPCError({
+          code: 'UNAUTHORIZED',
+          message: 'Reset token has expired',
+        });
+      }
+
       // Hash the new password
       const hashedPassword = bcrypt.hashSync(password, 10);
 
@@ -168,6 +250,11 @@ export const authRouter = createTRPCRouter({
         .update(user)
         .set({ password: hashedPassword })
         .where(eq(user.email, email));
+
+      // Delete the used token
+      await ctx.db
+        .delete(verificationToken)
+        .where(eq(verificationToken.identifier, email));
 
       return { success: true, message: 'Password updated successfully' };
     }),

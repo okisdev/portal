@@ -33,7 +33,7 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [emailSent, setEmailSent] = useState(false);
   const [sentEmail, setSentEmail] = useState('');
-  const [isPasswordLogin, setIsPasswordLogin] = useState(true);
+  const [isPasswordLogin, setIsPasswordLogin] = useState(false);
 
   const {
     register,
@@ -166,7 +166,7 @@ export default function LoginPage() {
             </p>
           </div>
 
-          <form onSubmit={handleSubmit(onSubmit)} className='mt-6 space-y-4'>
+          <form onSubmit={handleSubmit(onSubmit)} className='mt-6 space-y-2'>
             {from === 'register' && type === 'success' && (
               <Banner
                 title={t('registration_successful')}
@@ -228,17 +228,7 @@ export default function LoginPage() {
                 )}
               </div>
             )}
-
-            <div className='flex items-center justify-between'>
-              <label className='flex items-center'>
-                <input
-                  type='checkbox'
-                  className='h-3 w-3 rounded border-input text-primary accent-primary focus:ring-ring focus:ring-offset-0'
-                />
-                <span className='ml-2 text-muted-foreground text-sm'>
-                  {t('remember_for_30_days')}
-                </span>
-              </label>
+            <div className='flex items-center justify-end'>
               {isPasswordLogin && (
                 <Link
                   href='/forgot-password'
