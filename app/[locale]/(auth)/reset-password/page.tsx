@@ -12,7 +12,6 @@ import { toast } from 'sonner';
 import { z } from 'zod/v4';
 import { Banner } from '@/components/shared/banner';
 import { Label } from '@/components/ui/label';
-import { encryptPassword } from '@/utils/password';
 import { api } from '@/utils/trpc/client';
 
 const resetPasswordSchema = z
@@ -38,6 +37,7 @@ export default function ResetPasswordPage() {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [email, setEmail] = useState('');
+  const [token, setToken] = useState('');
 
   const {
     register,
@@ -55,16 +55,19 @@ export default function ResetPasswordPage() {
 
   useEffect(() => {
     const emailFromUrl = searchParams.get('email');
-    if (emailFromUrl) {
+    const tokenFromUrl = searchParams.get('token');
+
+    if (emailFromUrl && tokenFromUrl) {
       setEmail(emailFromUrl);
+      setToken(tokenFromUrl);
     } else {
-      // If no email in URL, redirect to forgot password page
+      // If no email or token in URL, redirect to forgot password page
       router.push('/forgot-password');
     }
   }, [searchParams, router]);
 
   const onSubmit = async (data: ResetPasswordFormValues) => {
-    if (!email) {
+    if (!email || !token) {
       setError(t('invalid_reset_link'));
       toast.error(t('invalid_reset_link'));
       return;
@@ -74,11 +77,10 @@ export default function ResetPasswordPage() {
     setError('');
 
     try {
-      const hashedPassword = encryptPassword(data.password);
-
       await resetPassword.mutateAsync({
         email,
-        password: hashedPassword,
+        password: data.password,
+        token,
       });
 
       setSuccess(true);

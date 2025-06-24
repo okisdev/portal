@@ -77,12 +77,33 @@ export default function CRMContactsTablePage() {
   const [priorityFilter, setPriorityFilter] = useState<string[]>([]);
   const [sourceFilter, setSourceFilter] = useState<string[]>([]);
 
+  // Initialize sorting with default values (most recent first)
+  const [sorting, setSorting] = useState<SortingState>([
+    { id: 'createdAt', desc: true },
+  ]);
+  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
+  const [rowSelection, setRowSelection] = useState({});
+
+  const [search, setSearch] = useState('');
+  const debouncedSearch = useDebounce(search, 300);
+
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [contactToDelete, setContactToDelete] = useState<string | null>(null);
+  const [bulkDeleteDialogOpen, setBulkDeleteDialogOpen] = useState(false);
+
+  const [selectedColumn, setSelectedColumn] = useState<string>('');
+  const [pageIndex, setPageIndex] = useState(0);
+  const [pageSize, setPageSize] = useState(10);
+
   // Handle URL changes and page state
   useEffect(() => {
     const searchParam = searchParams.get('search');
     const statusParam = searchParams.get('status');
     const priorityParam = searchParams.get('priority');
     const sourceParam = searchParams.get('source');
+    const sortByParam = searchParams.get('sortBy');
+    const sortOrderParam = searchParams.get('sortOrder');
 
     // Handle search parameter
     if (searchParam) {
@@ -112,8 +133,13 @@ export default function CRMContactsTablePage() {
       setSourceFilter([]);
     }
 
+    // Handle sorting parameters
+    if (sortByParam && sortOrderParam) {
+      setSorting([{ id: sortByParam, desc: sortOrderParam === 'desc' }]);
+    }
+
     setIsInitialLoad(false);
-  }, [searchParams, pathname, router, isInitialLoad]);
+  }, [searchParams]);
 
   // Batch load all configurations at once
   const { data: configurations } = api.contact.getAllConfigurations.useQuery();
@@ -137,22 +163,6 @@ export default function CRMContactsTablePage() {
       toast.success(t('contact_updated_successfully'));
     },
   });
-
-  const [sorting, setSorting] = useState<SortingState>([]);
-  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
-  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
-  const [rowSelection, setRowSelection] = useState({});
-
-  const [search, setSearch] = useState('');
-  const debouncedSearch = useDebounce(search, 300);
-
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [contactToDelete, setContactToDelete] = useState<string | null>(null);
-  const [bulkDeleteDialogOpen, setBulkDeleteDialogOpen] = useState(false);
-
-  const [selectedColumn, setSelectedColumn] = useState<string>('');
-  const [pageIndex, setPageIndex] = useState(0);
-  const [pageSize, setPageSize] = useState(10);
 
   // Fetch contacts with server-side pagination and filtering
   const { data: contactsData, isLoading } =
@@ -193,6 +203,12 @@ export default function CRMContactsTablePage() {
       params.set('source', sourceFilter.join(','));
     }
 
+    // Add sorting parameters to URL
+    if (sorting.length > 0) {
+      params.set('sortBy', sorting[0].id);
+      params.set('sortOrder', sorting[0].desc ? 'desc' : 'asc');
+    }
+
     const newUrl = `${pathname}${params.toString() ? `?${params.toString()}` : ''}`;
     router.replace(newUrl, { scroll: false });
   }, [
@@ -200,7 +216,9 @@ export default function CRMContactsTablePage() {
     statusFilter,
     priorityFilter,
     sourceFilter,
+    sorting,
     pathname,
+    router,
     isInitialLoad,
   ]);
 
@@ -209,13 +227,7 @@ export default function CRMContactsTablePage() {
     if (!isInitialLoad) {
       setPageIndex(0);
     }
-  }, [
-    debouncedSearch,
-    statusFilter,
-    priorityFilter,
-    sourceFilter,
-    isInitialLoad,
-  ]);
+  }, [isInitialLoad]);
 
   const handleDeleteClick = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
