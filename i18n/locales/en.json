@@ -703,5 +703,7 @@
   "password_reset_success_description": "Your password has been updated successfully.",
   "redirecting_to_login": "Redirecting to login...",
   "invalid_reset_link": "Invalid reset link. Please request a new one.",
-  "please_login_with_new_password": "Please login with your new password"
+  "please_login_with_new_password": "Please login with your new password",
+  "load_more": "Load more",
+  "confirm_password": "Confirm password"
 }

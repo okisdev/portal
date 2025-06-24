@@ -4,7 +4,6 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ArrowLeft, CheckCircle2, Loader2 } from 'lucide-react';
 import Link from 'next/link';
-import { signIn } from 'next-auth/react';
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
@@ -70,24 +69,12 @@ export default function ForgotPasswordPage() {
     setError('');
 
     try {
-      // First check if user exists via TRPC
+      // Send password reset email via TRPC (includes user validation and email sending)
       await sendPasswordReset.mutateAsync({ email: data.email });
 
-      // If user exists, send the magic link via NextAuth
-      const result = await signIn('resend', {
-        email: data.email,
-        redirect: false,
-        callbackUrl: `/reset-password?email=${encodeURIComponent(data.email)}`,
-      });
-
-      if (result?.error) {
-        setError(result.error);
-        toast.error(result.error);
-      } else {
-        setEmailSent(true);
-        setSentEmail(data.email);
-        toast.success(t('password_reset_email_sent'));
-      }
+      setEmailSent(true);
+      setSentEmail(data.email);
+      toast.success(t('password_reset_email_sent'));
     } catch (err: any) {
       setError(err.message || t('unexpected_error'));
       toast.error(err.message || t('unexpected_error'));

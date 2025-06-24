@@ -5,6 +5,7 @@ import NextAuth, { CredentialsSignin } from 'next-auth';
 import Credentials from 'next-auth/providers/credentials';
 import Resend from 'next-auth/providers/resend';
 import { database } from '@/lib/database';
+import { env } from '@/lib/env';
 import { credentialSchema } from '@/lib/schema';
 import { getUserFromDb } from '@/utils/database';
 import { UnexpectedError, UserOrPasswordIncorrectError } from '@/utils/error';
@@ -52,7 +53,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       },
     }),
     Resend({
-      from: 'Portal <portal@mail.vifu.org>',
+      apiKey: env.RESEND_API_KEY,
+      from: `Portal <${env.RESEND_FROM_EMAIL}>`,
     }),
   ],
   session: {

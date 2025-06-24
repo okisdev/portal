@@ -16,7 +16,9 @@
     "biome:lint": "biome lint --write",
     "biome:fix": "biome check --fix",
     "deps:check": "bunx npm-check-updates",
-    "deps:update": "bunx npm-check-updates -u && bun install"
+    "deps:update": "bunx npm-check-updates -u && bun install",
+    "email:dev": "email dev --dir ./emails --port 3001",
+    "email:export": "email export --dir ./emails --out ./public/emails"
   },
   "dependencies": {
     "@auth/drizzle-adapter": "^1.9.0",
@@ -29,6 +31,7 @@
     "@hookform/resolvers": "^5.1.1",
     "@neondatabase/serverless": "^1.0.0",
     "@radix-ui/react-icons": "^1.3.2",
+    "@react-email/components": "^0.1.0",
     "@t3-oss/env-nextjs": "^0.13.4",
     "@tanstack/react-query": "^5.74.11",
     "@tanstack/react-table": "^8.21.3",
