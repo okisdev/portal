@@ -174,6 +174,13 @@ export default function LoginPage() {
                 variant='success'
               />
             )}
+            {from === 'reset-password' && type === 'success' && (
+              <Banner
+                title={t('password_reset_successful')}
+                description={t('please_login_with_new_password')}
+                variant='success'
+              />
+            )}
             {error && (
               <Banner title={t('error')} description={error} variant='error' />
             )}
