@@ -4,6 +4,7 @@ import type { User } from 'next-auth';
 import NextAuth, { CredentialsSignin } from 'next-auth';
 import Credentials from 'next-auth/providers/credentials';
 import Resend from 'next-auth/providers/resend';
+import * as schema from '@/drizzle/schema';
 import { database } from '@/lib/database';
 import { env } from '@/lib/env';
 import { credentialSchema } from '@/lib/schema';
@@ -11,7 +12,12 @@ import { getUserFromDb } from '@/utils/database';
 import { UnexpectedError, UserOrPasswordIncorrectError } from '@/utils/error';
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
-  adapter: DrizzleAdapter(database),
+  adapter: DrizzleAdapter(database, {
+    usersTable: schema.user as any,
+    accountsTable: schema.account as any,
+    sessionsTable: schema.session as any,
+    verificationTokensTable: schema.verificationToken as any,
+  }),
   providers: [
     Credentials({
       credentials: {
