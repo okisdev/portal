@@ -78,7 +78,7 @@ export const authRouter = createTRPCRouter({
     }),
 
   validateEmailDomain: publicProcedure
-    .input(z.object({ email: z.string().email() }))
+    .input(z.object({ email: z.email() }))
     .query(async ({ ctx, input }) => {
       const domain = input.email.split('@')[1];
       if (!domain) return false;
