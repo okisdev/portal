@@ -94,7 +94,7 @@ export default function CRMContactsTablePage() {
 
   const [selectedColumn, setSelectedColumn] = useState<string>('');
   const [pageIndex, setPageIndex] = useState(0);
-  const [pageSize, setPageSize] = useState(10);
+  const [pageSize, setPageSize] = useState(20);
 
   // Handle URL changes and page state
   useEffect(() => {
@@ -363,7 +363,7 @@ export default function CRMContactsTablePage() {
           onValueChange={(value) => handleStatusChange(row.original.id, value)}
           disabled={updateContact.isPending}
         >
-          <SelectTrigger className='h-8 w-[130px]'>
+          <SelectTrigger size='sm' className='w-26'>
             <SelectValue>
               <SmartColorBadge
                 value={row.original.status}
@@ -399,7 +399,7 @@ export default function CRMContactsTablePage() {
           }
           disabled={updateContact.isPending}
         >
-          <SelectTrigger className='h-8 w-[130px]'>
+          <SelectTrigger size='sm' className='w-28'>
             <SelectValue>
               <SmartColorBadge
                 value={row.original.priority || 'Medium'}
@@ -438,7 +438,7 @@ export default function CRMContactsTablePage() {
           onValueChange={(value) => handleSourceChange(row.original.id, value)}
           disabled={updateContact.isPending}
         >
-          <SelectTrigger className='h-8 w-[130px]'>
+          <SelectTrigger size='sm' className='w-30'>
             <SelectValue>
               <SmartColorBadge
                 value={row.original.source || 'N/A'}
