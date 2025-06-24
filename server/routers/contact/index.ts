@@ -21,7 +21,7 @@ import {
 import { createContactActivityHelper } from '@/server/helper/contact';
 import { activityRouter } from '@/server/routers/contact/activity';
 import { createTRPCRouter, protectedProcedure } from '@/server/trpc';
-import { sendEmail } from '@/utils/email';
+import { sendHtmlEmail } from '@/utils/email';
 import { stringifyPhone } from '@/utils/phone';
 
 export const contactRouter = createTRPCRouter({
@@ -553,7 +553,7 @@ export const contactRouter = createTRPCRouter({
           });
         }
 
-        await sendEmail({
+        await sendHtmlEmail({
           from: ctx.session.user.email,
           to: input.to,
           subject: input.subject,
