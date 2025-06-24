@@ -5,8 +5,10 @@ import NextAuth, { CredentialsSignin } from 'next-auth';
 import Credentials from 'next-auth/providers/credentials';
 import Resend from 'next-auth/providers/resend';
 import * as schema from '@/drizzle/schema';
+import { MagicLinkEmail } from '@/emails';
 import { database } from '@/lib/database';
 import { env } from '@/lib/env';
+import { resend } from '@/lib/mail';
 import { credentialSchema } from '@/lib/schema';
 import { getUserFromDb } from '@/utils/database';
 import { UnexpectedError, UserOrPasswordIncorrectError } from '@/utils/error';
@@ -61,6 +63,35 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     Resend({
       apiKey: env.RESEND_API_KEY,
       from: `Portal <${env.RESEND_FROM_EMAIL}>`,
+      sendVerificationRequest: async (params) => {
+        const { identifier: email, url, request } = params;
+
+        // Extract user agent and IP for security details
+        const userAgent = request.headers.get('user-agent') || 'Unknown device';
+        const ip =
+          request.headers.get('x-forwarded-for') ||
+          request.headers.get('x-real-ip') ||
+          'Unknown IP';
+
+        try {
+          await resend.emails.send({
+            from: `Portal <${env.RESEND_FROM_EMAIL}>`,
+            to: email,
+            subject: 'Sign in to Portal',
+            react: MagicLinkEmail({
+              email,
+              magicLinkUrl: url,
+              type: 'login',
+              userAgent,
+              ip,
+              expiresInMinutes: 60,
+            }),
+          });
+        } catch (error) {
+          console.error('Failed to send magic link email:', error);
+          throw new Error('Failed to send verification email');
+        }
+      },
     }),
   ],
   session: {

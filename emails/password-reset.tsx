@@ -28,7 +28,7 @@ export const PasswordResetEmail = ({
     <EmailLayout preview='Reset your Portal password'>
       <Section className='text-center'>
         <Img
-          src='https://portal.example.com/icon.png'
+          src='https://portal.vifu.org/web-app-manifest-512x512.png'
           width='60'
           height='60'
           alt='Portal'
