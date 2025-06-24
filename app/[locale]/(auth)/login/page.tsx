@@ -181,6 +181,13 @@ export default function LoginPage() {
                 variant='success'
               />
             )}
+            {from === 'password-reset' && type === 'sent' && (
+              <Banner
+                title={t('password_reset_email_sent')}
+                description={t('check_email_for_reset_link')}
+                variant='success'
+              />
+            )}
             {error && (
               <Banner title={t('error')} description={error} variant='error' />
             )}
