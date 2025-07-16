@@ -114,7 +114,7 @@ export function CalendarSidePanel({
       <div className='flex items-center justify-between'>
         <Popover>
           <PopoverTrigger asChild>
-            <Button variant='outline' className='w-full justify-between'>
+            <Button className='w-full justify-between' variant='outline'>
               <span>
                 {format(currentDate, 'MMMM yyyy', { locale: dateLocale })}
               </span>
@@ -122,11 +122,10 @@ export function CalendarSidePanel({
             </Button>
           </PopoverTrigger>
           <PopoverContent
-            className='w-(--radix-popper-anchor-width) p-0'
             align='start'
+            className='w-(--radix-popper-anchor-width) p-0'
           >
             <YearMonthPicker
-              value={currentDate}
               onChange={(date) => {
                 onDateSelect(date);
                 const newDate = new Date(date);
@@ -134,6 +133,7 @@ export function CalendarSidePanel({
                 onDateSelect(newDate);
               }}
               onClose={() => {}}
+              value={currentDate}
             />
           </PopoverContent>
         </Popover>
@@ -141,7 +141,7 @@ export function CalendarSidePanel({
 
       <div className='grid grid-cols-7 gap-1 text-sm'>
         {WEEKDAYS.map((day) => (
-          <div key={day} className='text-center text-muted-foreground'>
+          <div className='text-center text-muted-foreground' key={day}>
             {locale === 'en' ? t(day).slice(0, 1) : t(day).slice(2)}
           </div>
         ))}
@@ -149,15 +149,15 @@ export function CalendarSidePanel({
           .slice(0, 35)
           .map((date) => (
             <Button
-              key={date.toISOString()}
-              variant='ghost'
               className={cn(
                 'h-6 w-6 p-0',
                 !isSameMonth(date, currentDate) && 'text-muted-foreground',
                 isSameDay(date, selectedDate) &&
                   'bg-primary text-primary-foreground'
               )}
+              key={date.toISOString()}
               onClick={() => onDateSelect(date)}
+              variant='ghost'
             >
               {getDate(date)}
             </Button>
@@ -168,10 +168,10 @@ export function CalendarSidePanel({
         <div className='flex items-center justify-between gap-2'>
           <p className='flex-1 text-sm'>{t('calendars')}</p>
           <Button
-            variant='ghost'
-            size='icon'
             className='h-6 w-6'
             onClick={onAddCalendar}
+            size='icon'
+            variant='ghost'
           >
             <Plus className='h-4 w-4' />
           </Button>
@@ -192,15 +192,15 @@ export function CalendarSidePanel({
               </div>
             )}
             {folders?.map((folder) => (
-              <div key={folder.id} className='flex items-center gap-2'>
+              <div className='flex items-center gap-2' key={folder.id}>
                 <Checkbox
                   checked={!hiddenCalendars.has(folder.id)}
                   onCheckedChange={(checked) => onToggleCalendar(folder.id)}
                 />
                 <Button
-                  variant='ghost'
                   className='h-8 min-w-0 flex-1 justify-start px-2'
                   onClick={() => onToggleCalendar(folder.id)}
+                  variant='ghost'
                 >
                   <div className='flex min-w-0 flex-1 items-center'>
                     <div
@@ -213,9 +213,9 @@ export function CalendarSidePanel({
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button
-                      variant='ghost'
                       className='h-8 w-8 p-0'
                       onClick={(e) => e.stopPropagation()}
+                      variant='ghost'
                     >
                       <MoreHorizontal className='h-4 w-4' />
                       <span className='sr-only'>{t('open_menu')}</span>
@@ -300,18 +300,18 @@ export function CalendarSidePanel({
       </div>
 
       <ActionAlertDialog
-        open={!!folderToDelete}
-        onOpenChange={(open) => !open && setFolderToDelete(null)}
+        cancelText={t('cancel')}
+        confirmText={t('delete')}
+        description={t('delete_calendar_description')}
         onConfirm={() => {
           if (folderToDelete) {
             onDeleteCalendar(folderToDelete);
             setFolderToDelete(null);
           }
         }}
+        onOpenChange={(open) => !open && setFolderToDelete(null)}
+        open={!!folderToDelete}
         title={t('delete_calendar')}
-        description={t('delete_calendar_description')}
-        confirmText={t('delete')}
-        cancelText={t('cancel')}
       />
     </div>
   );

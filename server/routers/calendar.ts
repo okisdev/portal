@@ -302,7 +302,7 @@ export const calendarRouter = createTRPCRouter({
           initiatorId: ctx.session?.user.id,
           metadata: {
             contact: whichContact,
-            event: event,
+            event,
             startAt: event.startAt,
             endAt: event.endAt,
           },
@@ -467,7 +467,7 @@ export const calendarRouter = createTRPCRouter({
         subType: 'MEETING_SCHEDULED',
         metadata: {
           contact: thisContact,
-          event: event,
+          event,
           startAt,
           endAt,
           description,

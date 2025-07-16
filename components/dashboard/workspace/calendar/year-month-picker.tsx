@@ -55,9 +55,9 @@ export function YearMonthPicker({
     <div className='p-2'>
       <div className='mb-2 flex items-center justify-between'>
         <Button
-          variant='ghost'
           className='font-medium text-sm'
           onClick={() => setMode(mode === 'month' ? 'year' : 'month')}
+          variant='ghost'
         >
           {mode === 'month'
             ? displayYear
@@ -65,18 +65,18 @@ export function YearMonthPicker({
         </Button>
         <div className='flex items-center gap-1'>
           <Button
-            variant='ghost'
-            size='icon'
             className='h-7 w-7'
             onClick={handlePrevious}
+            size='icon'
+            variant='ghost'
           >
             <ChevronLeft className='h-4 w-4' />
           </Button>
           <Button
-            variant='ghost'
-            size='icon'
             className='h-7 w-7'
             onClick={handleNext}
+            size='icon'
+            variant='ghost'
           >
             <ChevronRight className='h-4 w-4' />
           </Button>
@@ -87,15 +87,15 @@ export function YearMonthPicker({
         <div className='grid grid-cols-3 gap-2'>
           {MONTHS.map((month, index) => (
             <Button
-              key={month}
-              variant='ghost'
               className={cn(
                 'h-9',
                 value.getMonth() === index &&
                   value.getFullYear() === displayYear &&
                   'bg-primary text-primary-foreground'
               )}
+              key={month}
               onClick={() => handleMonthClick(index)}
+              variant='ghost'
             >
               {locale === 'en' ? month.slice(0, 3) : t(month.toLowerCase())}
             </Button>
@@ -106,14 +106,14 @@ export function YearMonthPicker({
           {Array.from({ length: 12 }, (_, i) => displayYear - 6 + i).map(
             (year) => (
               <Button
-                key={year}
-                variant='ghost'
                 className={cn(
                   'h-9',
                   value.getFullYear() === year &&
                     'bg-primary text-primary-foreground'
                 )}
+                key={year}
                 onClick={() => handleYearClick(year)}
+                variant='ghost'
               >
                 {year}
               </Button>

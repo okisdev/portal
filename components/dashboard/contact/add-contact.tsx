@@ -18,10 +18,10 @@ export function AddContact({ isLoading }: { isLoading: boolean }) {
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button
-          variant='outline'
-          size='sm'
           className='flex h-8 items-center gap-2'
           disabled={isLoading}
+          size='sm'
+          variant='outline'
         >
           {t('add_contact')}
         </Button>

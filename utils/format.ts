@@ -8,7 +8,7 @@ export const formatCurrency = (amount: number) => {
 };
 
 export const parseDate = (dateString: string): Date | undefined => {
-  if (!dateString) return undefined;
+  if (!dateString) return;
 
   // Try different date formats
   const formats = [
@@ -53,7 +53,7 @@ export const parseDate = (dateString: string): Date | undefined => {
     // Ignore fallback errors
   }
 
-  return undefined;
+  return;
 };
 
 export const parseFullName = (

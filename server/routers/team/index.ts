@@ -494,7 +494,7 @@ export const teamRouter = createTRPCRouter({
             title: input.title,
             description: input.description,
             meetingDate: input.meetingDate,
-            status: status,
+            status,
             createdBy: ctx.session.user.id,
           })
           .returning();

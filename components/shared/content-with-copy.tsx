@@ -25,9 +25,9 @@ export function ContentWithCopy({
 
   return (
     <button
+      className={cn('flex items-center gap-2', className)}
       onClick={handleCopy}
       type='button'
-      className={cn('flex items-center gap-2', className)}
     >
       {content}
       {copied ? (

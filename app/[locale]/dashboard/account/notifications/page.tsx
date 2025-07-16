@@ -77,14 +77,14 @@ export default function NotificationsPage() {
   return (
     <div className='space-y-6 p-6'>
       <PageHeader
-        title={t('notifications')}
         description={t('notifications_description')}
+        title={t('notifications')}
       />
 
       <div className='flex h-[calc(100vh-12rem)] flex-col gap-8'>
         <div className='flex items-center justify-between'>
           <div className='flex items-center gap-4'>
-            <Select value={filterType} onValueChange={setFilterType}>
+            <Select onValueChange={setFilterType} value={filterType}>
               <SelectTrigger className='w-[180px]'>
                 <SelectValue placeholder={t('filter_type')} />
               </SelectTrigger>
@@ -98,11 +98,11 @@ export default function NotificationsPage() {
             </Select>
           </div>
           <Button
-            variant='outline'
-            size='sm'
+            className='transition-colors hover:bg-neutral-100 dark:hover:bg-neutral-800'
             disabled={markAllAsRead.isPending}
             onClick={() => markAllAsRead.mutate()}
-            className='transition-colors hover:bg-neutral-100 dark:hover:bg-neutral-800'
+            size='sm'
+            variant='outline'
           >
             {markAllAsRead.isPending
               ? t('marking_all_as_read')
@@ -116,8 +116,8 @@ export default function NotificationsPage() {
               .fill(0)
               .map((_, i) => (
                 <div
-                  key={nanoid()}
                   className='flex animate-pulse flex-col gap-2 rounded-lg border bg-white p-4 shadow-xs dark:border-neutral-800 dark:bg-neutral-900'
+                  key={nanoid()}
                 >
                   <div className='flex items-center gap-3'>
                     <Skeleton className='h-8 w-8 rounded-full' />
@@ -140,13 +140,13 @@ export default function NotificationsPage() {
 
           {filteredNotifications?.map((notification) => (
             <div
-              key={notification.id}
               className={cn(
                 'group flex items-start gap-4 rounded-lg border p-4 shadow-xs transition-all duration-200',
                 notification.read
                   ? 'bg-white hover:bg-neutral-50 dark:border-neutral-800 dark:bg-neutral-900 dark:hover:bg-neutral-800'
                   : 'bg-blue-50 hover:bg-blue-100/80 dark:bg-blue-950/50 dark:hover:bg-blue-900/30'
               )}
+              key={notification.id}
             >
               <div className='rounded-full bg-neutral-100/80 p-2 dark:bg-neutral-800'>
                 <NotificationIcon type={notification.type} />
@@ -184,7 +184,7 @@ export default function NotificationsPage() {
               </div>
               <div className='flex flex-row items-center gap-2'>
                 {notification.metadata && (
-                  <Button variant='ghost' size='sm'>
+                  <Button size='sm' variant='ghost'>
                     <Link
                       href={`/dashboard/crm/${JSON.parse(notification.metadata)?.type}/${JSON.parse(notification.metadata)?.id}`}
                     >
@@ -194,10 +194,10 @@ export default function NotificationsPage() {
                 )}
                 {!notification.read && (
                   <Button
-                    variant='ghost'
-                    size='sm'
                     className='hover:bg-blue-300 dark:hover:bg-blue-800'
                     onClick={() => markAsRead.mutate(notification.id)}
+                    size='sm'
+                    variant='ghost'
                   >
                     {t('mark_as_read')}
                   </Button>

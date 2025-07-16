@@ -17,14 +17,14 @@ export default function Home() {
             </p>
             <div className='mt-10 flex items-center justify-center gap-x-6'>
               <Link
-                href='/dashboard'
                 className='rounded-md bg-neutral-900 px-3.5 py-2.5 font-semibold text-sm text-white shadow-xs hover:bg-neutral-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-neutral-900 focus-visible:outline-offset-2 dark:bg-neutral-700 dark:hover:bg-neutral-600'
+                href='/dashboard'
               >
                 Open Dashboard
               </Link>
               <Link
-                href='/demo'
                 className='font-semibold text-neutral-900 text-sm leading-6 dark:text-white'
+                href='/demo'
               >
                 Watch Demo <span aria-hidden='true'>→</span>
               </Link>
@@ -65,7 +65,7 @@ export default function Home() {
                   icon: '⚡',
                 },
               ].map((feature) => (
-                <div key={feature.title} className='flex flex-col'>
+                <div className='flex flex-col' key={feature.title}>
                   <div className='mb-6 text-4xl'>{feature.icon}</div>
                   <div className='flex flex-auto flex-col'>
                     <h3 className='font-semibold text-neutral-900 text-xl leading-8 tracking-tight dark:text-white'>
@@ -115,8 +115,8 @@ export default function Home() {
                 },
               ].map((testimonial) => (
                 <div
-                  key={testimonial.author}
                   className='rounded-2xl bg-white p-8 text-sm leading-6 shadow-xs dark:bg-neutral-800'
+                  key={testimonial.author}
                 >
                   <p className='text-neutral-900 dark:text-white'>
                     "{testimonial.quote}"
@@ -147,14 +147,14 @@ export default function Home() {
           </p>
           <div className='mt-10 flex items-center justify-center gap-x-6'>
             <Link
-              href='/register'
               className='rounded-md bg-neutral-900 px-3.5 py-2.5 font-semibold text-sm text-white shadow-xs hover:bg-neutral-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-neutral-900 focus-visible:outline-offset-2 dark:bg-neutral-700 dark:hover:bg-neutral-600'
+              href='/register'
             >
               Start Free Trial
             </Link>
             <Link
-              href='/contact'
               className='font-semibold text-neutral-900 text-sm leading-6 dark:text-white'
+              href='/contact'
             >
               Contact Sales <span aria-hidden='true'>→</span>
             </Link>

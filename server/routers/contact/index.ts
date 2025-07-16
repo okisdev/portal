@@ -641,7 +641,7 @@ export const contactRouter = createTRPCRouter({
 
       // Process contacts that don't exist yet
       const newContacts = input.contacts.filter(
-        (contact) => !contact.email || !existingEmails.has(contact.email)
+        (contact) => !(contact.email && existingEmails.has(contact.email))
       );
 
       try {

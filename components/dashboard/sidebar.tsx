@@ -59,7 +59,7 @@ import {
 } from '@/components/ui/sidebar';
 import { Skeleton } from '@/components/ui/skeleton';
 import { usePathname, useRouter } from '@/i18n/navigation';
-import packageInfo from '@/package.json';
+import packageInfo from '@/package.json' with { type: 'json' };
 import { copyToClipboard } from '@/utils/clipboard';
 import { api } from '@/utils/trpc/client';
 
@@ -128,7 +128,6 @@ export function DashboardSidebar() {
       </SidebarHeader>
       <SidebarContent>
         <SidebarGroupSection
-          title={t('workspace')}
           items={[
             {
               id: 'calendar',
@@ -137,9 +136,9 @@ export function DashboardSidebar() {
               icon: Calendar,
             },
           ]}
+          title={t('workspace')}
         />
         <SidebarGroupSection
-          title={t('crm')}
           items={[
             {
               id: 'contacts',
@@ -179,9 +178,9 @@ export function DashboardSidebar() {
               icon: Building,
             },
           ]}
+          title={t('crm')}
         />
         <SidebarGroupSection
-          title={t('site')}
           items={[
             ...(me?.role === 'ADMIN'
               ? [
@@ -200,12 +199,13 @@ export function DashboardSidebar() {
               icon: Settings,
             },
           ]}
+          title={t('site')}
         />
       </SidebarContent>
       <SidebarFooter>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton tooltip={t('settings')} asChild>
+            <SidebarMenuButton asChild tooltip={t('settings')}>
               <Link href='/dashboard/account/settings'>
                 <Settings />
                 <span>{t('settings')}</span>
@@ -213,7 +213,7 @@ export function DashboardSidebar() {
             </SidebarMenuButton>
           </SidebarMenuItem>
           <SidebarMenuItem>
-            <SidebarMenuButton tooltip={t('notifications')} asChild>
+            <SidebarMenuButton asChild tooltip={t('notifications')}>
               <Link href='/dashboard/account/notifications'>
                 <Bell />
                 {unreadNotificationsCount &&
@@ -248,13 +248,13 @@ export function DashboardSidebar() {
                 </SidebarMenuButton>
               </DropdownMenuTrigger>
               <DropdownMenuContent
-                side='top'
                 className='w-(--radix-popper-anchor-width)'
+                side='top'
               >
                 <DropdownMenuItem asChild>
                   <Link
-                    href='/dashboard/account/settings'
                     className='cursor-pointer'
+                    href='/dashboard/account/settings'
                   >
                     <Settings className='mr-2 h-4 w-4' />
                     <span>{t('account')}</span>
@@ -291,29 +291,29 @@ export function DashboardSidebar() {
                   </DropdownMenuTrigger>
                   <DropdownMenuContent side='right'>
                     <DropdownMenuRadioGroup
-                      value={theme}
                       onValueChange={setTheme}
+                      value={theme}
                     >
                       <DropdownMenuRadioItem
-                        value='system'
                         className='flex cursor-pointer items-center gap-2'
                         onClick={() => setTheme('system')}
+                        value='system'
                       >
                         <Laptop className='mr-2 h-4 w-4' />
                         <span>{t('system')}</span>
                       </DropdownMenuRadioItem>
                       <DropdownMenuRadioItem
-                        value='light'
                         className='flex cursor-pointer items-center gap-2'
                         onClick={() => setTheme('light')}
+                        value='light'
                       >
                         <Sun className='mr-2 h-4 w-4' />
                         <span>{t('light')}</span>
                       </DropdownMenuRadioItem>
                       <DropdownMenuRadioItem
-                        value='dark'
                         className='flex cursor-pointer items-center gap-2'
                         onClick={() => setTheme('dark')}
+                        value='dark'
                       >
                         <Moon className='mr-2 h-4 w-4' />
                         <span>{t('dark')}</span>
@@ -331,8 +331,8 @@ export function DashboardSidebar() {
                   </DropdownMenuTrigger>
                   <DropdownMenuContent side='right'>
                     <DropdownMenuRadioGroup
-                      value={locale}
                       onValueChange={handleChangeLocale}
+                      value={locale}
                     >
                       {[
                         {
@@ -355,9 +355,9 @@ export function DashboardSidebar() {
                         },
                       ].map((item) => (
                         <DropdownMenuRadioItem
+                          className='flex cursor-pointer items-center gap-2'
                           key={item.value}
                           value={item.value}
-                          className='flex cursor-pointer items-center gap-2'
                         >
                           <span>{item.flag}</span>
                           <span>{item.title}</span>
@@ -380,13 +380,13 @@ export function DashboardSidebar() {
         </SidebarMenu>
       </SidebarFooter>
       <ActionAlertDialog
-        open={showSignOutDialog}
-        onOpenChange={setShowSignOutDialog}
-        onConfirm={() => signOut()}
-        title={t('sign_out')}
-        description={t('sign_out_description')}
         cancelText={t('cancel')}
         confirmText={t('sign_out')}
+        description={t('sign_out_description')}
+        onConfirm={() => signOut()}
+        onOpenChange={setShowSignOutDialog}
+        open={showSignOutDialog}
+        title={t('sign_out')}
       />
     </Sidebar>
   );
@@ -401,9 +401,9 @@ function SidebarGroupSection({
 
   return (
     <Collapsible
-      defaultOpen={defaultOpen}
       className='group/collapsible'
       data-collapsible='icon'
+      defaultOpen={defaultOpen}
     >
       <SidebarGroup>
         <SidebarGroupLabel asChild>
@@ -421,9 +421,9 @@ function SidebarGroupSection({
                 return (
                   <SidebarMenuItem key={item.id}>
                     <SidebarMenuButton
-                      tooltip={item.title}
                       asChild
                       className={isItemActive ? 'bg-accent' : ''}
+                      tooltip={item.title}
                     >
                       <Link href={item.url ?? ''}>
                         <item.icon />
@@ -443,9 +443,9 @@ function SidebarGroupSection({
                           return (
                             <SidebarMenuItem key={subItem.id}>
                               <SidebarMenuButton
-                                tooltip={subItem.title}
                                 asChild
                                 className={isSubItemActive ? 'bg-accent' : ''}
+                                tooltip={subItem.title}
                               >
                                 <Link href={subItem.url}>
                                   <subItem.icon />

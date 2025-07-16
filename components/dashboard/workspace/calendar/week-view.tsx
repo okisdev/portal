@@ -56,14 +56,14 @@ export function WeekView({
         <div className='p-2 text-muted-foreground text-sm'>{t('time')}</div>
         {getWeekDays(currentDate).map((date) => (
           <DayHeader
-            key={date.toISOString()}
             date={date}
-            selectedDate={selectedDate}
             events={events}
             folders={folders}
             hiddenCalendars={hiddenCalendars}
-            onEventEdit={onEventEdit}
+            key={date.toISOString()}
             onEventDelete={onEventDelete}
+            onEventEdit={onEventEdit}
+            selectedDate={selectedDate}
           />
         ))}
       </div>
@@ -75,17 +75,17 @@ export function WeekView({
           <TimeColumn />
           {getWeekDays(currentDate).map((date) => (
             <TimeGrid
-              key={date.toISOString()}
               date={date}
               events={events.filter((event) => !event.isAllDay)}
               folders={folders}
               hiddenCalendars={hiddenCalendars}
-              onTimeSelect={onTimeSelect}
               isSelecting={isSelecting}
               isTimeSlotSelected={isTimeSlotSelected}
-              onSelectionEnd={onSelectionEnd}
-              onEventEdit={onEventEdit}
+              key={date.toISOString()}
               onEventDelete={onEventDelete}
+              onEventEdit={onEventEdit}
+              onSelectionEnd={onSelectionEnd}
+              onTimeSelect={onTimeSelect}
             />
           ))}
         </div>

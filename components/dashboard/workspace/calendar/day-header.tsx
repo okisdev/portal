@@ -73,11 +73,11 @@ export function DayHeader({
             const folder = folders?.find((f) => f.id === event.folderId);
             return (
               <EventPopover
-                key={event.id}
                 event={event}
                 folder={folder}
-                onEventEdit={onEventEdit}
+                key={event.id}
                 onEventDelete={onEventDelete}
+                onEventEdit={onEventEdit}
               />
             );
           })}

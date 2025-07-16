@@ -32,8 +32,8 @@ export function MetadataPopover({
       <PopoverTrigger asChild>
         {trigger || (
           <button
-            type='button'
             className='flex cursor-pointer items-center rounded bg-muted/50 px-1 py-0.5 text-muted-foreground text-xs transition-colors hover:bg-foreground/10 hover:text-foreground'
+            type='button'
           >
             <Info className='mr-1 inline-block size-3' />
             <span>{withTitle ? title : t('view_details')}</span>
@@ -41,8 +41,8 @@ export function MetadataPopover({
         )}
       </PopoverTrigger>
       <PopoverContent
-        className={cn('h-auto max-h-[50vh] overflow-y-auto', className)}
         align={align}
+        className={cn('h-auto max-h-[50vh] overflow-y-auto', className)}
       >
         {children}
       </PopoverContent>

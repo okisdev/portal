@@ -52,7 +52,7 @@ export function DataTable<TData>({
                 {table.getHeaderGroups().map((headerGroup) => (
                   <TableRow key={headerGroup.id}>
                     {headerGroup.headers.map((header) => (
-                      <TableHead key={header.id} colSpan={header.colSpan}>
+                      <TableHead colSpan={header.colSpan} key={header.id}>
                         {header.isPlaceholder
                           ? null
                           : flexRender(
@@ -68,16 +68,16 @@ export function DataTable<TData>({
                 {table.getRowModel().rows?.length ? (
                   table.getRowModel().rows.map((row) => (
                     <TableRow
-                      key={row.id}
                       data-state={row.getIsSelected() && 'selected'}
+                      key={row.id}
                       onClick={(e) => handleRowClick(e, row.original)}
                     >
                       {row.getVisibleCells().map((cell) => (
                         <TableCell
-                          key={cell.id}
                           data-checkbox-cell={
                             cell.column.id === 'select' ? true : undefined
                           }
+                          key={cell.id}
                         >
                           {flexRender(
                             cell.column.columnDef.cell,
@@ -90,8 +90,8 @@ export function DataTable<TData>({
                 ) : (
                   <TableRow>
                     <TableCell
-                      colSpan={columns.length}
                       className='h-24 text-center'
+                      colSpan={columns.length}
                     >
                       {t('no_results')}
                     </TableCell>

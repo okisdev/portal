@@ -125,9 +125,9 @@ function SortableItem({
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
-              variant='ghost'
-              size='icon'
               className='h-6 w-6 opacity-0 group-hover:opacity-100'
+              size='icon'
+              variant='ghost'
             >
               <MoreHorizontal className='h-4 w-4' />
             </Button>
@@ -138,8 +138,8 @@ function SortableItem({
               {t('edit')}
             </DropdownMenuItem>
             <DropdownMenuItem
-              onClick={() => onRemove(item.value)}
               className='text-destructive'
+              onClick={() => onRemove(item.value)}
             >
               <Trash className='mr-2 h-4 w-4' />
               {t('remove')}
@@ -500,9 +500,9 @@ export default function ManagementPage() {
 
     return (
       <DndContext
-        sensors={sensors}
-        onDragStart={(event) => handleDragStart(event, values)}
         onDragEnd={(event) => handleDragEnd(event, type, values)}
+        onDragStart={(event) => handleDragStart(event, values)}
+        sensors={sensors}
       >
         <div className='space-y-4'>
           <div className='flex items-center justify-between text-muted-foreground text-sm'>
@@ -516,12 +516,12 @@ export default function ManagementPage() {
             <div className='space-y-2'>
               {values.map((item, index) => (
                 <SortableItem
-                  key={item.value}
+                  index={index}
                   item={item}
-                  type={type}
+                  key={item.value}
                   onEdit={handleEdit}
                   onRemove={onRemove}
-                  index={index}
+                  type={type}
                 />
               ))}
             </div>
@@ -530,8 +530,8 @@ export default function ManagementPage() {
         <DragOverlay>
           {activeItem ? (
             <DragOverlayItem
-              item={activeItem}
               index={values.findIndex((item) => item.value === activeId)}
+              item={activeItem}
             />
           ) : null}
         </DragOverlay>
@@ -542,11 +542,11 @@ export default function ManagementPage() {
   return (
     <div className='container mx-auto space-y-4 p-4'>
       <PageHeader
-        title={t('management')}
         description={t('management_description')}
+        title={t('management')}
       />
 
-      <Tabs defaultValue='status' className='space-y-6'>
+      <Tabs className='space-y-6' defaultValue='status'>
         <TabsList className='grid w-full grid-cols-3'>
           <TabsTrigger value='status'>{t('status')}</TabsTrigger>
           <TabsTrigger value='priority'>{t('priority')}</TabsTrigger>
@@ -627,11 +627,11 @@ export default function ManagementPage() {
       </Tabs>
 
       <Dialog
-        open={isStatusDialogOpen}
         onOpenChange={(open) => {
           setIsStatusDialogOpen(open);
           if (!open) setEditingItem(null);
         }}
+        open={isStatusDialogOpen}
       >
         <DialogContent>
           <DialogHeader>
@@ -641,8 +641,8 @@ export default function ManagementPage() {
           </DialogHeader>
           <Form {...statusForm}>
             <form
-              onSubmit={statusForm.handleSubmit(onSubmitStatus)}
               className='space-y-4'
+              onSubmit={statusForm.handleSubmit(onSubmitStatus)}
             >
               <FormField
                 control={statusForm.control}
@@ -663,7 +663,7 @@ export default function ManagementPage() {
                   <FormItem>
                     <FormLabel>{t('color')}</FormLabel>
                     <FormControl>
-                      <Input {...field} type='color' className='h-10 w-full' />
+                      <Input {...field} className='h-10 w-full' type='color' />
                     </FormControl>
                   </FormItem>
                 )}
@@ -679,11 +679,11 @@ export default function ManagementPage() {
       </Dialog>
 
       <Dialog
-        open={isPriorityDialogOpen}
         onOpenChange={(open) => {
           setIsPriorityDialogOpen(open);
           if (!open) setEditingItem(null);
         }}
+        open={isPriorityDialogOpen}
       >
         <DialogContent>
           <DialogHeader>
@@ -693,8 +693,8 @@ export default function ManagementPage() {
           </DialogHeader>
           <Form {...priorityForm}>
             <form
-              onSubmit={priorityForm.handleSubmit(onSubmitPriority)}
               className='space-y-4'
+              onSubmit={priorityForm.handleSubmit(onSubmitPriority)}
             >
               <FormField
                 control={priorityForm.control}
@@ -718,7 +718,7 @@ export default function ManagementPage() {
                   <FormItem>
                     <FormLabel>{t('color')}</FormLabel>
                     <FormControl>
-                      <Input {...field} type='color' className='h-10 w-full' />
+                      <Input {...field} className='h-10 w-full' type='color' />
                     </FormControl>
                   </FormItem>
                 )}
@@ -734,11 +734,11 @@ export default function ManagementPage() {
       </Dialog>
 
       <Dialog
-        open={isSourceDialogOpen}
         onOpenChange={(open) => {
           setIsSourceDialogOpen(open);
           if (!open) setEditingItem(null);
         }}
+        open={isSourceDialogOpen}
       >
         <DialogContent>
           <DialogHeader>
@@ -748,8 +748,8 @@ export default function ManagementPage() {
           </DialogHeader>
           <Form {...sourceForm}>
             <form
-              onSubmit={sourceForm.handleSubmit(onSubmitSource)}
               className='space-y-4'
+              onSubmit={sourceForm.handleSubmit(onSubmitSource)}
             >
               <FormField
                 control={sourceForm.control}
@@ -770,7 +770,7 @@ export default function ManagementPage() {
                   <FormItem>
                     <FormLabel>{t('color')}</FormLabel>
                     <FormControl>
-                      <Input {...field} type='color' className='h-10 w-full' />
+                      <Input {...field} className='h-10 w-full' type='color' />
                     </FormControl>
                   </FormItem>
                 )}

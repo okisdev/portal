@@ -67,7 +67,7 @@ export default function ResetPasswordPage() {
   }, [searchParams, router]);
 
   const onSubmit = async (data: ResetPasswordFormValues) => {
-    if (!email || !token) {
+    if (!(email && token)) {
       setError(t('invalid_reset_link'));
       toast.error(t('invalid_reset_link'));
       return;
@@ -101,10 +101,10 @@ export default function ResetPasswordPage() {
   if (success) {
     return (
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.2 }}
         className='space-y-6 text-center'
+        initial={{ opacity: 0, y: 20 }}
+        transition={{ duration: 0.2 }}
       >
         <div className='flex justify-center'>
           <CheckCircle2 className='h-12 w-12 text-green-500' />
@@ -126,8 +126,8 @@ export default function ResetPasswordPage() {
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
+      initial={{ opacity: 0, y: 20 }}
       transition={{ duration: 0.2 }}
     >
       <div className='space-y-2 text-center'>
@@ -145,9 +145,9 @@ export default function ResetPasswordPage() {
         )}
       </div>
 
-      <form onSubmit={handleSubmit(onSubmit)} className='mt-6 space-y-4'>
+      <form className='mt-6 space-y-4' onSubmit={handleSubmit(onSubmit)}>
         {error && (
-          <Banner title={t('error')} description={error} variant='error' />
+          <Banner description={error} title={t('error')} variant='error' />
         )}
 
         <div className='space-y-1'>
@@ -186,9 +186,9 @@ export default function ResetPasswordPage() {
 
         <div className='space-y-3'>
           <button
-            type='submit'
-            disabled={loading || !password || !confirmPassword}
             className='flex w-full items-center justify-center rounded-lg bg-primary px-4 py-2 font-medium text-primary-foreground transition-colors hover:bg-primary/80 disabled:cursor-not-allowed disabled:opacity-50'
+            disabled={loading || !password || !confirmPassword}
+            type='submit'
           >
             {loading ? (
               <>
@@ -202,8 +202,8 @@ export default function ResetPasswordPage() {
 
           <div className='flex items-center justify-center space-x-4 text-center text-muted-foreground text-sm'>
             <Link
-              href='/login'
               className='flex items-center text-muted-foreground hover:text-foreground'
+              href='/login'
             >
               <ArrowLeft className='mr-1 h-4 w-4' />
               {t('back_to_login')}

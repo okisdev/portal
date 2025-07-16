@@ -90,11 +90,11 @@ export function NameTag({ id, type, className }: NameTagProps) {
   if (type === 'contact') {
     return (
       <Link
-        href={`/dashboard/crm/contacts/${id}`}
         className={cn(
           className,
           'text-muted-foreground underline transition duration-100 ease-in-out hover:text-neutral-900'
         )}
+        href={`/dashboard/crm/contacts/${id}`}
       >
         {displayName}
       </Link>

@@ -80,7 +80,7 @@ export default function ManualContactForm() {
   });
 
   const formatName = (firstName?: string, lastName?: string) => {
-    if (!firstName && !lastName) return 'N/A';
+    if (!(firstName || lastName)) return 'N/A';
     if (firstName && lastName) return `${firstName} ${lastName}`;
     return firstName || lastName || 'N/A';
   };
@@ -113,7 +113,7 @@ export default function ManualContactForm() {
 
   // Function to parse date from various formats
   const parseDate = (dateString: string): Date | undefined => {
-    if (!dateString) return undefined;
+    if (!dateString) return;
 
     // Try different date formats
     const formats = [
@@ -144,12 +144,12 @@ export default function ManualContactForm() {
       return startOfDay(fallbackDate);
     }
 
-    return undefined;
+    return;
   };
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleSubmit)} className='space-y-4'>
+      <form className='space-y-4' onSubmit={form.handleSubmit(handleSubmit)}>
         <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
           <FormField
             control={form.control}
@@ -189,8 +189,8 @@ export default function ManualContactForm() {
                 <FormLabel>{t('email')}</FormLabel>
                 <FormControl>
                   <EmailInput
-                    value={field.value || ''}
                     onChange={field.onChange}
+                    value={field.value || ''}
                   />
                 </FormControl>
                 <FormMessage />
@@ -206,8 +206,8 @@ export default function ManualContactForm() {
                 <FormLabel>{t('phone')}</FormLabel>
                 <FormControl>
                   <PhoneInput
-                    value={field.value || ''}
                     onChange={field.onChange}
+                    value={field.value || ''}
                   />
                 </FormControl>
                 <FormMessage />
@@ -225,7 +225,9 @@ export default function ManualContactForm() {
                 <FormLabel>{t('company')}</FormLabel>
                 <FormControl>
                   <Combobox
-                    value={field.value ?? ''}
+                    allowCustom={true}
+                    groupHeading={t('companies')}
+                    items={companies?.map((c) => c.name) || []}
                     onChange={(value) => {
                       const selectedCompany = companies?.find(
                         (c) => c.name === value
@@ -236,11 +238,9 @@ export default function ManualContactForm() {
                       );
                       form.setValue('companyId', selectedCompany?.id || null);
                     }}
-                    items={companies?.map((c) => c.name) || []}
                     placeholder={t('select_company')}
                     searchPlaceholder={t('search_company')}
-                    groupHeading={t('companies')}
-                    allowCustom={true}
+                    value={field.value ?? ''}
                   />
                 </FormControl>
                 <FormMessage />
@@ -256,12 +256,12 @@ export default function ManualContactForm() {
                 <FormLabel>{t('source')}</FormLabel>
                 <FormControl>
                   <Combobox
-                    value={field.value ?? ''}
-                    onChange={field.onChange}
+                    groupHeading={t('sources')}
                     items={sources}
+                    onChange={field.onChange}
                     placeholder={t('select_source')}
                     searchPlaceholder={t('search_source')}
-                    groupHeading={t('sources')}
+                    value={field.value ?? ''}
                   />
                 </FormControl>
                 <FormMessage />
@@ -279,19 +279,19 @@ export default function ManualContactForm() {
                 <FormLabel>{t('status')}</FormLabel>
                 <FormControl>
                   <Combobox
-                    value={field.value ?? ''}
-                    onChange={field.onChange}
-                    items={statuses?.map((s: Status) => s.value) ?? []}
-                    placeholder={t('select_status')}
-                    searchPlaceholder={t('search_status')}
-                    groupHeading={t('statuses')}
                     allowCustom={false}
+                    groupHeading={t('statuses')}
+                    items={statuses?.map((s: Status) => s.value) ?? []}
+                    onChange={field.onChange}
+                    placeholder={t('select_status')}
                     renderItem={(id) => {
                       const status = statuses?.find(
                         (s: Status) => s.value === id
                       );
                       return status?.value ?? id;
                     }}
+                    searchPlaceholder={t('search_status')}
+                    value={field.value ?? ''}
                   />
                 </FormControl>
                 <FormMessage />
@@ -310,33 +310,33 @@ export default function ManualContactForm() {
                 <div className='relative flex gap-2'>
                   <FormControl>
                     <Input
-                      placeholder='YYYY/MM/DD'
-                      value={
-                        field.value ? format(field.value, 'yyyy/MM/dd') : ''
-                      }
                       onChange={(e) => {
                         const parsedDate = parseDate(e.target.value);
                         field.onChange(parsedDate);
                       }}
+                      placeholder='YYYY/MM/DD'
+                      value={
+                        field.value ? format(field.value, 'yyyy/MM/dd') : ''
+                      }
                     />
                   </FormControl>
                   <Popover>
                     <PopoverTrigger asChild>
                       <Button
+                        className={cn('px-2')}
                         type='button'
                         variant={'outline'}
-                        className={cn('px-2')}
                       >
                         <CalendarIcon className='h-4 w-4' />
                       </Button>
                     </PopoverTrigger>
-                    <PopoverContent className='w-auto p-0' align='start'>
+                    <PopoverContent align='start' className='w-auto p-0'>
                       <Calendar
-                        mode='single'
-                        selected={field.value}
-                        onSelect={field.onChange}
                         disabled={(date) => date > new Date()}
                         initialFocus
+                        mode='single'
+                        onSelect={field.onChange}
+                        selected={field.value}
                       />
                     </PopoverContent>
                   </Popover>
@@ -363,7 +363,7 @@ export default function ManualContactForm() {
         />
 
         <div className='flex justify-end'>
-          <Button type='submit' disabled={isLoading}>
+          <Button disabled={isLoading} type='submit'>
             {isLoading ? t('creating') : t('create_contact')}
           </Button>
         </div>

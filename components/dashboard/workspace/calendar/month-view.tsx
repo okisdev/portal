@@ -74,8 +74,8 @@ export function MonthView({
     <div className='grid flex-1 grid-cols-7'>
       {WEEKDAYS.map((day) => (
         <div
-          key={day}
           className='border-r border-b p-2 text-muted-foreground text-sm'
+          key={day}
         >
           {t(day)}
         </div>
@@ -86,12 +86,12 @@ export function MonthView({
         return (
           // biome-ignore lint/a11y/useKeyWithClickEvents: <explanation>
           <div
-            key={date.toISOString()}
             className={cn(
               'relative min-h-[120px] border-r border-b p-2',
               !isSameMonth(date, currentDate) && 'bg-muted/50',
               isSameDay(date, selectedDate) && 'ring-2 ring-primary ring-inset'
             )}
+            key={date.toISOString()}
             onClick={() => setSelectedDate(date)}
           >
             <span
@@ -110,11 +110,11 @@ export function MonthView({
 
                 return (
                   <EventPopover
-                    key={event.id}
                     event={event}
                     folder={folder}
-                    onEventEdit={onEventEdit}
+                    key={event.id}
                     onEventDelete={onEventDelete}
+                    onEventEdit={onEventEdit}
                   />
                 );
               })}

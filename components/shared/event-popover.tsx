@@ -32,13 +32,13 @@ export function EventPopover({
     <Popover>
       <PopoverTrigger asChild>
         <Button
-          variant='ghost'
           className='h-auto w-full justify-start truncate rounded p-1 text-foreground text-xs'
-          style={{ backgroundColor: `${folder?.color}20` }}
           onClick={(e) => {
             e.stopPropagation();
             onEventClick?.(e);
           }}
+          style={{ backgroundColor: `${folder?.color}20` }}
+          variant='ghost'
         >
           {event.isAllDay ? (
             t('all_day')
@@ -122,8 +122,8 @@ export function EventPopover({
                   <div className='col-span-2 space-y-1'>
                     {event.participants.map((participant) => (
                       <div
-                        key={participant.id}
                         className='flex items-center justify-between text-sm'
+                        key={participant.id}
                       >
                         <span>
                           {participant.participantType === 'contact' &&
@@ -161,18 +161,18 @@ export function EventPopover({
             <div className='flex justify-end gap-2'>
               {onEventDelete && (
                 <Button
+                  onClick={() => onEventDelete(event.id)}
                   size='sm'
                   variant='destructive'
-                  onClick={() => onEventDelete(event.id)}
                 >
                   {t('delete')}
                 </Button>
               )}
               {onEventEdit && (
                 <Button
-                  variant='outline'
-                  size='sm'
                   onClick={() => onEventEdit(event)}
+                  size='sm'
+                  variant='outline'
                 >
                   {t('edit')}
                 </Button>

@@ -93,10 +93,10 @@ export default function RegisterPage() {
 
   return (
     <motion.div
-      key='register-form'
-      initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
+      initial={{ opacity: 0, y: 20 }}
+      key='register-form'
       transition={{ duration: 0.2 }}
     >
       <div className='space-y-2 text-center'>
@@ -108,7 +108,7 @@ export default function RegisterPage() {
         </p>
       </div>
 
-      <form onSubmit={handleSubmit(onSubmit)} className='mt-6 space-y-4'>
+      <form className='mt-6 space-y-4' onSubmit={handleSubmit(onSubmit)}>
         {error && (
           <div className='rounded-lg bg-destructive/10 p-3 text-destructive text-sm'>
             {error}
@@ -122,8 +122,8 @@ export default function RegisterPage() {
           <input
             type='email'
             {...register('email')}
-            onBlur={handleEmailBlur}
             className='w-full rounded-lg border bg-background p-2 focus:outline-hidden focus:ring-2 focus:ring-ring'
+            onBlur={handleEmailBlur}
             placeholder={t('email_placeholder')}
           />
           {errors.email && (
@@ -152,9 +152,9 @@ export default function RegisterPage() {
 
         <div className='space-y-3'>
           <button
-            type='submit'
-            disabled={loading || !email || !password}
             className='flex w-full items-center justify-center rounded-lg bg-primary px-4 py-2 font-medium text-primary-foreground transition-colors hover:bg-primary/80 disabled:cursor-not-allowed disabled:opacity-50'
+            disabled={loading || !email || !password}
+            type='submit'
           >
             {loading ? (
               <>
@@ -169,8 +169,8 @@ export default function RegisterPage() {
           <p className='text-center text-muted-foreground text-sm'>
             {t('already_have_an_account')}{' '}
             <Link
-              href='/login'
               className='text-muted-foreground underline hover:text-foreground'
+              href='/login'
             >
               {t('sign_in')}
             </Link>

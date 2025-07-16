@@ -121,11 +121,11 @@ export default function SitePage() {
   return (
     <div className='container mx-auto max-w-4xl space-y-4 px-4 pt-10'>
       <PageHeader
-        title={t('site_configuration')}
         description={t('site_configuration_description')}
+        title={t('site_configuration')}
       />
 
-      <Tabs defaultValue='general' className='space-y-4'>
+      <Tabs className='space-y-4' defaultValue='general'>
         <TabsList>
           <TabsTrigger value='general'>{t('general')}</TabsTrigger>
           <TabsTrigger value='members'>{t('members')}</TabsTrigger>
@@ -146,18 +146,18 @@ export default function SitePage() {
                 <Label htmlFor='siteName'>{t('site_name')}</Label>
                 <Input
                   id='siteName'
+                  onChange={(e) => setSiteName(e.target.value)}
                   placeholder='Portal'
                   value={siteName}
-                  onChange={(e) => setSiteName(e.target.value)}
                 />
               </div>
               <div className='space-y-2'>
                 <Label htmlFor='siteDomain'>{t('site_domain')}</Label>
                 <Input
                   id='siteDomain'
+                  onChange={(e) => setSiteDomain(e.target.value)}
                   placeholder='portal'
                   value={siteDomain}
-                  onChange={(e) => setSiteDomain(e.target.value)}
                 />
               </div>
               <div className='space-y-2'>
@@ -166,15 +166,15 @@ export default function SitePage() {
                 </Label>
                 <Input
                   id='supportEmailDomains'
+                  onChange={handleSupportEmailDomainChange}
                   placeholder='support.portal.com, help.portal.com'
                   value={supportEmailDomains}
-                  onChange={handleSupportEmailDomainChange}
                 />
                 <p className='text-muted-foreground text-sm'>
                   {t('support_email_domains_description')}
                 </p>
               </div>
-              <Button onClick={handleSaveChanges} disabled={isLoading}>
+              <Button disabled={isLoading} onClick={handleSaveChanges}>
                 {isLoading ? t('saving') : t('save_changes')}
               </Button>
             </CardContent>

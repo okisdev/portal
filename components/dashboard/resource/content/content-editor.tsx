@@ -57,40 +57,40 @@ function TagManager({ tags, onTagsChange, disabled }: TagManagerProps) {
       {isEditing && !disabled ? (
         <div className='flex-1'>
           <Combobox
-            value=''
-            onChange={handleAddTag}
-            items={contentTags}
-            placeholder={t('add_tags')}
-            searchPlaceholder={t('tags_search_placeholder')}
+            allowCustom
             emptyText={t('no_matching_tags')}
             groupHeading={t('existing_tags')}
-            allowCustom
+            items={contentTags}
+            onChange={handleAddTag}
+            placeholder={t('add_tags')}
+            searchPlaceholder={t('tags_search_placeholder')}
             size='sm'
+            value=''
           />
         </div>
       ) : (
         <div className='flex items-center gap-1'>
           <button
-            type='button'
-            onClick={() => !disabled && setIsEditing(true)}
-            disabled={disabled}
             className='flex flex-wrap items-center gap-1 rounded-sm px-1 hover:bg-accent/40'
+            disabled={disabled}
+            onClick={() => !disabled && setIsEditing(true)}
+            type='button'
           >
             {tags.length > 0 ? (
               tags.map((tag) => (
                 <Badge
+                  className='gap-0.5 py-0.5 text-xs'
                   key={tag}
                   variant='secondary'
-                  className='gap-0.5 py-0.5 text-xs'
                 >
                   {tag}
                   {!disabled && (
                     <div
+                      className='ml-1 cursor-pointer rounded-full outline-hidden hover:text-destructive'
                       onMouseDown={(e) => {
                         e.stopPropagation();
                         handleRemoveTag(tag);
                       }}
-                      className='ml-1 cursor-pointer rounded-full outline-hidden hover:text-destructive'
                     >
                       <X className='size-2.5' />
                     </div>
@@ -105,10 +105,10 @@ function TagManager({ tags, onTagsChange, disabled }: TagManagerProps) {
           </button>
           {tags.length > 0 && !disabled && (
             <Button
-              variant='ghost'
-              size='sm'
-              onClick={() => setIsEditing(true)}
               className='h-5 w-5 p-0'
+              onClick={() => setIsEditing(true)}
+              size='sm'
+              variant='ghost'
             >
               <Plus className='size-3' />
             </Button>
@@ -207,73 +207,73 @@ export function ContentEditor({
           <div className='flex-1 space-y-1'>
             {editingTitle && !isViewMode ? (
               <Input
-                value={tempTitle}
-                onChange={(e) => setTempTitle(e.target.value)}
-                onBlur={handleTitleEdit}
-                onKeyDown={(e) => e.key === 'Enter' && handleTitleEdit()}
                 className='h-8 font-medium text-base'
+                onBlur={handleTitleEdit}
+                onChange={(e) => setTempTitle(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleTitleEdit()}
+                value={tempTitle}
               />
             ) : (
               <button
-                type='button'
                 className='w-full rounded-sm p-0.5 text-left font-medium text-base hover:bg-accent/40'
-                onClick={() => !isViewMode && setEditingTitle(true)}
                 disabled={isViewMode}
+                onClick={() => !isViewMode && setEditingTitle(true)}
+                type='button'
               >
                 {content.title}
               </button>
             )}
             {editingDescription && !isViewMode ? (
               <Input
-                value={tempDescription}
-                onChange={(e) => setTempDescription(e.target.value)}
-                onBlur={handleDescriptionEdit}
-                onKeyDown={(e) => e.key === 'Enter' && handleDescriptionEdit()}
                 className='h-7 text-muted-foreground text-sm'
+                onBlur={handleDescriptionEdit}
+                onChange={(e) => setTempDescription(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleDescriptionEdit()}
+                value={tempDescription}
               />
             ) : (
               <button
-                type='button'
                 className='w-full rounded-sm p-0.5 text-left text-muted-foreground text-sm hover:bg-accent/40'
-                onClick={() => !isViewMode && setEditingDescription(true)}
                 disabled={isViewMode}
+                onClick={() => !isViewMode && setEditingDescription(true)}
+                type='button'
               >
                 {content.description || t('add_a_description')}
               </button>
             )}
             <TagManager
-              tags={tempTags}
-              onTagsChange={handleTagsChange}
               disabled={isViewMode}
+              onTagsChange={handleTagsChange}
+              tags={tempTags}
             />
           </div>
           <div className='flex h-full flex-col items-center justify-between'>
             <div className='flex items-center gap-1'>
               {hasUnsavedChanges && !isViewMode && (
                 <Button
-                  variant='ghost'
-                  size='sm'
-                  onClick={handleSave}
-                  disabled={isLoading}
                   className='h-7 gap-1 px-2 text-xs'
+                  disabled={isLoading}
+                  onClick={handleSave}
+                  size='sm'
+                  variant='ghost'
                 >
                   <Save className='h-3 w-3' />
                   {t('save')}
                 </Button>
               )}
               <Button
-                variant='ghost'
-                size='sm'
-                onClick={() => setShowSendHistory(true)}
                 className='h-7 w-7 p-0'
+                onClick={() => setShowSendHistory(true)}
+                size='sm'
+                variant='ghost'
               >
                 <Database className='h-3 w-3' />
               </Button>
               <Button
-                variant='ghost'
-                size='sm'
-                onClick={() => setIsViewMode(!isViewMode)}
                 className='h-7 w-7 p-0'
+                onClick={() => setIsViewMode(!isViewMode)}
+                size='sm'
+                variant='ghost'
               >
                 {isViewMode ? (
                   <Eye className='h-3 w-3' />
@@ -283,10 +283,10 @@ export function ContentEditor({
               </Button>
               {!isViewMode && (
                 <Button
-                  variant='ghost'
-                  size='sm'
-                  onClick={onDelete}
                   className='h-7 w-7 p-0'
+                  onClick={onDelete}
+                  size='sm'
+                  variant='ghost'
                 >
                   <Trash className='h-3 w-3 text-destructive' />
                 </Button>
@@ -318,20 +318,20 @@ export function ContentEditor({
 
       <div className='flex-1'>
         <TipTapEditor
-          key={content.id}
+          className='h-full'
           content={editorContent}
-          onChange={handleContentChange}
           disabled={isViewMode}
           editable={!isViewMode}
-          className='h-full'
+          key={content.id}
+          onChange={handleContentChange}
         />
       </div>
 
       {content && (
         <SendHistoryDialog
-          open={showSendHistory}
-          onOpenChange={setShowSendHistory}
           content={content}
+          onOpenChange={setShowSendHistory}
+          open={showSendHistory}
         />
       )}
     </div>

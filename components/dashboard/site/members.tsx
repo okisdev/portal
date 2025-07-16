@@ -108,19 +108,19 @@ export function SiteMembers() {
       id: 'select',
       header: ({ table }) => (
         <Checkbox
+          aria-label='Select all'
           checked={
             table.getIsAllPageRowsSelected() ||
             (table.getIsSomePageRowsSelected() && 'indeterminate')
           }
           onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-          aria-label='Select all'
         />
       ),
       cell: ({ row }) => (
         <Checkbox
+          aria-label='Select row'
           checked={row.getIsSelected()}
           onCheckedChange={(value) => row.toggleSelected(!!value)}
-          aria-label='Select row'
         />
       ),
       enableSorting: false,
@@ -151,7 +151,7 @@ export function SiteMembers() {
       cell: ({ row }) => (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant='ghost' className='h-8 w-8 p-0'>
+            <Button className='h-8 w-8 p-0' variant='ghost'>
               <MoreHorizontal className='h-4 w-4' />
             </Button>
           </DropdownMenuTrigger>
@@ -192,7 +192,7 @@ export function SiteMembers() {
 
   return (
     <div className='space-y-4'>
-      <PageHeader title={t('site')} description={t('site_description')} />
+      <PageHeader description={t('site_description')} title={t('site')} />
 
       <div className='grid gap-4 md:grid-cols-2'>
         <Card>
@@ -222,13 +222,13 @@ export function SiteMembers() {
           <CardDescription>{t('user_management_description')}</CardDescription>
         </CardHeader>
         <CardContent>
-          <DataTable table={table} columns={columns} loading={isLoading} />
+          <DataTable columns={columns} loading={isLoading} table={table} />
         </CardContent>
       </Card>
 
       <Dialog
-        open={editingUser !== null}
         onOpenChange={(open) => !open && setEditingUser(null)}
+        open={editingUser !== null}
       >
         <DialogContent className='max-h-[90vh] max-w-xl overflow-y-auto'>
           <DialogHeader>
@@ -239,23 +239,23 @@ export function SiteMembers() {
               <div className='space-y-2'>
                 <Label>{t('first_name')}</Label>
                 <Input
-                  value={editingUser?.firstName ?? ''}
                   onChange={(e) =>
                     setEditingUser((prev) =>
                       prev ? { ...prev, firstName: e.target.value } : null
                     )
                   }
+                  value={editingUser?.firstName ?? ''}
                 />
               </div>
               <div className='space-y-2'>
                 <Label>{t('last_name')}</Label>
                 <Input
-                  value={editingUser?.lastName ?? ''}
                   onChange={(e) =>
                     setEditingUser((prev) =>
                       prev ? { ...prev, lastName: e.target.value } : null
                     )
                   }
+                  value={editingUser?.lastName ?? ''}
                 />
               </div>
             </div>
@@ -263,37 +263,37 @@ export function SiteMembers() {
             <div className='space-y-2'>
               <Label>{t('email')}</Label>
               <Input
-                type='email'
-                value={editingUser?.email ?? ''}
                 onChange={(e) =>
                   setEditingUser((prev) =>
                     prev ? { ...prev, email: e.target.value } : null
                   )
                 }
+                type='email'
+                value={editingUser?.email ?? ''}
               />
             </div>
 
             <div className='space-y-2'>
               <Label>{t('username')}</Label>
               <Input
-                value={editingUser?.username ?? ''}
                 onChange={(e) =>
                   setEditingUser((prev) =>
                     prev ? { ...prev, username: e.target.value } : null
                   )
                 }
+                value={editingUser?.username ?? ''}
               />
             </div>
 
             <div className='space-y-2'>
               <Label>{t('role')}</Label>
               <Select
-                value={editingUser?.role ?? undefined}
                 onValueChange={(value: UserRole) =>
                   setEditingUser((prev) =>
                     prev ? { ...prev, role: value } : null
                   )
                 }
+                value={editingUser?.role ?? undefined}
               >
                 <SelectTrigger>
                   <SelectValue placeholder={t('select_role')} />
@@ -313,10 +313,10 @@ export function SiteMembers() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant='outline' onClick={() => setEditingUser(null)}>
+            <Button onClick={() => setEditingUser(null)} variant='outline'>
               {t('cancel')}
             </Button>
-            <Button onClick={handleUpdateUser} disabled={updateUserPending}>
+            <Button disabled={updateUserPending} onClick={handleUpdateUser}>
               {updateUserPending ? t('saving_loading') : t('save_changes')}
             </Button>
           </DialogFooter>
@@ -324,11 +324,11 @@ export function SiteMembers() {
       </Dialog>
 
       <ActionAlertDialog
-        open={userToDelete !== null}
-        onOpenChange={(open) => !open && setUserToDelete(null)}
-        onConfirm={() => userToDelete && deleteUser(userToDelete.id)}
-        title={t('delete_user')}
         description={t('delete_user_description')}
+        onConfirm={() => userToDelete && deleteUser(userToDelete.id)}
+        onOpenChange={(open) => !open && setUserToDelete(null)}
+        open={userToDelete !== null}
+        title={t('delete_user')}
       />
     </div>
   );

@@ -102,8 +102,8 @@ export function ContentForm({
   return (
     <Form {...form}>
       <form
-        onSubmit={form.handleSubmit(onSubmitForm)}
         className='flex h-full flex-col'
+        onSubmit={form.handleSubmit(onSubmitForm)}
       >
         <div className='space-y-4 border-b bg-background p-4'>
           <FormField
@@ -147,26 +147,26 @@ export function ContentForm({
                 <FormControl>
                   <div className='space-y-2'>
                     <Combobox
-                      value=''
-                      onChange={handleAddTag}
-                      items={contentTags}
-                      placeholder={t('add_tags')}
-                      searchPlaceholder={t('tags_search_placeholder')}
+                      allowCustom
                       emptyText={t('no_matching_tags')}
                       groupHeading={t('existing_tags')}
-                      allowCustom
+                      items={contentTags}
+                      onChange={handleAddTag}
+                      placeholder={t('add_tags')}
+                      searchPlaceholder={t('tags_search_placeholder')}
+                      value=''
                     />
                     <div className='flex flex-wrap gap-1.5'>
                       {(field.value
                         ? (JSON.parse(field.value) as string[])
                         : []
                       ).map((tag: string) => (
-                        <Badge key={tag} variant='secondary' className='gap-1'>
+                        <Badge className='gap-1' key={tag} variant='secondary'>
                           {tag}
                           <button
-                            type='button'
-                            onClick={() => handleRemoveTag(tag)}
                             className='ml-1 rounded-full outline-hidden hover:text-destructive'
+                            onClick={() => handleRemoveTag(tag)}
+                            type='button'
                           >
                             <X className='size-3' />
                           </button>
@@ -207,9 +207,9 @@ export function ContentForm({
               <FormItem className='h-full'>
                 <FormControl>
                   <TipTapEditor
+                    className='h-full'
                     content={field.value}
                     onChange={field.onChange}
-                    className='h-full'
                   />
                 </FormControl>
                 <FormMessage />
@@ -218,7 +218,7 @@ export function ContentForm({
           />
         </div>
         <div className='border-t bg-background p-4'>
-          <Button type='submit' disabled={isSubmitting} className='w-full'>
+          <Button className='w-full' disabled={isSubmitting} type='submit'>
             {content ? t('update') : t('create')}
           </Button>
         </div>

@@ -149,12 +149,44 @@ export default function LoginPage() {
 
   return (
     <AnimatePresence mode='wait'>
-      {!emailSent ? (
+      {emailSent ? (
         <motion.div
-          key='login-form'
+          animate={{ opacity: 1, y: 0 }}
+          className='space-y-6 text-center'
+          exit={{ opacity: 0, y: -20 }}
           initial={{ opacity: 0, y: 20 }}
+          key='success-message'
+          transition={{ duration: 0.2 }}
+        >
+          <div className='flex justify-center'>
+            <CheckCircle2 className='h-12 w-12 text-green-500' />
+          </div>
+          <div className='space-y-2'>
+            <h2 className='font-medium text-2xl text-foreground'>
+              Check your email
+            </h2>
+            <p className='text-muted-foreground'>
+              We've sent a magic link to{' '}
+              <span className='font-medium text-foreground'>{sentEmail}</span>
+            </p>
+          </div>
+          <button
+            className='text-muted-foreground text-sm hover:text-foreground'
+            onClick={() => {
+              setEmailSent(false);
+              setSentEmail('');
+            }}
+            type='button'
+          >
+            Use a different email
+          </button>
+        </motion.div>
+      ) : (
+        <motion.div
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -20 }}
+          initial={{ opacity: 0, y: 20 }}
+          key='login-form'
           transition={{ duration: 0.2 }}
         >
           <div className='space-y-2 text-center'>
@@ -166,39 +198,39 @@ export default function LoginPage() {
             </p>
           </div>
 
-          <form onSubmit={handleSubmit(onSubmit)} className='mt-6 space-y-2'>
+          <form className='mt-6 space-y-2' onSubmit={handleSubmit(onSubmit)}>
             {from === 'register' && type === 'success' && (
               <Banner
-                title={t('registration_successful')}
                 description={t('please_login_to_continue')}
+                title={t('registration_successful')}
                 variant='success'
               />
             )}
             {from === 'reset-password' && type === 'success' && (
               <Banner
-                title={t('password_reset_successful')}
                 description={t('please_login_with_new_password')}
+                title={t('password_reset_successful')}
                 variant='success'
               />
             )}
             {from === 'password-reset' && type === 'sent' && (
               <Banner
-                title={t('password_reset_email_sent')}
                 description={t('check_email_for_reset_link')}
+                title={t('password_reset_email_sent')}
                 variant='success'
               />
             )}
             {error && (
-              <Banner title={t('error')} description={error} variant='error' />
+              <Banner description={error} title={t('error')} variant='error' />
             )}
 
             <div className='space-y-1'>
               <Label className='mb-1 flex justify-between font-medium text-foreground text-sm'>
                 <span>{t('email')}</span>
                 <button
-                  type='button'
-                  onClick={() => setIsPasswordLogin(!isPasswordLogin)}
                   className='text-muted-foreground text-sm hover:text-foreground'
+                  onClick={() => setIsPasswordLogin(!isPasswordLogin)}
+                  type='button'
                 >
                   {isPasswordLogin ? t('use_magic_link') : t('use_password')}
                 </button>
@@ -206,8 +238,8 @@ export default function LoginPage() {
               <input
                 type='email'
                 {...register('email')}
-                onBlur={handleEmailBlur}
                 className='w-full rounded-lg border bg-background p-2 focus:outline-hidden focus:ring-2 focus:ring-ring'
+                onBlur={handleEmailBlur}
                 placeholder={t('email_placeholder')}
               />
               {errors.email && (
@@ -238,8 +270,8 @@ export default function LoginPage() {
             <div className='flex items-center justify-end'>
               {isPasswordLogin && (
                 <Link
-                  href='/forgot-password'
                   className='text-muted-foreground text-sm hover:text-foreground hover:underline'
+                  href='/forgot-password'
                 >
                   {t('forgot_password')}
                 </Link>
@@ -248,9 +280,9 @@ export default function LoginPage() {
 
             <div className='space-y-3'>
               <button
-                type='submit'
-                disabled={loading || !email || (isPasswordLogin && !password)}
                 className='flex w-full items-center justify-center rounded-lg bg-primary px-4 py-2 font-medium text-primary-foreground transition-colors hover:bg-primary/80 disabled:cursor-not-allowed disabled:opacity-50'
+                disabled={loading || !email || (isPasswordLogin && !password)}
+                type='submit'
               >
                 {loading ? (
                   <>
@@ -266,46 +298,14 @@ export default function LoginPage() {
               <p className='text-center text-muted-foreground text-sm'>
                 {t('dont_have_an_account')}{' '}
                 <Link
-                  href='/register'
                   className='text-muted-foreground underline hover:text-foreground'
+                  href='/register'
                 >
                   {t('sign_up')}
                 </Link>
               </p>
             </div>
           </form>
-        </motion.div>
-      ) : (
-        <motion.div
-          key='success-message'
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -20 }}
-          transition={{ duration: 0.2 }}
-          className='space-y-6 text-center'
-        >
-          <div className='flex justify-center'>
-            <CheckCircle2 className='h-12 w-12 text-green-500' />
-          </div>
-          <div className='space-y-2'>
-            <h2 className='font-medium text-2xl text-foreground'>
-              Check your email
-            </h2>
-            <p className='text-muted-foreground'>
-              We've sent a magic link to{' '}
-              <span className='font-medium text-foreground'>{sentEmail}</span>
-            </p>
-          </div>
-          <button
-            type='button'
-            onClick={() => {
-              setEmailSent(false);
-              setSentEmail('');
-            }}
-            className='text-muted-foreground text-sm hover:text-foreground'
-          >
-            Use a different email
-          </button>
         </motion.div>
       )}
     </AnimatePresence>

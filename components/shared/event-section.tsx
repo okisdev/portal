@@ -90,7 +90,7 @@ export function EventSection({
     <div className='space-y-1'>
       <div className='flex items-center justify-between'>
         <h2 className='font-medium text-foreground'>{t('meetings')}</h2>
-        <Button variant='ghost' size='icon' onClick={handleOpenBookingModal}>
+        <Button onClick={handleOpenBookingModal} size='icon' variant='ghost'>
           <Plus className='h-4 w-4' />
         </Button>
       </div>
@@ -102,11 +102,11 @@ export function EventSection({
             <AnimatePresence initial={false}>
               {todayAppointments.map((apt) => (
                 <motion.div
-                  key={apt.id}
-                  initial={{ opacity: 0, height: 0 }}
                   animate={{ opacity: 1, height: 'auto' }}
-                  exit={{ opacity: 0, height: 0 }}
                   className='flex items-center gap-3 rounded-md border bg-card px-3 py-2'
+                  exit={{ opacity: 0, height: 0 }}
+                  initial={{ opacity: 0, height: 0 }}
+                  key={apt.id}
                 >
                   <Calendar className='h-4 w-4 shrink-0 text-primary' />
                   <div className='min-w-0 flex-1'>
@@ -118,7 +118,7 @@ export function EventSection({
                   </div>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant='ghost' size='icon' className='h-8 w-8'>
+                      <Button className='h-8 w-8' size='icon' variant='ghost'>
                         <MoreHorizontal className='h-4 w-4' />
                       </Button>
                     </DropdownMenuTrigger>
@@ -153,9 +153,9 @@ export function EventSection({
 
         <div className='space-y-1'>
           <button
-            type='button'
             className='flex w-full items-center justify-between rounded-md px-1 py-1 hover:bg-accent'
             onClick={() => setIsUpcomingOpen(!isUpcomingOpen)}
+            type='button'
           >
             <p className='font-medium text-muted-foreground text-sm'>
               {t('upcoming_meetings')}
@@ -175,10 +175,10 @@ export function EventSection({
           <AnimatePresence initial={false}>
             {isUpcomingOpen && (
               <motion.div
-                initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: 'auto' }}
-                exit={{ opacity: 0, height: 0 }}
                 className='space-y-1 pt-1'
+                exit={{ opacity: 0, height: 0 }}
+                initial={{ opacity: 0, height: 0 }}
               >
                 {upcomingAppointments.length === 0 ? (
                   <p className='px-1 text-muted-foreground text-xs'>
@@ -187,11 +187,11 @@ export function EventSection({
                 ) : (
                   upcomingAppointments.map((apt) => (
                     <motion.div
-                      key={apt.id}
-                      initial={{ opacity: 0, height: 0 }}
                       animate={{ opacity: 1, height: 'auto' }}
-                      exit={{ opacity: 0, height: 0 }}
                       className='flex items-center gap-3 rounded-md border bg-card px-3 py-2'
+                      exit={{ opacity: 0, height: 0 }}
+                      initial={{ opacity: 0, height: 0 }}
+                      key={apt.id}
                     >
                       <Calendar className='h-4 w-4 shrink-0 text-primary' />
                       <div className='min-w-0 flex-1'>
@@ -206,9 +206,9 @@ export function EventSection({
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <Button
-                            variant='ghost'
-                            size='icon'
                             className='h-8 w-8'
+                            size='icon'
+                            variant='ghost'
                           >
                             <MoreHorizontal className='h-4 w-4' />
                           </Button>
@@ -246,9 +246,9 @@ export function EventSection({
 
         <div className='space-y-1'>
           <button
-            type='button'
             className='flex w-full items-center justify-between rounded-md px-1 py-1 hover:bg-accent'
             onClick={() => setIsPastOpen(!isPastOpen)}
+            type='button'
           >
             <span className='font-medium text-muted-foreground text-sm'>
               {t('past_meetings')}
@@ -268,10 +268,10 @@ export function EventSection({
           <AnimatePresence initial={false}>
             {isPastOpen && (
               <motion.div
-                initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: 'auto' }}
-                exit={{ opacity: 0, height: 0 }}
                 className='space-y-1 pt-1'
+                exit={{ opacity: 0, height: 0 }}
+                initial={{ opacity: 0, height: 0 }}
               >
                 {pastAppointments.length === 0 ? (
                   <p className='px-1 text-muted-foreground text-xs'>
@@ -280,11 +280,11 @@ export function EventSection({
                 ) : (
                   pastAppointments.map((apt) => (
                     <motion.div
-                      key={apt.id}
-                      initial={{ opacity: 0, height: 0 }}
                       animate={{ opacity: 1, height: 'auto' }}
-                      exit={{ opacity: 0, height: 0 }}
                       className='flex items-center gap-3 rounded-md border bg-muted/40 px-3 py-2'
+                      exit={{ opacity: 0, height: 0 }}
+                      initial={{ opacity: 0, height: 0 }}
+                      key={apt.id}
                     >
                       <Calendar className='h-4 w-4 shrink-0 text-muted-foreground' />
                       <div className='min-w-0 flex-1'>
@@ -298,9 +298,9 @@ export function EventSection({
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <Button
-                            variant='ghost'
-                            size='icon'
                             className='h-8 w-8'
+                            size='icon'
+                            variant='ghost'
                           >
                             <MoreHorizontal className='h-4 w-4' />
                           </Button>
@@ -338,11 +338,6 @@ export function EventSection({
       </div>
 
       <EventDialog
-        open={!!editingAppointment}
-        onOpenChange={(open) => !open && setEditingAppointment(null)}
-        onSubmit={handleEditAppointment}
-        isEditMode={true}
-        key={editingAppointment?.id}
         defaultValues={
           editingAppointment
             ? {
@@ -350,25 +345,30 @@ export function EventSection({
                 description: editingAppointment.description,
                 startAt: new Date(editingAppointment.startAt),
                 endAt: new Date(
-                  editingAppointment.startAt.getTime() + 30 * 60000
+                  editingAppointment.startAt.getTime() + 30 * 60_000
                 ),
               }
             : undefined
         }
         folders={calendarFolders}
+        isEditMode={true}
+        key={editingAppointment?.id}
+        onOpenChange={(open) => !open && setEditingAppointment(null)}
+        onSubmit={handleEditAppointment}
+        open={!!editingAppointment}
       />
 
       <EventDialog
-        open={isBookingModalOpen}
-        onOpenChange={setIsBookingModalOpen}
-        onSubmit={onCreateAppointment}
         defaultValues={{
           title: defaultTitle || '',
           startAt: new Date(),
-          endAt: new Date(Date.now() + 30 * 60000),
+          endAt: new Date(Date.now() + 30 * 60_000),
           folderId: 'default',
         }}
         folders={calendarFolders}
+        onOpenChange={setIsBookingModalOpen}
+        onSubmit={onCreateAppointment}
+        open={isBookingModalOpen}
       />
     </div>
   );

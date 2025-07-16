@@ -33,7 +33,7 @@ export function ContentSideList({
     <div className='w-1/3 border-r p-4'>
       <div className='mb-4 flex items-center justify-between'>
         <PageHeader title={t('contents')} />
-        <Button variant='outline' className='h-8' onClick={onNewContent}>
+        <Button className='h-8' onClick={onNewContent} variant='outline'>
           <PlusCircle className='h-4 w-4' />
           {t('new')}
         </Button>
@@ -42,10 +42,10 @@ export function ContentSideList({
       <div className='relative mb-4'>
         <Search className='absolute top-3 left-3 h-4 w-4 text-muted-foreground' />
         <Input
-          placeholder={t('search_contents')}
           className='pl-10'
-          value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
+          placeholder={t('search_contents')}
+          value={searchQuery}
         />
       </div>
 
@@ -59,17 +59,17 @@ export function ContentSideList({
         ) : (
           contents?.map((item) => (
             <button
-              type='button'
-              key={item.resourceContent.id}
               className={cn(
                 'mb-2 w-full cursor-pointer rounded-lg p-4 text-left transition-colors hover:bg-accent/50',
                 currentContent?.id === item.resourceContent.id
                   ? 'bg-accent'
                   : ''
               )}
+              key={item.resourceContent.id}
               onClick={() => {
                 router.push(`?id=${item.resourceContent.id}`);
               }}
+              type='button'
             >
               <div className='flex items-center justify-between'>
                 <h3 className='font-semibold'>{item.resourceContent.title}</h3>

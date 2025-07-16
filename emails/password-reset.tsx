@@ -28,11 +28,11 @@ export const PasswordResetEmail = ({
     <EmailLayout preview='Reset your Portal password'>
       <Section className='text-center'>
         <Img
-          src='https://portal.vifu.org/web-app-manifest-512x512.png'
-          width='60'
-          height='60'
           alt='Portal'
           className='mx-auto mb-4'
+          height='60'
+          src='https://portal.vifu.org/web-app-manifest-512x512.png'
+          width='60'
         />
         <Heading className='mb-6 font-bold text-2xl text-gray-900'>
           Reset your password
@@ -49,8 +49,8 @@ export const PasswordResetEmail = ({
 
       <Section className='my-8 text-center'>
         <Button
-          href={resetUrl}
           className='inline-block rounded-lg bg-blue-600 px-6 py-3 font-medium text-white no-underline hover:bg-blue-700'
+          href={resetUrl}
         >
           Reset Password
         </Button>
@@ -62,7 +62,7 @@ export const PasswordResetEmail = ({
       </Text>
 
       <Text className='mb-6 break-all rounded bg-gray-50 p-3 text-gray-700 text-sm'>
-        <Link href={resetUrl} className='text-blue-600 no-underline'>
+        <Link className='text-blue-600 no-underline' href={resetUrl}>
           {resetUrl}
         </Link>
       </Text>
@@ -80,8 +80,8 @@ export const PasswordResetEmail = ({
       <Text className='mb-4 text-gray-600 text-sm'>
         If you didn't request a password reset, please ignore this email or
         <Link
-          href='mailto:support@portal.example.com'
           className='text-blue-600 no-underline'
+          href='mailto:support@portal.example.com'
         >
           {' '}
           contact support

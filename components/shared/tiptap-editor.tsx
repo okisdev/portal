@@ -101,7 +101,7 @@ export function TipTapEditor({
         types: ['heading', 'paragraph'],
       }),
     ],
-    content: content,
+    content,
     editable: editable && !disabled,
     onUpdate: ({ editor }) => {
       if (!disabled && editable) {
@@ -178,11 +178,11 @@ export function TipTapEditor({
     children: React.ReactNode;
   }) => (
     <Button
-      type='button'
-      variant='ghost'
-      size='icon'
       className={cn('h-8 w-8', isActive && 'bg-muted')}
       onClick={onClick}
+      size='icon'
+      type='button'
+      variant='ghost'
     >
       {children}
     </Button>
@@ -208,31 +208,31 @@ export function TipTapEditor({
         <div className='flex flex-col items-start gap-1 border-b bg-muted/50 p-1'>
           <div className='flex gap-1'>
             <Button
-              type='button'
-              variant='ghost'
-              size='sm'
               className={cn('gap-2', mode === 'rich-text' && 'bg-muted')}
               onClick={() => setMode('rich-text')}
+              size='sm'
+              type='button'
+              variant='ghost'
             >
               <FileText className='h-4 w-4' />
               {t('rich_text')}
             </Button>
             <Button
-              type='button'
-              variant='ghost'
-              size='sm'
               className={cn('gap-2', mode === 'markdown' && 'bg-muted')}
               onClick={() => setMode('markdown')}
+              size='sm'
+              type='button'
+              variant='ghost'
             >
               <FileText className='h-4 w-4' />
               {t('markdown')}
             </Button>
             <Button
-              type='button'
-              variant='ghost'
-              size='sm'
               className={cn('gap-2', mode === 'html' && 'bg-muted')}
               onClick={() => setMode('html')}
+              size='sm'
+              type='button'
+              variant='ghost'
             >
               <Code className='h-4 w-4' />
               {t('html')}
@@ -243,32 +243,32 @@ export function TipTapEditor({
             {mode === 'rich-text' && (
               <>
                 <ToolbarButton
-                  onClick={() => editor.chain().focus().toggleBold().run()}
                   isActive={editor.isActive('bold')}
+                  onClick={() => editor.chain().focus().toggleBold().run()}
                 >
                   <Bold className='h-4 w-4' />
                 </ToolbarButton>
                 <ToolbarButton
-                  onClick={() => editor.chain().focus().toggleItalic().run()}
                   isActive={editor.isActive('italic')}
+                  onClick={() => editor.chain().focus().toggleItalic().run()}
                 >
                   <Italic className='h-4 w-4' />
                 </ToolbarButton>
                 <ToolbarButton
-                  onClick={() => editor.chain().focus().toggleUnderline().run()}
                   isActive={editor.isActive('underline')}
+                  onClick={() => editor.chain().focus().toggleUnderline().run()}
                 >
                   <UnderlineIcon className='h-4 w-4' />
                 </ToolbarButton>
                 <ToolbarButton
-                  onClick={() => editor.chain().focus().toggleStrike().run()}
                   isActive={editor.isActive('strike')}
+                  onClick={() => editor.chain().focus().toggleStrike().run()}
                 >
                   <Strikethrough className='h-4 w-4' />
                 </ToolbarButton>
                 <ToolbarButton
-                  onClick={setLink}
                   isActive={editor.isActive('link')}
+                  onClick={setLink}
                 >
                   <LinkIcon className='h-4 w-4' />
                 </ToolbarButton>
@@ -276,50 +276,50 @@ export function TipTapEditor({
                   <ImageIcon className='h-4 w-4' />
                 </ToolbarButton>
                 <ToolbarButton
+                  isActive={editor.isActive({ textAlign: 'left' })}
                   onClick={() =>
                     editor.chain().focus().setTextAlign('left').run()
                   }
-                  isActive={editor.isActive({ textAlign: 'left' })}
                 >
                   <AlignLeft className='h-4 w-4' />
                 </ToolbarButton>
                 <ToolbarButton
+                  isActive={editor.isActive({ textAlign: 'center' })}
                   onClick={() =>
                     editor.chain().focus().setTextAlign('center').run()
                   }
-                  isActive={editor.isActive({ textAlign: 'center' })}
                 >
                   <AlignCenter className='h-4 w-4' />
                 </ToolbarButton>
                 <ToolbarButton
+                  isActive={editor.isActive({ textAlign: 'right' })}
                   onClick={() =>
                     editor.chain().focus().setTextAlign('right').run()
                   }
-                  isActive={editor.isActive({ textAlign: 'right' })}
                 >
                   <AlignRight className='h-4 w-4' />
                 </ToolbarButton>
                 <ToolbarButton
+                  isActive={editor.isActive('bulletList')}
                   onClick={() =>
                     editor.chain().focus().toggleBulletList().run()
                   }
-                  isActive={editor.isActive('bulletList')}
                 >
                   <List className='h-4 w-4' />
                 </ToolbarButton>
                 <ToolbarButton
+                  isActive={editor.isActive('orderedList')}
                   onClick={() =>
                     editor.chain().focus().toggleOrderedList().run()
                   }
-                  isActive={editor.isActive('orderedList')}
                 >
                   <ListOrdered className='h-4 w-4' />
                 </ToolbarButton>
                 <ToolbarButton
+                  isActive={editor.isActive('blockquote')}
                   onClick={() =>
                     editor.chain().focus().toggleBlockquote().run()
                   }
-                  isActive={editor.isActive('blockquote')}
                 >
                   <Quote className='h-4 w-4' />
                 </ToolbarButton>
@@ -342,24 +342,25 @@ export function TipTapEditor({
       <div className='relative flex-1 overflow-hidden'>
         {mode === 'html' ? (
           <textarea
-            value={htmlContent}
-            onChange={handleHtmlChange}
             className='absolute inset-0 w-full resize-none overflow-y-auto p-4 font-mono text-sm focus:outline-hidden'
-            placeholder={t('html_placeholder')}
             disabled={disabled}
+            onChange={handleHtmlChange}
+            placeholder={t('html_placeholder')}
             readOnly={!editable || disabled}
+            value={htmlContent}
           />
         ) : mode === 'markdown' ? (
           <textarea
-            value={markdownContent}
-            onChange={handleMarkdownChange}
             className='absolute inset-0 w-full resize-none overflow-y-auto p-4 font-mono text-sm focus:outline-hidden'
-            placeholder={t('markdown_placeholder')}
             disabled={disabled}
+            onChange={handleMarkdownChange}
+            placeholder={t('markdown_placeholder')}
             readOnly={!editable || disabled}
+            value={markdownContent}
           />
         ) : (
           <div
+            aria-hidden={!editable || disabled}
             className={cn(
               'absolute inset-0 overflow-y-auto',
               editable && !disabled && mode === 'rich-text'
@@ -373,8 +374,8 @@ export function TipTapEditor({
             }}
           >
             <EditorContent
-              editor={editor}
               className='prose prose-sm dark:prose-invert max-w-none p-4'
+              editor={editor}
             />
           </div>
         )}

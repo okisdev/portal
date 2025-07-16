@@ -21,7 +21,7 @@ export function hexToRgb(
 export function getRelativeLuminance(r: number, g: number, b: number): number {
   const [rs, gs, bs] = [r, g, b].map((c) => {
     const normalized = c / 255;
-    return normalized <= 0.03928
+    return normalized <= 0.039_28
       ? normalized / 12.92
       : ((normalized + 0.055) / 1.055) ** 2.4;
   });
@@ -50,7 +50,7 @@ export function adjustColorBrightness(color: string, amount: number): string {
 }
 
 export function randomColor(type: 'hex' | 'rgb' = 'hex') {
-  const color = `#${Math.floor(Math.random() * 16777215).toString(16)}`;
+  const color = `#${Math.floor(Math.random() * 16_777_215).toString(16)}`;
 
   return type === 'hex' ? color : rgbToHex(color);
 }

@@ -39,11 +39,11 @@ export const MagicLinkEmail = ({
     <EmailLayout preview={preview}>
       <Section className='text-center'>
         <Img
-          src='https://portal.vifu.org/web-app-manifest-512x512.png'
-          width='60'
-          height='60'
           alt='Portal'
           className='mx-auto mb-4'
+          height='60'
+          src='https://portal.vifu.org/web-app-manifest-512x512.png'
+          width='60'
         />
         <Heading className='mb-6 font-bold text-2xl text-gray-900'>
           {title}
@@ -60,8 +60,8 @@ export const MagicLinkEmail = ({
 
       <Section className='my-8 text-center'>
         <Button
-          href={magicLinkUrl}
           className='inline-block rounded-lg bg-blue-600 px-6 py-3 font-medium text-white no-underline hover:bg-blue-700'
+          href={magicLinkUrl}
         >
           {action}
         </Button>
@@ -73,7 +73,7 @@ export const MagicLinkEmail = ({
       </Text>
 
       <Text className='mb-6 break-all rounded bg-gray-50 p-3 text-gray-700 text-sm'>
-        <Link href={magicLinkUrl} className='text-blue-600 no-underline'>
+        <Link className='text-blue-600 no-underline' href={magicLinkUrl}>
           {magicLinkUrl}
         </Link>
       </Text>
@@ -93,8 +93,8 @@ export const MagicLinkEmail = ({
           ? "If you didn't request a password reset, please ignore this email or "
           : "If you didn't request this sign-in link, please ignore this email or "}
         <Link
-          href='mailto:support@portal.example.com'
           className='text-blue-600 no-underline'
+          href='mailto:support@portal.example.com'
         >
           contact support
         </Link>{' '}

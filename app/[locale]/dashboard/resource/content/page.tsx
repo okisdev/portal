@@ -128,16 +128,16 @@ export default function ContentPage() {
       <div className='flex w-80 flex-col border-r bg-muted/10'>
         <div className='border-b bg-background p-4'>
           <PageHeader
-            title={t('content')}
             right={
               <button
-                type='button'
-                onClick={handleNewContent}
                 className='inline-flex h-9 items-center justify-center rounded-md bg-primary px-3 font-medium text-primary-foreground text-sm ring-offset-background transition-colors hover:bg-primary/90 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50'
+                onClick={handleNewContent}
+                type='button'
               >
                 {t('new')}
               </button>
             }
+            title={t('content')}
           />
         </div>
 
@@ -161,19 +161,19 @@ export default function ContentPage() {
                 : [];
               return (
                 <button
-                  key={item.resourceContent.id}
-                  type='button'
-                  onClick={() =>
-                    router.push(
-                      `/dashboard/resource/content?id=${item.resourceContent.id}`
-                    )
-                  }
                   className={cn(
                     'group w-full space-y-2 rounded-lg border bg-background p-3 text-left transition-all hover:border-primary/20 hover:shadow-xs',
                     currentContent?.id === item.resourceContent.id
                       ? 'border-primary/40 shadow-xs'
                       : ''
                   )}
+                  key={item.resourceContent.id}
+                  onClick={() =>
+                    router.push(
+                      `/dashboard/resource/content?id=${item.resourceContent.id}`
+                    )
+                  }
+                  type='button'
                 >
                   <div>
                     <h3 className='line-clamp-1 font-medium text-sm group-hover:text-primary'>
@@ -190,9 +190,9 @@ export default function ContentPage() {
                     <div className='flex flex-wrap items-center gap-1.5'>
                       {tags.map((tag: string) => (
                         <Badge
+                          className='text-xs'
                           key={tag}
                           variant='secondary'
-                          className='text-xs'
                         >
                           {tag}
                         </Badge>
@@ -230,26 +230,26 @@ export default function ContentPage() {
         {id ? (
           <ContentEditor
             content={currentContent}
-            onUpdate={handleUpdate}
-            onDelete={() => setIsDeleteDialogOpen(true)}
             isLoading={contentLoading}
+            onDelete={() => setIsDeleteDialogOpen(true)}
+            onUpdate={handleUpdate}
           />
         ) : (
           <ContentForm
-            onSubmit={createContent.mutate}
             isSubmitting={createContent.isPending}
+            onSubmit={createContent.mutate}
           />
         )}
       </div>
 
       <ActionAlertDialog
-        open={isDeleteDialogOpen}
-        onOpenChange={setIsDeleteDialogOpen}
-        onConfirm={handleDelete}
-        title={t('delete_content')}
-        description={t('delete_content_description')}
-        confirmText={t('delete')}
         cancelText={t('cancel')}
+        confirmText={t('delete')}
+        description={t('delete_content_description')}
+        onConfirm={handleDelete}
+        onOpenChange={setIsDeleteDialogOpen}
+        open={isDeleteDialogOpen}
+        title={t('delete_content')}
       />
     </div>
   );

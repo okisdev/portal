@@ -144,7 +144,7 @@ export function SendEmail({ open, onOpenChange, recipient }: SendEmailProps) {
   if (!recipient) return null;
 
   return (
-    <Dialog open={open} onOpenChange={handleClose}>
+    <Dialog onOpenChange={handleClose} open={open}>
       <DialogContent className='max-h-[90vh] max-w-2xl overflow-y-auto p-4 sm:p-6'>
         <DialogHeader>
           <DialogTitle>{t('compose_email')}</DialogTitle>
@@ -178,10 +178,10 @@ export function SendEmail({ open, onOpenChange, recipient }: SendEmailProps) {
                 <span className='text-sm'>{recipient.name}</span>
               </div>
               <Button
-                variant='ghost'
-                size='sm'
-                onClick={() => setShowCcBcc(!showCcBcc)}
                 className='text-muted-foreground hover:text-foreground'
+                onClick={() => setShowCcBcc(!showCcBcc)}
+                size='sm'
+                variant='ghost'
               >
                 {showCcBcc ? 'Hide CC/BCC' : 'Add CC/BCC'}
               </Button>
@@ -195,8 +195,6 @@ export function SendEmail({ open, onOpenChange, recipient }: SendEmailProps) {
                   CC
                 </div>
                 <Input
-                  placeholder='Enter CC email addresses (comma separated)'
-                  value={formData.cc.join(', ')}
                   onChange={(e) =>
                     setFormData((prev) => ({
                       ...prev,
@@ -205,6 +203,8 @@ export function SendEmail({ open, onOpenChange, recipient }: SendEmailProps) {
                         .map((email) => email.trim()),
                     }))
                   }
+                  placeholder='Enter CC email addresses (comma separated)'
+                  value={formData.cc.join(', ')}
                 />
               </div>
               <div className='flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4'>
@@ -212,8 +212,6 @@ export function SendEmail({ open, onOpenChange, recipient }: SendEmailProps) {
                   BCC
                 </div>
                 <Input
-                  placeholder='Enter BCC email addresses (comma separated)'
-                  value={formData.bcc.join(', ')}
                   onChange={(e) =>
                     setFormData((prev) => ({
                       ...prev,
@@ -222,6 +220,8 @@ export function SendEmail({ open, onOpenChange, recipient }: SendEmailProps) {
                         .map((email) => email.trim()),
                     }))
                   }
+                  placeholder='Enter BCC email addresses (comma separated)'
+                  value={formData.bcc.join(', ')}
                 />
               </div>
             </>
@@ -229,19 +229,19 @@ export function SendEmail({ open, onOpenChange, recipient }: SendEmailProps) {
 
           <div className='space-y-4'>
             <Input
-              placeholder='Subject'
-              value={formData.subject}
               onChange={(e) =>
                 setFormData((prev) => ({ ...prev, subject: e.target.value }))
               }
+              placeholder='Subject'
+              value={formData.subject}
             />
             <TipTapEditor
+              className='min-h-[200px]'
               content={formData.content}
               onChange={(content) =>
                 setFormData((prev) => ({ ...prev, content }))
               }
               placeholder='Write your message...'
-              className='min-h-[200px]'
             />
           </div>
 
@@ -249,15 +249,15 @@ export function SendEmail({ open, onOpenChange, recipient }: SendEmailProps) {
             <div className='flex items-center justify-between'>
               <h3 className='font-medium text-sm'>{t('attachments')}</h3>
               <input
-                type='file'
-                multiple
-                onChange={handleFileChange}
                 className='hidden'
                 id='file-upload'
+                multiple
+                onChange={handleFileChange}
+                type='file'
               />
               <label
-                htmlFor='file-upload'
                 className='cursor-pointer text-muted-foreground text-xs hover:text-foreground'
+                htmlFor='file-upload'
               >
                 {t('add_attachment')}
               </label>
@@ -265,8 +265,8 @@ export function SendEmail({ open, onOpenChange, recipient }: SendEmailProps) {
             <div className='grid grid-cols-1 gap-4 sm:grid-cols-3'>
               {formData.attachments.map((file, index) => (
                 <div
-                  key={file.name + nanoid()}
                   className='flex items-center gap-3 rounded-lg border p-3'
+                  key={file.name + nanoid()}
                 >
                   <div className='flex size-10 items-center justify-center rounded-lg bg-muted'>
                     <File className='size-5 text-blue-600' />
@@ -278,10 +278,10 @@ export function SendEmail({ open, onOpenChange, recipient }: SendEmailProps) {
                     </p>
                   </div>
                   <Button
-                    variant='ghost'
-                    size='icon'
-                    onClick={() => removeAttachment(index)}
                     className='size-6'
+                    onClick={() => removeAttachment(index)}
+                    size='icon'
+                    variant='ghost'
                   >
                     <X className='size-4' />
                   </Button>
@@ -294,11 +294,11 @@ export function SendEmail({ open, onOpenChange, recipient }: SendEmailProps) {
         <div className='flex flex-col items-center justify-between gap-4 border-t pt-4 sm:flex-row'>
           <div className='flex w-full items-center gap-2 sm:w-auto'>
             <Button
-              variant='outline'
-              size='icon'
               onClick={() =>
                 setFormData((prev) => ({ ...prev, attachments: [] }))
               }
+              size='icon'
+              variant='outline'
             >
               <Trash2 className='size-4' />
             </Button>
@@ -306,24 +306,24 @@ export function SendEmail({ open, onOpenChange, recipient }: SendEmailProps) {
           <div className='flex w-full flex-col items-center gap-2 sm:w-auto sm:flex-row'>
             {isScheduleMode ? (
               <Input
+                className='w-full sm:w-auto'
+                onChange={(e) => setScheduledDate(new Date(e.target.value))}
                 type='datetime-local'
                 value={scheduledDate?.toISOString().slice(0, 16) || ''}
-                onChange={(e) => setScheduledDate(new Date(e.target.value))}
-                className='w-full sm:w-auto'
               />
             ) : null}
             <Button
-              variant='outline'
               className='w-full gap-2 sm:w-auto'
               onClick={() => setIsScheduleMode(!isScheduleMode)}
+              variant='outline'
             >
               <Calendar className='size-4' />
               {isScheduleMode ? t('cancel_schedule') : t('schedule')}
             </Button>
             <Button
               className='w-full gap-2 sm:w-auto'
-              onClick={handleSend}
               disabled={sendEmail.isPending}
+              onClick={handleSend}
             >
               <Send className='size-4' />
               {isScheduleMode ? t('schedule') : t('send')}
