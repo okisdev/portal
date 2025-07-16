@@ -360,6 +360,7 @@ export function TipTapEditor({
           />
         ) : (
           <div
+            aria-hidden={!editable || disabled}
             className={cn(
               'absolute inset-0 overflow-y-auto',
               editable && !disabled && mode === 'rich-text'
