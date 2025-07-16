@@ -26,11 +26,11 @@ export const WelcomeEmail = ({
     <EmailLayout preview='Welcome to Portal!'>
       <Section className='text-center'>
         <Img
-          src='https://portal.vifu.org/web-app-manifest-512x512.png'
-          width='60'
-          height='60'
           alt='Portal'
           className='mx-auto mb-4'
+          height='60'
+          src='https://portal.vifu.org/web-app-manifest-512x512.png'
+          width='60'
         />
         <Heading className='mb-6 font-bold text-2xl text-gray-900'>
           Welcome to Portal!
@@ -52,8 +52,8 @@ export const WelcomeEmail = ({
 
       <Section className='my-8 text-center'>
         <Button
-          href={loginUrl}
           className='inline-block rounded-lg bg-blue-600 px-6 py-3 font-medium text-white no-underline hover:bg-blue-700'
+          href={loginUrl}
         >
           Get Started
         </Button>
@@ -81,15 +81,15 @@ export const WelcomeEmail = ({
       <Text className='mb-4 text-gray-600 text-sm'>
         Need help getting started? Check out our{' '}
         <Link
-          href='https://portal.example.com/docs'
           className='text-blue-600 no-underline'
+          href='https://portal.example.com/docs'
         >
           documentation
         </Link>{' '}
         or{' '}
         <Link
-          href='mailto:support@portal.example.com'
           className='text-blue-600 no-underline'
+          href='mailto:support@portal.example.com'
         >
           contact our support team
         </Link>

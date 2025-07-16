@@ -118,7 +118,7 @@ const ContactCard = memo(function ContactCard({
     <div
       className={cn(
         'rounded-lg border bg-card p-4 shadow-sm',
-        !simplified ? 'group relative' : ''
+        simplified ? '' : 'group relative'
       )}
     >
       <div className='flex items-start gap-3'>
@@ -135,12 +135,12 @@ const ContactCard = memo(function ContactCard({
             <h4 className='font-medium text-sm'>{contact.name}</h4>
             {onClickView && (
               <Button
-                variant='outline'
-                size='icon'
                 className='size-7 cursor-pointer'
-                onClick={handleClick}
-                title={t('view_contact_details')}
                 data-no-dnd='true'
+                onClick={handleClick}
+                size='icon'
+                title={t('view_contact_details')}
+                variant='outline'
               >
                 <ArrowUpRight className='size-4' />
               </Button>
@@ -166,30 +166,30 @@ const ContactCard = memo(function ContactCard({
               <div className='flex flex-wrap gap-2 pt-1'>
                 {contact.status && groupBy !== 'status' && (
                   <SmartColorBadge
-                    value={contact.status}
                     color={
                       statuses?.find((s: Status) => s.value === contact.status)
                         ?.color || '#6b7280'
                     }
+                    value={contact.status}
                   />
                 )}
                 {contact.priority && groupBy !== 'priority' && (
                   <SmartColorBadge
-                    value={contact.priority}
                     color={
                       priorities?.find(
                         (p: Priority) => p.value === contact.priority
                       )?.color || '#6b7280'
                     }
+                    value={contact.priority}
                   />
                 )}
                 {contact.source && groupBy !== 'source' && (
                   <SmartColorBadge
-                    value={contact.source}
                     color={
                       sources?.find((s: Source) => s.value === contact.source)
                         ?.color || '#6b7280'
                     }
+                    value={contact.source}
                   />
                 )}
               </div>
@@ -271,9 +271,9 @@ const SortableItem = memo(function SortableItem({
     <div
       {...attributes}
       {...listeners}
+      className='group relative cursor-move transition-colors'
       ref={setNodeRef}
       style={style}
-      className='group relative cursor-move transition-colors'
     >
       <div
         className='absolute top-2 right-2 cursor-grab touch-none opacity-0 group-hover:opacity-100'
@@ -284,8 +284,8 @@ const SortableItem = memo(function SortableItem({
       </div>
       <ContactCard
         contact={contact}
-        onClickView={handleItemClick}
         groupBy={groupBy}
+        onClickView={handleItemClick}
       />
     </div>
   );
@@ -374,7 +374,7 @@ function DroppableColumn({
   return (
     <div className='flex h-full w-[280px] shrink-0 flex-col sm:w-[280px]'>
       <div className='mb-2 flex items-center justify-between'>
-        <SmartColorBadge value={column.title} color={column.color} />
+        <SmartColorBadge color={column.color} value={column.title} />
         <div className='flex items-center gap-2'>
           <span className='text-muted-foreground text-xs'>
             {column.items.length}
@@ -382,7 +382,7 @@ function DroppableColumn({
           </span>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant='ghost' className='h-6 w-6 p-0'>
+              <Button className='h-6 w-6 p-0' variant='ghost'>
                 <MoreHorizontal className='h-4 w-4' />
               </Button>
             </DropdownMenuTrigger>
@@ -397,18 +397,18 @@ function DroppableColumn({
       </div>
       <div className='mb-2'>
         <Input
+          className='h-7 w-full text-xs'
+          onChange={(e) => setColumnSearch(e.target.value)}
           placeholder={t('search_in_column')}
           value={columnSearch}
-          onChange={(e) => setColumnSearch(e.target.value)}
-          className='h-7 w-full text-xs'
         />
       </div>
       <div
-        ref={setMultipleRefs}
         className={cn(
           'flex-1 overflow-y-auto rounded-lg border p-2',
           isOver ? 'bg-accent/20' : 'bg-muted/50'
         )}
+        ref={setMultipleRefs}
         style={{ position: 'relative' }}
       >
         <SortableContext
@@ -425,8 +425,8 @@ function DroppableColumn({
                   const contact = filteredItems[virtualItem.index];
                   return (
                     <div
-                      key={contact.id}
                       data-index={virtualItem.index}
+                      key={contact.id}
                       ref={virtualizer.measureElement}
                       style={{
                         position: 'absolute',
@@ -438,8 +438,8 @@ function DroppableColumn({
                     >
                       <SortableItem
                         contact={contact}
-                        onClick={onClick}
                         groupBy={groupBy}
+                        onClick={onClick}
                       />
                     </div>
                   );
@@ -457,18 +457,18 @@ function DroppableColumn({
         </SortableContext>
         {column.hasMore && filteredItems.length === column.items.length && (
           <div className='mt-2 space-y-2 text-center'>
-            <Badge variant='secondary' className='text-xs'>
+            <Badge className='text-xs' variant='secondary'>
               {t('showing_x_of_y', {
                 x: column.items.length,
                 y: column.totalCount,
               })}
             </Badge>
             <Button
-              variant='outline'
-              size='sm'
               className='w-full text-xs'
-              onClick={() => onLoadMore(column.id)}
               disabled={isLoadingMore}
+              onClick={() => onLoadMore(column.id)}
+              size='sm'
+              variant='outline'
             >
               {isLoadingMore ? t('loading') : t('load_more')}
             </Button>
@@ -502,8 +502,8 @@ const LoadingSkeleton = memo(function LoadingSkeleton() {
     <div className='flex h-full gap-4 overflow-x-auto'>
       {columnSkeletons.map((column) => (
         <div
-          key={column.id}
           className='flex h-full w-[280px] shrink-0 flex-col sm:w-[280px]'
+          key={column.id}
         >
           <div className='mb-2 flex items-center justify-between'>
             <Skeleton className='h-6 w-20' />
@@ -515,8 +515,8 @@ const LoadingSkeleton = memo(function LoadingSkeleton() {
           <div className='flex-1 space-y-2 overflow-y-auto rounded-lg border bg-muted/50 p-2'>
             {itemSkeletons.map((item) => (
               <div
-                key={`${column.id}-${item.id}`}
                 className='rounded-lg border bg-card p-4 shadow-sm'
+                key={`${column.id}-${item.id}`}
               >
                 <div className='flex items-start gap-3'>
                   <Skeleton className='size-8 rounded-full' />
@@ -676,7 +676,7 @@ export default function CRMContactsKanbanPage() {
     }
 
     // Ensure we have valid data before proceeding
-    if (!event.active || !event.active.id) {
+    if (!(event.active && event.active.id)) {
       return;
     }
 
@@ -688,7 +688,7 @@ export default function CRMContactsKanbanPage() {
     const { active, over } = event;
 
     // Add additional safeguards against undefined values
-    if (!active || !active.id || !over) {
+    if (!(active && active.id && over)) {
       setIsDragging(false);
       setActiveId(null);
       return;
@@ -893,32 +893,32 @@ export default function CRMContactsKanbanPage() {
   return (
     <div className='space-y-4 p-4'>
       <PageHeader
-        title={t('contacts')}
-        subtitle={
-          !isLoading
-            ? `(${t('total_number_contacts', { count: totalContacts })})`
-            : undefined
-        }
         description={t('contacts_description')}
+        subtitle={
+          isLoading
+            ? undefined
+            : `(${t('total_number_contacts', { count: totalContacts })})`
+        }
+        title={t('contacts')}
       />
 
       <div className='flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between'>
         <div className='flex flex-col gap-4 sm:flex-row sm:items-center'>
           <Input
-            placeholder={t('search_contacts')}
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
             className='h-8 w-full max-w-sm sm:w-72'
             disabled={isLoading}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder={t('search_contacts')}
+            value={search}
           />
           <Select
-            value={groupBy}
+            disabled={debouncedDragging}
             onValueChange={(value) =>
               setGroupBy(value as 'status' | 'priority' | 'source')
             }
-            disabled={debouncedDragging}
+            value={groupBy}
           >
-            <SelectTrigger size='sm' className='h-8 w-full sm:w-[120px]'>
+            <SelectTrigger className='h-8 w-full sm:w-[120px]' size='sm'>
               <SelectValue placeholder={t('group_by')} />
             </SelectTrigger>
             <SelectContent>
@@ -929,29 +929,29 @@ export default function CRMContactsKanbanPage() {
           </Select>
           <div className='flex items-center gap-2'>
             <Checkbox
-              id='show-empty-columns'
               checked={showEmptyColumns}
+              disabled={debouncedDragging}
+              id='show-empty-columns'
               onCheckedChange={(checked) => {
                 if (typeof checked === 'boolean') {
                   setShowEmptyColumns(checked);
                 }
               }}
-              disabled={debouncedDragging}
             />
             <label
-              htmlFor='show-empty-columns'
               className='text-muted-foreground text-sm'
+              htmlFor='show-empty-columns'
             >
               {t('show_empty_columns')}
             </label>
           </div>
           {hasHiddenColumns && (
             <Button
-              variant='outline'
-              size='sm'
               className='h-8'
-              onClick={handleShowAllColumns}
               disabled={debouncedDragging}
+              onClick={handleShowAllColumns}
+              size='sm'
+              variant='outline'
             >
               <Eye className='mr-2 h-4 w-4' />
               {t('show_all_columns')}
@@ -970,28 +970,28 @@ export default function CRMContactsKanbanPage() {
         ) : (
           <div className='flex h-full gap-4 overflow-x-auto'>
             <DndContext
-              sensors={sensors}
-              onDragStart={handleDragStart}
-              onDragEnd={handleDragEnd}
-              collisionDetection={closestCenter}
-              // Skip dragging if starting on button or other interactive elements
               autoScroll={{
                 threshold: {
                   x: 0.12,
                   y: 0.12,
                 },
               }}
+              collisionDetection={closestCenter}
+              onDragEnd={handleDragEnd}
+              onDragStart={handleDragStart}
+              // Skip dragging if starting on button or other interactive elements
+              sensors={sensors}
             >
               {visibleColumns.map((column) => (
                 <DroppableColumn
-                  key={column.id}
                   column={column}
-                  onClick={handleContactClick}
-                  showEmptyColumns={showEmptyColumns}
                   groupBy={groupBy}
+                  isLoadingMore={loadingMore[column.id]}
+                  key={column.id}
+                  onClick={handleContactClick}
                   onHideColumn={handleHideColumn}
                   onLoadMore={handleLoadMore}
-                  isLoadingMore={loadingMore[column.id] || false}
+                  showEmptyColumns={showEmptyColumns}
                 />
               ))}
               <DragOverlay>

@@ -150,7 +150,7 @@ export default function AccountSettingsPage() {
     event.preventDefault();
 
     // Don't submit if any field is empty
-    if (!currentPassword || !newPassword || !confirmPassword) {
+    if (!(currentPassword && newPassword && confirmPassword)) {
       return;
     }
 
@@ -266,24 +266,24 @@ export default function AccountSettingsPage() {
   return (
     <div className='container mx-auto max-w-4xl space-y-4 px-4 pt-10'>
       <PageHeader
-        title={t('account_settings')}
         description={t('account_settings_description')}
+        title={t('account_settings')}
       />
 
       <div className='flex h-full flex-col space-y-8'>
-        <Tabs defaultValue='profile' className='space-y-4'>
+        <Tabs className='space-y-4' defaultValue='profile'>
           <TabsList>
             <TabsTrigger value='profile'>{t('profile')}</TabsTrigger>
             <TabsTrigger value='password'>{t('password')}</TabsTrigger>
           </TabsList>
 
-          <TabsContent value='profile' className='space-y-4'>
+          <TabsContent className='space-y-4' value='profile'>
             <div className='space-y-8'>
               <div className='flex items-center space-x-8'>
                 <Avatar className='h-28 w-28'>
                   <AvatarImage
-                    src={image || '/default-avatar.png'}
                     alt='Profile picture'
+                    src={image || '/default-avatar.png'}
                   />
                   <AvatarFallback>
                     {firstName?.[0]}
@@ -298,18 +298,18 @@ export default function AccountSettingsPage() {
                     {t('update_your_profile_picture')}
                   </p>
                   <Button
+                    onClick={() => fileInputRef.current?.click()}
                     type='button'
                     variant='outline'
-                    onClick={() => fileInputRef.current?.click()}
                   >
                     {t('change_photo')}
                   </Button>
                   <Input
-                    type='file'
-                    ref={fileInputRef}
-                    onChange={handleImageUpload}
                     accept='image/*'
                     className='hidden'
+                    onChange={handleImageUpload}
+                    ref={fileInputRef}
+                    type='file'
                   />
                 </div>
               </div>
@@ -322,49 +322,49 @@ export default function AccountSettingsPage() {
                   <div className='space-y-2'>
                     <Label htmlFor='firstName'>{t('first_name')}</Label>
                     <Input
-                      type='text'
                       id='firstName'
-                      value={firstName}
-                      onChange={(e) => setFirstName(e.target.value)}
                       onBlur={(e) =>
                         handleNameChange('firstName', e.target.value)
                       }
+                      onChange={(e) => setFirstName(e.target.value)}
+                      type='text'
+                      value={firstName}
                     />
                   </div>
                   <div className='space-y-2'>
                     <Label htmlFor='lastName'>{t('last_name')}</Label>
                     <Input
-                      type='text'
                       id='lastName'
-                      value={lastName}
-                      onChange={(e) => setLastName(e.target.value)}
                       onBlur={(e) =>
                         handleNameChange('lastName', e.target.value)
                       }
+                      onChange={(e) => setLastName(e.target.value)}
+                      type='text'
+                      value={lastName}
                     />
                   </div>
                 </div>
                 <div className='space-y-2'>
                   <Label htmlFor='username'>{t('username')}</Label>
                   <Input
-                    type='text'
                     id='username'
-                    value={username}
+                    onBlur={(e) => handleUsernameChange(e.target.value)}
                     onChange={(e) => {
                       const lowercaseValue = e.target.value
                         .toLowerCase()
                         .replace(/\s+/g, '');
                       setUsername(lowercaseValue);
                     }}
-                    onBlur={(e) => handleUsernameChange(e.target.value)}
                     placeholder={t('enter_username')}
+                    type='text'
+                    value={username}
                   />
                   {usernameError && (
                     <p className='text-destructive text-sm'>{usernameError}</p>
                   )}
                 </div>
                 <div className='space-y-2'>
-                  <Label htmlFor='email' className='flex items-center gap-2'>
+                  <Label className='flex items-center gap-2' htmlFor='email'>
                     {t('email_address')}
                     {!isLoading && (
                       <Tooltip>
@@ -387,17 +387,17 @@ export default function AccountSettingsPage() {
                   </Label>
                   <div className='flex items-center gap-2'>
                     <Input
-                      type='email'
-                      id='email'
-                      value={email}
-                      readOnly
                       className='cursor-default'
+                      id='email'
+                      readOnly
+                      type='email'
+                      value={email}
                     />
                     <Button
-                      variant='outline'
-                      size='icon'
-                      onClick={handleEmailEditClick}
                       className='shrink-0'
+                      onClick={handleEmailEditClick}
+                      size='icon'
+                      variant='outline'
                     >
                       <Pencil className='h-4 w-4' />
                     </Button>
@@ -413,16 +413,14 @@ export default function AccountSettingsPage() {
                 <div className='space-y-2'>
                   <Label htmlFor='timezone'>{t('timezone')}</Label>
                   <Combobox
-                    value={timezone}
+                    allowCustom={false}
+                    emptyText={t('no_timezone_found')}
+                    groupHeading={t('timezones')}
+                    items={timezones.map((tz) => tz.value)}
                     onChange={(value) =>
                       handleTimezoneChange(value as Timezone)
                     }
-                    items={timezones.map((tz) => tz.value)}
                     placeholder={t('select_timezone')}
-                    searchPlaceholder={t('search_timezone')}
-                    emptyText={t('no_timezone_found')}
-                    groupHeading={t('timezones')}
-                    allowCustom={false}
                     renderItem={(item) => (
                       <div className='flex w-full items-center justify-between'>
                         <span>
@@ -432,36 +430,38 @@ export default function AccountSettingsPage() {
                         {timezone === item && <Check className='h-4 w-4' />}
                       </div>
                     )}
+                    searchPlaceholder={t('search_timezone')}
+                    value={timezone}
                   />
                 </div>
               </div>
             </div>
           </TabsContent>
 
-          <TabsContent value='password' className='space-y-4'>
+          <TabsContent className='space-y-4' value='password'>
             <div className='space-y-4'>
               <h2 className='font-medium text-2xl tracking-tight'>
                 {t('change_password')}
               </h2>
-              <form onSubmit={handlePasswordSubmit} className='space-y-4'>
+              <form className='space-y-4' onSubmit={handlePasswordSubmit}>
                 <div className='space-y-2'>
                   <Label htmlFor='currentPassword'>
                     {t('current_password')}
                   </Label>
                   <Input
-                    type='password'
                     id='currentPassword'
-                    value={currentPassword}
                     onChange={(e) => setCurrentPassword(e.target.value)}
+                    type='password'
+                    value={currentPassword}
                   />
                 </div>
                 <div className='space-y-2'>
                   <Label htmlFor='newPassword'>{t('new_password')}</Label>
                   <Input
-                    type='password'
                     id='newPassword'
-                    value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
+                    type='password'
+                    value={newPassword}
                   />
                 </div>
                 <div className='space-y-2'>
@@ -469,25 +469,25 @@ export default function AccountSettingsPage() {
                     {t('confirm_new_password')}
                   </Label>
                   <Input
-                    type='password'
                     id='confirmPassword'
-                    value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
+                    type='password'
+                    value={confirmPassword}
                   />
                 </div>
                 <div className='flex items-center justify-between'>
                   <Button
+                    className='text-muted-foreground hover:text-foreground'
+                    disabled={sendPasswordReset.isPending}
+                    onClick={handleForgotPassword}
                     type='button'
                     variant='ghost'
-                    onClick={handleForgotPassword}
-                    disabled={sendPasswordReset.isPending}
-                    className='text-muted-foreground hover:text-foreground'
                   >
                     {sendPasswordReset.isPending
                       ? t('sending_reset_email')
                       : t('forgot_current_password')}
                   </Button>
-                  <Button type='submit' disabled={updatePassword.isPending}>
+                  <Button disabled={updatePassword.isPending} type='submit'>
                     {updatePassword.isPending
                       ? t('updating_password')
                       : t('update_password')}
@@ -500,7 +500,6 @@ export default function AccountSettingsPage() {
       </div>
 
       <Dialog
-        open={isEmailDialogOpen}
         onOpenChange={(open) => {
           setIsEmailDialogOpen(open);
           if (!open) {
@@ -509,6 +508,7 @@ export default function AccountSettingsPage() {
             setConfirmPendingEmail('');
           }
         }}
+        open={isEmailDialogOpen}
       >
         <DialogContent>
           <DialogHeader>
@@ -522,20 +522,20 @@ export default function AccountSettingsPage() {
               <Label htmlFor='newEmail'>{t('new_email')}</Label>
               <Input
                 id='newEmail'
-                type='email'
-                value={pendingEmail}
                 onChange={(e) => setPendingEmail(e.target.value)}
                 placeholder={t('enter_new_email')}
+                type='email'
+                value={pendingEmail}
               />
             </div>
             <div className='space-y-2'>
               <Label htmlFor='confirmEmail'>{t('confirm_new_email')}</Label>
               <Input
                 id='confirmEmail'
-                type='email'
-                value={confirmPendingEmail}
                 onChange={(e) => setConfirmPendingEmail(e.target.value)}
                 placeholder={t('confirm_new_email')}
+                type='email'
+                value={confirmPendingEmail}
               />
             </div>
             {emailError && (
@@ -544,16 +544,16 @@ export default function AccountSettingsPage() {
           </div>
           <DialogFooter>
             <Button
-              variant='outline'
               onClick={() => setIsEmailDialogOpen(false)}
+              variant='outline'
             >
               {t('cancel')}
             </Button>
             <Button
-              onClick={confirmEmailChange}
               disabled={
                 updateAccount.isPending || !pendingEmail || !confirmPendingEmail
               }
+              onClick={confirmEmailChange}
             >
               {updateAccount.isPending ? t('updating') : t('update_email')}
             </Button>

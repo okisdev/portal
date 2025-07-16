@@ -227,19 +227,19 @@ export default function TeamIdPage() {
       id: 'select',
       header: ({ table }) => (
         <Checkbox
+          aria-label='Select all'
           checked={
             table.getIsAllPageRowsSelected() ||
             (table.getIsSomePageRowsSelected() && 'indeterminate')
           }
           onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-          aria-label='Select all'
         />
       ),
       cell: ({ row }) => (
         <Checkbox
+          aria-label='Select row'
           checked={row.getIsSelected()}
           onCheckedChange={(value) => row.toggleSelected(!!value)}
-          aria-label='Select row'
         />
       ),
       enableSorting: false,
@@ -310,12 +310,12 @@ export default function TeamIdPage() {
       ),
       cell: ({ row }) => (
         <SmartColorBadge
-          value={row.original.contact.status}
           color={
             statuses?.find(
               (s: Status) => s.value === (row.original.contact.status || 'Lead')
             )?.color || '#6b7280'
           }
+          value={row.original.contact.status}
         />
       ),
     },
@@ -325,7 +325,7 @@ export default function TeamIdPage() {
         <div className='flex justify-end'>
           <DropdownMenu>
             <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-              <Button variant='ghost' className='h-8 w-8 p-0'>
+              <Button className='h-8 w-8 p-0' variant='ghost'>
                 <span className='sr-only'>{t('open_menu')}</span>
                 <MoreHorizontal className='size-4' />
               </Button>
@@ -453,13 +453,13 @@ export default function TeamIdPage() {
                 </div>
                 <div className='flex items-center gap-2'>
                   <Button
-                    variant='outline'
-                    size='sm'
                     onClick={() => setIsNewMeetingModalOpen(true)}
+                    size='sm'
+                    variant='outline'
                   >
                     <Calendar className='mr-2 size-4' /> {t('add_meeting')}
                   </Button>
-                  <Button variant='outline' size='sm' onClick={handleEditClick}>
+                  <Button onClick={handleEditClick} size='sm' variant='outline'>
                     <Edit2 className='mr-2 size-4' /> {t('edit_team')}
                   </Button>
                 </div>
@@ -480,12 +480,12 @@ export default function TeamIdPage() {
                 )}
                 {teamContacts && teamContacts?.length > 0 && (
                   <DataTable
-                    table={table}
                     columns={columns}
                     loading={isLoading}
                     onRowClick={(row) =>
                       router.push(`/dashboard/crm/contacts/${row.contact.id}`)
                     }
+                    table={table}
                   />
                 )}
               </div>
@@ -508,6 +508,7 @@ export default function TeamIdPage() {
                             metadata: activity.metadata,
                             createdAt: activity.createdAt,
                           }))}
+                          isLoading={createTeamActivity.isPending}
                           onCreateActivity={(data) => {
                             createTeamActivity.mutate({
                               teamId: teamId[0],
@@ -522,13 +523,12 @@ export default function TeamIdPage() {
                               },
                             });
                           }}
-                          isLoading={createTeamActivity.isPending}
                           onDeleteNote={(id) => deleteNote.mutate({ id })}
-                          onUpdateNote={(id, description) =>
-                            updateNote.mutate({ id, description })
-                          }
                           onReplyNote={(id, description) =>
                             replyNote.mutate({ id, description })
+                          }
+                          onUpdateNote={(id, description) =>
+                            updateNote.mutate({ id, description })
                           }
                         />
                       ),
@@ -555,12 +555,12 @@ export default function TeamIdPage() {
                   </Label>
                   <p className='mt-1 text-sm'>
                     <Link
+                      className='hover:underline'
                       href={
                         team.leaderId
                           ? `/dashboard/crm/contacts/${team.leaderId}`
                           : ''
                       }
-                      className='hover:underline'
                     >
                       {team.leaderId
                         ? `${team.leader?.firstName} ${team.leader?.lastName}`
@@ -574,12 +574,12 @@ export default function TeamIdPage() {
                   </Label>
                   <p className='mt-1 text-sm'>
                     <Link
+                      className='hover:underline'
                       href={
                         team.subLeaderId
                           ? `/dashboard/crm/contacts/${team.subLeaderId}`
                           : ''
                       }
-                      className='hover:underline'
                     >
                       {team.subLeaderId
                         ? `${team.subLeader?.firstName} ${team.subLeader?.lastName}`
@@ -593,12 +593,12 @@ export default function TeamIdPage() {
                   </Label>
                   <p className='mt-1 text-sm'>
                     <Link
+                      className='hover:underline'
                       href={
                         team.referralId
                           ? `/dashboard/crm/contacts/${team.referralId}`
                           : ''
                       }
-                      className='hover:underline'
                     >
                       {team.referralId
                         ? `${team.referral?.firstName} ${team.referral?.lastName}`
@@ -612,12 +612,12 @@ export default function TeamIdPage() {
                   </Label>
                   <p className='mt-1 text-sm'>
                     <Link
+                      className='hover:underline'
                       href={
                         team.company
                           ? `/dashboard/crm/company/${team.company?.id}`
                           : ''
                       }
-                      className='hover:underline'
                     >
                       {team.company?.name || 'N/A'}
                     </Link>
@@ -657,20 +657,20 @@ export default function TeamIdPage() {
                   })) || []
                 }
                 calendarFolders={folders}
+                defaultTitle={t('team_meeting_title', { name: team.name })}
                 onCreateAppointment={handleCreateMeeting}
-                onUpdateAppointment={(data) => {
-                  // TODO: Add update meeting functionality
-                  toast.error(
-                    'Update meeting functionality not implemented yet'
-                  );
-                }}
                 onDeleteAppointment={(id) => {
                   deleteTeamMeeting.mutate({
                     id,
                     teamId: teamId[0],
                   });
                 }}
-                defaultTitle={t('team_meeting_title', { name: team.name })}
+                onUpdateAppointment={(data) => {
+                  // TODO: Add update meeting functionality
+                  toast.error(
+                    'Update meeting functionality not implemented yet'
+                  );
+                }}
               />
             </div>
           </div>
@@ -678,39 +678,41 @@ export default function TeamIdPage() {
       </div>
 
       <Dialog
-        open={isEditModalOpen}
         onOpenChange={(open) => !open && handleCloseEdit()}
+        open={isEditModalOpen}
       >
         <DialogContent className='max-h-[90vh] max-w-xl overflow-y-auto'>
           <DialogHeader>
             <DialogTitle>{t('edit_team_information')}</DialogTitle>
           </DialogHeader>
-          <form onSubmit={handleSubmitEdit} className='space-y-4'>
+          <form className='space-y-4' onSubmit={handleSubmitEdit}>
             <div className='space-y-2'>
               <Label>{t('team_name')}</Label>
               <Input
-                value={editForm.name}
                 onChange={(e) =>
                   setEditForm({ ...editForm, name: e.target.value })
                 }
+                value={editForm.name}
               />
             </div>
             <div className='space-y-2'>
               <Label>{t('description')}</Label>
               <Textarea
-                value={editForm.description}
                 onChange={(e) =>
                   setEditForm({ ...editForm, description: e.target.value })
                 }
+                value={editForm.description}
               />
             </div>
             <div className='space-y-2'>
               <Label>{t('team_leader')}</Label>
               <Combobox
-                value={
-                  editForm.leaderId
-                    ? `${teamContacts?.find((m) => m.contact.id === editForm.leaderId)?.contact.firstName} ${teamContacts?.find((m) => m.contact.id === editForm.leaderId)?.contact.lastName}`
-                    : ''
+                allowCustom={false}
+                groupHeading={t('contacts')}
+                items={
+                  teamContacts?.map(
+                    (c) => `${c.contact.firstName} ${c.contact.lastName}`
+                  ) || []
                 }
                 onChange={(value) => {
                   const contact = teamContacts?.find(
@@ -722,24 +724,24 @@ export default function TeamIdPage() {
                     leaderId: contact?.contact.id || '',
                   });
                 }}
-                items={
-                  teamContacts?.map(
-                    (c) => `${c.contact.firstName} ${c.contact.lastName}`
-                  ) || []
-                }
                 placeholder={t('select_team_leader')}
                 searchPlaceholder={t('search_team_leader')}
-                allowCustom={false}
-                groupHeading={t('contacts')}
+                value={
+                  editForm.leaderId
+                    ? `${teamContacts?.find((m) => m.contact.id === editForm.leaderId)?.contact.firstName} ${teamContacts?.find((m) => m.contact.id === editForm.leaderId)?.contact.lastName}`
+                    : ''
+                }
               />
             </div>
             <div className='space-y-2'>
               <Label>{t('sub_leader')}</Label>
               <Combobox
-                value={
-                  editForm.subLeaderId
-                    ? `${teamContacts?.find((m) => m.contact.id === editForm.subLeaderId)?.contact.firstName} ${teamContacts?.find((m) => m.contact.id === editForm.subLeaderId)?.contact.lastName}`
-                    : ''
+                allowCustom={false}
+                groupHeading={t('contacts')}
+                items={
+                  teamContacts?.map(
+                    (c) => `${c.contact.firstName} ${c.contact.lastName}`
+                  ) || []
                 }
                 onChange={(value) => {
                   const contact = teamContacts?.find(
@@ -751,28 +753,25 @@ export default function TeamIdPage() {
                     subLeaderId: contact?.contact.id || '',
                   });
                 }}
-                items={
-                  teamContacts?.map(
-                    (c) => `${c.contact.firstName} ${c.contact.lastName}`
-                  ) || []
-                }
                 placeholder={t('select_sub_leader')}
                 searchPlaceholder={t('search_sub_leader')}
-                allowCustom={false}
-                groupHeading={t('contacts')}
+                value={
+                  editForm.subLeaderId
+                    ? `${teamContacts?.find((m) => m.contact.id === editForm.subLeaderId)?.contact.firstName} ${teamContacts?.find((m) => m.contact.id === editForm.subLeaderId)?.contact.lastName}`
+                    : ''
+                }
               />
             </div>
             <div className='space-y-2'>
               <Label>{t('referral')}</Label>
               <Combobox
-                value={
-                  editForm.referralId
-                    ? `${teamContacts?.find((c) => c.contact.id === editForm.referralId)?.contact.firstName} ${teamContacts?.find((c) => c.contact.id === editForm.referralId)?.contact.lastName} (${
-                        teamContacts?.find(
-                          (c) => c.contact.id === editForm.referralId
-                        )?.contact.email
-                      })`
-                    : ''
+                allowCustom={false}
+                groupHeading={t('contacts')}
+                items={
+                  teamContacts?.map(
+                    (contact) =>
+                      `${contact.contact.firstName} ${contact.contact.lastName} (${contact.contact.email})`
+                  ) || []
                 }
                 onChange={(value) => {
                   const contact = teamContacts?.find(
@@ -782,27 +781,25 @@ export default function TeamIdPage() {
                   );
                   setEditForm({ ...editForm, referralId: contact?.id || '' });
                 }}
-                items={
-                  teamContacts?.map(
-                    (contact) =>
-                      `${contact.contact.firstName} ${contact.contact.lastName} (${contact.contact.email})`
-                  ) || []
-                }
                 placeholder={t('select_referral')}
                 searchPlaceholder={t('search_referral')}
-                allowCustom={false}
-                groupHeading={t('contacts')}
+                value={
+                  editForm.referralId
+                    ? `${teamContacts?.find((c) => c.contact.id === editForm.referralId)?.contact.firstName} ${teamContacts?.find((c) => c.contact.id === editForm.referralId)?.contact.lastName} (${
+                        teamContacts?.find(
+                          (c) => c.contact.id === editForm.referralId
+                        )?.contact.email
+                      })`
+                    : ''
+                }
               />
             </div>
             <div className='space-y-2'>
               <Label>{t('company')}</Label>
               <Combobox
-                value={
-                  editForm.company
-                    ? companies?.find((c) => c.id === editForm.company.id)
-                        ?.name || ''
-                    : ''
-                }
+                allowCustom={false}
+                groupHeading={t('companies')}
+                items={companies?.map((company) => company.name) || []}
                 onChange={(value) => {
                   const company = companies?.find((c) => c.name === value);
                   setEditForm({
@@ -810,32 +807,35 @@ export default function TeamIdPage() {
                     company: company || { id: '', name: '' },
                   });
                 }}
-                items={companies?.map((company) => company.name) || []}
                 placeholder={t('select_company')}
                 searchPlaceholder={t('search_company')}
-                allowCustom={false}
-                groupHeading={t('companies')}
+                value={
+                  editForm.company
+                    ? companies?.find((c) => c.id === editForm.company.id)
+                        ?.name || ''
+                    : ''
+                }
               />
             </div>
             <div className='space-y-2'>
               <Label>{t('remarks')}</Label>
               <Textarea
-                value={editForm.remarks}
                 onChange={(e) =>
                   setEditForm({ ...editForm, remarks: e.target.value })
                 }
                 placeholder={t('enter_remarks')}
+                value={editForm.remarks}
               />
             </div>
             <div className='flex justify-end space-x-2'>
               <Button
+                onClick={() => setIsEditModalOpen(false)}
                 type='button'
                 variant='outline'
-                onClick={() => setIsEditModalOpen(false)}
               >
                 {t('cancel')}
               </Button>
-              <Button type='submit' disabled={updateTeam.isPending}>
+              <Button disabled={updateTeam.isPending} type='submit'>
                 {updateTeam.isPending ? t('saving_loading') : t('save_changes')}
               </Button>
             </div>
@@ -844,10 +844,16 @@ export default function TeamIdPage() {
       </Dialog>
 
       <EventDialog
-        open={isNewMeetingModalOpen}
+        folders={folders}
+        onCreateFolder={async (name) => {
+          await createFolder.mutateAsync({
+            name,
+            color: `#${Math.floor(Math.random() * 16_777_215).toString(16)}`,
+          });
+        }}
         onOpenChange={setIsNewMeetingModalOpen}
         onSubmit={handleCreateMeeting}
-        folders={folders}
+        open={isNewMeetingModalOpen}
         participantOptions={
           participantOptions && {
             users: participantOptions.users.map((u) => ({
@@ -857,17 +863,10 @@ export default function TeamIdPage() {
             contacts: participantOptions.contacts,
           }
         }
-        onCreateFolder={async (name) => {
-          await createFolder.mutateAsync({
-            name,
-            color: `#${Math.floor(Math.random() * 16777215).toString(16)}`,
-          });
-        }}
       />
 
       <ActionAlertDialog
-        open={!!meetingToDelete}
-        onOpenChange={(open) => !open && setMeetingToDelete(null)}
+        description={t('delete_meeting_description')}
         onConfirm={() => {
           if (meetingToDelete) {
             deleteTeamMeeting.mutate({
@@ -877,16 +876,17 @@ export default function TeamIdPage() {
             setMeetingToDelete(null);
           }
         }}
+        onOpenChange={(open) => !open && setMeetingToDelete(null)}
+        open={!!meetingToDelete}
         title={t('delete_meeting')}
-        description={t('delete_meeting_description')}
       />
 
       <ActionAlertDialog
-        open={!!contactToDelete}
-        onOpenChange={(open) => !open && setContactToDelete(null)}
-        onConfirm={handleDeleteContact}
-        title={t('remove_contact')}
         description={t('remove_contact_description')}
+        onConfirm={handleDeleteContact}
+        onOpenChange={(open) => !open && setContactToDelete(null)}
+        open={!!contactToDelete}
+        title={t('remove_contact')}
       />
     </div>
   );

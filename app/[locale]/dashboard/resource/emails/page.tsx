@@ -93,7 +93,7 @@ export default function EmailsPage() {
   };
 
   const handleSaveTemplate = async () => {
-    if (!title || !subject || !editorContent) {
+    if (!(title && subject && editorContent)) {
       toast.error('Please fill in all required fields');
       return;
     }
@@ -120,8 +120,8 @@ export default function EmailsPage() {
     <div className='flex h-full flex-col'>
       <div className='container mx-auto flex h-full flex-col px-8 py-6'>
         <PageHeader
-          title='Email Templates'
           description='Create and manage your email templates'
+          title='Email Templates'
         />
 
         <div className='mt-8 grid flex-1 grid-cols-12 gap-8'>
@@ -131,10 +131,10 @@ export default function EmailsPage() {
                 Templates
               </h3>
               <Button
-                onClick={resetForm}
-                variant='outline'
-                size='sm'
                 className='h-8'
+                onClick={resetForm}
+                size='sm'
+                variant='outline'
               >
                 <Plus className='h-4 w-4' /> New
               </Button>
@@ -149,15 +149,15 @@ export default function EmailsPage() {
               )}
               {templates?.map((template) => (
                 <button
-                  type='button'
-                  key={template.id}
                   className={cn(
                     'w-full cursor-pointer rounded-md border border-neutral-200 px-3 py-2 text-left transition-colors dark:border-neutral-800',
                     selectedTemplate?.id === template.id
                       ? 'bg-white shadow-xs ring-1 ring-neutral-200 dark:ring-neutral-800'
                       : 'hover:bg-white/60 dark:hover:bg-neutral-900/60'
                   )}
+                  key={template.id}
                   onClick={() => handleSelectTemplate(template)}
+                  type='button'
                 >
                   <span className='font-medium text-neutral-900 text-sm dark:text-neutral-100'>
                     {template.title}
@@ -189,26 +189,26 @@ export default function EmailsPage() {
                 {selectedTemplate && (
                   <>
                     <Button
+                      className='text-neutral-600 hover:bg-neutral-50'
                       onClick={handleCopyHtml}
                       variant='outline'
-                      className='text-neutral-600 hover:bg-neutral-50'
                     >
                       Copy HTML
                     </Button>
                     <Button
+                      className='text-red-600 hover:bg-red-50'
                       onClick={handleDeleteTemplate}
                       variant='outline'
-                      className='text-red-600 hover:bg-red-50'
                     >
                       Delete
                     </Button>
                   </>
                 )}
                 <Button
-                  variant='outline'
-                  size='sm'
-                  onClick={handleSaveTemplate}
                   className='h-8'
+                  onClick={handleSaveTemplate}
+                  size='sm'
+                  variant='outline'
                 >
                   {selectedTemplate ? 'Update' : 'Save'} Template
                 </Button>
@@ -218,31 +218,31 @@ export default function EmailsPage() {
             <div className='flex flex-1 flex-col space-y-4'>
               <div>
                 <Input
+                  className='mb-2'
+                  onChange={(e) => setTitle(e.target.value)}
                   placeholder='Template Title'
                   value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  className='mb-2'
                 />
                 <Textarea
-                  placeholder='Template Description (optional)'
-                  value={description}
                   onChange={(e) => setDescription(e.target.value)}
+                  placeholder='Template Description (optional)'
                   rows={2}
+                  value={description}
                 />
               </div>
 
               <Input
+                onChange={(e) => setSubject(e.target.value)}
                 placeholder='Email Subject'
                 value={subject}
-                onChange={(e) => setSubject(e.target.value)}
               />
 
               <div className='min-h-0 flex-1'>
                 <TipTapEditor
+                  className='h-full'
                   content={editorContent}
                   onChange={setEditorContent}
                   placeholder='Write your email content here...'
-                  className='h-full'
                 />
               </div>
             </div>

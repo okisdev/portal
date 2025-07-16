@@ -16,26 +16,26 @@ export default function BodyProvider({
     <ThemeProvider
       attribute='class'
       defaultTheme='system'
-      value={{ light: 'light', dark: 'dark' }}
       disableTransitionOnChange
+      value={{ light: 'light', dark: 'dark' }}
     >
       {children}
 
-      <Toaster richColors position='top-right' />
+      <Toaster position='top-right' richColors />
 
       <ProgressBar
-        height='2px'
         color='hsl(var(--foreground))'
+        height='2px'
         options={{ showSpinner: false }}
         shallowRouting
       />
 
       <Monitoring
-        url='https://monitoring.react-scan.com/api/v1/ingest'
-        // biome-ignore lint/style/noNonNullAssertion: <explanation>
         apiKey={process.env.NEXT_PUBLIC_REACT_SCAN_API_KEY!}
-        commit={process.env.NEXT_PUBLIC_VERCEL_GIT_COMMIT_SHA}
+        // biome-ignore lint/style/noNonNullAssertion: <explanation>
         branch={process.env.NEXT_PUBLIC_VERCEL_GIT_COMMIT_REF}
+        commit={process.env.NEXT_PUBLIC_VERCEL_GIT_COMMIT_SHA}
+        url='https://monitoring.react-scan.com/api/v1/ingest'
       />
 
       <SpeedInsights />

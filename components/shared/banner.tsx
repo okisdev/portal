@@ -59,7 +59,7 @@ export function Banner({
         <p className={cn('text-sm', styles.description)}>{description}</p>
       )}
       {action && (
-        <Button variant='outline' size='sm' onClick={action.onClick}>
+        <Button onClick={action.onClick} size='sm' variant='outline'>
           {action.icon}
           {action.label}
         </Button>

@@ -164,19 +164,19 @@ export default function CRMTeamsPage() {
       id: 'select',
       header: ({ table }) => (
         <Checkbox
+          aria-label='Select all'
           checked={
             table.getIsAllPageRowsSelected() ||
             (table.getIsSomePageRowsSelected() && 'indeterminate')
           }
           onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-          aria-label='Select all'
         />
       ),
       cell: ({ row }) => (
         <Checkbox
+          aria-label='Select row'
           checked={row.getIsSelected()}
           onCheckedChange={(value) => row.toggleSelected(!!value)}
-          aria-label='Select row'
         />
       ),
       enableSorting: false,
@@ -228,18 +228,18 @@ export default function CRMTeamsPage() {
       cell: ({ row }) => (
         <DropdownMenu>
           <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-            <Button variant='ghost' className='h-8 w-8 p-0'>
+            <Button className='h-8 w-8 p-0' variant='ghost'>
               <span className='sr-only'>Open menu</span>
               <MoreHorizontal className='h-4 w-4' />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align='end'>
             <DropdownMenuItem
+              className='cursor-pointer'
               onClick={(e) => {
                 e.stopPropagation();
                 router.push(`/dashboard/crm/team/${row.original.id}?mode=edit`);
               }}
-              className='cursor-pointer'
             >
               <Pencil className='mr-2 h-4 w-4' />
               {t('edit_team')}
@@ -287,26 +287,34 @@ export default function CRMTeamsPage() {
   return (
     <div className='space-y-4 p-4'>
       <PageHeader
-        title={t('teams')}
-        subtitle={
-          !isLoading
-            ? `(${t('total_number_teams', { count: filteredTeams.length })})`
-            : undefined
-        }
         description={t('teams_description')}
+        subtitle={
+          isLoading
+            ? undefined
+            : `(${t('total_number_teams', { count: filteredTeams.length })})`
+        }
+        title={t('teams')}
       />
 
       <div className='flex items-center justify-between'>
         <div className='flex items-center'>
           <Input
-            placeholder={t('filter_teams')}
-            disabled={isLoading}
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
             className='h-8 w-72 max-w-sm'
+            disabled={isLoading}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder={t('filter_teams')}
+            value={search}
           />
           <Combobox
-            value={selectedColumn}
+            allowCustom={false}
+            alwaysPlaceHolder={true}
+            className='ml-2 w-48'
+            emptyText={t('no_columns_found')}
+            groupHeading={t('visible_columns')}
+            items={table
+              .getAllColumns()
+              .filter((column) => column.getCanHide())
+              .map((column) => column.id)}
             onChange={(value) => {
               setSelectedColumn(value);
               const column = table
@@ -316,15 +324,7 @@ export default function CRMTeamsPage() {
                 column.toggleVisibility(!column.getIsVisible());
               }
             }}
-            items={table
-              .getAllColumns()
-              .filter((column) => column.getCanHide())
-              .map((column) => column.id)}
             placeholder={t('visible_columns')}
-            searchPlaceholder={t('search_columns')}
-            emptyText={t('no_columns_found')}
-            groupHeading={t('visible_columns')}
-            allowCustom={false}
             renderItem={(item) => {
               const column = table
                 .getAllColumns()
@@ -336,17 +336,17 @@ export default function CRMTeamsPage() {
                 </div>
               );
             }}
-            className='ml-2 w-48'
+            searchPlaceholder={t('search_columns')}
             size='sm'
-            alwaysPlaceHolder={true}
+            value={selectedColumn}
           />
         </div>
 
         <div className='flex flex-row gap-2'>
           <Button
-            variant='outline'
             className='h-8'
             onClick={() => setIsCreateModalOpen(true)}
+            variant='outline'
           >
             <Plus className='size-4' /> {t('create_team')}
           </Button>
@@ -354,50 +354,50 @@ export default function CRMTeamsPage() {
       </div>
 
       <DataTable
-        table={table}
         columns={tableColumns}
         loading={isLoading}
         onRowClick={(row) => router.push(`/dashboard/crm/team/${row.id}`)}
+        table={table}
       />
 
       <ActionAlertDialog
-        open={!!teamToDelete}
-        onOpenChange={(open) => !open && setTeamToDelete(null)}
-        onConfirm={() => teamToDelete && handleDeleteTeam(teamToDelete)}
         description={t('delete_site_description')}
+        onConfirm={() => teamToDelete && handleDeleteTeam(teamToDelete)}
+        onOpenChange={(open) => !open && setTeamToDelete(null)}
+        open={!!teamToDelete}
       />
 
-      <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
+      <Dialog onOpenChange={setIsCreateModalOpen} open={isCreateModalOpen}>
         <DialogContent className='max-h-[90vh] max-w-xl overflow-y-auto'>
           <DialogHeader>
             <DialogTitle>{t('create_new_team')}</DialogTitle>
           </DialogHeader>
-          <form onSubmit={handleCreateTeam} className='space-y-4'>
+          <form className='space-y-4' onSubmit={handleCreateTeam}>
             <div className='space-y-2'>
               <Label>{t('team_name')}</Label>
               <Input
-                value={newTeamName}
                 onChange={(e) => setNewTeamName(e.target.value)}
                 placeholder='Enter team name...'
+                value={newTeamName}
               />
             </div>
             <div className='space-y-2'>
               <Label>{t('description')}</Label>
               <Input
-                value={newTeamDescription}
                 onChange={(e) => setNewTeamDescription(e.target.value)}
                 placeholder={t('enter_team_description')}
+                value={newTeamDescription}
               />
             </div>
             <div className='flex justify-end gap-2'>
               <Button
+                onClick={() => setIsCreateModalOpen(false)}
                 type='button'
                 variant='outline'
-                onClick={() => setIsCreateModalOpen(false)}
               >
                 {t('cancel')}
               </Button>
-              <Button type='submit' disabled={createTeam.isPending}>
+              <Button disabled={createTeam.isPending} type='submit'>
                 {t('create_team')}
               </Button>
             </div>

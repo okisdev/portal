@@ -245,24 +245,24 @@ export default function TasksPage() {
     <div className='flex h-full flex-col'>
       <div className='container mx-auto max-w-7xl space-y-8 px-6 py-6 pb-0 2xl:px-0'>
         <PageHeader
-          title='Personal Tasks'
           description='Manage your personal tasks and stay organized'
+          title='Personal Tasks'
         />
 
         <div className='flex items-center justify-between'>
           <div className='flex items-center gap-2'>
             <Button
-              variant='outline'
               className='h-8'
               onClick={() => setIsCreateOpen(true)}
+              variant='outline'
             >
               <PlusIcon className='mr-2 h-4 w-4' />
               Add Task
             </Button>
 
-            <Popover open={isFilterOpen} onOpenChange={setIsFilterOpen}>
+            <Popover onOpenChange={setIsFilterOpen} open={isFilterOpen}>
               <PopoverTrigger asChild>
-                <Button variant='outline' className='h-8 gap-2'>
+                <Button className='h-8 gap-2' variant='outline'>
                   <FilterIcon className='h-4 w-4' />
                   Filter
                   {visibleStatuses.length !== STATUSES.length && (
@@ -272,15 +272,15 @@ export default function TasksPage() {
                   )}
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className='w-80' align='start'>
+              <PopoverContent align='start' className='w-80'>
                 <div className='space-y-4'>
                   <h4 className='font-medium'>Filter by Status</h4>
                   <div className='space-y-2'>
                     {STATUSES.map((status) => (
-                      <div key={status} className='flex items-center space-x-2'>
+                      <div className='flex items-center space-x-2' key={status}>
                         <Checkbox
-                          id={status}
                           checked={visibleStatuses.includes(status)}
+                          id={status}
                           onCheckedChange={(checked) => {
                             const newStatuses = checked
                               ? [...visibleStatuses, status]
@@ -289,8 +289,8 @@ export default function TasksPage() {
                           }}
                         />
                         <label
-                          htmlFor={status}
                           className='font-medium text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70'
+                          htmlFor={status}
                         >
                           {status}
                         </label>
@@ -304,18 +304,18 @@ export default function TasksPage() {
 
           <div className='flex items-center gap-2'>
             <Button
-              variant={viewMode === 'list' ? 'default' : 'outline'}
-              size='icon'
-              onClick={() => updateViewMode('list')}
               className='h-8 w-8'
+              onClick={() => updateViewMode('list')}
+              size='icon'
+              variant={viewMode === 'list' ? 'default' : 'outline'}
             >
               <ListIcon className='h-4 w-4' />
             </Button>
             <Button
-              variant={viewMode === 'kanban' ? 'default' : 'outline'}
-              size='icon'
-              onClick={() => updateViewMode('kanban')}
               className='h-8 w-8'
+              onClick={() => updateViewMode('kanban')}
+              size='icon'
+              variant={viewMode === 'kanban' ? 'default' : 'outline'}
             >
               <LayoutGridIcon className='h-4 w-4' />
             </Button>
@@ -327,27 +327,26 @@ export default function TasksPage() {
         <div className='h-full overflow-auto'>
           {viewMode === 'list' ? (
             <TaskList
+              onContentView={handleContentView}
+              onDelete={handleDelete}
+              onEdit={handleEdit}
               tasks={tasks}
               visibleStatuses={visibleStatuses}
-              onEdit={handleEdit}
-              onDelete={handleDelete}
-              onContentView={handleContentView}
             />
           ) : (
             <KanbanBoard
+              onContentView={handleContentView}
+              onDelete={handleDelete}
+              onEdit={handleEdit}
+              onStatusChange={handleStatusChange}
               tasks={tasks}
               visibleStatuses={visibleStatuses}
-              onEdit={handleEdit}
-              onDelete={handleDelete}
-              onContentView={handleContentView}
-              onStatusChange={handleStatusChange}
             />
           )}
         </div>
       </div>
 
       <Dialog
-        open={isCreateOpen || !!editingTask}
         onOpenChange={(open) => {
           if (open) {
             if (!editingTask) {
@@ -367,6 +366,7 @@ export default function TasksPage() {
             setKeepCreating(false);
           }
         }}
+        open={isCreateOpen || !!editingTask}
       >
         <DialogContent className='max-h-[90vh] max-w-xl overflow-y-auto'>
           <DialogHeader>
@@ -379,7 +379,7 @@ export default function TasksPage() {
           </DialogHeader>
 
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-4'>
+            <form className='space-y-4' onSubmit={form.handleSubmit(onSubmit)}>
               <FormField
                 control={form.control}
                 name='title'
@@ -416,8 +416,8 @@ export default function TasksPage() {
                     <FormLabel>Content</FormLabel>
                     <FormControl>
                       <Textarea
-                        placeholder='Add detailed content for your task...'
                         className='min-h-[200px]'
+                        placeholder='Add detailed content for your task...'
                         {...field}
                       />
                     </FormControl>
@@ -434,8 +434,8 @@ export default function TasksPage() {
                     <FormItem>
                       <FormLabel>Priority</FormLabel>
                       <Select
-                        onValueChange={field.onChange}
                         defaultValue={field.value}
+                        onValueChange={field.onChange}
                       >
                         <FormControl>
                           <SelectTrigger>
@@ -461,8 +461,8 @@ export default function TasksPage() {
                     <FormItem>
                       <FormLabel>Status</FormLabel>
                       <Select
-                        onValueChange={field.onChange}
                         defaultValue={field.value}
+                        onValueChange={field.onChange}
                       >
                         <FormControl>
                           <SelectTrigger>
@@ -493,9 +493,9 @@ export default function TasksPage() {
                     <FormLabel>Due Date</FormLabel>
                     <FormControl>
                       <DateTimePicker
-                        value={field.value || new Date()}
                         onChange={field.onChange}
                         showTimePicker={true}
+                        value={field.value || new Date()}
                       />
                     </FormControl>
                     <FormMessage />
@@ -507,16 +507,16 @@ export default function TasksPage() {
                 {!editingTask && (
                   <div className='flex flex-1 items-center gap-2'>
                     <Switch
-                      id='keep-creating'
                       checked={keepCreating}
+                      id='keep-creating'
                       onCheckedChange={setKeepCreating}
                     />
                     <Label htmlFor='keep-creating'>Keep creating</Label>
                   </div>
                 )}
                 <Button
-                  type='submit'
                   disabled={createTask.isPending || updateTask.isPending}
+                  type='submit'
                 >
                   {editingTask ? 'Update Task' : 'Create Task'}
                 </Button>
@@ -527,8 +527,8 @@ export default function TasksPage() {
       </Dialog>
 
       <Dialog
-        open={!!viewingContent}
         onOpenChange={(open) => !open && setViewingContent(null)}
+        open={!!viewingContent}
       >
         <DialogContent className='max-h-[90vh] max-w-xl overflow-y-auto'>
           <DialogHeader>

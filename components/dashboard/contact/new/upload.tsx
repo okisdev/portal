@@ -90,12 +90,12 @@ export default function ContactUpload() {
   });
 
   const isRowEmpty = (row: ContactFormData) => {
-    return (
-      !row.firstName &&
-      !row.lastName &&
-      !row.email &&
-      !row.phone &&
-      !row.company
+    return !(
+      row.firstName ||
+      row.lastName ||
+      row.email ||
+      row.phone ||
+      row.company
     );
   };
 
@@ -404,19 +404,19 @@ export default function ContactUpload() {
         {!showPreview && (
           <>
             <Button
-              variant='outline'
               className='h-8 gap-2'
-              onClick={() => document.getElementById('csvUpload')?.click()}
               disabled={isProcessingCsv}
+              onClick={() => document.getElementById('csvUpload')?.click()}
+              variant='outline'
             >
               <Upload className='h-4 w-4' />
               {isProcessingCsv ? t('processing') : t('upload_csv')}
             </Button>
             {!isProcessingCsv && (
               <Button
-                variant='outline'
                 className='h-8 gap-2'
                 onClick={downloadTemplate}
+                variant='outline'
               >
                 <Download className='h-4 w-4' />
                 {t('download_template')}
@@ -425,11 +425,11 @@ export default function ContactUpload() {
           </>
         )}
         <input
-          id='csvUpload'
-          type='file'
           accept='.csv'
           className='hidden'
+          id='csvUpload'
           onChange={handleCsvUpload}
+          type='file'
         />
       </div>
 
@@ -441,16 +441,16 @@ export default function ContactUpload() {
 
       {hasDuplicates && (
         <Banner
-          variant='warning'
-          title={t('duplicate_entries_detected')}
-          description={t('duplicate_entries_detected_description', {
-            count: duplicates.length,
-          })}
           action={{
             label: t('download_duplicate_list'),
             icon: <Download className='mr-2 h-4 w-4' />,
             onClick: downloadDuplicates,
           }}
+          description={t('duplicate_entries_detected_description', {
+            count: duplicates.length,
+          })}
+          title={t('duplicate_entries_detected')}
+          variant='warning'
         />
       )}
 
@@ -462,17 +462,17 @@ export default function ContactUpload() {
             {isLoading ? (
               <>
                 <div className='flex-1 space-y-2'>
-                  <Progress value={progress} className='w-full' />
+                  <Progress className='w-full' value={progress} />
                   <p className='text-muted-foreground text-sm'>
                     {progressStatus} {t('processing_time_description')}
                   </p>
                 </div>
                 <Button
+                  className='shrink-0'
+                  disabled={isCancelling}
+                  onClick={handleCancelUpload}
                   type='button'
                   variant='destructive'
-                  onClick={handleCancelUpload}
-                  disabled={isCancelling}
-                  className='shrink-0'
                 >
                   {isCancelling ? t('cancelling') : t('cancel_upload')}
                 </Button>
@@ -481,17 +481,14 @@ export default function ContactUpload() {
               <>
                 <div className='flex flex-1 items-center gap-4'>
                   <Button
-                    type='submit'
-                    size='sm'
                     disabled={isLoading}
                     onClick={handleSubmit}
+                    size='sm'
+                    type='submit'
                   >
                     {t('import_contacts')}
                   </Button>
                   <Button
-                    type='button'
-                    size='sm'
-                    variant='outline'
                     onClick={() => {
                       setShowPreview(false);
                       setCsvData([]);
@@ -503,6 +500,9 @@ export default function ContactUpload() {
                       ) as HTMLInputElement;
                       if (fileInput) fileInput.value = '';
                     }}
+                    size='sm'
+                    type='button'
+                    variant='outline'
                   >
                     {t('reset')}
                   </Button>
@@ -531,39 +531,41 @@ export default function ContactUpload() {
                   <TableRow key={row.email + row.phone}>
                     <TableCell>
                       <Input
-                        value={row.firstName}
                         onChange={(e) =>
                           handleCsvEdit(index, 'firstName', e.target.value)
                         }
+                        value={row.firstName}
                       />
                     </TableCell>
                     <TableCell>
                       <Input
-                        value={row.lastName}
                         onChange={(e) =>
                           handleCsvEdit(index, 'lastName', e.target.value)
                         }
+                        value={row.lastName}
                       />
                     </TableCell>
                     <TableCell>
                       <Input
-                        value={row.email}
                         onChange={(e) =>
                           handleCsvEdit(index, 'email', e.target.value)
                         }
+                        value={row.email}
                       />
                     </TableCell>
                     <TableCell>
                       <Input
-                        value={row.phone}
                         onChange={(e) =>
                           handleCsvEdit(index, 'phone', e.target.value)
                         }
+                        value={row.phone}
                       />
                     </TableCell>
                     <TableCell>
                       <Combobox
-                        value={row.company ?? ''}
+                        allowCustom={true}
+                        groupHeading={t('companies')}
+                        items={companies?.map((c) => c.name) || []}
                         onChange={(value) => {
                           const selectedCompany = companies?.find(
                             (c) => c.name === value
@@ -574,19 +576,17 @@ export default function ContactUpload() {
                             selectedCompany ? selectedCompany.name : value
                           );
                         }}
-                        items={companies?.map((c) => c.name) || []}
                         placeholder={t('select_company')}
                         searchPlaceholder={t('search_company')}
-                        groupHeading={t('companies')}
-                        allowCustom={true}
+                        value={row.company ?? ''}
                       />
                     </TableCell>
                     <TableCell>
                       <Select
-                        value={row.status.value}
                         onValueChange={(value) =>
                           handleCsvEdit(index, 'status', value)
                         }
+                        value={row.status.value}
                       >
                         <SelectTrigger>
                           <SelectValue />
@@ -595,8 +595,8 @@ export default function ContactUpload() {
                           {statuses?.map((status: Status) => (
                             <SelectItem key={status.value} value={status.value}>
                               <SmartColorBadge
-                                value={status.value}
                                 color={status.color}
+                                value={status.value}
                               />
                             </SelectItem>
                           ))}
@@ -605,33 +605,27 @@ export default function ContactUpload() {
                     </TableCell>
                     <TableCell>
                       <Combobox
-                        value={row.source ?? ''}
+                        groupHeading={t('sources')}
+                        items={sources}
                         onChange={(value) =>
                           handleCsvEdit(index, 'source', value)
                         }
-                        items={sources}
                         placeholder={t('select_source')}
                         searchPlaceholder={t('search_source')}
-                        groupHeading={t('sources')}
+                        value={row.source ?? ''}
                       />
                     </TableCell>
                     <TableCell>
                       <Input
-                        value={row.remark}
                         onChange={(e) =>
                           handleCsvEdit(index, 'remark', e.target.value)
                         }
+                        value={row.remark}
                       />
                     </TableCell>
                     <TableCell>
                       <div className='flex gap-2'>
                         <Input
-                          placeholder='YYYY/MM/DD'
-                          value={
-                            row.createdAt
-                              ? formatDateForDisplay(row.createdAt)
-                              : ''
-                          }
                           onChange={(e) => {
                             const dateStr = e.target.value;
                             if (dateStr && !validateDateFormat(dateStr)) {
@@ -652,9 +646,14 @@ export default function ContactUpload() {
                             setCsvData((prev) => updateData(prev));
                             setNonDuplicates((prev) => updateData(prev));
                           }}
+                          placeholder='YYYY/MM/DD'
+                          value={
+                            row.createdAt
+                              ? formatDateForDisplay(row.createdAt)
+                              : ''
+                          }
                         />
                         <Input
-                          type='date'
                           className='absolute right-0 w-10 p-0 opacity-0'
                           onChange={(e) => {
                             const date = e.target.value
@@ -671,6 +670,7 @@ export default function ContactUpload() {
                             setCsvData((prev) => updateData(prev));
                             setNonDuplicates((prev) => updateData(prev));
                           }}
+                          type='date'
                         />
                       </div>
                     </TableCell>

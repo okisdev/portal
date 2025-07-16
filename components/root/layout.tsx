@@ -22,21 +22,21 @@ export default async function RootLayout(props: Props) {
   return (
     <html lang={locale} suppressHydrationWarning>
       <head>
-        <meta name='apple-mobile-web-app-title' content='Portal' />
+        <meta content='Portal' name='apple-mobile-web-app-title' />
         <meta
-          name='theme-color'
-          media='(prefers-color-scheme: light)'
           content='white'
+          media='(prefers-color-scheme: light)'
+          name='theme-color'
         />
         <meta
-          name='theme-color'
-          media='(prefers-color-scheme: dark)'
           content='black'
+          media='(prefers-color-scheme: dark)'
+          name='theme-color'
         />
         <Script
+          data-website-id={env.NEXT_PUBLIC_UMAMI_WEBSITE_ID}
           defer
           src='https://umami.harisfox.com/script.js'
-          data-website-id={env.NEXT_PUBLIC_UMAMI_WEBSITE_ID}
         />
       </head>
 

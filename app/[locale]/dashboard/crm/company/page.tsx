@@ -315,19 +315,19 @@ export default function CompanyPage() {
       id: 'select',
       header: ({ table }) => (
         <Checkbox
+          aria-label='Select all'
           checked={
             table.getIsAllPageRowsSelected() ||
             (table.getIsSomePageRowsSelected() && 'indeterminate')
           }
           onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-          aria-label='Select all'
         />
       ),
       cell: ({ row }) => (
         <Checkbox
+          aria-label='Select row'
           checked={row.getIsSelected()}
           onCheckedChange={(value) => row.toggleSelected(!!value)}
-          aria-label='Select row'
         />
       ),
       enableSorting: false,
@@ -402,16 +402,16 @@ export default function CompanyPage() {
       ),
       cell: ({ row }) => (
         <Button
-          variant='ghost'
-          size='sm'
-          disabled={!row.original.website}
           asChild
+          disabled={!row.original.website}
           onClick={(e) => e.stopPropagation()}
+          size='sm'
+          variant='ghost'
         >
           <Link
             href={row.original.website || ''}
-            target='_blank'
             rel='noopener noreferrer'
+            target='_blank'
           >
             {row.original.website ? t('visit') : '—'}
             {row.original.website && <ExternalLink className='h-4 w-4' />}
@@ -431,7 +431,7 @@ export default function CompanyPage() {
       cell: ({ row }) => (
         <DropdownMenu>
           <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-            <Button variant='ghost' className='h-8 w-8 p-0'>
+            <Button className='h-8 w-8 p-0' variant='ghost'>
               <MoreHorizontal className='h-4 w-4' />
             </Button>
           </DropdownMenuTrigger>
@@ -481,28 +481,36 @@ export default function CompanyPage() {
   return (
     <div className='space-y-4 p-4'>
       <PageHeader
-        title={t('companies')}
-        subtitle={
-          !isLoading
-            ? `(${t('total_number_companies', { count: filteredCompanies.length })})`
-            : undefined
-        }
         description={t('companies_description')}
+        subtitle={
+          isLoading
+            ? undefined
+            : `(${t('total_number_companies', { count: filteredCompanies.length })})`
+        }
+        title={t('companies')}
       />
 
       <div className='flex flex-col gap-4'>
         <div className='flex items-center justify-between'>
           <div className='flex flex-row gap-2'>
             <Input
-              placeholder={t('search_companies')}
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
               className='h-8 w-72 max-w-sm'
               disabled={isLoading}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder={t('search_companies')}
+              value={search}
             />
 
             <Combobox
-              value={selectedColumn}
+              allowCustom={false}
+              alwaysPlaceHolder={true}
+              className='w-48'
+              emptyText={t('no_columns_found')}
+              groupHeading={t('visible_columns')}
+              items={table
+                .getAllColumns()
+                .filter((column) => column.getCanHide())
+                .map((column) => column.id)}
               onChange={(value) => {
                 setSelectedColumn(value);
                 const column = table
@@ -512,15 +520,7 @@ export default function CompanyPage() {
                   column.toggleVisibility(!column.getIsVisible());
                 }
               }}
-              items={table
-                .getAllColumns()
-                .filter((column) => column.getCanHide())
-                .map((column) => column.id)}
               placeholder={t('visible_columns')}
-              searchPlaceholder={t('search_columns')}
-              emptyText={t('no_columns_found')}
-              groupHeading={t('visible_columns')}
-              allowCustom={false}
               renderItem={(item) => {
                 const column = table
                   .getAllColumns()
@@ -532,19 +532,19 @@ export default function CompanyPage() {
                   </div>
                 );
               }}
-              className='w-48'
+              searchPlaceholder={t('search_columns')}
               size='sm'
-              alwaysPlaceHolder={true}
+              value={selectedColumn}
             />
           </div>
 
           <div className='flex flex-row gap-2'>
             <Button
-              variant='outline'
-              size='sm'
               className='h-8'
               disabled={isLoading}
               onClick={() => setCreateDialogOpen(true)}
+              size='sm'
+              variant='outline'
             >
               <Plus className='size-4' /> {t('add_company')}
             </Button>
@@ -553,23 +553,23 @@ export default function CompanyPage() {
       </div>
 
       <DataTable
-        table={table}
         columns={tableColumns}
         loading={isLoading}
         onRowClick={(row) => router.push(`/dashboard/crm/company/${row.id}`)}
+        table={table}
       />
 
       <ActionAlertDialog
-        open={deleteDialogOpen}
-        onOpenChange={setDeleteDialogOpen}
-        onConfirm={handleDeleteConfirm}
-        title='Delete Company'
-        description='This action cannot be undone. This will permanently delete the company and remove their data from our servers.'
-        confirmText={t('delete')}
         cancelText={t('cancel')}
+        confirmText={t('delete')}
+        description='This action cannot be undone. This will permanently delete the company and remove their data from our servers.'
+        onConfirm={handleDeleteConfirm}
+        onOpenChange={setDeleteDialogOpen}
+        open={deleteDialogOpen}
+        title='Delete Company'
       />
 
-      <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
+      <Dialog onOpenChange={setCreateDialogOpen} open={createDialogOpen}>
         <DialogContent className='sm:max-w-[600px]'>
           <DialogHeader>
             <DialogTitle>{t('add_company')}</DialogTitle>
@@ -580,8 +580,8 @@ export default function CompanyPage() {
 
           <Form {...createCompanyForm}>
             <form
-              onSubmit={createCompanyForm.handleSubmit(onSubmit)}
               className='space-y-4'
+              onSubmit={createCompanyForm.handleSubmit(onSubmit)}
             >
               <div className='grid grid-cols-2 gap-4'>
                 <FormField
@@ -661,8 +661,8 @@ export default function CompanyPage() {
                     <FormItem>
                       <FormLabel>{t('status')}</FormLabel>
                       <Select
-                        onValueChange={field.onChange}
                         defaultValue={field.value}
+                        onValueChange={field.onChange}
                       >
                         <FormControl>
                           <SelectTrigger>
@@ -690,8 +690,8 @@ export default function CompanyPage() {
                     <FormLabel>{t('phone')}</FormLabel>
                     <FormControl>
                       <PhoneInput
-                        value={field.value || ''}
                         onChange={field.onChange}
+                        value={field.value || ''}
                       />
                     </FormControl>
                     <FormMessage />
@@ -787,13 +787,13 @@ export default function CompanyPage() {
 
               <DialogFooter>
                 <Button
-                  variant='outline'
-                  type='button'
                   onClick={() => setCreateDialogOpen(false)}
+                  type='button'
+                  variant='outline'
                 >
                   {t('cancel')}
                 </Button>
-                <Button type='submit' disabled={createCompany.isPending}>
+                <Button disabled={createCompany.isPending} type='submit'>
                   {t('create')}
                 </Button>
               </DialogFooter>
@@ -802,7 +802,7 @@ export default function CompanyPage() {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+      <Dialog onOpenChange={setEditDialogOpen} open={editDialogOpen}>
         <DialogContent className='sm:max-w-[600px]'>
           <DialogHeader>
             <DialogTitle>{t('edit_company')}</DialogTitle>
@@ -813,8 +813,8 @@ export default function CompanyPage() {
 
           <Form {...editCompanyForm}>
             <form
-              onSubmit={editCompanyForm.handleSubmit(onEditSubmit)}
               className='space-y-4'
+              onSubmit={editCompanyForm.handleSubmit(onEditSubmit)}
             >
               <div className='grid grid-cols-2 gap-4'>
                 <FormField
@@ -895,8 +895,8 @@ export default function CompanyPage() {
                       <FormLabel>{t('phone')}</FormLabel>
                       <FormControl>
                         <PhoneInput
-                          value={field.value || ''}
                           onChange={field.onChange}
+                          value={field.value || ''}
                         />
                       </FormControl>
                       <FormMessage />
@@ -911,8 +911,8 @@ export default function CompanyPage() {
                     <FormItem>
                       <FormLabel>{t('status')}</FormLabel>
                       <Select
-                        onValueChange={field.onChange}
                         defaultValue={field.value}
+                        onValueChange={field.onChange}
                       >
                         <FormControl>
                           <SelectTrigger>
@@ -1020,13 +1020,13 @@ export default function CompanyPage() {
 
               <DialogFooter>
                 <Button
-                  variant='outline'
-                  type='button'
                   onClick={() => setEditDialogOpen(false)}
+                  type='button'
+                  variant='outline'
                 >
                   {t('cancel')}
                 </Button>
-                <Button type='submit' disabled={editCompany.isPending}>
+                <Button disabled={editCompany.isPending} type='submit'>
                   {t('save')}
                 </Button>
               </DialogFooter>

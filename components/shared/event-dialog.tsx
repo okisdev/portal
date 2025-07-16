@@ -102,8 +102,8 @@ export function EventDialog({
       location: defaultValues?.location || '',
       startAt: defaultValues?.startAt || new Date(),
       endAt: defaultValues?.endAt || new Date(),
-      isAllDay: defaultValues?.isAllDay || false,
-      isPublic: defaultValues?.isPublic || false,
+      isAllDay: defaultValues?.isAllDay,
+      isPublic: defaultValues?.isPublic,
       folderId: defaultValues?.folderId || folders[0]?.id || '',
       participants: defaultValues?.participants || [],
     },
@@ -113,7 +113,7 @@ export function EventDialog({
     if (open) {
       const startAt = defaultValues?.startAt || new Date();
       const endAt = defaultValues?.endAt || new Date();
-      const isAllDay = defaultValues?.isAllDay || false;
+      const isAllDay = defaultValues?.isAllDay;
 
       form.reset({
         title: defaultValues?.title || '',
@@ -122,7 +122,7 @@ export function EventDialog({
         startAt: isAllDay ? setAllDayEventTimes(startAt) : startAt,
         endAt: isAllDay ? setAllDayEventTimes(endAt, true) : endAt,
         isAllDay,
-        isPublic: defaultValues?.isPublic || false,
+        isPublic: defaultValues?.isPublic,
         folderId: defaultValues?.folderId || folders[0]?.id || '',
         participants: defaultValues?.participants || [],
       });
@@ -178,7 +178,6 @@ export function EventDialog({
 
   return (
     <Dialog
-      open={open}
       onOpenChange={(open) => {
         onOpenChange(open);
         if (!open) {
@@ -195,6 +194,7 @@ export function EventDialog({
           });
         }
       }}
+      open={open}
     >
       <DialogContent className='max-h-[90vh] max-w-xl overflow-y-auto'>
         <DialogHeader>
@@ -204,11 +204,11 @@ export function EventDialog({
         </DialogHeader>
         <Form {...form}>
           <form
+            className='space-y-4'
             onSubmit={form.handleSubmit((data) => {
               onSubmit(data);
               onOpenChange(false);
             })}
-            className='space-y-4'
           >
             <FormField
               control={form.control}
@@ -244,8 +244,9 @@ export function EventDialog({
                   <FormLabel>{t('location')}</FormLabel>
                   <FormControl>
                     <Combobox
-                      value={field.value || ''}
-                      onChange={field.onChange}
+                      allowCustom={true}
+                      emptyText={t('no_locations_found')}
+                      groupHeading={t('suggested_locations')}
                       items={[
                         'Meeting Room 1',
                         'Meeting Room 2',
@@ -257,11 +258,10 @@ export function EventDialog({
                         'Google Meet',
                         'Microsoft Teams',
                       ]}
+                      onChange={field.onChange}
                       placeholder={t('enter_or_select_location')}
                       searchPlaceholder={t('search_locations')}
-                      emptyText={t('no_locations_found')}
-                      groupHeading={t('suggested_locations')}
-                      allowCustom={true}
+                      value={field.value || ''}
                     />
                   </FormControl>
                 </FormItem>
@@ -310,9 +310,9 @@ export function EventDialog({
                     <FormLabel>{t('start')}</FormLabel>
                     <FormControl>
                       <DateTimePicker
-                        value={field.value}
                         onChange={(date) => field.onChange(date)}
                         showTimePicker={!form.watch('isAllDay')}
+                        value={field.value}
                       />
                     </FormControl>
                   </FormItem>
@@ -327,9 +327,9 @@ export function EventDialog({
                     <FormLabel>{t('end')}</FormLabel>
                     <FormControl>
                       <DateTimePicker
-                        value={field.value}
                         onChange={(date) => field.onChange(date)}
                         showTimePicker={!form.watch('isAllDay')}
+                        value={field.value}
                       />
                     </FormControl>
                   </FormItem>
@@ -345,16 +345,16 @@ export function EventDialog({
                   <FormLabel>{t('calendar')}</FormLabel>
                   <FormControl>
                     <Combobox
+                      allowCustom={false}
+                      emptyText={t('no_calendars_found')}
+                      groupHeading={t('calendars')}
+                      items={folders?.map((f) => f.name) || []}
+                      onChange={handleCalendarSelect}
+                      placeholder={t('select_or_create_calendar')}
+                      searchPlaceholder={t('search_calendars')}
                       value={
                         folders?.find((f) => f.id === field.value)?.name || ''
                       }
-                      onChange={handleCalendarSelect}
-                      items={folders?.map((f) => f.name) || []}
-                      placeholder={t('select_or_create_calendar')}
-                      searchPlaceholder={t('search_calendars')}
-                      emptyText={t('no_calendars_found')}
-                      groupHeading={t('calendars')}
-                      allowCustom={false}
                     />
                   </FormControl>
                 </FormItem>
@@ -366,7 +366,7 @@ export function EventDialog({
                 <div className='flex items-center space-x-2'>
                   <p className='font-medium text-sm'>{t('participants')}</p>
                   <button
-                    type='button'
+                    className='flex items-center justify-center rounded-full bg-neutral-100 p-1 transition-colors hover:bg-neutral-200'
                     onClick={() => {
                       const participants = form.getValues('participants') || [];
                       form.setValue('participants', [
@@ -379,7 +379,7 @@ export function EventDialog({
                         },
                       ]);
                     }}
-                    className='flex items-center justify-center rounded-full bg-neutral-100 p-1 transition-colors hover:bg-neutral-200'
+                    type='button'
                   >
                     <PlusIcon className='size-4' />
                   </button>
@@ -388,8 +388,8 @@ export function EventDialog({
                 {(form.watch('participants') || []).map(
                   (participant, index) => (
                     <div
-                      key={participant.id + nanoid()}
                       className='flex items-start gap-2'
+                      key={participant.id + nanoid()}
                     >
                       <FormField
                         control={form.control}
@@ -397,7 +397,6 @@ export function EventDialog({
                         render={({ field }) => (
                           <FormItem className='flex-1'>
                             <Select
-                              value={field.value}
                               onValueChange={(
                                 value: 'user' | 'contact' | 'external'
                               ) => {
@@ -415,6 +414,7 @@ export function EventDialog({
                                   undefined
                                 );
                               }}
+                              value={field.value}
                             >
                               <SelectTrigger>
                                 <SelectValue placeholder={t('type')} />
@@ -442,8 +442,8 @@ export function EventDialog({
                           render={({ field }) => (
                             <FormItem className='flex-1'>
                               <Select
-                                value={field.value}
                                 onValueChange={field.onChange}
+                                value={field.value}
                               >
                                 <SelectTrigger>
                                   <SelectValue placeholder={t('select_user')} />
@@ -468,10 +468,13 @@ export function EventDialog({
                           render={({ field }) => (
                             <FormItem className='flex-1'>
                               <Combobox
-                                value={
-                                  participantOptions.contacts?.find(
-                                    (contact) => contact.id === field.value
-                                  )?.name || ''
+                                allowCustom={false}
+                                emptyText={t('no_contacts_found')}
+                                groupHeading={t('contacts')}
+                                items={
+                                  participantOptions.contacts?.map(
+                                    (contact) => contact.name
+                                  ) || []
                                 }
                                 onChange={(value) => {
                                   const contact =
@@ -480,16 +483,13 @@ export function EventDialog({
                                     );
                                   field.onChange(contact?.id || '');
                                 }}
-                                items={
-                                  participantOptions.contacts?.map(
-                                    (contact) => contact.name
-                                  ) || []
-                                }
                                 placeholder={t('select_contact')}
                                 searchPlaceholder={t('search_contacts')}
-                                emptyText={t('no_contacts_found')}
-                                groupHeading={t('contacts')}
-                                allowCustom={false}
+                                value={
+                                  participantOptions.contacts?.find(
+                                    (contact) => contact.id === field.value
+                                  )?.name || ''
+                                }
                               />
                             </FormItem>
                           )}
@@ -525,8 +525,8 @@ export function EventDialog({
                         render={({ field }) => (
                           <FormItem>
                             <Select
-                              value={field.value}
                               onValueChange={field.onChange}
+                              value={field.value}
                             >
                               <SelectTrigger>
                                 <SelectValue placeholder={t('role')} />
@@ -548,9 +548,6 @@ export function EventDialog({
                       />
 
                       <Button
-                        type='button'
-                        variant='ghost'
-                        size='icon'
                         onClick={() => {
                           const participants =
                             form.getValues('participants') || [];
@@ -559,6 +556,9 @@ export function EventDialog({
                             participants.filter((_, i) => i !== index)
                           );
                         }}
+                        size='icon'
+                        type='button'
+                        variant='ghost'
                       >
                         <X className='h-4 w-4' />
                       </Button>

@@ -296,7 +296,7 @@ export default function ContactIdPage() {
     return <PageLoading />;
   }
 
-  if (!isLoading && !contact) {
+  if (!(isLoading || contact)) {
     notFound();
   }
 
@@ -406,8 +406,8 @@ export default function ContactIdPage() {
                     <div className='flex items-center gap-2'>
                       <Building2 className='size-4 shrink-0' />
                       <Link
-                        href={`/dashboard/crm/contacts?company=${contact.company}`}
                         className='hover:text-primary'
+                        href={`/dashboard/crm/contacts?company=${contact.company}`}
                       >
                         {contact.company}
                       </Link>
@@ -420,8 +420,8 @@ export default function ContactIdPage() {
                         {contact?.teams?.map((team, index) => (
                           <React.Fragment key={team.id}>
                             <Link
-                              href={`/dashboard/crm/team/${team.id}`}
                               className='hover:text-primary'
+                              href={`/dashboard/crm/team/${team.id}`}
                             >
                               {team.name}
                             </Link>
@@ -433,10 +433,10 @@ export default function ContactIdPage() {
                   )}
                   {contact?.email && (
                     <Link
-                      href={`mailto:${contact.email}`}
-                      target='_blank'
-                      rel='noopener noreferrer'
                       className='flex items-center gap-2 hover:text-primary'
+                      href={`mailto:${contact.email}`}
+                      rel='noopener noreferrer'
+                      target='_blank'
                     >
                       <Mail className='size-4 shrink-0' />
                       <span className='truncate'>{contact.email}</span>
@@ -444,10 +444,10 @@ export default function ContactIdPage() {
                   )}
                   {contact?.phone && (
                     <Link
-                      href={`https://wa.me/${contact.phone.replace(/\D/g, '')}`}
-                      target='_blank'
-                      rel='noopener noreferrer'
                       className='flex items-center gap-2 hover:text-primary'
+                      href={`https://wa.me/${contact.phone.replace(/\D/g, '')}`}
+                      rel='noopener noreferrer'
+                      target='_blank'
                     >
                       <Phone className='size-4 shrink-0' />
                       <span>{parsePhone(contact.phone)}</span>
@@ -486,8 +486,8 @@ export default function ContactIdPage() {
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <button
-                      type='button'
                       className='my-1 text-muted-foreground outline-hidden hover:text-foreground'
+                      type='button'
                     >
                       <MoreHorizontal className='size-4' />
                     </button>
@@ -497,16 +497,16 @@ export default function ContactIdPage() {
                     className='bg-popover text-popover-foreground'
                   >
                     <DropdownMenuItem
-                      onClick={handleEditClick}
                       className='cursor-pointer'
+                      onClick={handleEditClick}
                     >
                       <Edit2 className='mr-2 size-4' />
                       {t('edit')}
                     </DropdownMenuItem>
 
                     <DropdownMenuItem
-                      onClick={handleDeleteClick}
                       className='cursor-pointer text-destructive'
+                      onClick={handleDeleteClick}
                     >
                       <Trash2 className='mr-2 size-4' />
                       {t('delete')}
@@ -523,7 +523,7 @@ export default function ContactIdPage() {
                     {t('last_contact')}
                     {lastContactDate && (
                       <button
-                        type='button'
+                        className='text-muted-foreground hover:text-foreground'
                         onClick={() => {
                           setLastContactDate(null);
                           updateContact.mutate({
@@ -531,15 +531,13 @@ export default function ContactIdPage() {
                             lastContactedAt: null,
                           });
                         }}
-                        className='text-muted-foreground hover:text-foreground'
+                        type='button'
                       >
                         <X className='size-3' />
                       </button>
                     )}
                   </div>
                   <DateTimePicker
-                    size='sm'
-                    value={lastContactDate}
                     onChange={(date) => setLastContactDate(date)}
                     onClose={() => {
                       const lastContactedAt = contact?.lastContactedAt
@@ -554,6 +552,8 @@ export default function ContactIdPage() {
                         });
                       }
                     }}
+                    size='sm'
+                    value={lastContactDate}
                   />
                 </div>
                 <div className='space-y-1.5'>
@@ -561,7 +561,7 @@ export default function ContactIdPage() {
                     {t('next_follow_up')}
                     {nextFollowUpDate && (
                       <button
-                        type='button'
+                        className='text-muted-foreground hover:text-foreground'
                         onClick={() => {
                           setNextFollowUpDate(null);
                           updateContact.mutate({
@@ -569,15 +569,13 @@ export default function ContactIdPage() {
                             nextFollowUpAt: null,
                           });
                         }}
-                        className='text-muted-foreground hover:text-foreground'
+                        type='button'
                       >
                         <X className='size-3' />
                       </button>
                     )}
                   </div>
                   <DateTimePicker
-                    size='sm'
-                    value={nextFollowUpDate}
                     onChange={(date) => setNextFollowUpDate(date)}
                     onClose={() => {
                       const currentTime = contact?.nextFollowUpAt
@@ -618,6 +616,8 @@ export default function ContactIdPage() {
                         });
                       }
                     }}
+                    size='sm'
+                    value={nextFollowUpDate}
                   />
                 </div>
                 <div className='space-y-1.5'>
@@ -625,19 +625,19 @@ export default function ContactIdPage() {
                     {t('priority')}
                   </span>
                   <Select
-                    value={contact?.priority || 'Medium'}
                     onValueChange={handlePriorityChange}
+                    value={contact?.priority || 'Medium'}
                   >
                     <SelectTrigger className='w-full'>
                       <SelectValue>
                         <SmartColorBadge
-                          value={contact?.priority || 'Medium'}
                           color={
                             priorities?.find(
                               (p: Priority) =>
                                 p.value === (contact?.priority || 'Medium')
                             )?.color || '#6b7280'
                           }
+                          value={contact?.priority || 'Medium'}
                         />
                       </SelectValue>
                     </SelectTrigger>
@@ -645,8 +645,8 @@ export default function ContactIdPage() {
                       {priorities?.map((priority: Priority) => (
                         <SelectItem key={priority.value} value={priority.value}>
                           <SmartColorBadge
-                            value={priority.value}
                             color={priority.color}
+                            value={priority.value}
                           />
                         </SelectItem>
                       ))}
@@ -658,19 +658,19 @@ export default function ContactIdPage() {
                     {t('status')}
                   </span>
                   <Select
-                    value={contact?.status || 'Lead'}
                     onValueChange={handleStatusChange}
+                    value={contact?.status || 'Lead'}
                   >
                     <SelectTrigger className='w-full'>
                       <SelectValue>
                         <SmartColorBadge
-                          value={contact?.status || 'Lead'}
                           color={
                             statuses?.find(
                               (s: Status) =>
                                 s.value === (contact?.status || 'Lead')
                             )?.color || '#6b7280'
                           }
+                          value={contact?.status || 'Lead'}
                         />
                       </SelectValue>
                     </SelectTrigger>
@@ -678,8 +678,8 @@ export default function ContactIdPage() {
                       {statuses?.map((status: Status) => (
                         <SelectItem key={status.value} value={status.value}>
                           <SmartColorBadge
-                            value={status.value}
                             color={status.color}
+                            value={status.value}
                           />
                         </SelectItem>
                       ))}
@@ -694,7 +694,6 @@ export default function ContactIdPage() {
                 <div className='mb-2 flex items-center justify-between'>
                   <h2 className='font-medium text-foreground'>{t('remark')}</h2>
                   <button
-                    type='button'
                     className='text-muted-foreground hover:text-foreground'
                     onClick={() => {
                       if (isNotesEditing) {
@@ -708,6 +707,7 @@ export default function ContactIdPage() {
                         setIsNotesEditing(true);
                       }
                     }}
+                    type='button'
                   >
                     {isNotesEditing ? (
                       <div className='flex items-center gap-2'>
@@ -721,10 +721,10 @@ export default function ContactIdPage() {
                 </div>
                 {isNotesEditing ? (
                   <Textarea
-                    value={editableRemark}
-                    onChange={(e) => setEditableRemark(e.target.value)}
                     className='min-h-[100px] bg-background'
+                    onChange={(e) => setEditableRemark(e.target.value)}
                     placeholder={t('add_remark_about_this_contact')}
+                    value={editableRemark}
                   />
                 ) : (
                   <p className='whitespace-pre-wrap text-muted-foreground text-sm'>
@@ -737,13 +737,13 @@ export default function ContactIdPage() {
                 <EventSection
                   appointments={appointments || []}
                   calendarFolders={calendarFolders}
-                  onCreateAppointment={handleBookAppointment}
-                  onUpdateAppointment={(data) => updateAppointment.mutate(data)}
-                  onDeleteAppointment={(id) => deleteAppointment.mutate({ id })}
                   defaultTitle={t('meeting_with', {
                     who: me?.name || '',
                     name: contact?.name || '',
                   })}
+                  onCreateAppointment={handleBookAppointment}
+                  onDeleteAppointment={(id) => deleteAppointment.mutate({ id })}
+                  onUpdateAppointment={(data) => updateAppointment.mutate(data)}
                 />
               </div>
 
@@ -757,12 +757,12 @@ export default function ContactIdPage() {
                   <>
                     {contact?.leadingTeams?.map((team) => (
                       <div
-                        key={team.id}
                         className='mb-3 flex items-center justify-between'
+                        key={team.id}
                       >
                         <Link
-                          href={`/dashboard/crm/team/${team.id}`}
                           className='text-sm transition-colors duration-200 hover:text-primary hover:underline'
+                          href={`/dashboard/crm/team/${team.id}`}
                         >
                           {team.name}
                         </Link>
@@ -773,12 +773,12 @@ export default function ContactIdPage() {
                     ))}
                     {contact?.subLeadingTeams?.map((team) => (
                       <div
-                        key={team.id}
                         className='mb-3 flex items-center justify-between'
+                        key={team.id}
                       >
                         <Link
-                          href={`/dashboard/crm/team/${team.id}`}
                           className='text-sm transition-colors duration-200 hover:text-primary hover:underline'
+                          href={`/dashboard/crm/team/${team.id}`}
                         >
                           {team.name}
                         </Link>
@@ -789,12 +789,12 @@ export default function ContactIdPage() {
                     ))}
                     {contact?.referralTeams?.map((team) => (
                       <div
-                        key={team.id}
                         className='mb-3 flex items-center justify-between'
+                        key={team.id}
                       >
                         <Link
-                          href={`/dashboard/crm/team/${team.id}`}
                           className='text-sm transition-colors duration-200 hover:text-primary hover:underline'
+                          href={`/dashboard/crm/team/${team.id}`}
                         >
                           {team.name}
                         </Link>
@@ -806,24 +806,26 @@ export default function ContactIdPage() {
                     {contact?.teams
                       ?.filter(
                         (team) =>
-                          !contact.leadingTeams?.some(
-                            (lt) => lt.id === team.id
-                          ) &&
-                          !contact.subLeadingTeams?.some(
-                            (st) => st.id === team.id
-                          ) &&
-                          !contact.referralTeams?.some(
-                            (rt) => rt.id === team.id
+                          !(
+                            contact.leadingTeams?.some(
+                              (lt) => lt.id === team.id
+                            ) ||
+                            contact.subLeadingTeams?.some(
+                              (st) => st.id === team.id
+                            ) ||
+                            contact.referralTeams?.some(
+                              (rt) => rt.id === team.id
+                            )
                           )
                       )
                       .map((team) => (
                         <div
-                          key={team.id}
                           className='mb-3 flex items-center justify-between'
+                          key={team.id}
                         >
                           <Link
-                            href={`/dashboard/crm/team/${team.id}`}
                             className='text-sm hover:text-primary hover:underline'
+                            href={`/dashboard/crm/team/${team.id}`}
                           >
                             {team.name}
                           </Link>
@@ -857,6 +859,8 @@ export default function ContactIdPage() {
                         metadata: activity.metadata,
                         createdAt: activity.createdAt,
                       }))}
+                      filterTypes={['NOTE_ADDED']}
+                      isLoading={createContactActivity.isPending}
                       onCreateActivity={(data) => {
                         createContactActivity.mutate({
                           contactId: contactId[0],
@@ -871,18 +875,16 @@ export default function ContactIdPage() {
                           },
                         });
                       }}
-                      isLoading={createContactActivity.isPending}
-                      filterTypes={['NOTE_ADDED']}
                       onDeleteNote={(id) => deleteNote.mutate({ id })}
-                      onUpdateNote={(id, description) =>
-                        updateNote.mutate({ id, description })
-                      }
                       onReplyNote={(id, description) =>
                         replyNote.mutate({
                           id,
                           description,
                           contactId: contactId[0],
                         })
+                      }
+                      onUpdateNote={(id, description) =>
+                        updateNote.mutate({ id, description })
                       }
                     />
                   ),
@@ -901,6 +903,7 @@ export default function ContactIdPage() {
                         metadata: activity.metadata,
                         createdAt: activity.createdAt,
                       }))}
+                      isLoading={createContactActivity.isPending}
                       onCreateActivity={(data) => {
                         createContactActivity.mutate({
                           contactId: contactId[0],
@@ -915,17 +918,16 @@ export default function ContactIdPage() {
                           },
                         });
                       }}
-                      isLoading={createContactActivity.isPending}
                       onDeleteNote={(id) => deleteNote.mutate({ id })}
-                      onUpdateNote={(id, description) =>
-                        updateNote.mutate({ id, description })
-                      }
                       onReplyNote={(id, description) =>
                         replyNote.mutate({
                           id,
                           description,
                           contactId: contactId[0],
                         })
+                      }
+                      onUpdateNote={(id, description) =>
+                        updateNote.mutate({ id, description })
                       }
                     />
                   ),
@@ -936,31 +938,31 @@ export default function ContactIdPage() {
         </div>
       </div>
 
-      <Dialog open={isEditModalOpen} onOpenChange={handleCloseEditModal}>
+      <Dialog onOpenChange={handleCloseEditModal} open={isEditModalOpen}>
         <DialogContent className='max-h-[90vh] max-w-xl overflow-y-auto'>
           <DialogHeader>
             <DialogTitle>{t('edit_contact_information')}</DialogTitle>
           </DialogHeader>
-          <form onSubmit={handleSubmitEdit} className='space-y-4'>
+          <form className='space-y-4' onSubmit={handleSubmitEdit}>
             <div className='grid grid-cols-2 gap-4'>
               <div className='space-y-2'>
                 <Label htmlFor='firstName'>{t('first_name')}</Label>
                 <Input
                   id='firstName'
-                  value={editForm.firstName}
                   onChange={(e) =>
                     setEditForm({ ...editForm, firstName: e.target.value })
                   }
+                  value={editForm.firstName}
                 />
               </div>
               <div className='space-y-2'>
                 <Label htmlFor='lastName'>{t('last_name')}</Label>
                 <Input
                   id='lastName'
-                  value={editForm.lastName}
                   onChange={(e) =>
                     setEditForm({ ...editForm, lastName: e.target.value })
                   }
+                  value={editForm.lastName}
                 />
               </div>
             </div>
@@ -968,25 +970,27 @@ export default function ContactIdPage() {
               <Label htmlFor='email'>{t('email')}</Label>
               <Input
                 id='email'
-                type='email'
-                value={editForm.email}
                 onChange={(e) =>
                   setEditForm({ ...editForm, email: e.target.value })
                 }
+                type='email'
+                value={editForm.email}
               />
             </div>
             <div className='space-y-2'>
               <Label htmlFor='phone'>{t('phone')}</Label>
               <PhoneInput
                 id='phone'
-                value={editForm.phone}
                 onChange={(value) => setEditForm({ ...editForm, phone: value })}
+                value={editForm.phone}
               />
             </div>
             <div className='space-y-2'>
               <Label htmlFor='company'>{t('company')}</Label>
               <Combobox
-                value={editForm.company}
+                allowCustom={true}
+                groupHeading={t('companies')}
+                items={companies?.map((c) => c.name) || []}
                 onChange={(value) => {
                   const selectedCompany = companies?.find(
                     (c) => c.name === value
@@ -997,21 +1001,19 @@ export default function ContactIdPage() {
                     companyId: selectedCompany?.id || null,
                   });
                 }}
-                items={companies?.map((c) => c.name) || []}
                 placeholder={t('select_company')}
                 searchPlaceholder={t('search_company')}
-                groupHeading={t('companies')}
-                allowCustom={true}
+                value={editForm.company}
               />
             </div>
             <div className='space-y-2'>
               <Label htmlFor='status'>{t('status')}</Label>
 
               <Select
-                value={editForm.status}
                 onValueChange={(value) =>
                   setEditForm({ ...editForm, status: value })
                 }
+                value={editForm.status}
               >
                 <SelectTrigger>
                   <SelectValue placeholder='Select status' />
@@ -1020,8 +1022,8 @@ export default function ContactIdPage() {
                   {statuses?.map((status: Status) => (
                     <SelectItem key={status.value} value={status.value}>
                       <SmartColorBadge
-                        value={status.value}
                         color={status.color}
+                        value={status.value}
                       />
                     </SelectItem>
                   ))}
@@ -1031,23 +1033,23 @@ export default function ContactIdPage() {
             <div className='space-y-2'>
               <Label htmlFor='source'>{t('source')}</Label>
               <Combobox
-                value={editForm.source}
+                groupHeading={t('sources')}
+                items={sources}
                 onChange={(value) =>
                   setEditForm({ ...editForm, source: value })
                 }
-                items={sources}
                 placeholder={t('select_source')}
                 searchPlaceholder={t('search_source')}
-                groupHeading={t('sources')}
+                value={editForm.source}
               />
             </div>
             <div className='space-y-2'>
               <Label htmlFor='priority'>{t('priority')}</Label>
               <Select
-                value={editForm.priority}
                 onValueChange={(value) =>
                   setEditForm({ ...editForm, priority: value })
                 }
+                value={editForm.priority}
               >
                 <SelectTrigger>
                   <SelectValue placeholder='Select priority' />
@@ -1056,8 +1058,8 @@ export default function ContactIdPage() {
                   {priorities?.map((priority: Priority) => (
                     <SelectItem key={priority.value} value={priority.value}>
                       <SmartColorBadge
-                        value={priority.value}
                         color={priority.color}
+                        value={priority.value}
                       />
                     </SelectItem>
                   ))}
@@ -1066,13 +1068,13 @@ export default function ContactIdPage() {
             </div>
             <div className='flex justify-end space-x-2'>
               <Button
+                onClick={handleCloseEditModal}
                 type='button'
                 variant='outline'
-                onClick={handleCloseEditModal}
               >
                 {t('cancel')}
               </Button>
-              <Button type='submit' disabled={updateContact.isPending}>
+              <Button disabled={updateContact.isPending} type='submit'>
                 {updateContact.isPending ? t('saving') : t('save_changes')}
               </Button>
             </div>
@@ -1081,11 +1083,6 @@ export default function ContactIdPage() {
       </Dialog>
 
       <EventDialog
-        open={!!editingAppointment}
-        onOpenChange={(open) => !open && setEditingAppointment(null)}
-        onSubmit={handleEditAppointment}
-        isEditMode={true}
-        key={editingAppointment?.id}
         defaultValues={
           editingAppointment
             ? {
@@ -1093,31 +1090,36 @@ export default function ContactIdPage() {
                 description: editingAppointment.description,
                 startAt: new Date(editingAppointment.startAt),
                 endAt: new Date(
-                  editingAppointment.startAt.getTime() + 30 * 60000
+                  editingAppointment.startAt.getTime() + 30 * 60_000
                 ),
               }
             : undefined
         }
         folders={calendarFolders}
+        isEditMode={true}
+        key={editingAppointment?.id}
+        onOpenChange={(open) => !open && setEditingAppointment(null)}
+        onSubmit={handleEditAppointment}
+        open={!!editingAppointment}
       />
 
       <EventDialog
-        open={isBookingModalOpen}
-        onOpenChange={setIsBookingModalOpen}
-        onSubmit={handleBookAppointment}
         defaultValues={{
           title: t('meeting_with', {
             who: me?.name || '',
             name: contact?.name || '',
           }),
           startAt: new Date(),
-          endAt: new Date(Date.now() + 30 * 60000),
+          endAt: new Date(Date.now() + 30 * 60_000),
           folderId: 'default',
         }}
         folders={calendarFolders}
+        onOpenChange={setIsBookingModalOpen}
+        onSubmit={handleBookAppointment}
+        open={isBookingModalOpen}
       />
 
-      <Dialog open={isTeamModalOpen} onOpenChange={setIsTeamModalOpen}>
+      <Dialog onOpenChange={setIsTeamModalOpen} open={isTeamModalOpen}>
         <DialogContent className='max-h-[90vh] max-w-xl overflow-y-auto'>
           <DialogHeader>
             <DialogTitle>{t('assign_to_team')}</DialogTitle>
@@ -1126,7 +1128,7 @@ export default function ContactIdPage() {
           <div className='space-y-4'>
             <div className='space-y-2'>
               <Label>{t('select_team')}</Label>
-              <Select value={selectedTeam} onValueChange={setSelectedTeam}>
+              <Select onValueChange={setSelectedTeam} value={selectedTeam}>
                 <SelectTrigger>
                   <SelectValue placeholder={t('select_a_team')} />
                 </SelectTrigger>
@@ -1141,8 +1143,8 @@ export default function ContactIdPage() {
             </div>
             <div className='flex justify-end gap-2'>
               <Button
-                onClick={handleAssignTeam}
                 disabled={assignToTeam.isPending || !selectedTeam}
+                onClick={handleAssignTeam}
               >
                 {t('assign')}
               </Button>
@@ -1152,13 +1154,13 @@ export default function ContactIdPage() {
       </Dialog>
 
       <ActionAlertDialog
-        open={deleteDialogOpen}
-        onOpenChange={setDeleteDialogOpen}
-        onConfirm={handleDeleteConfirm}
-        title={t('delete_contact')}
-        description={t('delete_contact_description')}
-        confirmText={t('delete')}
         cancelText={t('cancel')}
+        confirmText={t('delete')}
+        description={t('delete_contact_description')}
+        onConfirm={handleDeleteConfirm}
+        onOpenChange={setDeleteDialogOpen}
+        open={deleteDialogOpen}
+        title={t('delete_contact')}
       />
     </div>
   );

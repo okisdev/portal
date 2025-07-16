@@ -714,7 +714,7 @@ export const teamActivity = pgTable('portal_team_activity', {
   updatedAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
 });
 
-// @ts-ignore - Self-referential table limitation
+// @ts-expect-error - Self-referential table limitation
 export const userTask = pgTable('portal_user_task', {
   id: text()
     .primaryKey()
@@ -737,7 +737,7 @@ export const userTask = pgTable('portal_user_task', {
   assignedTo: text().references(() => user.id), // can be assigned to another user
   labels: text(), // JSON array of labels/tags
   attachments: text(), // JSON array of attachment URLs/metadata
-  // @ts-ignore - Self-referential table limitation
+  // @ts-expect-error - Self-referential table limitation
   parentTaskId: text().references(() => userTask.id), // for subtasks
   metadata: text(), // JSON string for additional data
   createdAt: timestamp({ mode: 'date' }).notNull().defaultNow(),

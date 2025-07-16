@@ -284,19 +284,19 @@ export default function CRMContactsTablePage() {
       id: 'select',
       header: ({ table }) => (
         <Checkbox
+          aria-label='Select all'
           checked={
             table.getIsAllPageRowsSelected() ||
             (table.getIsAllPageRowsSelected() && 'indeterminate')
           }
           onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-          aria-label='Select all'
         />
       ),
       cell: ({ row }) => (
         <Checkbox
+          aria-label='Select row'
           checked={row.getIsSelected()}
           onCheckedChange={(value) => row.toggleSelected(!!value)}
-          aria-label='Select row'
         />
       ),
       enableSorting: false,
@@ -359,26 +359,26 @@ export default function CRMContactsTablePage() {
       ),
       cell: ({ row }) => (
         <Select
-          value={row.original.status}
-          onValueChange={(value) => handleStatusChange(row.original.id, value)}
           disabled={updateContact.isPending}
+          onValueChange={(value) => handleStatusChange(row.original.id, value)}
+          value={row.original.status}
         >
-          <SelectTrigger size='sm' className='w-26'>
+          <SelectTrigger className='w-26' size='sm'>
             <SelectValue>
               <SmartColorBadge
-                value={row.original.status}
                 color={
                   statuses?.find(
                     (s: Status) => s.value === (row.original.status || 'Lead')
                   )?.color || '#6b7280'
                 }
+                value={row.original.status}
               />
             </SelectValue>
           </SelectTrigger>
           <SelectContent>
             {statuses?.map((status: Status) => (
               <SelectItem key={status.value} value={status.value}>
-                <SmartColorBadge value={status.value} color={status.color} />
+                <SmartColorBadge color={status.color} value={status.value} />
               </SelectItem>
             ))}
           </SelectContent>
@@ -393,22 +393,22 @@ export default function CRMContactsTablePage() {
       ),
       cell: ({ row }) => (
         <Select
-          value={row.original.priority || 'Medium'}
+          disabled={updateContact.isPending}
           onValueChange={(value) =>
             handlePriorityChange(row.original.id, value)
           }
-          disabled={updateContact.isPending}
+          value={row.original.priority || 'Medium'}
         >
-          <SelectTrigger size='sm' className='w-28'>
+          <SelectTrigger className='w-28' size='sm'>
             <SelectValue>
               <SmartColorBadge
-                value={row.original.priority || 'Medium'}
                 color={
                   priorities?.find(
                     (p: Priority) =>
                       p.value === (row.original.priority || 'Medium')
                   )?.color || '#6b7280'
                 }
+                value={row.original.priority || 'Medium'}
               />
             </SelectValue>
           </SelectTrigger>
@@ -416,8 +416,8 @@ export default function CRMContactsTablePage() {
             {priorities?.map((priority: Priority) => (
               <SelectItem key={priority.value} value={priority.value}>
                 <SmartColorBadge
-                  value={priority.value}
                   color={priority.color}
+                  value={priority.value}
                 />
               </SelectItem>
             ))}
@@ -434,26 +434,26 @@ export default function CRMContactsTablePage() {
       ),
       cell: ({ row }) => (
         <Select
-          value={row.original.source || 'N/A'}
-          onValueChange={(value) => handleSourceChange(row.original.id, value)}
           disabled={updateContact.isPending}
+          onValueChange={(value) => handleSourceChange(row.original.id, value)}
+          value={row.original.source || 'N/A'}
         >
-          <SelectTrigger size='sm' className='w-30'>
+          <SelectTrigger className='w-30' size='sm'>
             <SelectValue>
               <SmartColorBadge
-                value={row.original.source || 'N/A'}
                 color={
                   sources?.find(
                     (s: Source) => s.value === (row.original.source || 'N/A')
                   )?.color || '#6b7280'
                 }
+                value={row.original.source || 'N/A'}
               />
             </SelectValue>
           </SelectTrigger>
           <SelectContent>
             {sources?.map((source: Source) => (
               <SelectItem key={source.value} value={source.value}>
-                <SmartColorBadge value={source.value} color={source.color} />
+                <SmartColorBadge color={source.color} value={source.value} />
               </SelectItem>
             ))}
           </SelectContent>
@@ -511,7 +511,7 @@ export default function CRMContactsTablePage() {
       cell: ({ row }) => (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant='ghost' className='h-8 w-8 p-0'>
+            <Button className='h-8 w-8 p-0' variant='ghost'>
               <span className='sr-only'>{t('open_menu')}</span>
               <MoreHorizontal className='h-4 w-4' />
             </Button>
@@ -522,8 +522,8 @@ export default function CRMContactsTablePage() {
               {t('view')}
             </DropdownMenuItem>
             <DropdownMenuItem
-              onClick={(e) => handleDeleteClick(row.original.id, e)}
               className='text-destructive'
+              onClick={(e) => handleDeleteClick(row.original.id, e)}
             >
               <Trash2 className='mr-2 h-4 w-4' />
               {t('delete')}
@@ -574,30 +574,38 @@ export default function CRMContactsTablePage() {
   return (
     <div className='space-y-4 p-4'>
       <PageHeader
-        title={t('contacts')}
-        subtitle={
-          !isLoading
-            ? `(${t('total_number_contacts', { count: totalCount || 0 })})`
-            : undefined
-        }
         description={t('contacts_description')}
+        subtitle={
+          isLoading
+            ? undefined
+            : `(${t('total_number_contacts', { count: totalCount || 0 })})`
+        }
+        title={t('contacts')}
       />
 
       <div className='flex flex-col gap-4'>
         <div className='flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between'>
           <div className='flex flex-col gap-4 sm:flex-row'>
             <Input
-              placeholder={t('search_contacts')}
-              value={search}
+              className='h-8 w-full max-w-sm sm:w-72'
+              disabled={isLoading}
               onChange={(e) => {
                 setSearch(e.target.value);
               }}
-              className='h-8 w-full max-w-sm sm:w-72'
-              disabled={isLoading}
+              placeholder={t('search_contacts')}
+              value={search}
             />
 
             <Combobox
-              value={selectedColumn}
+              allowCustom={false}
+              alwaysPlaceHolder={true}
+              className='w-full sm:w-48'
+              emptyText={t('no_columns_found')}
+              groupHeading={t('visible_columns')}
+              items={table
+                .getAllColumns()
+                .filter((column) => column.getCanHide())
+                .map((column) => column.id)}
               onChange={(value) => {
                 setSelectedColumn(value);
                 const column = table
@@ -607,15 +615,7 @@ export default function CRMContactsTablePage() {
                   column.toggleVisibility(!column.getIsVisible());
                 }
               }}
-              items={table
-                .getAllColumns()
-                .filter((column) => column.getCanHide())
-                .map((column) => column.id)}
               placeholder={t('visible_columns')}
-              searchPlaceholder={t('search_columns')}
-              emptyText={t('no_columns_found')}
-              groupHeading={t('visible_columns')}
-              allowCustom={false}
               renderItem={(item) => {
                 const column = table
                   .getAllColumns()
@@ -627,23 +627,23 @@ export default function CRMContactsTablePage() {
                   </div>
                 );
               }}
-              className='w-full sm:w-48'
+              searchPlaceholder={t('search_columns')}
               size='sm'
-              alwaysPlaceHolder={true}
+              value={selectedColumn}
             />
 
             {(statusFilter.length > 0 ||
               sourceFilter.length > 0 ||
               priorityFilter.length > 0) && (
               <Button
-                variant='outline'
-                size='sm'
                 className='h-8'
                 onClick={() => {
                   setStatusFilter([]);
                   setSourceFilter([]);
                   setPriorityFilter([]);
                 }}
+                size='sm'
+                variant='outline'
               >
                 {t('clear_all_filters')}
               </Button>
@@ -655,9 +655,9 @@ export default function CRMContactsTablePage() {
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button
-                    variant='outline'
-                    size='sm'
                     className='flex h-8 items-center gap-2'
+                    size='sm'
+                    variant='outline'
                   >
                     <MoreHorizontal className='mr-2 h-4 w-4' />
                     {t('bulk_actions')}
@@ -688,7 +688,6 @@ export default function CRMContactsTablePage() {
               const isActive = statusFilter.includes(status.value);
               return (
                 <button
-                  type='button'
                   key={status.value}
                   onClick={() => {
                     if (isActive) {
@@ -699,11 +698,12 @@ export default function CRMContactsTablePage() {
                       setStatusFilter([...statusFilter, status.value]);
                     }
                   }}
+                  type='button'
                 >
                   <SmartColorBadge
-                    value={status.value}
                     color={status.color}
                     isActive={isActive}
+                    value={status.value}
                   />
                 </button>
               );
@@ -711,10 +711,10 @@ export default function CRMContactsTablePage() {
           </div>
           {statusFilter.length > 0 && (
             <Button
-              variant='ghost'
-              size='sm'
               className='h-6 px-2 text-xs'
               onClick={() => setStatusFilter([])}
+              size='sm'
+              variant='ghost'
             >
               {t('clear')}
             </Button>
@@ -727,7 +727,6 @@ export default function CRMContactsTablePage() {
               const isActive = sourceFilter.includes(source.value);
               return (
                 <button
-                  type='button'
                   key={source.value}
                   onClick={() => {
                     if (isActive) {
@@ -738,11 +737,12 @@ export default function CRMContactsTablePage() {
                       setSourceFilter([...sourceFilter, source.value]);
                     }
                   }}
+                  type='button'
                 >
                   <SmartColorBadge
-                    value={source.value}
                     color={source.color}
                     isActive={isActive}
+                    value={source.value}
                   />
                 </button>
               );
@@ -750,10 +750,10 @@ export default function CRMContactsTablePage() {
           </div>
           {sourceFilter.length > 0 && (
             <Button
-              variant='ghost'
-              size='sm'
               className='h-6 px-2 text-xs'
               onClick={() => setSourceFilter([])}
+              size='sm'
+              variant='ghost'
             >
               {t('clear')}
             </Button>
@@ -766,7 +766,6 @@ export default function CRMContactsTablePage() {
               const isActive = priorityFilter.includes(priority.value);
               return (
                 <button
-                  type='button'
                   key={priority.value}
                   onClick={() => {
                     if (isActive) {
@@ -777,11 +776,12 @@ export default function CRMContactsTablePage() {
                       setPriorityFilter([...priorityFilter, priority.value]);
                     }
                   }}
+                  type='button'
                 >
                   <SmartColorBadge
-                    value={priority.value}
                     color={priority.color}
                     isActive={isActive}
+                    value={priority.value}
                   />
                 </button>
               );
@@ -789,10 +789,10 @@ export default function CRMContactsTablePage() {
           </div>
           {priorityFilter.length > 0 && (
             <Button
-              variant='ghost'
-              size='sm'
               className='h-6 px-2 text-xs'
               onClick={() => setPriorityFilter([])}
+              size='sm'
+              variant='ghost'
             >
               {t('clear')}
             </Button>
@@ -801,32 +801,32 @@ export default function CRMContactsTablePage() {
       </div>
 
       <DataTable
-        table={table}
         columns={tableColumns}
         loading={isLoading}
         onRowClick={(row) => router.push(`/dashboard/crm/contacts/${row.id}`)}
+        table={table}
       />
 
       <ActionAlertDialog
-        open={deleteDialogOpen}
-        onOpenChange={setDeleteDialogOpen}
-        onConfirm={handleDeleteConfirm}
-        title={t('delete_contact')}
-        description={t('delete_contact_description')}
-        confirmText={t('delete')}
         cancelText={t('cancel')}
+        confirmText={t('delete')}
+        description={t('delete_contact_description')}
+        onConfirm={handleDeleteConfirm}
+        onOpenChange={setDeleteDialogOpen}
+        open={deleteDialogOpen}
+        title={t('delete_contact')}
       />
 
       <ActionAlertDialog
-        open={bulkDeleteDialogOpen}
-        onOpenChange={setBulkDeleteDialogOpen}
-        onConfirm={handleBulkDelete}
-        title={t('delete_selected_contacts')}
+        cancelText={t('cancel')}
+        confirmText={t('delete')}
         description={t('delete_selected_contacts_description', {
           count: table.getFilteredSelectedRowModel().rows.length,
         })}
-        confirmText={t('delete')}
-        cancelText={t('cancel')}
+        onConfirm={handleBulkDelete}
+        onOpenChange={setBulkDeleteDialogOpen}
+        open={bulkDeleteDialogOpen}
+        title={t('delete_selected_contacts')}
       />
     </div>
   );

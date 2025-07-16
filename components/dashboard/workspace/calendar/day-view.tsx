@@ -51,13 +51,13 @@ export function DayView({
         </div>
         <DayHeader
           date={currentDate}
-          selectedDate={selectedDate}
           events={events}
           folders={folders}
           hiddenCalendars={hiddenCalendars}
-          onEventEdit={onEventEdit}
-          onEventDelete={onEventDelete}
           isCompact={true}
+          onEventDelete={onEventDelete}
+          onEventEdit={onEventEdit}
+          selectedDate={selectedDate}
         />
       </div>
       <div className='flex-1 overflow-y-auto'>
@@ -71,12 +71,12 @@ export function DayView({
             events={events.filter((event) => !event.isAllDay)}
             folders={folders}
             hiddenCalendars={hiddenCalendars}
-            onTimeSelect={onTimeSelect}
             isSelecting={isSelecting}
             isTimeSlotSelected={isTimeSlotSelected}
-            onSelectionEnd={onSelectionEnd}
-            onEventEdit={onEventEdit}
             onEventDelete={onEventDelete}
+            onEventEdit={onEventEdit}
+            onSelectionEnd={onSelectionEnd}
+            onTimeSelect={onTimeSelect}
           />
         </div>
       </div>

@@ -186,13 +186,13 @@ export default function DashboardPersonalCalendar() {
     const startDate = new Date(selectedDate);
     const endDate = new Date(selectedDate);
 
-    if (!form.getValues('isAllDay')) {
-      // For regular events, set end time to 1 hour after start
-      endDate.setHours(endDate.getHours() + 1);
-    } else {
+    if (form.getValues('isAllDay')) {
       // For all-day events, set times to midnight
       startDate.setHours(0, 0, 0, 0);
       endDate.setHours(0, 0, 0, 0);
+    } else {
+      // For regular events, set end time to 1 hour after start
+      endDate.setHours(endDate.getHours() + 1);
     }
 
     form.setValue('startAt', startDate);
@@ -204,13 +204,13 @@ export default function DashboardPersonalCalendar() {
       const startDate = new Date(selectedDate);
       const endDate = new Date(selectedDate);
 
-      if (!form.getValues('isAllDay')) {
-        // For regular events, set end time to 1 hour after start
-        endDate.setHours(endDate.getHours() + 1);
-      } else {
+      if (form.getValues('isAllDay')) {
         // For all-day events, set times to midnight
         startDate.setHours(0, 0, 0, 0);
         endDate.setHours(0, 0, 0, 0);
+      } else {
+        // For regular events, set end time to 1 hour after start
+        endDate.setHours(endDate.getHours() + 1);
       }
 
       form.reset({
@@ -365,7 +365,7 @@ export default function DashboardPersonalCalendar() {
   };
 
   const isTimeSlotSelected = (date: Date, hour: number, minute: number) => {
-    if (!selectionStart || !selectionEnd || !isSelecting) return false;
+    if (!(selectionStart && selectionEnd && isSelecting)) return false;
 
     const timeSlot = new Date(date);
     timeSlot.setHours(hour, minute, 0, 0);
@@ -467,8 +467,13 @@ export default function DashboardPersonalCalendar() {
         <div className='hidden border-r md:block'>
           <CalendarSidePanel
             currentDate={currentDate}
-            selectedDate={selectedDate}
+            folders={folders ?? []}
+            hiddenCalendars={hiddenCalendars}
             isLoading={isLoadingFolders}
+            onAddCalendar={() => {
+              addCalendarForm.reset();
+              setIsAddCalendarOpen(true);
+            }}
             onDateSelect={(date) => {
               setSelectedDate(date);
               if (
@@ -478,8 +483,22 @@ export default function DashboardPersonalCalendar() {
                 setCurrentDate(date);
               }
             }}
-            folders={folders ?? []}
-            hiddenCalendars={hiddenCalendars}
+            onDeleteCalendar={(folderId) => {
+              toast.promise(deleteFolder.mutateAsync({ id: folderId }), {
+                loading: t('deleting_calendar'),
+                success: t('calendar_deleted_successfully'),
+                error: t('failed_to_delete_calendar'),
+              });
+            }}
+            onEditCalendar={(folder) => {
+              setSelectedCalendar(folder);
+              calendarForm.reset({
+                name: folder.name,
+                color: folder.color ?? '#000000',
+                visibility: folder.visibility ?? 'PRIVATE',
+              });
+              setIsEditCalendarOpen(true);
+            }}
             onToggleCalendar={(folderId) => {
               setHiddenCalendars((prev) => {
                 const next = new Set(prev);
@@ -491,117 +510,79 @@ export default function DashboardPersonalCalendar() {
                 return next;
               });
             }}
-            onAddCalendar={() => {
-              addCalendarForm.reset();
-              setIsAddCalendarOpen(true);
-            }}
-            onEditCalendar={(folder) => {
-              setSelectedCalendar(folder);
-              calendarForm.reset({
-                name: folder.name,
-                color: folder.color ?? '#000000',
-                visibility: folder.visibility ?? 'PRIVATE',
-              });
-              setIsEditCalendarOpen(true);
-            }}
-            onDeleteCalendar={(folderId) => {
-              toast.promise(deleteFolder.mutateAsync({ id: folderId }), {
-                loading: t('deleting_calendar'),
-                success: t('calendar_deleted_successfully'),
-                error: t('failed_to_delete_calendar'),
-              });
-            }}
+            selectedDate={selectedDate}
           />
         </div>
 
         <div className='flex flex-1 flex-col'>
           <CalendarHeader
             currentDate={currentDate}
-            view={view}
-            onViewChange={updateView}
-            onTodayClick={goToToday}
-            onPrevious={goToPrevious}
-            onNext={goToNext}
             onAddEvent={() => setIsEventDialogOpen(true)}
+            onNext={goToNext}
+            onPrevious={goToPrevious}
+            onTodayClick={goToToday}
+            onViewChange={updateView}
+            view={view}
           />
 
           {view === 'month' ? (
             <MonthView
               currentDate={currentDate}
-              selectedDate={selectedDate}
-              setSelectedDate={setSelectedDate}
               events={events ?? []}
               folders={folders ?? []}
               hiddenCalendars={hiddenCalendars}
-              onEventEdit={handleEditEvent}
               onEventDelete={handleDeleteEvent}
+              onEventEdit={handleEditEvent}
+              selectedDate={selectedDate}
+              setSelectedDate={setSelectedDate}
             />
           ) : view === 'week' ? (
             <WeekView
               currentDate={currentDate}
-              selectedDate={selectedDate}
               events={events ?? []}
               folders={folders ?? []}
               hiddenCalendars={hiddenCalendars}
-              onTimeSelect={handleTimeSelection}
               isSelecting={isSelecting}
               isTimeSlotSelected={isTimeSlotSelected}
-              onSelectionEnd={finishSelection}
-              onEventEdit={handleEditEvent}
               onEventDelete={handleDeleteEvent}
+              onEventEdit={handleEditEvent}
+              onSelectionEnd={finishSelection}
+              onTimeSelect={handleTimeSelection}
+              selectedDate={selectedDate}
             />
           ) : view === '3days' ? (
             <ThreeDayView
               currentDate={currentDate}
-              selectedDate={selectedDate}
               events={events ?? []}
               folders={folders ?? []}
               hiddenCalendars={hiddenCalendars}
-              onTimeSelect={handleTimeSelection}
               isSelecting={isSelecting}
               isTimeSlotSelected={isTimeSlotSelected}
-              onSelectionEnd={finishSelection}
-              onEventEdit={handleEditEvent}
               onEventDelete={handleDeleteEvent}
+              onEventEdit={handleEditEvent}
+              onSelectionEnd={finishSelection}
+              onTimeSelect={handleTimeSelection}
+              selectedDate={selectedDate}
             />
           ) : (
             <DayView
               currentDate={currentDate}
-              selectedDate={selectedDate}
               events={events ?? []}
               folders={folders ?? []}
               hiddenCalendars={hiddenCalendars}
-              onTimeSelect={handleTimeSelection}
               isSelecting={isSelecting}
               isTimeSlotSelected={isTimeSlotSelected}
-              onSelectionEnd={finishSelection}
-              onEventEdit={handleEditEvent}
               onEventDelete={handleDeleteEvent}
+              onEventEdit={handleEditEvent}
+              onSelectionEnd={finishSelection}
+              onTimeSelect={handleTimeSelection}
+              selectedDate={selectedDate}
             />
           )}
         </div>
       </div>
 
       <EventDialog
-        open={isEventDialogOpen}
-        onOpenChange={(open) => {
-          setIsEventDialogOpen(open);
-          if (!open) {
-            setSelectedEvent(null);
-            setIsEditMode(false);
-          }
-        }}
-        onSubmit={(data) => {
-          if (isEditMode && selectedEvent) {
-            updateEvent.mutate({
-              id: selectedEvent.id,
-              ...data,
-            });
-          } else {
-            createEvent.mutate(data);
-          }
-        }}
-        isEditMode={isEditMode}
         defaultValues={
           selectedEvent
             ? {
@@ -628,6 +609,31 @@ export default function DashboardPersonalCalendar() {
               }
         }
         folders={folders}
+        isEditMode={isEditMode}
+        onCreateFolder={async (name) => {
+          await createFolder.mutateAsync({
+            name,
+            color: `#${Math.floor(Math.random() * 16_777_215).toString(16)}`,
+          });
+        }}
+        onOpenChange={(open) => {
+          setIsEventDialogOpen(open);
+          if (!open) {
+            setSelectedEvent(null);
+            setIsEditMode(false);
+          }
+        }}
+        onSubmit={(data) => {
+          if (isEditMode && selectedEvent) {
+            updateEvent.mutate({
+              id: selectedEvent.id,
+              ...data,
+            });
+          } else {
+            createEvent.mutate(data);
+          }
+        }}
+        open={isEventDialogOpen}
         participantOptions={
           participantOptions && {
             users: participantOptions.users.map((u) => ({
@@ -637,16 +643,9 @@ export default function DashboardPersonalCalendar() {
             contacts: participantOptions.contacts,
           }
         }
-        onCreateFolder={async (name) => {
-          await createFolder.mutateAsync({
-            name,
-            color: `#${Math.floor(Math.random() * 16777215).toString(16)}`,
-          });
-        }}
       />
 
       <Dialog
-        open={isEditCalendarOpen}
         onOpenChange={(open) => {
           setIsEditCalendarOpen(open);
           if (!open) {
@@ -654,6 +653,7 @@ export default function DashboardPersonalCalendar() {
             calendarForm.reset();
           }
         }}
+        open={isEditCalendarOpen}
       >
         <DialogContent className='max-h-[90vh] max-w-xl overflow-y-auto'>
           <DialogHeader>
@@ -661,8 +661,8 @@ export default function DashboardPersonalCalendar() {
           </DialogHeader>
           <Form {...calendarForm}>
             <form
-              onSubmit={calendarForm.handleSubmit(handleCalendarSubmit)}
               className='space-y-4'
+              onSubmit={calendarForm.handleSubmit(handleCalendarSubmit)}
             >
               <FormField
                 control={calendarForm.control}
@@ -708,8 +708,8 @@ export default function DashboardPersonalCalendar() {
                   <FormItem>
                     <FormLabel>{t('visibility')}</FormLabel>
                     <Select
-                      onValueChange={field.onChange}
                       defaultValue={field.value}
+                      onValueChange={field.onChange}
                     >
                       <FormControl>
                         <SelectTrigger>
@@ -728,17 +728,17 @@ export default function DashboardPersonalCalendar() {
 
               <div className='flex justify-end gap-2'>
                 <Button
-                  type='button'
-                  variant='outline'
                   onClick={() => {
                     setIsEditCalendarOpen(false);
                     setSelectedCalendar(null);
                     calendarForm.reset();
                   }}
+                  type='button'
+                  variant='outline'
                 >
                   {t('cancel')}
                 </Button>
-                <Button type='submit' disabled={updateFolder.isPending}>
+                <Button disabled={updateFolder.isPending} type='submit'>
                   {updateFolder.isPending
                     ? t('saving_loading')
                     : t('save_changes')}
@@ -750,13 +750,13 @@ export default function DashboardPersonalCalendar() {
       </Dialog>
 
       <Dialog
-        open={isAddCalendarOpen}
         onOpenChange={(open) => {
           setIsAddCalendarOpen(open);
           if (!open) {
             addCalendarForm.reset();
           }
         }}
+        open={isAddCalendarOpen}
       >
         <DialogContent className='max-h-[90vh] max-w-xl overflow-y-auto'>
           <DialogHeader>
@@ -764,8 +764,8 @@ export default function DashboardPersonalCalendar() {
           </DialogHeader>
           <Form {...addCalendarForm}>
             <form
-              onSubmit={addCalendarForm.handleSubmit(handleAddCalendarSubmit)}
               className='space-y-4'
+              onSubmit={addCalendarForm.handleSubmit(handleAddCalendarSubmit)}
             >
               <FormField
                 control={addCalendarForm.control}
@@ -811,8 +811,8 @@ export default function DashboardPersonalCalendar() {
                   <FormItem>
                     <FormLabel>{t('visibility')}</FormLabel>
                     <Select
-                      onValueChange={field.onChange}
                       defaultValue={field.value}
+                      onValueChange={field.onChange}
                     >
                       <FormControl>
                         <SelectTrigger>
@@ -831,12 +831,12 @@ export default function DashboardPersonalCalendar() {
 
               <div className='flex justify-end gap-2'>
                 <Button
-                  type='button'
-                  variant='outline'
                   onClick={() => {
                     setIsAddCalendarOpen(false);
                     addCalendarForm.reset();
                   }}
+                  type='button'
+                  variant='outline'
                 >
                   {t('cancel')}
                 </Button>
@@ -848,13 +848,13 @@ export default function DashboardPersonalCalendar() {
       </Dialog>
 
       <ActionAlertDialog
-        open={isDeleteEventDialogOpen}
-        onOpenChange={setIsDeleteEventDialogOpen}
-        onConfirm={confirmDeleteEvent}
-        title={t('delete_event')}
-        description={t('delete_event_description')}
         cancelText={t('cancel')}
         confirmText={t('delete')}
+        description={t('delete_event_description')}
+        onConfirm={confirmDeleteEvent}
+        onOpenChange={setIsDeleteEventDialogOpen}
+        open={isDeleteEventDialogOpen}
+        title={t('delete_event')}
       />
     </>
   );

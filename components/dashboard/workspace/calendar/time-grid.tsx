@@ -69,16 +69,16 @@ export function TimeGrid({
           (event) => !hiddenCalendars.has(event.folderId)
         );
         return (
-          <div key={hour} className='relative h-[60px] w-full cursor-pointer'>
+          <div className='relative h-[60px] w-full cursor-pointer' key={hour}>
             <div className='pointer-events-none absolute inset-0 w-full'>
               {getMinuteIntervalsForHour().map((minute) => (
                 <div
-                  key={`${hour}-${minute}`}
                   className={cn(
                     'h-[15px] w-full',
                     isTimeSlotSelected(date, hour, minute) && 'bg-primary/20',
                     minute < 45 && 'border-border/30 border-b'
                   )}
+                  key={`${hour}-${minute}`}
                 />
               ))}
             </div>
@@ -87,12 +87,12 @@ export function TimeGrid({
                 const folder = folders?.find((f) => f.id === event.folderId);
                 return (
                   <EventPopover
-                    key={event.id}
                     event={event}
                     folder={folder}
-                    onEventEdit={onEventEdit}
-                    onEventDelete={onEventDelete}
+                    key={event.id}
                     onEventClick={(e) => e.stopPropagation()}
+                    onEventDelete={onEventDelete}
+                    onEventEdit={onEventEdit}
                   />
                 );
               })}

@@ -90,8 +90,8 @@ export const resourceRouter = createTRPCRouter({
 
       const result = await ctx.db
         .select({
-          resourceContent: resourceContent,
-          resourceContentShare: resourceContentShare,
+          resourceContent,
+          resourceContentShare,
           sendCount:
             sql<number>`count(distinct ${resourceContentSendTrack.id})`.mapWith(
               Number
@@ -539,7 +539,7 @@ export const resourceRouter = createTRPCRouter({
           sentAt: resourceContentSendTrack.sentAt,
           status: resourceContentSendTrack.status,
           metadata: resourceContentSendTrack.metadata,
-          contact: contact,
+          contact,
           sentBy: user,
         })
         .from(resourceContentSendTrack)

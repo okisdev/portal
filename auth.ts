@@ -33,7 +33,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
           const dbUser = await getUserFromDb(email);
 
-          if (!dbUser || !dbUser.password) {
+          if (!(dbUser && dbUser.password)) {
             throw new UserOrPasswordIncorrectError();
           }
 

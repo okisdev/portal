@@ -89,7 +89,11 @@ export function PhoneInput({
 
       // If no country code detected or not matched, just set the number
       // Default to Hong Kong if no country code is detected
-      if (!selectedCountry) {
+      if (selectedCountry) {
+        setPhoneNumber(value);
+        setIsValid(false);
+        onValidityChange?.(false);
+      } else {
         setSelectedCountry(defaultCountry || null);
         setPhoneNumber(value);
         if (defaultCountry) {
@@ -100,10 +104,6 @@ export function PhoneInput({
           setIsValid(false);
           onValidityChange?.(false);
         }
-      } else {
-        setPhoneNumber(value);
-        setIsValid(false);
-        onValidityChange?.(false);
       }
     } else {
       // Default to Hong Kong for empty values
@@ -157,24 +157,20 @@ export function PhoneInput({
   return (
     <div className={cn('flex gap-2', className)}>
       <Combobox
-        value={selectedCountry?.label ?? defaultCountry?.label ?? ''}
-        onChange={handleCountryChange}
+        allowCustom={false}
+        className='w-[180px]'
+        groupHeading={t('countries')}
         items={phoneCountries.map((country) => country.label)}
+        onChange={handleCountryChange}
+        placeholder={t('select_country')}
+        recommendedHeading={t('recommended_countries')}
         recommendedItems={validRecommendedCountries.map(
           (country) => country.label
         )}
-        placeholder={t('select_country')}
         searchPlaceholder={t('search_country')}
-        groupHeading={t('countries')}
-        recommendedHeading={t('recommended_countries')}
-        className='w-[180px]'
-        allowCustom={false}
+        value={selectedCountry?.label ?? defaultCountry?.label ?? ''}
       />
       <Input
-        type='tel'
-        value={phoneNumber}
-        onChange={handlePhoneChange}
-        onBlur={handleBlur}
         className={cn(
           'flex-1',
           isValid
@@ -183,11 +179,15 @@ export function PhoneInput({
               ? 'border-red-500 focus-visible:ring-red-500'
               : ''
         )}
+        onBlur={handleBlur}
+        onChange={handlePhoneChange}
         placeholder={
           selectedCountry || defaultCountry
             ? undefined
             : t('enter_phone_number')
         }
+        type='tel'
+        value={phoneNumber}
         {...props}
       />
     </div>

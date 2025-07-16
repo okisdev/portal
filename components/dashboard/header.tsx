@@ -173,11 +173,11 @@ export function DashboardHeader() {
       ) : (
         <div className='flex items-center gap-2 px-4'>
           <Button
-            variant='outline'
             className={cn(
               'relative h-8 w-full justify-start rounded-[0.5rem] bg-muted/50 font-normal text-muted-foreground text-sm shadow-none sm:pr-12 md:w-40 lg:w-56 xl:w-64'
             )}
             onClick={() => setOpen(true)}
+            variant='outline'
           >
             <span className='hidden lg:inline-flex'>
               {t('search_placeholder')}
@@ -189,7 +189,7 @@ export function DashboardHeader() {
               <span className='text-xs'>⌘</span>K
             </kbd>
           </Button>
-          <CommandDialog open={open} onOpenChange={setOpen}>
+          <CommandDialog onOpenChange={setOpen} open={open}>
             <CommandInput placeholder={t('search_placeholder')} />
             <CommandList>
               <CommandEmpty>{t('no_results_found')}</CommandEmpty>

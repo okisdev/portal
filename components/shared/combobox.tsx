@@ -80,9 +80,9 @@ function ComboboxCommand({
   return (
     <Command>
       <CommandInput
+        onValueChange={setQuery}
         placeholder={searchPlaceholder}
         value={query}
-        onValueChange={setQuery}
       />
       <CommandEmpty>{emptyText}</CommandEmpty>
       {allowCustom &&
@@ -91,11 +91,11 @@ function ComboboxCommand({
         !filteredRecommendedItems.includes(query) && (
           <CommandGroup heading={t('custom')}>
             <CommandItem
-              value={`custom-${query}`}
               onSelect={() => {
                 onChange(query);
                 setOpen(false);
               }}
+              value={`custom-${query}`}
             >
               {t('use_query', { query })}
             </CommandItem>
@@ -103,18 +103,18 @@ function ComboboxCommand({
         )}
       {filteredRecommendedItems.length > 0 && (
         <CommandGroup
-          heading={recommendedHeading}
           className='max-h-[150px] overflow-y-auto'
+          heading={recommendedHeading}
         >
           {filteredRecommendedItems.map((item) => (
             <CommandItem
+              className='flex cursor-pointer items-center gap-2'
               key={`recommended-${item}-${nanoid()}`}
-              value={item}
               onSelect={() => {
                 onChange(value === item ? '' : item);
                 setOpen(false);
               }}
-              className='flex cursor-pointer items-center gap-2'
+              value={item}
             >
               {renderItem ? (
                 renderItem(item)
@@ -129,18 +129,18 @@ function ComboboxCommand({
         </CommandGroup>
       )}
       <CommandGroup
-        heading={groupHeading}
         className='max-h-[300px] overflow-y-auto'
+        heading={groupHeading}
       >
         {filteredItems.map((item) => (
           <CommandItem
+            className='flex cursor-pointer items-center gap-2'
             key={item + nanoid()}
-            value={item}
             onSelect={() => {
               onChange(value === item ? '' : item);
               setOpen(false);
             }}
-            className='flex cursor-pointer items-center gap-2'
+            value={item}
           >
             {renderItem ? (
               renderItem(item)
@@ -194,16 +194,16 @@ function Combobox({
   }, [items, recommendedItems, value, onChange, allowCustom]);
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover onOpenChange={setOpen} open={open}>
       <PopoverTrigger asChild>
         <Button
-          variant='outline'
-          size={size}
           aria-expanded={open}
           className={cn(
             'group w-full justify-between px-3 font-normal',
             className
           )}
+          size={size}
+          variant='outline'
         >
           <span className='flex-1 text-left'>
             {alwaysPlaceHolder ? placeholder : value || placeholder}
@@ -212,23 +212,23 @@ function Combobox({
         </Button>
       </PopoverTrigger>
       <PopoverContent
-        className='w-(--radix-popper-anchor-width) p-0'
         align='end'
+        className='w-(--radix-popper-anchor-width) p-0'
       >
         <ComboboxCommand
-          query={query}
-          setQuery={setQuery}
-          value={value}
-          onChange={onChange}
-          setOpen={setOpen}
-          items={items}
-          recommendedItems={recommendedItems}
-          searchPlaceholder={searchPlaceholder}
+          allowCustom={allowCustom}
           emptyText={emptyText}
           groupHeading={groupHeading}
+          items={items}
+          onChange={onChange}
+          query={query}
           recommendedHeading={recommendedHeading}
-          allowCustom={allowCustom}
+          recommendedItems={recommendedItems}
           renderItem={renderItem}
+          searchPlaceholder={searchPlaceholder}
+          setOpen={setOpen}
+          setQuery={setQuery}
+          value={value}
         />
       </PopoverContent>
     </Popover>

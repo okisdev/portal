@@ -29,7 +29,7 @@ export function ActionAlertDialog({
   confirmText = 'Delete',
 }: ActionAlertDialogProps) {
   return (
-    <AlertDialog open={open} onOpenChange={onOpenChange}>
+    <AlertDialog onOpenChange={onOpenChange} open={open}>
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>{title}</AlertDialogTitle>
@@ -38,8 +38,8 @@ export function ActionAlertDialog({
         <AlertDialogFooter>
           <AlertDialogCancel>{cancelText}</AlertDialogCancel>
           <AlertDialogAction
-            onClick={onConfirm}
             className='bg-red-500 hover:bg-red-600 dark:bg-red-500 dark:text-white dark:hover:bg-red-600'
+            onClick={onConfirm}
           >
             {confirmText}
           </AlertDialogAction>

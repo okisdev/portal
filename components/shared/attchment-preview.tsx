@@ -19,16 +19,16 @@ export function AttachmentPreview({
       <div className='group relative overflow-hidden rounded-md border border-border'>
         <Zoom>
           <img
-            src={s3Url}
             alt={name}
             className='max-h-[300px] w-auto cursor-zoom-in object-contain'
+            src={s3Url}
           />
         </Zoom>
         <div className='absolute top-2 right-2 opacity-0 transition-opacity group-hover:opacity-100'>
           <a
-            href={s3Url}
-            download
             className='flex items-center justify-center rounded-full bg-background/80 p-1.5 text-muted-foreground shadow-sm hover:bg-background hover:text-foreground'
+            download
+            href={s3Url}
             title='Download'
           >
             <Download className='h-4 w-4' />
@@ -50,20 +50,20 @@ export function AttachmentPreview({
           title='Video file'
         >
           <svg
-            xmlns='http://www.w3.org/2000/svg'
-            width='12'
-            height='12'
-            viewBox='0 0 24 24'
+            aria-hidden='true'
+            className='h-3 w-3'
             fill='none'
+            height='12'
             stroke='currentColor'
-            strokeWidth='2'
             strokeLinecap='round'
             strokeLinejoin='round'
-            className='h-3 w-3'
-            aria-hidden='true'
+            strokeWidth='2'
+            viewBox='0 0 24 24'
+            width='12'
+            xmlns='http://www.w3.org/2000/svg'
           >
             <path d='m22 8-6 4 6 4V8Z' />
-            <rect width='14' height='12' x='2' y='6' rx='2' ry='2' />
+            <rect height='12' rx='2' ry='2' width='14' x='2' y='6' />
           </svg>
         </div>
       ) : type === 'audio' ? (
@@ -72,17 +72,17 @@ export function AttachmentPreview({
           title='Audio file'
         >
           <svg
-            xmlns='http://www.w3.org/2000/svg'
-            width='12'
-            height='12'
-            viewBox='0 0 24 24'
+            aria-hidden='true'
+            className='h-3 w-3'
             fill='none'
+            height='12'
             stroke='currentColor'
-            strokeWidth='2'
             strokeLinecap='round'
             strokeLinejoin='round'
-            className='h-3 w-3'
-            aria-hidden='true'
+            strokeWidth='2'
+            viewBox='0 0 24 24'
+            width='12'
+            xmlns='http://www.w3.org/2000/svg'
           >
             <path d='M9 18V5l12-2v13' />
             <circle cx='6' cy='18' r='3' />
@@ -93,18 +93,18 @@ export function AttachmentPreview({
         <FileIcon className='h-3 w-3' />
       )}
       <a
-        href={s3Url}
-        target='_blank'
-        rel='noopener noreferrer'
         className='max-w-[150px] truncate hover:underline'
+        href={s3Url}
+        rel='noopener noreferrer'
+        target='_blank'
         title={name}
       >
         {name}
       </a>
       <a
-        href={s3Url}
-        download
         className='text-muted-foreground hover:text-foreground'
+        download
+        href={s3Url}
         title='Download'
       >
         <Download className='h-3 w-3' />

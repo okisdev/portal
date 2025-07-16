@@ -80,10 +80,10 @@ function TaskCard({ task, onEdit, onDelete, onContentClick }: TaskCardProps) {
               </span>
               {task.content && (
                 <Button
-                  variant='ghost'
-                  size='icon'
-                  onClick={() => onContentClick(task)}
                   className='h-6 w-6'
+                  onClick={() => onContentClick(task)}
+                  size='icon'
+                  variant='ghost'
                 >
                   <AlignLeftIcon className='h-4 w-4' />
                 </Button>
@@ -92,9 +92,9 @@ function TaskCard({ task, onEdit, onDelete, onContentClick }: TaskCardProps) {
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
-                  variant='ghost'
-                  size='icon'
                   className='h-8 w-8 opacity-0 group-hover:opacity-100'
+                  size='icon'
+                  variant='ghost'
                 >
                   <MoreVerticalIcon className='h-4 w-4' />
                 </Button>
@@ -131,14 +131,14 @@ function TaskCard({ task, onEdit, onDelete, onContentClick }: TaskCardProps) {
       </div>
 
       <ActionAlertDialog
-        open={isDeleteAlertOpen}
-        onOpenChange={setIsDeleteAlertOpen}
+        description='Are you sure you want to delete this task? This action cannot be undone.'
         onConfirm={() => {
           onDelete(task.id);
           setIsDeleteAlertOpen(false);
         }}
+        onOpenChange={setIsDeleteAlertOpen}
+        open={isDeleteAlertOpen}
         title='Delete Task'
-        description='Are you sure you want to delete this task? This action cannot be undone.'
       />
     </div>
   );
@@ -157,7 +157,7 @@ function DroppableColumn({ status, children }: DroppableColumnProps) {
   const [header, content] = children;
 
   return (
-    <div ref={setNodeRef} data-status={status} className='flex h-full flex-col'>
+    <div className='flex h-full flex-col' data-status={status} ref={setNodeRef}>
       <div className='flex items-center justify-between pb-4'>{header}</div>
       <div
         className={cn(
@@ -227,7 +227,9 @@ export default function KanbanBoard({
   return (
     <div className={cn('h-full', isDragging ? 'cursor-grabbing' : '')}>
       <DndContext
-        sensors={sensors}
+        onDragCancel={() => {
+          setIsDragging(false);
+        }}
         onDragEnd={(event) => {
           setIsDragging(false);
           handleDragEnd(event);
@@ -235,9 +237,7 @@ export default function KanbanBoard({
         onDragStart={() => {
           setIsDragging(true);
         }}
-        onDragCancel={() => {
-          setIsDragging(false);
-        }}
+        sensors={sensors}
       >
         <div className='container mx-auto max-w-7xl'>
           <div className='grid h-full grid-cols-1 gap-6 md:grid-cols-5'>
@@ -253,10 +253,10 @@ export default function KanbanBoard({
                   {tasksByStatus[status].map((task) => (
                     <div key={task.id}>
                       <TaskCard
-                        task={task}
-                        onEdit={onEdit}
-                        onDelete={onDelete}
                         onContentClick={onContentView}
+                        onDelete={onDelete}
+                        onEdit={onEdit}
+                        task={task}
                       />
                     </div>
                   ))}

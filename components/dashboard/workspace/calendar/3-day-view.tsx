@@ -61,15 +61,15 @@ export function ThreeDayView({
         </div>
         {threeDays.map((date) => (
           <DayHeader
-            key={date.toISOString()}
             date={date}
-            selectedDate={selectedDate}
             events={events}
             folders={folders}
             hiddenCalendars={hiddenCalendars}
-            onEventEdit={onEventEdit}
-            onEventDelete={onEventDelete}
             isCompact={true}
+            key={date.toISOString()}
+            onEventDelete={onEventDelete}
+            onEventEdit={onEventEdit}
+            selectedDate={selectedDate}
           />
         ))}
       </div>
@@ -81,17 +81,17 @@ export function ThreeDayView({
           <TimeColumn />
           {threeDays.map((date) => (
             <TimeGrid
-              key={date.toISOString()}
               date={date}
               events={events.filter((event) => !event.isAllDay)}
               folders={folders}
               hiddenCalendars={hiddenCalendars}
-              onTimeSelect={onTimeSelect}
               isSelecting={isSelecting}
               isTimeSlotSelected={isTimeSlotSelected}
-              onSelectionEnd={onSelectionEnd}
-              onEventEdit={onEventEdit}
+              key={date.toISOString()}
               onEventDelete={onEventDelete}
+              onEventEdit={onEventEdit}
+              onSelectionEnd={onSelectionEnd}
+              onTimeSelect={onTimeSelect}
             />
           ))}
         </div>

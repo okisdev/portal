@@ -1,166 +1,66 @@
 {
   "$schema": "https://biomejs.dev/schemas/latest/schema.json",
-  "vcs": {
-    "enabled": true,
-    "clientKind": "git",
-    "useIgnoreFile": true
-  },
-  "formatter": {
-    "enabled": true,
-    "formatWithErrors": false,
-    "indentStyle": "space",
-    "indentWidth": 2,
-    "lineEnding": "lf",
-    "lineWidth": 80,
-    "attributePosition": "auto"
-  },
-  "assist": {
-    "actions": {
-      "source": {
-        "organizeImports": "on"
-      }
+  "extends": [
+    "ultracite"
+  ],
+  "javascript": {
+    "formatter": {
+      "jsxQuoteStyle": "single",
+      "quoteStyle": "single"
     }
   },
   "linter": {
-    "enabled": true,
     "rules": {
-      "a11y": {
-        "noAutofocus": "off"
-      },
-      "complexity": {
-        "useSimplifiedLogicExpression": "off"
-      },
       "correctness": {
-        "noUndeclaredDependencies": "off",
-        "useImportExtensions": "off",
-        "noNodejsModules": "off"
-      },
-      "nursery": {
-        "noSecrets": "off",
-        "useExplicitType": "off",
-        "useUniqueElementIds": "off",
-        "useSortedClasses": {
-          "fix": "safe",
-          "level": "error",
-          "options": {
-            "attributes": [
-              "className"
-            ],
-            "functions": [
-              "clsx",
-              "cva",
-              "tw",
-              "twMerge",
-              "cn",
-              "twJoin"
-            ]
-          }
+        "noUnusedImports": {
+          "level": "warn",
+          "fix": "none"
+        },
+        "noUnusedVariables": {
+          "level": "warn",
+          "fix": "none",
+          "options": {}
+        },
+        "noUnusedFunctionParameters": "warn",
+        "useExhaustiveDependencies": {
+          "level": "warn",
+          "fix": "none",
+          "options": {}
         }
       },
-      "performance": {
-        "noBarrelFile": "off",
-        "noReExportAll": "off",
-        "noNamespaceImport": "off"
+      "complexity": {
+        "noExcessiveCognitiveComplexity": "warn"
       },
-      "style": {
-        "noDefaultExport": "off",
-        "noImplicitBoolean": "off",
-        "useExplicitLengthCheck": "off",
-        "useFilenamingConvention": {
-          "level": "error",
-          "options": {
-            "requireAscii": true,
-            "filenameCases": [
-              "kebab-case"
-            ]
-          }
-        },
-        "useSingleVarDeclarator": "off",
-        "useNamingConvention": "off",
-        "noParameterAssign": "error",
-        "useAsConstAssertion": "error",
-        "useDefaultParameterLast": "error",
-        "useEnumInitializers": "error",
-        "useSelfClosingElements": "error",
-        "noUnusedTemplateLiteral": "error",
-        "useNumberNamespace": "error",
-        "noInferrableTypes": "error",
-        "noUselessElse": "error",
-        "noCommonJs": "off",
-        "noProcessEnv": "off",
-        "useComponentExportOnlyModules": "off",
-        "useConsistentCurlyBraces": "off"
+      "nursery": {
+        "noAwaitInLoop": "warn",
+        "noShadow": "warn"
       },
       "suspicious": {
-        "noReactSpecificProps": "off",
-        "noArrayIndexKey": "off",
         "noExplicitAny": "warn",
-        "useAwait": "off"
+        "useAwait": "off",
+        "noConsole": "off",
+        "noArrayIndexKey": "warn"
+      },
+      "style": {
+        "noEnum": "off",
+        "noNestedTernary": "warn"
+      },
+      "performance": {
+        "useTopLevelRegex": "warn",
+        "noNamespaceImport": "warn"
       }
-    },
-    "includes": [
-      "**",
-      "!**/.gitignore",
-      "!**/components/ui/**"
-    ]
-  },
-  "javascript": {
-    "formatter": {
-      "arrowParentheses": "always",
-      "attributePosition": "auto",
-      "bracketSameLine": false,
-      "bracketSpacing": true,
-      "enabled": true,
-      "indentStyle": "space",
-      "indentWidth": 2,
-      "jsxQuoteStyle": "single",
-      "lineEnding": "lf",
-      "lineWidth": 80,
-      "quoteProperties": "asNeeded",
-      "quoteStyle": "single",
-      "semicolons": "always",
-      "trailingCommas": "es5"
-    }
-  },
-  "css": {
-    "formatter": {
-      "indentStyle": "space",
-      "indentWidth": 2,
-      "lineEnding": "lf",
-      "lineWidth": 80,
-      "quoteStyle": "double"
-    },
-    "parser": {
-      "allowWrongLineComments": false,
-      "cssModules": false
     }
   },
   "json": {
     "formatter": {
-      "enabled": true,
-      "indentStyle": "space",
-      "indentWidth": 2,
-      "lineEnding": "lf",
-      "lineWidth": 1,
-      "trailingCommas": "none"
-    },
-    "linter": {
-      "enabled": true
-    },
-    "parser": {
-      "allowComments": false,
-      "allowTrailingCommas": false
+      "lineWidth": 1
     }
   },
   "files": {
     "includes": [
       "**",
-      "!**/node_modules/**",
-      "!**/.next/**",
-      "!**/.turbo/**",
-      "!**/dist/**",
-      "!**/drizzle/meta/**",
-      "!**/worker-configuration.d.ts"
+      "!**/worker-configuration.d.ts",
+      "!**/components/ui/**"
     ]
   }
 }

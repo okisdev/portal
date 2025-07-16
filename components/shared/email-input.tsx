@@ -59,10 +59,6 @@ export function EmailInput({
 
   return (
     <Input
-      type='email'
-      value={value}
-      onChange={handleEmailChange}
-      onBlur={handleBlur}
       className={cn(
         className,
         value
@@ -71,7 +67,11 @@ export function EmailInput({
             : 'border-red-500 focus-visible:ring-red-500'
           : ''
       )}
+      onBlur={handleBlur}
+      onChange={handleEmailChange}
       placeholder={t('enter_email_address')}
+      type='email'
+      value={value}
       {...props}
     />
   );

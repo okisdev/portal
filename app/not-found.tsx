@@ -23,8 +23,8 @@ export default async function NotFound() {
           <p className='text-muted-foreground'>{t('404_description')}</p>
         </div>
         <Link
-          href='/'
           className='text-muted-foreground text-sm transition duration-300 hover:text-primary'
+          href='/'
         >
           {t('go_back_to_home')}
         </Link>

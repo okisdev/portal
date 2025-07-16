@@ -246,10 +246,10 @@ export default function CompanyIdPage() {
                 </div>
                 <div className='flex items-center gap-2'>
                   <Button
-                    variant='outline'
-                    size='sm'
                     className='h-8'
                     onClick={handleEditClick}
+                    size='sm'
+                    variant='outline'
                   >
                     <Edit2 className='mr-1 size-4' /> {t('edit_company')}
                   </Button>
@@ -262,14 +262,14 @@ export default function CompanyIdPage() {
                 <div className='flex items-center justify-between'>
                   <p className='font-medium'>{t('company_teams')}</p>
                   <Button
-                    variant='outline'
-                    size='sm'
                     className='h-8'
                     onClick={() =>
                       router.push(
                         `/dashboard/crm/team/new?companyId=${companyId[0]}`
                       )
                     }
+                    size='sm'
+                    variant='outline'
                   >
                     <Plus className='mr-1 size-4' /> {t('add_team')}
                   </Button>
@@ -282,9 +282,9 @@ export default function CompanyIdPage() {
                   )}
                   {teams?.map((team) => (
                     <Link
-                      key={team.id}
-                      href={`/dashboard/crm/team/${team.id}`}
                       className='rounded-lg bg-card p-4 transition-colors hover:bg-muted/50'
+                      href={`/dashboard/crm/team/${team.id}`}
+                      key={team.id}
                     >
                       <div className='flex items-center justify-between'>
                         <div>
@@ -333,10 +333,10 @@ export default function CompanyIdPage() {
                     <p className='text-sm'>
                       {(company.website && (
                         <Link
-                          href={company.website}
-                          target='_blank'
-                          rel='noopener noreferrer'
                           className='text-primary hover:underline'
+                          href={company.website}
+                          rel='noopener noreferrer'
+                          target='_blank'
                         >
                           {company.website}
                         </Link>
@@ -422,8 +422,8 @@ export default function CompanyIdPage() {
       </div>
 
       <Dialog
-        open={isEditModalOpen}
         onOpenChange={(open) => !open && handleCloseEdit()}
+        open={isEditModalOpen}
       >
         <DialogContent className='sm:max-w-[600px]'>
           <DialogHeader>
@@ -433,7 +433,7 @@ export default function CompanyIdPage() {
             </DialogDescription>
           </DialogHeader>
           <Form {...editCompanyForm}>
-            <form onSubmit={handleSubmitEdit} className='space-y-4'>
+            <form className='space-y-4' onSubmit={handleSubmitEdit}>
               <div className='grid grid-cols-2 gap-4'>
                 <FormField
                   control={editCompanyForm.control}
@@ -507,8 +507,8 @@ export default function CompanyIdPage() {
                     <FormItem>
                       <FormLabel>{t('status')}</FormLabel>
                       <Select
-                        onValueChange={field.onChange}
                         defaultValue={field.value}
+                        onValueChange={field.onChange}
                       >
                         <FormControl>
                           <SelectTrigger>
@@ -536,8 +536,8 @@ export default function CompanyIdPage() {
                     <FormLabel>{t('phone')}</FormLabel>
                     <FormControl>
                       <PhoneInput
-                        value={field.value || ''}
                         onChange={field.onChange}
+                        value={field.value || ''}
                       />
                     </FormControl>
                     <FormMessage />
@@ -629,13 +629,13 @@ export default function CompanyIdPage() {
 
               <DialogFooter>
                 <Button
-                  variant='outline'
-                  type='button'
                   onClick={handleCloseEdit}
+                  type='button'
+                  variant='outline'
                 >
                   {t('cancel')}
                 </Button>
-                <Button type='submit' disabled={updateCompany.isPending}>
+                <Button disabled={updateCompany.isPending} type='submit'>
                   {t('save_changes')}
                 </Button>
               </DialogFooter>
@@ -645,10 +645,16 @@ export default function CompanyIdPage() {
       </Dialog>
 
       <EventDialog
-        open={isNewMeetingModalOpen}
+        folders={folders}
+        onCreateFolder={async (name) => {
+          await createFolder.mutateAsync({
+            name,
+            color: `#${Math.floor(Math.random() * 16_777_215).toString(16)}`,
+          });
+        }}
         onOpenChange={setIsNewMeetingModalOpen}
         onSubmit={handleCreateMeeting}
-        folders={folders}
+        open={isNewMeetingModalOpen}
         participantOptions={
           participantOptions && {
             users: participantOptions.users.map((u) => ({
@@ -658,17 +664,10 @@ export default function CompanyIdPage() {
             contacts: participantOptions.contacts,
           }
         }
-        onCreateFolder={async (name) => {
-          await createFolder.mutateAsync({
-            name,
-            color: `#${Math.floor(Math.random() * 16777215).toString(16)}`,
-          });
-        }}
       />
 
       <ActionAlertDialog
-        open={!!meetingToDelete}
-        onOpenChange={(open) => !open && setMeetingToDelete(null)}
+        description={t('delete_meeting_description')}
         onConfirm={() => {
           if (meetingToDelete) {
             deleteTeamMeeting.mutate({
@@ -678,16 +677,17 @@ export default function CompanyIdPage() {
             setMeetingToDelete(null);
           }
         }}
+        onOpenChange={(open) => !open && setMeetingToDelete(null)}
+        open={!!meetingToDelete}
         title={t('delete_meeting')}
-        description={t('delete_meeting_description')}
       />
 
       <ActionAlertDialog
-        open={!!contactToDelete}
-        onOpenChange={(open) => !open && setContactToDelete(null)}
-        onConfirm={handleDeleteContact}
-        title={t('remove_contact')}
         description={t('remove_contact_description')}
+        onConfirm={handleDeleteContact}
+        onOpenChange={(open) => !open && setContactToDelete(null)}
+        open={!!contactToDelete}
+        title={t('remove_contact')}
       />
     </div>
   );

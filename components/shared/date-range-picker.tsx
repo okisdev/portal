@@ -78,16 +78,16 @@ export function DateRangePicker({
 
   return (
     <div className={cn('grid gap-2', className)}>
-      <Popover open={isOpen} onOpenChange={setIsOpen}>
+      <Popover onOpenChange={setIsOpen} open={isOpen}>
         <PopoverTrigger asChild>
           <Button
-            id='date'
-            variant={'outline'}
             className={cn(
               'w-[300px] justify-start text-left font-normal',
               !selectedRange && 'text-muted-foreground',
               'hover:bg-accent hover:text-accent-foreground'
             )}
+            id='date'
+            variant={'outline'}
           >
             <CalendarIcon className='mr-2 h-4 w-4' />
             {selectedRange?.from ? (
@@ -104,7 +104,7 @@ export function DateRangePicker({
             )}
           </Button>
         </PopoverTrigger>
-        <PopoverContent className='w-auto p-0' align={align}>
+        <PopoverContent align={align} className='w-auto p-0'>
           <div className='flex'>
             <div className='min-w-[150px] border-r p-3'>
               <div className='space-y-3'>
@@ -112,14 +112,14 @@ export function DateRangePicker({
                 <div className='flex flex-col gap-2'>
                   {presets.map((preset) => (
                     <Button
-                      key={preset.label}
-                      variant='ghost'
                       className='justify-start text-left text-sm'
+                      key={preset.label}
                       onClick={() => {
                         setSelectedRange(preset.dates);
                         onChange?.(preset.dates);
                         setIsOpen(false);
                       }}
+                      variant='ghost'
                     >
                       {preset.label}
                     </Button>
@@ -132,11 +132,6 @@ export function DateRangePicker({
                 <div className='flex items-center justify-center gap-8'>
                   <div className='space-y-2.5 text-center'>
                     <Calendar
-                      mode='range'
-                      defaultMonth={currentMonth}
-                      selected={selectedRange}
-                      onSelect={handleSelect}
-                      numberOfMonths={1}
                       className='border-0'
                       classNames={{
                         months: 'space-y-4',
@@ -173,15 +168,15 @@ export function DateRangePicker({
                           'aria-selected:bg-accent aria-selected:text-accent-foreground',
                         day_hidden: 'invisible',
                       }}
+                      defaultMonth={currentMonth}
+                      mode='range'
+                      numberOfMonths={1}
+                      onSelect={handleSelect}
+                      selected={selectedRange}
                     />
                   </div>
                   <div className='space-y-2.5 text-center'>
                     <Calendar
-                      mode='range'
-                      defaultMonth={addMonths(currentMonth, 1)}
-                      selected={selectedRange}
-                      onSelect={handleSelect}
-                      numberOfMonths={1}
                       className='border-0'
                       classNames={{
                         months: 'space-y-4',
@@ -218,6 +213,11 @@ export function DateRangePicker({
                           'aria-selected:bg-accent aria-selected:text-accent-foreground',
                         day_hidden: 'invisible',
                       }}
+                      defaultMonth={addMonths(currentMonth, 1)}
+                      mode='range'
+                      numberOfMonths={1}
+                      onSelect={handleSelect}
+                      selected={selectedRange}
                     />
                   </div>
                 </div>
@@ -230,11 +230,11 @@ export function DateRangePicker({
                   </div>
                   <div className='flex space-x-2'>
                     <Button
-                      variant='outline'
                       onClick={() => {
                         setSelectedRange({ from: undefined, to: undefined });
                         setIsOpen(false);
                       }}
+                      variant='outline'
                     >
                       {t('cancel')}
                     </Button>

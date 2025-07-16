@@ -65,13 +65,13 @@ export function DateTimePicker({
       <PopoverTrigger asChild>
         <div>
           <Button
-            size={size}
-            type='button'
-            variant={'outline'}
             className={cn(
               'flex w-full items-center pl-3 text-left font-normal',
               !value && 'text-muted-foreground'
             )}
+            size={size}
+            type='button'
+            variant={'outline'}
           >
             <span className='truncate'>
               {value ? (
@@ -91,10 +91,10 @@ export function DateTimePicker({
       <PopoverContent className='w-auto p-0'>
         <div className='sm:flex'>
           <Calendar
-            mode='single'
-            selected={value === null ? undefined : value}
-            onSelect={handleDateSelect}
             initialFocus
+            mode='single'
+            onSelect={handleDateSelect}
+            selected={value === null ? undefined : value}
           />
           {showTimePicker && value && (
             <div className='flex flex-col divide-y sm:h-[300px] sm:flex-row sm:divide-x sm:divide-y-0'>
@@ -104,15 +104,15 @@ export function DateTimePicker({
                     .reverse()
                     .map((hour) => (
                       <Button
-                        key={hour}
-                        type='button'
-                        size='icon'
-                        variant={
-                          value.getHours() === hour ? 'default' : 'ghost'
-                        }
                         className='aspect-square shrink-0 sm:w-full'
+                        key={hour}
                         onClick={() =>
                           handleTimeChange('hour', hour.toString())
+                        }
+                        size='icon'
+                        type='button'
+                        variant={
+                          value.getHours() === hour ? 'default' : 'ghost'
                         }
                       >
                         {hour}
@@ -124,15 +124,15 @@ export function DateTimePicker({
                 <div className='flex p-2 sm:flex-col'>
                   {Array.from({ length: 12 }, (_, i) => i * 5).map((minute) => (
                     <Button
-                      key={minute}
-                      type='button'
-                      size='icon'
-                      variant={
-                        value.getMinutes() === minute ? 'default' : 'ghost'
-                      }
                       className='aspect-square shrink-0 sm:w-full'
+                      key={minute}
                       onClick={() =>
                         handleTimeChange('minute', minute.toString())
+                      }
+                      size='icon'
+                      type='button'
+                      variant={
+                        value.getMinutes() === minute ? 'default' : 'ghost'
                       }
                     >
                       {minute.toString().padStart(2, '0')}

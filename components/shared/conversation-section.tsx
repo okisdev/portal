@@ -106,7 +106,7 @@ export function ConversationSection({
     return (
       <div className='flex items-start gap-2'>
         <Avatar className='h-6 w-6'>
-          <AvatarImage src={user.display} alt={user.name ?? user.username} />
+          <AvatarImage alt={user.name ?? user.username} src={user.display} />
           <AvatarFallback>{(user.name ?? user.username)[0]}</AvatarFallback>
         </Avatar>
         <span className='text-left'>{user.name ?? user.username}</span>
@@ -197,7 +197,7 @@ export function ConversationSection({
   const handleReplySubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!replyText.trim() || !replyingTo) return;
+    if (!(replyText.trim() && replyingTo)) return;
 
     onCreateActivity({
       type: 'ENGAGEMENT',
@@ -231,10 +231,8 @@ export function ConversationSection({
         if (replyText.trim() && replyingTo) {
           handleReplySubmit(e);
         }
-      } else {
-        if (newActivity.trim()) {
-          handleSubmitActivity(e);
-        }
+      } else if (newActivity.trim()) {
+        handleSubmitActivity(e);
       }
     }
 
@@ -273,7 +271,7 @@ export function ConversationSection({
 
   return (
     <div className='flex h-full flex-col'>
-      <div id='activities-container' className='flex-1 overflow-y-auto'>
+      <div className='flex-1 overflow-y-auto' id='activities-container'>
         <div className='pointer-events-none sticky top-0 z-10 h-4 bg-linear-to-b from-background to-transparent' />
         <div className='space-y-1'>
           {conversationActivities?.length === 0 && (
@@ -295,7 +293,7 @@ export function ConversationSection({
             const isIncoming = activity.subType === 'MESSAGE_RECEIVED';
 
             return (
-              <div key={activity.id} id={`note-${activity.id}`}>
+              <div id={`note-${activity.id}`} key={activity.id}>
                 {showDateDivider && (
                   <div className='sticky top-0 bg-background/95 py-2 backdrop-blur-sm supports-backdrop-filter:bg-background/60'>
                     <p className='font-medium text-muted-foreground text-sm'>
@@ -316,9 +314,9 @@ export function ConversationSection({
                     activity.metadata?.replyTo && 'ml-4'
                   )}
                   style={{
-                    borderLeftColor: !isWhatsAppMessage
-                      ? 'rgb(59 130 246)'
-                      : 'transparent',
+                    borderLeftColor: isWhatsAppMessage
+                      ? 'transparent'
+                      : 'rgb(59 130 246)',
                   }}
                 >
                   <div
@@ -371,9 +369,9 @@ export function ConversationSection({
                         {!isWhatsAppMessage &&
                           activity.subType === 'NOTE_ADDED' && (
                             <button
-                              type='button'
-                              onClick={() => setReplyingTo(activity.id)}
                               className='rounded-md bg-muted/50 px-1 py-0.5 text-muted-foreground text-xs hover:bg-muted'
+                              onClick={() => setReplyingTo(activity.id)}
+                              type='button'
                             >
                               {t('reply')}
                             </button>
@@ -399,54 +397,54 @@ export function ConversationSection({
                     )}
                     {replyingTo === activity.id && (
                       <form
-                        onSubmit={handleReplySubmit}
                         className='mt-2 flex items-start gap-2'
+                        onSubmit={handleReplySubmit}
                       >
                         <div className='relative flex-1'>
                           <Popover open={showMentions}>
                             <PopoverTrigger asChild>
                               <div className='relative w-full'>
                                 <Textarea
+                                  className='min-h-[60px] resize-none'
                                   id='replyInput'
-                                  value={replyText}
                                   onChange={(e) => handleInputChange(e, true)}
                                   onKeyDown={(e) => handleKeyDown(e, true)}
                                   placeholder={t('write_a_reply')}
-                                  className='min-h-[60px] resize-none'
+                                  value={replyText}
                                 />
                               </div>
                             </PopoverTrigger>
-                            <PopoverContent className='w-64 p-0' align='start'>
+                            <PopoverContent align='start' className='w-64 p-0'>
                               <ComboboxCommand
-                                query={mentionSearch}
-                                setQuery={setMentionSearch}
-                                value=''
+                                allowCustom={false}
+                                emptyText={t('no_users_found')}
+                                groupHeading={t('users')}
+                                items={userMentionItems}
                                 onChange={(username) =>
                                   handleMention(username, true)
                                 }
-                                setOpen={setShowMentions}
-                                items={userMentionItems}
-                                searchPlaceholder={t('search_users')}
-                                emptyText={t('no_users_found')}
-                                groupHeading={t('users')}
-                                allowCustom={false}
+                                query={mentionSearch}
                                 renderItem={renderMentionItem}
+                                searchPlaceholder={t('search_users')}
+                                setOpen={setShowMentions}
+                                setQuery={setMentionSearch}
+                                value=''
                               />
                             </PopoverContent>
                           </Popover>
                         </div>
                         <div className='flex gap-1'>
-                          <Button type='submit' size='sm' disabled={isLoading}>
+                          <Button disabled={isLoading} size='sm' type='submit'>
                             {t('reply')}
                           </Button>
                           <Button
-                            type='button'
-                            size='sm'
-                            variant='outline'
                             onClick={() => {
                               setReplyingTo(null);
                               setReplyText('');
                             }}
+                            size='sm'
+                            type='button'
+                            variant='outline'
                           >
                             {t('cancel')}
                           </Button>
@@ -455,11 +453,11 @@ export function ConversationSection({
                     )}
                     {activity.metadata?.replyTo && (
                       <button
-                        type='button'
+                        className='mt-1 flex items-center gap-1 rounded bg-muted/50 px-1 py-0.5 text-muted-foreground text-xs transition-colors hover:bg-foreground/10 hover:text-foreground'
                         onClick={() =>
                           scrollToNote(activity.metadata?.replyTo as string)
                         }
-                        className='mt-1 flex items-center gap-1 rounded bg-muted/50 px-1 py-0.5 text-muted-foreground text-xs transition-colors hover:bg-foreground/10 hover:text-foreground'
+                        type='button'
                       >
                         <ArrowUpRight className='size-3' />
                         {t('jump_to_original_note')}
@@ -474,16 +472,15 @@ export function ConversationSection({
       </div>
       <div className='mt-auto bg-background pt-4'>
         <form
-          onSubmit={handleSubmitActivity}
           className='relative flex max-w-full flex-col gap-2 sm:flex-row'
+          onSubmit={handleSubmitActivity}
         >
           <div className='relative flex-1'>
             <Popover open={showMentions}>
               <PopoverTrigger asChild>
                 <div className='relative w-full'>
                   <Textarea
-                    ref={inputRef}
-                    value={newActivity}
+                    className='min-h-[60px] resize-none'
                     onChange={(e) => handleInputChange(e)}
                     onKeyDown={(e) => handleKeyDown(e)}
                     placeholder={
@@ -491,32 +488,33 @@ export function ConversationSection({
                         ? t('write_a_reply')
                         : t('send_whatsapp_message')
                     }
-                    className='min-h-[60px] resize-none'
+                    ref={inputRef}
+                    value={newActivity}
                   />
                 </div>
               </PopoverTrigger>
-              <PopoverContent className='w-64 p-0' align='start'>
+              <PopoverContent align='start' className='w-64 p-0'>
                 <ComboboxCommand
-                  query={mentionSearch}
-                  setQuery={setMentionSearch}
-                  value=''
-                  onChange={handleMention}
-                  setOpen={setShowMentions}
-                  items={userMentionItems}
-                  searchPlaceholder={t('search_users')}
+                  allowCustom={false}
                   emptyText={t('no_users_found')}
                   groupHeading={t('users')}
-                  allowCustom={false}
+                  items={userMentionItems}
+                  onChange={handleMention}
+                  query={mentionSearch}
                   renderItem={renderMentionItem}
+                  searchPlaceholder={t('search_users')}
+                  setOpen={setShowMentions}
+                  setQuery={setMentionSearch}
+                  value=''
                 />
               </PopoverContent>
             </Popover>
           </div>
           <Button
-            type='submit'
-            size='sm'
-            disabled={isLoading}
             className='w-full sm:w-auto'
+            disabled={isLoading}
+            size='sm'
+            type='submit'
           >
             {replyingTo ? t('reply') : t('send')}
           </Button>

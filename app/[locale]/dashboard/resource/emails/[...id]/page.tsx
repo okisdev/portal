@@ -75,7 +75,7 @@ export default function EmailDetailPage() {
   }, [template]);
 
   const handleSaveTemplate = async () => {
-    if (!id || !title || !subject || !editorContent) {
+    if (!(id && title && subject && editorContent)) {
       toast.error('Please fill in all required fields');
       return;
     }
@@ -122,8 +122,8 @@ export default function EmailDetailPage() {
             The template you're looking for doesn't exist or has been deleted.
           </p>
           <Button
-            onClick={() => router.push('/dashboard/resource/emails')}
             className='mt-4'
+            onClick={() => router.push('/dashboard/resource/emails')}
             variant='outline'
           >
             Back to Templates
@@ -138,8 +138,8 @@ export default function EmailDetailPage() {
       <div className='container mx-auto flex h-full flex-col px-8 py-6'>
         <div className='mb-6 flex items-center justify-between'>
           <PageHeader
-            title='Edit Email Template'
             description='Make changes to your email template'
+            title='Edit Email Template'
           />
           <div className='flex gap-2'>
             <Button
@@ -149,22 +149,22 @@ export default function EmailDetailPage() {
               {t('back')}
             </Button>
             <Button
+              className='text-neutral-600 hover:bg-neutral-50'
               onClick={handleCopyHtml}
               variant='outline'
-              className='text-neutral-600 hover:bg-neutral-50'
             >
               {t('copy_html')}
             </Button>
             <Button
+              className='text-red-600 hover:bg-red-50'
               onClick={handleDeleteTemplate}
               variant='outline'
-              className='text-red-600 hover:bg-red-50'
             >
               {t('delete')}
             </Button>
             <Button
-              onClick={handleSaveTemplate}
               className='bg-neutral-900 text-white hover:bg-neutral-800'
+              onClick={handleSaveTemplate}
             >
               {t('save_changes')}
             </Button>
@@ -174,31 +174,31 @@ export default function EmailDetailPage() {
         <div className='flex flex-1 flex-col space-y-4'>
           <div>
             <Input
+              className='mb-2'
+              onChange={(e) => setTitle(e.target.value)}
               placeholder='Template Title'
               value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              className='mb-2'
             />
             <Textarea
-              placeholder='Template Description (optional)'
-              value={description}
               onChange={(e) => setDescription(e.target.value)}
+              placeholder='Template Description (optional)'
               rows={2}
+              value={description}
             />
           </div>
 
           <Input
+            onChange={(e) => setSubject(e.target.value)}
             placeholder='Email Subject'
             value={subject}
-            onChange={(e) => setSubject(e.target.value)}
           />
 
           <div className='min-h-0 flex-1'>
             <TipTapEditor
+              className='h-full'
               content={editorContent}
               onChange={setEditorContent}
               placeholder='Write your email content here...'
-              className='h-full'
             />
           </div>
         </div>

@@ -121,7 +121,8 @@ export default function Dashboard() {
 
   // Prepare data for status breakdown
   const statusData = useMemo(() => {
-    if (!dashboardData?.statusBreakdown || !configurations?.statuses) return [];
+    if (!(dashboardData?.statusBreakdown && configurations?.statuses))
+      return [];
 
     return dashboardData.statusBreakdown.map((item) => ({
       status: item.status,
@@ -132,7 +133,7 @@ export default function Dashboard() {
 
   // Prepare data for priority breakdown
   const priorityData = useMemo(() => {
-    if (!dashboardData?.priorityBreakdown || !configurations?.priorities)
+    if (!(dashboardData?.priorityBreakdown && configurations?.priorities))
       return [];
 
     return dashboardData.priorityBreakdown
@@ -149,7 +150,7 @@ export default function Dashboard() {
 
   // Prepare data for source breakdown
   const sourceData = useMemo(() => {
-    if (!dashboardData?.sourceBreakdown || !configurations?.sources) return [];
+    if (!(dashboardData?.sourceBreakdown && configurations?.sources)) return [];
 
     return dashboardData.sourceBreakdown
       .filter((item) => item.source !== null)
@@ -359,24 +360,24 @@ export default function Dashboard() {
                   >
                     <CartesianGrid vertical={false} />
                     <XAxis
-                      dataKey='month'
-                      tickLine={false}
                       axisLine={false}
-                      tickMargin={8}
+                      dataKey='month'
                       tickFormatter={(value) =>
                         typeof value === 'string' ? value.slice(0, 3) : ''
                       }
+                      tickLine={false}
+                      tickMargin={8}
                     />
                     <ChartTooltip
-                      cursor={false}
                       content={<ChartTooltipContent indicator='line' />}
+                      cursor={false}
                     />
                     <Area
                       dataKey='leads'
-                      type='natural'
                       fill='var(--color-leads)'
                       fillOpacity={0.4}
                       stroke='var(--color-leads)'
+                      type='natural'
                     />
                   </AreaChart>
                 </ChartContainer>
@@ -464,13 +465,13 @@ export default function Dashboard() {
                           {performanceMetrics.industries.map(
                             (industry, idx) => (
                               <div
-                                key={idx}
                                 className='flex items-center justify-between'
+                                key={idx}
                               >
                                 <span className='text-xs sm:text-sm'>
                                   {industry.industry}
                                 </span>
-                                <Badge variant='outline' className='text-xs'>
+                                <Badge className='text-xs' variant='outline'>
                                   {industry.count}
                                 </Badge>
                               </div>
@@ -501,8 +502,8 @@ export default function Dashboard() {
                   <div className='space-y-2 sm:space-y-3'>
                     {overdueFollowUps.slice(0, 5).map((contact) => (
                       <div
-                        key={contact.id}
                         className='flex items-center justify-between rounded-lg border bg-orange-50 p-2 dark:bg-orange-950/20'
+                        key={contact.id}
                       >
                         <div className='flex items-center gap-2 sm:gap-3'>
                           <Avatar className='size-6 sm:size-8'>
@@ -539,9 +540,9 @@ export default function Dashboard() {
                     {overdueFollowUps.length > 5 && (
                       <Button
                         asChild
-                        variant='ghost'
-                        size='sm'
                         className='w-full'
+                        size='sm'
+                        variant='ghost'
                       >
                         <Link href='/dashboard/crm/contacts?filter=overdue'>
                           View all {overdueFollowUps.length} overdue
@@ -570,8 +571,8 @@ export default function Dashboard() {
                   recentActivities.length > 0 ? (
                     recentActivities.map((activity) => (
                       <div
-                        key={activity.id}
                         className='flex items-start gap-2 rounded-lg p-2 hover:bg-muted/50 sm:gap-3'
+                        key={activity.id}
                       >
                         <Avatar className='size-6 sm:size-7'>
                           <AvatarFallback className='text-xs'>
@@ -607,9 +608,9 @@ export default function Dashboard() {
                               </span>
                               <Button
                                 asChild
-                                variant='outline'
-                                size='icon'
                                 className='size-4 text-xs sm:size-5'
+                                size='icon'
+                                variant='outline'
                               >
                                 <Link
                                   href={`/dashboard/crm/contacts/${activity.contact?.id}`}
@@ -652,8 +653,8 @@ export default function Dashboard() {
                   recentContacts.length > 0 ? (
                     recentContacts.map((contact) => (
                       <div
-                        key={contact.id}
                         className='flex items-center justify-between'
+                        key={contact.id}
                       >
                         <div className='flex items-center gap-2 sm:gap-3'>
                           <Avatar className='size-6 sm:size-8'>
@@ -676,12 +677,12 @@ export default function Dashboard() {
                         </div>
                         <div className='flex items-center gap-2'>
                           <SmartColorBadge
-                            value={contact.status}
                             color={getColorFromConfig(
                               contact.status,
                               configurations?.statuses || []
                             )}
                             hoverEffect={false}
+                            value={contact.status}
                           />
                         </div>
                       </div>
@@ -712,8 +713,8 @@ export default function Dashboard() {
                   topCompanies.length > 0 ? (
                     topCompanies.map((company, idx) => (
                       <div
-                        key={idx}
                         className='flex items-center justify-between'
+                        key={idx}
                       >
                         <div>
                           <p className='font-medium text-xs sm:text-sm'>
@@ -724,7 +725,7 @@ export default function Dashboard() {
                             {company.hotCount} hot
                           </p>
                         </div>
-                        <Badge variant='outline' className='text-xs'>
+                        <Badge className='text-xs' variant='outline'>
                           {company.count}
                         </Badge>
                       </div>
@@ -749,26 +750,26 @@ export default function Dashboard() {
                 </div>
               </div>
               <div className='flex-1 p-6 pt-0'>
-                <Tabs defaultValue='status' className='h-full w-full'>
+                <Tabs className='h-full w-full' defaultValue='status'>
                   <TabsList className='grid w-full grid-cols-3 text-xs sm:text-sm'>
                     <TabsTrigger value='status'>{t('status')}</TabsTrigger>
                     <TabsTrigger value='priority'>{t('priority')}</TabsTrigger>
                     <TabsTrigger value='resource'>{t('resource')}</TabsTrigger>
                   </TabsList>
                   <TabsContent
-                    value='status'
                     className='mt-3 space-y-2 sm:mt-4 sm:space-y-3'
+                    value='status'
                   >
                     {statusData.map((item) => (
                       <div
-                        key={item.status}
                         className='flex items-center justify-between'
+                        key={item.status}
                       >
                         <div className='flex items-center gap-2'>
                           <SmartColorBadge
-                            value={item.status}
                             color={item.color}
                             hoverEffect={false}
+                            value={item.status}
                           />
                         </div>
                         <div className='flex items-center gap-2'>
@@ -787,19 +788,19 @@ export default function Dashboard() {
                     ))}
                   </TabsContent>
                   <TabsContent
-                    value='priority'
                     className='mt-3 space-y-2 sm:mt-4 sm:space-y-3'
+                    value='priority'
                   >
                     {priorityData.map((item) => (
                       <div
-                        key={item.status}
                         className='flex items-center justify-between'
+                        key={item.status}
                       >
                         <div className='flex items-center gap-2'>
                           <SmartColorBadge
-                            value={item.status}
                             color={item.color}
                             hoverEffect={false}
+                            value={item.status}
                           />
                         </div>
                         <div className='flex items-center gap-2'>
@@ -818,19 +819,19 @@ export default function Dashboard() {
                     ))}
                   </TabsContent>
                   <TabsContent
-                    value='resource'
                     className='mt-3 space-y-2 sm:mt-4 sm:space-y-3'
+                    value='resource'
                   >
                     {sourceData.map((item) => (
                       <div
-                        key={item.status}
                         className='flex items-center justify-between'
+                        key={item.status}
                       >
                         <div className='flex items-center gap-2'>
                           <SmartColorBadge
-                            value={item.status}
                             color={item.color}
                             hoverEffect={false}
+                            value={item.status}
                           />
                         </div>
                         <div className='flex items-center gap-2'>

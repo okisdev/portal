@@ -119,7 +119,7 @@ export function ActivitySection({
     return (
       <div className='flex items-start gap-2'>
         <Avatar className='h-6 w-6'>
-          <AvatarImage src={user.display} alt={user.name ?? user.username} />
+          <AvatarImage alt={user.name ?? user.username} src={user.display} />
           <AvatarFallback>{(user.name ?? user.username)[0]}</AvatarFallback>
         </Avatar>
         <span className='text-left'>{user.name ?? user.username}</span>
@@ -232,7 +232,7 @@ export function ActivitySection({
   const handleReplySubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!replyText.trim() || !replyingTo) return;
+    if (!(replyText.trim() && replyingTo)) return;
 
     onReplyNote(replyingTo, replyText);
 
@@ -252,7 +252,7 @@ export function ActivitySection({
   const handleEditSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!editText.trim() || !editingNoteId) return;
+    if (!(editText.trim() && editingNoteId)) return;
 
     onUpdateNote(editingNoteId, editText);
 
@@ -359,8 +359,10 @@ export function ActivitySection({
     try {
       const parsedMetadata = JSON.parse(metadata);
       if (
-        !parsedMetadata.attachments ||
-        !Array.isArray(parsedMetadata.attachments)
+        !(
+          parsedMetadata.attachments &&
+          Array.isArray(parsedMetadata.attachments)
+        )
       )
         return null;
 
@@ -368,11 +370,11 @@ export function ActivitySection({
         <div className='mt-2 flex flex-wrap gap-2'>
           {parsedMetadata.attachments.map(
             (attachment: { url: string; name: string; type: string }) => (
-              <div key={attachment.url} className='relative'>
+              <div className='relative' key={attachment.url}>
                 <AttachmentPreview
-                  url={attachment.url}
                   name={attachment.name}
                   type={attachment.type}
+                  url={attachment.url}
                 />
               </div>
             )
@@ -402,7 +404,7 @@ export function ActivitySection({
 
   return (
     <div className='flex h-full flex-col'>
-      <div id='activities-container' className='flex-1 overflow-y-auto'>
+      <div className='flex-1 overflow-y-auto' id='activities-container'>
         <div className='pointer-events-none sticky top-0 z-10 h-4 bg-linear-to-b from-background to-transparent' />
         <div className='space-y-1'>
           {filteredActivities?.length === 0 && (
@@ -425,7 +427,7 @@ export function ActivitySection({
             const showDateDivider = currentDate !== prevDate;
 
             return (
-              <div key={activity.id} id={`note-${activity.id}`}>
+              <div id={`note-${activity.id}`} key={activity.id}>
                 {showDateDivider && (
                   <div className='sticky top-0 bg-background/95 py-2 backdrop-blur-sm supports-backdrop-filter:bg-background/60'>
                     <p className='font-medium text-muted-foreground text-sm'>
@@ -509,9 +511,9 @@ export function ActivitySection({
                         {activity.type === 'ENGAGEMENT' &&
                           activity.subType === 'NOTE_ADDED' && (
                             <button
-                              type='button'
-                              onClick={() => setReplyingTo(activity.id)}
                               className='flex cursor-pointer items-center gap-1 rounded bg-muted/50 px-1 py-0.5 text-muted-foreground text-xs transition-colors hover:bg-foreground/10 hover:text-foreground'
+                              onClick={() => setReplyingTo(activity.id)}
+                              type='button'
                             >
                               <MessageCircle className='size-3' />
                               {t('reply')}
@@ -520,14 +522,14 @@ export function ActivitySection({
                         {activity.type === 'ENGAGEMENT' &&
                           activity.subType === 'NOTE_ADDED' && (
                             <button
-                              type='button'
+                              className='flex cursor-pointer items-center gap-1 rounded bg-muted/50 px-1 py-0.5 text-muted-foreground text-xs transition-colors hover:bg-foreground/10 hover:text-foreground'
                               onClick={() =>
                                 handleEditNote(
                                   activity.id,
                                   activity.description
                                 )
                               }
-                              className='flex cursor-pointer items-center gap-1 rounded bg-muted/50 px-1 py-0.5 text-muted-foreground text-xs transition-colors hover:bg-foreground/10 hover:text-foreground'
+                              type='button'
                             >
                               <Edit2 className='size-3' />
                               {t('edit')}
@@ -536,9 +538,9 @@ export function ActivitySection({
                         {activity.type === 'ENGAGEMENT' &&
                           activity.subType === 'NOTE_ADDED' && (
                             <button
-                              type='button'
-                              onClick={() => handleDeleteNote(activity.id)}
                               className='flex cursor-pointer items-center gap-1 rounded bg-muted/50 px-1 py-0.5 text-muted-foreground text-xs transition-colors hover:bg-foreground/10 hover:text-foreground'
+                              onClick={() => handleDeleteNote(activity.id)}
+                              type='button'
                             >
                               <Trash className='size-3' />
                               {t('delete')}
@@ -560,16 +562,16 @@ export function ActivitySection({
                     </div>
                     {editingNoteId === activity.id && (
                       <form
-                        onSubmit={handleEditSubmit}
                         className='mt-2 flex items-start gap-2'
+                        onSubmit={handleEditSubmit}
                       >
                         <div className='relative flex-1'>
                           <Popover open={showMentions}>
                             <PopoverTrigger asChild>
                               <div className='relative w-full'>
                                 <Textarea
+                                  className='min-h-[60px] resize-none'
                                   id='editInput'
-                                  value={editText}
                                   onChange={(e) =>
                                     handleInputChange(e, false, true)
                                   }
@@ -577,41 +579,41 @@ export function ActivitySection({
                                     handleKeyDown(e, false, true)
                                   }
                                   placeholder={t('edit_note')}
-                                  className='min-h-[60px] resize-none'
+                                  value={editText}
                                 />
                               </div>
                             </PopoverTrigger>
-                            <PopoverContent className='w-64 p-0' align='start'>
+                            <PopoverContent align='start' className='w-64 p-0'>
                               <ComboboxCommand
-                                query={mentionSearch}
-                                setQuery={setMentionSearch}
-                                value=''
+                                allowCustom={false}
+                                emptyText={t('no_users_found')}
+                                groupHeading={t('users')}
+                                items={userMentionItems}
                                 onChange={(username) =>
                                   handleMention(username, false, true)
                                 }
-                                setOpen={setShowMentions}
-                                items={userMentionItems}
-                                searchPlaceholder={t('search_users')}
-                                emptyText={t('no_users_found')}
-                                groupHeading={t('users')}
-                                allowCustom={false}
+                                query={mentionSearch}
                                 renderItem={renderMentionItem}
+                                searchPlaceholder={t('search_users')}
+                                setOpen={setShowMentions}
+                                setQuery={setMentionSearch}
+                                value=''
                               />
                             </PopoverContent>
                           </Popover>
                         </div>
                         <div className='flex gap-1'>
-                          <Button type='submit' size='sm' disabled={isLoading}>
+                          <Button disabled={isLoading} size='sm' type='submit'>
                             {t('save')}
                           </Button>
                           <Button
-                            type='button'
-                            size='sm'
-                            variant='outline'
                             onClick={() => {
                               setEditingNoteId(null);
                               setEditText('');
                             }}
+                            size='sm'
+                            type='button'
+                            variant='outline'
                           >
                             {t('cancel')}
                           </Button>
@@ -620,54 +622,54 @@ export function ActivitySection({
                     )}
                     {replyingTo === activity.id && (
                       <form
-                        onSubmit={handleReplySubmit}
                         className='mt-2 flex items-start gap-2'
+                        onSubmit={handleReplySubmit}
                       >
                         <div className='relative flex-1'>
                           <Popover open={showMentions}>
                             <PopoverTrigger asChild>
                               <div className='relative w-full'>
                                 <Textarea
+                                  className='min-h-[60px] resize-none'
                                   id='replyInput'
-                                  value={replyText}
                                   onChange={(e) => handleInputChange(e, true)}
                                   onKeyDown={(e) => handleKeyDown(e, true)}
                                   placeholder={t('write_a_reply')}
-                                  className='min-h-[60px] resize-none'
+                                  value={replyText}
                                 />
                               </div>
                             </PopoverTrigger>
-                            <PopoverContent className='w-64 p-0' align='start'>
+                            <PopoverContent align='start' className='w-64 p-0'>
                               <ComboboxCommand
-                                query={mentionSearch}
-                                setQuery={setMentionSearch}
-                                value=''
+                                allowCustom={false}
+                                emptyText={t('no_users_found')}
+                                groupHeading={t('users')}
+                                items={userMentionItems}
                                 onChange={(username) =>
                                   handleMention(username, true)
                                 }
-                                setOpen={setShowMentions}
-                                items={userMentionItems}
-                                searchPlaceholder={t('search_users')}
-                                emptyText={t('no_users_found')}
-                                groupHeading={t('users')}
-                                allowCustom={false}
+                                query={mentionSearch}
                                 renderItem={renderMentionItem}
+                                searchPlaceholder={t('search_users')}
+                                setOpen={setShowMentions}
+                                setQuery={setMentionSearch}
+                                value=''
                               />
                             </PopoverContent>
                           </Popover>
                         </div>
                         <div className='flex gap-1'>
-                          <Button type='submit' size='sm' disabled={isLoading}>
+                          <Button disabled={isLoading} size='sm' type='submit'>
                             {t('reply')}
                           </Button>
                           <Button
-                            type='button'
-                            size='sm'
-                            variant='outline'
                             onClick={() => {
                               setReplyingTo(null);
                               setReplyText('');
                             }}
+                            size='sm'
+                            type='button'
+                            variant='outline'
                           >
                             {t('cancel')}
                           </Button>
@@ -677,13 +679,13 @@ export function ActivitySection({
                     {activity.metadata &&
                       JSON.parse(activity.metadata).replyTo && (
                         <button
-                          type='button'
+                          className='mt-1 flex items-center gap-1 rounded bg-muted/50 px-1 py-0.5 text-muted-foreground text-xs transition-colors hover:bg-foreground/10 hover:text-foreground'
                           onClick={() =>
                             scrollToNote(
                               JSON.parse(activity.metadata as string).replyTo
                             )
                           }
-                          className='mt-1 flex items-center gap-1 rounded bg-muted/50 px-1 py-0.5 text-muted-foreground text-xs transition-colors hover:bg-foreground/10 hover:text-foreground'
+                          type='button'
                         >
                           <ArrowUpRight className='size-3' />
                           {t('jump_to_original_note')}
@@ -697,20 +699,20 @@ export function ActivitySection({
         </div>
       </div>
       <div className='mt-auto bg-background pt-4'>
-        <form onSubmit={handleSubmitActivity} className='relative'>
+        <form className='relative' onSubmit={handleSubmitActivity}>
           <div className='relative w-full'>
             <Popover open={showMentions}>
               <PopoverTrigger asChild>
                 <div className='relative w-full'>
                   <Textarea
+                    className='min-h-[60px] resize-none pr-24'
+                    onChange={(e) => handleInputChange(e)}
+                    onCompositionEnd={() => setIsComposing(false)}
+                    onCompositionStart={() => setIsComposing(true)}
+                    onKeyDown={(e) => handleKeyDown(e)}
+                    placeholder={t('add_a_note')}
                     ref={inputRef}
                     value={newActivity}
-                    onChange={(e) => handleInputChange(e)}
-                    onKeyDown={(e) => handleKeyDown(e)}
-                    onCompositionStart={() => setIsComposing(true)}
-                    onCompositionEnd={() => setIsComposing(false)}
-                    placeholder={t('add_a_note')}
-                    className='min-h-[60px] resize-none pr-24'
                   />
                   {uploadProgress && (
                     <div className='absolute bottom-2 left-2 text-muted-foreground text-xs'>
@@ -720,47 +722,47 @@ export function ActivitySection({
 
                   <div className='absolute top-2 right-2 flex items-center gap-1'>
                     <input
-                      type='file'
-                      ref={fileInputRef}
-                      onChange={handleFileUpload}
-                      className='hidden'
                       accept='image/*,video/*,audio/*,.pdf,.doc,.docx,.xls,.xlsx,.txt'
+                      className='hidden'
+                      onChange={handleFileUpload}
+                      ref={fileInputRef}
+                      type='file'
                     />
                     <Button
-                      type='button'
-                      size='icon'
-                      variant='ghost'
-                      onClick={() => fileInputRef.current?.click()}
-                      disabled={isUploading}
                       className='h-8 w-8'
+                      disabled={isUploading}
+                      onClick={() => fileInputRef.current?.click()}
+                      size='icon'
                       title={t('attach_file')}
+                      type='button'
+                      variant='ghost'
                     >
                       <Paperclip className='h-4 w-4' />
                     </Button>
                     <Button
-                      type='submit'
-                      size='sm'
-                      disabled={isLoading || isUploading}
                       className='h-8'
+                      disabled={isLoading || isUploading}
+                      size='sm'
+                      type='submit'
                     >
                       {t('add_note')}
                     </Button>
                   </div>
                 </div>
               </PopoverTrigger>
-              <PopoverContent className='w-64 p-0' align='start'>
+              <PopoverContent align='start' className='w-64 p-0'>
                 <ComboboxCommand
-                  query={mentionSearch}
-                  setQuery={setMentionSearch}
-                  value=''
-                  onChange={handleMention}
-                  setOpen={setShowMentions}
-                  items={userMentionItems}
-                  searchPlaceholder={t('search_users')}
+                  allowCustom={false}
                   emptyText={t('no_users_found')}
                   groupHeading={t('users')}
-                  allowCustom={false}
+                  items={userMentionItems}
+                  onChange={handleMention}
+                  query={mentionSearch}
                   renderItem={renderMentionItem}
+                  searchPlaceholder={t('search_users')}
+                  setOpen={setShowMentions}
+                  setQuery={setMentionSearch}
+                  value=''
                 />
               </PopoverContent>
             </Popover>
@@ -769,8 +771,8 @@ export function ActivitySection({
               <div className='mt-2 flex flex-wrap gap-1'>
                 {attachments.map((attachment, index) => (
                   <div
-                    key={attachment.url}
                     className='flex items-center gap-1 rounded-md bg-muted px-2 py-1 text-xs'
+                    key={attachment.url}
                   >
                     {attachment.type === 'image' ? (
                       <ImageIcon className='h-3 w-3' />
@@ -784,10 +786,10 @@ export function ActivitySection({
                       {attachment.name}
                     </span>
                     <button
-                      type='button'
-                      onClick={() => handleRemoveFile(index)}
                       className='ml-1 text-muted-foreground hover:text-foreground'
+                      onClick={() => handleRemoveFile(index)}
                       title={t('remove')}
+                      type='button'
                     >
                       <X className='h-3 w-3' />
                     </button>
@@ -800,13 +802,13 @@ export function ActivitySection({
       </div>
 
       <ActionAlertDialog
-        open={!!deleteNoteId}
-        onOpenChange={(open) => !open && setDeleteNoteId(null)}
-        onConfirm={confirmDeleteNote}
-        title={t('delete_note')}
-        description={t('delete_note_confirmation')}
         cancelText={t('cancel')}
         confirmText={t('delete')}
+        description={t('delete_note_confirmation')}
+        onConfirm={confirmDeleteNote}
+        onOpenChange={(open) => !open && setDeleteNoteId(null)}
+        open={!!deleteNoteId}
+        title={t('delete_note')}
       />
     </div>
   );

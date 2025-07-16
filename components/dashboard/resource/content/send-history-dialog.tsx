@@ -113,7 +113,7 @@ export function SendHistoryDialog({
   });
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog onOpenChange={onOpenChange} open={open}>
       <DialogContent className='max-h-[90vh] max-w-4xl overflow-y-auto'>
         <DialogHeader>
           <DialogTitle>{t('send_history')}</DialogTitle>
@@ -130,7 +130,7 @@ export function SendHistoryDialog({
             </div>
           </div>
 
-          <DataTable table={table} columns={columns} loading={isLoading} />
+          <DataTable columns={columns} loading={isLoading} table={table} />
         </div>
       </DialogContent>
     </Dialog>
