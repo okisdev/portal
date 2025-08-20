@@ -5,7 +5,7 @@ import NextAuth, { CredentialsSignin } from 'next-auth';
 import Credentials from 'next-auth/providers/credentials';
 import Resend from 'next-auth/providers/resend';
 import * as schema from '@/drizzle/schema';
-import { MagicLinkEmail } from '@/emails';
+import { MagicLinkEmail } from '@/emails/magic-link';
 import { database } from '@/lib/database';
 import { env } from '@/lib/env';
 import { resend } from '@/lib/mail';

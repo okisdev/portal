@@ -4,7 +4,7 @@ import { and, eq } from 'drizzle-orm';
 import { v4 as uuidv4 } from 'uuid';
 import { z } from 'zod/v4';
 import { siteConfig, user, verificationToken } from '@/drizzle/schema';
-import { PasswordResetEmail } from '@/emails';
+import { PasswordResetEmail } from '@/emails/password-reset';
 import { env } from '@/lib/env';
 import { sendEmail } from '@/lib/mail';
 import { createTRPCRouter, publicProcedure } from '@/server/trpc';
@@ -85,7 +85,9 @@ export const authRouter = createTRPCRouter({
     .input(z.object({ email: z.email() }))
     .query(async ({ ctx, input }) => {
       const domain = input.email.split('@')[1];
-      if (!domain) return false;
+      if (!domain) {
+        return false;
+      }
 
       // Check if user already exists
       const existingUser = await ctx.db

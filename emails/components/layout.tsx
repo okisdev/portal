@@ -9,10 +9,10 @@ import {
 } from '@react-email/components';
 import type * as React from 'react';
 
-interface EmailLayoutProps {
+type EmailLayoutProps = {
   children: React.ReactNode;
   preview: string;
-}
+};
 
 export const EmailLayout = ({ children, preview }: EmailLayoutProps) => {
   return (

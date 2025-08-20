@@ -11,12 +11,12 @@ import {
 import * as React from 'react';
 import { EmailLayout } from './components/layout';
 
-interface PasswordResetEmailProps {
+type PasswordResetEmailProps = {
   email?: string;
   resetUrl?: string;
   userAgent?: string;
   ip?: string;
-}
+};
 
 export const PasswordResetEmail = ({
   email = 'user@example.com',
