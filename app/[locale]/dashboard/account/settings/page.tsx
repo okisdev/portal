@@ -35,7 +35,6 @@ export default function AccountSettingsPage() {
   const { data: me, isLoading } = api.account.getMeFromDatabase.useQuery();
 
   const updateAccount = api.account.updateMe.useMutation();
-  const updatePassword = api.account.updatePassword.useMutation();
   const updateTimezone = api.account.updateTimezone.useMutation();
 
   const [firstName, setFirstName] = useState('');
@@ -161,11 +160,10 @@ export default function AccountSettingsPage() {
     }
 
     try {
-      await updatePassword.mutateAsync(
+      await authClient.changePassword(
         {
           currentPassword,
           newPassword,
-          confirmPassword,
         },
         {
           onSuccess: () => {
@@ -484,11 +482,7 @@ export default function AccountSettingsPage() {
                   >
                     {t('forgot_current_password')}
                   </Button>
-                  <Button disabled={updatePassword.isPending} type='submit'>
-                    {updatePassword.isPending
-                      ? t('updating_password')
-                      : t('update_password')}
-                  </Button>
+                  <Button type='submit'>{t('update_password')}</Button>
                 </div>
               </form>
             </div>
