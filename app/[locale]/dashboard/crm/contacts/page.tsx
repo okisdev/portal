@@ -47,7 +47,7 @@ import { parsePhoneWithoutCountryCode } from '@/utils/phone';
 import { api } from '@/utils/trpc/client';
 
 // Define the contact type from the paginated response
-type PaginatedContact = {
+interface PaginatedContact {
   id: string;
   name: string | null;
   firstName: string;
@@ -62,7 +62,7 @@ type PaginatedContact = {
   nextFollowUpAt: Date | null;
   lastContactedAt: Date | null;
   lastActivity: string | null;
-};
+}
 
 export default function CRMContactsTablePage() {
   const router = useRouter();

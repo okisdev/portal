@@ -1,6 +1,6 @@
 import { cn } from '@/lib/utils';
 
-type ColorBadgeProps = {
+interface ColorBadgeProps {
   type:
     | 'status'
     | 'contactStatus'
@@ -12,7 +12,7 @@ type ColorBadgeProps = {
   color?: string;
   className?: string;
   isActive?: boolean;
-};
+}
 
 export function ColorBadge({
   type,

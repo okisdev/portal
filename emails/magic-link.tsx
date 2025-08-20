@@ -11,14 +11,14 @@ import {
 import * as React from 'react';
 import { EmailLayout } from './components/layout';
 
-type MagicLinkEmailProps = {
+interface MagicLinkEmailProps {
   email?: string;
   magicLinkUrl?: string;
   type?: 'login' | 'password-reset';
   userAgent?: string;
   ip?: string;
   expiresInMinutes?: number;
-};
+}
 
 export const MagicLinkEmail = ({
   email = 'user@example.com',

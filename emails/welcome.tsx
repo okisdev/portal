@@ -11,11 +11,11 @@ import {
 import * as React from 'react';
 import { EmailLayout } from './components/layout';
 
-type WelcomeEmailProps = {
+interface WelcomeEmailProps {
   email?: string;
   name?: string;
   loginUrl?: string;
-};
+}
 
 export const WelcomeEmail = ({
   email = 'user@example.com',

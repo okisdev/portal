@@ -63,7 +63,7 @@ import packageInfo from '@/package.json' with { type: 'json' };
 import { copyToClipboard } from '@/utils/clipboard';
 import { api } from '@/utils/trpc/client';
 
-type SidebarGroupSectionProps = {
+interface SidebarGroupSectionProps {
   title: string;
   items: Array<{
     id: string;
@@ -79,7 +79,7 @@ type SidebarGroupSectionProps = {
     }>;
   }>;
   defaultOpen?: boolean;
-};
+}
 
 export function DashboardSidebar() {
   const router = useRouter();

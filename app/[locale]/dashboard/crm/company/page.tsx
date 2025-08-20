@@ -70,10 +70,10 @@ import {
 import { useDebounce } from '@/hooks/use-debounce';
 import { api } from '@/utils/trpc/client';
 
-type SortConfig = {
+interface SortConfig {
   column: string;
   direction: 'asc' | 'desc';
-};
+}
 
 const createCompanySchema = z.object({
   name: z.string().min(1, 'Name is required'),

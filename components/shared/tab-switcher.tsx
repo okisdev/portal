@@ -3,12 +3,12 @@
 import { useEffect, useRef, useState } from 'react';
 import { cn } from '@/lib/utils';
 
-type TabSwitcherProps = {
+interface TabSwitcherProps {
   config: {
     label: string;
     value: React.ReactNode;
   }[];
-};
+}
 
 export function TabSwitcher({ config }: TabSwitcherProps) {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
