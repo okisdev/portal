@@ -31,10 +31,14 @@ export const accountRouter = createTRPCRouter({
         role: user.role,
         username: user.username,
         timezone: user.timezone,
+        hasPassword: user.password,
       })
       .from(user)
       .where(eq(user.id, ctx.session.user.id))
-      .then(([user]) => user);
+      .then(([userData]) => ({
+        ...userData,
+        hasPassword: !!userData.hasPassword,
+      }));
   }),
 
   updateMe: protectedProcedure

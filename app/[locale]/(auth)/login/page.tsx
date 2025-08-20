@@ -242,22 +242,29 @@ export default function LoginPage() {
             </div>
 
             {isPasswordLogin && (
-              <div className='space-y-1'>
-                <Label className='mb-1 block font-medium text-foreground text-sm'>
-                  {t('password')}
-                </Label>
-                <input
-                  type='password'
-                  {...register('password')}
-                  className='w-full rounded-lg border bg-background p-2 focus:outline-hidden focus:ring-2 focus:ring-ring'
-                  placeholder={t('password_placeholder')}
+              <>
+                <Banner
+                  description={t('magic_link_is_more_secure_and_convenient')}
+                  title={t('password_login_not_recommended')}
+                  variant='warning'
                 />
-                {errors.password && (
-                  <p className='mt-1 text-destructive text-sm'>
-                    {errors.password.message}
-                  </p>
-                )}
-              </div>
+                <div className='space-y-1'>
+                  <Label className='mb-1 block font-medium text-foreground text-sm'>
+                    {t('password')}
+                  </Label>
+                  <input
+                    type='password'
+                    {...register('password')}
+                    className='w-full rounded-lg border bg-background p-2 focus:outline-hidden focus:ring-2 focus:ring-ring'
+                    placeholder={t('password_placeholder')}
+                  />
+                  {errors.password && (
+                    <p className='mt-1 text-destructive text-sm'>
+                      {errors.password.message}
+                    </p>
+                  )}
+                </div>
+              </>
             )}
             <div className='flex items-center justify-end'>
               {isPasswordLogin && (
