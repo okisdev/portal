@@ -28,6 +28,7 @@ import { timezones } from '@/data/data';
 import { authClient } from '@/lib/auth.client';
 import type { Timezone } from '@/lib/schema';
 import { api } from '@/utils/trpc/client';
+import { setPasswordAction } from './actions';
 
 const USERNAME_REGEX = /^[a-z0-9_-]+$/;
 
@@ -171,26 +172,40 @@ export default function AccountSettingsPage() {
     setIsPasswordLoading(true);
 
     try {
-      await authClient.changePassword(
-        {
-          currentPassword: hasPassword ? currentPassword : '',
-          newPassword,
-        },
-        {
-          onSuccess: () => {
-            toast.success(t('password_updated_successfully'));
-            setHasPassword(true); // User now has a password
+      if (hasPassword) {
+        // User has existing password - use changePassword
+        await authClient.changePassword(
+          {
+            currentPassword,
+            newPassword,
           },
-          onError: () => {
-            toast.error(t('failed_to_update_password'));
-          },
+          {
+            onSuccess: () => {
+              toast.success(t('password_updated_successfully'));
+            },
+            onError: () => {
+              toast.error(t('failed_to_update_password'));
+            },
+          }
+        );
+      } else {
+        // User doesn't have password - use setPassword server action
+        const result = await setPasswordAction(newPassword);
+
+        if (result.success) {
+          toast.success(t('password_created_successfully'));
+          setHasPassword(true); // User now has a password
+        } else {
+          toast.error(result.error || t('failed_to_create_password'));
         }
-      );
+      }
+
       setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
     } catch (error) {
-      console.error('Failed to update password:', error);
+      console.error('Failed to handle password operation:', error);
+      toast.error(t('unexpected_error'));
     } finally {
       setIsPasswordLoading(false);
     }
@@ -518,12 +533,13 @@ export default function AccountSettingsPage() {
                   >
                     {(() => {
                       if (isPasswordLoading) {
-                        return t('updating_password');
+                        return hasPassword
+                          ? t('updating_password')
+                          : t('creating_password');
                       }
-                      if (hasPassword) {
-                        return t('update_password');
-                      }
-                      return t('create_password');
+                      return hasPassword
+                        ? t('update_password')
+                        : t('create_password');
                     })()}
                   </Button>
                 </div>
