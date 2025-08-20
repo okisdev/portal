@@ -49,6 +49,12 @@ const migrationSteps: MigrationStep[] = [
     required: true,
   },
   {
+    name: 'user_add_updated_at',
+    description: 'Add updated_at column to portal_user',
+    sql: 'ALTER TABLE portal_user ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT NOW() NOT NULL',
+    required: true,
+  },
+  {
     name: 'user_drop_old_email_verified',
     description: 'Drop old emailVerified timestamp column',
     sql: 'ALTER TABLE portal_user DROP COLUMN IF EXISTS "emailVerified"',
@@ -129,6 +135,30 @@ const migrationSteps: MigrationStep[] = [
     description: 'Add updated_at column to portal_account',
     sql: 'ALTER TABLE portal_account ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT NOW() NOT NULL',
     required: true,
+  },
+  {
+    name: 'account_drop_old_type',
+    description: 'Drop old type column from portal_account',
+    sql: 'ALTER TABLE portal_account DROP COLUMN IF EXISTS type',
+    required: false,
+  },
+  {
+    name: 'account_drop_old_token_type',
+    description: 'Drop old token_type column from portal_account',
+    sql: 'ALTER TABLE portal_account DROP COLUMN IF EXISTS token_type',
+    required: false,
+  },
+  {
+    name: 'account_drop_old_session_state',
+    description: 'Drop old session_state column from portal_account',
+    sql: 'ALTER TABLE portal_account DROP COLUMN IF EXISTS session_state',
+    required: false,
+  },
+  {
+    name: 'account_drop_old_expires_at',
+    description: 'Drop old integer expires_at column from portal_account',
+    sql: 'ALTER TABLE portal_account DROP COLUMN IF EXISTS expires_at',
+    required: false,
   },
 
   // Step 3: Session table migrations
