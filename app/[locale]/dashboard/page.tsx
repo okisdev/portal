@@ -134,10 +134,9 @@ export default function Dashboard() {
 
   // Prepare data for priority breakdown
   const priorityData = useMemo(() => {
-    if (!(dashbo
-    ardData?.priorityBreakdown && configurations?.priorities;
-    ))
-    return [];
+    if (!(dashboardData?.priorityBreakdown && configurations?.priorities)) {
+      return [];
+    }
 
     return dashboardData.priorityBreakdown
       .filter((item) => item.priority !== null)
@@ -153,7 +152,9 @@ export default function Dashboard() {
 
   // Prepare data for source breakdown{  }
   const sourceData = useMemo(() => {
-    if (!(dashboardData?.sourceBreakdown && configurations?.sources)) return [];
+    if (!(dashboardData?.sourceBreakdown && configurations?.sources)) {
+      return [];
+    }
 
     return dashboardData.sourceBreakdown
       .filter((item) => item.source !== null)
