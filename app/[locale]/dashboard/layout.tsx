@@ -11,12 +11,14 @@ export default async function DashboardLayout({
 }>) {
   const session = await auth();
 
-  if (!session) return redirect('/login');
+  if (!session) {
+    return redirect('/login');
+  }
 
   return (
     <SidebarProvider>
       <DashboardSidebar />
-      <SidebarInset className='max-h-screen w-[calc(100vw-var(--sidebar-width))] overflow-hidden '>
+      <SidebarInset className='max-h-screen w-[calc(100vw-var(--sidebar-width))] overflow-hidden'>
         <DashboardHeader />
         <div className='flex-1 overflow-y-auto'>{children}</div>
       </SidebarInset>

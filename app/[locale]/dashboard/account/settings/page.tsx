@@ -71,7 +71,9 @@ export default function AccountSettingsPage() {
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
     const file = event.target.files?.[0];
-    if (!file) return;
+    if (!file) {
+      return;
+    }
 
     const formData = new FormData();
     formData.append('file', file);

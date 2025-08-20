@@ -14,7 +14,8 @@
       "correctness": {
         "noUnusedImports": {
           "level": "warn",
-          "fix": "none"
+          "fix": "none",
+          "options": {}
         },
         "noUnusedVariables": {
           "level": "warn",
@@ -32,7 +33,6 @@
         "noExcessiveCognitiveComplexity": "warn"
       },
       "nursery": {
-        "noAwaitInLoop": "warn",
         "noShadow": "warn"
       },
       "suspicious": {
@@ -43,6 +43,7 @@
       },
       "style": {
         "noEnum": "off",
+        "noMagicNumbers": "off",
         "noNestedTernary": "warn"
       },
       "performance": {
@@ -59,8 +60,7 @@
   "files": {
     "includes": [
       "**",
-      "!**/worker-configuration.d.ts",
-      "!**/components/ui/**"
+      "!**/components/ui"
     ]
   }
 }

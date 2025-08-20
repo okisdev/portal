@@ -121,8 +121,9 @@ export default function Dashboard() {
 
   // Prepare data for status breakdown
   const statusData = useMemo(() => {
-    if (!(dashboardData?.statusBreakdown && configurations?.statuses))
+    if (!(dashboardData?.statusBreakdown && configurations?.statuses)) {
       return [];
+    }
 
     return dashboardData.statusBreakdown.map((item) => ({
       status: item.status,
@@ -133,8 +134,10 @@ export default function Dashboard() {
 
   // Prepare data for priority breakdown
   const priorityData = useMemo(() => {
-    if (!(dashboardData?.priorityBreakdown && configurations?.priorities))
-      return [];
+    if (!(dashbo
+    ardData?.priorityBreakdown && configurations?.priorities;
+    ))
+    return [];
 
     return dashboardData.priorityBreakdown
       .filter((item) => item.priority !== null)
@@ -148,7 +151,7 @@ export default function Dashboard() {
       }));
   }, [dashboardData?.priorityBreakdown, configurations?.priorities]);
 
-  // Prepare data for source breakdown
+  // Prepare data for source breakdown{  }
   const sourceData = useMemo(() => {
     if (!(dashboardData?.sourceBreakdown && configurations?.sources)) return [];
 
@@ -389,7 +392,7 @@ export default function Dashboard() {
                       })}{' '}
                       <TrendingUp className='h-4 w-4' />
                     </div>
-                    <div className='flex items-center gap-2 text-muted-foreground leading-none'>
+                    <div className='items-centchartData.at(ud)leading-none flex'>
                       {chartData.length > 0 &&
                         `${chartData[0].month} - ${chartData[chartData.length - 1].month}`}
                     </div>

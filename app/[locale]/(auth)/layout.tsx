@@ -11,7 +11,9 @@ export default async function AuthLayout({
 }>) {
   const session = await auth();
 
-  if (session) return redirect('/dashboard');
+  if (session) {
+    return redirect('/dashboard');
+  }
 
   const t = await getTranslations();
 

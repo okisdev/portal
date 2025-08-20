@@ -8,7 +8,9 @@ export default async function DashboardLayout({
 }>) {
   const session = await auth();
 
-  if (!session?.user) return notFound();
+  if (!session?.user) {
+    return notFound();
+  }
 
   return children;
 }

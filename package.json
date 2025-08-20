@@ -95,7 +95,7 @@
     "zod": "^4.0.5"
   },
   "devDependencies": {
-    "@biomejs/biome": "2.1.1",
+    "@biomejs/biome": "^2.2.0",
     "@tailwindcss/postcss": "^4.1.11",
     "@tiptap/core": "^3.0.6",
     "@types/node": "^24.0.14",
@@ -105,7 +105,7 @@
     "tailwindcss": "^4.1.11",
     "turbo": "^2.5.4",
     "typescript": "^5.8.3",
-    "ultracite": "5.0.36"
+    "ultracite": "^5.2.4"
   },
   "packageManager": "bun@1.2.18"
 }

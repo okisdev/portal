@@ -11,7 +11,9 @@ export default async function SiteAdminLayout({
 }>) {
   const session = await auth();
 
-  if (!session?.user) return notFound();
+  if (!session?.user) {
+    return notFound();
+  }
 
   const currentUser = await database
     .select()

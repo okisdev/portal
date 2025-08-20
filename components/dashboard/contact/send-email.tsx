@@ -141,7 +141,9 @@ export function SendEmail({ open, onOpenChange, recipient }: SendEmailProps) {
     }));
   };
 
-  if (!recipient) return null;
+  if (!recipient) {
+    return null;
+  }
 
   return (
     <Dialog onOpenChange={handleClose} open={open}>

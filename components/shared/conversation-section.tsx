@@ -101,7 +101,9 @@ export function ConversationSection({
   const renderMentionItem = (username: string) => {
     const user = userMentionData.find((u) => u.username === username);
 
-    if (!user) return username;
+    if (!user) {
+      return username;
+    }
 
     return (
       <div className='flex items-start gap-2'>
@@ -180,7 +182,9 @@ export function ConversationSection({
   const handleSubmitActivity = (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!newActivity.trim()) return;
+    if (!newActivity.trim()) {
+      return;
+    }
 
     onCreateActivity({
       type: 'ENGAGEMENT',
@@ -197,7 +201,9 @@ export function ConversationSection({
   const handleReplySubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!(replyText.trim() && replyingTo)) return;
+    if (!(replyText.trim() && replyingTo)) {
+      return;
+    }
 
     onCreateActivity({
       type: 'ENGAGEMENT',

@@ -195,7 +195,7 @@ export function CalendarSidePanel({
               <div className='flex items-center gap-2' key={folder.id}>
                 <Checkbox
                   checked={!hiddenCalendars.has(folder.id)}
-                  onCheckedChange={(checked) => onToggleCalendar(folder.id)}
+                  onCheckedChange={(_checked) => onToggleCalendar(folder.id)}
                 />
                 <Button
                   className='h-8 min-w-0 flex-1 justify-start px-2'

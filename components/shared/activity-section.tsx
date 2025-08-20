@@ -99,7 +99,7 @@ export function ActivitySection({
   const userMentionItems = userMentionData.map((user) => user.username);
 
   const { uploadToR2, isUploading } = useUpload({
-    onSuccess: (url) => {
+    onSuccess: (_url) => {
       setUploadProgress(null);
     },
     onError: (error) => {
@@ -114,7 +114,9 @@ export function ActivitySection({
   const renderMentionItem = (username: string) => {
     const user = userMentionData.find((u) => u.username === username);
 
-    if (!user) return username;
+    if (!user) {
+      return username;
+    }
 
     return (
       <div className='flex items-start gap-2'>
@@ -214,7 +216,9 @@ export function ActivitySection({
   const handleSubmitActivity = (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!newActivity.trim() && attachments.length === 0) return;
+    if (!newActivity.trim() && attachments.length === 0) {
+      return;
+    }
 
     onCreateActivity({
       type: 'ENGAGEMENT',
@@ -232,7 +236,9 @@ export function ActivitySection({
   const handleReplySubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!(replyText.trim() && replyingTo)) return;
+    if (!(replyText.trim() && replyingTo)) {
+      return;
+    }
 
     onReplyNote(replyingTo, replyText);
 
@@ -252,7 +258,9 @@ export function ActivitySection({
   const handleEditSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!(editText.trim() && editingNoteId)) return;
+    if (!(editText.trim() && editingNoteId)) {
+      return;
+    }
 
     onUpdateNote(editingNoteId, editText);
 
@@ -324,7 +332,9 @@ export function ActivitySection({
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file) return;
+    if (!file) {
+      return;
+    }
 
     try {
       const url = await uploadToR2(file);
@@ -354,7 +364,9 @@ export function ActivitySection({
   };
 
   const renderAttachments = (metadata: string | null) => {
-    if (!metadata) return null;
+    if (!metadata) {
+      return null;
+    }
 
     try {
       const parsedMetadata = JSON.parse(metadata);
@@ -363,8 +375,9 @@ export function ActivitySection({
           parsedMetadata.attachments &&
           Array.isArray(parsedMetadata.attachments)
         )
-      )
+      ) {
         return null;
+      }
 
       return (
         <div className='mt-2 flex flex-wrap gap-2'>
