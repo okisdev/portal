@@ -10,10 +10,13 @@ import {
   varchar,
 } from 'drizzle-orm/pg-core';
 
-export const verificationToken = pgTable('portal_verification_token', {
+export const verification = pgTable('portal_verification', {
+  id: text().primaryKey().notNull(),
   identifier: text().notNull(),
-  token: text().notNull(),
-  expires: timestamp({ mode: 'string' }).notNull(),
+  value: text().notNull(),
+  expiresAt: timestamp('expires_at', { mode: 'string' }).notNull(),
+  createdAt: timestamp('created_at', { mode: 'string' }).defaultNow(),
+  updatedAt: timestamp('updated_at', { mode: 'string' }).defaultNow(),
 });
 
 export const user = pgTable(
@@ -24,7 +27,7 @@ export const user = pgTable(
     lastName: text(),
     name: text(),
     email: text(),
-    emailVerified: timestamp({ mode: 'string' }),
+    emailVerified: boolean('email_verified').notNull().default(false),
     password: text(),
     image: text(),
     role: text('role', {
@@ -145,6 +148,12 @@ export const user = pgTable(
       .notNull()
       .default('Asia/Hong_Kong'),
     username: text().unique(),
+    createdAt: timestamp('created_at', { mode: 'string' })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp('updated_at', { mode: 'string' })
+      .notNull()
+      .defaultNow(),
   },
   (table) => [unique('user_email_unique').on(table.email)]
 );
@@ -152,17 +161,27 @@ export const user = pgTable(
 export const account = pgTable(
   'portal_account',
   {
+    id: text().primaryKey().notNull(),
     userId: text().notNull(),
-    type: text().notNull(),
-    provider: text().notNull(),
-    providerAccountId: text().notNull(),
+    providerId: text('provider_id').notNull(),
+    accountId: text('account_id').notNull(),
     refreshToken: text('refresh_token'),
     accessToken: text('access_token'),
-    expiresAt: integer('expires_at'),
-    tokenType: text('token_type'),
+    accessTokenExpiresAt: timestamp('access_token_expires_at', {
+      mode: 'string',
+    }),
+    refreshTokenExpiresAt: timestamp('refresh_token_expires_at', {
+      mode: 'string',
+    }),
     scope: text(),
     idToken: text('id_token'),
-    sessionState: text('session_state'),
+    password: text(),
+    createdAt: timestamp('created_at', { mode: 'string' })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp('updated_at', { mode: 'string' })
+      .notNull()
+      .defaultNow(),
   },
   (table) => [
     foreignKey({
@@ -198,9 +217,18 @@ export const authenticator = pgTable(
 export const session = pgTable(
   'portal_session',
   {
-    sessionToken: text().primaryKey().notNull(),
+    id: text().primaryKey().notNull(),
     userId: text().notNull(),
-    expires: timestamp({ mode: 'string' }).notNull(),
+    token: text().notNull().unique(),
+    expiresAt: timestamp('expires_at', { mode: 'string' }).notNull(),
+    createdAt: timestamp('created_at', { mode: 'string' })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp('updated_at', { mode: 'string' })
+      .notNull()
+      .defaultNow(),
+    ipAddress: text('ip_address'),
+    userAgent: text('user_agent'),
   },
   (table) => [
     foreignKey({

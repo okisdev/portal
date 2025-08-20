@@ -13,14 +13,14 @@ import { EmailLayout } from './components/layout';
 
 interface PasswordResetEmailProps {
   email?: string;
-  resetUrl?: string;
+  token?: string;
   userAgent?: string;
   ip?: string;
 }
 
 export const PasswordResetEmail = ({
   email = 'user@example.com',
-  resetUrl = 'https://portal.example.com/reset-password?email=user@example.com',
+  token = '1234567890',
   userAgent = 'Chrome on Mac OS',
   ip = '192.168.1.1',
 }: PasswordResetEmailProps) => {
@@ -50,7 +50,7 @@ export const PasswordResetEmail = ({
       <Section className='my-8 text-center'>
         <Button
           className='inline-block rounded-lg bg-blue-600 px-6 py-3 font-medium text-white no-underline hover:bg-blue-700'
-          href={resetUrl}
+          href={`/reset-password?email=${email}&token=${token}`}
         >
           Reset Password
         </Button>
@@ -62,8 +62,11 @@ export const PasswordResetEmail = ({
       </Text>
 
       <Text className='mb-6 break-all rounded bg-gray-50 p-3 text-gray-700 text-sm'>
-        <Link className='text-blue-600 no-underline' href={resetUrl}>
-          {resetUrl}
+        <Link
+          className='text-blue-600 no-underline'
+          href={`/reset-password?email=${email}&token=${token}`}
+        >
+          {`/reset-password?email=${email}&token=${token}`}
         </Link>
       </Text>
 

@@ -12,7 +12,7 @@ import { toast } from 'sonner';
 import { z } from 'zod/v4';
 import { Banner } from '@/components/shared/banner';
 import { Label } from '@/components/ui/label';
-import { api } from '@/utils/trpc/client';
+import { authClient } from '@/lib/auth.client';
 
 const resetPasswordSchema = z
   .object({
@@ -51,8 +51,6 @@ export default function ResetPasswordPage() {
   const password = watch('password');
   const confirmPassword = watch('confirmPassword');
 
-  const resetPassword = api.auth.resetPassword.useMutation();
-
   useEffect(() => {
     const emailFromUrl = searchParams.get('email');
     const tokenFromUrl = searchParams.get('token');
@@ -77,19 +75,23 @@ export default function ResetPasswordPage() {
     setError('');
 
     try {
-      await resetPassword.mutateAsync({
-        email,
-        password: data.password,
+      await authClient.resetPassword({
+        newPassword: data.password,
         token,
+        fetchOptions: {
+          onSuccess: () => {
+            setSuccess(true);
+            router.push('/login?from=reset-password&type=success');
+            toast.success(t('password_reset_successful'));
+          },
+          onError: (ctx) => {
+            setError(ctx.error.message || t('unexpected_error'));
+          },
+          onSettled: () => {
+            setLoading(false);
+          },
+        },
       });
-
-      setSuccess(true);
-      toast.success(t('password_reset_successful'));
-
-      // Redirect to login after 2 seconds
-      setTimeout(() => {
-        router.push('/login?from=reset-password&type=success');
-      }, 2000);
     } catch (err: any) {
       setError(err.message || t('unexpected_error'));
       toast.error(err.message || t('unexpected_error'));

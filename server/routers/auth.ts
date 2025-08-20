@@ -3,7 +3,7 @@ import bcrypt from 'bcrypt-edge';
 import { and, eq } from 'drizzle-orm';
 import { v4 as uuidv4 } from 'uuid';
 import { z } from 'zod/v4';
-import { siteConfig, user, verificationToken } from '@/drizzle/schema';
+import { siteConfig, user, verification } from '@/drizzle/schema';
 import { PasswordResetEmail } from '@/emails/password-reset';
 import { env } from '@/lib/env';
 import { sendEmail } from '@/lib/mail';
@@ -145,14 +145,15 @@ export const authRouter = createTRPCRouter({
 
       // Delete any existing tokens for this email
       await ctx.db
-        .delete(verificationToken)
-        .where(eq(verificationToken.identifier, email));
+        .delete(verification)
+        .where(eq(verification.identifier, email));
 
       // Store the new token
-      await ctx.db.insert(verificationToken).values({
+      await ctx.db.insert(verification).values({
+        id: uuidv4(),
         identifier: email,
-        token,
-        expires: expires.toISOString(),
+        value: token,
+        expiresAt: expires.toISOString(),
       });
 
       // Create the reset URL
@@ -215,12 +216,9 @@ export const authRouter = createTRPCRouter({
       // Verify the token
       const validToken = await ctx.db
         .select()
-        .from(verificationToken)
+        .from(verification)
         .where(
-          and(
-            eq(verificationToken.identifier, email),
-            eq(verificationToken.token, token)
-          )
+          and(eq(verification.identifier, email), eq(verification.value, token))
         );
 
       if (validToken.length === 0) {
@@ -231,12 +229,12 @@ export const authRouter = createTRPCRouter({
       }
 
       // Check if token is expired
-      const tokenExpiry = new Date(validToken[0].expires);
+      const tokenExpiry = new Date(validToken[0].expiresAt);
       if (tokenExpiry < new Date()) {
         // Delete expired token
         await ctx.db
-          .delete(verificationToken)
-          .where(eq(verificationToken.identifier, email));
+          .delete(verification)
+          .where(eq(verification.identifier, email));
 
         throw new TRPCError({
           code: 'UNAUTHORIZED',
@@ -255,8 +253,8 @@ export const authRouter = createTRPCRouter({
 
       // Delete the used token
       await ctx.db
-        .delete(verificationToken)
-        .where(eq(verificationToken.identifier, email));
+        .delete(verification)
+        .where(eq(verification.identifier, email));
 
       return { success: true, message: 'Password updated successfully' };
     }),

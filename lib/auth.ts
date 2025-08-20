@@ -3,9 +3,10 @@ import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { magicLink } from 'better-auth/plugins';
 import * as schema from '@/drizzle/schema';
 import MagicLinkEmail from '@/emails/magic-link';
+import PasswordResetEmail from '@/emails/password-reset';
 import { database } from '@/lib/database';
 import { env } from '@/lib/env';
-import { resend } from '@/lib/mail';
+import { resend, sendEmail } from '@/lib/mail';
 
 export const auth = betterAuth({
   secret: env.AUTH_SECRET,
@@ -16,37 +17,27 @@ export const auth = betterAuth({
       portal_user: schema.user,
       portal_account: schema.account,
       portal_session: schema.session,
-      portal_verification_token: schema.verificationToken,
+      portal_verification: schema.verification,
     },
   }),
   emailAndPassword: {
     enabled: true,
-  },
-  // Map existing NextAuth.js fields to Better Auth fields
-  user: {
-    fields: {
-      emailVerified: 'emailVerified', // timestamp → boolean mapping handled by Better Auth
-    },
-  },
-  session: {
-    fields: {
-      expiresAt: 'expires', // Map your existing `expires` field to Better Auth's `expiresAt`
-      token: 'sessionToken', // Map your existing `sessionToken` field to Better Auth's `token`
-    },
-  },
-  account: {
-    fields: {
-      providerId: 'provider', // Map your existing `provider` field to Better Auth's `providerId`
-      accountId: 'providerAccountId', // Map your existing `providerAccountId` field to Better Auth's `accountId`
-      refreshToken: 'refreshToken', // Already mapped correctly in your schema
-      accessToken: 'accessToken', // Already mapped correctly in your schema
-      accessTokenExpiresAt: 'expiresAt', // Map your existing `expiresAt` field
-      idToken: 'idToken', // Already mapped correctly in your schema
+    sendResetPassword: async ({ user, url, token }, request) => {
+      await sendEmail({
+        to: user.email,
+        subject: 'Reset your password - Peakwind',
+        node: PasswordResetEmail({
+          email: user.email,
+          token,
+          userAgent: request?.headers.get('user-agent') || '',
+          ip: request?.headers.get('x-forwarded-for') || '',
+        }),
+      });
     },
   },
   plugins: [
     magicLink({
-      sendMagicLink: async ({ email, token, url }, request) => {
+      sendMagicLink: async ({ email, token: _token, url }, request) => {
         await resend.emails.send({
           from: `Portal <${env.RESEND_FROM_EMAIL}>`,
           to: email,

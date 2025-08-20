@@ -11,6 +11,7 @@ import { toast } from 'sonner';
 import { z } from 'zod/v4';
 import { Banner } from '@/components/shared/banner';
 import { Label } from '@/components/ui/label';
+import { authClient } from '@/lib/auth.client';
 import { api } from '@/utils/trpc/client';
 
 const forgotPasswordSchema = z.object({
@@ -45,8 +46,6 @@ export default function ForgotPasswordPage() {
     { enabled: !!emailToValidate }
   );
 
-  const sendPasswordReset = api.auth.sendPasswordReset.useMutation();
-
   const isValidEmailFormat = (email: string) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
@@ -69,11 +68,22 @@ export default function ForgotPasswordPage() {
     setError('');
 
     try {
-      // Send password reset email via TRPC (includes user validation and email sending)
-      await sendPasswordReset.mutateAsync({ email: data.email });
+      await authClient.forgetPassword(
+        {
+          email: data.email,
+          redirectTo: '/reset-password',
+        },
+        {
+          onSuccess: () => {
+            setEmailSent(true);
+            setSentEmail(data.email);
+          },
+          onError: (ctx) => {
+            setError(ctx.error.message || t('unexpected_error'));
+          },
+        }
+      );
 
-      setEmailSent(true);
-      setSentEmail(data.email);
       toast.success(t('password_reset_email_sent'));
     } catch (err: any) {
       setError(err.message || t('unexpected_error'));

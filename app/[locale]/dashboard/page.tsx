@@ -168,7 +168,7 @@ export default function Dashboard() {
       }));
   }, [dashboardData?.sourceBreakdown, configurations?.sources]);
 
-  if (status === 'loading' || isLoading) {
+  if (isLoading) {
     return <PageLoading />;
   }
 
@@ -395,7 +395,7 @@ export default function Dashboard() {
                     </div>
                     <div className='items-centchartData.at(ud)leading-none flex'>
                       {chartData.length > 0 &&
-                        `${chartData[0].month} - ${chartData[chartData.length - 1].month}`}
+                        `${chartData[0].month} - ${chartData.at(-1)?.month}`}
                     </div>
                   </div>
                 </div>
