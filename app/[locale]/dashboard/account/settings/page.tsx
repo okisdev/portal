@@ -37,7 +37,6 @@ export default function AccountSettingsPage() {
   const updateAccount = api.account.updateMe.useMutation();
   const updatePassword = api.account.updatePassword.useMutation();
   const updateTimezone = api.account.updateTimezone.useMutation();
-  const sendPasswordReset = api.auth.sendPasswordReset.useMutation();
 
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -252,20 +251,9 @@ export default function AccountSettingsPage() {
     }
 
     try {
-      await sendPasswordReset.mutateAsync({ email: me.email });
+      await authClient.forgetPassword({ email: me.email });
 
       toast.success(t('password_reset_email_sent'));
-
-      // Sign out the user after sending the reset email
-      setTimeout(async () => {
-        await authClient.signOut({
-          fetchOptions: {
-            onSuccess: () => {
-              window.location.href = '/login?from=password-reset&type=sent';
-            },
-          },
-        });
-      }, 2000);
     } catch (error: any) {
       toast.error(error.message || t('failed_to_send_reset_email'));
     }
@@ -432,8 +420,12 @@ export default function AccountSettingsPage() {
                     renderItem={(item) => (
                       <div className='flex w-full items-center justify-between'>
                         <span>
-                          {`${timezones.find((tz) => tz.value === item)?.value} (${timezones.find((tz) => tz.value === item)?.code})` ||
-                            item}
+                          {(() => {
+                            const tz = timezones.find(
+                              (tz) => tz.value === item
+                            );
+                            return tz ? `${tz.value} (${tz.code})` : item;
+                          })()}
                         </span>
                         {timezone === item && <Check className='h-4 w-4' />}
                       </div>
@@ -486,14 +478,11 @@ export default function AccountSettingsPage() {
                 <div className='flex items-center justify-between'>
                   <Button
                     className='text-muted-foreground hover:text-foreground'
-                    disabled={sendPasswordReset.isPending}
                     onClick={handleForgotPassword}
                     type='button'
                     variant='ghost'
                   >
-                    {sendPasswordReset.isPending
-                      ? t('sending_reset_email')
-                      : t('forgot_current_password')}
+                    {t('forgot_current_password')}
                   </Button>
                   <Button disabled={updatePassword.isPending} type='submit'>
                     {updatePassword.isPending
