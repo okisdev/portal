@@ -22,7 +22,6 @@ import {
   Verified,
 } from 'lucide-react';
 import Link from 'next/link';
-import { signOut } from 'next-auth/react';
 import { useLocale, useTranslations } from 'next-intl';
 import { useTheme } from 'next-themes';
 import type React from 'react';
@@ -59,6 +58,7 @@ import {
 } from '@/components/ui/sidebar';
 import { Skeleton } from '@/components/ui/skeleton';
 import { usePathname, useRouter } from '@/i18n/navigation';
+import { authClient } from '@/lib/auth.client';
 import packageInfo from '@/package.json' with { type: 'json' };
 import { copyToClipboard } from '@/utils/clipboard';
 import { api } from '@/utils/trpc/client';
@@ -383,7 +383,7 @@ export function DashboardSidebar() {
         cancelText={t('cancel')}
         confirmText={t('sign_out')}
         description={t('sign_out_description')}
-        onConfirm={() => signOut()}
+        onConfirm={() => authClient.signOut()}
         onOpenChange={setShowSignOutDialog}
         open={showSignOutDialog}
         title={t('sign_out')}

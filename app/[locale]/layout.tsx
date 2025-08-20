@@ -14,7 +14,9 @@ export default async function LocaleLayout(props: Props) {
 
   const { locale } = await params;
 
-  if (!routing.locales.includes(locale as Locale)) notFound();
+  if (!routing.locales.includes(locale as Locale)) {
+    notFound();
+  }
 
   return (
     <RootLayout params={{ locale }}>

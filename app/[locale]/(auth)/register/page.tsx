@@ -11,7 +11,7 @@ import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod/v4';
 import { Label } from '@/components/ui/label';
-import { encryptPassword } from '@/utils/password';
+import { authClient } from '@/lib/auth.client';
 import { api } from '@/utils/trpc/client';
 
 const registerSchema = z.object({
@@ -40,7 +40,6 @@ export default function RegisterPage() {
   const email = watch('email');
   const password = watch('password');
 
-  const registerAccount = api.auth.register.useMutation();
   const [emailToValidate, setEmailToValidate] = useState<string>('');
 
   const { data: isValidDomain } = api.auth.validateEmailDomain.useQuery(
@@ -69,24 +68,11 @@ export default function RegisterPage() {
     setLoading(true);
     setError('');
 
-    const hashedPassword = encryptPassword(data.password);
-
-    await registerAccount.mutateAsync(
-      {
-        email: data.email,
-        password: hashedPassword,
-      },
-      {
-        onSuccess: () => {
-          toast.success(t('registration_successful'));
-          router.push('/login?from=register&type=success');
-        },
-        onError: (error) => {
-          setError(error.message || t('unexpected_error'));
-          toast.error(error.message || t('unexpected_error'));
-        },
-      }
-    );
+    await authClient.signUp.email({
+      email: data.email,
+      password: data.password,
+      name: '',
+    });
 
     setLoading(false);
   };

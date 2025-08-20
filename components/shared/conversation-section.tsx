@@ -2,7 +2,6 @@
 
 import { format } from 'date-fns';
 import { ArrowUpRight } from 'lucide-react';
-import { useSession } from 'next-auth/react';
 import { useTranslations } from 'next-intl';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ComboboxCommand } from '@/components/shared/combobox';
@@ -16,6 +15,7 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { Textarea } from '@/components/ui/textarea';
+import { authClient } from '@/lib/auth.client';
 import { cn } from '@/lib/utils';
 import { formatDate } from '@/utils/date';
 import { api } from '@/utils/trpc/client';
@@ -60,7 +60,7 @@ export function ConversationSection({
   contactId,
 }: ConversationSectionProps) {
   const t = useTranslations();
-  const { data: session } = useSession();
+  const { data: session } = authClient.useSession();
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
   const [newActivity, setNewActivity] = useState('');

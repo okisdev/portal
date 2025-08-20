@@ -21,7 +21,6 @@ import {
   Users,
 } from 'lucide-react';
 import Link from 'next/link';
-import { useSession } from 'next-auth/react';
 import { useLocale, useTranslations } from 'next-intl';
 import { useMemo } from 'react';
 import { Area, AreaChart, CartesianGrid, XAxis } from 'recharts';
@@ -45,6 +44,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { authClient } from '@/lib/auth.client';
 import type { ActivitySubType } from '@/lib/schema';
 import type { Locale } from '@/types/i18n';
 import { renderDescription } from '@/utils/activity';
@@ -62,7 +62,7 @@ const getColorFromConfig = (
 export default function Dashboard() {
   const t = useTranslations();
   const locale = useLocale() as Locale;
-  const { data: session, status } = useSession();
+  const { data: session } = authClient.useSession();
 
   // Fetch dashboard metrics and configurations in parallel
   const { data: dashboardData, isLoading: isMetricsLoading } =
@@ -95,7 +95,7 @@ export default function Dashboard() {
   const chartData = useMemo(() => {
     if (!dashboardData?.monthlyData || dashboardData.monthlyData.length === 0) {
       // Return empty data for last 6 months if no data
-      const defaultData = [];
+      const defaultData: { month: string; leads: number }[] = [];
       for (let i = 5; i >= 0; i--) {
         const date = subMonths(new Date(), i);
         defaultData.push({

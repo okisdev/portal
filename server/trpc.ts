@@ -8,9 +8,10 @@
  */
 
 import { initTRPC, TRPCError } from '@trpc/server';
-import type { Session } from 'next-auth';
+import { headers } from 'next/headers';
 import superjson from 'superjson';
 import { ZodError } from 'zod/v4';
+import { auth } from '@/lib/auth';
 import { database } from '@/lib/database';
 
 /**
@@ -25,13 +26,14 @@ import { database } from '@/lib/database';
  *
  * @see https://trpc.io/docs/server/context
  */
-export const createTRPCContext = async (opts: {
-  headers: Headers;
-  session: Session | null;
-}) => {
+export const createTRPCContext = async (opts: { headers: Headers }) => {
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
+
   return {
     db: database,
-    // session,
+    session,
     ...opts,
   };
 };

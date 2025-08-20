@@ -1,8 +1,9 @@
 import type { Metadata } from 'next';
+import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
-import { auth } from '@/auth';
 import Footer from '@/components/landing/footer';
 import Header from '@/components/landing/header';
+import { auth } from '@/lib/auth';
 
 export const metadata: Metadata = {
   title: 'Portal',
@@ -14,9 +15,13 @@ export default async function LandingLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const session = await auth();
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
 
-  if (session) redirect('/dashboard');
+  if (session) {
+    redirect('/dashboard');
+  }
 
   return (
     <main className='flex min-h-screen flex-col'>

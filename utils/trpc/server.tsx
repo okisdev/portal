@@ -1,6 +1,5 @@
 import { headers } from 'next/headers';
 import { cache } from 'react';
-import { auth } from '@/auth';
 import { createCaller, createTRPCContext } from '@/server';
 
 import 'server-only';
@@ -15,7 +14,6 @@ const createContext = cache(async () => {
   heads.set('x-trpc-source', 'rsc');
 
   return createTRPCContext({
-    session: await auth(),
     headers: heads,
   });
 });

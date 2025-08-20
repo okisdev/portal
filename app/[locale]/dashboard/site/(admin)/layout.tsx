@@ -1,7 +1,8 @@
 import { eq } from 'drizzle-orm';
+import { headers } from 'next/headers';
 import { notFound } from 'next/navigation';
-import { auth } from '@/auth';
 import { user } from '@/drizzle/schema';
+import { auth } from '@/lib/auth';
 import { database } from '@/lib/database';
 
 export default async function SiteAdminLayout({
@@ -9,7 +10,9 @@ export default async function SiteAdminLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const session = await auth();
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
 
   if (!session?.user) {
     return notFound();

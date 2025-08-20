@@ -12,7 +12,6 @@ import {
   Trash,
   X,
 } from 'lucide-react';
-import { useSession } from 'next-auth/react';
 import { useLocale, useTranslations } from 'next-intl';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ActionAlertDialog } from '@/components/shared/action-alert-dialog';
@@ -29,6 +28,7 @@ import {
 } from '@/components/ui/popover';
 import { Textarea } from '@/components/ui/textarea';
 import { useUpload } from '@/hooks/use-upload';
+import { authClient } from '@/lib/auth.client';
 import type { ActivitySubType } from '@/lib/schema';
 import { cn } from '@/lib/utils';
 import type { Locale } from '@/types/i18n';
@@ -66,7 +66,7 @@ export function ActivitySection({
 }: ActivitySectionProps) {
   const t = useTranslations();
   const locale = useLocale() as Locale;
-  const { data: session } = useSession();
+  const { data: session } = authClient.useSession();
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isComposing, setIsComposing] = useState(false);

@@ -1,7 +1,6 @@
 'use client';
 
 import { BadgeX, Check, Pencil, Verified } from 'lucide-react';
-import { signOut } from 'next-auth/react';
 import { useTranslations } from 'next-intl';
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
@@ -26,6 +25,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { timezones } from '@/data/data';
+import { authClient } from '@/lib/auth.client';
 import type { Timezone } from '@/lib/schema';
 import { api } from '@/utils/trpc/client';
 
@@ -258,7 +258,13 @@ export default function AccountSettingsPage() {
 
       // Sign out the user after sending the reset email
       setTimeout(async () => {
-        await signOut({ callbackUrl: '/login?from=password-reset&type=sent' });
+        await authClient.signOut({
+          fetchOptions: {
+            onSuccess: () => {
+              window.location.href = '/login?from=password-reset&type=sent';
+            },
+          },
+        });
       }, 2000);
     } catch (error: any) {
       toast.error(error.message || t('failed_to_send_reset_email'));
