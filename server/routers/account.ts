@@ -1,7 +1,7 @@
 import { TRPCError } from '@trpc/server';
 import { eq } from 'drizzle-orm';
 import z from 'zod/v4';
-import { user } from '@/drizzle/schema';
+import { account, user } from '@/drizzle/schema';
 import { timezoneSchema } from '@/lib/schema';
 import { createTRPCRouter, protectedProcedure } from '@/server/trpc';
 
@@ -18,7 +18,15 @@ export const accountRouter = createTRPCRouter({
     //   .then(([user]) => user);
   }),
 
-  getMeFromDatabase: protectedProcedure.query(({ ctx }) => {
+  getMeFromDatabase: protectedProcedure.query(async ({ ctx }) => {
+    const userAccount = await ctx.db
+      .select()
+      .from(account)
+      .where(eq(account.userId, ctx.session.user.id))
+      .then(([userAccount]) => userAccount);
+
+    const hasPassword = userAccount && userAccount.password !== null;
+
     return ctx.db
       .select({
         id: user.id,
@@ -31,13 +39,12 @@ export const accountRouter = createTRPCRouter({
         role: user.role,
         username: user.username,
         timezone: user.timezone,
-        hasPassword: user.password,
       })
       .from(user)
       .where(eq(user.id, ctx.session.user.id))
       .then(([userData]) => ({
         ...userData,
-        hasPassword: !!userData.hasPassword,
+        hasPassword,
       }));
   }),
 

@@ -160,6 +160,13 @@ const migrationSteps: MigrationStep[] = [
     sql: 'ALTER TABLE portal_account DROP COLUMN IF EXISTS expires_at',
     required: false,
   },
+  {
+    name: 'user_drop_password',
+    description:
+      'Drop password column from portal_user (now stored in portal_account)',
+    sql: 'ALTER TABLE portal_user DROP COLUMN IF EXISTS password',
+    required: false,
+  },
 
   // Step 3: Session table migrations
   {

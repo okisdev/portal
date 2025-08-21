@@ -28,7 +28,6 @@ export const user = pgTable(
     name: text(),
     email: text(),
     emailVerified: boolean('email_verified').notNull().default(false),
-    password: text(),
     image: text(),
     role: text('role', {
       enum: ['ADMIN', 'SALES_MANAGER', 'SALES_ASSISTANT', 'MANAGER', 'USER'],
