@@ -28,7 +28,8 @@
           "fix": "none",
           "options": {}
         },
-        "useSingleJsDocAsterisk": "off"
+        "useSingleJsDocAsterisk": "off",
+        "useJsonImportAttributes": "off"
       },
       "complexity": {
         "noExcessiveCognitiveComplexity": "warn"

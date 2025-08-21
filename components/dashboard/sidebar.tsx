@@ -59,7 +59,7 @@ import {
 import { Skeleton } from '@/components/ui/skeleton';
 import { usePathname, useRouter } from '@/i18n/navigation';
 import { authClient } from '@/lib/auth.client';
-import packageInfo from '@/package.json' with { type: 'json' };
+import packageInfo from '@/package.json';
 import { copyToClipboard } from '@/utils/clipboard';
 import { api } from '@/utils/trpc/client';
 
