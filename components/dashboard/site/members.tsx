@@ -16,13 +16,7 @@ import { PageHeader } from '@/components/shared/page-header';
 import { PageLoading } from '@/components/shared/page-loading';
 import { DataTable } from '@/components/shared/table';
 import { Button } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+
 import { Checkbox } from '@/components/ui/checkbox';
 import {
   Dialog,
@@ -89,7 +83,9 @@ export function SiteMembers() {
   };
 
   const handleUpdateUser = () => {
-    if (!editingUser) return;
+    if (!editingUser) {
+      return;
+    }
 
     updateUser({
       id: editingUser.id,
@@ -130,6 +126,16 @@ export function SiteMembers() {
       accessorKey: 'name',
       header: t('name'),
       enableSorting: true,
+      cell: ({ row }) => {
+        const user = row.original;
+        return (
+          user.name ||
+          `${user.firstName || ''} ${user.lastName || ''}`.trim() ||
+          user.username ||
+          user.email ||
+          '-'
+        );
+      },
     },
     {
       accessorKey: 'username',
@@ -195,36 +201,38 @@ export function SiteMembers() {
       <PageHeader description={t('site_description')} title={t('site')} />
 
       <div className='grid gap-4 md:grid-cols-2'>
-        <Card>
-          <CardHeader>
-            <CardTitle>{t('total_users')}</CardTitle>
-            <CardDescription>Number of registered users</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className='font-bold text-3xl'>{totalUsers}</p>
-          </CardContent>
-        </Card>
+        <div className='rounded-lg border bg-card p-6 text-card-foreground shadow-sm'>
+          <div className='space-y-2'>
+            <h3 className='font-semibold text-lg'>{t('total_users')}</h3>
+            <p className='text-muted-foreground text-sm'>
+              Number of registered users
+            </p>
+          </div>
+          <p className='font-bold text-3xl'>{totalUsers}</p>
+        </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Admin Users</CardTitle>
-            <CardDescription>Users with admin privileges</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className='font-bold text-3xl'>{adminUsers}</p>
-          </CardContent>
-        </Card>
+        <div className='rounded-lg border bg-card p-6 text-card-foreground shadow-sm'>
+          <div className='space-y-2'>
+            <h3 className='font-semibold text-lg'>Admin Users</h3>
+            <p className='text-muted-foreground text-sm'>
+              Users with admin privileges
+            </p>
+          </div>
+          <p className='font-bold text-3xl'>{adminUsers}</p>
+        </div>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>{t('user_management')}</CardTitle>
-          <CardDescription>{t('user_management_description')}</CardDescription>
-        </CardHeader>
-        <CardContent>
+      <div className='rounded-lg border bg-card text-card-foreground shadow-sm'>
+        <div className='p-6 pb-4'>
+          <h3 className='font-semibold text-lg'>{t('user_management')}</h3>
+          <p className='text-muted-foreground text-sm'>
+            {t('user_management_description')}
+          </p>
+        </div>
+        <div className='p-6 pt-0'>
           <DataTable columns={columns} loading={isLoading} table={table} />
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
       <Dialog
         onOpenChange={(open) => !open && setEditingUser(null)}

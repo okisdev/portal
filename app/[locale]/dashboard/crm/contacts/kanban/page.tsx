@@ -132,7 +132,12 @@ const ContactCard = memo(function ContactCard({
         </Avatar>
         <div className='flex-1 space-y-1 overflow-hidden truncate'>
           <div className='flex items-center justify-between'>
-            <h4 className='font-medium text-sm'>{contact.name}</h4>
+            <h4 className='font-medium text-sm'>
+              {contact.name ||
+                `${contact.firstName || ''} ${contact.lastName || ''}`.trim() ||
+                contact.email ||
+                '-'}
+            </h4>
             {onClickView && (
               <Button
                 className='size-7 cursor-pointer'
@@ -1001,10 +1006,18 @@ export default function CRMContactsKanbanPage() {
                       allContacts.find((c) => c.id === activeId) ||
                       allContacts[0] || {
                         id: activeId,
-                        name: '',
-                        email: '',
-                        status: '',
-                        priority: '',
+                        name: 'Unknown Contact',
+                        firstName: '',
+                        lastName: '',
+                        email: 'unknown@example.com',
+                        status: 'Lead',
+                        priority: 'Medium',
+                        source: 'N/A',
+                        company: null,
+                        phone: null,
+                        createdAt: new Date(),
+                        lastContactedAt: null,
+                        nextFollowUpAt: null,
                       }
                     }
                     simplified={true}
