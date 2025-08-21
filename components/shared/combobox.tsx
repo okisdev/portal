@@ -1,7 +1,6 @@
 'use client';
 
 import { Check, ChevronsUpDown } from 'lucide-react';
-import { nanoid } from 'nanoid';
 import { useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
@@ -17,7 +16,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
-import { cn } from '@/lib/utils';
+import { cn, randomString } from '@/lib/utils';
 
 interface ComboboxProps {
   value: string;
@@ -109,7 +108,7 @@ function ComboboxCommand({
           {filteredRecommendedItems.map((item) => (
             <CommandItem
               className='flex cursor-pointer items-center gap-2'
-              key={`recommended-${item}-${nanoid()}`}
+              key={`recommended-${item}-${randomString(10)}`}
               onSelect={() => {
                 onChange(value === item ? '' : item);
                 setOpen(false);
@@ -135,7 +134,7 @@ function ComboboxCommand({
         {filteredItems.map((item) => (
           <CommandItem
             className='flex cursor-pointer items-center gap-2'
-            key={item + nanoid()}
+            key={item + randomString(10)}
             onSelect={() => {
               onChange(value === item ? '' : item);
               setOpen(false);

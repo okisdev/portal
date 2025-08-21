@@ -2,7 +2,6 @@
 
 import { formatDistanceToNow } from 'date-fns';
 import { Bell, Mail, MessageSquare } from 'lucide-react';
-import { nanoid } from 'nanoid';
 import Link from 'next/link';
 import { useLocale, useTranslations } from 'next-intl';
 import { useState } from 'react';
@@ -58,8 +57,12 @@ export default function NotificationsPage() {
   });
 
   const filteredNotifications = notifications?.filter((notification) => {
-    if (filterType === 'all') return true;
-    if (filterType === 'unread') return !notification.read;
+    if (filterType === 'all') {
+      return true;
+    }
+    if (filterType === 'unread') {
+      return !notification.read;
+    }
     return notification.type === filterType;
   });
 
@@ -112,22 +115,20 @@ export default function NotificationsPage() {
 
         <div className='flex-1 space-y-3 overflow-y-auto pr-2'>
           {isLoading &&
-            Array(3)
-              .fill(0)
-              .map((_, i) => (
-                <div
-                  className='flex animate-pulse flex-col gap-2 rounded-lg border bg-white p-4 shadow-xs dark:border-neutral-800 dark:bg-neutral-900'
-                  key={nanoid()}
-                >
-                  <div className='flex items-center gap-3'>
-                    <Skeleton className='h-8 w-8 rounded-full' />
-                    <div className='flex-1 space-y-2'>
-                      <Skeleton className='h-4 w-1/4 rounded' />
-                      <Skeleton className='h-4 w-3/4 rounded' />
-                    </div>
+            new Array(3).fill(0).map((_, i) => (
+              <div
+                className='flex animate-pulse flex-col gap-2 rounded-lg border bg-white p-4 shadow-xs dark:border-neutral-800 dark:bg-neutral-900'
+                key={i}
+              >
+                <div className='flex items-center gap-3'>
+                  <Skeleton className='h-8 w-8 rounded-full' />
+                  <div className='flex-1 space-y-2'>
+                    <Skeleton className='h-4 w-1/4 rounded' />
+                    <Skeleton className='h-4 w-3/4 rounded' />
                   </div>
                 </div>
-              ))}
+              </div>
+            ))}
 
           {filteredNotifications?.length === 0 && !isLoading && (
             <div className='flex flex-col items-center justify-center rounded-lg border bg-white p-8 text-center dark:border-neutral-800 dark:bg-neutral-900'>

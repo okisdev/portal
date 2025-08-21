@@ -1,4 +1,3 @@
-import { nanoid } from 'nanoid';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   Table,
@@ -8,6 +7,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { randomString } from '@/lib/utils';
 
 interface TableLoadingProps {
   columnCount?: number;
@@ -25,7 +25,7 @@ export function TableLoading({
       <TableHeader>
         <TableRow>
           {Array.from({ length: columnCount }).map((_, i) => (
-            <TableHead key={nanoid()}>
+            <TableHead key={randomString(10)}>
               <Skeleton className='h-4 w-24' />
             </TableHead>
           ))}
@@ -38,9 +38,9 @@ export function TableLoading({
       </TableHeader>
       <TableBody>
         {Array.from({ length: rowCount }).map((_, i) => (
-          <TableRow key={nanoid()}>
+          <TableRow key={randomString(10)}>
             {Array.from({ length: columnCount }).map((_, j) => (
-              <TableCell key={nanoid()}>
+              <TableCell key={randomString(10)}>
                 <Skeleton className='h-6 w-full' />
               </TableCell>
             ))}

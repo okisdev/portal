@@ -106,7 +106,9 @@ const ContactCard = memo(function ContactCard({
   );
 
   const formatDate = (date: Date | null | undefined) => {
-    if (!date) return null;
+    if (!date) {
+      return null;
+    }
     return format(new Date(date), 'MMM d, yyyy');
   };
 
@@ -617,7 +619,9 @@ export default function CRMContactsKanbanPage() {
 
   // Get all contacts from columns for drag operations
   const allContacts = useMemo(() => {
-    if (!columns) return [];
+    if (!columns) {
+      return [];
+    }
     return columns.flatMap((column) => column.items);
   }, [columns]);
 
@@ -631,7 +635,9 @@ export default function CRMContactsKanbanPage() {
   // Handle loading more contacts for a specific column
   const handleLoadMore = useCallback(
     async (columnId: string) => {
-      if (loadingMore[columnId]) return;
+      if (loadingMore[columnId]) {
+        return;
+      }
 
       setLoadingMore((prev) => ({ ...prev, [columnId]: true }));
 
@@ -639,7 +645,9 @@ export default function CRMContactsKanbanPage() {
         const currentColumn = columns.find(
           (col: KanbanColumn) => col.id === columnId
         );
-        if (!currentColumn) return;
+        if (!currentColumn) {
+          return;
+        }
 
         const moreData = await utils.contact.getContactsForKanban.fetch({
           groupBy,
@@ -681,7 +689,7 @@ export default function CRMContactsKanbanPage() {
     }
 
     // Ensure we have valid data before proceeding
-    if (!(event.active && event.active.id)) {
+    if (!event.active?.id) {
       return;
     }
 
@@ -693,7 +701,7 @@ export default function CRMContactsKanbanPage() {
     const { active, over } = event;
 
     // Add additional safeguards against undefined values
-    if (!(active && active.id && over)) {
+    if (!(active?.id && over)) {
       setIsDragging(false);
       setActiveId(null);
       return;

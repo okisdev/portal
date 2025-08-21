@@ -1,7 +1,6 @@
 'use client';
 
 import { Calendar, File, Send, Trash2, X } from 'lucide-react';
-import { nanoid } from 'nanoid';
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { toast } from 'sonner';
@@ -17,6 +16,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { authClient } from '@/lib/auth.client';
 import type { Contact } from '@/lib/schema';
+import { randomString } from '@/lib/utils';
 import { api } from '@/utils/trpc/client';
 
 interface SendEmailProps {
@@ -268,7 +268,7 @@ export function SendEmail({ open, onOpenChange, recipient }: SendEmailProps) {
               {formData.attachments.map((file, index) => (
                 <div
                   className='flex items-center gap-3 rounded-lg border p-3'
-                  key={file.name + nanoid()}
+                  key={file.name + randomString(10)}
                 >
                   <div className='flex size-10 items-center justify-center rounded-lg bg-muted'>
                     <File className='size-5 text-blue-600' />
