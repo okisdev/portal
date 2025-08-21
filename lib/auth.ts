@@ -22,13 +22,13 @@ export const auth = betterAuth({
   }),
   emailAndPassword: {
     enabled: true,
-    sendResetPassword: async ({ user, url, token }, request) => {
+    sendResetPassword: async ({ user, url }, request) => {
       await sendEmail({
         to: user.email,
         subject: 'Reset your password - Peakwind',
         node: PasswordResetEmail({
           email: user.email,
-          token,
+          url,
           userAgent: request?.headers.get('user-agent') || '',
           ip: request?.headers.get('x-forwarded-for') || '',
         }),
@@ -37,7 +37,7 @@ export const auth = betterAuth({
   },
   plugins: [
     magicLink({
-      sendMagicLink: async ({ email, token: _token, url }, request) => {
+      sendMagicLink: async ({ email, url }, request) => {
         await resend.emails.send({
           from: `Portal <${env.RESEND_FROM_EMAIL}>`,
           to: email,

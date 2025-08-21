@@ -2,8 +2,16 @@
  * NextAuth.js to Better Auth Database Migration Script
  *
  * This script migrates your existing NextAuth.js database schema to be compatible
- * with Better Auth's expected structure. It preserves all existing data while
- * updating table structures and column names.
+ * with Better Auth's expected structure AND applies schema improvements including
+ * enum constraints, index optimizations, and type safety enhancements.
+ *
+ * It preserves all existing data while updating table structures and column names.
+ *
+ * Migration includes:
+ * - NextAuth.js to Better Auth table structure updates
+ * - Enum constraints for type safety (roles, timezones, status fields, etc.)
+ * - Index cleanup and optimization
+ * - Foreign key constraint updates
  *
  * Usage: bun run scripts/nextauth-to-better-auth-migration.ts
  *
@@ -11,6 +19,7 @@
  * - Backup your database before running this migration
  * - This migration is designed to be idempotent (safe to run multiple times)
  * - Test in a development environment first
+ * - Review enum constraints to ensure they match your data
  */
 
 import { database } from '@/lib/database';
@@ -323,6 +332,285 @@ const migrationSteps: MigrationStep[] = [
     description: 'Create index on portal_verification identifier column',
     sql: 'CREATE INDEX IF NOT EXISTS idx_portal_verification_identifier ON portal_verification(identifier)',
     required: true,
+  },
+
+  // Step 6: Add enum constraints for better type safety
+  {
+    name: 'user_add_role_constraint',
+    description: 'Add enum constraint to portal_user role column',
+    sql: `ALTER TABLE portal_user ADD CONSTRAINT user_role_check 
+          CHECK (role IN ('ADMIN', 'SALES_MANAGER', 'SALES_ASSISTANT', 'MANAGER', 'USER'))`,
+    required: false,
+  },
+  {
+    name: 'user_add_timezone_constraint',
+    description: 'Add enum constraint to portal_user timezone column',
+    sql: `ALTER TABLE portal_user ADD CONSTRAINT user_timezone_check 
+          CHECK (timezone IN (
+            'Africa/Cairo', 'Africa/Casablanca', 'Africa/Johannesburg', 'Africa/Lagos', 'Africa/Nairobi',
+            'America/Anchorage', 'America/Argentina/Buenos_Aires', 'America/Bogota', 'America/Caracas', 'America/Chicago',
+            'America/Denver', 'America/Edmonton', 'America/Halifax', 'America/Lima', 'America/Los_Angeles',
+            'America/Mexico_City', 'America/New_York', 'America/Phoenix', 'America/Santiago', 'America/Sao_Paulo',
+            'America/St_Johns', 'America/Toronto', 'America/Vancouver',
+            'Asia/Almaty', 'Asia/Baghdad', 'Asia/Baku', 'Asia/Bangkok', 'Asia/Beirut', 'Asia/Colombo',
+            'Asia/Dhaka', 'Asia/Dubai', 'Asia/Ho_Chi_Minh', 'Asia/Hong_Kong', 'Asia/Istanbul', 'Asia/Jakarta',
+            'Asia/Jerusalem', 'Asia/Kabul', 'Asia/Karachi', 'Asia/Kathmandu', 'Asia/Kolkata', 'Asia/Kuala_Lumpur',
+            'Asia/Kuwait', 'Asia/Manila', 'Asia/Muscat', 'Asia/Riyadh', 'Asia/Seoul', 'Asia/Shanghai',
+            'Asia/Singapore', 'Asia/Taipei', 'Asia/Tashkent', 'Asia/Tehran', 'Asia/Tokyo', 'Asia/Ulaanbaatar', 'Asia/Yangon',
+            'Atlantic/Azores', 'Atlantic/Cape_Verde', 'Atlantic/Reykjavik',
+            'Australia/Adelaide', 'Australia/Brisbane', 'Australia/Darwin', 'Australia/Hobart', 'Australia/Melbourne',
+            'Australia/Perth', 'Australia/Sydney',
+            'Europe/Amsterdam', 'Europe/Athens', 'Europe/Belgrade', 'Europe/Berlin', 'Europe/Brussels',
+            'Europe/Bucharest', 'Europe/Budapest', 'Europe/Copenhagen', 'Europe/Dublin', 'Europe/Helsinki',
+            'Europe/Istanbul', 'Europe/Kiev', 'Europe/Lisbon', 'Europe/London', 'Europe/Madrid', 'Europe/Moscow',
+            'Europe/Oslo', 'Europe/Paris', 'Europe/Prague', 'Europe/Rome', 'Europe/Stockholm', 'Europe/Vienna',
+            'Europe/Warsaw', 'Europe/Zurich',
+            'Indian/Maldives', 'Indian/Mauritius',
+            'Pacific/Auckland', 'Pacific/Fiji', 'Pacific/Guam', 'Pacific/Honolulu', 'Pacific/Noumea',
+            'Pacific/Pago_Pago', 'Pacific/Port_Moresby', 'Pacific/Tongatapu',
+            'UTC'
+          ))`,
+    required: false,
+  },
+  {
+    name: 'contact_activity_add_type_constraint',
+    description: 'Add enum constraint to portal_contact_activity type column',
+    sql: `ALTER TABLE portal_contact_activity ADD CONSTRAINT contact_activity_type_check 
+          CHECK (type IN ('CONTACT', 'STATUS', 'PRIORITY', 'SOURCE', 'DATE', 'TEAM', 'CAMPAIGN', 'DEAL', 'PAYMENT', 'ENGAGEMENT'))`,
+    required: false,
+  },
+  {
+    name: 'contact_activity_add_subtype_constraint',
+    description:
+      'Add enum constraint to portal_contact_activity subType column',
+    sql: `ALTER TABLE portal_contact_activity ADD CONSTRAINT contact_activity_subtype_check 
+          CHECK ("subType" IN (
+            'CONTACT_CREATED', 'CONTACT_UPDATED', 'CONTACT_DELETED',
+            'STATUS_CHANGED', 'PRIORITY_CHANGED', 'SOURCE_CHANGED',
+            'LAST_CONTACTED_UPDATED', 'LAST_CONTACTED_REMOVED', 'NEXT_FOLLOW_UP_UPDATED', 'NEXT_FOLLOW_UP_REMOVED',
+            'MEETING_SCHEDULED', 'MEETING_UPDATED', 'MEETING_CANCELLED', 'CALL_LOGGED', 'EMAIL_SENT',
+            'EMAIL_SCHEDULED', 'MESSAGE_SENT', 'MESSAGE_RECEIVED', 'NOTE_ADDED', 'REMARK_UPDATED',
+            'TEAM_CREATED', 'TEAM_UPDATED', 'TEAM_DELETED', 'TEAM_CONTACT_ASSIGNED', 'TEAM_CONTACT_REMOVED',
+            'CAMPAIGN_ASSIGNED', 'CAMPAIGN_REMOVED', 'CAMPAIGN_UPDATED',
+            'DEAL_CREATED', 'DEAL_UPDATED', 'DEAL_CLOSED',
+            'PAYMENT_LINK_CLICKED', 'PAYMENT_COMPLETED'
+          ))`,
+    required: false,
+  },
+  {
+    name: 'team_activity_add_type_constraint',
+    description: 'Add enum constraint to portal_team_activity type column',
+    sql: `ALTER TABLE portal_team_activity ADD CONSTRAINT team_activity_type_check 
+          CHECK (type IN ('CONTACT', 'STATUS', 'PRIORITY', 'SOURCE', 'DATE', 'TEAM', 'CAMPAIGN', 'DEAL', 'PAYMENT', 'ENGAGEMENT'))`,
+    required: false,
+  },
+  {
+    name: 'team_activity_add_subtype_constraint',
+    description: 'Add enum constraint to portal_team_activity subType column',
+    sql: `ALTER TABLE portal_team_activity ADD CONSTRAINT team_activity_subtype_check 
+          CHECK ("subType" IN (
+            'CONTACT_CREATED', 'CONTACT_UPDATED', 'CONTACT_DELETED',
+            'STATUS_CHANGED', 'PRIORITY_CHANGED', 'SOURCE_CHANGED',
+            'LAST_CONTACTED_UPDATED', 'LAST_CONTACTED_REMOVED', 'NEXT_FOLLOW_UP_UPDATED', 'NEXT_FOLLOW_UP_REMOVED',
+            'MEETING_SCHEDULED', 'MEETING_UPDATED', 'MEETING_CANCELLED', 'CALL_LOGGED', 'EMAIL_SENT',
+            'EMAIL_SCHEDULED', 'MESSAGE_SENT', 'MESSAGE_RECEIVED', 'NOTE_ADDED', 'REMARK_UPDATED',
+            'TEAM_CREATED', 'TEAM_UPDATED', 'TEAM_DELETED', 'TEAM_CONTACT_ASSIGNED', 'TEAM_CONTACT_REMOVED',
+            'CAMPAIGN_ASSIGNED', 'CAMPAIGN_REMOVED', 'CAMPAIGN_UPDATED',
+            'DEAL_CREATED', 'DEAL_UPDATED', 'DEAL_CLOSED',
+            'PAYMENT_LINK_CLICKED', 'PAYMENT_COMPLETED'
+          ))`,
+    required: false,
+  },
+
+  // Step 7: Clean up old complex indexes that are no longer needed
+  {
+    name: 'drop_old_verification_index',
+    description: 'Drop old complex btree index on portal_verification',
+    sql: 'DROP INDEX IF EXISTS idx_portal_verification_identifier',
+    required: false,
+  },
+  {
+    name: 'recreate_simple_verification_index',
+    description: 'Create simple index on portal_verification identifier',
+    sql: 'CREATE INDEX IF NOT EXISTS idx_portal_verification_identifier_simple ON portal_verification(identifier)',
+    required: true,
+  },
+  {
+    name: 'drop_old_user_email_index',
+    description: 'Drop old complex btree index on portal_user email',
+    sql: 'DROP INDEX IF EXISTS idx_portal_user_email',
+    required: false,
+  },
+  {
+    name: 'recreate_simple_user_email_index',
+    description: 'Create simple index on portal_user email',
+    sql: 'CREATE INDEX IF NOT EXISTS idx_portal_user_email_simple ON portal_user(email)',
+    required: true,
+  },
+  {
+    name: 'drop_old_session_indexes',
+    description: 'Drop old complex btree indexes on portal_session',
+    sql: 'DROP INDEX IF EXISTS idx_portal_session_expires_at; DROP INDEX IF EXISTS idx_portal_session_user_id',
+    required: false,
+  },
+  {
+    name: 'recreate_simple_session_indexes',
+    description: 'Create simple indexes on portal_session',
+    sql: 'CREATE INDEX IF NOT EXISTS idx_portal_session_expires_at_simple ON portal_session(expires_at); CREATE INDEX IF NOT EXISTS idx_portal_session_user_id_simple ON portal_session("userId")',
+    required: true,
+  },
+
+  // Step 8: Add unique constraint on session token (required by new schema)
+  {
+    name: 'session_add_token_unique',
+    description: 'Add unique constraint on portal_session token column',
+    sql: 'ALTER TABLE portal_session ADD CONSTRAINT portal_session_token_unique UNIQUE (token)',
+    required: true,
+  },
+
+  // Step 9: Add enum constraints for calendar and resource tables
+  {
+    name: 'calendar_folder_add_visibility_constraint',
+    description:
+      'Add enum constraint to portal_calendar_folder visibility column',
+    sql: `ALTER TABLE portal_calendar_folder ADD CONSTRAINT calendar_folder_visibility_check 
+          CHECK (visibility IN ('PUBLIC', 'SHARED', 'PRIVATE'))`,
+    required: false,
+  },
+  {
+    name: 'calendar_event_participant_add_constraints',
+    description:
+      'Add enum constraints to portal_calendar_event_participant columns',
+    sql: `ALTER TABLE portal_calendar_event_participant 
+          ADD CONSTRAINT calendar_event_participant_type_check 
+          CHECK ("participantType" IN ('user', 'contact', 'external')),
+          ADD CONSTRAINT calendar_event_participant_status_check 
+          CHECK (status IN ('pending', 'accepted', 'declined', 'tentative')),
+          ADD CONSTRAINT calendar_event_participant_role_check 
+          CHECK (role IN ('organizer', 'required', 'optional'))`,
+    required: false,
+  },
+  {
+    name: 'calendar_event_share_add_permission_constraint',
+    description:
+      'Add enum constraint to portal_calendar_event_share permission column',
+    sql: `ALTER TABLE portal_calendar_event_share ADD CONSTRAINT calendar_event_share_permission_check 
+          CHECK (permission IN ('view', 'edit'))`,
+    required: false,
+  },
+  {
+    name: 'resource_content_add_visibility_constraint',
+    description:
+      'Add enum constraint to portal_resource_content visibility column',
+    sql: `ALTER TABLE portal_resource_content ADD CONSTRAINT resource_content_visibility_check 
+          CHECK (visibility IN ('PUBLIC', 'SHARED', 'PRIVATE'))`,
+    required: false,
+  },
+  {
+    name: 'resource_content_share_add_permission_constraint',
+    description:
+      'Add enum constraint to portal_resource_content_share permission column',
+    sql: `ALTER TABLE portal_resource_content_share ADD CONSTRAINT resource_content_share_permission_check 
+          CHECK (permission IN ('view', 'edit'))`,
+    required: false,
+  },
+  {
+    name: 'resource_content_send_track_add_status_constraint',
+    description:
+      'Add enum constraint to portal_resource_content_send_track status column',
+    sql: `ALTER TABLE portal_resource_content_send_track ADD CONSTRAINT resource_content_send_track_status_check 
+          CHECK (status IN ('sent', 'delivered', 'read', 'failed'))`,
+    required: false,
+  },
+  {
+    name: 'resource_emails_add_visibility_constraint',
+    description:
+      'Add enum constraint to portal_resource_emails visibility column',
+    sql: `ALTER TABLE portal_resource_emails ADD CONSTRAINT resource_emails_visibility_check 
+          CHECK (visibility IN ('PUBLIC', 'SHARED', 'PRIVATE'))`,
+    required: false,
+  },
+
+  // Step 10: Add enum constraints for company and team tables
+  {
+    name: 'company_add_status_constraint',
+    description: 'Add enum constraint to portal_company status column',
+    sql: `ALTER TABLE portal_company ADD CONSTRAINT company_status_check 
+          CHECK (status IN ('active', 'inactive'))`,
+    required: false,
+  },
+  {
+    name: 'company_contact_add_role_constraint',
+    description: 'Add enum constraint to portal_company_contact role column',
+    sql: `ALTER TABLE portal_company_contact ADD CONSTRAINT company_contact_role_check 
+          CHECK (role IN ('employee', 'manager', 'executive', 'other'))`,
+    required: false,
+  },
+  {
+    name: 'team_meeting_add_status_constraint',
+    description: 'Add enum constraint to portal_team_meeting status column',
+    sql: `ALTER TABLE portal_team_meeting ADD CONSTRAINT team_meeting_status_check 
+          CHECK (status IN ('upcoming', 'completed', 'cancelled', 'no_show'))`,
+    required: false,
+  },
+  {
+    name: 'user_task_add_constraints',
+    description:
+      'Add enum constraints to portal_user_task status and priority columns',
+    sql: `ALTER TABLE portal_user_task 
+          ADD CONSTRAINT user_task_status_check 
+          CHECK (status IN ('backlog', 'todo', 'in_progress', 'in_review', 'done')),
+          ADD CONSTRAINT user_task_priority_check 
+          CHECK (priority IN ('urgent', 'high', 'medium', 'low'))`,
+    required: false,
+  },
+
+  // Step 11: Add enum constraints for custom field tables
+  {
+    name: 'contact_custom_field_add_type_constraint',
+    description:
+      'Add enum constraint to portal_contact_custom_field type column',
+    sql: `ALTER TABLE portal_contact_custom_field ADD CONSTRAINT contact_custom_field_type_check 
+          CHECK (type IN ('text', 'number', 'date', 'boolean', 'select', 'multiselect'))`,
+    required: false,
+  },
+  {
+    name: 'team_custom_field_add_type_constraint',
+    description: 'Add enum constraint to portal_team_custom_field type column',
+    sql: `ALTER TABLE portal_team_custom_field ADD CONSTRAINT team_custom_field_type_check 
+          CHECK (type IN ('text', 'number', 'date', 'boolean', 'select', 'multiselect'))`,
+    required: false,
+  },
+  {
+    name: 'company_custom_field_add_type_constraint',
+    description:
+      'Add enum constraint to portal_company_custom_field type column',
+    sql: `ALTER TABLE portal_company_custom_field ADD CONSTRAINT company_custom_field_type_check 
+          CHECK (type IN ('text', 'number', 'date', 'boolean', 'select', 'multiselect'))`,
+    required: false,
+  },
+  {
+    name: 'site_config_add_constraints',
+    description:
+      'Add enum constraints to portal_site_config key and type columns',
+    sql: `ALTER TABLE portal_site_config 
+          ADD CONSTRAINT site_config_key_check 
+          CHECK (key IN ('name', 'description', 'domain', 'supportEmailDomains', 'status', 'priority', 'source')),
+          ADD CONSTRAINT site_config_type_check 
+          CHECK (type IN ('string', 'number', 'boolean', 'json', 'array'))`,
+    required: false,
+  },
+  {
+    name: 'user_notifications_add_constraints',
+    description: 'Add enum constraints to portal_user_notifications columns',
+    sql: `ALTER TABLE portal_user_notifications 
+          ADD CONSTRAINT user_notifications_type_check 
+          CHECK (type IN ('MESSAGE')),
+          ADD CONSTRAINT user_notifications_subtype_check 
+          CHECK (sub_type IN ('MENTIONED', 'NOTE_ADDED', 'NOTE_UPDATED', 'NOTE_DELETED')),
+          ADD CONSTRAINT user_notifications_initiator_type_check 
+          CHECK (initiator_type IN ('user', 'contact', 'team', 'system'))`,
+    required: false,
   },
 ];
 

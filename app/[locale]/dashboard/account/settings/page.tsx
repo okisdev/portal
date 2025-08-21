@@ -4,6 +4,7 @@ import { BadgeX, Check, Pencil, Verified } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
+import { ActionAlertDialog } from '@/components/shared/action-alert-dialog';
 import { Combobox } from '@/components/shared/combobox';
 import { PageHeader } from '@/components/shared/page-header';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -25,7 +26,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { timezones } from '@/data/data';
-import { authClient } from '@/lib/auth.client';
+import { authClient, signOut } from '@/lib/auth.client';
 import type { Timezone } from '@/lib/schema';
 import { api } from '@/utils/trpc/client';
 import { setPasswordAction } from './actions';
@@ -53,6 +54,7 @@ export default function AccountSettingsPage() {
   const [emailError, setEmailError] = useState('');
   const [hasPassword, setHasPassword] = useState(false);
   const [isPasswordLoading, setIsPasswordLoading] = useState(false);
+  const [showLogoutConfirmDialog, setShowLogoutConfirmDialog] = useState(false);
 
   useEffect(() => {
     if (me) {
@@ -271,14 +273,31 @@ export default function AccountSettingsPage() {
     }
   };
 
-  const handleForgotPassword = async () => {
+  const handleForgotPassword = () => {
+    setShowLogoutConfirmDialog(true);
+  };
+
+  const confirmForgotPassword = async () => {
     if (!me?.email) {
       toast.error(t('no_email_found'));
       return;
     }
 
     try {
-      await authClient.forgetPassword({ email: me.email });
+      await authClient.forgetPassword({
+        email: me.email,
+        redirectTo: `${window.location.origin}/reset-password?email=${me.email}`,
+        fetchOptions: {
+          onSuccess: async () => {
+            toast.success(t('password_reset_email_sent'));
+
+            await signOut();
+          },
+          onError: () => {
+            toast.error(t('failed_to_send_reset_email'));
+          },
+        },
+      });
 
       toast.success(t('password_reset_email_sent'));
     } catch (error: unknown) {
@@ -287,6 +306,8 @@ export default function AccountSettingsPage() {
           ? error.message
           : t('failed_to_send_reset_email');
       toast.error(errorMessage);
+    } finally {
+      setShowLogoutConfirmDialog(false);
     }
   };
 
@@ -610,6 +631,16 @@ export default function AccountSettingsPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <ActionAlertDialog
+        cancelText={t('cancel')}
+        confirmText={t('send_reset_link')}
+        description={t('forgot_password_logout_warning')}
+        onConfirm={confirmForgotPassword}
+        onOpenChange={setShowLogoutConfirmDialog}
+        open={showLogoutConfirmDialog}
+        title={t('forgot_password_title')}
+      />
     </div>
   );
 }
