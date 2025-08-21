@@ -21,7 +21,6 @@ import {
   Users,
 } from 'lucide-react';
 import Link from 'next/link';
-import { useSession } from 'next-auth/react';
 import { useLocale, useTranslations } from 'next-intl';
 import { useMemo } from 'react';
 import { Area, AreaChart, CartesianGrid, XAxis } from 'recharts';
@@ -45,6 +44,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { authClient } from '@/lib/auth.client';
 import type { ActivitySubType } from '@/lib/schema';
 import type { Locale } from '@/types/i18n';
 import { renderDescription } from '@/utils/activity';
@@ -62,7 +62,7 @@ const getColorFromConfig = (
 export default function Dashboard() {
   const t = useTranslations();
   const locale = useLocale() as Locale;
-  const { data: session, status } = useSession();
+  const { data: session } = authClient.useSession();
 
   // Fetch dashboard metrics and configurations in parallel
   const { data: dashboardData, isLoading: isMetricsLoading } =
@@ -95,7 +95,7 @@ export default function Dashboard() {
   const chartData = useMemo(() => {
     if (!dashboardData?.monthlyData || dashboardData.monthlyData.length === 0) {
       // Return empty data for last 6 months if no data
-      const defaultData = [];
+      const defaultData: { month: string; leads: number }[] = [];
       for (let i = 5; i >= 0; i--) {
         const date = subMonths(new Date(), i);
         defaultData.push({
@@ -121,8 +121,9 @@ export default function Dashboard() {
 
   // Prepare data for status breakdown
   const statusData = useMemo(() => {
-    if (!(dashboardData?.statusBreakdown && configurations?.statuses))
+    if (!(dashboardData?.statusBreakdown && configurations?.statuses)) {
       return [];
+    }
 
     return dashboardData.statusBreakdown.map((item) => ({
       status: item.status,
@@ -133,8 +134,9 @@ export default function Dashboard() {
 
   // Prepare data for priority breakdown
   const priorityData = useMemo(() => {
-    if (!(dashboardData?.priorityBreakdown && configurations?.priorities))
+    if (!(dashboardData?.priorityBreakdown && configurations?.priorities)) {
       return [];
+    }
 
     return dashboardData.priorityBreakdown
       .filter((item) => item.priority !== null)
@@ -148,9 +150,11 @@ export default function Dashboard() {
       }));
   }, [dashboardData?.priorityBreakdown, configurations?.priorities]);
 
-  // Prepare data for source breakdown
+  // Prepare data for source breakdown{  }
   const sourceData = useMemo(() => {
-    if (!(dashboardData?.sourceBreakdown && configurations?.sources)) return [];
+    if (!(dashboardData?.sourceBreakdown && configurations?.sources)) {
+      return [];
+    }
 
     return dashboardData.sourceBreakdown
       .filter((item) => item.source !== null)
@@ -164,7 +168,7 @@ export default function Dashboard() {
       }));
   }, [dashboardData?.sourceBreakdown, configurations?.sources]);
 
-  if (status === 'loading' || isLoading) {
+  if (isLoading) {
     return <PageLoading />;
   }
 
@@ -389,9 +393,9 @@ export default function Dashboard() {
                       })}{' '}
                       <TrendingUp className='h-4 w-4' />
                     </div>
-                    <div className='flex items-center gap-2 text-muted-foreground leading-none'>
+                    <div className='items-centchartData.at(ud)leading-none flex'>
                       {chartData.length > 0 &&
-                        `${chartData[0].month} - ${chartData[chartData.length - 1].month}`}
+                        `${chartData[0].month} - ${chartData.at(-1)?.month}`}
                     </div>
                   </div>
                 </div>

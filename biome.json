@@ -14,7 +14,8 @@
       "correctness": {
         "noUnusedImports": {
           "level": "warn",
-          "fix": "none"
+          "fix": "none",
+          "options": {}
         },
         "noUnusedVariables": {
           "level": "warn",
@@ -26,14 +27,19 @@
           "level": "warn",
           "fix": "none",
           "options": {}
-        }
+        },
+        "useSingleJsDocAsterisk": "off"
       },
       "complexity": {
         "noExcessiveCognitiveComplexity": "warn"
       },
       "nursery": {
-        "noAwaitInLoop": "warn",
-        "noShadow": "warn"
+        "noShadow": "warn",
+        "useConsistentTypeDefinitions": {
+          "level": "warn",
+          "fix": "safe",
+          "options": {}
+        }
       },
       "suspicious": {
         "noExplicitAny": "warn",
@@ -43,6 +49,7 @@
       },
       "style": {
         "noEnum": "off",
+        "noMagicNumbers": "off",
         "noNestedTernary": "warn"
       },
       "performance": {
@@ -58,9 +65,7 @@
   },
   "files": {
     "includes": [
-      "**",
-      "!**/worker-configuration.d.ts",
-      "!**/components/ui/**"
+      "**"
     ]
   }
 }

@@ -5,14 +5,14 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { CheckCircle2, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { signIn } from 'next-auth/react';
 import { useTranslations } from 'next-intl';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod/v4';
 import { Banner } from '@/components/shared/banner';
 import { Label } from '@/components/ui/label';
+import { authClient } from '@/lib/auth.client';
 import { api } from '@/utils/trpc/client';
 
 const loginSchema = z.object({
@@ -84,29 +84,19 @@ export default function LoginPage() {
       setLoading(true);
       setError('');
 
-      const result = await signIn('credentials', {
+      if (!(data.email && data.password)) {
+        setError(t('email_and_password_required'));
+        toast.error(t('email_and_password_required'));
+        return;
+      }
+
+      const result = await authClient.signIn.email({
         email: data.email,
         password: data.password,
-        redirect: false,
       });
 
       if (result?.error) {
-        let errorMessage = t('unexpected_error');
-
-        switch (result.code) {
-          case 'user_not_found':
-            errorMessage = t('user_not_found_error');
-            break;
-          case 'password_incorrect':
-            errorMessage = t('password_incorrect_error');
-            break;
-          case 'user_or_password_incorrect':
-            errorMessage = t('user_or_password_incorrect_error');
-            break;
-          case 'unexpected_error':
-            errorMessage = t('unexpected_error');
-            break;
-        }
+        const errorMessage = t('unexpected_error');
 
         setError(errorMessage);
         toast.error(errorMessage);
@@ -127,17 +117,19 @@ export default function LoginPage() {
       setLoading(true);
       setError('');
 
-      const result = await signIn('resend', {
+      const result = await authClient.signIn.magicLink({
         email: data.email,
-        redirect: false,
+        fetchOptions: {
+          onSuccess: () => {
+            setEmailSent(true);
+            setSentEmail(data.email);
+          },
+        },
       });
 
       if (result?.error) {
-        setError(result.error);
-        toast.error(result.error);
-      } else {
-        setEmailSent(true);
-        setSentEmail(data.email);
+        setError(result.error.message || t('unexpected_error'));
+        toast.error(result.error.message || t('unexpected_error'));
       }
     } catch (err) {
       setError(t('unexpected_error'));
@@ -250,22 +242,29 @@ export default function LoginPage() {
             </div>
 
             {isPasswordLogin && (
-              <div className='space-y-1'>
-                <Label className='mb-1 block font-medium text-foreground text-sm'>
-                  {t('password')}
-                </Label>
-                <input
-                  type='password'
-                  {...register('password')}
-                  className='w-full rounded-lg border bg-background p-2 focus:outline-hidden focus:ring-2 focus:ring-ring'
-                  placeholder={t('password_placeholder')}
+              <>
+                <Banner
+                  description={t('magic_link_is_more_secure_and_convenient')}
+                  title={t('password_login_not_recommended')}
+                  variant='warning'
                 />
-                {errors.password && (
-                  <p className='mt-1 text-destructive text-sm'>
-                    {errors.password.message}
-                  </p>
-                )}
-              </div>
+                <div className='space-y-1'>
+                  <Label className='mb-1 block font-medium text-foreground text-sm'>
+                    {t('password')}
+                  </Label>
+                  <input
+                    type='password'
+                    {...register('password')}
+                    className='w-full rounded-lg border bg-background p-2 focus:outline-hidden focus:ring-2 focus:ring-ring'
+                    placeholder={t('password_placeholder')}
+                  />
+                  {errors.password && (
+                    <p className='mt-1 text-destructive text-sm'>
+                      {errors.password.message}
+                    </p>
+                  )}
+                </div>
+              </>
             )}
             <div className='flex items-center justify-end'>
               {isPasswordLogin && (

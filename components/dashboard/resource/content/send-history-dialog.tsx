@@ -27,7 +27,7 @@ interface SendHistoryDialogProps {
   content: ResourceContent;
 }
 
-type SendHistoryRecord = {
+interface SendHistoryRecord {
   id: string;
   sentAt: Date;
   status: 'sent' | 'delivered' | 'read' | 'failed';
@@ -41,7 +41,7 @@ type SendHistoryRecord = {
     id: string;
     name: string | null;
   } | null;
-};
+}
 
 export function SendHistoryDialog({
   open,

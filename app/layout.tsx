@@ -8,9 +8,9 @@ export const metadata: Metadata = {
   description: 'Streamline Your Business Operations',
 };
 
-type Props = {
+interface Props {
   children: ReactNode;
-};
+}
 
 export default function RootLayout({ children }: Props) {
   return <RootProvider>{children}</RootProvider>;

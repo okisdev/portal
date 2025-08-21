@@ -1,17 +1,22 @@
 import { ArrowLeft, Sparkle } from 'lucide-react';
+import { headers } from 'next/headers';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
-import { auth } from '@/auth';
+import { auth } from '@/lib/auth';
 
 export default async function AuthLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const session = await auth();
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
 
-  if (session) return redirect('/dashboard');
+  if (session) {
+    return redirect('/dashboard');
+  }
 
   const t = await getTranslations();
 

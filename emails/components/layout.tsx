@@ -17,9 +17,9 @@ interface EmailLayoutProps {
 export const EmailLayout = ({ children, preview }: EmailLayoutProps) => {
   return (
     <Html>
-      <Head />
       <Preview>{preview}</Preview>
       <Tailwind>
+        <Head />
         <Body className='bg-white font-sans'>
           <Container className='mx-auto my-10 max-w-md px-4'>
             <Section className='rounded-lg border border-gray-200 bg-white p-8 shadow-sm'>

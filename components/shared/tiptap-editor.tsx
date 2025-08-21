@@ -64,6 +64,26 @@ turndownService.addRule('strikethrough', {
   replacement: (content) => `~${content}~`,
 });
 
+const ToolbarButton = ({
+  onClick,
+  isActive = false,
+  children,
+}: {
+  onClick: () => void;
+  isActive?: boolean;
+  children: React.ReactNode;
+}) => (
+  <Button
+    className={cn('h-8 w-8', isActive && 'bg-muted')}
+    onClick={onClick}
+    size='icon'
+    type='button'
+    variant='ghost'
+  >
+    {children}
+  </Button>
+);
+
 export function TipTapEditor({
   content,
   onChange,
@@ -124,13 +144,13 @@ export function TipTapEditor({
   });
 
   useEffect(() => {
-    if (editor) {
+    if (editor?.setEditable) {
       editor.setEditable(editable && !disabled);
     }
   }, [editor, editable, disabled]);
 
   useEffect(() => {
-    if (editor && content !== editor.getHTML()) {
+    if (editor?.getHTML && content !== editor.getHTML()) {
       editor.commands.setContent(content);
       setHtmlContent(content);
       setMarkdownContent(turndownService.turndown(content));
@@ -138,7 +158,7 @@ export function TipTapEditor({
   }, [content, editor]);
 
   useEffect(() => {
-    if (editor) {
+    if (editor?.getHTML) {
       if (mode === 'markdown') {
         setMarkdownContent(turndownService.turndown(editor.getHTML()));
       } else if (mode === 'html') {
@@ -150,7 +170,7 @@ export function TipTapEditor({
   const handleHtmlChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const newHtml = e.target.value;
     setHtmlContent(newHtml);
-    if (editor) {
+    if (editor?.commands?.setContent) {
       editor.commands.setContent(newHtml);
     }
     const markdown = turndownService.turndown(newHtml);
@@ -167,26 +187,6 @@ export function TipTapEditor({
   if (!editor) {
     return null;
   }
-
-  const ToolbarButton = ({
-    onClick,
-    isActive = false,
-    children,
-  }: {
-    onClick: () => void;
-    isActive?: boolean;
-    children: React.ReactNode;
-  }) => (
-    <Button
-      className={cn('h-8 w-8', isActive && 'bg-muted')}
-      onClick={onClick}
-      size='icon'
-      type='button'
-      variant='ghost'
-    >
-      {children}
-    </Button>
-  );
 
   const addImage = () => {
     const url = window.prompt('Enter image URL');

@@ -50,7 +50,7 @@ import { useDebounce } from '@/hooks/use-debounce';
 import { formatDate } from '@/utils/date';
 import { api } from '@/utils/trpc/client';
 
-type TeamWithCount = {
+interface TeamWithCount {
   id: string;
   name: string;
   description: string | null;
@@ -58,7 +58,7 @@ type TeamWithCount = {
   createdBy: string;
   contacts: number;
   company: { id: string; name: string } | null;
-};
+}
 
 export default function CRMTeamsPage() {
   const router = useRouter();

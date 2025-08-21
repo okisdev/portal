@@ -110,7 +110,9 @@ export default function EmailsPage() {
   };
 
   const handleDeleteTemplate = async () => {
-    if (!selectedTemplate) return;
+    if (!selectedTemplate) {
+      return;
+    }
     if (confirm('Are you sure you want to delete this template?')) {
       deleteMutation.mutate(selectedTemplate.id);
     }

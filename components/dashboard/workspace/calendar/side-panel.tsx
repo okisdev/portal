@@ -17,7 +17,6 @@ import {
   Plus,
   Trash,
 } from 'lucide-react';
-import { useSession } from 'next-auth/react';
 import { useLocale, useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { ActionAlertDialog } from '@/components/shared/action-alert-dialog';
@@ -36,6 +35,7 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { Skeleton } from '@/components/ui/skeleton';
+import { authClient } from '@/lib/auth.client';
 import type { CalendarFolder } from '@/lib/schema';
 import { cn } from '@/lib/utils';
 import type { Locale } from '@/types/i18n';
@@ -69,7 +69,7 @@ export function CalendarSidePanel({
 }: CalendarSidePanelProps) {
   const t = useTranslations();
   const locale = useLocale() as Locale;
-  const { data: session } = useSession();
+  const { data: session } = authClient.useSession();
 
   const dateLocale =
     {
@@ -83,7 +83,7 @@ export function CalendarSidePanel({
   const getDaysInMonth = (date: Date) => {
     const start = startOfMonth(date);
     const end = endOfMonth(date);
-    const days = [];
+    const days: Date[] = [];
 
     // Get days from previous month
     const firstDayOfWeek = start.getDay();
@@ -132,7 +132,9 @@ export function CalendarSidePanel({
                 newDate.setDate(1);
                 onDateSelect(newDate);
               }}
-              onClose={() => {}}
+              onClose={() => {
+                // do nothing
+              }}
               value={currentDate}
             />
           </PopoverContent>
@@ -195,7 +197,7 @@ export function CalendarSidePanel({
               <div className='flex items-center gap-2' key={folder.id}>
                 <Checkbox
                   checked={!hiddenCalendars.has(folder.id)}
-                  onCheckedChange={(checked) => onToggleCalendar(folder.id)}
+                  onCheckedChange={(_checked) => onToggleCalendar(folder.id)}
                 />
                 <Button
                   className='h-8 min-w-0 flex-1 justify-start px-2'

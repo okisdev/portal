@@ -1,10 +1,9 @@
 import { TRPCError } from '@trpc/server';
 import { eq } from 'drizzle-orm';
 import z from 'zod/v4';
-import { user } from '@/drizzle/schema';
+import { account, user } from '@/drizzle/schema';
 import { timezoneSchema } from '@/lib/schema';
 import { createTRPCRouter, protectedProcedure } from '@/server/trpc';
-import { encryptPassword } from '@/utils/password';
 
 export const accountRouter = createTRPCRouter({
   getMe: protectedProcedure.query(({ ctx }) => {
@@ -19,7 +18,15 @@ export const accountRouter = createTRPCRouter({
     //   .then(([user]) => user);
   }),
 
-  getMeFromDatabase: protectedProcedure.query(({ ctx }) => {
+  getMeFromDatabase: protectedProcedure.query(async ({ ctx }) => {
+    const userAccount = await ctx.db
+      .select()
+      .from(account)
+      .where(eq(account.userId, ctx.session.user.id))
+      .then(([userAccount]) => userAccount);
+
+    const hasPassword = userAccount && userAccount.password !== null;
+
     return ctx.db
       .select({
         id: user.id,
@@ -35,7 +42,10 @@ export const accountRouter = createTRPCRouter({
       })
       .from(user)
       .where(eq(user.id, ctx.session.user.id))
-      .then(([user]) => user);
+      .then(([userData]) => ({
+        ...userData,
+        hasPassword,
+      }));
   }),
 
   updateMe: protectedProcedure
@@ -55,7 +65,9 @@ export const accountRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      if (!ctx.session.user.id) throw new TRPCError({ code: 'UNAUTHORIZED' });
+      if (!ctx.session.user.id) {
+        throw new TRPCError({ code: 'UNAUTHORIZED' });
+      }
 
       if (input.username) {
         const existingUser = await ctx.db
@@ -63,11 +75,12 @@ export const accountRouter = createTRPCRouter({
           .from(user)
           .where(eq(user.username, input.username))
           .then((rows) => rows[0]);
-        if (existingUser)
+        if (existingUser) {
           throw new TRPCError({
             code: 'CONFLICT',
             message: 'Username already exists',
           });
+        }
       }
 
       // First get the current user data to properly handle name updates
@@ -112,25 +125,6 @@ export const accountRouter = createTRPCRouter({
         .where(eq(user.id, ctx.session.user.id));
     }),
 
-  updatePassword: protectedProcedure
-    .input(
-      z.object({
-        currentPassword: z.string().optional(),
-        newPassword: z.string().min(8),
-        confirmPassword: z.string().min(8),
-      })
-    )
-    .mutation(({ ctx, input }) => {
-      if (!ctx.session.user.id) throw new TRPCError({ code: 'UNAUTHORIZED' });
-
-      const hashedPassword = encryptPassword(input.newPassword);
-
-      return ctx.db
-        .update(user)
-        .set({ password: hashedPassword })
-        .where(eq(user.id, ctx.session.user.id));
-    }),
-
   updateTimezone: protectedProcedure
     .input(
       z.object({
@@ -138,7 +132,9 @@ export const accountRouter = createTRPCRouter({
       })
     )
     .mutation(({ ctx, input }) => {
-      if (!ctx.session.user.id) throw new TRPCError({ code: 'UNAUTHORIZED' });
+      if (!ctx.session.user.id) {
+        throw new TRPCError({ code: 'UNAUTHORIZED' });
+      }
       return ctx.db
         .update(user)
         .set({ timezone: input.timezone })

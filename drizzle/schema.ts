@@ -10,10 +10,13 @@ import {
   varchar,
 } from 'drizzle-orm/pg-core';
 
-export const verificationToken = pgTable('portal_verification_token', {
+export const verification = pgTable('portal_verification', {
+  id: text().primaryKey().notNull(),
   identifier: text().notNull(),
-  token: text().notNull(),
-  expires: timestamp({ mode: 'string' }).notNull(),
+  value: text().notNull(),
+  expiresAt: timestamp('expires_at', { mode: 'string' }).notNull(),
+  createdAt: timestamp('created_at', { mode: 'string' }).defaultNow(),
+  updatedAt: timestamp('updated_at', { mode: 'string' }).defaultNow(),
 });
 
 export const user = pgTable(
@@ -24,127 +27,19 @@ export const user = pgTable(
     lastName: text(),
     name: text(),
     email: text(),
-    emailVerified: timestamp({ mode: 'string' }),
-    password: text(),
+    emailVerified: boolean('email_verified').notNull().default(false),
     image: text(),
     role: text('role', {
       enum: ['ADMIN', 'SALES_MANAGER', 'SALES_ASSISTANT', 'MANAGER', 'USER'],
     }).default('USER'),
-    timezone: text('timezone', {
-      enum: [
-        // Africa
-        'Africa/Cairo',
-        'Africa/Casablanca',
-        'Africa/Johannesburg',
-        'Africa/Lagos',
-        'Africa/Nairobi',
-        // America
-        'America/Anchorage',
-        'America/Argentina/Buenos_Aires',
-        'America/Bogota',
-        'America/Caracas',
-        'America/Chicago',
-        'America/Denver',
-        'America/Edmonton',
-        'America/Halifax',
-        'America/Lima',
-        'America/Los_Angeles',
-        'America/Mexico_City',
-        'America/New_York',
-        'America/Phoenix',
-        'America/Santiago',
-        'America/Sao_Paulo',
-        'America/St_Johns',
-        'America/Toronto',
-        'America/Vancouver',
-        // Asia
-        'Asia/Almaty',
-        'Asia/Baghdad',
-        'Asia/Baku',
-        'Asia/Bangkok',
-        'Asia/Beirut',
-        'Asia/Colombo',
-        'Asia/Dhaka',
-        'Asia/Dubai',
-        'Asia/Ho_Chi_Minh',
-        'Asia/Hong_Kong',
-        'Asia/Istanbul',
-        'Asia/Jakarta',
-        'Asia/Jerusalem',
-        'Asia/Kabul',
-        'Asia/Karachi',
-        'Asia/Kathmandu',
-        'Asia/Kolkata',
-        'Asia/Kuala_Lumpur',
-        'Asia/Kuwait',
-        'Asia/Manila',
-        'Asia/Muscat',
-        'Asia/Riyadh',
-        'Asia/Seoul',
-        'Asia/Shanghai',
-        'Asia/Singapore',
-        'Asia/Taipei',
-        'Asia/Tashkent',
-        'Asia/Tehran',
-        'Asia/Tokyo',
-        'Asia/Ulaanbaatar',
-        'Asia/Yangon',
-        // Atlantic
-        'Atlantic/Azores',
-        'Atlantic/Cape_Verde',
-        'Atlantic/Reykjavik',
-        // Australia
-        'Australia/Adelaide',
-        'Australia/Brisbane',
-        'Australia/Darwin',
-        'Australia/Hobart',
-        'Australia/Melbourne',
-        'Australia/Perth',
-        'Australia/Sydney',
-        // Europe
-        'Europe/Amsterdam',
-        'Europe/Athens',
-        'Europe/Belgrade',
-        'Europe/Berlin',
-        'Europe/Brussels',
-        'Europe/Bucharest',
-        'Europe/Budapest',
-        'Europe/Copenhagen',
-        'Europe/Dublin',
-        'Europe/Helsinki',
-        'Europe/Istanbul',
-        'Europe/Kiev',
-        'Europe/Lisbon',
-        'Europe/London',
-        'Europe/Madrid',
-        'Europe/Moscow',
-        'Europe/Oslo',
-        'Europe/Paris',
-        'Europe/Prague',
-        'Europe/Rome',
-        'Europe/Stockholm',
-        'Europe/Vienna',
-        'Europe/Warsaw',
-        'Europe/Zurich',
-        // Indian
-        'Indian/Maldives',
-        'Indian/Mauritius',
-        // Pacific
-        'Pacific/Auckland',
-        'Pacific/Fiji',
-        'Pacific/Guam',
-        'Pacific/Honolulu',
-        'Pacific/Noumea',
-        'Pacific/Pago_Pago',
-        'Pacific/Port_Moresby',
-        'Pacific/Tongatapu',
-        // UTC
-        'UTC',
-      ],
-    })
-      .notNull()
-      .default('Asia/Hong_Kong'),
+    timezone: text('timezone').notNull().default('Asia/Hong_Kong'),
     username: text().unique(),
+    createdAt: timestamp('created_at', { mode: 'string' })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp('updated_at', { mode: 'string' })
+      .notNull()
+      .defaultNow(),
   },
   (table) => [unique('user_email_unique').on(table.email)]
 );
@@ -152,17 +47,27 @@ export const user = pgTable(
 export const account = pgTable(
   'portal_account',
   {
+    id: text().primaryKey().notNull(),
     userId: text().notNull(),
-    type: text().notNull(),
-    provider: text().notNull(),
-    providerAccountId: text().notNull(),
+    providerId: text('provider_id').notNull(),
+    accountId: text('account_id').notNull(),
     refreshToken: text('refresh_token'),
     accessToken: text('access_token'),
-    expiresAt: integer('expires_at'),
-    tokenType: text('token_type'),
+    accessTokenExpiresAt: timestamp('access_token_expires_at', {
+      mode: 'string',
+    }),
+    refreshTokenExpiresAt: timestamp('refresh_token_expires_at', {
+      mode: 'string',
+    }),
     scope: text(),
     idToken: text('id_token'),
-    sessionState: text('session_state'),
+    password: text(),
+    createdAt: timestamp('created_at', { mode: 'string' })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp('updated_at', { mode: 'string' })
+      .notNull()
+      .defaultNow(),
   },
   (table) => [
     foreignKey({
@@ -198,9 +103,18 @@ export const authenticator = pgTable(
 export const session = pgTable(
   'portal_session',
   {
-    sessionToken: text().primaryKey().notNull(),
+    id: text().primaryKey().notNull(),
     userId: text().notNull(),
-    expires: timestamp({ mode: 'string' }).notNull(),
+    token: text().notNull().unique(),
+    expiresAt: timestamp('expires_at', { mode: 'string' }).notNull(),
+    createdAt: timestamp('created_at', { mode: 'string' })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp('updated_at', { mode: 'string' })
+      .notNull()
+      .defaultNow(),
+    ipAddress: text('ip_address'),
+    userAgent: text('user_agent'),
   },
   (table) => [
     foreignKey({

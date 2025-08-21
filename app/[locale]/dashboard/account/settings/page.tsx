@@ -1,10 +1,10 @@
 'use client';
 
 import { BadgeX, Check, Pencil, Verified } from 'lucide-react';
-import { signOut } from 'next-auth/react';
 import { useTranslations } from 'next-intl';
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
+import { ActionAlertDialog } from '@/components/shared/action-alert-dialog';
 import { Combobox } from '@/components/shared/combobox';
 import { PageHeader } from '@/components/shared/page-header';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -26,8 +26,12 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { timezones } from '@/data/data';
+import { authClient, signOut } from '@/lib/auth.client';
 import type { Timezone } from '@/lib/schema';
 import { api } from '@/utils/trpc/client';
+import { setPasswordAction } from './actions';
+
+const USERNAME_REGEX = /^[a-z0-9_-]+$/;
 
 export default function AccountSettingsPage() {
   const t = useTranslations();
@@ -35,9 +39,7 @@ export default function AccountSettingsPage() {
   const { data: me, isLoading } = api.account.getMeFromDatabase.useQuery();
 
   const updateAccount = api.account.updateMe.useMutation();
-  const updatePassword = api.account.updatePassword.useMutation();
   const updateTimezone = api.account.updateTimezone.useMutation();
-  const sendPasswordReset = api.auth.sendPasswordReset.useMutation();
 
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -50,6 +52,9 @@ export default function AccountSettingsPage() {
   const [pendingEmail, setPendingEmail] = useState('');
   const [confirmPendingEmail, setConfirmPendingEmail] = useState('');
   const [emailError, setEmailError] = useState('');
+  const [hasPassword, setHasPassword] = useState(false);
+  const [isPasswordLoading, setIsPasswordLoading] = useState(false);
+  const [showLogoutConfirmDialog, setShowLogoutConfirmDialog] = useState(false);
 
   useEffect(() => {
     if (me) {
@@ -59,6 +64,7 @@ export default function AccountSettingsPage() {
       setImage(me.image ?? '');
       setUsername(me.username ?? '');
       setTimezone((me.timezone as Timezone) ?? 'Asia/Hong_Kong');
+      setHasPassword(me.hasPassword ?? false);
     }
   }, [me]);
 
@@ -71,7 +77,9 @@ export default function AccountSettingsPage() {
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
     const file = event.target.files?.[0];
-    if (!file) return;
+    if (!file) {
+      return;
+    }
 
     const formData = new FormData();
     formData.append('file', file);
@@ -149,8 +157,12 @@ export default function AccountSettingsPage() {
   const handlePasswordSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
 
-    // Don't submit if any field is empty
-    if (!(currentPassword && newPassword && confirmPassword)) {
+    // For users with password, check all fields; for users without password, only check new password fields
+    if (hasPassword) {
+      if (!(currentPassword && newPassword && confirmPassword)) {
+        return;
+      }
+    } else if (!(newPassword && confirmPassword)) {
       return;
     }
 
@@ -159,27 +171,45 @@ export default function AccountSettingsPage() {
       return;
     }
 
+    setIsPasswordLoading(true);
+
     try {
-      await updatePassword.mutateAsync(
-        {
-          currentPassword,
-          newPassword,
-          confirmPassword,
-        },
-        {
-          onSuccess: () => {
-            toast.success(t('password_updated_successfully'));
+      if (hasPassword) {
+        // User has existing password - use changePassword
+        await authClient.changePassword(
+          {
+            currentPassword,
+            newPassword,
           },
-          onError: () => {
-            toast.error(t('failed_to_update_password'));
-          },
+          {
+            onSuccess: () => {
+              toast.success(t('password_updated_successfully'));
+            },
+            onError: () => {
+              toast.error(t('failed_to_update_password'));
+            },
+          }
+        );
+      } else {
+        // User doesn't have password - use setPassword server action
+        const result = await setPasswordAction(newPassword);
+
+        if (result.success) {
+          toast.success(t('password_created_successfully'));
+          setHasPassword(true); // User now has a password
+        } else {
+          toast.error(result.error || t('failed_to_create_password'));
         }
-      );
+      }
+
       setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
     } catch (error) {
-      console.error('Failed to update password:', error);
+      console.error('Failed to handle password operation:', error);
+      toast.error(t('unexpected_error'));
+    } finally {
+      setIsPasswordLoading(false);
     }
   };
 
@@ -217,7 +247,7 @@ export default function AccountSettingsPage() {
     }
 
     // Validate username format
-    if (!/^[a-z0-9_-]+$/.test(value)) {
+    if (!USERNAME_REGEX.test(value)) {
       setUsernameError(t('username_format_error'));
       return;
     }
@@ -243,23 +273,41 @@ export default function AccountSettingsPage() {
     }
   };
 
-  const handleForgotPassword = async () => {
+  const handleForgotPassword = () => {
+    setShowLogoutConfirmDialog(true);
+  };
+
+  const confirmForgotPassword = async () => {
     if (!me?.email) {
       toast.error(t('no_email_found'));
       return;
     }
 
     try {
-      await sendPasswordReset.mutateAsync({ email: me.email });
+      await authClient.forgetPassword({
+        email: me.email,
+        redirectTo: `${window.location.origin}/reset-password?email=${me.email}`,
+        fetchOptions: {
+          onSuccess: async () => {
+            toast.success(t('password_reset_email_sent'));
+
+            await signOut();
+          },
+          onError: () => {
+            toast.error(t('failed_to_send_reset_email'));
+          },
+        },
+      });
 
       toast.success(t('password_reset_email_sent'));
-
-      // Sign out the user after sending the reset email
-      setTimeout(async () => {
-        await signOut({ callbackUrl: '/login?from=password-reset&type=sent' });
-      }, 2000);
-    } catch (error: any) {
-      toast.error(error.message || t('failed_to_send_reset_email'));
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : t('failed_to_send_reset_email');
+      toast.error(errorMessage);
+    } finally {
+      setShowLogoutConfirmDialog(false);
     }
   };
 
@@ -424,8 +472,12 @@ export default function AccountSettingsPage() {
                     renderItem={(item) => (
                       <div className='flex w-full items-center justify-between'>
                         <span>
-                          {`${timezones.find((tz) => tz.value === item)?.value} (${timezones.find((tz) => tz.value === item)?.code})` ||
-                            item}
+                          {(() => {
+                            const tz = timezones.find(
+                              (timezoneItem) => timezoneItem.value === item
+                            );
+                            return tz ? `${tz.value} (${tz.code})` : item;
+                          })()}
                         </span>
                         {timezone === item && <Check className='h-4 w-4' />}
                       </div>
@@ -440,21 +492,30 @@ export default function AccountSettingsPage() {
 
           <TabsContent className='space-y-4' value='password'>
             <div className='space-y-4'>
-              <h2 className='font-medium text-2xl tracking-tight'>
-                {t('change_password')}
-              </h2>
+              <div>
+                <h2 className='font-medium text-2xl tracking-tight'>
+                  {hasPassword ? t('change_password') : t('create_a_password')}
+                </h2>
+                {!hasPassword && (
+                  <p className='mt-2 text-muted-foreground text-sm'>
+                    {t('password_not_set_description')}
+                  </p>
+                )}
+              </div>
               <form className='space-y-4' onSubmit={handlePasswordSubmit}>
-                <div className='space-y-2'>
-                  <Label htmlFor='currentPassword'>
-                    {t('current_password')}
-                  </Label>
-                  <Input
-                    id='currentPassword'
-                    onChange={(e) => setCurrentPassword(e.target.value)}
-                    type='password'
-                    value={currentPassword}
-                  />
-                </div>
+                {hasPassword && (
+                  <div className='space-y-2'>
+                    <Label htmlFor='currentPassword'>
+                      {t('current_password')}
+                    </Label>
+                    <Input
+                      id='currentPassword'
+                      onChange={(e) => setCurrentPassword(e.target.value)}
+                      type='password'
+                      value={currentPassword}
+                    />
+                  </div>
+                )}
                 <div className='space-y-2'>
                   <Label htmlFor='newPassword'>{t('new_password')}</Label>
                   <Input
@@ -476,21 +537,31 @@ export default function AccountSettingsPage() {
                   />
                 </div>
                 <div className='flex items-center justify-between'>
+                  {hasPassword && (
+                    <Button
+                      className='text-muted-foreground hover:text-foreground'
+                      onClick={handleForgotPassword}
+                      type='button'
+                      variant='ghost'
+                    >
+                      {t('forgot_current_password')}
+                    </Button>
+                  )}
                   <Button
-                    className='text-muted-foreground hover:text-foreground'
-                    disabled={sendPasswordReset.isPending}
-                    onClick={handleForgotPassword}
-                    type='button'
-                    variant='ghost'
+                    className={hasPassword ? '' : 'ml-auto'}
+                    disabled={isPasswordLoading}
+                    type='submit'
                   >
-                    {sendPasswordReset.isPending
-                      ? t('sending_reset_email')
-                      : t('forgot_current_password')}
-                  </Button>
-                  <Button disabled={updatePassword.isPending} type='submit'>
-                    {updatePassword.isPending
-                      ? t('updating_password')
-                      : t('update_password')}
+                    {(() => {
+                      if (isPasswordLoading) {
+                        return hasPassword
+                          ? t('updating_password')
+                          : t('creating_password');
+                      }
+                      return hasPassword
+                        ? t('update_password')
+                        : t('create_password');
+                    })()}
                   </Button>
                 </div>
               </form>
@@ -560,6 +631,16 @@ export default function AccountSettingsPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <ActionAlertDialog
+        cancelText={t('cancel')}
+        confirmText={t('send_reset_link')}
+        description={t('forgot_password_logout_warning')}
+        onConfirm={confirmForgotPassword}
+        onOpenChange={setShowLogoutConfirmDialog}
+        open={showLogoutConfirmDialog}
+        title={t('forgot_password_title')}
+      />
     </div>
   );
 }

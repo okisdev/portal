@@ -2,7 +2,6 @@
 
 import { format } from 'date-fns';
 import { ArrowUpRight } from 'lucide-react';
-import { useSession } from 'next-auth/react';
 import { useTranslations } from 'next-intl';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ComboboxCommand } from '@/components/shared/combobox';
@@ -16,6 +15,7 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { Textarea } from '@/components/ui/textarea';
+import { authClient } from '@/lib/auth.client';
 import { cn } from '@/lib/utils';
 import { formatDate } from '@/utils/date';
 import { api } from '@/utils/trpc/client';
@@ -60,7 +60,7 @@ export function ConversationSection({
   contactId,
 }: ConversationSectionProps) {
   const t = useTranslations();
-  const { data: session } = useSession();
+  const { data: session } = authClient.useSession();
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
   const [newActivity, setNewActivity] = useState('');
@@ -101,7 +101,9 @@ export function ConversationSection({
   const renderMentionItem = (username: string) => {
     const user = userMentionData.find((u) => u.username === username);
 
-    if (!user) return username;
+    if (!user) {
+      return username;
+    }
 
     return (
       <div className='flex items-start gap-2'>
@@ -180,7 +182,9 @@ export function ConversationSection({
   const handleSubmitActivity = (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!newActivity.trim()) return;
+    if (!newActivity.trim()) {
+      return;
+    }
 
     onCreateActivity({
       type: 'ENGAGEMENT',
@@ -197,7 +201,9 @@ export function ConversationSection({
   const handleReplySubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!(replyText.trim() && replyingTo)) return;
+    if (!(replyText.trim() && replyingTo)) {
+      return;
+    }
 
     onCreateActivity({
       type: 'ENGAGEMENT',
