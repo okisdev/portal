@@ -2,7 +2,6 @@
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { PlusIcon, X } from 'lucide-react';
-import { nanoid } from 'nanoid';
 import { useTranslations } from 'next-intl';
 import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
@@ -33,6 +32,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { randomString } from '@/lib/utils';
 
 const eventFormSchema = z.object({
   title: z.string().min(1, 'Title is required'),
@@ -389,7 +389,7 @@ export function EventDialog({
                   (participant, index) => (
                     <div
                       className='flex items-start gap-2'
-                      key={participant.id + nanoid()}
+                      key={participant.id + randomString(10)}
                     >
                       <FormField
                         control={form.control}

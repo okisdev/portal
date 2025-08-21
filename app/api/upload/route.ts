@@ -1,16 +1,16 @@
 import { PutObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
-import { nanoid } from 'nanoid';
 import { NextResponse } from 'next/server';
 import { env } from '@/lib/env';
 import { s3 } from '@/lib/s3';
+import { randomString } from '@/lib/utils';
 
 export async function POST(request: Request) {
   try {
     const { filename, contentType } = await request.json();
 
     const extension = filename.split('.').pop();
-    const uniqueFilename = `${nanoid()}.${extension}`;
+    const uniqueFilename = `${randomString(10)}.${extension}`;
 
     const signedUrl = await getSignedUrl(
       s3,
