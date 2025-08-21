@@ -317,7 +317,12 @@ export default function CRMContactsTablePage() {
             </AvatarFallback>
           </Avatar>
           <div className='w-16'>
-            <div className='truncate font-medium'>{row.original.name}</div>
+            <div className='truncate font-medium'>
+              {row.original.name ||
+                `${row.original.firstName || ''} ${row.original.lastName || ''}`.trim() ||
+                row.original.email ||
+                '-'}
+            </div>
             <div className='truncate text-neutral-500 text-xs'>
               {row.original.email}
             </div>

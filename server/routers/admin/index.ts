@@ -1,5 +1,5 @@
 import { TRPCError } from '@trpc/server';
-import { eq } from 'drizzle-orm';
+import { desc, eq } from 'drizzle-orm';
 import { v4 as uuidv4 } from 'uuid';
 import { z } from 'zod/v4';
 import { user } from '@/drizzle/schema';
@@ -28,7 +28,7 @@ export const adminRouter = createTRPCRouter({
   }),
 
   getUsers: adminProcedure.query(({ ctx }) => {
-    return ctx.db.select().from(user).execute();
+    return ctx.db.select().from(user).orderBy(desc(user.createdAt));
   }),
 
   getUser: adminProcedure.input(z.string()).query(({ ctx, input }) => {
