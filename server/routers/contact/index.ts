@@ -806,7 +806,6 @@ export const contactRouter = createTRPCRouter({
           createdAt: contact.createdAt,
           nextFollowUpAt: contact.nextFollowUpAt,
           lastContactedAt: contact.lastContactedAt,
-          lastActivity: contact.lastActivity,
         })
         .from(contact)
         .where(
