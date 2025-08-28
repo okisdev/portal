@@ -233,7 +233,9 @@ export default function ContactIdPage() {
   });
 
   const handleEditAppointment = (data: any) => {
-    if (!editingAppointment) return;
+    if (!editingAppointment) {
+      return;
+    }
 
     updateAppointment.mutate({
       id: editingAppointment.id,
@@ -316,7 +318,9 @@ export default function ContactIdPage() {
   };
 
   const handleAssignTeam = () => {
-    if (!selectedTeam) return;
+    if (!selectedTeam) {
+      return;
+    }
 
     assignToTeam.mutate({
       contactId,

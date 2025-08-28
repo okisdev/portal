@@ -101,7 +101,9 @@ export const contactRouter = createTRPCRouter({
             .then((rows) => rows[0])
         : null;
 
-      if (existingContact) return existingContact;
+      if (existingContact) {
+        return existingContact;
+      }
 
       // Ensure createdAt is set to midnight if provided
       const createdAt = input.createdAt
@@ -804,7 +806,6 @@ export const contactRouter = createTRPCRouter({
           createdAt: contact.createdAt,
           nextFollowUpAt: contact.nextFollowUpAt,
           lastContactedAt: contact.lastContactedAt,
-          lastActivity: contact.lastActivity,
         })
         .from(contact)
         .where(
@@ -944,9 +945,13 @@ export const contactRouter = createTRPCRouter({
 
     for (const config of configs) {
       const items = config.value ? JSON.parse(config.value) : [];
-      if (config.key === 'status') result.statuses = items;
-      else if (config.key === 'priority') result.priorities = items;
-      else if (config.key === 'source') result.sources = items;
+      if (config.key === 'status') {
+        result.statuses = items;
+      } else if (config.key === 'priority') {
+        result.priorities = items;
+      } else if (config.key === 'source') {
+        result.sources = items;
+      }
     }
 
     return result;

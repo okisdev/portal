@@ -61,7 +61,6 @@ interface PaginatedContact {
   createdAt: Date;
   nextFollowUpAt: Date | null;
   lastContactedAt: Date | null;
-  lastActivity: string | null;
 }
 
 export default function CRMContactsTablePage() {
@@ -183,7 +182,9 @@ export default function CRMContactsTablePage() {
 
   // Update URL when search or filters change
   useEffect(() => {
-    if (isInitialLoad) return;
+    if (isInitialLoad) {
+      return;
+    }
 
     const params = new URLSearchParams();
 
@@ -488,29 +489,31 @@ export default function CRMContactsTablePage() {
       enableSorting: true,
       enableHiding: isMobile,
     },
-    {
-      accessorKey: 'lastActivity',
-      header: ({ column }) => (
-        <DataTableHeader column={column} title={t('last_activity')} />
-      ),
-      cell: ({ row }) => {
-        const lastActivity = row.original.lastActivity
-          ? JSON.parse(row.original.lastActivity)
-          : null;
+    // {
+    //   accessorKey: 'lastActivity',
+    //   header: ({ column }) => (
+    //     <DataTableHeader column={column} title={t('last_activity')} />
+    //   ),
+    //   cell: ({ row }) => {
+    //     const lastActivity = row.original.lastActivity
+    //       ? JSON.parse(row.original.lastActivity)
+    //       : null;
 
-        if (!lastActivity) return '—';
+    //     if (!lastActivity) {
+    //       return '—';
+    //     }
 
-        return (
-          <div className='w-32'>
-            <p className='truncate whitespace-nowrap text-sm'>
-              {renderDescription(lastActivity, t, locale)}
-            </p>
-          </div>
-        );
-      },
-      enableSorting: false,
-      enableHiding: isMobile,
-    },
+    //     return (
+    //       <div className='w-32'>
+    //         <p className='truncate whitespace-nowrap text-sm'>
+    //           {renderDescription(lastActivity, t, locale)}
+    //         </p>
+    //       </div>
+    //     );
+    //   },
+    //   enableSorting: false,
+    //   enableHiding: isMobile,
+    // },
     {
       id: 'actions',
       cell: ({ row }) => (
