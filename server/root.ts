@@ -2,6 +2,7 @@ import type { inferReactQueryProcedureOptions } from '@trpc/react-query';
 import type { inferRouterInputs, inferRouterOutputs } from '@trpc/server';
 import { accountRouter } from '@/server/routers/account';
 import { adminRouter } from '@/server/routers/admin';
+import { apiKeyRouter } from '@/server/routers/api-key';
 import { authRouter } from '@/server/routers/auth';
 import { calendarRouter } from '@/server/routers/calendar';
 import { companyRouter } from '@/server/routers/company';
@@ -20,6 +21,7 @@ import { createCallerFactory, createTRPCRouter } from './trpc';
 export const appRouter = createTRPCRouter({
   account: accountRouter,
   admin: adminRouter,
+  apiKey: apiKeyRouter,
   auth: authRouter,
   calendar: calendarRouter,
   contact: contactRouter,

@@ -27,6 +27,7 @@ import {
   teamCustomValue,
   teamMeeting,
   user,
+  userApiKey,
   userNotifications,
   userTask,
 } from './schema';
@@ -42,6 +43,7 @@ export const userRelations = relations(user, ({ many }) => ({
   accounts: many(account),
   authenticators: many(authenticator),
   sessions: many(session),
+  apiKeys: many(userApiKey),
   calendarFolders: many(calendarFolder),
   calendarEvents: many(calendarEvent),
   sharedCalendarEvents: many(calendarEventShare, {
@@ -404,3 +406,10 @@ export const companyCustomValueRelations = relations(
     }),
   })
 );
+
+export const userApiKeyRelations = relations(userApiKey, ({ one }) => ({
+  user: one(user, {
+    fields: [userApiKey.userId],
+    references: [user.id],
+  }),
+}));

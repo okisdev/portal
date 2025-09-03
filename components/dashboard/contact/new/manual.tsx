@@ -80,8 +80,12 @@ export default function ManualContactForm() {
   });
 
   const formatName = (firstName?: string, lastName?: string) => {
-    if (!(firstName || lastName)) return 'N/A';
-    if (firstName && lastName) return `${firstName} ${lastName}`;
+    if (!(firstName || lastName)) {
+      return 'N/A';
+    }
+    if (firstName && lastName) {
+      return `${firstName} ${lastName}`;
+    }
     return firstName || lastName || 'N/A';
   };
 
@@ -113,7 +117,9 @@ export default function ManualContactForm() {
 
   // Function to parse date from various formats
   const parseDate = (dateString: string): Date | undefined => {
-    if (!dateString) return;
+    if (!dateString) {
+      return;
+    }
 
     // Try different date formats
     const formats = [

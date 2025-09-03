@@ -1,6 +1,17 @@
 'use client';
 
-import { BadgeX, Check, Pencil, Verified } from 'lucide-react';
+import {
+  BadgeX,
+  Check,
+  Copy,
+  Eye,
+  EyeOff,
+  Key,
+  Pencil,
+  Plus,
+  Trash2,
+  Verified,
+} from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
@@ -8,7 +19,9 @@ import { ActionAlertDialog } from '@/components/shared/action-alert-dialog';
 import { Combobox } from '@/components/shared/combobox';
 import { PageHeader } from '@/components/shared/page-header';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Dialog,
   DialogContent,
@@ -37,9 +50,13 @@ export default function AccountSettingsPage() {
   const t = useTranslations();
 
   const { data: me, isLoading } = api.account.getMeFromDatabase.useQuery();
+  const { data: apiKeys, refetch: refetchApiKeys } =
+    api.apiKey.getApiKeys.useQuery();
 
   const updateAccount = api.account.updateMe.useMutation();
   const updateTimezone = api.account.updateTimezone.useMutation();
+  const createApiKey = api.apiKey.createApiKey.useMutation();
+  const deleteApiKey = api.apiKey.deleteApiKey.useMutation();
 
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -55,6 +72,17 @@ export default function AccountSettingsPage() {
   const [hasPassword, setHasPassword] = useState(false);
   const [isPasswordLoading, setIsPasswordLoading] = useState(false);
   const [showLogoutConfirmDialog, setShowLogoutConfirmDialog] = useState(false);
+
+  // API Key states
+  const [isApiKeyDialogOpen, setIsApiKeyDialogOpen] = useState(false);
+  const [newApiKeyName, setNewApiKeyName] = useState('');
+  const [newApiKeyPermissions, setNewApiKeyPermissions] = useState<string[]>(
+    []
+  );
+  const [isFullAccess, setIsFullAccess] = useState(true);
+  const [generatedApiKey, setGeneratedApiKey] = useState<string | null>(null);
+  const [showApiKey, setShowApiKey] = useState(false);
+  const [deleteKeyId, setDeleteKeyId] = useState<string | null>(null);
 
   useEffect(() => {
     if (me) {
@@ -311,6 +339,121 @@ export default function AccountSettingsPage() {
     }
   };
 
+  // API Key functions
+  const handleCreateApiKey = async (event: React.FormEvent) => {
+    event.preventDefault();
+
+    if (!newApiKeyName.trim()) {
+      toast.error(t('api_key_name_required'));
+      return;
+    }
+
+    try {
+      const result = await createApiKey.mutateAsync({
+        name: newApiKeyName.trim(),
+        permissions: isFullAccess ? [] : newApiKeyPermissions,
+      });
+
+      setGeneratedApiKey(result.apiKey);
+      setNewApiKeyName('');
+      setNewApiKeyPermissions([]);
+      setIsFullAccess(true);
+      setShowApiKey(true);
+      toast.success(t('api_key_created_successfully'));
+      refetchApiKeys();
+    } catch (error) {
+      console.error('Failed to create API key:', error);
+      toast.error(t('failed_to_create_api_key'));
+    }
+  };
+
+  const handleDeleteApiKey = async (id: string) => {
+    try {
+      await deleteApiKey.mutateAsync({ id });
+      toast.success(t('api_key_deleted_successfully'));
+      setDeleteKeyId(null);
+      refetchApiKeys();
+    } catch (error) {
+      console.error('Failed to delete API key:', error);
+      toast.error(t('failed_to_delete_api_key'));
+    }
+  };
+
+  const copyToClipboard = async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      toast.success(t('copied_to_clipboard'));
+    } catch {
+      toast.error(t('failed_to_copy_to_clipboard'));
+    }
+  };
+
+  const resetApiKeyDialog = () => {
+    setIsApiKeyDialogOpen(false);
+    setGeneratedApiKey(null);
+    setShowApiKey(false);
+    setNewApiKeyName('');
+    setNewApiKeyPermissions([]);
+    setIsFullAccess(true);
+  };
+
+  // Available permissions
+  const availablePermissions = [
+    {
+      value: 'read:contacts',
+      label: 'Read Contacts',
+      description: 'View contact information',
+    },
+    {
+      value: 'write:contacts',
+      label: 'Write Contacts',
+      description: 'Create, update, and delete contacts',
+    },
+    {
+      value: 'read:calendar',
+      label: 'Read Calendar',
+      description: 'View calendar events',
+    },
+    {
+      value: 'write:calendar',
+      label: 'Write Calendar',
+      description: 'Create, update, and delete calendar events',
+    },
+    { value: 'read:tasks', label: 'Read Tasks', description: 'View tasks' },
+    {
+      value: 'write:tasks',
+      label: 'Write Tasks',
+      description: 'Create, update, and delete tasks',
+    },
+    {
+      value: 'read:resources',
+      label: 'Read Resources',
+      description: 'View resources and content',
+    },
+    {
+      value: 'write:resources',
+      label: 'Write Resources',
+      description: 'Create, update, and delete resources',
+    },
+  ];
+
+  const togglePermission = (permission: string) => {
+    setNewApiKeyPermissions((prev) =>
+      prev.includes(permission)
+        ? prev.filter((p) => p !== permission)
+        : [...prev, permission]
+    );
+    // If we're selecting individual permissions, turn off full access
+    setIsFullAccess(false);
+  };
+
+  const toggleFullAccess = (checked: boolean) => {
+    setIsFullAccess(checked);
+    if (checked) {
+      setNewApiKeyPermissions([]);
+    }
+  };
+
   return (
     <div className='container mx-auto max-w-4xl space-y-4 px-4 pt-10'>
       <PageHeader
@@ -323,6 +466,7 @@ export default function AccountSettingsPage() {
           <TabsList>
             <TabsTrigger value='profile'>{t('profile')}</TabsTrigger>
             <TabsTrigger value='password'>{t('password')}</TabsTrigger>
+            <TabsTrigger value='api-keys'>API Keys</TabsTrigger>
           </TabsList>
 
           <TabsContent className='space-y-4' value='profile'>
@@ -567,6 +711,127 @@ export default function AccountSettingsPage() {
               </form>
             </div>
           </TabsContent>
+
+          <TabsContent className='space-y-4' value='api-keys'>
+            <div className='space-y-4'>
+              <div className='flex items-center justify-between'>
+                <div className='space-y-1'>
+                  <h2 className='font-semibold text-2xl tracking-tight'>
+                    {t('api_keys')}
+                  </h2>
+                  <p className='text-muted-foreground text-sm'>
+                    {t('api_keys_description')}
+                  </p>
+                </div>
+                <Button onClick={() => setIsApiKeyDialogOpen(true)} size='sm'>
+                  <Plus className='mr-2 h-4 w-4' />
+                  {t('generate_api_key')}
+                </Button>
+              </div>
+
+              {/* API Keys List */}
+              {apiKeys?.length === 0 ? (
+                <div className='rounded-lg border border-dashed bg-card p-12 text-center'>
+                  <Key className='mx-auto mb-4 h-12 w-12 text-muted-foreground' />
+                  <h3 className='mb-2 font-semibold text-lg'>
+                    {t('no_api_keys')}
+                  </h3>
+                  <p className='mx-auto mb-4 max-w-md text-muted-foreground text-sm'>
+                    {t('no_api_keys_description')}
+                  </p>
+                  <Button
+                    onClick={() => setIsApiKeyDialogOpen(true)}
+                    variant='outline'
+                  >
+                    <Plus className='mr-2 h-4 w-4' />
+                    {t('generate_your_first_api_key')}
+                  </Button>
+                </div>
+              ) : (
+                <div className='grid gap-4'>
+                  {apiKeys?.map((key) => (
+                    <div
+                      className='group rounded-lg border bg-card p-4 shadow-sm'
+                      key={key.id}
+                    >
+                      <div className='flex items-start justify-between'>
+                        <div className='flex-1 space-y-3'>
+                          <div className='space-y-2'>
+                            <h4 className='font-semibold text-lg'>
+                              {key.name}
+                            </h4>
+
+                            <div className='flex items-center gap-3 text-muted-foreground text-sm'>
+                              <code className='rounded bg-muted px-2 py-1 font-mono text-xs'>
+                                {key.keyPrefix}••••••••••••••••••••
+                              </code>
+                              <span>•</span>
+                              <span>
+                                {t('created')}{' '}
+                                {key.createdAt.toLocaleDateString()}
+                              </span>
+                              {key.lastUsedAt && (
+                                <>
+                                  <span>•</span>
+                                  <span>
+                                    {t('last_used')}{' '}
+                                    {key.lastUsedAt.toLocaleDateString()}
+                                  </span>
+                                </>
+                              )}
+                              {key.usageCount !== null &&
+                                key.usageCount > 0 && (
+                                  <>
+                                    <span>•</span>
+                                    <span>
+                                      {t('api_calls', {
+                                        count: key.usageCount,
+                                      })}
+                                    </span>
+                                  </>
+                                )}
+                            </div>
+                          </div>
+
+                          {key.permissions &&
+                            JSON.parse(key.permissions).length > 0 && (
+                              <div className='space-y-2'>
+                                <p className='font-medium text-sm'>
+                                  {t('permissions')}
+                                </p>
+                                <div className='flex flex-wrap gap-1'>
+                                  {JSON.parse(key.permissions).map(
+                                    (permission: string) => (
+                                      <Badge
+                                        className='text-xs'
+                                        key={permission}
+                                        variant='outline'
+                                      >
+                                        {permission}
+                                      </Badge>
+                                    )
+                                  )}
+                                </div>
+                              </div>
+                            )}
+                        </div>
+
+                        <div className='flex items-center'>
+                          <Button
+                            onClick={() => setDeleteKeyId(key.id)}
+                            size='sm'
+                            variant='outline'
+                          >
+                            <Trash2 className='h-4 w-4' />
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </TabsContent>
         </Tabs>
       </div>
 
@@ -640,6 +905,198 @@ export default function AccountSettingsPage() {
         onOpenChange={setShowLogoutConfirmDialog}
         open={showLogoutConfirmDialog}
         title={t('forgot_password_title')}
+      />
+
+      {/* Create API Key Dialog */}
+      <Dialog
+        onOpenChange={(open) => {
+          if (open) {
+            setIsApiKeyDialogOpen(open);
+          } else {
+            resetApiKeyDialog();
+          }
+        }}
+        open={isApiKeyDialogOpen}
+      >
+        <DialogContent className='sm:max-w-lg'>
+          <DialogHeader>
+            <DialogTitle>
+              {generatedApiKey
+                ? t('api_key_generated')
+                : t('generate_new_api_key')}
+            </DialogTitle>
+            <DialogDescription>
+              {generatedApiKey
+                ? t('save_api_key_warning')
+                : t('create_new_api_key_description')}
+            </DialogDescription>
+          </DialogHeader>
+
+          {generatedApiKey ? (
+            <div className='space-y-4 py-4'>
+              <div className='space-y-3'>
+                <Label className='font-semibold text-sm'>
+                  {t('your_new_api_key')}
+                </Label>
+                <div className='flex items-center gap-2'>
+                  <Input
+                    className='font-mono text-sm'
+                    readOnly
+                    type={showApiKey ? 'text' : 'password'}
+                    value={generatedApiKey}
+                  />
+                  <Button
+                    onClick={() => setShowApiKey(!showApiKey)}
+                    size='sm'
+                    variant='outline'
+                  >
+                    {showApiKey ? (
+                      <EyeOff className='h-4 w-4' />
+                    ) : (
+                      <Eye className='h-4 w-4' />
+                    )}
+                  </Button>
+                  <Button
+                    onClick={() => copyToClipboard(generatedApiKey)}
+                    size='sm'
+                    variant='outline'
+                  >
+                    <Copy className='h-4 w-4' />
+                  </Button>
+                </div>
+              </div>
+              <div className='rounded-lg border border-amber-200 bg-amber-50 p-4 dark:border-amber-800 dark:bg-amber-950'>
+                <p className='text-amber-900 text-sm dark:text-amber-100'>
+                  <strong>{t('important')}:</strong> {t('api_key_save_warning')}
+                </p>
+              </div>
+              <DialogFooter>
+                <Button onClick={resetApiKeyDialog}>
+                  {t('ive_saved_my_api_key')}
+                </Button>
+              </DialogFooter>
+            </div>
+          ) : (
+            <form onSubmit={handleCreateApiKey}>
+              <div className='space-y-6 py-4'>
+                <div className='space-y-3'>
+                  <Label className='font-semibold' htmlFor='apiKeyName'>
+                    {t('name')}
+                  </Label>
+                  <Input
+                    id='apiKeyName'
+                    onChange={(e) => setNewApiKeyName(e.target.value)}
+                    placeholder={t('api_key_name_placeholder')}
+                    type='text'
+                    value={newApiKeyName}
+                  />
+                </div>
+
+                <div className='space-y-3'>
+                  <Label className='font-semibold'>{t('permissions')}</Label>
+                  <div className='space-y-4 rounded-lg border p-4'>
+                    {/* Full Access Option */}
+                    <div className='flex items-start space-x-3 rounded-md border bg-blue-50/50 p-4 dark:bg-blue-950/20'>
+                      <Checkbox
+                        checked={isFullAccess}
+                        id='full-access'
+                        onCheckedChange={toggleFullAccess}
+                      />
+                      <div className='flex-1'>
+                        <Label
+                          className='cursor-pointer font-medium text-sm'
+                          htmlFor='full-access'
+                        >
+                          {t('full_access')}
+                        </Label>
+                        <p className='text-muted-foreground text-xs leading-relaxed'>
+                          {t('full_access_description')}
+                        </p>
+                      </div>
+                    </div>
+
+                    {!isFullAccess && (
+                      <>
+                        <div className='my-4 h-px bg-border' />
+                        <div className='mb-3 space-y-1'>
+                          <p className='font-medium text-sm'>
+                            {t('or_select_specific_permissions')}
+                          </p>
+                          <p className='text-muted-foreground text-xs'>
+                            {t('select_specific_permissions_description')}
+                          </p>
+                        </div>
+                        <div className='grid gap-3 sm:grid-cols-2'>
+                          {availablePermissions.map((permission) => (
+                            <div
+                              className='flex items-start space-x-3 rounded-md p-3 transition-colors hover:bg-muted/50'
+                              key={permission.value}
+                            >
+                              <Checkbox
+                                checked={newApiKeyPermissions.includes(
+                                  permission.value
+                                )}
+                                id={permission.value}
+                                onCheckedChange={() =>
+                                  togglePermission(permission.value)
+                                }
+                              />
+                              <div className='flex-1'>
+                                <Label
+                                  className='cursor-pointer font-medium text-sm'
+                                  htmlFor={permission.value}
+                                >
+                                  {permission.label}
+                                </Label>
+                                <p className='text-muted-foreground text-xs leading-relaxed'>
+                                  {permission.description}
+                                </p>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </>
+                    )}
+                  </div>
+                </div>
+              </div>
+              <DialogFooter>
+                <Button
+                  onClick={resetApiKeyDialog}
+                  type='button'
+                  variant='outline'
+                >
+                  {t('cancel')}
+                </Button>
+                <Button
+                  disabled={createApiKey.isPending || !newApiKeyName.trim()}
+                  type='submit'
+                >
+                  {createApiKey.isPending
+                    ? t('generating')
+                    : t('generate_api_key')}
+                </Button>
+              </DialogFooter>
+            </form>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete API Key Dialog */}
+      <ActionAlertDialog
+        cancelText={t('cancel')}
+        confirmText={
+          deleteApiKey.isPending ? t('deleting') : t('delete_api_key')
+        }
+        description={t('delete_api_key_warning')}
+        onConfirm={() => deleteKeyId && handleDeleteApiKey(deleteKeyId)}
+        onOpenChange={(open) => {
+          if (!open) {
+            setDeleteKeyId(null);
+          }
+        }}
+        open={!!deleteKeyId}
+        title={t('delete_api_key')}
       />
     </div>
   );
