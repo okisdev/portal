@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import { and, eq } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 import type { NextRequest } from 'next/server';
 import { user, userApiKey } from '@/drizzle/schema';
 import { database } from '@/lib/database';
@@ -55,16 +55,12 @@ export async function authenticateApiKey(
         userId: userApiKey.userId,
         name: userApiKey.name,
         permissions: userApiKey.permissions,
-        isActive: userApiKey.isActive,
-        revokedAt: userApiKey.revokedAt,
         expiresAt: userApiKey.expiresAt,
         lastUsedAt: userApiKey.lastUsedAt,
         usageCount: userApiKey.usageCount,
       })
       .from(userApiKey)
-      .where(
-        and(eq(userApiKey.keyHash, keyHash), eq(userApiKey.isActive, true))
-      )
+      .where(eq(userApiKey.keyHash, keyHash))
       .then((rows) => rows[0]);
 
     if (!apiKeyRecord) {
@@ -73,11 +69,6 @@ export async function authenticateApiKey(
 
     // Check if API key is expired
     if (apiKeyRecord.expiresAt && apiKeyRecord.expiresAt < new Date()) {
-      return null;
-    }
-
-    // Check if API key is revoked
-    if (apiKeyRecord.revokedAt) {
       return null;
     }
 

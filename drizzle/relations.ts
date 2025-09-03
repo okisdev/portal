@@ -412,8 +412,4 @@ export const userApiKeyRelations = relations(userApiKey, ({ one }) => ({
     fields: [userApiKey.userId],
     references: [user.id],
   }),
-  revokedBy: one(user, {
-    fields: [userApiKey.revokedBy],
-    references: [user.id],
-  }),
 }));

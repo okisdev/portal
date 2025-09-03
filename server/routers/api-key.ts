@@ -38,8 +38,6 @@ export const apiKeyRouter = createTRPCRouter({
         lastUsedAt: userApiKey.lastUsedAt,
         lastUsedIp: userApiKey.lastUsedIp,
         expiresAt: userApiKey.expiresAt,
-        isActive: userApiKey.isActive,
-        revokedAt: userApiKey.revokedAt,
         usageCount: userApiKey.usageCount,
         createdAt: userApiKey.createdAt,
       })
@@ -92,14 +90,9 @@ export const apiKeyRouter = createTRPCRouter({
       };
     }),
 
-  // Revoke an API key
-  revokeApiKey: protectedProcedure
-    .input(
-      z.object({
-        id: z.string(),
-        reason: z.string().optional(),
-      })
-    )
+  // Delete an API key
+  deleteApiKey: protectedProcedure
+    .input(z.object({ id: z.string() }))
     .mutation(async ({ ctx, input }) => {
       // Verify the API key belongs to the current user
       const apiKeyRecord = await ctx.db
@@ -120,64 +113,8 @@ export const apiKeyRouter = createTRPCRouter({
         });
       }
 
-      if (apiKeyRecord.revokedAt) {
-        throw new TRPCError({
-          code: 'BAD_REQUEST',
-          message: 'API key is already revoked',
-        });
-      }
-
-      // Revoke the API key
-      return ctx.db
-        .update(userApiKey)
-        .set({
-          revokedAt: new Date(),
-          revokedBy: ctx.session.user.id,
-          revokeReason: input.reason,
-          isActive: false,
-        })
-        .where(eq(userApiKey.id, input.id));
-    }),
-
-  // Toggle API key active status
-  toggleApiKey: protectedProcedure
-    .input(
-      z.object({
-        id: z.string(),
-        isActive: z.boolean(),
-      })
-    )
-    .mutation(async ({ ctx, input }) => {
-      // Verify the API key belongs to the current user
-      const apiKeyRecord = await ctx.db
-        .select()
-        .from(userApiKey)
-        .where(
-          and(
-            eq(userApiKey.id, input.id),
-            eq(userApiKey.userId, ctx.session.user.id)
-          )
-        )
-        .then((rows) => rows[0]);
-
-      if (!apiKeyRecord) {
-        throw new TRPCError({
-          code: 'NOT_FOUND',
-          message: 'API key not found',
-        });
-      }
-
-      if (apiKeyRecord.revokedAt) {
-        throw new TRPCError({
-          code: 'BAD_REQUEST',
-          message: 'Cannot toggle revoked API key',
-        });
-      }
-
-      return ctx.db
-        .update(userApiKey)
-        .set({ isActive: input.isActive })
-        .where(eq(userApiKey.id, input.id));
+      // Delete the API key
+      return ctx.db.delete(userApiKey).where(eq(userApiKey.id, input.id));
     }),
 
   // Update API key usage stats (typically called by middleware)

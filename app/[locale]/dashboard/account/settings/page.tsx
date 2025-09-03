@@ -55,8 +55,7 @@ export default function AccountSettingsPage() {
   const updateAccount = api.account.updateMe.useMutation();
   const updateTimezone = api.account.updateTimezone.useMutation();
   const createApiKey = api.apiKey.createApiKey.useMutation();
-  const revokeApiKey = api.apiKey.revokeApiKey.useMutation();
-  const toggleApiKey = api.apiKey.toggleApiKey.useMutation();
+  const deleteApiKey = api.apiKey.deleteApiKey.useMutation();
 
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -81,8 +80,7 @@ export default function AccountSettingsPage() {
   );
   const [generatedApiKey, setGeneratedApiKey] = useState<string | null>(null);
   const [showApiKey, setShowApiKey] = useState(false);
-  const [revokeKeyId, setRevokeKeyId] = useState<string | null>(null);
-  const [revokeReason, setRevokeReason] = useState('');
+  const [deleteKeyId, setDeleteKeyId] = useState<string | null>(null);
 
   useEffect(() => {
     if (me) {
@@ -366,29 +364,15 @@ export default function AccountSettingsPage() {
     }
   };
 
-  const handleRevokeApiKey = async (id: string, reason?: string) => {
+  const handleDeleteApiKey = async (id: string) => {
     try {
-      await revokeApiKey.mutateAsync({ id, reason });
-      toast.success('API key revoked successfully');
-      setRevokeKeyId(null);
-      setRevokeReason('');
+      await deleteApiKey.mutateAsync({ id });
+      toast.success('API key deleted successfully');
+      setDeleteKeyId(null);
       refetchApiKeys();
     } catch (error) {
-      console.error('Failed to revoke API key:', error);
-      toast.error('Failed to revoke API key');
-    }
-  };
-
-  const handleToggleApiKey = async (id: string, isActive: boolean) => {
-    try {
-      await toggleApiKey.mutateAsync({ id, isActive });
-      toast.success(
-        `API key ${isActive ? 'enabled' : 'disabled'} successfully`
-      );
-      refetchApiKeys();
-    } catch (error) {
-      console.error('Failed to toggle API key:', error);
-      toast.error('Failed to update API key status');
+      console.error('Failed to delete API key:', error);
+      toast.error('Failed to delete API key');
     }
   };
 
@@ -760,16 +744,6 @@ export default function AccountSettingsPage() {
                         <div className='flex-1 space-y-1'>
                           <div className='flex items-center gap-2'>
                             <h4 className='font-medium'>{key.name}</h4>
-
-                            {key.revokedAt ? (
-                              <Badge variant='destructive'>Revoked</Badge>
-                            ) : (
-                              <Badge
-                                variant={key.isActive ? 'default' : 'secondary'}
-                              >
-                                {key.isActive ? 'Active' : 'Inactive'}
-                              </Badge>
-                            )}
                           </div>
                           {key.permissions && (
                             <div className='mt-1 flex flex-wrap gap-1'>
@@ -811,42 +785,18 @@ export default function AccountSettingsPage() {
                           </div>
                         </div>
                         <div className='flex items-center gap-2'>
-                          {!key.revokedAt && (
-                            <>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <Button
-                                    onClick={() =>
-                                      handleToggleApiKey(key.id, !key.isActive)
-                                    }
-                                    size='sm'
-                                    variant='outline'
-                                  >
-                                    {key.isActive ? (
-                                      <EyeOff className='h-4 w-4' />
-                                    ) : (
-                                      <Eye className='h-4 w-4' />
-                                    )}
-                                  </Button>
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                  {key.isActive ? 'Disable' : 'Enable'} API key
-                                </TooltipContent>
-                              </Tooltip>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <Button
-                                    onClick={() => setRevokeKeyId(key.id)}
-                                    size='sm'
-                                    variant='outline'
-                                  >
-                                    <Trash2 className='h-4 w-4' />
-                                  </Button>
-                                </TooltipTrigger>
-                                <TooltipContent>Revoke API key</TooltipContent>
-                              </Tooltip>
-                            </>
-                          )}
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                onClick={() => setDeleteKeyId(key.id)}
+                                size='sm'
+                                variant='outline'
+                              >
+                                <Trash2 className='h-4 w-4' />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>Delete API key</TooltipContent>
+                          </Tooltip>
                         </div>
                       </div>
                     ))}
@@ -1068,55 +1018,33 @@ export default function AccountSettingsPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Revoke API Key Dialog */}
+      {/* Delete API Key Dialog */}
       <Dialog
         onOpenChange={(open) => {
           if (!open) {
-            setRevokeKeyId(null);
-            setRevokeReason('');
+            setDeleteKeyId(null);
           }
         }}
-        open={!!revokeKeyId}
+        open={!!deleteKeyId}
       >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Revoke API Key</DialogTitle>
+            <DialogTitle>Delete API Key</DialogTitle>
             <DialogDescription>
               This action cannot be undone. The API key will be permanently
-              revoked.
+              deleted.
             </DialogDescription>
           </DialogHeader>
-          <div className='space-y-4 py-4'>
-            <div className='space-y-2'>
-              <Label htmlFor='revokeReason'>Reason (optional)</Label>
-              <Input
-                id='revokeReason'
-                onChange={(e) => setRevokeReason(e.target.value)}
-                placeholder='e.g., Security breach, No longer needed'
-                type='text'
-                value={revokeReason}
-              />
-            </div>
-          </div>
           <DialogFooter>
-            <Button
-              onClick={() => {
-                setRevokeKeyId(null);
-                setRevokeReason('');
-              }}
-              variant='outline'
-            >
+            <Button onClick={() => setDeleteKeyId(null)} variant='outline'>
               Cancel
             </Button>
             <Button
-              disabled={revokeApiKey.isPending}
-              onClick={() =>
-                revokeKeyId &&
-                handleRevokeApiKey(revokeKeyId, revokeReason || undefined)
-              }
+              disabled={deleteApiKey.isPending}
+              onClick={() => deleteKeyId && handleDeleteApiKey(deleteKeyId)}
               variant='destructive'
             >
-              {revokeApiKey.isPending ? 'Revoking...' : 'Revoke API Key'}
+              {deleteApiKey.isPending ? 'Deleting...' : 'Delete API Key'}
             </Button>
           </DialogFooter>
         </DialogContent>

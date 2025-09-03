@@ -831,10 +831,6 @@ export const userApiKey = pgTable(
     lastUsedAt: timestamp({ mode: 'date' }), // Track when the key was last used
     lastUsedIp: text('last_used_ip'), // Track IP address of last usage
     expiresAt: timestamp({ mode: 'date' }), // Optional expiration date
-    isActive: boolean().default(true), // Enable/disable the key
-    revokedAt: timestamp({ mode: 'date' }), // When the key was revoked
-    revokedBy: text().references(() => user.id), // Who revoked the key
-    revokeReason: text(), // Reason for revocation
     usageCount: integer().default(0), // Track number of times used
     metadata: text(), // JSON string for additional data (rate limits, etc.)
     createdAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
