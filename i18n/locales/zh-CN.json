@@ -103,7 +103,7 @@
   "already_have_an_account": "已有账户？",
   "any_additional_notes": "任何其他备注...",
   "any_condition": "任意条件",
-  "api_calls": "{count}调用",
+
   "api_key_created_successfully": "API密钥成功创建了",
   "api_key_deleted_successfully": "API密钥成功删除",
   "api_key_generated": "生成的API键",

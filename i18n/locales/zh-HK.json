@@ -103,7 +103,7 @@
   "already_have_an_account": "已有賬戶？",
   "any_additional_notes": "任何其他備註...",
   "any_condition": "任意條件",
-  "api_calls": "{count}調用",
+
   "api_key_created_successfully": "API密鑰成功創建了",
   "api_key_deleted_successfully": "API密鑰成功刪除",
   "api_key_generated": "生成的API鍵",

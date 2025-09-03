@@ -93,16 +93,6 @@ export function ApiKeysSection({ onCreateApiKey }: ApiKeysectionProps) {
                             </span>
                           </>
                         )}
-                        {key.usageCount !== null && key.usageCount > 0 && (
-                          <>
-                            <span>•</span>
-                            <span>
-                              {t('api_calls', {
-                                count: key.usageCount,
-                              })}
-                            </span>
-                          </>
-                        )}
                       </div>
                     </div>
 
