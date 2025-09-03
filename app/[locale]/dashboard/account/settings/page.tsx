@@ -21,6 +21,7 @@ import { PageHeader } from '@/components/shared/page-header';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Dialog,
   DialogContent,
@@ -78,6 +79,7 @@ export default function AccountSettingsPage() {
   const [newApiKeyPermissions, setNewApiKeyPermissions] = useState<string[]>(
     []
   );
+  const [isFullAccess, setIsFullAccess] = useState(true);
   const [generatedApiKey, setGeneratedApiKey] = useState<string | null>(null);
   const [showApiKey, setShowApiKey] = useState(false);
   const [deleteKeyId, setDeleteKeyId] = useState<string | null>(null);
@@ -342,46 +344,47 @@ export default function AccountSettingsPage() {
     event.preventDefault();
 
     if (!newApiKeyName.trim()) {
-      toast.error('API key name is required');
+      toast.error(t('api_key_name_required'));
       return;
     }
 
     try {
       const result = await createApiKey.mutateAsync({
         name: newApiKeyName.trim(),
-        permissions: newApiKeyPermissions,
+        permissions: isFullAccess ? [] : newApiKeyPermissions,
       });
 
       setGeneratedApiKey(result.apiKey);
       setNewApiKeyName('');
       setNewApiKeyPermissions([]);
+      setIsFullAccess(true);
       setShowApiKey(true);
-      toast.success('API key created successfully');
+      toast.success(t('api_key_created_successfully'));
       refetchApiKeys();
     } catch (error) {
       console.error('Failed to create API key:', error);
-      toast.error('Failed to create API key');
+      toast.error(t('failed_to_create_api_key'));
     }
   };
 
   const handleDeleteApiKey = async (id: string) => {
     try {
       await deleteApiKey.mutateAsync({ id });
-      toast.success('API key deleted successfully');
+      toast.success(t('api_key_deleted_successfully'));
       setDeleteKeyId(null);
       refetchApiKeys();
     } catch (error) {
       console.error('Failed to delete API key:', error);
-      toast.error('Failed to delete API key');
+      toast.error(t('failed_to_delete_api_key'));
     }
   };
 
   const copyToClipboard = async (text: string) => {
     try {
       await navigator.clipboard.writeText(text);
-      toast.success('Copied to clipboard');
+      toast.success(t('copied_to_clipboard'));
     } catch {
-      toast.error('Failed to copy to clipboard');
+      toast.error(t('failed_to_copy_to_clipboard'));
     }
   };
 
@@ -391,6 +394,7 @@ export default function AccountSettingsPage() {
     setShowApiKey(false);
     setNewApiKeyName('');
     setNewApiKeyPermissions([]);
+    setIsFullAccess(true);
   };
 
   // Available permissions
@@ -439,6 +443,15 @@ export default function AccountSettingsPage() {
         ? prev.filter((p) => p !== permission)
         : [...prev, permission]
     );
+    // If we're selecting individual permissions, turn off full access
+    setIsFullAccess(false);
+  };
+
+  const toggleFullAccess = (checked: boolean) => {
+    setIsFullAccess(checked);
+    if (checked) {
+      setNewApiKeyPermissions([]);
+    }
   };
 
   return (
@@ -702,107 +715,121 @@ export default function AccountSettingsPage() {
           <TabsContent className='space-y-4' value='api-keys'>
             <div className='space-y-4'>
               <div className='flex items-center justify-between'>
-                <div>
-                  <h2 className='font-medium text-2xl tracking-tight'>
-                    API Keys
+                <div className='space-y-1'>
+                  <h2 className='font-semibold text-2xl tracking-tight'>
+                    {t('api_keys')}
                   </h2>
                   <p className='text-muted-foreground text-sm'>
-                    Manage your API keys to authenticate with the Portal API
+                    {t('api_keys_description')}
                   </p>
                 </div>
-                <Button onClick={() => setIsApiKeyDialogOpen(true)}>
+                <Button onClick={() => setIsApiKeyDialogOpen(true)} size='sm'>
                   <Plus className='mr-2 h-4 w-4' />
-                  Generate API Key
+                  {t('generate_api_key')}
                 </Button>
               </div>
 
               {/* API Keys List */}
-              <div className='space-y-4'>
-                {apiKeys?.length === 0 ? (
-                  <div className='flex flex-col items-center justify-center rounded-lg border border-dashed p-8 text-center'>
-                    <Key className='mb-4 h-12 w-12 text-muted-foreground' />
-                    <h3 className='mb-2 font-semibold text-lg'>No API keys</h3>
-                    <p className='mb-4 text-muted-foreground text-sm'>
-                      You haven't created any API keys yet. Generate your first
-                      API key to get started.
-                    </p>
-                    <Button
-                      onClick={() => setIsApiKeyDialogOpen(true)}
-                      variant='outline'
+              {apiKeys?.length === 0 ? (
+                <div className='rounded-lg border border-dashed bg-card p-12 text-center'>
+                  <Key className='mx-auto mb-4 h-12 w-12 text-muted-foreground' />
+                  <h3 className='mb-2 font-semibold text-lg'>
+                    {t('no_api_keys')}
+                  </h3>
+                  <p className='mx-auto mb-4 max-w-md text-muted-foreground text-sm'>
+                    {t('no_api_keys_description')}
+                  </p>
+                  <Button
+                    onClick={() => setIsApiKeyDialogOpen(true)}
+                    variant='outline'
+                  >
+                    <Plus className='mr-2 h-4 w-4' />
+                    {t('generate_your_first_api_key')}
+                  </Button>
+                </div>
+              ) : (
+                <div className='grid gap-4'>
+                  {apiKeys?.map((key) => (
+                    <div
+                      className='group rounded-lg border bg-card p-4 shadow-sm'
+                      key={key.id}
                     >
-                      <Plus className='mr-2 h-4 w-4' />
-                      Generate Your First API Key
-                    </Button>
-                  </div>
-                ) : (
-                  <div className='space-y-3'>
-                    {apiKeys?.map((key) => (
-                      <div
-                        className='flex items-center justify-between rounded-lg border p-4'
-                        key={key.id}
-                      >
-                        <div className='flex-1 space-y-1'>
-                          <div className='flex items-center gap-2'>
-                            <h4 className='font-medium'>{key.name}</h4>
-                          </div>
-                          {key.permissions && (
-                            <div className='mt-1 flex flex-wrap gap-1'>
-                              {JSON.parse(key.permissions)
-                                .slice(0, 3)
-                                .map((permission: string) => (
-                                  <Badge
-                                    className='text-xs'
-                                    key={permission}
-                                    variant='outline'
-                                  >
-                                    {permission}
-                                  </Badge>
-                                ))}
-                              {JSON.parse(key.permissions).length > 3 && (
-                                <Badge className='text-xs' variant='outline'>
-                                  +{JSON.parse(key.permissions).length - 3} more
-                                </Badge>
-                              )}
-                            </div>
-                          )}
-                          <div className='flex items-center gap-4 text-muted-foreground text-sm'>
-                            <span>
-                              <code className='rounded bg-muted px-1 py-0.5 text-xs'>
-                                {key.keyPrefix}...
+                      <div className='flex items-start justify-between'>
+                        <div className='flex-1 space-y-3'>
+                          <div className='space-y-2'>
+                            <h4 className='font-semibold text-lg'>
+                              {key.name}
+                            </h4>
+
+                            <div className='flex items-center gap-3 text-muted-foreground text-sm'>
+                              <code className='rounded bg-muted px-2 py-1 font-mono text-xs'>
+                                {key.keyPrefix}••••••••••••••••••••
                               </code>
-                            </span>
-                            <span>
-                              Created {key.createdAt.toLocaleDateString()}
-                            </span>
-                            {key.lastUsedAt && (
+                              <span>•</span>
                               <span>
-                                Last used {key.lastUsedAt.toLocaleDateString()}
+                                {t('created')}{' '}
+                                {key.createdAt.toLocaleDateString()}
                               </span>
-                            )}
-                            {key.usageCount !== null && (
-                              <span>Used {key.usageCount} times</span>
-                            )}
+                              {key.lastUsedAt && (
+                                <>
+                                  <span>•</span>
+                                  <span>
+                                    {t('last_used')}{' '}
+                                    {key.lastUsedAt.toLocaleDateString()}
+                                  </span>
+                                </>
+                              )}
+                              {key.usageCount !== null &&
+                                key.usageCount > 0 && (
+                                  <>
+                                    <span>•</span>
+                                    <span>
+                                      {t('api_calls', {
+                                        count: key.usageCount,
+                                      })}
+                                    </span>
+                                  </>
+                                )}
+                            </div>
                           </div>
+
+                          {key.permissions &&
+                            JSON.parse(key.permissions).length > 0 && (
+                              <div className='space-y-2'>
+                                <p className='font-medium text-sm'>
+                                  {t('permissions')}
+                                </p>
+                                <div className='flex flex-wrap gap-1'>
+                                  {JSON.parse(key.permissions).map(
+                                    (permission: string) => (
+                                      <Badge
+                                        className='text-xs'
+                                        key={permission}
+                                        variant='outline'
+                                      >
+                                        {permission}
+                                      </Badge>
+                                    )
+                                  )}
+                                </div>
+                              </div>
+                            )}
                         </div>
-                        <div className='flex items-center gap-2'>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button
-                                onClick={() => setDeleteKeyId(key.id)}
-                                size='sm'
-                                variant='outline'
-                              >
-                                <Trash2 className='h-4 w-4' />
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>Delete API key</TooltipContent>
-                          </Tooltip>
+
+                        <div className='flex items-center'>
+                          <Button
+                            onClick={() => setDeleteKeyId(key.id)}
+                            size='sm'
+                            variant='outline'
+                          >
+                            <Trash2 className='h-4 w-4' />
+                          </Button>
                         </div>
                       </div>
-                    ))}
-                  </div>
-                )}
-              </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </TabsContent>
         </Tabs>
@@ -891,31 +918,36 @@ export default function AccountSettingsPage() {
         }}
         open={isApiKeyDialogOpen}
       >
-        <DialogContent className='sm:max-w-md'>
+        <DialogContent className='sm:max-w-lg'>
           <DialogHeader>
             <DialogTitle>
-              {generatedApiKey ? 'API Key Generated' : 'Generate New API Key'}
+              {generatedApiKey
+                ? t('api_key_generated')
+                : t('generate_new_api_key')}
             </DialogTitle>
             <DialogDescription>
               {generatedApiKey
-                ? "Save this API key somewhere secure. You won't be able to see it again."
-                : 'Create a new API key for your application.'}
+                ? t('save_api_key_warning')
+                : t('create_new_api_key_description')}
             </DialogDescription>
           </DialogHeader>
 
           {generatedApiKey ? (
             <div className='space-y-4 py-4'>
-              <div className='space-y-2'>
-                <Label>Your new API key</Label>
+              <div className='space-y-3'>
+                <Label className='font-semibold text-sm'>
+                  {t('your_new_api_key')}
+                </Label>
                 <div className='flex items-center gap-2'>
                   <Input
+                    className='font-mono text-sm'
                     readOnly
                     type={showApiKey ? 'text' : 'password'}
                     value={generatedApiKey}
                   />
                   <Button
                     onClick={() => setShowApiKey(!showApiKey)}
-                    size='icon'
+                    size='sm'
                     variant='outline'
                   >
                     {showApiKey ? (
@@ -926,72 +958,104 @@ export default function AccountSettingsPage() {
                   </Button>
                   <Button
                     onClick={() => copyToClipboard(generatedApiKey)}
-                    size='icon'
+                    size='sm'
                     variant='outline'
                   >
                     <Copy className='h-4 w-4' />
                   </Button>
                 </div>
               </div>
-              <div className='rounded-lg bg-amber-50 p-3 dark:bg-amber-950'>
+              <div className='rounded-lg border border-amber-200 bg-amber-50 p-4 dark:border-amber-800 dark:bg-amber-950'>
                 <p className='text-amber-900 text-sm dark:text-amber-100'>
-                  ⚠️ Save this API key now. For security reasons, you won't be
-                  able to view it again.
+                  <strong>{t('important')}:</strong> {t('api_key_save_warning')}
                 </p>
               </div>
               <DialogFooter>
-                <Button onClick={resetApiKeyDialog} variant='outline'>
-                  Close
+                <Button onClick={resetApiKeyDialog}>
+                  {t('ive_saved_my_api_key')}
                 </Button>
               </DialogFooter>
             </div>
           ) : (
             <form onSubmit={handleCreateApiKey}>
-              <div className='space-y-4 py-4'>
-                <div className='space-y-2'>
-                  <Label htmlFor='apiKeyName'>Name</Label>
+              <div className='space-y-6 py-4'>
+                <div className='space-y-3'>
+                  <Label className='font-semibold' htmlFor='apiKeyName'>
+                    {t('name')}
+                  </Label>
                   <Input
                     id='apiKeyName'
                     onChange={(e) => setNewApiKeyName(e.target.value)}
-                    placeholder='e.g., Mobile App, Production Server'
+                    placeholder={t('api_key_name_placeholder')}
                     type='text'
                     value={newApiKeyName}
                   />
                 </div>
-                <div className='space-y-2'>
-                  <Label>Permissions</Label>
-                  <div className='max-h-48 space-y-2 overflow-y-auto rounded-md border p-3'>
-                    {availablePermissions.map((permission) => (
-                      <div
-                        className='flex items-center space-x-3'
-                        key={permission.value}
-                      >
-                        <input
-                          checked={newApiKeyPermissions.includes(
-                            permission.value
-                          )}
-                          className='rounded border-gray-300'
-                          id={permission.value}
-                          onChange={() => togglePermission(permission.value)}
-                          type='checkbox'
-                        />
-                        <div className='flex-1'>
-                          <Label
-                            className='cursor-pointer font-medium text-sm'
-                            htmlFor={permission.value}
-                          >
-                            {permission.label}
-                          </Label>
+
+                <div className='space-y-3'>
+                  <Label className='font-semibold'>{t('permissions')}</Label>
+                  <div className='space-y-4 rounded-lg border p-4'>
+                    {/* Full Access Option */}
+                    <div className='flex items-start space-x-3 rounded-md border bg-blue-50/50 p-4 dark:bg-blue-950/20'>
+                      <Checkbox
+                        checked={isFullAccess}
+                        id='full-access'
+                        onCheckedChange={toggleFullAccess}
+                      />
+                      <div className='flex-1'>
+                        <Label
+                          className='cursor-pointer font-medium text-sm'
+                          htmlFor='full-access'
+                        >
+                          {t('full_access')}
+                        </Label>
+                        <p className='text-muted-foreground text-xs leading-relaxed'>
+                          {t('full_access_description')}
+                        </p>
+                      </div>
+                    </div>
+
+                    {!isFullAccess && (
+                      <>
+                        <div className='my-4 h-px bg-border' />
+                        <div className='mb-3 space-y-1'>
+                          <p className='font-medium text-sm'>
+                            {t('or_select_specific_permissions')}
+                          </p>
                           <p className='text-muted-foreground text-xs'>
-                            {permission.description}
+                            {t('select_specific_permissions_description')}
                           </p>
                         </div>
-                      </div>
-                    ))}
-                    {newApiKeyPermissions.length === 0 && (
-                      <p className='text-muted-foreground text-sm italic'>
-                        Select permissions or leave empty for full access
-                      </p>
+                        <div className='grid gap-3 sm:grid-cols-2'>
+                          {availablePermissions.map((permission) => (
+                            <div
+                              className='flex items-start space-x-3 rounded-md p-3 transition-colors hover:bg-muted/50'
+                              key={permission.value}
+                            >
+                              <Checkbox
+                                checked={newApiKeyPermissions.includes(
+                                  permission.value
+                                )}
+                                id={permission.value}
+                                onCheckedChange={() =>
+                                  togglePermission(permission.value)
+                                }
+                              />
+                              <div className='flex-1'>
+                                <Label
+                                  className='cursor-pointer font-medium text-sm'
+                                  htmlFor={permission.value}
+                                >
+                                  {permission.label}
+                                </Label>
+                                <p className='text-muted-foreground text-xs leading-relaxed'>
+                                  {permission.description}
+                                </p>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </>
                     )}
                   </div>
                 </div>
@@ -1002,15 +1066,15 @@ export default function AccountSettingsPage() {
                   type='button'
                   variant='outline'
                 >
-                  Cancel
+                  {t('cancel')}
                 </Button>
                 <Button
                   disabled={createApiKey.isPending || !newApiKeyName.trim()}
                   type='submit'
                 >
                   {createApiKey.isPending
-                    ? 'Generating...'
-                    : 'Generate API Key'}
+                    ? t('generating')
+                    : t('generate_api_key')}
                 </Button>
               </DialogFooter>
             </form>
@@ -1019,36 +1083,21 @@ export default function AccountSettingsPage() {
       </Dialog>
 
       {/* Delete API Key Dialog */}
-      <Dialog
+      <ActionAlertDialog
+        cancelText={t('cancel')}
+        confirmText={
+          deleteApiKey.isPending ? t('deleting') : t('delete_api_key')
+        }
+        description={t('delete_api_key_warning')}
+        onConfirm={() => deleteKeyId && handleDeleteApiKey(deleteKeyId)}
         onOpenChange={(open) => {
           if (!open) {
             setDeleteKeyId(null);
           }
         }}
         open={!!deleteKeyId}
-      >
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Delete API Key</DialogTitle>
-            <DialogDescription>
-              This action cannot be undone. The API key will be permanently
-              deleted.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button onClick={() => setDeleteKeyId(null)} variant='outline'>
-              Cancel
-            </Button>
-            <Button
-              disabled={deleteApiKey.isPending}
-              onClick={() => deleteKeyId && handleDeleteApiKey(deleteKeyId)}
-              variant='destructive'
-            >
-              {deleteApiKey.isPending ? 'Deleting...' : 'Delete API Key'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        title={t('delete_api_key')}
+      />
     </div>
   );
 }
