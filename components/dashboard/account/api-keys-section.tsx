@@ -78,7 +78,7 @@ export function ApiKeysSection({ onCreateApiKey }: ApiKeysectionProps) {
 
                       <div className='flex items-center gap-3 text-muted-foreground text-sm'>
                         <code className='rounded bg-muted px-2 py-1 font-mono text-xs'>
-                          {key.keyPrefix}••••••••••••••••••••
+                          {key.keyPrefix}•••••
                         </code>
                         <span>•</span>
                         <span>

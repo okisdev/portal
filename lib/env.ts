@@ -20,10 +20,6 @@ export const env = createEnv({
     NEXT_PUBLIC_REACT_SCAN_API_KEY: z
       .string()
       .min(1, 'NEXT_PUBLIC_REACT_SCAN_API_KEY is required'),
-    NEXT_PUBLIC_UMAMI_WEBSITE_ID: z
-      .string()
-      .min(1, 'NEXT_PUBLIC_UMAMI_WEBSITE_ID is required')
-      .optional(),
     NEXT_PUBLIC_S3_PUBLIC_URL: z
       .string()
       .min(1, 'NEXT_PUBLIC_S3_PUBLIC_URL is required'),
@@ -40,7 +36,6 @@ export const env = createEnv({
     S3_ENDPOINT: process.env.S3_ENDPOINT,
     NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
     NEXT_PUBLIC_REACT_SCAN_API_KEY: process.env.NEXT_PUBLIC_REACT_SCAN_API_KEY,
-    NEXT_PUBLIC_UMAMI_WEBSITE_ID: process.env.NEXT_PUBLIC_UMAMI_WEBSITE_ID,
     NEXT_PUBLIC_S3_PUBLIC_URL: process.env.NEXT_PUBLIC_S3_PUBLIC_URL,
   },
 });

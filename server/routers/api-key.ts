@@ -5,12 +5,12 @@ import { z } from 'zod/v4';
 import { userApiKey } from '@/drizzle/schema';
 import { createTRPCRouter, protectedProcedure } from '@/server/trpc';
 
-// Regex for extracting API key prefix
-const API_KEY_PREFIX_REGEX = /^(pk_\w+_)/;
+// Regex for extracting API key prefix (portal_ + 6 characters)
+const API_KEY_PREFIX_REGEX = /^(portal_.{6})/;
 
 // Utility function to generate API key
 const generateApiKey = () => {
-  const prefix = 'pk_';
+  const prefix = 'portal_';
   const randomPart = randomBytes(32).toString('hex');
   return `${prefix}${randomPart}`;
 };
@@ -20,7 +20,7 @@ const hashApiKey = (apiKey: string) => {
   return createHash('sha256').update(apiKey).digest('hex');
 };
 
-// Extract prefix from API key
+// Extract prefix from API key (portal_ + first 6 characters of the random part)
 const extractPrefix = (apiKey: string) => {
   const match = apiKey.match(API_KEY_PREFIX_REGEX);
   return match ? match[1] : '';
@@ -38,7 +38,6 @@ export const apiKeyRouter = createTRPCRouter({
         lastUsedAt: userApiKey.lastUsedAt,
         lastUsedIp: userApiKey.lastUsedIp,
         expiresAt: userApiKey.expiresAt,
-        usageCount: userApiKey.usageCount,
         createdAt: userApiKey.createdAt,
       })
       .from(userApiKey)

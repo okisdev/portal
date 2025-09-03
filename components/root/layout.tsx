@@ -1,8 +1,6 @@
-import Script from 'next/script';
 import { NextIntlClientProvider } from 'next-intl';
 import { getMessages } from 'next-intl/server';
 import BodyProvider from '@/components/root/provider';
-import { env } from '@/lib/env';
 import { cn } from '@/lib/utils';
 import { geistSans } from '@/styles/font';
 import { ReactScan } from '@/utils/react-scan';
@@ -32,11 +30,6 @@ export default async function RootLayout(props: Props) {
           content='black'
           media='(prefers-color-scheme: dark)'
           name='theme-color'
-        />
-        <Script
-          data-website-id={env.NEXT_PUBLIC_UMAMI_WEBSITE_ID}
-          defer
-          src='https://umami.harisfox.com/script.js'
         />
       </head>
 
