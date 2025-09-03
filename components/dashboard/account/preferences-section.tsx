@@ -2,21 +2,55 @@
 
 import { Check } from 'lucide-react';
 import { useTranslations } from 'next-intl';
+import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
 import { Combobox } from '@/components/shared/combobox';
 import { Label } from '@/components/ui/label';
 import { timezones } from '@/data/data';
 import type { Timezone } from '@/lib/schema';
+import { api } from '@/utils/trpc/client';
 
 interface PreferencesSectionProps {
-  timezone: Timezone;
-  onTimezoneChange: (value: Timezone) => void;
+  initialTimezone?: Timezone;
 }
 
 export function PreferencesSection({
-  timezone,
-  onTimezoneChange,
+  initialTimezone = 'Asia/Hong_Kong',
 }: PreferencesSectionProps) {
   const t = useTranslations();
+  const updateTimezone = api.account.updateTimezone.useMutation();
+
+  const [timezone, setTimezone] = useState<Timezone>(initialTimezone);
+
+  useEffect(() => {
+    if (initialTimezone) {
+      setTimezone(initialTimezone);
+    }
+  }, [initialTimezone]);
+
+  const handleTimezoneChange = async (value: Timezone) => {
+    // Check if timezone has actually changed
+    if (value === initialTimezone) {
+      return;
+    }
+
+    try {
+      await updateTimezone.mutateAsync(
+        { timezone: value },
+        {
+          onSuccess: () => {
+            setTimezone(value);
+            toast.success(t('timezone_updated_successfully'));
+          },
+          onError: () => {
+            toast.error(t('failed_to_update_timezone'));
+          },
+        }
+      );
+    } catch (error) {
+      console.error('Failed to update timezone:', error);
+    }
+  };
 
   return (
     <div className='space-y-4'>
@@ -29,7 +63,7 @@ export function PreferencesSection({
           emptyText={t('no_timezone_found')}
           groupHeading={t('timezones')}
           items={timezones.map((tz) => tz.value)}
-          onChange={(value) => onTimezoneChange(value as Timezone)}
+          onChange={(value) => handleTimezoneChange(value as Timezone)}
           placeholder={t('select_timezone')}
           renderItem={(item) => (
             <div className='flex w-full items-center justify-between'>

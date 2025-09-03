@@ -16,20 +16,12 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { api } from '@/utils/trpc/client';
 
 interface ApiKeyDialogProps {
   open: boolean;
-  newApiKeyName: string;
-  newApiKeyPermissions: string[];
-  isFullAccess: boolean;
-  generatedApiKey: string | null;
-  isCreating: boolean;
   onOpenChange: (open: boolean) => void;
-  onNameChange: (value: string) => void;
-  onPermissionToggle: (permission: string) => void;
-  onFullAccessToggle: (checked: boolean) => void;
-  onCreateApiKey: (event: React.FormEvent) => void;
-  onResetDialog: () => void;
+  onApiKeyCreated?: () => void;
 }
 
 // Available permissions
@@ -74,19 +66,18 @@ const availablePermissions = [
 
 export function ApiKeyDialog({
   open,
-  newApiKeyName,
-  newApiKeyPermissions,
-  isFullAccess,
-  generatedApiKey,
-  isCreating,
   onOpenChange,
-  onNameChange,
-  onPermissionToggle,
-  onFullAccessToggle,
-  onCreateApiKey,
-  onResetDialog,
+  onApiKeyCreated,
 }: ApiKeyDialogProps) {
   const t = useTranslations();
+  const createApiKey = api.apiKey.createApiKey.useMutation();
+
+  const [newApiKeyName, setNewApiKeyName] = useState('');
+  const [newApiKeyPermissions, setNewApiKeyPermissions] = useState<string[]>(
+    []
+  );
+  const [isFullAccess, setIsFullAccess] = useState(true);
+  const [generatedApiKey, setGeneratedApiKey] = useState<string | null>(null);
   const [showApiKey, setShowApiKey] = useState(false);
 
   const handleCopyToClipboard = async (text: string) => {
@@ -98,13 +89,64 @@ export function ApiKeyDialog({
     }
   };
 
+  const togglePermission = (permission: string) => {
+    setNewApiKeyPermissions((prev) =>
+      prev.includes(permission)
+        ? prev.filter((p) => p !== permission)
+        : [...prev, permission]
+    );
+    // If we're selecting individual permissions, turn off full access
+    setIsFullAccess(false);
+  };
+
+  const toggleFullAccess = (checked: boolean) => {
+    setIsFullAccess(checked);
+    if (checked) {
+      setNewApiKeyPermissions([]);
+    }
+  };
+
+  const handleCreateApiKey = async (event: React.FormEvent) => {
+    event.preventDefault();
+
+    if (!newApiKeyName.trim()) {
+      toast.error(t('api_key_name_required'));
+      return;
+    }
+
+    try {
+      const result = await createApiKey.mutateAsync({
+        name: newApiKeyName.trim(),
+        permissions: isFullAccess ? [] : newApiKeyPermissions,
+      });
+
+      setGeneratedApiKey(result.apiKey);
+      toast.success(t('api_key_created_successfully'));
+      if (onApiKeyCreated) {
+        onApiKeyCreated();
+      }
+    } catch (error) {
+      console.error('Failed to create API key:', error);
+      toast.error(t('failed_to_create_api_key'));
+    }
+  };
+
+  const resetApiKeyDialog = () => {
+    onOpenChange(false);
+    setGeneratedApiKey(null);
+    setNewApiKeyName('');
+    setNewApiKeyPermissions([]);
+    setIsFullAccess(true);
+    setShowApiKey(false);
+  };
+
   return (
     <Dialog
       onOpenChange={(isOpen) => {
         if (isOpen) {
           onOpenChange(isOpen);
         } else {
-          onResetDialog();
+          resetApiKeyDialog();
         }
       }}
       open={open}
@@ -162,13 +204,13 @@ export function ApiKeyDialog({
               </p>
             </div>
             <DialogFooter>
-              <Button onClick={onResetDialog}>
+              <Button onClick={resetApiKeyDialog}>
                 {t('ive_saved_my_api_key')}
               </Button>
             </DialogFooter>
           </div>
         ) : (
-          <form onSubmit={onCreateApiKey}>
+          <form onSubmit={handleCreateApiKey}>
             <div className='space-y-6 py-4'>
               <div className='space-y-3'>
                 <Label className='font-semibold' htmlFor='apiKeyName'>
@@ -176,7 +218,7 @@ export function ApiKeyDialog({
                 </Label>
                 <Input
                   id='apiKeyName'
-                  onChange={(e) => onNameChange(e.target.value)}
+                  onChange={(e) => setNewApiKeyName(e.target.value)}
                   placeholder={t('api_key_name_placeholder')}
                   type='text'
                   value={newApiKeyName}
@@ -191,7 +233,7 @@ export function ApiKeyDialog({
                     <Checkbox
                       checked={isFullAccess}
                       id='full-access'
-                      onCheckedChange={onFullAccessToggle}
+                      onCheckedChange={toggleFullAccess}
                     />
                     <div className='flex-1'>
                       <Label
@@ -229,7 +271,7 @@ export function ApiKeyDialog({
                               )}
                               id={permissionItem.value}
                               onCheckedChange={() =>
-                                onPermissionToggle(permissionItem.value)
+                                togglePermission(permissionItem.value)
                               }
                             />
                             <div className='flex-1'>
@@ -252,14 +294,20 @@ export function ApiKeyDialog({
               </div>
             </div>
             <DialogFooter>
-              <Button onClick={onResetDialog} type='button' variant='outline'>
+              <Button
+                onClick={resetApiKeyDialog}
+                type='button'
+                variant='outline'
+              >
                 {t('cancel')}
               </Button>
               <Button
-                disabled={isCreating || !newApiKeyName.trim()}
+                disabled={createApiKey.isPending || !newApiKeyName.trim()}
                 type='submit'
               >
-                {isCreating ? t('generating') : t('generate_api_key')}
+                {createApiKey.isPending
+                  ? t('generating')
+                  : t('generate_api_key')}
               </Button>
             </DialogFooter>
           </form>
