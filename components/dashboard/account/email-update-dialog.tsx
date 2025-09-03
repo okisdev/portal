@@ -1,8 +1,11 @@
 'use client';
 
+import { zodResolver } from '@hookform/resolvers/zod';
 import { useTranslations } from 'next-intl';
-import { useState } from 'react';
+import { useEffect } from 'react';
+import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
+import { z } from 'zod';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -12,9 +15,28 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { api } from '@/utils/trpc/client';
+
+const emailUpdateSchema = z
+  .object({
+    newEmail: z.string().email('Please enter a valid email address'),
+    confirmEmail: z.string().email('Please enter a valid email address'),
+  })
+  .refine((data) => data.newEmail === data.confirmEmail, {
+    message: 'Email addresses do not match',
+    path: ['confirmEmail'],
+  });
+
+type EmailUpdateFormValues = z.infer<typeof emailUpdateSchema>;
 
 interface EmailUpdateDialogProps {
   open: boolean;
@@ -32,27 +54,34 @@ export function EmailUpdateDialog({
   const t = useTranslations();
   const updateAccount = api.account.updateMe.useMutation();
 
-  const [pendingEmail, setPendingEmail] = useState('');
-  const [confirmPendingEmail, setConfirmPendingEmail] = useState('');
-  const [emailError, setEmailError] = useState('');
+  const form = useForm<EmailUpdateFormValues>({
+    resolver: zodResolver(emailUpdateSchema),
+    defaultValues: {
+      newEmail: '',
+      confirmEmail: '',
+    },
+  });
+
+  useEffect(() => {
+    if (open) {
+      // Reset form when dialog opens
+      form.reset({
+        newEmail: '',
+        confirmEmail: '',
+      });
+    }
+  }, [open, form]);
 
   const handleOpenChange = (isOpen: boolean) => {
     onOpenChange(isOpen);
     if (!isOpen) {
-      setEmailError('');
-      setPendingEmail('');
-      setConfirmPendingEmail('');
+      form.reset();
     }
   };
 
-  const confirmEmailChange = async () => {
-    if (pendingEmail !== confirmPendingEmail) {
-      setEmailError(t('emails_do_not_match'));
-      return;
-    }
-
+  const onSubmit = async (data: EmailUpdateFormValues) => {
     // Check if email has actually changed
-    if (pendingEmail === currentEmail) {
+    if (data.newEmail === currentEmail) {
       handleOpenChange(false);
       return;
     }
@@ -60,19 +89,25 @@ export function EmailUpdateDialog({
     try {
       await updateAccount.mutateAsync(
         {
-          email: pendingEmail,
+          email: data.newEmail,
         },
         {
           onSuccess: () => {
             if (onEmailUpdate) {
-              onEmailUpdate(pendingEmail);
+              onEmailUpdate(data.newEmail);
             }
             handleOpenChange(false);
-            setEmailError('');
             toast.success(t('account_updated_successfully'));
           },
-          onError: () => {
-            toast.error(t('failed_to_update_account'));
+          onError: (error) => {
+            if (error.message.includes('already exists')) {
+              form.setError('newEmail', {
+                type: 'manual',
+                message: t('email_already_exists'),
+              });
+            } else {
+              toast.error(t('failed_to_update_account'));
+            }
           },
         }
       );
@@ -90,44 +125,69 @@ export function EmailUpdateDialog({
             {t('update_email_address_description')}
           </DialogDescription>
         </DialogHeader>
-        <div className='space-y-4 py-4'>
-          <div className='space-y-2'>
-            <Label htmlFor='newEmail'>{t('new_email')}</Label>
-            <Input
-              id='newEmail'
-              onChange={(e) => setPendingEmail(e.target.value)}
-              placeholder={t('enter_new_email')}
-              type='email'
-              value={pendingEmail}
-            />
-          </div>
-          <div className='space-y-2'>
-            <Label htmlFor='confirmEmail'>{t('confirm_new_email')}</Label>
-            <Input
-              id='confirmEmail'
-              onChange={(e) => setConfirmPendingEmail(e.target.value)}
-              placeholder={t('confirm_new_email')}
-              type='email'
-              value={confirmPendingEmail}
-            />
-          </div>
-          {emailError && (
-            <p className='text-destructive text-sm'>{emailError}</p>
-          )}
-        </div>
-        <DialogFooter>
-          <Button onClick={() => handleOpenChange(false)} variant='outline'>
-            {t('cancel')}
-          </Button>
-          <Button
-            disabled={
-              updateAccount.isPending || !pendingEmail || !confirmPendingEmail
-            }
-            onClick={confirmEmailChange}
+
+        <Form {...form}>
+          <form
+            className='space-y-4 py-4'
+            onSubmit={form.handleSubmit(onSubmit)}
           >
-            {updateAccount.isPending ? t('updating') : t('update_email')}
-          </Button>
-        </DialogFooter>
+            <FormField
+              control={form.control}
+              name='newEmail'
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t('new_email')}</FormLabel>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      placeholder={t('enter_new_email')}
+                      type='email'
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name='confirmEmail'
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t('confirm_new_email')}</FormLabel>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      placeholder={t('confirm_new_email')}
+                      type='email'
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <DialogFooter>
+              <Button
+                onClick={() => handleOpenChange(false)}
+                type='button'
+                variant='outline'
+              >
+                {t('cancel')}
+              </Button>
+              <Button
+                disabled={
+                  form.formState.isSubmitting || !form.formState.isValid
+                }
+                type='submit'
+              >
+                {form.formState.isSubmitting
+                  ? t('updating')
+                  : t('update_email')}
+              </Button>
+            </DialogFooter>
+          </form>
+        </Form>
       </DialogContent>
     </Dialog>
   );

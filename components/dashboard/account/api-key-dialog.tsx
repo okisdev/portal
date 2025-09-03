@@ -1,9 +1,12 @@
 'use client';
 
+import { zodResolver } from '@hookform/resolvers/zod';
 import { Copy, Eye, EyeOff } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
+import { z } from 'zod';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
@@ -14,15 +17,17 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { api } from '@/utils/trpc/client';
-
-interface ApiKeyDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  onApiKeyCreated?: () => void;
-}
 
 // Available permissions
 const availablePermissions = [
@@ -62,7 +67,21 @@ const availablePermissions = [
     label: 'Write Resources',
     description: 'Create, update, and delete resources',
   },
-];
+] as const;
+
+const apiKeyFormSchema = z.object({
+  name: z.string().min(1, 'API key name is required'),
+  isFullAccess: z.boolean(),
+  permissions: z.array(z.string()),
+});
+
+type ApiKeyFormValues = z.infer<typeof apiKeyFormSchema>;
+
+interface ApiKeyDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onApiKeyCreated?: () => void;
+}
 
 export function ApiKeyDialog({
   open,
@@ -72,13 +91,28 @@ export function ApiKeyDialog({
   const t = useTranslations();
   const createApiKey = api.apiKey.createApiKey.useMutation();
 
-  const [newApiKeyName, setNewApiKeyName] = useState('');
-  const [newApiKeyPermissions, setNewApiKeyPermissions] = useState<string[]>(
-    []
-  );
-  const [isFullAccess, setIsFullAccess] = useState(true);
   const [generatedApiKey, setGeneratedApiKey] = useState<string | null>(null);
   const [showApiKey, setShowApiKey] = useState(false);
+
+  const form = useForm<ApiKeyFormValues>({
+    resolver: zodResolver(apiKeyFormSchema),
+    defaultValues: {
+      name: '',
+      isFullAccess: true,
+      permissions: [],
+    },
+  });
+
+  useEffect(() => {
+    if (open && !generatedApiKey) {
+      // Reset form when dialog opens for creating new key
+      form.reset({
+        name: '',
+        isFullAccess: true,
+        permissions: [],
+      });
+    }
+  }, [open, generatedApiKey, form]);
 
   const handleCopyToClipboard = async (text: string) => {
     try {
@@ -90,34 +124,28 @@ export function ApiKeyDialog({
   };
 
   const togglePermission = (permission: string) => {
-    setNewApiKeyPermissions((prev) =>
-      prev.includes(permission)
-        ? prev.filter((p) => p !== permission)
-        : [...prev, permission]
-    );
+    const currentPermissions = form.watch('permissions');
+    const newPermissions = currentPermissions.includes(permission)
+      ? currentPermissions.filter((p) => p !== permission)
+      : [...currentPermissions, permission];
+
+    form.setValue('permissions', newPermissions);
     // If we're selecting individual permissions, turn off full access
-    setIsFullAccess(false);
+    form.setValue('isFullAccess', false);
   };
 
   const toggleFullAccess = (checked: boolean) => {
-    setIsFullAccess(checked);
+    form.setValue('isFullAccess', checked);
     if (checked) {
-      setNewApiKeyPermissions([]);
+      form.setValue('permissions', []);
     }
   };
 
-  const handleCreateApiKey = async (event: React.FormEvent) => {
-    event.preventDefault();
-
-    if (!newApiKeyName.trim()) {
-      toast.error(t('api_key_name_required'));
-      return;
-    }
-
+  const onSubmit = async (data: ApiKeyFormValues) => {
     try {
       const result = await createApiKey.mutateAsync({
-        name: newApiKeyName.trim(),
-        permissions: isFullAccess ? [] : newApiKeyPermissions,
+        name: data.name,
+        permissions: data.isFullAccess ? [] : data.permissions,
       });
 
       setGeneratedApiKey(result.apiKey);
@@ -134,11 +162,12 @@ export function ApiKeyDialog({
   const resetApiKeyDialog = () => {
     onOpenChange(false);
     setGeneratedApiKey(null);
-    setNewApiKeyName('');
-    setNewApiKeyPermissions([]);
-    setIsFullAccess(true);
     setShowApiKey(false);
+    form.reset();
   };
+
+  const isFullAccess = form.watch('isFullAccess');
+  const permissions = form.watch('permissions');
 
   return (
     <Dialog
@@ -210,107 +239,118 @@ export function ApiKeyDialog({
             </DialogFooter>
           </div>
         ) : (
-          <form onSubmit={handleCreateApiKey}>
-            <div className='space-y-6 py-4'>
-              <div className='space-y-3'>
-                <Label className='font-semibold' htmlFor='apiKeyName'>
-                  {t('name')}
-                </Label>
-                <Input
-                  id='apiKeyName'
-                  onChange={(e) => setNewApiKeyName(e.target.value)}
-                  placeholder={t('api_key_name_placeholder')}
-                  type='text'
-                  value={newApiKeyName}
-                />
-              </div>
-
-              <div className='space-y-3'>
-                <Label className='font-semibold'>{t('permissions')}</Label>
-                <div className='space-y-4 rounded-lg border p-4'>
-                  {/* Full Access Option */}
-                  <div className='flex items-start space-x-3 rounded-md border bg-blue-50/50 p-4 dark:bg-blue-950/20'>
-                    <Checkbox
-                      checked={isFullAccess}
-                      id='full-access'
-                      onCheckedChange={toggleFullAccess}
-                    />
-                    <div className='flex-1'>
-                      <Label
-                        className='cursor-pointer font-medium text-sm'
-                        htmlFor='full-access'
-                      >
-                        {t('full_access')}
-                      </Label>
-                      <p className='text-muted-foreground text-xs leading-relaxed'>
-                        {t('full_access_description')}
-                      </p>
-                    </div>
-                  </div>
-
-                  {!isFullAccess && (
-                    <>
-                      <div className='my-4 h-px bg-border' />
-                      <div className='mb-3 space-y-1'>
-                        <p className='font-medium text-sm'>
-                          {t('or_select_specific_permissions')}
-                        </p>
-                        <p className='text-muted-foreground text-xs'>
-                          {t('select_specific_permissions_description')}
-                        </p>
-                      </div>
-                      <div className='grid gap-3 sm:grid-cols-2'>
-                        {availablePermissions.map((permissionItem) => (
-                          <div
-                            className='flex items-start space-x-3 rounded-md p-3 transition-colors hover:bg-muted/50'
-                            key={permissionItem.value}
-                          >
-                            <Checkbox
-                              checked={newApiKeyPermissions.includes(
-                                permissionItem.value
-                              )}
-                              id={permissionItem.value}
-                              onCheckedChange={() =>
-                                togglePermission(permissionItem.value)
-                              }
-                            />
-                            <div className='flex-1'>
-                              <Label
-                                className='cursor-pointer font-medium text-sm'
-                                htmlFor={permissionItem.value}
-                              >
-                                {permissionItem.label}
-                              </Label>
-                              <p className='text-muted-foreground text-xs leading-relaxed'>
-                                {permissionItem.description}
-                              </p>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)}>
+              <div className='space-y-6 py-4'>
+                <FormField
+                  control={form.control}
+                  name='name'
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className='font-semibold'>
+                        {t('name')}
+                      </FormLabel>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          placeholder={t('api_key_name_placeholder')}
+                          type='text'
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
                   )}
+                />
+
+                <div className='space-y-3'>
+                  <Label className='font-semibold'>{t('permissions')}</Label>
+                  <div className='space-y-4 rounded-lg border p-4'>
+                    {/* Full Access Option */}
+                    <div className='flex items-start space-x-3 rounded-md border bg-blue-50/50 p-4 dark:bg-blue-950/20'>
+                      <Checkbox
+                        checked={isFullAccess}
+                        id='full-access'
+                        onCheckedChange={toggleFullAccess}
+                      />
+                      <div className='flex-1'>
+                        <Label
+                          className='cursor-pointer font-medium text-sm'
+                          htmlFor='full-access'
+                        >
+                          {t('full_access')}
+                        </Label>
+                        <p className='text-muted-foreground text-xs leading-relaxed'>
+                          {t('full_access_description')}
+                        </p>
+                      </div>
+                    </div>
+
+                    {!isFullAccess && (
+                      <>
+                        <div className='my-4 h-px bg-border' />
+                        <div className='mb-3 space-y-1'>
+                          <p className='font-medium text-sm'>
+                            {t('or_select_specific_permissions')}
+                          </p>
+                          <p className='text-muted-foreground text-xs'>
+                            {t('select_specific_permissions_description')}
+                          </p>
+                        </div>
+                        <div className='grid gap-3 sm:grid-cols-2'>
+                          {availablePermissions.map((permissionItem) => (
+                            <div
+                              className='flex items-start space-x-3 rounded-md p-3 transition-colors hover:bg-muted/50'
+                              key={permissionItem.value}
+                            >
+                              <Checkbox
+                                checked={permissions.includes(
+                                  permissionItem.value
+                                )}
+                                id={permissionItem.value}
+                                onCheckedChange={() =>
+                                  togglePermission(permissionItem.value)
+                                }
+                              />
+                              <div className='flex-1'>
+                                <Label
+                                  className='cursor-pointer font-medium text-sm'
+                                  htmlFor={permissionItem.value}
+                                >
+                                  {permissionItem.label}
+                                </Label>
+                                <p className='text-muted-foreground text-xs leading-relaxed'>
+                                  {permissionItem.description}
+                                </p>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </>
+                    )}
+                  </div>
                 </div>
               </div>
-            </div>
-            <DialogFooter>
-              <Button
-                onClick={resetApiKeyDialog}
-                type='button'
-                variant='outline'
-              >
-                {t('cancel')}
-              </Button>
-              <Button
-                disabled={createApiKey.isPending || !newApiKeyName.trim()}
-                type='submit'
-              >
-                {createApiKey.isPending
-                  ? t('generating')
-                  : t('generate_api_key')}
-              </Button>
-            </DialogFooter>
-          </form>
+              <DialogFooter>
+                <Button
+                  onClick={resetApiKeyDialog}
+                  type='button'
+                  variant='outline'
+                >
+                  {t('cancel')}
+                </Button>
+                <Button
+                  disabled={
+                    form.formState.isSubmitting || !form.formState.isValid
+                  }
+                  type='submit'
+                >
+                  {form.formState.isSubmitting
+                    ? t('generating')
+                    : t('generate_api_key')}
+                </Button>
+              </DialogFooter>
+            </form>
+          </Form>
         )}
       </DialogContent>
     </Dialog>

@@ -1,12 +1,35 @@
 'use client';
 
+import { zodResolver } from '@hookform/resolvers/zod';
 import { useTranslations } from 'next-intl';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
+import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
+import { z } from 'zod';
 import { Button } from '@/components/ui/button';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { authClient, signOut } from '@/lib/auth.client';
+
+const passwordSchema = z
+  .object({
+    currentPassword: z.string().optional(),
+    newPassword: z.string().min(8, 'Password must be at least 8 characters'),
+    confirmPassword: z.string().min(1, 'Please confirm your password'),
+  })
+  .refine((data) => data.newPassword === data.confirmPassword, {
+    message: 'Passwords do not match',
+    path: ['confirmPassword'],
+  });
+
+type PasswordFormValues = z.infer<typeof passwordSchema>;
 
 interface PasswordSectionProps {
   initialHasPassword?: boolean;
@@ -25,89 +48,60 @@ export function PasswordSection({
 }: PasswordSectionProps) {
   const t = useTranslations();
 
-  const [hasPassword, setHasPassword] = useState(initialHasPassword);
-  const [currentPassword, setCurrentPassword] = useState('');
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [isPasswordLoading, setIsPasswordLoading] = useState(false);
+  const form = useForm<PasswordFormValues>({
+    resolver: zodResolver(passwordSchema),
+    defaultValues: {
+      currentPassword: '',
+      newPassword: '',
+      confirmPassword: '',
+    },
+  });
 
   useEffect(() => {
-    setHasPassword(initialHasPassword);
-  }, [initialHasPassword]);
+    // Reset form when component mounts
+    form.reset({
+      currentPassword: '',
+      newPassword: '',
+      confirmPassword: '',
+    });
+  }, [form]);
 
-  const validatePasswordForm = (): boolean => {
-    // For users with password, check all fields; for users without password, only check new password fields
-    if (hasPassword) {
-      if (!(currentPassword && newPassword && confirmPassword)) {
-        return false;
-      }
-    } else if (!(newPassword && confirmPassword)) {
-      return false;
-    }
-
-    if (newPassword !== confirmPassword) {
-      toast.error(t('passwords_do_not_match'));
-      return false;
-    }
-
-    return true;
-  };
-
-  const handleExistingPasswordChange = async () => {
-    await authClient.changePassword(
-      {
-        currentPassword,
-        newPassword,
-      },
-      {
-        onSuccess: () => {
-          toast.success(t('password_updated_successfully'));
-        },
-        onError: () => {
-          toast.error(t('failed_to_update_password'));
-        },
-      }
-    );
-  };
-
-  const handleNewPasswordCreation = async () => {
-    const result = await setPasswordAction(newPassword);
-
-    if (result.success) {
-      toast.success(t('password_created_successfully'));
-      setHasPassword(true);
-    } else {
-      toast.error(result.error || t('failed_to_create_password'));
-    }
-  };
-
-  const clearPasswordForm = () => {
-    setCurrentPassword('');
-    setNewPassword('');
-    setConfirmPassword('');
-  };
-
-  const handlePasswordSubmit = async (event: React.FormEvent) => {
-    event.preventDefault();
-
-    if (!validatePasswordForm()) {
-      return;
-    }
-
-    setIsPasswordLoading(true);
-
+  const handlePasswordSubmit = async (data: PasswordFormValues) => {
     try {
-      if (hasPassword) {
-        await handleExistingPasswordChange();
+      if (initialHasPassword && data.currentPassword) {
+        // User has existing password - use changePassword
+        await authClient.changePassword(
+          {
+            currentPassword: data.currentPassword,
+            newPassword: data.newPassword,
+          },
+          {
+            onSuccess: () => {
+              toast.success(t('password_updated_successfully'));
+              form.reset();
+            },
+            onError: () => {
+              form.setError('currentPassword', {
+                type: 'manual',
+                message: t('invalid_current_password'),
+              });
+            },
+          }
+        );
       } else {
-        await handleNewPasswordCreation();
+        // User doesn't have password - use setPassword server action
+        const result = await setPasswordAction(data.newPassword);
+
+        if (result.success) {
+          toast.success(t('password_created_successfully'));
+          form.reset();
+        } else {
+          toast.error(result.error || t('failed_to_create_password'));
+        }
       }
-      clearPasswordForm();
     } catch (error) {
       console.error('Failed to handle password operation:', error);
       toast.error(t('unexpected_error'));
-    } finally {
-      setIsPasswordLoading(false);
     }
   };
 
@@ -152,71 +146,98 @@ export function PasswordSection({
     <div className='space-y-4'>
       <div>
         <h2 className='font-medium text-2xl tracking-tight'>
-          {hasPassword ? t('change_password') : t('create_a_password')}
+          {initialHasPassword ? t('change_password') : t('create_a_password')}
         </h2>
-        {!hasPassword && (
+        {!initialHasPassword && (
           <p className='mt-2 text-muted-foreground text-sm'>
             {t('password_not_set_description')}
           </p>
         )}
       </div>
-      <form className='space-y-4' onSubmit={handlePasswordSubmit}>
-        {hasPassword && (
-          <div className='space-y-2'>
-            <Label htmlFor='currentPassword'>{t('current_password')}</Label>
-            <Input
-              id='currentPassword'
-              onChange={(e) => setCurrentPassword(e.target.value)}
-              type='password'
-              value={currentPassword}
+
+      <Form {...form}>
+        <form
+          className='space-y-4'
+          onSubmit={form.handleSubmit(handlePasswordSubmit)}
+        >
+          {initialHasPassword && (
+            <FormField
+              control={form.control}
+              name='currentPassword'
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t('current_password')}</FormLabel>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      required={initialHasPassword}
+                      type='password'
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-          </div>
-        )}
-        <div className='space-y-2'>
-          <Label htmlFor='newPassword'>{t('new_password')}</Label>
-          <Input
-            id='newPassword'
-            onChange={(e) => setNewPassword(e.target.value)}
-            type='password'
-            value={newPassword}
-          />
-        </div>
-        <div className='space-y-2'>
-          <Label htmlFor='confirmPassword'>{t('confirm_new_password')}</Label>
-          <Input
-            id='confirmPassword'
-            onChange={(e) => setConfirmPassword(e.target.value)}
-            type='password'
-            value={confirmPassword}
-          />
-        </div>
-        <div className='flex items-center justify-between'>
-          {hasPassword && (
-            <Button
-              className='text-muted-foreground hover:text-foreground'
-              onClick={handleForgotPassword}
-              type='button'
-              variant='ghost'
-            >
-              {t('forgot_current_password')}
-            </Button>
           )}
-          <Button
-            className={hasPassword ? '' : 'ml-auto'}
-            disabled={isPasswordLoading}
-            type='submit'
-          >
-            {(() => {
-              if (isPasswordLoading) {
-                return hasPassword
-                  ? t('updating_password')
-                  : t('creating_password');
-              }
-              return hasPassword ? t('update_password') : t('create_password');
-            })()}
-          </Button>
-        </div>
-      </form>
+
+          <FormField
+            control={form.control}
+            name='newPassword'
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{t('new_password')}</FormLabel>
+                <FormControl>
+                  <Input {...field} type='password' />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name='confirmPassword'
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{t('confirm_new_password')}</FormLabel>
+                <FormControl>
+                  <Input {...field} type='password' />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <div className='flex items-center justify-between'>
+            {initialHasPassword && (
+              <Button
+                className='text-muted-foreground hover:text-foreground'
+                onClick={handleForgotPassword}
+                type='button'
+                variant='ghost'
+              >
+                {t('forgot_current_password')}
+              </Button>
+            )}
+            <Button
+              className={initialHasPassword ? '' : 'ml-auto'}
+              disabled={form.formState.isSubmitting}
+              type='submit'
+            >
+              {(() => {
+                if (form.formState.isSubmitting) {
+                  return initialHasPassword
+                    ? t('updating_password')
+                    : t('creating_password');
+                }
+                return initialHasPassword
+                  ? t('update_password')
+                  : t('create_password');
+              })()}
+            </Button>
+          </div>
+        </form>
+      </Form>
     </div>
   );
 }
