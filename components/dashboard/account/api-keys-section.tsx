@@ -16,8 +16,7 @@ interface ApiKeysectionProps {
 export function ApiKeysSection({ onCreateApiKey }: ApiKeysectionProps) {
   const t = useTranslations();
 
-  const { data: apiKeys, refetch: refetchApiKeys } =
-    api.apiKey.getApiKeys.useQuery();
+  const { data: apiKeys, refetch: refetchApiKeys } = api.apiKey.list.useQuery();
   const deleteApiKey = api.apiKey.deleteApiKey.useMutation();
 
   const [deleteKeyId, setDeleteKeyId] = useState<string | null>(null);

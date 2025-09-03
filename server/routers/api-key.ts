@@ -28,7 +28,7 @@ const extractPrefix = (apiKey: string) => {
 
 export const apiKeyRouter = createTRPCRouter({
   // Get all API keys for the current user
-  getApiKeys: protectedProcedure.query(({ ctx }) => {
+  list: protectedProcedure.query(({ ctx }) => {
     return ctx.db
       .select({
         id: userApiKey.id,
@@ -47,7 +47,7 @@ export const apiKeyRouter = createTRPCRouter({
   }),
 
   // Create a new API key
-  createApiKey: protectedProcedure
+  create: protectedProcedure
     .input(
       z.object({
         name: z.string().min(1, 'Name is required').max(100, 'Name too long'),
@@ -115,37 +115,5 @@ export const apiKeyRouter = createTRPCRouter({
 
       // Delete the API key
       return ctx.db.delete(userApiKey).where(eq(userApiKey.id, input.id));
-    }),
-
-  // Update API key usage stats (typically called by middleware)
-  updateUsageStats: protectedProcedure
-    .input(
-      z.object({
-        keyHash: z.string(),
-        ipAddress: z.string().optional(),
-      })
-    )
-    .mutation(async ({ ctx, input }) => {
-      const currentKey = await ctx.db
-        .select({ usageCount: userApiKey.usageCount })
-        .from(userApiKey)
-        .where(eq(userApiKey.keyHash, input.keyHash))
-        .then((rows) => rows[0]);
-
-      if (!currentKey) {
-        throw new TRPCError({
-          code: 'NOT_FOUND',
-          message: 'API key not found',
-        });
-      }
-
-      return ctx.db
-        .update(userApiKey)
-        .set({
-          lastUsedAt: new Date(),
-          lastUsedIp: input.ipAddress,
-          usageCount: (currentKey.usageCount || 0) + 1,
-        })
-        .where(eq(userApiKey.keyHash, input.keyHash));
     }),
 });
