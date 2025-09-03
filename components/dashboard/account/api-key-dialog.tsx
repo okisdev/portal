@@ -27,6 +27,7 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { cn } from '@/lib/utils';
 import { api } from '@/utils/trpc/client';
 
 // Available permissions
@@ -325,11 +326,12 @@ export function ApiKeyDialog({
                           <div className='grid gap-3 sm:grid-cols-2'>
                             {availablePermissions.map((permissionItem) => (
                               <div
-                                className={`flex items-start space-x-3 rounded-md p-3 transition-colors ${
+                                className={cn(
+                                  'flex items-start space-x-3 rounded-md p-3 transition-colors',
                                   isFullAccess
                                     ? 'bg-muted/30 opacity-75'
                                     : 'hover:bg-muted/50'
-                                }`}
+                                )}
                                 key={permissionItem.value}
                               >
                                 <Checkbox
@@ -344,11 +346,12 @@ export function ApiKeyDialog({
                                 />
                                 <div className='flex-1'>
                                   <Label
-                                    className={`font-medium text-sm ${
+                                    className={cn(
+                                      'font-medium text-sm',
                                       isFullAccess
                                         ? 'cursor-default text-muted-foreground'
                                         : 'cursor-pointer'
-                                    }`}
+                                    )}
                                     htmlFor={permissionItem.value}
                                   >
                                     {permissionItem.label}
