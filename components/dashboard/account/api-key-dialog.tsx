@@ -95,6 +95,7 @@ export function ApiKeyDialog({
   onApiKeyCreated,
 }: ApiKeyDialogProps) {
   const t = useTranslations();
+  const utils = api.useUtils();
   const createApiKey = api.apiKey.create.useMutation();
 
   const [generatedApiKey, setGeneratedApiKey] = useState<string | null>(null);
@@ -140,20 +141,21 @@ export function ApiKeyDialog({
       ? currentPermissions.filter((p) => p !== permission)
       : [...currentPermissions, permission];
 
-    form.setValue('permissions', newPermissions);
+    form.setValue('permissions', newPermissions, { shouldValidate: true });
   };
 
   const toggleFullAccess = (checked: boolean) => {
-    form.setValue('isFullAccess', checked);
+    form.setValue('isFullAccess', checked, { shouldValidate: true });
     if (checked) {
       // When selecting full access, populate all permissions for visibility
       form.setValue(
         'permissions',
-        availablePermissions.map((p) => p.value)
+        availablePermissions.map((p) => p.value),
+        { shouldValidate: true }
       );
     } else {
       // When deselecting full access, clear permissions so user can choose
-      form.setValue('permissions', []);
+      form.setValue('permissions', [], { shouldValidate: true });
     }
   };
 
@@ -163,6 +165,9 @@ export function ApiKeyDialog({
         name: data.name,
         permissions: data.isFullAccess ? [] : data.permissions,
       });
+
+      // Invalidate the API key list query to refresh the list
+      await utils.apiKey.list.invalidate();
 
       setGeneratedApiKey(result.apiKey);
       toast.success(t('api_key_created_successfully'));

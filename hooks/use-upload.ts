@@ -13,17 +13,17 @@ export function useUpload(options: UseUploadOptions = {}) {
   const uploadToS3 = async (data: Blob | File) => {
     try {
       setIsUploading(true);
-      options.onProgress?.('Uploading audio to S3...');
+      options.onProgress?.('Uploading file to S3...');
 
       if (!data) {
-        throw new Error('No audio data provided');
+        throw new Error('No file data provided');
       }
 
       const response = await ky
         .post<{ url: string; key: string }>('/api/upload', {
           json: {
             filename: data instanceof File ? data.name : 'no-name',
-            contentType: data.type || 'audio/webm',
+            contentType: data.type || 'application/octet-stream',
           },
         })
         .json();
@@ -33,7 +33,7 @@ export function useUpload(options: UseUploadOptions = {}) {
       const uploadResponse = await ky.put(url, {
         body: data,
         headers: {
-          'Content-Type': data.type || 'audio/webm',
+          'Content-Type': data.type || 'application/octet-stream',
         },
       });
 

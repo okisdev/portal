@@ -59,6 +59,7 @@ import {
 import { Skeleton } from '@/components/ui/skeleton';
 import { usePathname, useRouter } from '@/i18n/navigation';
 import { authClient } from '@/lib/auth.client';
+import { env } from '@/lib/env';
 import packageInfo from '@/package.json';
 import { copyToClipboard } from '@/utils/clipboard';
 import { api } from '@/utils/trpc/client';
@@ -234,7 +235,9 @@ export function DashboardSidebar() {
               <DropdownMenuTrigger asChild>
                 <SidebarMenuButton tooltip={t('account')}>
                   <Avatar className='h-4 w-4'>
-                    <AvatarImage src={me?.image ?? ''} />
+                    <AvatarImage
+                      src={`${env.NEXT_PUBLIC_S3_PUBLIC_URL}/${me?.image}`}
+                    />
                     <AvatarFallback>
                       {me?.name?.charAt(0) ?? me?.email?.charAt(0)}
                     </AvatarFallback>

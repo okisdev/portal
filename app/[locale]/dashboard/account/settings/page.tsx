@@ -13,7 +13,9 @@ import { ProfilePicture } from '@/components/dashboard/account/profile-picture';
 import { ActionAlertDialog } from '@/components/shared/action-alert-dialog';
 import { PageHeader } from '@/components/shared/page-header';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useUpload } from '@/hooks/use-upload';
 import { authClient, signOut } from '@/lib/auth.client';
+import { env } from '@/lib/env';
 import type { Timezone } from '@/lib/schema';
 import { api } from '@/utils/trpc/client';
 import { setPasswordAction } from './actions';
@@ -28,17 +30,43 @@ export default function AccountSettingsPage() {
   const [isApiKeyDialogOpen, setIsApiKeyDialogOpen] = useState(false);
   const [showLogoutConfirmDialog, setShowLogoutConfirmDialog] = useState(false);
 
-  const handleImageUpload = async (
-    event: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    const file = event.target.files?.[0];
+  const updateMeMutation = api.account.updateMe.useMutation({
+    onSuccess: () => {
+      toast.success(t('image_updated_successfully'));
+    },
+    onError: (error) => {
+      console.error('Failed to update profile image:', error);
+      toast.error(t('failed_to_update_image'));
+    },
+  });
+
+  const { uploadToR2 } = useUpload({
+    onProgress: (info) => {
+      toast.loading(info);
+    },
+    onError: (error) => {
+      console.error('Upload error:', error);
+      toast.error(t('failed_to_upload_image'));
+    },
+  });
+
+  const handleImageUpload = async (file: File) => {
     if (!file) {
       return;
     }
 
-    const formData = new FormData();
-    formData.append('file', file);
-    // TODO: Implement image upload logic
+    try {
+      // Upload file to S3
+      const imageKey = await uploadToR2(file);
+
+      // Update user profile with the new image URL
+      await updateMeMutation.mutateAsync({
+        image: imageKey,
+      });
+    } catch (error) {
+      console.error('Failed to upload and update profile image:', error);
+      toast.error(t('failed_to_upload_image'));
+    }
   };
 
   const handleEmailEditClick = () => {
@@ -101,7 +129,7 @@ export default function AccountSettingsPage() {
             <div className='space-y-8'>
               <ProfilePicture
                 firstName={me?.firstName ?? ''}
-                image={me?.image ?? ''}
+                image={`${env.NEXT_PUBLIC_S3_PUBLIC_URL}/${me?.image}`}
                 lastName={me?.lastName ?? ''}
                 onImageUpload={handleImageUpload}
               />

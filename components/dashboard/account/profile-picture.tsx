@@ -16,6 +16,8 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import { useUpload } from '@/hooks/use-upload';
+import { api } from '@/utils/trpc/client';
 
 const profilePictureSchema = z.object({
   imageFile: z
@@ -71,6 +73,26 @@ export function ProfilePicture({
     },
   });
 
+  const updateMeMutation = api.account.updateMe.useMutation({
+    onSuccess: () => {
+      toast.success(t('image_updated_successfully'));
+    },
+    onError: (error) => {
+      console.error('Failed to update profile image:', error);
+      toast.error(t('failed_to_update_image'));
+    },
+  });
+
+  const { uploadToR2, isUploading } = useUpload({
+    onProgress: (info) => {
+      toast.loading(info);
+    },
+    onError: (error) => {
+      console.error('Upload error:', error);
+      toast.error(t('failed_to_upload_image'));
+    },
+  });
+
   const handleImageUpload = async (files: FileList | null) => {
     if (!files || files.length === 0) {
       return;
@@ -88,12 +110,13 @@ export function ProfilePicture({
       if (onImageUpload) {
         await onImageUpload(file);
       } else {
-        // Default upload logic
-        const formData = new FormData();
-        formData.append('file', file);
+        // Default upload logic - upload to S3 and update user profile
+        const imageKey = await uploadToR2(file);
 
-        // TODO: Implement default image upload
-        toast.success(t('image_uploaded_successfully'));
+        // Update user profile with the new image URL
+        await updateMeMutation.mutateAsync({
+          image: imageKey,
+        });
       }
     } catch (error) {
       console.error('Failed to upload image:', error);
@@ -130,6 +153,7 @@ export function ProfilePicture({
                 <FormControl>
                   <div>
                     <Button
+                      disabled={isUploading || updateMeMutation.isPending}
                       onClick={() => {
                         const input = document.createElement('input');
                         input.type = 'file';
@@ -145,7 +169,9 @@ export function ProfilePicture({
                       type='button'
                       variant='outline'
                     >
-                      {t('change_photo')}
+                      {isUploading || updateMeMutation.isPending
+                        ? t('uploading')
+                        : t('change_photo')}
                     </Button>
                     <Input
                       {...field}
