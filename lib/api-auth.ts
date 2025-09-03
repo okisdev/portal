@@ -57,7 +57,6 @@ export async function authenticateApiKey(
         permissions: userApiKey.permissions,
         expiresAt: userApiKey.expiresAt,
         lastUsedAt: userApiKey.lastUsedAt,
-        usageCount: userApiKey.usageCount,
       })
       .from(userApiKey)
       .where(eq(userApiKey.keyHash, keyHash))
@@ -100,7 +99,6 @@ export async function authenticateApiKey(
       .set({
         lastUsedAt: new Date(),
         lastUsedIp: clientIp,
-        usageCount: (apiKeyRecord.usageCount || 0) + 1,
       })
       .where(eq(userApiKey.id, apiKeyRecord.id))
       .catch((error) => {

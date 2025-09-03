@@ -186,9 +186,13 @@ export default function CompanyIdPage() {
     }
   }, [mode, company]);
 
-  if (isLoading) return <PageLoading />;
+  if (isLoading) {
+    return <PageLoading />;
+  }
 
-  if (!company) return notFound();
+  if (!company) {
+    return notFound();
+  }
 
   const handleEditClick = () => {
     router.push(`/dashboard/crm/company/${companyId[0]}?mode=edit`);

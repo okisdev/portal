@@ -5,7 +5,7 @@
 All API requests require authentication using API keys. Include your API key in the Authorization header:
 
 ```
-Authorization: Bearer pk_your_api_key_here
+Authorization: Bearer portal_your_api_key_here
 ```
 
 ## Contact Upload API
@@ -18,7 +18,7 @@ POST /api/v1/contact/upload
 ### Headers
 ```
 Content-Type: application/json
-Authorization: Bearer pk_your_api_key_here
+Authorization: Bearer portal_your_api_key_here
 ```
 
 ### Required Permissions
@@ -127,7 +127,7 @@ Authorization: Bearer pk_your_api_key_here
 ```bash
 curl -X POST https://your-domain.com/api/v1/contact/upload \
   -H "Content-Type: application/json" \
-  -H "Authorization: Bearer pk_your_api_key_here" \
+  -H "Authorization: Bearer portal_your_api_key_here" \
   -d '{
     "contacts": [
       {
@@ -147,7 +147,7 @@ const response = await fetch('/api/v1/contact/upload', {
   method: 'POST',
   headers: {
     'Content-Type': 'application/json',
-    'Authorization': 'Bearer pk_your_api_key_here'
+    'Authorization': 'Bearer portal_your_api_key_here'
   },
   body: JSON.stringify({
     contacts: [
@@ -172,7 +172,7 @@ import requests
 url = 'https://your-domain.com/api/v1/contact/upload'
 headers = {
     'Content-Type': 'application/json',
-    'Authorization': 'Bearer pk_your_api_key_here'
+    'Authorization': 'Bearer portal_your_api_key_here'
 }
 data = {
     'contacts': [
@@ -195,5 +195,5 @@ result = response.json()
 - Maximum 1000 contacts per request
 - Duplicate contacts (same email or phone) are automatically skipped
 - Phone numbers are automatically formatted for Hong Kong (+852)
-- All API keys track usage statistics automatically
+
 - Invalid contacts are reported in the errors array but don't fail the entire request

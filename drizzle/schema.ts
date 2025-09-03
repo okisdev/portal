@@ -826,12 +826,11 @@ export const userApiKey = pgTable(
       .references(() => user.id, { onDelete: 'cascade' }),
     name: text().notNull(), // Human-readable name for the API key (e.g., "CRM Integration", "Mobile App")
     keyHash: text().notNull().unique(), // Hashed version of the API key for secure storage
-    keyPrefix: text().notNull(), // First few characters for identification (e.g., "pk_")
+    keyPrefix: text().notNull(), // First few characters for identification (e.g., "portal_")
     permissions: text(), // JSON array of permissions/scopes (e.g., ["read:contacts", "write:contacts", "read:calendar"])
     lastUsedAt: timestamp({ mode: 'date' }), // Track when the key was last used
     lastUsedIp: text('last_used_ip'), // Track IP address of last usage
     expiresAt: timestamp({ mode: 'date' }), // Optional expiration date
-    usageCount: integer().default(0), // Track number of times used
     metadata: text(), // JSON string for additional data (rate limits, etc.)
     createdAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
     updatedAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
