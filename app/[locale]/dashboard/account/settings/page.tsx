@@ -1,6 +1,17 @@
 'use client';
 
-import { BadgeX, Check, Pencil, Verified } from 'lucide-react';
+import {
+  BadgeX,
+  Check,
+  Copy,
+  Eye,
+  EyeOff,
+  Key,
+  Pencil,
+  Plus,
+  Trash2,
+  Verified,
+} from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
@@ -8,6 +19,7 @@ import { ActionAlertDialog } from '@/components/shared/action-alert-dialog';
 import { Combobox } from '@/components/shared/combobox';
 import { PageHeader } from '@/components/shared/page-header';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -37,9 +49,14 @@ export default function AccountSettingsPage() {
   const t = useTranslations();
 
   const { data: me, isLoading } = api.account.getMeFromDatabase.useQuery();
+  const { data: apiKeys, refetch: refetchApiKeys } =
+    api.apiKey.getApiKeys.useQuery();
 
   const updateAccount = api.account.updateMe.useMutation();
   const updateTimezone = api.account.updateTimezone.useMutation();
+  const createApiKey = api.apiKey.createApiKey.useMutation();
+  const revokeApiKey = api.apiKey.revokeApiKey.useMutation();
+  const toggleApiKey = api.apiKey.toggleApiKey.useMutation();
 
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -55,6 +72,17 @@ export default function AccountSettingsPage() {
   const [hasPassword, setHasPassword] = useState(false);
   const [isPasswordLoading, setIsPasswordLoading] = useState(false);
   const [showLogoutConfirmDialog, setShowLogoutConfirmDialog] = useState(false);
+
+  // API Key states
+  const [isApiKeyDialogOpen, setIsApiKeyDialogOpen] = useState(false);
+  const [newApiKeyName, setNewApiKeyName] = useState('');
+  const [newApiKeyPermissions, setNewApiKeyPermissions] = useState<string[]>(
+    []
+  );
+  const [generatedApiKey, setGeneratedApiKey] = useState<string | null>(null);
+  const [showApiKey, setShowApiKey] = useState(false);
+  const [revokeKeyId, setRevokeKeyId] = useState<string | null>(null);
+  const [revokeReason, setRevokeReason] = useState('');
 
   useEffect(() => {
     if (me) {
@@ -311,6 +339,124 @@ export default function AccountSettingsPage() {
     }
   };
 
+  // API Key functions
+  const handleCreateApiKey = async (event: React.FormEvent) => {
+    event.preventDefault();
+
+    if (!newApiKeyName.trim()) {
+      toast.error('API key name is required');
+      return;
+    }
+
+    try {
+      const result = await createApiKey.mutateAsync({
+        name: newApiKeyName.trim(),
+        permissions: newApiKeyPermissions,
+      });
+
+      setGeneratedApiKey(result.apiKey);
+      setNewApiKeyName('');
+      setNewApiKeyPermissions([]);
+      setShowApiKey(true);
+      toast.success('API key created successfully');
+      refetchApiKeys();
+    } catch (error) {
+      console.error('Failed to create API key:', error);
+      toast.error('Failed to create API key');
+    }
+  };
+
+  const handleRevokeApiKey = async (id: string, reason?: string) => {
+    try {
+      await revokeApiKey.mutateAsync({ id, reason });
+      toast.success('API key revoked successfully');
+      setRevokeKeyId(null);
+      setRevokeReason('');
+      refetchApiKeys();
+    } catch (error) {
+      console.error('Failed to revoke API key:', error);
+      toast.error('Failed to revoke API key');
+    }
+  };
+
+  const handleToggleApiKey = async (id: string, isActive: boolean) => {
+    try {
+      await toggleApiKey.mutateAsync({ id, isActive });
+      toast.success(
+        `API key ${isActive ? 'enabled' : 'disabled'} successfully`
+      );
+      refetchApiKeys();
+    } catch (error) {
+      console.error('Failed to toggle API key:', error);
+      toast.error('Failed to update API key status');
+    }
+  };
+
+  const copyToClipboard = async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      toast.success('Copied to clipboard');
+    } catch {
+      toast.error('Failed to copy to clipboard');
+    }
+  };
+
+  const resetApiKeyDialog = () => {
+    setIsApiKeyDialogOpen(false);
+    setGeneratedApiKey(null);
+    setShowApiKey(false);
+    setNewApiKeyName('');
+    setNewApiKeyPermissions([]);
+  };
+
+  // Available permissions
+  const availablePermissions = [
+    {
+      value: 'read:contacts',
+      label: 'Read Contacts',
+      description: 'View contact information',
+    },
+    {
+      value: 'write:contacts',
+      label: 'Write Contacts',
+      description: 'Create, update, and delete contacts',
+    },
+    {
+      value: 'read:calendar',
+      label: 'Read Calendar',
+      description: 'View calendar events',
+    },
+    {
+      value: 'write:calendar',
+      label: 'Write Calendar',
+      description: 'Create, update, and delete calendar events',
+    },
+    { value: 'read:tasks', label: 'Read Tasks', description: 'View tasks' },
+    {
+      value: 'write:tasks',
+      label: 'Write Tasks',
+      description: 'Create, update, and delete tasks',
+    },
+    {
+      value: 'read:resources',
+      label: 'Read Resources',
+      description: 'View resources and content',
+    },
+    {
+      value: 'write:resources',
+      label: 'Write Resources',
+      description: 'Create, update, and delete resources',
+    },
+  ];
+
+  const togglePermission = (permission: string) => {
+    setNewApiKeyPermissions((prev) =>
+      prev.includes(permission)
+        ? prev.filter((p) => p !== permission)
+        : [...prev, permission]
+    );
+  };
+
   return (
     <div className='container mx-auto max-w-4xl space-y-4 px-4 pt-10'>
       <PageHeader
@@ -323,6 +469,7 @@ export default function AccountSettingsPage() {
           <TabsList>
             <TabsTrigger value='profile'>{t('profile')}</TabsTrigger>
             <TabsTrigger value='password'>{t('password')}</TabsTrigger>
+            <TabsTrigger value='api-keys'>API Keys</TabsTrigger>
           </TabsList>
 
           <TabsContent className='space-y-4' value='profile'>
@@ -567,6 +714,147 @@ export default function AccountSettingsPage() {
               </form>
             </div>
           </TabsContent>
+
+          <TabsContent className='space-y-4' value='api-keys'>
+            <div className='space-y-4'>
+              <div className='flex items-center justify-between'>
+                <div>
+                  <h2 className='font-medium text-2xl tracking-tight'>
+                    API Keys
+                  </h2>
+                  <p className='text-muted-foreground text-sm'>
+                    Manage your API keys to authenticate with the Portal API
+                  </p>
+                </div>
+                <Button onClick={() => setIsApiKeyDialogOpen(true)}>
+                  <Plus className='mr-2 h-4 w-4' />
+                  Generate API Key
+                </Button>
+              </div>
+
+              {/* API Keys List */}
+              <div className='space-y-4'>
+                {apiKeys?.length === 0 ? (
+                  <div className='flex flex-col items-center justify-center rounded-lg border border-dashed p-8 text-center'>
+                    <Key className='mb-4 h-12 w-12 text-muted-foreground' />
+                    <h3 className='mb-2 font-semibold text-lg'>No API keys</h3>
+                    <p className='mb-4 text-muted-foreground text-sm'>
+                      You haven't created any API keys yet. Generate your first
+                      API key to get started.
+                    </p>
+                    <Button
+                      onClick={() => setIsApiKeyDialogOpen(true)}
+                      variant='outline'
+                    >
+                      <Plus className='mr-2 h-4 w-4' />
+                      Generate Your First API Key
+                    </Button>
+                  </div>
+                ) : (
+                  <div className='space-y-3'>
+                    {apiKeys?.map((key) => (
+                      <div
+                        className='flex items-center justify-between rounded-lg border p-4'
+                        key={key.id}
+                      >
+                        <div className='flex-1 space-y-1'>
+                          <div className='flex items-center gap-2'>
+                            <h4 className='font-medium'>{key.name}</h4>
+
+                            {key.revokedAt ? (
+                              <Badge variant='destructive'>Revoked</Badge>
+                            ) : (
+                              <Badge
+                                variant={key.isActive ? 'default' : 'secondary'}
+                              >
+                                {key.isActive ? 'Active' : 'Inactive'}
+                              </Badge>
+                            )}
+                          </div>
+                          {key.permissions && (
+                            <div className='mt-1 flex flex-wrap gap-1'>
+                              {JSON.parse(key.permissions)
+                                .slice(0, 3)
+                                .map((permission: string) => (
+                                  <Badge
+                                    className='text-xs'
+                                    key={permission}
+                                    variant='outline'
+                                  >
+                                    {permission}
+                                  </Badge>
+                                ))}
+                              {JSON.parse(key.permissions).length > 3 && (
+                                <Badge className='text-xs' variant='outline'>
+                                  +{JSON.parse(key.permissions).length - 3} more
+                                </Badge>
+                              )}
+                            </div>
+                          )}
+                          <div className='flex items-center gap-4 text-muted-foreground text-sm'>
+                            <span>
+                              <code className='rounded bg-muted px-1 py-0.5 text-xs'>
+                                {key.keyPrefix}...
+                              </code>
+                            </span>
+                            <span>
+                              Created {key.createdAt.toLocaleDateString()}
+                            </span>
+                            {key.lastUsedAt && (
+                              <span>
+                                Last used {key.lastUsedAt.toLocaleDateString()}
+                              </span>
+                            )}
+                            {key.usageCount !== null && (
+                              <span>Used {key.usageCount} times</span>
+                            )}
+                          </div>
+                        </div>
+                        <div className='flex items-center gap-2'>
+                          {!key.revokedAt && (
+                            <>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    onClick={() =>
+                                      handleToggleApiKey(key.id, !key.isActive)
+                                    }
+                                    size='sm'
+                                    variant='outline'
+                                  >
+                                    {key.isActive ? (
+                                      <EyeOff className='h-4 w-4' />
+                                    ) : (
+                                      <Eye className='h-4 w-4' />
+                                    )}
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  {key.isActive ? 'Disable' : 'Enable'} API key
+                                </TooltipContent>
+                              </Tooltip>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    onClick={() => setRevokeKeyId(key.id)}
+                                    size='sm'
+                                    variant='outline'
+                                  >
+                                    <Trash2 className='h-4 w-4' />
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>Revoke API key</TooltipContent>
+                              </Tooltip>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          </TabsContent>
         </Tabs>
       </div>
 
@@ -641,6 +929,198 @@ export default function AccountSettingsPage() {
         open={showLogoutConfirmDialog}
         title={t('forgot_password_title')}
       />
+
+      {/* Create API Key Dialog */}
+      <Dialog
+        onOpenChange={(open) => {
+          if (open) {
+            setIsApiKeyDialogOpen(open);
+          } else {
+            resetApiKeyDialog();
+          }
+        }}
+        open={isApiKeyDialogOpen}
+      >
+        <DialogContent className='sm:max-w-md'>
+          <DialogHeader>
+            <DialogTitle>
+              {generatedApiKey ? 'API Key Generated' : 'Generate New API Key'}
+            </DialogTitle>
+            <DialogDescription>
+              {generatedApiKey
+                ? "Save this API key somewhere secure. You won't be able to see it again."
+                : 'Create a new API key for your application.'}
+            </DialogDescription>
+          </DialogHeader>
+
+          {generatedApiKey ? (
+            <div className='space-y-4 py-4'>
+              <div className='space-y-2'>
+                <Label>Your new API key</Label>
+                <div className='flex items-center gap-2'>
+                  <Input
+                    readOnly
+                    type={showApiKey ? 'text' : 'password'}
+                    value={generatedApiKey}
+                  />
+                  <Button
+                    onClick={() => setShowApiKey(!showApiKey)}
+                    size='icon'
+                    variant='outline'
+                  >
+                    {showApiKey ? (
+                      <EyeOff className='h-4 w-4' />
+                    ) : (
+                      <Eye className='h-4 w-4' />
+                    )}
+                  </Button>
+                  <Button
+                    onClick={() => copyToClipboard(generatedApiKey)}
+                    size='icon'
+                    variant='outline'
+                  >
+                    <Copy className='h-4 w-4' />
+                  </Button>
+                </div>
+              </div>
+              <div className='rounded-lg bg-amber-50 p-3 dark:bg-amber-950'>
+                <p className='text-amber-900 text-sm dark:text-amber-100'>
+                  ⚠️ Save this API key now. For security reasons, you won't be
+                  able to view it again.
+                </p>
+              </div>
+              <DialogFooter>
+                <Button onClick={resetApiKeyDialog} variant='outline'>
+                  Close
+                </Button>
+              </DialogFooter>
+            </div>
+          ) : (
+            <form onSubmit={handleCreateApiKey}>
+              <div className='space-y-4 py-4'>
+                <div className='space-y-2'>
+                  <Label htmlFor='apiKeyName'>Name</Label>
+                  <Input
+                    id='apiKeyName'
+                    onChange={(e) => setNewApiKeyName(e.target.value)}
+                    placeholder='e.g., Mobile App, Production Server'
+                    type='text'
+                    value={newApiKeyName}
+                  />
+                </div>
+                <div className='space-y-2'>
+                  <Label>Permissions</Label>
+                  <div className='max-h-48 space-y-2 overflow-y-auto rounded-md border p-3'>
+                    {availablePermissions.map((permission) => (
+                      <div
+                        className='flex items-center space-x-3'
+                        key={permission.value}
+                      >
+                        <input
+                          checked={newApiKeyPermissions.includes(
+                            permission.value
+                          )}
+                          className='rounded border-gray-300'
+                          id={permission.value}
+                          onChange={() => togglePermission(permission.value)}
+                          type='checkbox'
+                        />
+                        <div className='flex-1'>
+                          <Label
+                            className='cursor-pointer font-medium text-sm'
+                            htmlFor={permission.value}
+                          >
+                            {permission.label}
+                          </Label>
+                          <p className='text-muted-foreground text-xs'>
+                            {permission.description}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                    {newApiKeyPermissions.length === 0 && (
+                      <p className='text-muted-foreground text-sm italic'>
+                        Select permissions or leave empty for full access
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+              <DialogFooter>
+                <Button
+                  onClick={resetApiKeyDialog}
+                  type='button'
+                  variant='outline'
+                >
+                  Cancel
+                </Button>
+                <Button
+                  disabled={createApiKey.isPending || !newApiKeyName.trim()}
+                  type='submit'
+                >
+                  {createApiKey.isPending
+                    ? 'Generating...'
+                    : 'Generate API Key'}
+                </Button>
+              </DialogFooter>
+            </form>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Revoke API Key Dialog */}
+      <Dialog
+        onOpenChange={(open) => {
+          if (!open) {
+            setRevokeKeyId(null);
+            setRevokeReason('');
+          }
+        }}
+        open={!!revokeKeyId}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Revoke API Key</DialogTitle>
+            <DialogDescription>
+              This action cannot be undone. The API key will be permanently
+              revoked.
+            </DialogDescription>
+          </DialogHeader>
+          <div className='space-y-4 py-4'>
+            <div className='space-y-2'>
+              <Label htmlFor='revokeReason'>Reason (optional)</Label>
+              <Input
+                id='revokeReason'
+                onChange={(e) => setRevokeReason(e.target.value)}
+                placeholder='e.g., Security breach, No longer needed'
+                type='text'
+                value={revokeReason}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              onClick={() => {
+                setRevokeKeyId(null);
+                setRevokeReason('');
+              }}
+              variant='outline'
+            >
+              Cancel
+            </Button>
+            <Button
+              disabled={revokeApiKey.isPending}
+              onClick={() =>
+                revokeKeyId &&
+                handleRevokeApiKey(revokeKeyId, revokeReason || undefined)
+              }
+              variant='destructive'
+            >
+              {revokeApiKey.isPending ? 'Revoking...' : 'Revoke API Key'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

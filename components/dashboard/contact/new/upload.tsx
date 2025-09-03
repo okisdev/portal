@@ -105,14 +105,18 @@ export default function ContactUpload() {
 
   // Function to format date for display
   const formatDateForDisplay = (date: Date | undefined): string => {
-    if (!date) return '';
+    if (!date) {
+      return '';
+    }
     return format(date, 'yyyy/MM/dd');
   };
 
   // Add this new function to validate date format
   const validateDateFormat = (dateStr: string): boolean => {
     const regex = /^\d{4}\/\d{2}\/\d{2}$/;
-    if (!regex.test(dateStr)) return false;
+    if (!regex.test(dateStr)) {
+      return false;
+    }
 
     const [year, month, day] = dateStr.split('/').map(Number);
     const date = new Date(year, month - 1, day);
@@ -125,7 +129,9 @@ export default function ContactUpload() {
 
   const handleCsvUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file) return;
+    if (!file) {
+      return;
+    }
 
     setIsProcessingCsv(true);
     try {
@@ -174,7 +180,9 @@ export default function ContactUpload() {
                 };
               })
               .filter((row): row is ContactFormData => {
-                if (!row) return false;
+                if (!row) {
+                  return false;
+                }
                 const isEmpty = Boolean(isRowEmpty(row));
                 const isValid = Boolean(isRowValid(row));
                 return !isEmpty && isValid;
@@ -478,36 +486,36 @@ export default function ContactUpload() {
                 </Button>
               </>
             ) : (
-              <>
-                <div className='flex flex-1 items-center gap-4'>
-                  <Button
-                    disabled={isLoading}
-                    onClick={handleSubmit}
-                    size='sm'
-                    type='submit'
-                  >
-                    {t('import_contacts')}
-                  </Button>
-                  <Button
-                    onClick={() => {
-                      setShowPreview(false);
-                      setCsvData([]);
-                      setDuplicates([]);
-                      setHasDuplicates(false);
-                      // Reset the file input
-                      const fileInput = document.getElementById(
-                        'csvUpload'
-                      ) as HTMLInputElement;
-                      if (fileInput) fileInput.value = '';
-                    }}
-                    size='sm'
-                    type='button'
-                    variant='outline'
-                  >
-                    {t('reset')}
-                  </Button>
-                </div>
-              </>
+              <div className='flex flex-1 items-center gap-4'>
+                <Button
+                  disabled={isLoading}
+                  onClick={handleSubmit}
+                  size='sm'
+                  type='submit'
+                >
+                  {t('import_contacts')}
+                </Button>
+                <Button
+                  onClick={() => {
+                    setShowPreview(false);
+                    setCsvData([]);
+                    setDuplicates([]);
+                    setHasDuplicates(false);
+                    // Reset the file input
+                    const fileInput = document.getElementById(
+                      'csvUpload'
+                    ) as HTMLInputElement;
+                    if (fileInput) {
+                      fileInput.value = '';
+                    }
+                  }}
+                  size='sm'
+                  type='button'
+                  variant='outline'
+                >
+                  {t('reset')}
+                </Button>
+              </div>
             )}
           </div>
 

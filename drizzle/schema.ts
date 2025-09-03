@@ -813,3 +813,38 @@ export const siteConfig = pgTable('portal_site_config', {
   createdAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
   updatedAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
 });
+
+export const userApiKey = pgTable(
+  'portal_user_api_key',
+  {
+    id: text()
+      .primaryKey()
+      .notNull()
+      .$defaultFn(() => crypto.randomUUID()),
+    userId: text()
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    name: text().notNull(), // Human-readable name for the API key (e.g., "CRM Integration", "Mobile App")
+    keyHash: text().notNull().unique(), // Hashed version of the API key for secure storage
+    keyPrefix: text().notNull(), // First few characters for identification (e.g., "pk_")
+    permissions: text(), // JSON array of permissions/scopes (e.g., ["read:contacts", "write:contacts", "read:calendar"])
+    lastUsedAt: timestamp({ mode: 'date' }), // Track when the key was last used
+    lastUsedIp: text('last_used_ip'), // Track IP address of last usage
+    expiresAt: timestamp({ mode: 'date' }), // Optional expiration date
+    isActive: boolean().default(true), // Enable/disable the key
+    revokedAt: timestamp({ mode: 'date' }), // When the key was revoked
+    revokedBy: text().references(() => user.id), // Who revoked the key
+    revokeReason: text(), // Reason for revocation
+    usageCount: integer().default(0), // Track number of times used
+    metadata: text(), // JSON string for additional data (rate limits, etc.)
+    createdAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
+    updatedAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
+  },
+  (table) => [
+    foreignKey({
+      columns: [table.userId],
+      foreignColumns: [user.id],
+      name: 'portal_user_api_key_userId_user_id_fk',
+    }).onDelete('cascade'),
+  ]
+);
