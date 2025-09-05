@@ -4,7 +4,6 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { motion } from 'framer-motion';
 import { Loader2 } from 'lucide-react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
@@ -15,14 +14,17 @@ import { authClient } from '@/lib/auth.client';
 import { api } from '@/utils/trpc/client';
 
 const registerSchema = z.object({
+  firstName: z.string().min(1, 'First name is required'),
+  lastName: z.string().min(1, 'Last name is required'),
   email: z.email('Please enter a valid email'),
   password: z.string().min(8, 'Password must be at least 8 characters'),
 });
 
 type RegisterFormValues = z.infer<typeof registerSchema>;
 
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 export default function RegisterPage() {
-  const router = useRouter();
   const t = useTranslations();
 
   const [error, setError] = useState('');
@@ -37,6 +39,8 @@ export default function RegisterPage() {
     resolver: zodResolver(registerSchema),
   });
 
+  const firstName = watch('firstName');
+  const lastName = watch('lastName');
   const email = watch('email');
   const password = watch('password');
 
@@ -47,9 +51,8 @@ export default function RegisterPage() {
     { enabled: !!emailToValidate }
   );
 
-  const isValidEmailFormat = (email: string) => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
+  const isValidEmailFormat = (emailToCheck: string) => {
+    return EMAIL_REGEX.test(emailToCheck);
   };
 
   const handleEmailBlur = () => {
@@ -71,7 +74,7 @@ export default function RegisterPage() {
     await authClient.signUp.email({
       email: data.email,
       password: data.password,
-      name: '',
+      name: `${data.firstName} ${data.lastName}`,
     });
 
     setLoading(false);
@@ -100,6 +103,42 @@ export default function RegisterPage() {
             {error}
           </div>
         )}
+
+        <div className='grid grid-cols-2 gap-4'>
+          <div className='space-y-1'>
+            <Label className='mb-1 block font-medium text-foreground text-sm'>
+              {t('first_name')}
+            </Label>
+            <input
+              type='text'
+              {...register('firstName')}
+              className='w-full rounded-lg border bg-background p-2 focus:outline-hidden focus:ring-2 focus:ring-ring'
+              placeholder='John'
+            />
+            {errors.firstName && (
+              <p className='mt-1 text-destructive text-sm'>
+                {errors.firstName.message}
+              </p>
+            )}
+          </div>
+
+          <div className='space-y-1'>
+            <Label className='mb-1 block font-medium text-foreground text-sm'>
+              {t('last_name')}
+            </Label>
+            <input
+              type='text'
+              {...register('lastName')}
+              className='w-full rounded-lg border bg-background p-2 focus:outline-hidden focus:ring-2 focus:ring-ring'
+              placeholder='Doe'
+            />
+            {errors.lastName && (
+              <p className='mt-1 text-destructive text-sm'>
+                {errors.lastName.message}
+              </p>
+            )}
+          </div>
+        </div>
 
         <div className='space-y-1'>
           <Label className='mb-1 block font-medium text-foreground text-sm'>
@@ -139,7 +178,7 @@ export default function RegisterPage() {
         <div className='space-y-3'>
           <button
             className='flex w-full items-center justify-center rounded-lg bg-primary px-4 py-2 font-medium text-primary-foreground transition-colors hover:bg-primary/80 disabled:cursor-not-allowed disabled:opacity-50'
-            disabled={loading || !email || !password}
+            disabled={loading || !firstName || !lastName || !email || !password}
             type='submit'
           >
             {loading ? (

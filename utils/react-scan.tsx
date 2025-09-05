@@ -1,6 +1,6 @@
 'use client';
 
-import { type JSX, useEffect } from 'react';
+import { Fragment, type JSX, useEffect } from 'react';
 import { scan } from 'react-scan';
 
 export function ReactScan(): JSX.Element {
@@ -10,5 +10,5 @@ export function ReactScan(): JSX.Element {
     });
   }, []);
 
-  return <></>;
+  return <Fragment />;
 }
