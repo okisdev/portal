@@ -762,5 +762,19 @@
   "you": "你",
   "your_new_api_key": "您的新 API 密鑰",
   "audit": "審計",
-  "image_updated_successfully": "個人資料圖片成功更新了"
+  "image_updated_successfully": "個人資料圖片成功更新了",
+  "advanced": "先進的",
+  "advance": "進步",
+  "labelling": "標籤",
+  "add_priorities": "添加優先級",
+  "add_sources": "添加來源",
+  "add_statuses": "添加狀態",
+  "edit_priorities": "編輯優先級",
+  "edit_sources": "編輯資源",
+  "edit_statuses": "編輯狀態",
+  "labelling_description": "管理您的標籤",
+  "priorities": "優先事項",
+  "priorities_management": "優先管理",
+  "sources_management": "來源管理",
+  "statuses_management": "狀態管理"
 }

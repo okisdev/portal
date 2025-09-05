@@ -18,6 +18,7 @@ import {
   Sparkle,
   Sun,
   Table,
+  Tags,
   Users,
   Verified,
 } from 'lucide-react';
@@ -188,19 +189,25 @@ export function DashboardSidebar() {
                   {
                     id: 'overview',
                     title: t('overview'),
-                    url: '/dashboard/site',
+                    url: '/dashboard/advance/site',
                     icon: Users,
                   },
                 ]
               : []),
             {
-              id: 'management',
-              title: t('management'),
-              url: '/dashboard/site/management',
+              id: 'labelling',
+              title: t('labelling'),
+              url: '/dashboard/advance/labelling',
+              icon: Tags,
+            },
+            {
+              id: 'audit',
+              title: t('audit'),
+              url: '/dashboard/advance/audit',
               icon: Settings,
             },
           ]}
-          title={t('site')}
+          title={t('advance')}
         />
       </SidebarContent>
       <SidebarFooter>

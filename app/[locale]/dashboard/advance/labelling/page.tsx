@@ -183,7 +183,7 @@ function DragOverlayItem({
   );
 }
 
-export default function ManagementPage() {
+export default function AdvanceLabellingPage() {
   const t = useTranslations();
   const utils = api.useUtils();
 
@@ -424,6 +424,8 @@ export default function ManagementPage() {
         sourceForm.reset({ value: item.value, color: item.color });
         setIsSourceDialogOpen(true);
         break;
+      default:
+        break;
     }
   };
 
@@ -463,7 +465,9 @@ export default function ManagementPage() {
     setActiveId(null);
     setActiveItem(null);
 
-    if (!over || active.id === over.id) return;
+    if (!over || active.id === over.id) {
+      return;
+    }
 
     const oldIndex = values.findIndex((item) => item.value === active.id);
     const newIndex = values.findIndex((item) => item.value === over.id);
@@ -480,6 +484,8 @@ export default function ManagementPage() {
         break;
       case 'source':
         reorderSource.mutate({ values: newValues });
+        break;
+      default:
         break;
     }
   };
@@ -542,26 +548,26 @@ export default function ManagementPage() {
   return (
     <div className='container mx-auto space-y-4 p-4'>
       <PageHeader
-        description={t('management_description')}
-        title={t('management')}
+        description={t('labelling_description')}
+        title={t('labelling')}
       />
 
       <Tabs className='space-y-6' defaultValue='status'>
         <TabsList className='grid w-full grid-cols-3'>
-          <TabsTrigger value='status'>{t('status')}</TabsTrigger>
-          <TabsTrigger value='priority'>{t('priority')}</TabsTrigger>
-          <TabsTrigger value='source'>{t('source')}</TabsTrigger>
+          <TabsTrigger value='status'>{t('statuses')}</TabsTrigger>
+          <TabsTrigger value='priority'>{t('priorities')}</TabsTrigger>
+          <TabsTrigger value='source'>{t('sources')}</TabsTrigger>
         </TabsList>
 
         <TabsContent value='status'>
           <Card>
             <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
               <CardTitle className='font-semibold text-xl'>
-                {t('status_management')}
+                {t('statuses_management')}
               </CardTitle>
               <Button onClick={() => setIsStatusDialogOpen(true)} size='sm'>
                 <Plus className='mr-2 h-4 w-4' />
-                {t('add_status')}
+                {t('add_statuses')}
               </Button>
             </CardHeader>
             <CardContent>
@@ -581,11 +587,11 @@ export default function ManagementPage() {
           <Card>
             <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
               <CardTitle className='font-semibold text-xl'>
-                {t('priority_management')}
+                {t('priorities_management')}
               </CardTitle>
               <Button onClick={() => setIsPriorityDialogOpen(true)} size='sm'>
                 <Plus className='mr-2 h-4 w-4' />
-                {t('add_priority')}
+                {t('add_priorities')}
               </Button>
             </CardHeader>
             <CardContent>
@@ -605,11 +611,11 @@ export default function ManagementPage() {
           <Card>
             <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
               <CardTitle className='font-semibold text-xl'>
-                {t('source_management')}
+                {t('sources_management')}
               </CardTitle>
               <Button onClick={() => setIsSourceDialogOpen(true)} size='sm'>
                 <Plus className='mr-2 h-4 w-4' />
-                {t('add_source')}
+                {t('add_sources')}
               </Button>
             </CardHeader>
             <CardContent>
@@ -629,14 +635,16 @@ export default function ManagementPage() {
       <Dialog
         onOpenChange={(open) => {
           setIsStatusDialogOpen(open);
-          if (!open) setEditingItem(null);
+          if (!open) {
+            setEditingItem(null);
+          }
         }}
         open={isStatusDialogOpen}
       >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>
-              {editingItem ? t('edit_status') : t('add_status')}
+              {editingItem ? t('edit_statuses') : t('add_statuses')}
             </DialogTitle>
           </DialogHeader>
           <Form {...statusForm}>
@@ -670,7 +678,7 @@ export default function ManagementPage() {
               />
               <DialogFooter>
                 <Button type='submit'>
-                  {editingItem ? t('update') : t('add')}
+                  {editingItem ? t('update') : t('add_statuses')}
                 </Button>
               </DialogFooter>
             </form>
@@ -681,14 +689,16 @@ export default function ManagementPage() {
       <Dialog
         onOpenChange={(open) => {
           setIsPriorityDialogOpen(open);
-          if (!open) setEditingItem(null);
+          if (!open) {
+            setEditingItem(null);
+          }
         }}
         open={isPriorityDialogOpen}
       >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>
-              {editingItem ? t('edit_priority') : t('add_priority')}
+              {editingItem ? t('edit_priorities') : t('add_priorities')}
             </DialogTitle>
           </DialogHeader>
           <Form {...priorityForm}>
@@ -725,7 +735,7 @@ export default function ManagementPage() {
               />
               <DialogFooter>
                 <Button type='submit'>
-                  {editingItem ? t('update') : t('add')}
+                  {editingItem ? t('update') : t('add_priorities')}
                 </Button>
               </DialogFooter>
             </form>
@@ -736,14 +746,16 @@ export default function ManagementPage() {
       <Dialog
         onOpenChange={(open) => {
           setIsSourceDialogOpen(open);
-          if (!open) setEditingItem(null);
+          if (!open) {
+            setEditingItem(null);
+          }
         }}
         open={isSourceDialogOpen}
       >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>
-              {editingItem ? t('edit_source') : t('add_source')}
+              {editingItem ? t('edit_sources') : t('add_sources')}
             </DialogTitle>
           </DialogHeader>
           <Form {...sourceForm}>
@@ -777,7 +789,7 @@ export default function ManagementPage() {
               />
               <DialogFooter>
                 <Button type='submit'>
-                  {editingItem ? t('update') : t('add')}
+                  {editingItem ? t('update') : t('add_sources')}
                 </Button>
               </DialogFooter>
             </form>
