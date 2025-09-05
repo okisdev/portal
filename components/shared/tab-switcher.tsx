@@ -113,7 +113,7 @@ export function TabSwitcher({ config }: TabSwitcherProps) {
       </div>
       <div
         aria-labelledby={config[activeIndex]?.label}
-        className='relative mt-4 h-[calc(100%-44px)]'
+        className='relative mt-2 h-[calc(100%-44px)]'
         id={`panel-${config[activeIndex]?.label}`}
         role='tabpanel'
       >
