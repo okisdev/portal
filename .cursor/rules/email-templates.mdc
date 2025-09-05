@@ -1,0 +1,557 @@
+---
+description: Email template system with React Email and email sending patterns
+globs: 
+  - "emails/**/*.{ts,tsx}"
+  - "lib/mail.ts"
+  - "utils/email.ts"
+  - "**/*email*.{ts,tsx}"
+alwaysApply: false
+---
+# Email Template System
+
+Portal uses React Email for creating beautiful, responsive email templates with comprehensive sending capabilities.
+
+## Architecture
+
+### Core Components
+- `emails/`: React Email template components
+- `emails/components/layout.tsx`: Shared email layout wrapper
+- `lib/mail.ts`: Email service configuration (Resend, SMTP, etc.)
+- `utils/email.ts`: Email sending utilities and helpers
+
+### Template Structure
+- `emails/welcome.tsx`: User welcome email
+- `emails/magic-link.tsx`: Magic link authentication email  
+- `emails/password-reset.tsx`: Password reset email
+- Future templates: Invitation, notification, marketing emails
+
+## Email Templates
+
+### Base Layout Component
+```tsx
+// emails/components/layout.tsx
+import {
+  Body,
+  Container,
+  Head,
+  Html,
+  Preview,
+  Tailwind,
+} from '@react-email/components';
+
+interface EmailLayoutProps {
+  children: React.ReactNode;
+  preview: string;
+}
+
+export function EmailLayout({ children, preview }: EmailLayoutProps) {
+  return (
+    <Html>
+      <Head />
+      <Preview>{preview}</Preview>
+      <Tailwind>
+        <Body className="bg-gray-50 font-sans">
+          <Container className="mx-auto py-10 px-5">
+            <div className="bg-white rounded-lg shadow-sm border p-8">
+              {children}
+            </div>
+          </Container>
+        </Body>
+      </Tailwind>
+    </Html>
+  );
+}
+```
+
+### Welcome Email Template
+```tsx
+// emails/welcome.tsx
+import {
+  Button,
+  Heading,
+  Hr,
+  Img,
+  Section,
+  Text,
+} from '@react-email/components';
+import { EmailLayout } from './components/layout';
+
+interface WelcomeEmailProps {
+  name?: string;
+  email?: string;
+  loginUrl?: string;
+}
+
+export const WelcomeEmail = ({
+  email = 'user@example.com',
+  name = 'there',
+  loginUrl = 'https://portal.example.com/login',
+}: WelcomeEmailProps) => {
+  return (
+    <EmailLayout preview="Welcome to Portal!">
+      <Section className="text-center">
+        <Img
+          alt="Portal"
+          className="mx-auto mb-4"
+          height="60"
+          src="https://portal.vifu.org/web-app-manifest-512x512.png"
+          width="60"
+        />
+        <Heading className="mb-6 font-bold text-2xl text-gray-900">
+          Welcome to Portal!
+        </Heading>
+      </Section>
+
+      <Text className="mb-4 text-gray-700">Hi {name},</Text>
+
+      <Text className="mb-4 text-gray-700">
+        Welcome to Portal! We're excited to have you on board. Your account has
+        been successfully created with the email address:{' '}
+        <strong>{email}</strong>
+      </Text>
+
+      <Text className="mb-6 text-gray-700">
+        Portal helps you streamline your business operations with powerful CRM
+        tools, contact management, and team collaboration features.
+      </Text>
+
+      <Section className="my-8 text-center">
+        <Button
+          className="inline-block rounded-lg bg-blue-600 px-6 py-3 font-medium text-white no-underline hover:bg-blue-700"
+          href={loginUrl}
+        >
+          Get Started
+        </Button>
+      </Section>
+
+      <Hr className="my-6 border-gray-200" />
+
+      <Text className="mb-4 text-gray-700">
+        <strong>What's next?</strong>
+      </Text>
+
+      <Text className="mb-2 text-gray-700">
+        • Set up your profile and preferences
+      </Text>
+      <Text className="mb-2 text-gray-700">
+        • Import your contacts or create your first contact
+      </Text>
+      <Text className="mb-2 text-gray-700">
+        • Explore the dashboard and CRM features
+      </Text>
+      <Text className="mb-6 text-gray-700">
+        • Invite team members to collaborate
+      </Text>
+
+      <Text className="mb-4 text-gray-600 text-sm">
+        If you have any questions, feel free to reach out to our support team.
+        We're here to help!
+      </Text>
+
+      <Text className="text-gray-600 text-sm">
+        Best regards,<br />
+        The Portal Team
+      </Text>
+    </EmailLayout>
+  );
+};
+```
+
+### Password Reset Email
+```tsx
+// emails/password-reset.tsx
+import {
+  Button,
+  Heading,
+  Section,
+  Text,
+} from '@react-email/components';
+import { EmailLayout } from './components/layout';
+
+interface PasswordResetEmailProps {
+  name?: string;
+  resetUrl?: string;
+  expiresInMinutes?: number;
+  ip?: string;
+}
+
+export const PasswordResetEmail = ({
+  name = 'there',
+  resetUrl = 'https://portal.example.com/reset-password?token=...',
+  expiresInMinutes = 15,
+  ip,
+}: PasswordResetEmailProps) => {
+  return (
+    <EmailLayout preview="Reset your Portal password">
+      <Heading className="mb-6 font-bold text-2xl text-gray-900">
+        Reset Your Password
+      </Heading>
+
+      <Text className="mb-4 text-gray-700">Hi {name},</Text>
+
+      <Text className="mb-4 text-gray-700">
+        We received a request to reset your password for your Portal account.
+        {ip && ` This request came from IP address: ${ip}`}
+      </Text>
+
+      <Text className="mb-6 text-gray-700">
+        Click the button below to reset your password. This link will expire in{' '}
+        {expiresInMinutes} minutes for security reasons.
+      </Text>
+
+      <Section className="my-8 text-center">
+        <Button
+          className="inline-block rounded-lg bg-red-600 px-6 py-3 font-medium text-white no-underline hover:bg-red-700"
+          href={resetUrl}
+        >
+          Reset Password
+        </Button>
+      </Section>
+
+      <Text className="mb-4 text-gray-700">
+        If you didn't request this password reset, you can safely ignore this
+        email. Your password will not be changed.
+      </Text>
+
+      <Text className="text-gray-600 text-sm">
+        If the button doesn't work, copy and paste this link into your browser:
+        <br />
+        {resetUrl}
+      </Text>
+    </EmailLayout>
+  );
+};
+```
+
+### Magic Link Email
+```tsx
+// emails/magic-link.tsx
+import {
+  Button,
+  Heading,
+  Section,
+  Text,
+} from '@react-email/components';
+import { EmailLayout } from './components/layout';
+
+interface MagicLinkEmailProps {
+  name?: string;
+  magicLinkUrl?: string;
+  expiresInMinutes?: number;
+}
+
+export const MagicLinkEmail = ({
+  name = 'there',
+  magicLinkUrl = 'https://portal.example.com/auth/magic?token=...',
+  expiresInMinutes = 10,
+}: MagicLinkEmailProps) => {
+  return (
+    <EmailLayout preview="Sign in to Portal">
+      <Heading className="mb-6 font-bold text-2xl text-gray-900">
+        Sign in to Portal
+      </Heading>
+
+      <Text className="mb-4 text-gray-700">Hi {name},</Text>
+
+      <Text className="mb-6 text-gray-700">
+        Click the button below to sign in to your Portal account. This link
+        will expire in {expiresInMinutes} minutes for security reasons.
+      </Text>
+
+      <Section className="my-8 text-center">
+        <Button
+          className="inline-block rounded-lg bg-blue-600 px-6 py-3 font-medium text-white no-underline hover:bg-blue-700"
+          href={magicLinkUrl}
+        >
+          Sign In
+        </Button>
+      </Section>
+
+      <Text className="mb-4 text-gray-700">
+        If you didn't request this sign-in link, you can safely ignore this
+        email.
+      </Text>
+
+      <Text className="text-gray-600 text-sm">
+        If the button doesn't work, copy and paste this link into your browser:
+        <br />
+        {magicLinkUrl}
+      </Text>
+    </EmailLayout>
+  );
+};
+```
+
+## Email Service Configuration
+
+### Mail Service Setup
+```typescript
+// lib/mail.ts
+import { Resend } from 'resend';
+
+// Initialize email service (Resend example)
+const resend = new Resend(process.env.RESEND_API_KEY);
+
+export interface EmailOptions {
+  to: string | string[];
+  from?: string;
+  subject: string;
+  react: React.ReactElement;
+  cc?: string[];
+  bcc?: string[];
+  attachments?: {
+    filename: string;
+    content: string | Buffer;
+    contentType?: string;
+  }[];
+}
+
+export async function sendEmail(options: EmailOptions) {
+  const { to, from = 'Portal <noreply@portal.vifu.org>', subject, react, ...rest } = options;
+
+  try {
+    const { data, error } = await resend.emails.send({
+      from,
+      to: Array.isArray(to) ? to : [to],
+      subject,
+      react,
+      ...rest,
+    });
+
+    if (error) {
+      throw new Error(`Email sending failed: ${error.message}`);
+    }
+
+    return data;
+  } catch (error) {
+    console.error('Email sending error:', error);
+    throw error;
+  }
+}
+```
+
+### Email Utility Functions
+```typescript
+// utils/email.ts
+import { render } from '@react-email/render';
+import type { ReactElement } from 'react';
+
+export interface SendEmailParams {
+  to: string | string[];
+  from?: string;
+  subject: string;
+  content: string;
+  cc?: string[];
+  bcc?: string[];
+  attachments?: any[];
+}
+
+export async function sendHtmlEmail({
+  from = 'Portal <noreply@portal.vifu.org>',
+  to,
+  subject,
+  content,
+  cc,
+  bcc,
+  attachments,
+}: SendEmailParams) {
+  // Implementation depends on email service provider
+  // This is a generic interface that can be adapted
+}
+
+export function renderEmailTemplate(template: ReactElement): string {
+  return render(template);
+}
+
+export async function sendTemplateEmail<T>(
+  template: (props: T) => ReactElement,
+  props: T,
+  emailOptions: Omit<EmailOptions, 'react'>
+) {
+  const rendered = template(props);
+  
+  return sendEmail({
+    ...emailOptions,
+    react: rendered,
+  });
+}
+```
+
+## Email Sending Patterns
+
+### Welcome Email Integration
+```typescript
+// server/routers/auth.ts
+import { sendEmail } from '@/lib/mail';
+import { WelcomeEmail } from '@/emails/welcome';
+
+export const authRouter = createTRPCRouter({
+  register: publicProcedure
+    .input(registerSchema)
+    .mutation(async ({ ctx, input }) => {
+      // Create user account
+      const user = await ctx.db.insert(userTable).values({
+        ...input,
+        id: crypto.randomUUID(),
+      });
+
+      // Send welcome email
+      await sendEmail({
+        to: input.email,
+        subject: 'Welcome to Portal!',
+        react: WelcomeEmail({
+          name: input.name,
+          email: input.email,
+          loginUrl: `${env.APP_URL}/login`,
+        }),
+      });
+
+      return { success: true };
+    }),
+});
+```
+
+### Bulk Email Sending
+```typescript
+export async function sendBulkEmails<T>(
+  recipients: { email: string; props: T }[],
+  template: (props: T) => ReactElement,
+  subject: string
+) {
+  const promises = recipients.map(({ email, props }) =>
+    sendEmail({
+      to: email,
+      subject,
+      react: template(props),
+    })
+  );
+
+  // Send emails in batches to avoid rate limits
+  const batchSize = 10;
+  const batches = [];
+  
+  for (let i = 0; i < promises.length; i += batchSize) {
+    batches.push(promises.slice(i, i + batchSize));
+  }
+
+  const results = [];
+  for (const batch of batches) {
+    const batchResults = await Promise.allSettled(batch);
+    results.push(...batchResults);
+    
+    // Add delay between batches
+    await new Promise(resolve => setTimeout(resolve, 1000));
+  }
+
+  return results;
+}
+```
+
+## Development & Testing
+
+### Email Preview Server
+```typescript
+// For development, use React Email's preview server
+// Run: npx email dev
+
+// Or create custom preview pages
+export async function GET() {
+  const html = render(
+    WelcomeEmail({
+      name: 'John Doe',
+      email: 'john@example.com',
+      loginUrl: 'http://localhost:3000/login',
+    })
+  );
+
+  return new Response(html, {
+    headers: { 'Content-Type': 'text/html' },
+  });
+}
+```
+
+### Test Email Sending
+```typescript
+// utils/email.test.ts
+import { describe, it, expect, vi } from 'vitest';
+import { sendEmail } from '@/lib/mail';
+import { WelcomeEmail } from '@/emails/welcome';
+
+// Mock the email service
+vi.mock('@/lib/mail');
+
+describe('Email Templates', () => {
+  it('should send welcome email successfully', async () => {
+    const mockSendEmail = vi.mocked(sendEmail);
+    mockSendEmail.mockResolvedValue({ id: 'test-email-id' });
+
+    const result = await sendEmail({
+      to: 'test@example.com',
+      subject: 'Welcome!',
+      react: WelcomeEmail({
+        name: 'Test User',
+        email: 'test@example.com',
+      }),
+    });
+
+    expect(mockSendEmail).toHaveBeenCalledWith({
+      to: 'test@example.com',
+      subject: 'Welcome!',
+      react: expect.any(Object),
+    });
+
+    expect(result).toEqual({ id: 'test-email-id' });
+  });
+});
+```
+
+## Best Practices
+
+### Template Design
+- Use responsive design principles
+- Test across multiple email clients
+- Keep file sizes small for faster loading
+- Use web-safe fonts and fallbacks
+- Include alt text for images
+
+### Content Guidelines
+- Clear and concise subject lines
+- Personalized greetings when possible
+- Clear call-to-action buttons
+- Unsubscribe links for marketing emails
+- Consistent branding and styling
+
+### Security Considerations
+- Validate email addresses before sending
+- Use secure token generation for magic links
+- Set appropriate expiration times
+- Log email sending for audit trails
+- Handle bounces and spam complaints
+
+### Performance Optimization
+- Use email template caching
+- Implement rate limiting
+- Queue emails for batch processing
+- Monitor delivery rates and metrics
+- Handle failures gracefully with retries
+
+### Internationalization
+```typescript
+// Support for multi-language emails
+export function WelcomeEmailI18n({
+  name,
+  email,
+  loginUrl,
+  locale = 'en',
+}: WelcomeEmailProps & { locale?: string }) {
+  const t = getTranslations(locale);
+  
+  return (
+    <EmailLayout preview={t('welcome.preview')}>
+      <Heading>{t('welcome.title')}</Heading>
+      <Text>{t('welcome.greeting', { name })}</Text>
+      {/* ... */}
+    </EmailLayout>
+  );
+}
+```

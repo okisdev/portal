@@ -1,0 +1,605 @@
+---
+description: Comprehensive audit logging system for tracking user actions and system events
+globs: 
+  - "utils/audit.ts"
+  - "utils/api-audit.ts" 
+  - "utils/activity.ts"
+  - "server/routers/audit.ts"
+  - "**/*audit*.{ts,tsx}"
+alwaysApply: false
+---
+# Audit Logging System
+
+Portal implements comprehensive audit logging to track all user actions, data changes, and system events for compliance and security purposes.
+
+## Architecture
+
+### Core Components
+- `utils/audit.ts`: Core audit logging utilities for tRPC procedures
+- `utils/api-audit.ts`: API-specific audit logging for REST endpoints
+- `utils/activity.ts`: Activity tracking utilities for business entities
+- `server/routers/audit.ts`: Audit log querying and reporting
+- `drizzle/schema.ts`: Audit log database tables
+
+### Database Schema
+- `portal_audit_log`: Main audit trail for all system operations
+- `portal_team_activity`: Team-specific activity tracking
+- Integration with existing entity tables for change tracking
+
+## Core Audit Logging
+
+### Main Audit Log Structure
+```typescript
+// Database schema for audit logs
+export const auditLog = pgTable('portal_audit_log', {
+  id: text().primaryKey().$defaultFn(() => crypto.randomUUID()),
+  userId: text().notNull().references(() => user.id),
+  action: text('action').notNull(), // CREATE, READ, UPDATE, DELETE
+  resource: text('resource').notNull(), // contact, company, task, etc.
+  resourceId: text('resource_id'), // ID of the affected resource
+  inputData: text('input_data'), // JSON string of input data
+  previousData: text('previous_data'), // JSON string of data before change
+  newData: text('new_data'), // JSON string of data after change
+  ipAddress: text('ip_address'),
+  userAgent: text('user_agent'),
+  timestamp: timestamp({ mode: 'date' }).notNull().defaultNow(),
+  status: text('status').notNull().default('SUCCESS'), // SUCCESS, FAILED
+  errorMessage: text('error_message'),
+  metadata: text('metadata'), // Additional context as JSON
+});
+```
+
+### Audit Utility Functions
+```typescript
+// utils/audit.ts
+import { database } from '@/lib/database';
+import { auditLog } from '@/drizzle/schema';
+
+interface AuditContext {
+  userId: string;
+  action: 'CREATE' | 'READ' | 'UPDATE' | 'DELETE';
+  resource: string;
+  resourceId?: string;
+  ipAddress?: string;
+  userAgent?: string;
+}
+
+interface AuditLogParams {
+  context: AuditContext;
+  inputData?: any;
+  previousData?: any;
+  newData?: any;
+  status?: 'SUCCESS' | 'FAILED';
+  errorMessage?: string;
+  metadata?: any;
+  db: typeof database;
+}
+
+export async function createAuditLog({
+  context,
+  inputData,
+  previousData,
+  newData,
+  status = 'SUCCESS',
+  errorMessage,
+  metadata,
+  db,
+}: AuditLogParams) {
+  try {
+    await db.insert(auditLog).values({
+      id: crypto.randomUUID(),
+      userId: context.userId,
+      action: context.action,
+      resource: context.resource,
+      resourceId: context.resourceId,
+      inputData: inputData ? JSON.stringify(inputData) : null,
+      previousData: previousData ? JSON.stringify(previousData) : null,
+      newData: newData ? JSON.stringify(newData) : null,
+      ipAddress: context.ipAddress,
+      userAgent: context.userAgent,
+      status,
+      errorMessage,
+      metadata: metadata ? JSON.stringify(metadata) : null,
+      timestamp: new Date(),
+    });
+  } catch (error) {
+    // Log audit logging failures to console/monitoring
+    console.error('Failed to create audit log:', error);
+    // Don't throw to avoid breaking the main operation
+  }
+}
+
+export function createAuditContext(
+  session: any,
+  headers?: Headers
+): Omit<AuditContext, 'action' | 'resource'> {
+  return {
+    userId: session.user.id,
+    ipAddress: headers?.get('x-forwarded-for') || headers?.get('x-real-ip') || 'unknown',
+    userAgent: headers?.get('user-agent') || 'unknown',
+  };
+}
+```
+
+### tRPC Integration
+```typescript
+// server/routers/contact.ts - Example audit integration
+import { createAuditLog, createAuditContext } from '@/utils/audit';
+
+export const contactRouter = createTRPCRouter({
+  create: protectedProcedure
+    .input(createContactSchema)
+    .mutation(async ({ ctx, input }) => {
+      const auditContext = {
+        ...createAuditContext(ctx.session, ctx.headers),
+        action: 'CREATE' as const,
+        resource: 'contact',
+      };
+
+      try {
+        // Perform the main operation
+        const newContact = await ctx.db.insert(contact).values({
+          id: crypto.randomUUID(),
+          ...input,
+          createdBy: ctx.session.user.id,
+        });
+
+        // Log successful creation
+        await createAuditLog({
+          context: {
+            ...auditContext,
+            resourceId: newContact[0].id,
+          },
+          inputData: input,
+          newData: newContact[0],
+          db: ctx.db,
+        });
+
+        return newContact[0];
+      } catch (error) {
+        // Log failed creation
+        await createAuditLog({
+          context: auditContext,
+          inputData: input,
+          status: 'FAILED',
+          errorMessage: error instanceof Error ? error.message : 'Unknown error',
+          db: ctx.db,
+        });
+
+        throw error;
+      }
+    }),
+
+  update: protectedProcedure
+    .input(updateContactSchema)
+    .mutation(async ({ ctx, input }) => {
+      const auditContext = {
+        ...createAuditContext(ctx.session, ctx.headers),
+        action: 'UPDATE' as const,
+        resource: 'contact',
+        resourceId: input.id,
+      };
+
+      try {
+        // Get previous data for audit trail
+        const previousData = await ctx.db
+          .select()
+          .from(contact)
+          .where(eq(contact.id, input.id));
+
+        if (!previousData[0]) {
+          throw new Error('Contact not found');
+        }
+
+        // Perform the update
+        const updatedContact = await ctx.db
+          .update(contact)
+          .set({ ...input, updatedAt: new Date() })
+          .where(eq(contact.id, input.id))
+          .returning();
+
+        // Log successful update
+        await createAuditLog({
+          context: auditContext,
+          inputData: input,
+          previousData: previousData[0],
+          newData: updatedContact[0],
+          db: ctx.db,
+        });
+
+        return updatedContact[0];
+      } catch (error) {
+        // Log failed update
+        await createAuditLog({
+          context: auditContext,
+          inputData: input,
+          status: 'FAILED',
+          errorMessage: error instanceof Error ? error.message : 'Unknown error',
+          db: ctx.db,
+        });
+
+        throw error;
+      }
+    }),
+});
+```
+
+## API Audit Logging
+
+### API-Specific Audit Functions
+```typescript
+// utils/api-audit.ts
+import { database } from '@/lib/database';
+import type { NextRequest } from 'next/server';
+
+export interface ApiAuditContext {
+  userId: string;
+  apiKeyId?: string;
+  action: 'CREATE' | 'READ' | 'UPDATE' | 'DELETE';
+  resource: string;
+  ipAddress: string;
+  userAgent: string;
+  procedureName: string;
+}
+
+interface ApiAuditLogParams {
+  context: ApiAuditContext;
+  resourceId?: string;
+  inputData?: any;
+  previousData?: any;
+  newData?: any;
+  status?: 'SUCCESS' | 'FAILED';
+  errorMessage?: string;
+  duration?: number;
+  metadata?: any;
+}
+
+export async function createApiAuditLog({
+  context,
+  resourceId,
+  inputData,
+  previousData,
+  newData,
+  status = 'SUCCESS',
+  errorMessage,
+  duration,
+  metadata,
+}: ApiAuditLogParams) {
+  try {
+    await database.insert(auditLog).values({
+      id: crypto.randomUUID(),
+      userId: context.userId,
+      action: context.action,
+      resource: context.resource,
+      resourceId,
+      inputData: inputData ? JSON.stringify(inputData) : null,
+      previousData: previousData ? JSON.stringify(previousData) : null,
+      newData: newData ? JSON.stringify(newData) : null,
+      ipAddress: context.ipAddress,
+      userAgent: context.userAgent,
+      status,
+      errorMessage,
+      timestamp: new Date(),
+      metadata: metadata ? JSON.stringify({
+        ...metadata,
+        duration,
+        procedureName: context.procedureName,
+        apiKeyId: context.apiKeyId,
+      }) : null,
+    });
+  } catch (error) {
+    console.error('Failed to create API audit log:', error);
+  }
+}
+
+export function getApiClientInfo(request: NextRequest) {
+  return {
+    ipAddress: request.ip || 
+               request.headers.get('x-forwarded-for') || 
+               request.headers.get('x-real-ip') || 
+               'unknown',
+    userAgent: request.headers.get('user-agent') || 'unknown',
+  };
+}
+
+export function getApiProcedureName(pathname: string): string {
+  // Extract procedure name from API path
+  const parts = pathname.split('/').filter(Boolean);
+  return parts.slice(1).join('.'); // Remove 'api' prefix
+}
+```
+
+### API Route Integration
+```typescript
+// app/api/v1/contact/upload/route.ts - Example API audit
+export async function POST(request: NextRequest) {
+  const startTime = Date.now();
+  let authContext: Awaited<ReturnType<typeof authenticateApiKey>> = null;
+
+  try {
+    // Authentication
+    authContext = await authenticateApiKey(request);
+    if (!authContext) {
+      return createAuthErrorResponse('Invalid or missing API key');
+    }
+
+    // Set up audit context
+    const { ipAddress, userAgent } = getApiClientInfo(request);
+    const procedureName = getApiProcedureName(request.nextUrl.pathname);
+
+    const body = await request.json();
+    const validation = bulkContactUploadSchema.safeParse(body);
+
+    if (!validation.success) {
+      // Log validation error
+      await createApiAuditLog({
+        context: {
+          userId: authContext.user.id,
+          apiKeyId: authContext.apiKey.id,
+          action: 'CREATE',
+          resource: 'contact',
+          ipAddress,
+          userAgent,
+          procedureName,
+        },
+        inputData: body,
+        status: 'FAILED',
+        errorMessage: 'Validation error',
+        duration: Date.now() - startTime,
+        metadata: {
+          validationErrors: validation.error.flatten().fieldErrors,
+        },
+      });
+
+      return Response.json({ error: 'Validation failed' }, { status: 400 });
+    }
+
+    // Process the bulk upload...
+    const results = await processBulkContacts(validation.data.contacts);
+
+    // Log successful operation
+    await createApiAuditLog({
+      context: {
+        userId: authContext.user.id,
+        apiKeyId: authContext.apiKey.id,
+        action: 'CREATE',
+        resource: 'contact',
+        ipAddress,
+        userAgent,
+        procedureName,
+      },
+      inputData: validation.data,
+      newData: results,
+      status: 'SUCCESS',
+      duration: Date.now() - startTime,
+      metadata: {
+        contactsProcessed: results.created.length,
+        contactsSkipped: results.skipped.length,
+        contactsErrored: results.errors.length,
+      },
+    });
+
+    return Response.json(results);
+  } catch (error) {
+    // Log error
+    if (authContext) {
+      await createApiAuditLog({
+        context: {
+          userId: authContext.user.id,
+          apiKeyId: authContext.apiKey.id,
+          action: 'CREATE',
+          resource: 'contact',
+          ipAddress: request.ip || 'unknown',
+          userAgent: request.headers.get('user-agent') || 'unknown',
+          procedureName: getApiProcedureName(request.nextUrl.pathname),
+        },
+        status: 'FAILED',
+        errorMessage: error instanceof Error ? error.message : 'Unknown error',
+        duration: Date.now() - startTime,
+      });
+    }
+
+    return Response.json({ error: 'Internal server error' }, { status: 500 });
+  }
+}
+```
+
+## Activity Tracking
+
+### Activity Utilities
+```typescript
+// utils/activity.ts
+import { database } from '@/lib/database';
+import { teamActivity } from '@/drizzle/schema';
+
+export interface ActivityData {
+  type: string;
+  title: string;
+  description?: string;
+  entityType: string;
+  entityId: string;
+  metadata?: any;
+}
+
+export async function createActivity(
+  userId: string,
+  teamId: string,
+  activityData: ActivityData
+) {
+  return database.insert(teamActivity).values({
+    id: crypto.randomUUID(),
+    userId,
+    teamId,
+    type: activityData.type,
+    title: activityData.title,
+    description: activityData.description,
+    entityType: activityData.entityType,
+    entityId: activityData.entityId,
+    metadata: activityData.metadata ? JSON.stringify(activityData.metadata) : null,
+    timestamp: new Date(),
+  });
+}
+
+export function formatActivity(activity: any): string {
+  const actions: Record<string, string> = {
+    'contact.created': 'created contact',
+    'contact.updated': 'updated contact',
+    'contact.deleted': 'deleted contact',
+    'company.created': 'created company',
+    'task.created': 'created task',
+    'task.completed': 'completed task',
+    'meeting.scheduled': 'scheduled meeting',
+  };
+
+  return actions[activity.type] || activity.type;
+}
+
+// Activity creation helpers for common operations
+export const createContactActivity = (
+  userId: string,
+  teamId: string,
+  contactId: string,
+  action: 'created' | 'updated' | 'deleted',
+  contactName: string
+) => createActivity(userId, teamId, {
+  type: `contact.${action}`,
+  title: `${formatActivity({ type: `contact.${action}` })} ${contactName}`,
+  entityType: 'contact',
+  entityId: contactId,
+});
+
+export const createTaskActivity = (
+  userId: string,
+  teamId: string,
+  taskId: string,
+  action: 'created' | 'updated' | 'completed' | 'deleted',
+  taskTitle: string
+) => createActivity(userId, teamId, {
+  type: `task.${action}`,
+  title: `${formatActivity({ type: `task.${action}` })} "${taskTitle}"`,
+  entityType: 'task',
+  entityId: taskId,
+});
+```
+
+## Audit Reporting
+
+### Audit Router
+```typescript
+// server/routers/audit.ts
+import { z } from 'zod';
+import { createTRPCRouter, protectedProcedure, adminProcedure } from '@/server/trpc';
+import { auditLog } from '@/drizzle/schema';
+import { desc, eq, and, gte, lte, like } from 'drizzle-orm';
+
+const auditQuerySchema = z.object({
+  limit: z.number().min(1).max(100).default(50),
+  offset: z.number().min(0).default(0),
+  userId: z.string().optional(),
+  resource: z.string().optional(),
+  action: z.enum(['CREATE', 'READ', 'UPDATE', 'DELETE']).optional(),
+  status: z.enum(['SUCCESS', 'FAILED']).optional(),
+  startDate: z.date().optional(),
+  endDate: z.date().optional(),
+  search: z.string().optional(),
+});
+
+export const auditRouter = createTRPCRouter({
+  // Get audit logs (admin only)
+  getLogs: adminProcedure
+    .input(auditQuerySchema)
+    .query(async ({ ctx, input }) => {
+      const conditions = [];
+
+      if (input.userId) conditions.push(eq(auditLog.userId, input.userId));
+      if (input.resource) conditions.push(eq(auditLog.resource, input.resource));
+      if (input.action) conditions.push(eq(auditLog.action, input.action));
+      if (input.status) conditions.push(eq(auditLog.status, input.status));
+      if (input.startDate) conditions.push(gte(auditLog.timestamp, input.startDate));
+      if (input.endDate) conditions.push(lte(auditLog.timestamp, input.endDate));
+      if (input.search) {
+        conditions.push(
+          like(auditLog.inputData, `%${input.search}%`)
+        );
+      }
+
+      const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+
+      const logs = await ctx.db
+        .select()
+        .from(auditLog)
+        .where(whereClause)
+        .orderBy(desc(auditLog.timestamp))
+        .limit(input.limit)
+        .offset(input.offset);
+
+      const total = await ctx.db
+        .select({ count: count() })
+        .from(auditLog)
+        .where(whereClause);
+
+      return {
+        data: logs,
+        total: total[0]?.count || 0,
+        hasMore: input.offset + input.limit < (total[0]?.count || 0),
+      };
+    }),
+
+  // Get user's own audit trail
+  getMyLogs: protectedProcedure
+    .input(auditQuerySchema.omit({ userId: true }))
+    .query(async ({ ctx, input }) => {
+      // Same as above but filtered to current user
+      const logs = await ctx.db
+        .select()
+        .from(auditLog)
+        .where(eq(auditLog.userId, ctx.session.user.id))
+        .orderBy(desc(auditLog.timestamp))
+        .limit(input.limit)
+        .offset(input.offset);
+
+      return { data: logs };
+    }),
+
+  // Get audit statistics
+  getStats: adminProcedure
+    .input(z.object({
+      startDate: z.date(),
+      endDate: z.date(),
+    }))
+    .query(async ({ ctx, input }) => {
+      // Implementation for audit statistics
+      // Count by action, resource, status, etc.
+    }),
+});
+```
+
+## Best Practices
+
+### What to Log
+- All data modifications (CREATE, UPDATE, DELETE)
+- Authentication events (login, logout, failed attempts)
+- Permission changes and role updates
+- API key usage and access
+- File uploads and downloads
+- System configuration changes
+
+### Security Considerations
+- Never log sensitive data (passwords, tokens, PII)
+- Sanitize input data before logging
+- Implement log retention policies
+- Secure audit log storage and access
+- Monitor for audit log tampering
+
+### Performance Optimization
+- Use asynchronous logging to avoid blocking operations
+- Implement log batching for high-volume operations
+- Use proper database indexing for audit queries
+- Archive old logs to separate storage
+
+### Compliance
+- Maintain immutable audit trails
+- Implement proper data retention policies
+- Provide audit reporting capabilities
+- Support compliance export formats (CSV, JSON)
+- Document audit trail procedures

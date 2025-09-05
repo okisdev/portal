@@ -1,45 +1,239 @@
 ---
-description: 
+description: Authentication system with Better Auth patterns
 globs: 
+  - "lib/auth*.{ts,tsx}"
+  - "app/(auth)/**/*.{ts,tsx}"
+  - "app/api/auth/**/*.{ts,tsx}"
+  - "middleware.ts"
+  - "components/**/auth/**/*.{ts,tsx}"
 alwaysApply: false
 ---
 # Authentication System
 
-The application uses NextAuth.js (Auth.js) for authentication with Drizzle ORM for database storage.
+Portal uses Better-Auth with comprehensive session management and role-based access control.
 
-## Configuration
+## Core Configuration
 
-- [auth.ts](mdc:auth.ts): Main NextAuth configuration
-- [app/api/auth/[...nextauth]/route.ts](mdc:app/api/auth/[...nextauth]/route.ts): NextAuth API routes
+- `lib/auth.ts`: Main authentication configuration with providers and callbacks
+- `lib/auth.client.ts`: Client-side authentication utilities
+- `app/api/auth/[...all]/route.ts`: Authentication API endpoints
+- `middleware.ts`: Route protection and locale handling
 
 ## Authentication Pages
 
-- [app/[locale]/(auth)/login/page.tsx](mdc:app/[locale]/(auth)/login/page.tsx): Login page
-- [app/[locale]/(auth)/register/page.tsx](mdc:app/[locale]/(auth)/register/page.tsx): Registration page
+**Auth Layout**: `app/[locale]/(auth)/layout.tsx`
+- Redirects authenticated users to dashboard
+- Provides clean auth-focused layout
 
-## Database Tables
+**Core Auth Pages**:
+- `app/[locale]/(auth)/login/page.tsx`: Login with email/password and OAuth
+- `app/[locale]/(auth)/register/page.tsx`: User registration
+- `app/[locale]/(auth)/forgot-password/page.tsx`: Password reset request
+- `app/[locale]/(auth)/reset-password/page.tsx`: Password reset confirmation
 
-Authentication data is stored in these tables:
-- `portal_user`: User accounts
-- `portal_session`: User sessions
-- `portal_account`: OAuth accounts
-- `portal_verification_token`: Email verification tokens
+## Database Schema
+
+### Authentication Tables
+```typescript
+// User accounts with role-based access
+portal_user: {
+  id: string (primary key)
+  email: string (unique)
+  name: string
+  role: 'ADMIN' | 'SALES_MANAGER' | 'SALES_ASSISTANT' | 'MANAGER' | 'USER'
+  emailVerified: boolean
+  timezone: string (default: 'Asia/Hong_Kong')
+  // ... profile fields
+}
+
+// Session management
+portal_session: {
+  id: string
+  userId: string (foreign key)
+  token: string
+  expiresAt: timestamp
+  // ... session metadata
+}
+
+// OAuth provider accounts  
+portal_account: {
+  id: string
+  userId: string (foreign key)
+  provider: string
+  providerAccountId: string
+  // ... OAuth fields
+}
+
+// Email verification
+portal_verification: {
+  id: string
+  identifier: string (email)
+  value: string (token)
+  expiresAt: timestamp
+}
+```
 
 ## Authentication Flows
 
-1. **Email/Password**:
-   - Standard credentials login
-   - Email verification flow
+### Email/Password Authentication
+```typescript
+// Login flow
+const signIn = async (email: string, password: string) => {
+  const result = await signIn('credentials', {
+    email,
+    password,
+    redirect: false,
+  });
+  
+  if (result?.error) {
+    throw new Error(result.error);
+  }
+  
+  return result;
+};
+```
 
-2. **OAuth Providers**:
-   - Supporting various OAuth providers
+### OAuth Providers
+- Support for multiple OAuth providers (Google, GitHub, etc.)
+- Automatic account linking for existing users
+- Profile information sync from providers
 
-3. **Session Management**:
-   - JWT and database sessions
-   - Session expiration and renewal
+### Session Management
+- Database sessions with automatic cleanup
+- Configurable session expiration (30 days default)
+- Session refresh on active usage
+- Secure cookie handling with httpOnly and secure flags
 
-## Middleware Protection
+## Role-Based Access Control
 
-- [middleware.ts](mdc:middleware.ts): Route protection middleware
-- Protected routes require authentication
-- Role-based access control
+### User Roles
+- **ADMIN**: Full system access, user management
+- **SALES_MANAGER**: Sales team management, advanced CRM features
+- **SALES_ASSISTANT**: Basic CRM operations, assigned contacts
+- **MANAGER**: Team management, departmental access
+- **USER**: Basic access, personal tasks and contacts
+
+### Permission Patterns
+```typescript
+// tRPC middleware for role protection
+export const adminProcedure = protectedProcedure.use(
+  middleware(async ({ ctx, next }) => {
+    if (ctx.session.user.role !== 'ADMIN') {
+      throw new TRPCError({ code: 'FORBIDDEN' });
+    }
+    return next();
+  })
+);
+
+// Page-level protection
+export default async function AdminPage() {
+  const session = await auth();
+  if (!session || session.user.role !== 'ADMIN') {
+    return redirect('/dashboard');
+  }
+  // ... admin content
+}
+```
+
+## Route Protection
+
+### Middleware Implementation
+```typescript
+// middleware.ts
+export default async function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl;
+  
+  // Authentication check for protected routes
+  if (pathname.startsWith('/dashboard')) {
+    const session = await auth.api.getSession({
+      headers: request.headers,
+    });
+    
+    if (!session) {
+      return redirect('/login');
+    }
+  }
+  
+  // Locale handling
+  return createLocalizedPathnameMiddleware(locales, defaultLocale)(request);
+}
+```
+
+### Protected Route Patterns
+- Dashboard routes require authentication
+- Admin routes require ADMIN role
+- API routes validate session or API keys
+- Automatic redirect to login for unauthenticated users
+
+## Client-Side Session Management
+
+### Session Hook Usage
+```tsx
+import { useSession } from 'next-auth/react';
+
+export function UserProfile() {
+  const { data: session, status } = useSession();
+  
+  if (status === 'loading') return <Skeleton />;
+  if (status === 'unauthenticated') return redirect('/login');
+  
+  return <div>Welcome, {session.user.name}!</div>;
+}
+```
+
+### Authentication States
+- Handle loading states during session validation
+- Redirect patterns for unauthenticated access
+- Role-based UI rendering
+
+## Security Best Practices
+
+### Password Security
+- Secure password hashing (bcrypt/argon2)
+- Password strength requirements
+- Rate limiting on authentication attempts
+
+### Session Security
+- Secure cookie configuration
+- CSRF protection enabled
+- Session invalidation on logout
+- Automatic session cleanup
+
+### API Security
+- Session validation for tRPC procedures  
+- API key authentication for external endpoints
+- Rate limiting and abuse prevention
+- Comprehensive audit logging
+
+## Email Integration
+
+### Authentication Emails
+- Welcome emails on registration
+- Password reset emails with secure tokens
+- Magic link authentication (optional)
+- Email verification for new accounts
+
+### Email Templates
+```tsx
+// emails/welcome.tsx
+export const WelcomeEmail = ({ email, name, loginUrl }) => (
+  <EmailLayout preview="Welcome to Portal!">
+    <Text>Hi {name}, welcome to Portal!</Text>
+    <Button href={loginUrl}>Get Started</Button>
+  </EmailLayout>
+);
+```
+
+## Development & Testing
+
+### Authentication Testing
+- Mock authentication in tests
+- Test role-based access patterns  
+- Validate session handling
+- Test OAuth provider integration
+
+### Local Development
+- Use development OAuth apps
+- Email testing with local SMTP
+- Session debugging utilities
+- Authentication flow testing

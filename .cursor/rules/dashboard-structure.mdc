@@ -1,43 +1,183 @@
 ---
-description: 
+description: Dashboard architecture and CRM feature organization
 globs: 
+  - "app/**/dashboard/**/*.{ts,tsx}"
+  - "components/dashboard/**/*.{ts,tsx}"
 alwaysApply: false
 ---
 # Dashboard Structure
 
-The dashboard is the main application interface after login, organized into several sections.
+The dashboard is Portal's main business interface providing comprehensive CRM and business management tools.
 
-## Main Layout
+## Layout Architecture
 
-- [app/[locale]/dashboard/layout.tsx](mdc:app/[locale]/dashboard/layout.tsx): Dashboard layout with navigation
-- [app/[locale]/dashboard/page.tsx](mdc:app/[locale]/dashboard/page.tsx): Dashboard homepage
+### Core Layout Components
+- `app/[locale]/dashboard/layout.tsx`: Protected dashboard layout with authentication
+- `app/[locale]/dashboard/page.tsx`: Dashboard homepage with analytics overview
+- `components/dashboard/header.tsx`: Main header with breadcrumbs and search
+- `components/dashboard/sidebar.tsx`: Collapsible navigation sidebar
 
-## Sections
+### Navigation Structure
+The dashboard uses a sidebar-based navigation with collapsible sections:
+- **CRM**: Contact and company management
+- **Workspace**: Tasks and calendar
+- **Resources**: Content and email management 
+- **Advance**: Site and admin controls
+- **Account**: User preferences and settings
 
-The dashboard is organized into these primary sections:
+## Feature Sections
 
-### CRM
+### CRM Management
+**Contact Management** (`/dashboard/crm/contacts`):
+- Contact list with advanced filtering and search
+- Contact details with activity timeline
+- Bulk operations and import/export
+- Contact assignment and ownership
+- Lead scoring and conversion tracking
 
-- `/app/[locale]/dashboard/crm/contacts`: Contact management
-- `/app/[locale]/dashboard/crm/company`: Company management
-- `/app/[locale]/dashboard/crm/team`: Team management
+**Company Management** (`/dashboard/crm/company`):
+- Company profiles with contact relationships
+- Company hierarchy and subsidiaries
+- Revenue tracking and deal management
+- Company activity and interaction history
 
-### Workspace
+**Team Management** (`/dashboard/crm/team`):
+- Team member management and roles
+- Performance analytics and reporting
+- Collaboration tools and shared resources
+- Team activity feeds and notifications
 
-- `/app/[locale]/dashboard/workspace/tasks`: Task management
-- `/app/[locale]/dashboard/workspace/calendar`: Calendar view
+### Workspace Tools
+**Task Management** (`/dashboard/workspace/tasks`):
+- Kanban board with drag-and-drop
+- Task assignment and status tracking
+- Priority levels and due date management
+- Task dependencies and subtasks
+- Team collaboration on tasks
 
-### Resources
+**Calendar System** (`/dashboard/workspace/calendar`):
+- Multiple view modes (month, week, day)
+- Event creation and management
+- Meeting scheduling with participants
+- Calendar sharing and permissions
+- Integration with contact activities
 
-- `/app/[locale]/dashboard/resource/content`: Content management
-- `/app/[locale]/dashboard/resource/emails`: Email templates
+### Resource Management
+**Content Management** (`/dashboard/resource/content`):
+- Content library and organization
+- Rich text editor for content creation
+- Content versioning and approval workflows
+- Template management for reusable content
 
-### Site Management
+**Email Templates** (`/dashboard/resource/emails`):
+- Email template builder with drag-and-drop
+- Template categorization and tagging
+- Personalization and dynamic content
+- Email performance analytics
 
-- `/app/[locale]/dashboard/site/(general)/management`: Site management
-- `/app/[locale]/dashboard/site/(admin)`: Admin controls
+### Advanced Features
+**Site Management** (`/dashboard/advance/site`):
+- General site settings and configuration
+- User management and permissions
+- System health and monitoring
+- Integration settings and API keys
 
-### Account
+**Admin Controls** (`/dashboard/advance/site/(admin)`):
+- Advanced user management
+- System configuration and maintenance
+- Audit logs and compliance reporting
+- Database management tools
 
-- `/app/[locale]/dashboard/account/settings`: User settings
-- `/app/[locale]/dashboard/account/notifications`: Notification settings
+### Account Management
+**User Settings** (`/dashboard/account/settings`):
+- Personal profile management
+- Password and security settings
+- Notification preferences
+- Timezone and locale settings
+
+**Account Preferences** (`/dashboard/account`):
+- Dashboard customization
+- Theme and appearance settings
+- API key management
+- Export and backup options
+
+## Component Architecture
+
+### Dashboard Components
+```tsx
+// Main dashboard layout structure
+<SidebarProvider>
+  <DashboardSidebar />
+  <SidebarInset>
+    <DashboardHeader />
+    <main>{children}</main>
+  </SidebarInset>
+</SidebarProvider>
+```
+
+### Navigation Patterns
+- Breadcrumb navigation for page hierarchy
+- Command palette for quick actions (Cmd+K)
+- Contextual actions in page headers
+- Quick access to frequently used features
+
+### Data Display Patterns
+- Interactive data tables with sorting and filtering
+- Card-based layouts for overview screens
+- Timeline views for activity tracking
+- Chart and analytics visualizations
+
+## State Management
+
+### tRPC Integration
+- Real-time data synchronization
+- Optimistic updates for better UX
+- Error handling and retry logic
+- Background data refetching
+
+### Local State Management
+- React Query for server state caching
+- Local state for UI interactions
+- Form state management with React Hook Form
+- Global UI state (sidebar, themes, etc.)
+
+## Performance Optimizations
+
+### Code Splitting
+- Route-based code splitting for dashboard sections
+- Component lazy loading for heavy features
+- Dynamic imports for optional functionality
+
+### Data Loading
+- Pagination for large datasets
+- Virtual scrolling for long lists
+- Background data prefetching
+- Intelligent caching strategies
+
+## Responsive Design
+
+### Mobile Adaptation
+- Collapsible sidebar for mobile devices
+- Touch-optimized interactions
+- Simplified navigation for small screens
+- Progressive disclosure of features
+
+### Desktop Optimization
+- Multi-panel layouts for large screens
+- Keyboard shortcuts for power users
+- Drag and drop interactions
+- Context menus and right-click actions
+
+## Security & Permissions
+
+### Role-Based Access
+- Different dashboard views based on user roles
+- Feature-level permissions enforcement
+- Data access restrictions by ownership
+- Audit logging for sensitive operations
+
+### Data Protection
+- Client-side data validation
+- Secure API communication
+- Session timeout handling
+- CSRF protection on forms

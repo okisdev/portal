@@ -1,0 +1,245 @@
+---
+description: Custom utilities, hooks, and helper functions throughout the application
+globs: 
+  - "utils/**/*.{ts,tsx}"
+  - "hooks/**/*.{ts,tsx}"
+  - "lib/utils.ts"
+  - "**/*util*.{ts,tsx}"
+  - "**/*helper*.{ts,tsx}"
+alwaysApply: false
+---
+# Utilities & Hooks
+
+Portal includes a comprehensive set of custom utilities, hooks, and helper functions for common operations and React patterns.
+
+## Core Utilities
+
+### lib/utils.ts - Essential Utilities
+```typescript
+import { type ClassValue, clsx } from 'clsx';
+import { twMerge } from 'tailwind-merge';
+
+// Class name merging utility for Tailwind CSS
+export function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs));
+}
+
+// Environment detection
+export function isDev() {
+  return process.env.NODE_ENV === 'development';
+}
+
+// Generate random strings for IDs, tokens, etc.
+export function randomString(length: number = 10): string {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  let result = '';
+  for (let i = 0; i < length; i++) {
+    result += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return result;
+}
+
+// Safe JSON parsing with fallback
+export function safeJsonParse<T>(json: string, fallback: T): T {
+  try {
+    return JSON.parse(json);
+  } catch {
+    return fallback;
+  }
+}
+
+// Debounce function
+export function debounce<T extends (...args: any[]) => any>(
+  func: T,
+  wait: number
+): (...args: Parameters<T>) => void {
+  let timeout: NodeJS.Timeout;
+  return (...args: Parameters<T>) => {
+    clearTimeout(timeout);
+    timeout = setTimeout(() => func.apply(this, args), wait);
+  };
+}
+
+// Sleep utility for async operations
+export const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+```
+
+## Custom React Hooks
+
+### hooks/use-debounce.ts - Debounced Values
+```typescript
+import { useEffect, useState } from 'react';
+
+export function useDebounce<T>(value: T, delay = 500): T {
+  const [debouncedValue, setDebouncedValue] = useState<T>(value);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [value, delay]);
+
+  return debouncedValue;
+}
+
+// Usage example:
+// const debouncedSearchTerm = useDebounce(searchTerm, 300);
+```
+
+### hooks/use-mobile.ts - Responsive Detection
+```typescript
+import * as React from 'react';
+
+const MOBILE_BREAKPOINT = 768;
+
+export function useIsMobile() {
+  const [isMobile, setIsMobile] = React.useState<boolean | undefined>(
+    undefined
+  );
+
+  React.useEffect(() => {
+    const mql = window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT - 1}px)`);
+    const onChange = () => {
+      setIsMobile(window.innerWidth < MOBILE_BREAKPOINT);
+    };
+    mql.addEventListener('change', onChange);
+    setIsMobile(window.innerWidth < MOBILE_BREAKPOINT);
+    return () => mql.removeEventListener('change', onChange);
+  }, []);
+
+  return !!isMobile;
+}
+
+// Advanced responsive hook with multiple breakpoints
+export function useBreakpoint() {
+  const [breakpoint, setBreakpoint] = React.useState<string>('lg');
+
+  React.useEffect(() => {
+    const updateBreakpoint = () => {
+      const width = window.innerWidth;
+      if (width < 640) setBreakpoint('sm');
+      else if (width < 768) setBreakpoint('md');  
+      else if (width < 1024) setBreakpoint('lg');
+      else if (width < 1280) setBreakpoint('xl');
+      else setBreakpoint('2xl');
+    };
+
+    updateBreakpoint();
+    window.addEventListener('resize', updateBreakpoint);
+    return () => window.removeEventListener('resize', updateBreakpoint);
+  }, []);
+
+  return breakpoint;
+}
+```
+
+### hooks/use-upload.ts - File Upload Management
+```typescript
+import { useState } from 'react';
+import ky from 'ky';
+
+interface UseUploadOptions {
+  onSuccess?: (key: string) => void;
+  onError?: (error: Error) => void;
+  onProgress?: (info: string) => void;
+}
+
+export function useUpload(options: UseUploadOptions = {}) {
+  const [isUploading, setIsUploading] = useState(false);
+
+  const uploadToS3 = async (data: Blob | File) => {
+    try {
+      setIsUploading(true);
+      options.onProgress?.('Uploading file to S3...');
+
+      if (!data) {
+        throw new Error('No file data provided');
+      }
+
+      // Get pre-signed URL
+      const response = await ky
+        .post<{ url: string; key: string }>('/api/upload', {
+          json: {
+            filename: data instanceof File ? data.name : 'no-name',
+            contentType: data.type || 'application/octet-stream',
+          },
+        })
+        .json();
+
+      const { url, key } = response;
+
+      // Upload directly to S3
+      const uploadResponse = await ky.put(url, {
+        body: data,
+        headers: {
+          'Content-Type': data.type || 'application/octet-stream',
+        },
+      });
+
+      if (!uploadResponse.ok) {
+        throw new Error(`Upload failed with status: ${uploadResponse.status}`);
+      }
+
+      options.onProgress?.(`File uploaded to S3: ${key}`);
+      options.onSuccess?.(key);
+
+      return key;
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown upload error';
+      console.error('Upload error:', errorMessage);
+      options.onProgress?.(`Upload error: ${errorMessage}`);
+      options.onError?.(
+        error instanceof Error ? error : new Error(errorMessage)
+      );
+      throw error;
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  return {
+    uploadToR2: uploadToS3,
+    isUploading,
+  };
+}
+```
+
+### Custom Hooks for Common Patterns
+```typescript
+// hooks/use-local-storage.ts
+export function useLocalStorage<T>(
+  key: string,
+  initialValue: T
+): [T, (value: T | ((val: T) => T)) => void] {
+  const [storedValue, setStoredValue] = useState<T>(() => {
+    if (typeof window === 'undefined') {
+      return initialValue;
+    }
+    try {
+      const item = window.localStorage.getItem(key);
+      return item ? JSON.parse(item) : initialValue;
+    } catch (error) {
+      console.error(`Error reading localStorage key "${key}":`, error);
+      return initialValue;
+    }
+  });
+
+  const setValue = (value: T | ((val: T) => T)) => {
+    try {
+      const valueToStore = value instanceof Function ? value(storedValue) : value;
+      setStoredValue(valueToStore);
+      if (typeof window !== 'undefined') {
+        window.localStorage.setItem(key, JSON.stringify(valueToStore));
+      }
+    } catch (error) {
+      console.error(`Error setting localStorage key "${key}":`, error);
+    }
+  };
+
+  return [storedValue, setValue];
+}\n\n// hooks/use-copy-to-clipboard.ts\nexport function useCopyToClipboard() {\n  const [copied, setCopied] = useState(false);\n\n  const copy = async (text: string) => {\n    if (!navigator?.clipboard) {\n      console.warn('Clipboard not supported');\n      return false;\n    }\n\n    try {\n      await navigator.clipboard.writeText(text);\n      setCopied(true);\n      setTimeout(() => setCopied(false), 2000);\n      return true;\n    } catch (error) {\n      console.error('Failed to copy text: ', error);\n      return false;\n    }\n  };\n\n  return { copied, copy };\n}\n\n// hooks/use-async.ts\ninterface AsyncState<T> {\n  data: T | null;\n  error: Error | null;\n  loading: boolean;\n}\n\nexport function useAsync<T>(\n  asyncFunction: () => Promise<T>,\n  dependencies: any[] = []\n) {\n  const [state, setState] = useState<AsyncState<T>>({\n    data: null,\n    error: null,\n    loading: true,\n  });\n\n  useEffect(() => {\n    let isMounted = true;\n\n    setState({ data: null, error: null, loading: true });\n\n    asyncFunction()\n      .then(data => {\n        if (isMounted) {\n          setState({ data, error: null, loading: false });\n        }\n      })\n      .catch(error => {\n        if (isMounted) {\n          setState({ data: null, error, loading: false });\n        }\n      });\n\n    return () => {\n      isMounted = false;\n    };\n  }, dependencies);\n\n  return state;\n}\n```\n\n## Data Formatting Utilities\n\n### utils/format.ts - Data Formatting\n```typescript\n// Format currency values\nexport function formatCurrency(\n  amount: number,\n  currency = 'USD',\n  locale = 'en-US'\n): string {\n  return new Intl.NumberFormat(locale, {\n    style: 'currency',\n    currency,\n  }).format(amount);\n}\n\n// Format numbers with locale-specific separators\nexport function formatNumber(\n  value: number,\n  options: Intl.NumberFormatOptions = {}\n): string {\n  return new Intl.NumberFormat('en-US', options).format(value);\n}\n\n// Format file sizes\nexport function formatFileSize(bytes: number): string {\n  if (bytes === 0) return '0 Bytes';\n  \n  const k = 1024;\n  const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];\n  const i = Math.floor(Math.log(bytes) / Math.log(k));\n  \n  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];\n}\n\n// Format relative time (\"2 hours ago\")\nexport function formatRelativeTime(date: Date | string): string {\n  const now = new Date();\n  const past = new Date(date);\n  const diffInMs = now.getTime() - past.getTime();\n  \n  const minute = 60 * 1000;\n  const hour = 60 * minute;\n  const day = 24 * hour;\n  const week = 7 * day;\n  const month = 30 * day;\n  const year = 365 * day;\n  \n  if (diffInMs < minute) return 'just now';\n  if (diffInMs < hour) return `${Math.floor(diffInMs / minute)}m ago`;\n  if (diffInMs < day) return `${Math.floor(diffInMs / hour)}h ago`;\n  if (diffInMs < week) return `${Math.floor(diffInMs / day)}d ago`;\n  if (diffInMs < month) return `${Math.floor(diffInMs / week)}w ago`;\n  if (diffInMs < year) return `${Math.floor(diffInMs / month)}mo ago`;\n  \n  return `${Math.floor(diffInMs / year)}y ago`;\n}\n\n// Truncate text with ellipsis\nexport function truncate(text: string, length: number): string {\n  if (text.length <= length) return text;\n  return text.slice(0, length).trim() + '...';\n}\n\n// Capitalize first letter\nexport function capitalize(str: string): string {\n  return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();\n}\n\n// Convert string to slug (URL-friendly)\nexport function slugify(text: string): string {\n  return text\n    .toLowerCase()\n    .replace(/[^\\w\\s-]/g, '') // Remove special characters\n    .replace(/[\\s_-]+/g, '-') // Replace spaces and underscores with hyphens\n    .replace(/^-+|-+$/g, ''); // Remove leading and trailing hyphens\n}\n```\n\n### utils/date.ts - Date Utilities\n```typescript\nimport { \n  format, \n  isToday, \n  isYesterday, \n  isThisWeek, \n  isThisYear,\n  parseISO,\n  addDays,\n  subDays,\n  startOfDay,\n  endOfDay\n} from 'date-fns';\n\n// Smart date formatting based on recency\nexport function formatSmartDate(date: Date | string): string {\n  const d = typeof date === 'string' ? parseISO(date) : date;\n  \n  if (isToday(d)) return format(d, 'HH:mm');\n  if (isYesterday(d)) return 'Yesterday';\n  if (isThisWeek(d)) return format(d, 'EEEE');\n  if (isThisYear(d)) return format(d, 'MMM d');\n  \n  return format(d, 'MMM d, yyyy');\n}\n\n// Get business days between two dates\nexport function getBusinessDaysBetween(start: Date, end: Date): number {\n  let count = 0;\n  let current = new Date(start);\n  \n  while (current <= end) {\n    const dayOfWeek = current.getDay();\n    if (dayOfWeek !== 0 && dayOfWeek !== 6) { // Not Sunday or Saturday\n      count++;\n    }\n    current = addDays(current, 1);\n  }\n  \n  return count;\n}\n\n// Check if date is within business hours\nexport function isBusinessHours(date: Date, startHour = 9, endHour = 17): boolean {\n  const hour = date.getHours();\n  const dayOfWeek = date.getDay();\n  \n  return dayOfWeek >= 1 && dayOfWeek <= 5 && hour >= startHour && hour < endHour;\n}\n```\n\n### utils/phone.ts - Phone Number Utilities\n```typescript\n// Format phone numbers for display\nexport function formatPhone(phone: string): string {\n  const cleaned = phone.replace(/\\D/g, '');\n  \n  // Handle Hong Kong numbers (852 prefix)\n  if (cleaned.startsWith('852') && cleaned.length === 11) {\n    return `+852 ${cleaned.slice(3, 7)} ${cleaned.slice(7)}`;\n  }\n  \n  // Handle US numbers\n  if (cleaned.length === 10) {\n    return `(${cleaned.slice(0, 3)}) ${cleaned.slice(3, 6)}-${cleaned.slice(6)}`;\n  }\n  \n  // Handle international numbers\n  if (cleaned.length > 10) {\n    return `+${cleaned.slice(0, -10)} ${cleaned.slice(-10, -7)} ${cleaned.slice(-7, -4)} ${cleaned.slice(-4)}`;\n  }\n  \n  return phone; // Return original if no pattern matches\n}\n\n// Validate phone number format\nexport function isValidPhone(phone: string): boolean {\n  const phoneRegex = /^[+]?[1-9]\\d{1,14}$/;\n  const cleaned = phone.replace(/[^\\d+]/g, '');\n  return phoneRegex.test(cleaned);\n}\n\n// Normalize phone number for storage\nexport function stringifyPhone(phone: string): string {\n  const cleaned = phone.replace(/\\D/g, '');\n  \n  // Add 852 prefix for Hong Kong numbers without country code\n  if (cleaned.length === 8 && !cleaned.startsWith('852')) {\n    return `852${cleaned}`;\n  }\n  \n  return cleaned;\n}\n```\n\n## Clipboard Utilities\n\n### utils/clipboard.ts - Clipboard Operations\n```typescript\n// Copy text to clipboard\nexport async function copyToClipboard(text: string): Promise<boolean> {\n  if (!navigator.clipboard) {\n    // Fallback for older browsers\n    const textArea = document.createElement('textarea');\n    textArea.value = text;\n    textArea.style.position = 'fixed';\n    textArea.style.opacity = '0';\n    document.body.appendChild(textArea);\n    textArea.focus();\n    textArea.select();\n    \n    try {\n      const successful = document.execCommand('copy');\n      document.body.removeChild(textArea);\n      return successful;\n    } catch (err) {\n      console.error('Fallback: Could not copy text: ', err);\n      document.body.removeChild(textArea);\n      return false;\n    }\n  }\n\n  try {\n    await navigator.clipboard.writeText(text);\n    return true;\n  } catch (err) {\n    console.error('Could not copy text: ', err);\n    return false;\n  }\n}\n\n// Read text from clipboard\nexport async function readFromClipboard(): Promise<string | null> {\n  if (!navigator.clipboard) {\n    console.warn('Clipboard API not supported');\n    return null;\n  }\n\n  try {\n    return await navigator.clipboard.readText();\n  } catch (err) {\n    console.error('Could not read clipboard: ', err);\n    return null;\n  }\n}\n```\n\n## Color Utilities\n\n### utils/color.ts - Color Manipulation\n```typescript\n// Generate consistent colors for strings (useful for avatars, tags)\nexport function stringToColor(str: string): string {\n  let hash = 0;\n  for (let i = 0; i < str.length; i++) {\n    hash = str.charCodeAt(i) + ((hash << 5) - hash);\n  }\n  \n  const hue = Math.abs(hash) % 360;\n  return `hsl(${hue}, 70%, 50%)`;\n}\n\n// Get contrasting text color (black or white) for a given background\nexport function getContrastColor(hexColor: string): string {\n  // Remove # if present\n  const color = hexColor.replace('#', '');\n  \n  // Convert to RGB\n  const r = parseInt(color.substr(0, 2), 16);\n  const g = parseInt(color.substr(2, 2), 16);\n  const b = parseInt(color.substr(4, 2), 16);\n  \n  // Calculate luminance\n  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;\n  \n  return luminance > 0.5 ? '#000000' : '#FFFFFF';\n}\n\n// Convert hex to rgba\nexport function hexToRgba(hex: string, alpha: number = 1): string {\n  const r = parseInt(hex.slice(1, 3), 16);\n  const g = parseInt(hex.slice(3, 5), 16);\n  const b = parseInt(hex.slice(5, 7), 16);\n  \n  return `rgba(${r}, ${g}, ${b}, ${alpha})`;\n}\n```\n\n## Performance Utilities\n\n### Performance Monitoring\n```typescript\n// Measure function execution time\nexport function measureTime<T>(fn: () => T, label?: string): T {\n  const start = performance.now();\n  const result = fn();\n  const end = performance.now();\n  \n  if (label) {\n    console.log(`${label}: ${end - start}ms`);\n  }\n  \n  return result;\n}\n\n// Async version\nexport async function measureTimeAsync<T>(\n  fn: () => Promise<T>, \n  label?: string\n): Promise<T> {\n  const start = performance.now();\n  const result = await fn();\n  const end = performance.now();\n  \n  if (label) {\n    console.log(`${label}: ${end - start}ms`);\n  }\n  \n  return result;\n}\n\n// Throttle function calls\nexport function throttle<T extends (...args: any[]) => any>(\n  func: T,\n  limit: number\n): (...args: Parameters<T>) => void {\n  let inThrottle: boolean;\n  return (...args: Parameters<T>) => {\n    if (!inThrottle) {\n      func.apply(this, args);\n      inThrottle = true;\n      setTimeout(() => (inThrottle = false), limit);\n    }\n  };\n}\n```\n\n## Best Practices\n\n### Utility Organization\n- Group related utilities in dedicated files\n- Use clear, descriptive function names\n- Provide TypeScript types for all parameters\n- Include JSDoc comments for complex functions\n\n### Custom Hooks\n- Follow React hook naming convention (useXxx)\n- Handle cleanup in useEffect return functions\n- Provide default values for optional parameters\n- Use proper dependency arrays\n\n### Performance\n- Memoize expensive calculations\n- Use debouncing for user input\n- Implement proper error boundaries\n- Clean up event listeners and timeouts\n\n### Testing\n- Unit test utility functions\n- Test edge cases and error conditions\n- Mock external dependencies in tests\n- Use React Testing Library for hook testing

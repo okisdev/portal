@@ -1,35 +1,136 @@
 ---
+description: API architecture patterns and tRPC/Next.js API routes
+globs: 
+  - "server/**/*.{ts,tsx}"
+  - "app/api/**/*.{ts,tsx}"
+  - "utils/trpc/**/*.{ts,tsx}"
 alwaysApply: false
 ---
 # API Structure
 
-The application uses tRPC for typesafe APIs and Next.js API routes for other endpoints.
+Portal uses a hybrid API architecture with tRPC for typesafe APIs and Next.js API routes for specific endpoints.
 
-## tRPC Structure
+## tRPC Architecture
 
-- `/server/routers`: tRPC router definitions organized by domain
-- `/app/api/trpc/[trpc]/route.ts`: tRPC API endpoint
-- `/utils/trpc`: tRPC client utilities
+### Server Structure
+- `/server/trpc.ts`: tRPC setup, context creation, middleware definitions
+- `/server/root.ts`: Main app router combining all sub-routers
+- `/server/index.ts`: Server-side caller factory and type inference helpers
+- `/server/routers/`: Domain-specific routers organized by business logic
 
-## Key tRPC Routers
+### Available tRPC Routers
 
-- [server/routers/auth.ts](mdc:server/routers/auth.ts): Authentication-related procedures
-- [server/routers/user.ts](mdc:server/routers/user/index.ts): User management
-- [server/routers/contact.ts](mdc:server/routers/contact/index.ts): Contact management
-- [server/routers/company.ts](mdc:server/routers/company.ts): Company management
-- [server/routers/calendar.ts](mdc:server/routers/calendar.ts): Calendar functionality
-- [server/routers/task.ts](mdc:server/routers/task.ts): Task management
+**Core Business Logic:**
+- `auth`: Authentication procedures (login, logout, session management)
+- `user`: User management (CRUD operations, profile updates)
+- `contact`: Contact management with CRM features
+- `company`: Company/organization management
+- `team`: Team collaboration and management
+- `calendar`: Calendar events and scheduling
+- `task`: Task management with kanban workflows
+
+**System Management:**
+- `account`: User account settings and preferences  
+- `admin`: Administrative operations (user management, system controls)
+- `audit`: Audit trail querying and reporting
+- `site`: Site-wide settings and configurations
+- `resource`: Resource management (content, emails, templates)
+- `apiKey`: API key management for external integrations
+
+### tRPC Context
+
+```typescript
+// Context includes database, session, and request headers
+interface Context {
+  db: typeof database;
+  session: Session | null;
+  headers: Headers;
+}
+```
+
+### Procedure Types
+
+- **Public procedures**: No authentication required
+- **Protected procedures**: Require valid session
+- **Admin procedures**: Require admin role
+- **API Key procedures**: For external API access
 
 ## Next.js API Routes
 
-- `/app/api/auth/[...nextauth]/route.ts`: NextAuth.js authentication
-- `/app/api/upload/route.ts`: File upload handling
+### Authentication
+- `/app/api/auth/[...all]/route.ts`: NextAuth.js/Better Auth endpoints
 
-## Client Usage
+### File Management  
+- `/app/api/upload/route.ts`: S3 pre-signed URL generation for file uploads
 
-tRPC is used in the client via React Query hooks:
+### External APIs
+- `/app/api/v1/contact/upload/route.ts`: Bulk contact upload REST endpoint
+- Supports API key authentication with permissions
+- Includes comprehensive audit logging
+- Handles validation and duplicate detection
 
+## Client-Side Usage
+
+### tRPC Client Setup
 ```tsx
-// Example usage
-const { data, isLoading } = api.user.getUser.useQuery({ id: userId });
+// utils/trpc/client.tsx
+import { createTRPCReact } from '@trpc/react-query';
+import type { AppRouter } from '@/server/root';
+
+export const api = createTRPCReact<AppRouter>();
+
+// Usage in components
+const { data, isLoading, error } = api.contact.getAll.useQuery({
+  limit: 50,
+  offset: 0,
+});
+
+// Mutations with optimistic updates
+const createContact = api.contact.create.useMutation({
+  onSuccess: () => {
+    utils.contact.getAll.invalidate();
+  },
+});
 ```
+
+### API Routes Client Usage
+```tsx
+// File upload using custom hook
+const { uploadToR2, isUploading } = useUpload({
+  onSuccess: (key) => console.log('Uploaded:', key),
+  onError: (error) => console.error('Upload failed:', error),
+});
+
+await uploadToR2(file);
+```
+
+## Error Handling
+
+### tRPC Errors
+- Use `TRPCError` with specific error codes
+- Implement proper error boundaries in React components
+- Leverage React Query's error handling
+
+### API Route Errors
+- Return proper HTTP status codes
+- Include structured error responses with codes and details
+- Implement comprehensive audit logging for failures
+
+## Authentication & Authorization
+
+### Session-based (tRPC)
+- Session validation in tRPC context
+- Role-based access control through middleware
+- Automatic user context injection
+
+### API Key-based (REST)
+- API key validation with permissions
+- Rate limiting and usage tracking
+- Audit logging for all API key usage
+
+## Performance Optimizations
+
+- Use React Query for caching and background updates
+- Implement proper data invalidation strategies
+- Leverage tRPC's built-in batching for multiple queries
+- Use Drizzle prepared statements for database operations
