@@ -17,6 +17,7 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { authClient, signOut } from '@/lib/auth.client';
+import { api } from '@/utils/trpc/client';
 
 const passwordSchema = z
   .object({
@@ -48,6 +49,8 @@ export function PasswordSection({
 }: PasswordSectionProps) {
   const t = useTranslations();
 
+  const utils = api.useUtils();
+
   const form = useForm<PasswordFormValues>({
     resolver: zodResolver(passwordSchema),
     defaultValues: {
@@ -76,9 +79,11 @@ export function PasswordSection({
             newPassword: data.newPassword,
           },
           {
-            onSuccess: () => {
+            onSuccess: async () => {
               toast.success(t('password_updated_successfully'));
               form.reset();
+              // Invalidate user data to refresh hasPassword status
+              await utils.account.getMeFromDatabase.invalidate();
             },
             onError: () => {
               form.setError('currentPassword', {
@@ -95,6 +100,8 @@ export function PasswordSection({
         if (result.success) {
           toast.success(t('password_created_successfully'));
           form.reset();
+          // Invalidate user data to refresh hasPassword status
+          await utils.account.getMeFromDatabase.invalidate();
         } else {
           toast.error(result.error || t('failed_to_create_password'));
         }
