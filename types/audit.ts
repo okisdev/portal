@@ -139,6 +139,9 @@ export const PROCEDURE_MAPPING: Record<
   markNotificationAsRead: { action: 'UPDATE', resource: 'notification' },
   markAllNotificationsAsRead: { action: 'UPDATE', resource: 'notification' },
   createNotification: { action: 'CREATE', resource: 'notification' },
+
+  // API v1 procedures
+  'v1.contact.upload': { action: 'CREATE', resource: 'contact' },
 };
 
 export interface AuditContext {

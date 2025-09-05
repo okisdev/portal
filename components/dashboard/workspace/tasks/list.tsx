@@ -60,7 +60,9 @@ export default function TaskList({
           const tasksInStatus = filteredTasks.filter(
             (task) => task.status === status
           );
-          if (tasksInStatus.length === 0) return null;
+          if (tasksInStatus.length === 0) {
+            return null;
+          }
 
           return (
             <div className='space-y-4' key={status}>

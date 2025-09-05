@@ -208,7 +208,9 @@ export default function KanbanBoard({
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
-    if (!over) return;
+    if (!over) {
+      return;
+    }
 
     const taskId = active.id as string;
     const newStatus = (over.id as string).replace('droppable-', '');

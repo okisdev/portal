@@ -1,4 +1,5 @@
 import { auditLog } from '@/drizzle/schema';
+import type { database } from '@/lib/database';
 import type { AuditAction, AuditContext, AuditResource } from '@/types/audit';
 import { PROCEDURE_MAPPING } from '@/types/audit';
 
@@ -14,7 +15,7 @@ interface AuditLogParams {
   errorMessage?: string;
   duration?: number;
   metadata?: Record<string, unknown>;
-  db: unknown; // Use the database instance from context - type will be inferred from drizzle
+  db: typeof database;
 }
 
 export async function createAuditLog({
