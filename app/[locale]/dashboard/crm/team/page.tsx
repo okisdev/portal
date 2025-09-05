@@ -125,7 +125,9 @@ export default function CRMTeamsPage() {
   }, [search, pathname]);
 
   const filteredTeams = useMemo(() => {
-    if (!teams) return [];
+    if (!teams) {
+      return [];
+    }
 
     return teams.filter((team) => {
       if (debouncedSearch) {
@@ -146,7 +148,9 @@ export default function CRMTeamsPage() {
 
   const handleCreateTeam = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newTeamName.trim()) return;
+    if (!newTeamName.trim()) {
+      return;
+    }
 
     createTeam.mutate({
       name: newTeamName,

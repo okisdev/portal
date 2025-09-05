@@ -760,5 +760,7 @@
   "workspace": "工作区",
   "write_a_reply": "写回复... 使用 @ 提及某人",
   "you": "你",
-  "your_new_api_key": "您的新 API 密钥"
+  "your_new_api_key": "您的新 API 密钥",
+  "audit": "审计",
+  "image_updated_successfully": "个人资料图片成功更新了"
 }

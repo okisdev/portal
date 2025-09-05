@@ -761,5 +761,6 @@
   "workspace": "Workspace",
   "write_a_reply": "Write a reply... Use @ to mention someone",
   "you": "You",
-  "your_new_api_key": "Your new API key"
+  "your_new_api_key": "Your new API key",
+  "audit": "Audit"
 }
