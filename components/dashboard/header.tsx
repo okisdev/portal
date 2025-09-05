@@ -44,21 +44,21 @@ export function DashboardHeader() {
 
   useEffect(() => {
     if (paths.includes('contacts')) {
-      const id = paths[paths.length - 1];
-      if (uuidValidate(id)) {
+      const id = paths.at(-1);
+      if (id && uuidValidate(id)) {
         setContactId(id);
       }
     }
     if (paths.includes('company')) {
-      const id = paths[paths.length - 1];
-      if (uuidValidate(id)) {
+      const id = paths.at(-1);
+      if (id && uuidValidate(id)) {
         setCompanyId(id);
       }
     }
 
     if (paths.includes('crm') && paths.includes('team')) {
-      const id = paths[paths.length - 1];
-      if (uuidValidate(id)) {
+      const id = paths.at(-1);
+      if (id && uuidValidate(id)) {
         setTeamId(id);
       }
     }

@@ -103,7 +103,7 @@ export function TabSwitcher({ config }: TabSwitcherProps) {
                 role='tab'
                 tabIndex={0}
               >
-                <div className='flex h-full items-center justify-center whitespace-nowrap font-[var(--www-mattmannucci-me-geist-regular-font-family)] text-sm leading-5'>
+                <div className='flex h-full items-center justify-center whitespace-nowrap text-sm leading-5'>
                   {tab.label}
                 </div>
               </div>
@@ -113,7 +113,7 @@ export function TabSwitcher({ config }: TabSwitcherProps) {
       </div>
       <div
         aria-labelledby={config[activeIndex]?.label}
-        className='relative mt-4 h-[calc(100%-44px)]'
+        className='relative mt-2 h-[calc(100%-44px)]'
         id={`panel-${config[activeIndex]?.label}`}
         role='tabpanel'
       >

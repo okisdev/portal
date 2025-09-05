@@ -9,6 +9,7 @@ import {
   ImageIcon,
   MessageCircle,
   Paperclip,
+  Send,
   Trash,
   X,
 } from 'lucide-react';
@@ -379,6 +380,10 @@ export function ActivitySection({
         return null;
       }
 
+      if (parsedMetadata.attachments.length === 0) {
+        return null;
+      }
+
       return (
         <div className='mt-2 flex flex-wrap gap-2'>
           {parsedMetadata.attachments.map(
@@ -418,7 +423,6 @@ export function ActivitySection({
   return (
     <div className='flex h-full flex-col'>
       <div className='flex-1 overflow-y-auto' id='activities-container'>
-        <div className='pointer-events-none sticky top-0 z-10 h-4 bg-linear-to-b from-background to-transparent' />
         <div className='space-y-1'>
           {filteredActivities?.length === 0 && (
             <p className='text-muted-foreground text-sm'>
@@ -450,7 +454,7 @@ export function ActivitySection({
                 )}
                 <div
                   className={cn(
-                    'flex items-start gap-3 border-l-2 py-3 pr-2 pl-4 hover:bg-muted/30',
+                    'flex items-start gap-3 border-l-2 px-4 py-3 hover:bg-muted/30',
                     highlightedNote === activity.id &&
                       'bg-neutral-500/20 dark:bg-neutral-500/50',
                     activity.metadata &&
@@ -478,7 +482,7 @@ export function ActivitySection({
                                       : 'rgb(156 163 175)',
                   }}
                 >
-                  <div className='flex-1 space-y-1'>
+                  <div className='min-w-0 flex-1 space-y-1'>
                     <div className='flex w-full items-center justify-between'>
                       <div className='flex items-center gap-2 text-sm'>
                         <span className='font-medium'>
@@ -503,10 +507,7 @@ export function ActivitySection({
                         )}
                         <span className='text-muted-foreground text-xs'>•</span>
                         <span className='text-muted-foreground text-xs'>
-                          {formatDate(
-                            new Date(activity.createdAt),
-                            locale as any
-                          )}
+                          {formatDate(new Date(activity.createdAt), locale)}
                         </span>
                       </div>
                       <div className='flex items-center gap-2'>
@@ -563,7 +564,7 @@ export function ActivitySection({
                     </div>
                     <div
                       className={cn(
-                        'text-sm',
+                        'whitespace-pre-wrap break-words text-sm',
                         activity.type === 'ENGAGEMENT' &&
                           activity.subType === 'NOTE_ADDED'
                           ? 'rounded-md bg-blue-50 p-3 dark:bg-blue-950/50'
@@ -583,7 +584,7 @@ export function ActivitySection({
                             <PopoverTrigger asChild>
                               <div className='relative w-full'>
                                 <Textarea
-                                  className='min-h-[60px] resize-none'
+                                  className='min-h-[60px] resize-none whitespace-pre-wrap break-all'
                                   id='editInput'
                                   onChange={(e) =>
                                     handleInputChange(e, false, true)
@@ -643,7 +644,7 @@ export function ActivitySection({
                             <PopoverTrigger asChild>
                               <div className='relative w-full'>
                                 <Textarea
-                                  className='min-h-[60px] resize-none'
+                                  className='min-h-[60px] resize-none whitespace-pre-wrap break-all'
                                   id='replyInput'
                                   onChange={(e) => handleInputChange(e, true)}
                                   onKeyDown={(e) => handleKeyDown(e, true)}
@@ -718,7 +719,7 @@ export function ActivitySection({
               <PopoverTrigger asChild>
                 <div className='relative w-full'>
                   <Textarea
-                    className='min-h-[60px] resize-none pr-24'
+                    className='h-auto resize-none whitespace-pre-wrap break-all pr-24'
                     onChange={(e) => handleInputChange(e)}
                     onCompositionEnd={() => setIsComposing(false)}
                     onCompositionStart={() => setIsComposing(true)}
@@ -733,7 +734,7 @@ export function ActivitySection({
                     </div>
                   )}
 
-                  <div className='absolute top-2 right-2 flex items-center gap-1'>
+                  <div className='absolute right-2 bottom-2 flex items-center gap-1'>
                     <input
                       accept='image/*,video/*,audio/*,.pdf,.doc,.docx,.xls,.xlsx,.txt'
                       className='hidden'
@@ -742,23 +743,22 @@ export function ActivitySection({
                       type='file'
                     />
                     <Button
-                      className='h-8 w-8'
+                      className='size-8'
                       disabled={isUploading}
                       onClick={() => fileInputRef.current?.click()}
                       size='icon'
                       title={t('attach_file')}
-                      type='button'
                       variant='ghost'
                     >
-                      <Paperclip className='h-4 w-4' />
+                      <Paperclip className='size-4' />
                     </Button>
                     <Button
-                      className='h-8'
+                      className='size-8'
                       disabled={isLoading || isUploading}
-                      size='sm'
+                      size='icon'
                       type='submit'
                     >
-                      {t('add_note')}
+                      <Send className='size-4' />
                     </Button>
                   </div>
                 </div>

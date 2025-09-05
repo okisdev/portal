@@ -1,39 +1,98 @@
 ---
-description:
-globs:
+description: Portal project structure and architecture patterns
+globs: 
+  - "**/*.{ts,tsx,js,jsx,md,json,mjs,mdc}"
 alwaysApply: false
 ---
 # Project Structure
 
-Portal is a Next.js 15 application with a modern tech stack:
+Portal is a Next.js 15 business operations platform with comprehensive CRM functionality.
+
+## Tech Stack
 
 - **Frontend**: Next.js 15, React 19, TailwindCSS, shadcn/ui components
-- **Backend**: Next.js API routes, tRPC, Next-Auth
-- **Database**: PostgreSQL with Drizzle ORM
-- **International**: next-intl for localization
+- **Backend**: Next.js API routes, tRPC for typesafe APIs, NextAuth.js/Better Auth
+- **Database**: PostgreSQL with Drizzle ORM 
+- **Internationalization**: next-intl for multi-language support (en, zh-CN, zh-HK)
+- **File Storage**: AWS S3 integration for file uploads
+- **Email**: React Email for templated emails
+- **Styling**: TailwindCSS with class-variance-authority for component variants
 
-## Key Directories
+## Directory Structure
 
-- `/app`: Next.js App Router structure
-- `/components`: React components organized by section
-- `/drizzle`: Database schema and migrations
-- `/server`: tRPC routers and server-side logic
-- `/lib`: Utility libraries and shared code
-- `/public`: Static assets
+- `/app`: Next.js App Router with locale support `[locale]`
+  - `/(auth)`: Authentication pages (login, register, reset password)
+  - `/(landing)`: Landing/marketing pages 
+  - `/dashboard`: Main application dashboard with CRM features
+  - `/api`: Next.js API routes (upload, webhooks, v1 REST endpoints)
 
-## Main Entry Points
+- `/components`: React components organized by usage
+  - `/ui`: Base shadcn/ui components (button, dialog, form, etc.)
+  - `/shared`: Reusable components across sections (combobox, date-pickers, etc.)
+  - `/dashboard`: Dashboard-specific components (header, sidebar, etc.)
+  - `/landing`: Landing page components
+  - `/root`: Root layout components and providers
 
-- [app/layout.tsx](mdc:app/layout.tsx): Root layout
-- [app/[locale]/layout.tsx](mdc:app/[locale]/layout.tsx): Locale-specific layout
-- [app/[locale]/(auth)/login/page.tsx](mdc:app/[locale]/(auth)/login/page.tsx): Login page
-- [app/[locale]/dashboard/page.tsx](mdc:app/[locale]/dashboard/page.tsx): Dashboard home
+- `/server`: tRPC server architecture
+  - `/routers`: API routers by domain (auth, user, contact, company, team, etc.)
+  - `/helper`: Server-side helper functions
+  - `trpc.ts`: tRPC setup and context
+  - `root.ts`: Main app router combining all sub-routers
 
-## Authentication
+- `/drizzle`: Database layer
+  - `schema.ts`: Comprehensive database schema (20+ tables)
+  - `relations.ts`: Table relationships and foreign keys
 
-- [auth.ts](mdc:auth.ts): Next-Auth configuration
-- [app/api/auth/[...nextauth]/route.ts](mdc:app/api/auth/[...nextauth]/route.ts): Auth API routes
+- `/lib`: Core utilities and configurations
+  - `auth.ts`: NextAuth.js/Better Auth configuration
+  - `database.ts`: Database connection and setup
+  - `utils.ts`: Common utility functions (cn, isDev)
+  - `env.ts`: Environment variable validation
+  - `s3.ts`: S3/R2 client configuration
+  - `mail.ts`: Email sending configuration
 
-## Database
+- `/utils`: Application-specific utilities
+  - `trpc/`: tRPC client utilities and providers
+  - `audit.ts`: Audit logging utilities  
+  - `activity.ts`: Activity tracking utilities
+  - `api-audit.ts`: API audit logging for REST endpoints
 
-- [drizzle/schema.ts](mdc:drizzle/schema.ts): Database schema definitions
-- [drizzle/relations.ts](mdc:drizzle/relations.ts): Table relationships
+- `/hooks`: Custom React hooks
+  - `use-mobile.ts`: Mobile/responsive detection
+  - `use-debounce.ts`: Debouncing utilities
+  - `use-upload.ts`: File upload hook with S3 integration
+
+- `/emails`: React Email templates
+  - `welcome.tsx`: Welcome email template
+  - `magic-link.tsx`: Magic link authentication email
+  - `password-reset.tsx`: Password reset email
+
+- `/i18n`: Internationalization setup
+  - `/locales`: Translation JSON files (en.json, zh-CN.json, zh-HK.json)
+  - `routing.ts`: i18n routing configuration
+  - `navigation.ts`: Localized navigation helpers
+
+- `/types`: TypeScript type definitions
+  - `i18n.ts`: i18n type definitions
+  - `audit.ts`: Audit logging types
+
+## Key Features
+
+- **CRM**: Contact management, company management, team collaboration
+- **Dashboard**: Analytics, task management, calendar, resource management
+- **Authentication**: Email/password, OAuth providers, session management
+- **File Upload**: S3 integration with signed URLs and progress tracking
+- **Email System**: Templated emails with React Email
+- **Audit Trail**: Comprehensive logging of user actions and API calls
+- **Multi-language**: Support for English, Chinese Simplified, Chinese Traditional
+- **Responsive**: Mobile-first design with responsive components
+
+## Architecture Patterns
+
+- Use App Router for all routing
+- Implement locale-based routing with `[locale]` parameter
+- Organize components by usage context (ui, shared, domain-specific)
+- Use tRPC for typesafe API calls with React Query integration
+- Implement comprehensive audit logging for all data modifications
+- Use Drizzle ORM with prepared statements for database operations
+- Follow shadcn/ui component patterns with Tailwind styling

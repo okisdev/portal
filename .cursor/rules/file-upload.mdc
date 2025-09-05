@@ -1,0 +1,398 @@
+---
+description: File upload system with S3 integration and progress tracking
+globs: 
+  - "app/api/upload/**/*.{ts,tsx}"
+  - "hooks/use-upload.ts"
+  - "lib/s3.ts"
+  - "**/*upload*.{ts,tsx}"
+alwaysApply: false
+---
+# File Upload System
+
+Portal provides comprehensive file upload capabilities with S3/R2 integration, progress tracking, and secure handling.
+
+## Architecture
+
+### Core Components
+- `app/api/upload/route.ts`: S3 pre-signed URL generation API endpoint
+- `hooks/use-upload.ts`: React hook for file uploads with progress tracking
+- `lib/s3.ts`: S3/R2 client configuration and utilities
+- `components/shared/attachment-preview.tsx`: File attachment preview component
+
+### Upload Flow
+1. Client requests pre-signed URL from `/api/upload`
+2. Server generates unique filename and S3 pre-signed URL
+3. Client uploads directly to S3 using pre-signed URL
+4. Progress tracking and error handling via custom hook
+5. Success callback with file key for database storage
+
+## API Endpoint
+
+### Pre-signed URL Generation
+```typescript
+// app/api/upload/route.ts
+export async function POST(request: Request) {
+  const { filename, contentType } = await request.json();
+  
+  // Generate unique filename
+  const extension = filename.split('.').pop();
+  const uniqueFilename = `${randomString(10)}.${extension}`;
+  
+  // Create S3 pre-signed URL
+  const signedUrl = await getSignedUrl(
+    s3,
+    new PutObjectCommand({
+      Bucket: env.S3_BUCKET_NAME,
+      Key: uniqueFilename,
+      ContentType: contentType,
+    }),
+    { expiresIn: 60 } // 1 minute expiry
+  );
+  
+  return NextResponse.json({
+    url: signedUrl,
+    key: uniqueFilename,
+  });
+}
+```
+
+### Request/Response Format
+```typescript
+// Request
+{
+  filename: string;
+  contentType: string;
+}
+
+// Response
+{
+  url: string;      // Pre-signed upload URL
+  key: string;      // Unique file key for storage
+}
+```
+
+## S3 Configuration
+
+### Client Setup
+```typescript
+// lib/s3.ts
+import { S3Client } from '@aws-sdk/client-s3';
+
+export const s3 = new S3Client({
+  region: env.S3_REGION,
+  endpoint: env.S3_ENDPOINT,
+  credentials: {
+    accessKeyId: env.S3_ACCESS_KEY_ID,
+    secretAccessKey: env.S3_SECRET_ACCESS_KEY,
+  },
+  forcePathStyle: true, // Required for R2 compatibility
+});
+```
+
+### Environment Variables
+```bash
+S3_BUCKET_NAME=your-bucket-name
+S3_REGION=auto
+S3_ENDPOINT=https://your-account.r2.cloudflarestorage.com
+S3_ACCESS_KEY_ID=your-access-key
+S3_SECRET_ACCESS_KEY=your-secret-key
+```
+
+## Upload Hook
+
+### useUpload Hook Implementation
+```typescript
+interface UseUploadOptions {
+  onSuccess?: (key: string) => void;
+  onError?: (error: Error) => void;
+  onProgress?: (info: string) => void;
+}
+
+export function useUpload(options: UseUploadOptions = {}) {
+  const [isUploading, setIsUploading] = useState(false);
+
+  const uploadToS3 = async (data: Blob | File) => {
+    try {
+      setIsUploading(true);
+      options.onProgress?.('Uploading file to S3...');
+
+      // Get pre-signed URL
+      const response = await ky
+        .post<{ url: string; key: string }>('/api/upload', {
+          json: {
+            filename: data instanceof File ? data.name : 'no-name',
+            contentType: data.type || 'application/octet-stream',
+          },
+        })
+        .json();
+
+      // Upload directly to S3
+      const uploadResponse = await ky.put(response.url, {
+        body: data,
+        headers: {
+          'Content-Type': data.type || 'application/octet-stream',
+        },
+      });
+
+      if (!uploadResponse.ok) {
+        throw new Error(`Upload failed with status: ${uploadResponse.status}`);
+      }
+
+      options.onProgress?.(`File uploaded: ${response.key}`);
+      options.onSuccess?.(response.key);
+      
+      return response.key;
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown upload error';
+      options.onProgress?.(`Upload error: ${errorMessage}`);
+      options.onError?.(error instanceof Error ? error : new Error(errorMessage));
+      throw error;
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  return {
+    uploadToR2: uploadToS3, // Alias for backward compatibility
+    isUploading,
+  };
+}
+```
+
+### Hook Usage Examples
+```tsx
+// Basic usage
+export function FileUploadComponent() {
+  const { uploadToR2, isUploading } = useUpload({
+    onSuccess: (key) => {
+      console.log('File uploaded successfully:', key);
+      // Save key to database via tRPC
+    },
+    onError: (error) => {
+      console.error('Upload failed:', error);
+      toast.error('Failed to upload file');
+    },
+    onProgress: (info) => {
+      console.log('Upload progress:', info);
+    },
+  });
+
+  const handleFileSelect = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      try {
+        const fileKey = await uploadToR2(file);
+        // Handle successful upload
+      } catch (error) {
+        // Error already handled in hook
+      }
+    }
+  };
+
+  return (
+    <div>
+      <input
+        type="file"
+        onChange={handleFileSelect}
+        disabled={isUploading}
+      />
+      {isUploading && <p>Uploading...</p>}
+    </div>
+  );
+}
+```
+
+## File Preview Component
+
+### Attachment Preview
+```tsx
+interface AttachmentPreviewProps {
+  fileKey: string;
+  fileName: string;
+  fileSize?: number;
+  contentType?: string;
+  onRemove?: () => void;
+}
+
+export function AttachmentPreview({
+  fileKey,
+  fileName,
+  fileSize,
+  contentType,
+  onRemove,
+}: AttachmentPreviewProps) {
+  const fileUrl = `${env.NEXT_PUBLIC_S3_PUBLIC_URL}/${fileKey}`;
+  
+  const isImage = contentType?.startsWith('image/');
+  
+  return (
+    <div className="flex items-center gap-3 p-3 border rounded-lg">
+      {isImage ? (
+        <img
+          src={fileUrl}
+          alt={fileName}
+          className="w-12 h-12 object-cover rounded"
+        />
+      ) : (
+        <FileIcon className="w-12 h-12 text-muted-foreground" />
+      )}
+      
+      <div className="flex-1">
+        <p className="font-medium">{fileName}</p>
+        {fileSize && (
+          <p className="text-sm text-muted-foreground">
+            {formatFileSize(fileSize)}
+          </p>
+        )}
+      </div>
+      
+      <div className="flex items-center gap-2">
+        <Button variant="outline" size="sm" asChild>
+          <a href={fileUrl} target="_blank" rel="noopener noreferrer">
+            <ExternalLinkIcon className="w-4 h-4" />
+          </a>
+        </Button>
+        
+        {onRemove && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onRemove}
+          >
+            <XIcon className="w-4 h-4" />
+          </Button>
+        )}
+      </div>
+    </div>
+  );
+}
+```
+
+## Integration Patterns
+
+### Database Storage
+Store file metadata in database after successful upload:
+
+```typescript
+// tRPC mutation for saving file metadata
+export const uploadFile = protectedProcedure
+  .input(z.object({
+    fileKey: z.string(),
+    fileName: z.string(),
+    fileSize: z.number(),
+    contentType: z.string(),
+    relatedEntityId: z.string().optional(),
+    relatedEntityType: z.string().optional(),
+  }))
+  .mutation(async ({ ctx, input }) => {
+    const fileRecord = await ctx.db.insert(fileAttachment).values({
+      id: crypto.randomUUID(),
+      userId: ctx.session.user.id,
+      fileKey: input.fileKey,
+      fileName: input.fileName,
+      fileSize: input.fileSize,
+      contentType: input.contentType,
+      relatedEntityId: input.relatedEntityId,
+      relatedEntityType: input.relatedEntityType,
+      createdAt: new Date(),
+    });
+    
+    return fileRecord;
+  });
+```
+
+### Form Integration
+```tsx
+export function ContactFormWithFiles() {
+  const form = useForm<ContactFormData>({
+    resolver: zodResolver(contactSchema),
+  });
+  
+  const [attachments, setAttachments] = useState<FileAttachment[]>([]);
+  
+  const { uploadToR2, isUploading } = useUpload({
+    onSuccess: (key) => {
+      // Add to attachments list
+      setAttachments(prev => [...prev, { key, name: file.name }]);
+    },
+  });
+
+  const onSubmit = async (data: ContactFormData) => {
+    // Include attachment keys in form submission
+    await createContact.mutateAsync({
+      ...data,
+      attachments: attachments.map(a => a.key),
+    });
+  };
+
+  return (
+    <Form {...form}>
+      {/* Form fields */}
+      
+      <FormField
+        control={form.control}
+        name="attachments"
+        render={() => (
+          <FormItem>
+            <FormLabel>Attachments</FormLabel>
+            <FormControl>
+              <FileUploadZone
+                onFilesSelected={handleFilesSelected}
+                isUploading={isUploading}
+              />
+            </FormControl>
+            
+            {attachments.map((attachment) => (
+              <AttachmentPreview
+                key={attachment.key}
+                {...attachment}
+                onRemove={() => removeAttachment(attachment.key)}
+              />
+            ))}
+          </FormItem>
+        )}
+      />
+    </Form>
+  );
+}
+```
+
+## Security Considerations
+
+### Pre-signed URL Security
+- Short expiration time (1 minute) for upload URLs
+- Unique filename generation to prevent overwrites
+- Content-Type validation on both client and server
+- File size limits enforced at S3 level
+
+### Access Control
+- Authentication required for pre-signed URL generation
+- User-based file access through database relations
+- Private S3 bucket with controlled public access
+- Audit logging for all file operations
+
+## Best Practices
+
+### File Naming
+- Generate unique filenames to prevent conflicts
+- Preserve original file extensions
+- Use secure random string generation
+- Avoid user-provided filenames in storage keys
+
+### Error Handling
+- Comprehensive error messages for debugging
+- Graceful degradation for upload failures
+- Progress feedback for long uploads
+- Retry mechanisms for network failures
+
+### Performance
+- Direct S3 upload to reduce server load
+- Progress tracking for user feedback  
+- Lazy loading for file previews
+- Efficient file metadata queries
+
+### Cleanup
+- Implement garbage collection for orphaned files
+- Remove files when related entities are deleted
+- Monitor storage usage and costs
+- Automatic cleanup of temporary uploads

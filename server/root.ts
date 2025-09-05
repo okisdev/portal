@@ -3,6 +3,7 @@ import type { inferRouterInputs, inferRouterOutputs } from '@trpc/server';
 import { accountRouter } from '@/server/routers/account';
 import { adminRouter } from '@/server/routers/admin';
 import { apiKeyRouter } from '@/server/routers/api-key';
+import { auditRouter } from '@/server/routers/audit';
 import { authRouter } from '@/server/routers/auth';
 import { calendarRouter } from '@/server/routers/calendar';
 import { companyRouter } from '@/server/routers/company';
@@ -22,6 +23,7 @@ export const appRouter = createTRPCRouter({
   account: accountRouter,
   admin: adminRouter,
   apiKey: apiKeyRouter,
+  audit: auditRouter,
   auth: authRouter,
   calendar: calendarRouter,
   contact: contactRouter,

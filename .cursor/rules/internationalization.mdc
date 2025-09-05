@@ -1,46 +1,258 @@
 ---
-description:
-globs:
+description: Internationalization setup with next-intl and multi-language support
+globs: 
+  - "i18n/**/*.{ts,tsx,json}"
+  - "app/**/[locale]/**/*.{ts,tsx}"
+  - "middleware.ts"
+  - "**/*i18n*.{ts,tsx}"
 alwaysApply: false
 ---
 # Internationalization (i18n)
 
-The application uses next-intl for internationalization support.
+Portal supports multiple languages using next-intl with locale-based routing and comprehensive translation management.
 
-## Structure
+## Architecture
 
-- `/i18n`: Configuration and utilities for internationalization
-- `/i18n/locales`: Translation files for each supported language
-- `/app/[locale]`: Locale-aware routes with the locale parameter
+### Configuration Files
+- `i18n/routing.ts`: Core routing configuration with supported locales
+- `i18n/navigation.ts`: Localized navigation helpers and utilities  
+- `i18n/request.ts`: Server-side locale detection and request handling
+- `middleware.ts`: Locale routing middleware for automatic detection
 
-## Supported Languages
+### Translation Structure
+- `i18n/locales/en.json`: English (default) - comprehensive base translations
+- `i18n/locales/zh-CN.json`: Chinese Simplified - mainland China
+- `i18n/locales/zh-HK.json`: Chinese Traditional - Hong Kong
 
-- English (en)
-- Chinese Simplified (zh-CN)
-- Chinese Traditional (zh-HK)
+### Route Structure
+- `app/[locale]/`: All routes include locale parameter
+- Automatic locale detection from Accept-Language header
+- Fallback to default locale (en) for unsupported languages
+- URL structure: `/en/dashboard`, `/zh-CN/dashboard`, `/zh-HK/dashboard`
 
-## Translation Files
+## Translation Management
 
-- [i18n/locales/en.json](mdc:i18n/locales/en.json): English translations
-- [i18n/locales/zh-CN.json](mdc:i18n/locales/zh-CN.json): Chinese Simplified translations
-- [i18n/locales/zh-HK.json](mdc:i18n/locales/zh-HK.json): Chinese Traditional translations
+### JSON Structure
+```json
+{
+  "Common": {
+    "welcome": "Welcome",
+    "loading": "Loading...",
+    "error": "An error occurred"
+  },
+  "Dashboard": {
+    "title": "Dashboard",
+    "analytics": {
+      "totalContacts": "Total Contacts",
+      "revenue": "Revenue"
+    }
+  },
+  "CRM": {
+    "contacts": {
+      "title": "Contacts",
+      "addNew": "Add New Contact",
+      "fields": {
+        "firstName": "First Name",
+        "lastName": "Last Name",
+        "email": "Email Address"
+      }
+    }
+  }
+}
+```
 
-## Configuration
+### Nested Namespaces
+Organize translations by feature areas:
+- `Common`: Shared UI elements, buttons, messages
+- `Dashboard`: Dashboard-specific content
+- `CRM`: Contact and company management
+- `Auth`: Authentication and user management
+- `Tasks`: Task management features
+- `Calendar`: Calendar and event features
 
-- [i18n/navigation.ts](mdc:i18n/navigation.ts): Navigation configuration for i18n
-- [i18n/routing.ts](mdc:i18n/routing.ts): Routing configuration for i18n
-- [i18n/request.ts](mdc:i18n/request.ts): Request-based locale detection
+## Usage Patterns
 
-## Usage
-
-Translations are used with the `useTranslations` hook:
-
+### Component Translation
 ```tsx
 import { useTranslations } from 'next-intl';
 
-export default function MyComponent() {
-  const t = useTranslations('Common');
+export default function ContactForm() {
+  const t = useTranslations('CRM.contacts');
+  const common = useTranslations('Common');
   
-  return <h1>{t('welcome')}</h1>;
+  return (
+    <form>
+      <h2>{t('title')}</h2>
+      <input placeholder={t('fields.firstName')} />
+      <button>{common.save}</button>
+    </form>
+  );
 }
 ```
+
+### Server Component Translation
+```tsx
+import { getTranslations } from 'next-intl/server';
+
+export default async function ServerPage({ 
+  params: { locale } 
+}: {
+  params: { locale: string }
+}) {
+  const t = await getTranslations('Dashboard');
+  
+  return <h1>{t('title')}</h1>;
+}
+```
+
+### Dynamic Translation Keys
+```tsx
+const t = useTranslations('CRM.contacts.status');
+const status = 'active'; // dynamic value
+const statusText = t(status); // translates 'active' key
+```
+
+### Pluralization
+```tsx
+const t = useTranslations('Common');
+const count = 5;
+
+// Using ICU message format for plurals
+const message = t('itemCount', { count });
+// Translation: "itemCount": "{count, plural, =0 {No items} =1 {One item} other {# items}}"
+```
+
+## Routing & Navigation
+
+### Localized Navigation
+```tsx
+import { Link, redirect } from '@/i18n/navigation';
+import { useRouter } from '@/i18n/navigation';
+
+export function LocalizedNavigation() {
+  const router = useRouter();
+  
+  return (
+    <nav>
+      <Link href="/dashboard">{t('dashboard')}</Link>
+      <Link href="/crm/contacts">{t('contacts')}</Link>
+      <button onClick={() => router.push('/settings')}>
+        {t('settings')}
+      </button>
+    </nav>
+  );
+}
+```
+
+### Locale Switching
+```tsx
+import { useLocale } from 'next-intl';
+import { useRouter, usePathname } from '@/i18n/navigation';
+
+export function LocaleSwitcher() {
+  const locale = useLocale();
+  const router = useRouter();
+  const pathname = usePathname();
+  
+  const switchLocale = (newLocale: string) => {
+    router.replace(pathname, { locale: newLocale });
+  };
+  
+  return (
+    <select value={locale} onChange={(e) => switchLocale(e.target.value)}>
+      <option value="en">English</option>
+      <option value="zh-CN">简体中文</option>
+      <option value="zh-HK">繁體中文</option>
+    </select>
+  );
+}
+```
+
+## Middleware Configuration
+
+```tsx
+// middleware.ts
+import createIntlMiddleware from 'next-intl/middleware';
+import { routing } from './i18n/routing';
+
+const intlMiddleware = createIntlMiddleware(routing);
+
+export default async function middleware(request: NextRequest) {
+  // Handle internationalization
+  const response = intlMiddleware(request);
+  
+  // Additional middleware logic (auth, etc.)
+  return response;
+}
+
+export const config = {
+  matcher: ['/', '/(zh-CN|zh-HK|en)/:path*']
+};
+```
+
+## Date & Number Formatting
+
+### Locale-Aware Formatting
+```tsx
+import { useFormatter } from 'next-intl';
+
+export function FormattedContent() {
+  const format = useFormatter();
+  
+  const date = new Date();
+  const price = 1299.99;
+  
+  return (
+    <div>
+      <p>{format.dateTime(date, 'short')}</p>
+      <p>{format.number(price, 'currency')}</p>
+    </div>
+  );
+}
+```
+
+### Timezone Handling
+```tsx
+const format = useFormatter();
+const userTimezone = 'Asia/Hong_Kong';
+
+const formattedDate = format.dateTime(date, {
+  timeZone: userTimezone,
+  dateStyle: 'medium',
+  timeStyle: 'short'
+});
+```
+
+## Best Practices
+
+### Translation Key Organization
+- Use nested namespaces for better organization
+- Keep keys descriptive and context-aware
+- Avoid overly deep nesting (max 3-4 levels)
+- Use consistent naming conventions
+
+### Content Management
+- Implement translation validation in CI/CD
+- Use translation management tools for non-developers
+- Maintain translation completeness tracking
+- Regular translation review and updates
+
+### Performance Optimization
+- Lazy load translation files when possible
+- Use tree-shaking for unused translations
+- Implement efficient caching strategies
+- Monitor bundle size impact of translations
+
+### Development Workflow
+- Extract translatable strings during development
+- Use translation keys instead of hardcoded text
+- Implement missing translation detection
+- Provide development-time translation helpers
+
+## RTL Support (Future)
+
+While not currently implemented, the architecture supports RTL languages:
+- CSS logical properties usage
+- Directional icon handling
+- Layout adaptation for RTL reading patterns
+- Bidirectional text support

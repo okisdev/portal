@@ -8,7 +8,9 @@ export const formatCurrency = (amount: number) => {
 };
 
 export const parseDate = (dateString: string): Date | undefined => {
-  if (!dateString) return;
+  if (!dateString) {
+    return;
+  }
 
   // Try different date formats
   const formats = [
@@ -59,7 +61,9 @@ export const parseDate = (dateString: string): Date | undefined => {
 export const parseFullName = (
   fullName: string
 ): { firstName: string; lastName: string } => {
-  if (!fullName) return { firstName: 'N/A', lastName: '' };
+  if (!fullName) {
+    return { firstName: 'N/A', lastName: '' };
+  }
 
   // Trim and remove extra spaces
   const cleanName = fullName.trim().replace(/\s+/g, ' ');
@@ -79,7 +83,7 @@ export const parseFullName = (
     // If there are multiple parts, treat last part as lastName
     return {
       firstName: parts.slice(0, -1).join(' ') || 'N/A',
-      lastName: parts[parts.length - 1],
+      lastName: parts.at(-1) || '',
     };
   }
 

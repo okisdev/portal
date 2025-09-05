@@ -843,3 +843,32 @@ export const userApiKey = pgTable(
     }).onDelete('cascade'),
   ]
 );
+
+export const auditLog = pgTable('portal_user_audit_log', {
+  id: text()
+    .primaryKey()
+    .notNull()
+    .$defaultFn(() => crypto.randomUUID()),
+  userId: text()
+    .notNull()
+    .references(() => user.id, { onDelete: 'cascade' }), // Who performed the action
+  action: text('action').notNull(), // e.g., 'CREATE', 'UPDATE', 'DELETE'
+  resource: text('resource').notNull(), // e.g., 'contact', 'team', 'company', 'user'
+  resourceId: text('resource_id'), // ID of the affected resource
+  routerName: text('router_name').notNull(), // e.g., 'contact', 'team', 'admin'
+  procedureName: text('procedure_name').notNull(), // e.g., 'createContact', 'updateUser'
+  inputData: text('input_data'), // JSON string of the input data
+  previousData: text('previous_data'), // JSON string of data before change (for updates/deletes)
+  newData: text('new_data'), // JSON string of data after change (for creates/updates)
+  ipAddress: text('ip_address'), // IP address of the user
+  userAgent: text('user_agent'), // User agent string
+  status: text('status', {
+    enum: ['SUCCESS', 'FAILED', 'PENDING'],
+  })
+    .notNull()
+    .default('SUCCESS'),
+  errorMessage: text('error_message'), // Error message if action failed
+  duration: integer('duration'), // Duration of the action in milliseconds
+  metadata: text('metadata'), // JSON string for additional context/custom data
+  createdAt: timestamp({ mode: 'date' }).notNull().defaultNow(),
+});

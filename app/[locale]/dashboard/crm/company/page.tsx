@@ -226,7 +226,9 @@ export default function CompanyPage() {
   }, [search, sortConfig, pathname]);
 
   const filteredCompanies = useMemo(() => {
-    if (!companies) return [];
+    if (!companies) {
+      return [];
+    }
 
     return companies
       .filter((company) => {
@@ -247,7 +249,9 @@ export default function CompanyPage() {
         return true;
       })
       .sort((a, b) => {
-        if (!sortConfig.column) return 0;
+        if (!sortConfig.column) {
+          return 0;
+        }
 
         let aValue = String(a[sortConfig.column as keyof typeof a] ?? '');
         let bValue = String(b[sortConfig.column as keyof typeof b] ?? '');
@@ -257,8 +261,12 @@ export default function CompanyPage() {
           bValue = new Date(b.createdAt).getTime().toString();
         }
 
-        if (aValue < bValue) return sortConfig.direction === 'asc' ? -1 : 1;
-        if (aValue > bValue) return sortConfig.direction === 'asc' ? 1 : -1;
+        if (aValue < bValue) {
+          return sortConfig.direction === 'asc' ? -1 : 1;
+        }
+        if (aValue > bValue) {
+          return sortConfig.direction === 'asc' ? 1 : -1;
+        }
         return 0;
       });
   }, [companies, sortConfig, debouncedSearch]);
@@ -299,7 +307,9 @@ export default function CompanyPage() {
   };
 
   const onEditSubmit = (data: CreateCompanySchema) => {
-    if (!selectedCompany) return;
+    if (!selectedCompany) {
+      return;
+    }
     editCompany.mutate({
       id: selectedCompany.id,
       ...data,

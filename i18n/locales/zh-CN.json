@@ -760,5 +760,21 @@
   "workspace": "工作区",
   "write_a_reply": "写回复... 使用 @ 提及某人",
   "you": "你",
-  "your_new_api_key": "您的新 API 密钥"
+  "your_new_api_key": "您的新 API 密钥",
+  "audit": "审计",
+  "image_updated_successfully": "个人资料图片成功更新了",
+  "advanced": "先进的",
+  "advance": "进步",
+  "labelling": "标签",
+  "add_priorities": "添加优先级",
+  "add_sources": "添加来源",
+  "add_statuses": "添加状态",
+  "edit_priorities": "编辑优先级",
+  "edit_sources": "编辑资源",
+  "edit_statuses": "编辑状态",
+  "labelling_description": "管理您的标签",
+  "priorities": "优先事项",
+  "priorities_management": "优先管理",
+  "sources_management": "来源管理",
+  "statuses_management": "状态管理"
 }

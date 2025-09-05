@@ -1,36 +1,172 @@
 ---
-description:
-globs:
+description: Database schema, Drizzle ORM patterns and query strategies
+globs: 
+  - "drizzle/**/*.{ts,tsx}"
+  - "lib/database.ts"
+  - "**/*schema*.{ts,tsx}"
+  - "server/**/*.{ts,tsx}"
 alwaysApply: false
 ---
-# Database Structure
+# Database Architecture
 
-The application uses PostgreSQL with Drizzle ORM for database operations.
+Portal uses PostgreSQL with Drizzle ORM for comprehensive business data management.
 
-## Schema Definition
+## Schema Organization
 
-- [drizzle/schema.ts](mdc:drizzle/schema.ts): Database table definitions
-- [drizzle/relations.ts](mdc:drizzle/relations.ts): Table relationships
+- `drizzle/schema.ts`: Complete database schema with 20+ tables
+- `drizzle/relations.ts`: Foreign key relationships and joins
+- `drizzle.config.ts`: Drizzle Kit configuration for migrations
+- `lib/database.ts`: Database connection and client setup
 
-## Key Tables
+## Core Tables
 
-The database schema includes these primary tables:
-- `portal_user`: User accounts
-- `portal_session`: User sessions
-- `portal_account`: OAuth provider accounts
-- `portal_verification_token`: Email verification tokens
+### Authentication & Users
+- `portal_user`: User accounts with roles (ADMIN, SALES_MANAGER, SALES_ASSISTANT, MANAGER, USER)
+- `portal_session`: User sessions for NextAuth.js/Better Auth
+- `portal_account`: OAuth provider accounts (Google, GitHub, etc.)
+- `portal_verification`: Email verification tokens
 
-## Database Operations
+### CRM Core
+- `portal_contact`: Contact management with rich metadata
+- `portal_company`: Company/organization records
+- `portal_company_contact`: Many-to-many relationship between companies and contacts
+- `portal_team`: Team management and collaboration
 
-Database operations are performed using Drizzle ORM queries:
+### Business Operations
+- `portal_user_task`: Task management with kanban workflows
+- `portal_calendar_event`: Calendar events and scheduling
+- `portal_team_meeting`: Team meeting records
+- `portal_resource_content`: Content management system
+- `portal_resource_emails`: Email templates and management
 
+### System & Audit
+- `portal_audit_log`: Comprehensive audit trail for all operations
+- `portal_api_key`: API key management for external integrations
+- `portal_team_activity`: Team activity tracking
+
+## Drizzle ORM Patterns
+
+### Query Patterns
 ```typescript
-// Example query
+// Basic CRUD operations
 const users = await db.select().from(user).where(eq(user.role, 'ADMIN'));
+
+// Joins and relations
+const contactsWithCompany = await db
+  .select()
+  .from(contact)
+  .leftJoin(company, eq(contact.companyId, company.id));
+
+// Prepared statements for performance
+const getUserById = db
+  .select()
+  .from(user)
+  .where(eq(user.id, $1))
+  .prepare();
+
+// Transactions for data consistency
+await db.transaction(async (tx) => {
+  await tx.insert(contact).values(newContact);
+  await tx.insert(teamActivity).values(activityLog);
+});
 ```
 
-## Migrations
+### Schema Definitions
+```typescript
+// Table with relationships
+export const contact = pgTable('portal_contact', {
+  id: text().primaryKey().$defaultFn(() => crypto.randomUUID()),
+  firstName: text().notNull(),
+  lastName: text().notNull(),
+  email: text(),
+  companyId: text().references(() => company.id),
+  assignedTo: text().references(() => user.id),
+  createdBy: text().references(() => user.id),
+  status: text('status').notNull().default('Lead'),
+  priority: text('priority').default('Medium'),
+  // ... other fields
+});
 
-Database migrations are handled with Drizzle Kit:
-- `/drizzle/*.sql`: SQL migration files
-- `drizzle.config.ts`: Drizzle configuration
+// Enums and constraints
+role: text('role', {
+  enum: ['ADMIN', 'SALES_MANAGER', 'SALES_ASSISTANT', 'MANAGER', 'USER'],
+}).default('USER')
+```
+
+## Data Relationships
+
+### User-Centric Relations
+- Users can have multiple contacts assigned
+- Users can be members of multiple teams
+- Users create tasks and calendar events
+- Users have audit trails for all actions
+
+### CRM Relations
+- Contacts belong to companies (optional)
+- Companies have multiple contacts
+- Teams manage groups of contacts/companies
+- Activities track interactions across all entities
+
+### Hierarchical Data
+- Tasks can have parent-child relationships (subtasks)
+- Teams have hierarchical activity tracking
+- Audit logs maintain complete change history
+
+## Database Operations Best Practices
+
+### Performance Optimizations
+- Use prepared statements for repeated queries
+- Implement proper indexing on frequently queried columns
+- Use transactions for multi-table operations
+- Leverage Drizzle's query builder for complex joins
+
+### Data Integrity
+- Foreign key constraints maintain referential integrity
+- Use transactions for related operations
+- Implement soft deletes where appropriate
+- Validate data at both application and database levels
+
+### Audit & Compliance
+- All data modifications create audit log entries
+- Track user actions with timestamps and context
+- Maintain data lineage for compliance requirements
+- Implement proper data retention policies
+
+## Migration Strategy
+
+### Drizzle Kit Usage
+```bash
+# Generate migrations
+npx drizzle-kit generate
+
+# Push schema changes
+npx drizzle-kit push
+
+# View migrations
+npx drizzle-kit up
+```
+
+### Schema Evolution
+- Use incremental migrations for schema changes
+- Maintain backward compatibility during deployments
+- Test migrations against production-like data
+- Document breaking changes and migration paths
+
+## Connection Management
+
+```typescript
+// Database client setup (lib/database.ts)
+import { drizzle } from 'drizzle-orm/postgres-js';
+import postgres from 'postgres';
+
+const connectionString = env.DATABASE_URL;
+const client = postgres(connectionString);
+export const database = drizzle(client);
+```
+
+## Type Safety
+
+- Full TypeScript support with inferred types
+- Generate types from schema automatically
+- Use branded types for IDs and foreign keys
+- Leverage Drizzle's type-safe query builder

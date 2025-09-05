@@ -1,34 +1,292 @@
 ---
-description:
-globs:
+description: UI components architecture with shadcn/ui and design patterns
+globs: 
+  - "components/**/*.{ts,tsx}"
+  - "**/*component*.{ts,tsx}"
+  - "styles/**/*.{ts,tsx,css}"
 alwaysApply: false
 ---
-# UI Components
+# UI Components Architecture
 
-The application uses a collection of UI components based on shadcn/ui with Radix UI primitives and styled with TailwindCSS.
+Portal uses a comprehensive component system built on shadcn/ui with Radix UI primitives and TailwindCSS.
 
 ## Component Organization
 
-- `/components/ui`: Reusable UI components based on shadcn/ui
-- `/components/shared`: Shared components used across multiple sections
-- `/components/dashboard`: Dashboard-specific components
-- `/components/landing`: Landing page components
-- `/components/root`: Root-level components
+### Core UI Components (`/components/ui`)
+Base components following shadcn/ui patterns:
+- `button.tsx`: Button variations with cva styling variants
+- `form.tsx`: React Hook Form integration with validation
+- `dialog.tsx`, `sheet.tsx`, `drawer.tsx`: Modal and overlay components  
+- `dropdown-menu.tsx`, `popover.tsx`: Contextual menus and overlays
+- `table.tsx`: Data table with sorting and pagination
+- `sidebar.tsx`: Navigation sidebar with collapsible sections
+- `input.tsx`, `textarea.tsx`, `select.tsx`: Form input components
+- `calendar.tsx`: Calendar picker for date selection
+- `card.tsx`, `badge.tsx`, `avatar.tsx`: Content display components
 
-## Key UI Components
+### Shared Components (`/components/shared`)
+Cross-application reusable components:
+- `combobox.tsx`: Search and select with autocomplete
+- `date-time-picker.tsx`, `date-range-picker.tsx`: Advanced date/time selection
+- `tiptap-editor.tsx`: Rich text editor with multiple modes
+- `activity-section.tsx`: Activity timeline display
+- `event-dialog.tsx`, `event-popover.tsx`: Calendar event management
+- `table/`: Advanced table components with pagination and sorting
+- `content-with-copy.tsx`: Content display with copy functionality
 
-- [components/ui/button.tsx](mdc:components/ui/button.tsx): Button component
-- [components/ui/form.tsx](mdc:components/ui/form.tsx): Form components with React Hook Form integration
-- [components/ui/dialog.tsx](mdc:components/ui/dialog.tsx): Dialog component
-- [components/ui/dropdown-menu.tsx](mdc:components/ui/dropdown-menu.tsx): Dropdown menu component
-- [components/ui/sidebar.tsx](mdc:components/ui/sidebar.tsx): Sidebar navigation component
-- [components/ui/table.tsx](mdc:components/ui/table.tsx): Table component
-- [components/ui/calendar.tsx](mdc:components/ui/calendar.tsx): Calendar component
+### Domain-Specific Components
+**Dashboard (`/components/dashboard`)**:
+- `header.tsx`: Main dashboard header with breadcrumbs and search
+- `sidebar.tsx`: Navigation sidebar with user context
+- Subdirectories organized by feature (account, contact, resource, workspace)
 
-## Usage Pattern
+**Landing (`/components/landing`)**:
+- `header.tsx`, `footer.tsx`: Marketing page layout components
 
-The UI components follow a consistent pattern:
-1. Import Radix UI primitives
-2. Extend with TailwindCSS using class-variance-authority (cva)
-3. Export with React.forwardRef for proper ref handling
-4. Use with tailwind-merge for class name conflicts
+**Root (`/components/root`)**:
+- `layout.tsx`: Root application layout
+- `provider.tsx`: Global providers (theme, analytics, progress)
+
+## Component Patterns
+
+### shadcn/ui Pattern
+```tsx
+import { cva, type VariantProps } from 'class-variance-authority';
+import { cn } from '@/lib/utils';
+
+const buttonVariants = cva(
+  "inline-flex items-center justify-center rounded-md text-sm font-medium",
+  {
+    variants: {
+      variant: {
+        default: "bg-primary text-primary-foreground hover:bg-primary/90",
+        destructive: "bg-destructive text-destructive-foreground",
+        outline: "border border-input bg-background hover:bg-accent",
+        // ... more variants
+      },
+      size: {
+        default: "h-10 px-4 py-2",
+        sm: "h-9 rounded-md px-3",
+        lg: "h-11 rounded-md px-8",
+        icon: "h-10 w-10",
+      },
+    },
+    defaultVariants: {
+      variant: "default",
+      size: "default",
+    },
+  }
+);
+
+export interface ButtonProps
+  extends React.ButtonHTMLAttributes<HTMLButtonElement>,
+    VariantProps<typeof buttonVariants> {
+  asChild?: boolean;
+}
+
+const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
+  ({ className, variant, size, asChild = false, ...props }, ref) => {
+    const Comp = asChild ? Slot : "button";
+    return (
+      <Comp
+        className={cn(buttonVariants({ variant, size, className }))}
+        ref={ref}
+        {...props}
+      />
+    );
+  }
+);
+```
+
+### Form Integration Pattern
+```tsx
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { Form, FormControl, FormField, FormItem, FormLabel } from '@/components/ui/form';
+
+const formSchema = z.object({
+  name: z.string().min(1, 'Name is required'),
+});
+
+export function MyForm() {
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+  });
+
+  return (
+    <Form {...form}>
+      <FormField
+        control={form.control}
+        name="name"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Name</FormLabel>
+            <FormControl>
+              <Input {...field} />
+            </FormControl>
+          </FormItem>
+        )}
+      />
+    </Form>
+  );
+}
+```
+
+### Advanced Component Examples
+
+#### Combobox with Search
+```tsx
+export function Combobox({ items, value, onChange, allowCustom = false }) {
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState('');
+  
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button variant="outline" role="combobox">
+          {value || "Select item..."}
+          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-[200px] p-0">
+        <Command>
+          <CommandInput
+            placeholder="Search..."
+            value={query}
+            onValueChange={setQuery}
+          />
+          <CommandEmpty>
+            {allowCustom ? (
+              <Button onClick={() => onChange(query)}>
+                Create "{query}"
+              </Button>
+            ) : (
+              "No results found."
+            )}
+          </CommandEmpty>
+          <CommandGroup>
+            {items.map((item) => (
+              <CommandItem key={item} onSelect={() => onChange(item)}>
+                <Check className={cn("mr-2 h-4 w-4", value === item ? "opacity-100" : "opacity-0")} />
+                {item}
+              </CommandItem>
+            ))}
+          </CommandGroup>
+        </Command>
+      </PopoverContent>
+    </Popover>
+  );
+}
+```
+
+#### Rich Text Editor
+```tsx
+export function TipTapEditor({ content, onChange, editable = true }) {
+  const editor = useEditor({
+    extensions: [StarterKit, Link, Image],
+    content,
+    onUpdate: ({ editor }) => {
+      onChange(editor.getHTML());
+    },
+    editable,
+  });
+
+  return (
+    <div className="border rounded-lg">
+      <Toolbar editor={editor} />
+      <EditorContent
+        editor={editor}
+        className="prose max-w-none p-4"
+      />
+    </div>
+  );
+}
+```
+
+## Styling Patterns
+
+### TailwindCSS Integration
+- Use `cn()` utility for class merging
+- Implement consistent spacing and typography scales
+- Follow design system color palette
+- Use responsive design patterns
+
+### Dark Mode Support
+```tsx
+// Automatic dark mode support through CSS variables
+.dark {
+  --background: 0 0% 3.9%;
+  --foreground: 0 0% 98%;
+  --primary: 0 0% 98%;
+  --primary-foreground: 0 0% 9%;
+}
+```
+
+### Component Variants
+- Use `class-variance-authority` for consistent variant patterns
+- Implement size, color, and behavior variants
+- Provide sensible default variants
+- Support composition through `asChild` pattern
+
+## Accessibility
+
+### ARIA Patterns
+- Proper ARIA labels and descriptions
+- Keyboard navigation support
+- Focus management for modals and dropdowns
+- Screen reader compatibility
+
+### Form Accessibility
+- Associate labels with form controls
+- Provide validation feedback
+- Support keyboard navigation
+- Clear error messaging
+
+## Performance Optimizations
+
+### Code Splitting
+- Lazy load heavy components (TipTap editor)
+- Use dynamic imports for conditional components
+- Optimize bundle size with tree shaking
+
+### Rendering Optimizations
+- Use React.memo for expensive components
+- Implement proper dependency arrays
+- Avoid unnecessary re-renders
+- Use callback optimization patterns
+
+## Theme System
+
+### CSS Variables
+- Consistent color system across light/dark modes
+- Scalable spacing and typography
+- Component-specific CSS custom properties
+
+### Provider Setup
+```tsx
+export function ThemeProvider({ children }) {
+  return (
+    <NextThemesProvider
+      attribute="class"
+      defaultTheme="system"
+      enableSystem
+      disableTransitionOnChange
+    >
+      {children}
+    </NextThemesProvider>
+  );
+}
+```
+
+## Component Testing
+
+### Testing Patterns
+- Unit tests for component logic
+- Integration tests for form workflows  
+- Accessibility testing with jest-axe
+- Visual regression testing
+
+### Mock Strategies
+- Mock external dependencies (tRPC, auth)
+- Provide test utilities for common patterns
+- Use React Testing Library best practices

@@ -177,7 +177,7 @@ export default function Dashboard() {
   return (
     <div className='container mx-auto h-[calc(100vh-4rem)] p-2 sm:p-4'>
       <div className='flex h-full flex-col'>
-        <div className='mb-4 flex items-center justify-between sm:mb-6'>
+        <div className='mb-4 flex items-center justify-between'>
           <PageHeader
             title={t('welcome_back', { name: session?.user?.name || '' })}
           />
@@ -192,7 +192,7 @@ export default function Dashboard() {
         </div>
 
         {/* Overview Metrics Grid */}
-        <div className='mb-4 grid grid-cols-2 gap-2 sm:mb-6 sm:gap-4 lg:grid-cols-6'>
+        <div className='mb-4 grid grid-cols-2 gap-2 sm:gap-4 lg:grid-cols-6'>
           <div className='relative flex items-start gap-2 rounded-lg border bg-card p-3 sm:gap-3 sm:p-4'>
             <div className='flex size-6 items-center justify-center rounded-lg bg-primary/10 sm:size-8'>
               <Users className='size-3 text-primary sm:size-4' />
@@ -339,7 +339,7 @@ export default function Dashboard() {
         </div>
 
         {/* Main Content - 3 Column Layout */}
-        <div className='flex flex-1 flex-col gap-4 sm:gap-6 lg:flex-row'>
+        <div className='flex flex-1 flex-col gap-2 sm:gap-4 lg:flex-row'>
           {/* Left Column - Chart & Performance */}
           <div className='w-full space-y-4 sm:space-y-6 lg:w-1/2'>
             {/* Chart Section */}

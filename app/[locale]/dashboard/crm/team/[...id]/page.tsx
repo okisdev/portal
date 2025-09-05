@@ -384,9 +384,13 @@ export default function TeamIdPage() {
     getFacetedUniqueValues: getFacetedUniqueValues(),
   });
 
-  if (isLoading) return <PageLoading />;
+  if (isLoading) {
+    return <PageLoading />;
+  }
 
-  if (!team) return notFound();
+  if (!team) {
+    return notFound();
+  }
 
   const handleAddMember = (contactId: string) => {
     addTeamContact.mutate({
@@ -665,7 +669,7 @@ export default function TeamIdPage() {
                     teamId: teamId[0],
                   });
                 }}
-                onUpdateAppointment={(data) => {
+                onUpdateAppointment={(_data) => {
                   // TODO: Add update meeting functionality
                   toast.error(
                     'Update meeting functionality not implemented yet'

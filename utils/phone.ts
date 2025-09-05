@@ -44,7 +44,9 @@ export const parsePhoneWithoutCountryCode = (phone: string): string => {
     const phoneWithPlus = phone.startsWith('+') ? phone : `+${phone}`;
     const phoneNumber = parsePhoneNumberWithError(phoneWithPlus);
 
-    if (!phoneNumber) return phone;
+    if (!phoneNumber) {
+      return phone;
+    }
 
     // Return only the national number without the country code
     return phoneNumber.nationalNumber;

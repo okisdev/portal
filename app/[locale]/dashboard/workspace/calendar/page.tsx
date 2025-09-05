@@ -365,7 +365,9 @@ export default function DashboardPersonalCalendar() {
   };
 
   const isTimeSlotSelected = (date: Date, hour: number, minute: number) => {
-    if (!(selectionStart && selectionEnd && isSelecting)) return false;
+    if (!(selectionStart && selectionEnd && isSelecting)) {
+      return false;
+    }
 
     const timeSlot = new Date(date);
     timeSlot.setHours(hour, minute, 0, 0);

@@ -11,6 +11,11 @@ import {
 } from '@/lib/api-auth';
 import { database } from '@/lib/database';
 import { createContactActivityHelper } from '@/server/helper/contact';
+import {
+  createApiAuditLog,
+  getApiClientInfo,
+  getApiProcedureName,
+} from '@/utils/api-audit';
 import { stringifyPhone } from '@/utils/phone';
 
 // Validation schemas
@@ -62,9 +67,12 @@ const parseDate = (dateStr: string): Date => {
 };
 
 export async function POST(request: NextRequest) {
+  const startTime = Date.now();
+  let authContext: Awaited<ReturnType<typeof authenticateApiKey>> = null;
+
   try {
     // Authenticate API key
-    const authContext = await authenticateApiKey(request);
+    authContext = await authenticateApiKey(request);
     if (!authContext) {
       return createAuthErrorResponse('Invalid or missing API key');
     }
@@ -74,11 +82,35 @@ export async function POST(request: NextRequest) {
       return createPermissionErrorResponse('write:contacts');
     }
 
+    // Set up audit context
+    const { ipAddress, userAgent } = getApiClientInfo(request);
+    const procedureName = getApiProcedureName(request.nextUrl.pathname);
+
     // Parse and validate request body
     const body = await request.json();
     const validation = bulkContactUploadSchema.safeParse(body);
 
     if (!validation.success) {
+      // Log validation error
+      await createApiAuditLog({
+        context: {
+          userId: authContext.user.id,
+          apiKeyId: authContext.apiKey.id,
+          ipAddress,
+          userAgent,
+          action: 'CREATE',
+          resource: 'contact',
+          procedureName,
+        },
+        inputData: body,
+        status: 'FAILED',
+        errorMessage: 'Validation error',
+        duration: Date.now() - startTime,
+        metadata: {
+          validationErrors: validation.error.flatten().fieldErrors,
+        },
+      });
+
       return Response.json(
         {
           error: {
@@ -253,6 +285,34 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Log successful bulk contact creation
+    await createApiAuditLog({
+      context: {
+        userId: authContext.user.id,
+        apiKeyId: authContext.apiKey.id,
+        ipAddress,
+        userAgent,
+        action: 'CREATE',
+        resource: 'contact',
+        procedureName,
+      },
+      inputData: { contactCount: contacts.length },
+      newData: {
+        created: results.length,
+        skipped: skipped.length,
+        errors: errors.length,
+      },
+      status: 'SUCCESS',
+      duration: Date.now() - startTime,
+      metadata: {
+        operation: 'bulk_contact_upload',
+        totalContacts: contacts.length,
+        successCount: results.length,
+        skipCount: skipped.length,
+        errorCount: errors.length,
+      },
+    });
+
     return Response.json({
       success: true,
       data: {
@@ -269,6 +329,33 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     console.error('Contact upload API error:', error);
+
+    // Log API error if we have auth context
+    if (authContext) {
+      const { ipAddress, userAgent } = getApiClientInfo(request);
+      const procedureName = getApiProcedureName(request.nextUrl.pathname);
+
+      await createApiAuditLog({
+        context: {
+          userId: authContext.user.id,
+          apiKeyId: authContext.apiKey.id,
+          ipAddress,
+          userAgent,
+          action: 'CREATE',
+          resource: 'contact',
+          procedureName,
+        },
+        status: 'FAILED',
+        errorMessage:
+          error instanceof Error ? error.message : 'Internal server error',
+        duration: Date.now() - startTime,
+        metadata: {
+          operation: 'bulk_contact_upload',
+          error: 'unexpected_error',
+        },
+      });
+    }
+
     return Response.json(
       {
         error: {
