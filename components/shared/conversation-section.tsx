@@ -278,7 +278,6 @@ export function ConversationSection({
   return (
     <div className='flex h-full flex-col'>
       <div className='flex-1 overflow-y-auto' id='activities-container'>
-        <div className='pointer-events-none sticky top-0 z-10 h-4 bg-linear-to-b from-background to-transparent' />
         <div className='space-y-1'>
           {conversationActivities?.length === 0 && (
             <p className='text-muted-foreground text-sm'>

@@ -50,7 +50,7 @@ export const taskRouter = createTRPCRouter({
         .optional()
     )
     .query(async ({ ctx, input }) => {
-      const conditions = [];
+      const conditions: any[] = [];
 
       if (input?.status) {
         conditions.push(eq(userTask.status, input.status));

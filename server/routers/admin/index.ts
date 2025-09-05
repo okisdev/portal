@@ -1,26 +1,9 @@
-import { TRPCError } from '@trpc/server';
 import { desc, eq } from 'drizzle-orm';
 import { v4 as uuidv4 } from 'uuid';
 import { z } from 'zod/v4';
 import { user } from '@/drizzle/schema';
-import { createTRPCRouter, protectedProcedure } from '../../trpc';
-
-const adminProcedure = protectedProcedure.use(async ({ ctx, next }) => {
-  const currentUser = await ctx.db
-    .select()
-    .from(user)
-    .where(eq(user.id, ctx.session.user.id))
-    .then((res) => res[0]);
-
-  if (!currentUser || currentUser.role !== 'ADMIN') {
-    throw new TRPCError({
-      code: 'UNAUTHORIZED',
-      message: 'Only admins can access this resource',
-    });
-  }
-
-  return next();
-});
+import { createTRPCRouter } from '@/server/trpc';
+import { adminProcedure } from './utils';
 
 export const adminRouter = createTRPCRouter({
   getMe: adminProcedure.query(({ ctx }) => {

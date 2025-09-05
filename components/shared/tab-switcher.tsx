@@ -103,7 +103,7 @@ export function TabSwitcher({ config }: TabSwitcherProps) {
                 role='tab'
                 tabIndex={0}
               >
-                <div className='flex h-full items-center justify-center whitespace-nowrap font-[var(--www-mattmannucci-me-geist-regular-font-family)] text-sm leading-5'>
+                <div className='flex h-full items-center justify-center whitespace-nowrap text-sm leading-5'>
                   {tab.label}
                 </div>
               </div>

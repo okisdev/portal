@@ -9,6 +9,7 @@ import {
   ImageIcon,
   MessageCircle,
   Paperclip,
+  Send,
   Trash,
   X,
 } from 'lucide-react';
@@ -418,7 +419,6 @@ export function ActivitySection({
   return (
     <div className='flex h-full flex-col'>
       <div className='flex-1 overflow-y-auto' id='activities-container'>
-        <div className='pointer-events-none sticky top-0 z-10 h-4 bg-linear-to-b from-background to-transparent' />
         <div className='space-y-1'>
           {filteredActivities?.length === 0 && (
             <p className='text-muted-foreground text-sm'>
@@ -503,10 +503,7 @@ export function ActivitySection({
                         )}
                         <span className='text-muted-foreground text-xs'>•</span>
                         <span className='text-muted-foreground text-xs'>
-                          {formatDate(
-                            new Date(activity.createdAt),
-                            locale as any
-                          )}
+                          {formatDate(new Date(activity.createdAt), locale)}
                         </span>
                       </div>
                       <div className='flex items-center gap-2'>
@@ -718,7 +715,7 @@ export function ActivitySection({
               <PopoverTrigger asChild>
                 <div className='relative w-full'>
                   <Textarea
-                    className='min-h-[60px] resize-none pr-24'
+                    className='h-auto resize-none pr-24'
                     onChange={(e) => handleInputChange(e)}
                     onCompositionEnd={() => setIsComposing(false)}
                     onCompositionStart={() => setIsComposing(true)}
@@ -733,7 +730,7 @@ export function ActivitySection({
                     </div>
                   )}
 
-                  <div className='absolute top-2 right-2 flex items-center gap-1'>
+                  <div className='absolute right-2 bottom-2 flex items-center gap-1'>
                     <input
                       accept='image/*,video/*,audio/*,.pdf,.doc,.docx,.xls,.xlsx,.txt'
                       className='hidden'
@@ -742,23 +739,22 @@ export function ActivitySection({
                       type='file'
                     />
                     <Button
-                      className='h-8 w-8'
+                      className='size-8'
                       disabled={isUploading}
                       onClick={() => fileInputRef.current?.click()}
                       size='icon'
                       title={t('attach_file')}
-                      type='button'
                       variant='ghost'
                     >
-                      <Paperclip className='h-4 w-4' />
+                      <Paperclip className='size-4' />
                     </Button>
                     <Button
-                      className='h-8'
+                      className='size-8'
                       disabled={isLoading || isUploading}
-                      size='sm'
+                      size='icon'
                       type='submit'
                     >
-                      {t('add_note')}
+                      <Send className='size-4' />
                     </Button>
                   </div>
                 </div>
