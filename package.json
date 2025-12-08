@@ -93,7 +93,7 @@
   },
   "devDependencies": {
     "@biomejs/biome": "^2.2.3",
-    "@react-email/preview-server": "4.2.8",
+    "@react-email/preview-server": "5.0.6",
     "@tailwindcss/postcss": "^4.1.13",
     "@tiptap/core": "^3.4.1",
     "@types/node": "^24.3.1",
