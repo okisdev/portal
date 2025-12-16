@@ -84,7 +84,7 @@ export default function AccountSettingsPage() {
     }
 
     try {
-      await authClient.forgetPassword({
+      await authClient.requestPasswordReset({
         email: me.email,
         redirectTo: `${window.location.origin}/reset-password?email=${me.email}`,
         fetchOptions: {

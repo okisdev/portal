@@ -125,7 +125,7 @@ export function PasswordSection({
     }
 
     try {
-      await authClient.forgetPassword({
+      await authClient.requestPasswordReset({
         email: userEmail,
         redirectTo: `${window.location.origin}/reset-password?email=${userEmail}`,
         fetchOptions: {
