@@ -46,8 +46,8 @@ export const auth = betterAuth({
             email,
             magicLinkUrl: url,
             type: 'login',
-            userAgent: request?.headers.get('user-agent') || '',
-            ip: request?.headers.get('x-forwarded-for') || '',
+            userAgent: request?.headers?.get('user-agent') || '',
+            ip: request?.headers?.get('x-forwarded-for') || '',
             expiresInMinutes: 60,
           }),
         });
