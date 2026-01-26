@@ -9,6 +9,7 @@ import { env } from '@/lib/env';
 import { resend, sendEmail } from '@/lib/mail';
 
 export const auth = betterAuth({
+  baseURL: env.NEXT_PUBLIC_APP_URL,
   secret: env.AUTH_SECRET,
   database: drizzleAdapter(database, {
     provider: 'pg',

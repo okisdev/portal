@@ -71,13 +71,24 @@ export default function RegisterPage() {
     setLoading(true);
     setError('');
 
-    await authClient.signUp.email({
-      email: data.email,
-      password: data.password,
-      name: `${data.firstName} ${data.lastName}`,
-    });
-
-    setLoading(false);
+    await authClient.signUp.email(
+      {
+        email: data.email,
+        password: data.password,
+        name: `${data.firstName} ${data.lastName}`,
+        callbackURL: '/dashboard',
+      },
+      {
+        onSuccess: () => {
+          toast.success(t('registration_successful'));
+        },
+        onError: (ctx) => {
+          setError(ctx.error.message || t('unexpected_error'));
+          toast.error(ctx.error.message || t('unexpected_error'));
+          setLoading(false);
+        },
+      }
+    );
   };
 
   return (
