@@ -16,8 +16,8 @@
     "biome:lint": "biome lint --write",
     "biome:fix": "biome check --fix",
     "deps:check": "bunx taze -f -x recharts,next",
-    "deps:update": "bunx taze -f -x -w recharts,next && bun install",
-    "deps:update:no-install": "bunx taze -f -x -w recharts,next",
+    "deps:update": "bunx taze -f -w -x recharts,next && bun install",
+    "deps:update:no-install": "bunx taze -f -w -x recharts,next",
     "email:dev": "email dev --dir ./emails --port 3001",
     "email:export": "email export --dir ./emails --out ./public/emails"
   },
