@@ -79,7 +79,7 @@
     "react-hook-form": "^7.71.1",
     "react-medium-image-zoom": "^5.4.0",
     "react-resizable-panels": "^3.0.6",
-    "react-scan": "^0.4.3",
+    "react-scan": "^0.5.0",
     "recharts": "2.15.4",
     "resend": "^6.8.0",
     "server-only": "^0.0.1",
